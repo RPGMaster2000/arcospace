@@ -63,6 +63,8 @@ func _ready() -> void:
 	for slot in range(card_slots.size()):
 		var button: Button = get_node(card_slots[slot])
 		button.pressed.connect(_on_card_pressed.bind(slot))
+		button.discard_requested.connect(_discard_card.bind(slot))
+	$DiscardToggle.toggled.connect(_on_discard_toggled)
 	refresh_display()
 
 
@@ -79,6 +81,9 @@ func _write_state(side: String, state: Dictionary) -> void:
 
 
 func _on_card_pressed(slot: int) -> void:
+	if $DiscardToggle.button_pressed:
+		_discard_card(slot)
+		return
 	if resolving_card or slot < 0 or slot >= hand.cards.size():
 		return
 	if enemy_hull <= 0 or player_hull <= 0:
@@ -99,6 +104,31 @@ func _on_card_pressed(slot: int) -> void:
 	# Effekten är klar innan samma plats får sitt nya kort.
 	hand.replace_card(slot)
 	resolving_card = false
+	refresh_display()
+
+
+func _on_discard_toggled(_enabled: bool) -> void:
+	refresh_display()
+
+
+func _discard_card(slot: int) -> void:
+	if resolving_card or slot < 0 or slot >= hand.cards.size():
+		return
+	if enemy_hull <= 0 or player_hull <= 0:
+		return
+	var card: Resource = hand.cards[slot]
+	if card == null:
+		return
+	resolving_card = true
+	# Återvinn en tredjedel avrundat nedåt, utan kostnad eller korteffekt.
+	var resource_key: String = "player_" + card.family
+	var refund: int = int(floor(card.cost / 3.0))
+	set(resource_key, get(resource_key) + refund)
+	extra_action_requested = false
+	hand.replace_card(slot)
+	resolving_card = false
+	# Pekskärmsläget gäller en kassering; högerklick fungerar alltid direkt.
+	$DiscardToggle.set_pressed_no_signal(false)
 	refresh_display()
 
 
@@ -125,6 +155,6 @@ func refresh_display() -> void:
 		var card: Resource = hand.cards[slot]
 		button.card_data = card
 		var playable: bool = card != null and enemy_hull > 0 and player_hull > 0
-		if playable:
+		if playable and not $DiscardToggle.button_pressed:
 			playable = get("player_" + card.family) >= card.cost
 		button.set_playable(playable)

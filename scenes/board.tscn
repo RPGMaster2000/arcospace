@@ -344,6 +344,15 @@ offset_right = 1255.0
 offset_bottom = 700.0
 tooltip_text = "Torpedo Salvo"
 
+[node name="DiscardToggle" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 445.0
+offset_top = 437.0
+offset_right = 835.0
+offset_bottom = 480.0
+tooltip_text = "Enable, then click or tap a card. Right-click a card to discard directly."
+text = "Discard: recover cost / 3"
+
 [node name="CardHand" type="Node" parent="."]
 script = ExtResource("3_hand")
 

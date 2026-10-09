@@ -32,10 +32,16 @@ two copies per hand. The played card is excluded from the copy count, so the sam
 card can legitimately be drawn again. There is no finite draw/discard pile.
 Unaffordable cards are disabled and cannot consume resources or trigger a draw.
 
-This is a player-only loop. No enemy AI, turn income, discard or full victory
+Right-click a card to discard it immediately, including an unaffordable card.
+For touch or left-click, enable the board's Discard toggle, then choose a card.
+The toggle resets after one discard. Discarding grants floor(cost / 3) in the
+card's cost resource without paying the cost or applying any effect. It replaces
+that slot and never grants Play Again. The toggle is an editable scene node.
+
+This is a player-only loop. No enemy AI, turn income or full victory
 system has been added. The existing zero-Hull stop remains. Energy Surge sets
 `extra_action_requested` for a future turn controller; it grants no extra income.
-Resources can run out: restart the scene or increase starting values in Inspector.
+Resources can run low: discard for refunds, restart the scene, or increase starting values in Inspector.
 
 ## Code responsibilities
 
@@ -56,3 +62,7 @@ resource-driven label updates and the existing zero-Hull stop.
 The original 28 effects were checked against browser results in 336 state
 combinations. Current automated checks use Godot 4.6 headless. This project declares
 4.7; visual layout and that exact version have not been verified here.
+
+Discard checks: `godot --headless --path . --script res://tests/discard_test.gd`.
+Includes all 28 refunds, real GUI right-click input on an unaffordable card,
+one-shot toggle behavior, effect suppression, replacement and the zero-Hull stop.
