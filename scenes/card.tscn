@@ -76,6 +76,6 @@ offset_top = 122.0
 offset_right = 179.0
 offset_bottom = 194.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 16
 text = "Deal 6 damage.\nShields absorb first."
 autowrap_mode = 2

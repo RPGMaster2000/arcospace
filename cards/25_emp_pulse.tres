@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "EMP Pulse"
+family = "energy"
+cost = 7
+description = "Enemy resources −3 each"
+effects = {"drain": {"materials": 3, "energy": 3, "crew": 3}}
+play_again = false

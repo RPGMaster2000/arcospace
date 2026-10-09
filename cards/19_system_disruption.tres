@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "System Disruption"
+family = "crew"
+cost = 9
+description = "Enemy production −1 each (min 1)"
+effects = {"sabotage": true}
+play_again = false

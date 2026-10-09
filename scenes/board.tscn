@@ -386,6 +386,32 @@ text = "10 Crew"
 text = "Deal 12 damage.
 Shields first."
 
+[node name="PreviousCards" type="Button" parent="."]
+layout_mode = 0
+offset_left = 445.0
+offset_top = 440.0
+offset_right = 540.0
+offset_bottom = 480.0
+text = "Previous"
+
+[node name="LibraryPage" type="Label" parent="."]
+layout_mode = 0
+offset_left = 540.0
+offset_top = 440.0
+offset_right = 740.0
+offset_bottom = 480.0
+text = "Test cards"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextCards" type="Button" parent="."]
+layout_mode = 0
+offset_left = 740.0
+offset_top = 440.0
+offset_right = 835.0
+offset_bottom = 480.0
+text = "Next"
+
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]
 [editable path="LaserBurstCard"]

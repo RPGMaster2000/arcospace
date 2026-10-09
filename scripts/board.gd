@@ -1,17 +1,16 @@
 extends Control
 
-# HUVUDANSVAR: Hantera sex testkort och visa aktuell status.
+# HUVUDANSVAR: Visa och provspela kortbiblioteket samt aktuell status.
 # GÖR INTE: Hantera korthand, turer, AI eller animationer.
 
-# Kortdata: kostnaden betalas innan effekten utförs.
-const CARDS: Dictionary = {
-	"ShieldPlatingCard": {"family": "materials", "cost": 3, "effect": "shields", "amount": 4},
-	"SynthesizerUpgradeCard": {"family": "materials", "cost": 8, "effect": "synthesizer", "amount": 1},
-	"LaserBurstCard": {"family": "energy", "cost": 6, "effect": "damage", "amount": 6},
-	"EnergyCellCard": {"family": "energy", "cost": 3, "effect": "energy", "amount": 4},
-	"QuartersUpgradeCard": {"family": "crew", "cost": 8, "effect": "quarters", "amount": 1},
-	"TorpedoSalvoCard": {"family": "crew", "cost": 10, "effect": "damage", "amount": 12},
-}
+const CardLibrary = preload("res://scripts/card_library.gd")
+const CardEffects = preload("res://scripts/card_effects.gd")
+const CARD_SLOTS = ["ShieldPlatingCard", "SynthesizerUpgradeCard", "LaserBurstCard",
+	"EnergyCellCard", "QuartersUpgradeCard", "TorpedoSalvoCard"]
+# Behåll de tidigare sex testkorten som första vy.
+const STARTING_CARDS = [0, 3, 11, 7, 17, 19]
+var library_page: int = -1
+var extra_action_requested: bool = false
 
 #PLAYER
 var player_hull: int = 30
@@ -60,50 +59,50 @@ var enemy_quarters: int = 2
 @onready var enemy_quarters_label: Label = $EnemyResource3/quarters
 
 func _ready() -> void:
-	for card_name in CARDS:
-		var card_button: Button = get_node(NodePath(card_name)) as Button
-		card_button.pressed.connect(_on_card_pressed.bind(card_name))
+	for slot in range(CARD_SLOTS.size()):
+		var button: Button = get_node(CARD_SLOTS[slot])
+		button.pressed.connect(_on_card_pressed.bind(slot))
+	$PreviousCards.pressed.connect(_change_page.bind(-1))
+	$NextCards.pressed.connect(_change_page.bind(1))
 	refresh_display()
 
 
-func _on_card_pressed(card_name: String) -> void:
-	var card: Dictionary = CARDS[card_name]
-	var family: String = card["family"]
-	var cost: int = card["cost"]
-	if enemy_hull <= 0 or player_hull <= 0 or player_resource(family) < cost:
+func _change_page(direction: int) -> void:
+	# -1 är startvyn; 0..4 visar hela biblioteket, sex kort per sida.
+	library_page = wrapi(library_page + direction, -1, 5)
+	refresh_display()
+
+
+func _card_index(slot: int) -> int:
+	return STARTING_CARDS[slot] if library_page == -1 else library_page * 6 + slot
+
+
+func _read_state(side: String) -> Dictionary:
+	var state: Dictionary = {}
+	for key in ["hull", "shields", "materials", "energy", "crew", "synthesizer", "reactor", "quarters"]:
+		state[key] = get(side + "_" + key)
+	return state
+
+
+func _write_state(side: String, state: Dictionary) -> void:
+	for key in state:
+		set(side + "_" + key, state[key])
+
+
+func _on_card_pressed(slot: int) -> void:
+	var index: int = _card_index(slot)
+	if index >= CardLibrary.CARDS.size() or enemy_hull <= 0 or player_hull <= 0:
 		return
-
-	# Betala exakt en gång, före effekten.
-	match family:
-		"materials": player_materials -= cost
-		"energy": player_energy -= cost
-		"crew": player_crew -= cost
-
-	var amount: int = card["amount"]
-	match card["effect"]:
-		"shields": player_shields += amount
-		"synthesizer": player_synthesizer += amount
-		"damage": damage_enemy(amount)
-		"energy": player_energy += amount
-		"quarters": player_quarters += amount
+	var card: Resource = CardLibrary.CARDS[index]
+	var actor: Dictionary = _read_state("player")
+	var enemy: Dictionary = _read_state("enemy")
+	if not CardEffects.play(card, actor, enemy):
+		return
+	_write_state("player", actor)
+	_write_state("enemy", enemy)
+	# Turhanteraren kan senare använda denna flagga utan extra turinkomst.
+	extra_action_requested = card.play_again
 	refresh_display()
-
-
-func player_resource(family: String) -> int:
-	match family:
-		"materials": return player_materials
-		"energy": return player_energy
-		"crew": return player_crew
-	return 0
-
-func damage_enemy(amount: int) -> void:
-	var damage: int = maxi(amount, 0)
-	var absorbed: int = mini(enemy_shields, damage)
-
-	enemy_shields -= absorbed
-
-	var hull_damage: int = damage - absorbed
-	enemy_hull = maxi(enemy_hull - hull_damage, 0)
 
 
 func refresh_display() -> void:
@@ -124,8 +123,19 @@ func refresh_display() -> void:
 	enemy_reactor_label.text = str(enemy_reactor)
 	enemy_crew_label.text = str(enemy_crew)
 	enemy_quarters_label.text = str(enemy_quarters)
-	for card_name in CARDS:
-		var card: Dictionary = CARDS[card_name]
-		var card_button: Button = get_node(NodePath(card_name)) as Button
-		card_button.disabled = enemy_hull <= 0 or player_hull <= 0 or player_resource(card["family"]) < card["cost"]
-		card_button.modulate = Color(0.55, 0.55, 0.55) if card_button.disabled else Color.WHITE
+	$LibraryPage.text = "Test cards" if library_page == -1 else "Library %d / 5" % (library_page + 1)
+	for slot in range(CARD_SLOTS.size()):
+		var button: Button = get_node(CARD_SLOTS[slot])
+		var index: int = _card_index(slot)
+		button.visible = index < CardLibrary.CARDS.size()
+		if not button.visible:
+			continue
+		var card: Resource = CardLibrary.CARDS[index]
+		button.get_node("TitleLabel").text = card.card_name
+		button.get_node("CostLabel").text = "%d %s" % [card.cost, card.family.capitalize()]
+		button.get_node("DescriptionLabel").text = card.description
+		var colors = {"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)}
+		button.get_node("CostLabel").add_theme_color_override("font_color", colors[card.family])
+		button.tooltip_text = card.card_name + "\n" + card.description
+		button.disabled = enemy_hull <= 0 or player_hull <= 0 or get("player_" + card.family) < card.cost
+		button.modulate = Color(0.55, 0.55, 0.55) if button.disabled else Color.WHITE
