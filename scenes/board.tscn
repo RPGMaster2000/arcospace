@@ -19,42 +19,6 @@ default_font = SubResource("BoldFont")
 Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleNormal"]
-bg_color = Color(0.055, 0.1, 0.18, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.25, 0.55, 0.9, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleHover"]
-bg_color = Color(0.1, 0.2, 0.34, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.5, 0.8, 1, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleDisabled"]
-bg_color = Color(0.08, 0.08, 0.09, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.25, 0.25, 0.28, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
 [node name="Board (Control)" type="Control" unique_id=546223253]
 layout_mode = 3
 anchors_preset = 15
@@ -554,256 +518,52 @@ default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 [node name="ShieldPlatingCard" parent="." unique_id=2042586335 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 21.0
 offset_top = 396.0
 offset_right = 219.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_0")
 
-[node name="TitleLabel" parent="ShieldPlatingCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="ShieldPlatingCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="ShieldPlatingCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
-
 [node name="SynthesizerUpgradeCard" parent="." unique_id=1150386306 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 229.0
 offset_top = 396.0
 offset_right = 427.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_1")
 
-[node name="TitleLabel" parent="SynthesizerUpgradeCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="SynthesizerUpgradeCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="SynthesizerUpgradeCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
-
 [node name="LaserBurstCard" parent="." unique_id=1370597201 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 437.0
 offset_top = 396.0
 offset_right = 635.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_2")
 
-[node name="TitleLabel" parent="LaserBurstCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="LaserBurstCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="LaserBurstCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
-
 [node name="EnergyCellCard" parent="." unique_id=372245618 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 645.0
 offset_top = 396.0
 offset_right = 843.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_3")
 
-[node name="TitleLabel" parent="EnergyCellCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="EnergyCellCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="EnergyCellCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
-
 [node name="QuartersUpgradeCard" parent="." unique_id=926793025 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 853.0
 offset_top = 396.0
 offset_right = 1051.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_4")
 
-[node name="TitleLabel" parent="QuartersUpgradeCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="QuartersUpgradeCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="QuartersUpgradeCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
-
 [node name="TorpedoSalvoCard" parent="." unique_id=464282260 instance=ExtResource("2_card")]
-custom_minimum_size = Vector2(195, 210)
 layout_mode = 0
 offset_left = 1061.0
 offset_top = 396.0
 offset_right = 1259.0
 offset_bottom = 690.0
-tooltip_text = "Play Laser Burst"
-theme = null
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
 card_data = ExtResource("preview_5")
-
-[node name="TitleLabel" parent="TorpedoSalvoCard" index="0"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-
-[node name="CostLabel" parent="TorpedoSalvoCard" index="1"]
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "6 Energy"
-
-[node name="DescriptionLabel" parent="TorpedoSalvoCard" index="2"]
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.
-Shields absorb first."
-vertical_alignment = 0
 
 [node name="CardHand" type="Node" parent="." unique_id=417793868]
 script = ExtResource("3_hand")
