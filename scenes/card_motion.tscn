@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/card_motion.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/card_motion.tres" id="2"]
+
+[node name="CardMotion" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 100
+script = ExtResource("1")
+settings = ExtResource("2")
+
+[node name="StageAnchor" type="Marker2D" parent="."]
+position = Vector2(640, 282)
+
+[node name="EnemyOrigin" type="Marker2D" parent="."]
+position = Vector2(1125, 190)
+
+[node name="ExitAnchor" type="Marker2D" parent="."]
+position = Vector2(-220, 270)
+
+[node name="Scanner" type="ColorRect" parent="."]
+visible = false
+z_index = 1
+layout_mode = 0
+offset_right = 208.0
+offset_bottom = 3.0
+mouse_filter = 2
+color = Color(0.55, 0.95, 1, 1)

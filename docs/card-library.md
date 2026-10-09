@@ -112,3 +112,32 @@ AI/turn checks: `godot --headless --path . --script res://tests/ai_turn_test.gd`
 Covers actual Timer-driven play, both sides' extra actions, income timing, blocked
 player input, AI discard/refunds, choosing a winning piercing attack, all three
 win conditions and stopping AI scheduling on victory.
+
+## Card motion
+
+Played cards travel from the player slot (or the enemy origin marker) to the
+centre, resolve once on arrival, pause for reading, then slide left and fade.
+Player discards use a top-to-bottom scanner wipe in their hand slot; enemy discards
+use a concealed card at the enemy marker. Refunds resolve after the wipe.
+The replacement slot fades in after the old visual has gone. Both play and discard
+input remain locked until completion. The next turn or AI think delay starts only
+then. A winning card still finishes its exit and cleanup.
+
+- `resources/card_motion.tres`: enable/disable animations and edit travel, hold,
+  exit, discard and refill durations, plus centre scale.
+- `scenes/card_motion.tscn`: move StageAnchor, EnemyOrigin and ExitAnchor; edit the
+  Scanner's color. All coordinates use the same 1280×720 board space.
+- `CardMotion` on the board: select another card scene or local timing settings.
+- `scripts/card_motion.gd`: visual sequencing and resolution cue only.
+- `board.gd`: validates/locks actions, awaits motion, then advances the turn.
+
+The animated card reuses card.tscn, with its discard button hidden and mouse input
+ignored. Native tweens and clipping provide all motion; no textures, generated
+artwork or per-ability effects were added. Closing the scene cancels the tween,
+restores the source visual and releases the waiting action.
+
+Run `godot --headless --path . --script res://tests/card_motion_test.gd` to check
+real animation timing, resolution cues, repeated-input rejection, delayed AI
+scheduling, player/enemy plays and discards, victory cleanup and scene closure.
+Rule tests disable motion locally to keep their checks immediate. Visual polish
+still needs review in the running editor; these tests run headlessly.

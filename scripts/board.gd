@@ -3,6 +3,8 @@ extends Control
 # RESPONSIBILITY: Coordinate both hands, turns, effects and board display.
 # DOES NOT: Choose AI moves, implement card effects or animate cards.
 
+signal action_finished(side: String, discarded: bool)
+
 const MatchRules = preload("res://scripts/match_rules.gd")
 const CardEffects = preload("res://scripts/card_effects.gd")
 # Assign the six editable scene card buttons in the Inspector.
@@ -125,15 +127,41 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	var card: Resource = active_hand.cards[slot]
 	if card == null:
 		return false
+	if not discard and get(side + "_" + card.family) < card.cost:
+		return false
+	resolving_card = true
+	enemy_timer.stop()
+	refresh_display()
+	var source: Control = get_node(card_slots[slot]) if side == "player" else null
+	var motion = $CardMotion
+	await motion.animate_action(card, source, side, discard,
+		_resolve_card.bind(side, slot, discard, card))
+	if motion.cancelling or not is_inside_tree() or is_queued_for_deletion():
+		return false
+	resolving_card = false
+	if _check_winner():
+		refresh_display()
+	elif extra_action_requested:
+		# Another action in the same turn: no additional production income.
+		refresh_display()
+		if side == "enemy":
+			enemy_timer.start()
+	else:
+		turn_number += 1
+		_begin_turn("enemy" if side == "player" else "player")
+	action_finished.emit(side, discard)
+	return true
+
+
+func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> void:
+	var active_hand = hand if side == "player" else enemy_hand
 	var other: String = "enemy" if side == "player" else "player"
 	var actor: Dictionary = _read_state(side)
 	var target: Dictionary = _read_state(other)
-	resolving_card = true
 	if discard:
 		actor[card.family] += int(floor(card.cost / 3.0))
-	elif not CardEffects.play(card, actor, target):
-		resolving_card = false
-		return false
+	else:
+		CardEffects.play(card, actor, target)
 	_write_state(side, actor)
 	_write_state(other, target)
 	active_hand.replace_card(slot)
@@ -145,22 +173,12 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		$LastActionLabel.text += " (+%d %s)" % [int(floor(card.cost / 3.0)), card.family.capitalize()]
 	elif extra_action_requested:
 		$LastActionLabel.text += " — play again"
-	resolving_card = false
-	if _check_winner():
-		refresh_display()
-	elif extra_action_requested:
-		# Another action in the same turn: no additional production income.
-		refresh_display()
-		if side == "enemy":
-			enemy_timer.start()
-	else:
-		turn_number += 1
-		_begin_turn(other)
-	return true
+	_check_winner()
+	refresh_display()
 
 
 func _on_enemy_timeout() -> void:
-	if current_actor != "enemy" or not winner.is_empty():
+	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
 	var move: Dictionary = enemy_ai.choose(enemy_hand.cards, _read_state("enemy"),
 		_read_state("player"), hull_goal, resource_goal)

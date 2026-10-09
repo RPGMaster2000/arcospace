@@ -13,6 +13,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	var board = BoardScene.instantiate()
+	board.get_node("CardMotion").settings.enabled = false
 	board.get_node("EnemyHand").starting_hand.assign([Library.CARDS[11]])
 	root.add_child(board)
 	check(board.player_energy == 18 and board.enemy_energy == 16, "Opening income only belongs to player")
@@ -70,6 +71,7 @@ func run() -> void:
 	# Resource win from discard, and Hull win from repair.
 	for mode in ["resource", "hull"]:
 		board = BoardScene.instantiate()
+		board.get_node("CardMotion").settings.enabled = false
 		root.add_child(board)
 		if mode == "resource":
 			board.player_materials = 99

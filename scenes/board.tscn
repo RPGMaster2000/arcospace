@@ -12,6 +12,8 @@
 
 [ext_resource type="Script" path="res://scripts/enemy_ai.gd" id="4_ai"]
 
+[ext_resource type="PackedScene" path="res://scenes/card_motion.tscn" id="5_motion"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -601,6 +603,9 @@ mouse_filter = 2
 theme_override_font_sizes/font_size = 15
 text = "Play a card or discard to begin"
 horizontal_alignment = 1
+
+[node name="CardMotion" parent="." instance=ExtResource("5_motion")]
+layout_mode = 1
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]
