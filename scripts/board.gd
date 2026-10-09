@@ -228,6 +228,8 @@ func _check_winner() -> bool:
 
 
 func refresh_display() -> void:
+	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0
+	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0
 	var player_can_act: bool = winner.is_empty() and current_actor == "player" and not resolving_card
 	if winner.is_empty():
 		$TurnLabel.text = "Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
