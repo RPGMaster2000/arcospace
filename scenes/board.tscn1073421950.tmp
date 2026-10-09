@@ -1,0 +1,72 @@
+[gd_scene format=3 uid="uid://b8oky8vk8op0d"]
+
+[ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_bw3vb"]
+
+[node name="Board (Control)" type="Control" unique_id=1075141435]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bw3vb")
+
+[node name="PlayerShip" type="ColorRect" parent="." unique_id=1730456445]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 220.0
+offset_right = 460.0
+offset_bottom = 340.0
+color = Color(0.23921569, 1, 1, 1)
+
+[node name="EnemyShip" type="ColorRect" parent="." unique_id=1494306326]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 220.0
+offset_right = 1100.0
+offset_bottom = 340.0
+color = Color(0.76939416, 0.14234477, 0.099697284, 1)
+
+[node name="PlayerHullLabel" type="Label" parent="." unique_id=689157574]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 366.0
+offset_right = 460.0
+offset_bottom = 411.0
+theme_override_font_sizes/font_size = 28
+text = "Hull: 30"
+
+[node name="PlayerShieldsLabel" type="Label" parent="." unique_id=1233772012]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 415.0
+offset_right = 460.0
+offset_bottom = 460.0
+theme_override_font_sizes/font_size = 28
+text = "Shields: 10"
+
+[node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1014125510]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 365.0
+offset_right = 1100.0
+offset_bottom = 410.0
+theme_override_font_sizes/font_size = 28
+text = "Hull: 30"
+
+[node name="EnemyHullLabel" type="Label" parent="." unique_id=263807945]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 415.0
+offset_right = 1100.0
+offset_bottom = 460.0
+theme_override_font_sizes/font_size = 28
+text = "Shields: 10"
+
+[node name="AttackButton" type="Button" parent="." unique_id=816115612]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 570.0
+offset_right = 790.0
+offset_bottom = 640.0
+text = "Attack: 6 damage"

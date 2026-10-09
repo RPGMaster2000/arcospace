@@ -1,0 +1,394 @@
+[gd_scene format=3 uid="uid://b8oky8vk8op0d"]
+
+[ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_bw3vb"]
+[ext_resource type="PackedScene" path="res://scenes/card.tscn" id="2_card"]
+
+[node name="Board (Control)" type="Control" unique_id=1075141435]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bw3vb")
+
+[node name="PlayerShip" type="ColorRect" parent="." unique_id=1730456445]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 220.0
+offset_right = 460.0
+offset_bottom = 340.0
+color = Color(0.23921569, 1, 1, 1)
+
+[node name="EnemyShip" type="ColorRect" parent="." unique_id=1494306326]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 220.0
+offset_right = 1100.0
+offset_bottom = 340.0
+color = Color(0.76939416, 0.14234477, 0.099697284, 1)
+
+[node name="PlayerHullLabel" type="Label" parent="." unique_id=689157574]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 366.0
+offset_right = 460.0
+offset_bottom = 411.0
+theme_override_font_sizes/font_size = 28
+text = "Hull: 30"
+
+[node name="PlayerShieldsLabel" type="Label" parent="." unique_id=1233772012]
+layout_mode = 0
+offset_left = 180.0
+offset_top = 415.0
+offset_right = 460.0
+offset_bottom = 460.0
+theme_override_font_sizes/font_size = 28
+text = "Shields: 10"
+
+[node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1014125510]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 365.0
+offset_right = 1100.0
+offset_bottom = 410.0
+theme_override_font_sizes/font_size = 28
+text = "Hull: 30"
+
+[node name="EnemyHullLabel" type="Label" parent="." unique_id=263807945]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 415.0
+offset_right = 1100.0
+offset_bottom = 460.0
+theme_override_font_sizes/font_size = 28
+text = "Shields: 10"
+
+[node name="PlayerResource1" type="ColorRect" parent="." unique_id=680910628]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 92.0
+offset_right = 85.0
+offset_bottom = 132.0
+scale = Vector2(1.5, 1.5)
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="PlayerResource1" unique_id=871765761]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.43529412, 0, 0, 1)
+
+[node name="synthesizer" type="Label" parent="PlayerResource1" unique_id=1825931305]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="materials" type="Label" parent="PlayerResource1" unique_id=859546636]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "12"
+horizontal_alignment = 1
+
+[node name="EnemyResource1" type="ColorRect" parent="." unique_id=2061708942]
+layout_mode = 0
+offset_left = 1175.0
+offset_top = 92.0
+offset_right = 1215.0
+offset_bottom = 132.0
+scale = Vector2(1.5, 1.5)
+tooltip_text = "Materials / Synthesizer"
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="EnemyResource1" unique_id=1608162921]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.43529412, 0, 0, 1)
+
+[node name="synthesizer" type="Label" parent="EnemyResource1" unique_id=794640475]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="materials" type="Label" parent="EnemyResource1" unique_id=1868164594]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "16"
+horizontal_alignment = 1
+
+[node name="EnemyResource2" type="ColorRect" parent="." unique_id=1591482094]
+layout_mode = 0
+offset_left = 1175.0
+offset_top = 182.0
+offset_right = 1215.0
+offset_bottom = 222.0
+scale = Vector2(1.5, 1.5)
+tooltip_text = "Energy / Reactor"
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="EnemyResource2" unique_id=633660565]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0.2, 0.55, 1)
+
+[node name="reactor" type="Label" parent="EnemyResource2" unique_id=1498339168]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="energy" type="Label" parent="EnemyResource2" unique_id=559152887]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "16"
+horizontal_alignment = 1
+
+[node name="EnemyResource3" type="ColorRect" parent="." unique_id=396234753]
+layout_mode = 0
+offset_left = 1175.0
+offset_top = 272.0
+offset_right = 1215.0
+offset_bottom = 312.0
+scale = Vector2(1.5, 1.5)
+tooltip_text = "Crew / Quarters"
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="EnemyResource3" unique_id=888980435]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0.35, 0.12, 1)
+
+[node name="quarters" type="Label" parent="EnemyResource3" unique_id=598862371]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="crew" type="Label" parent="EnemyResource3" unique_id=1814687551]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "16"
+horizontal_alignment = 1
+
+[node name="PlayerResource2" type="ColorRect" parent="." unique_id=1577347422]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 182.0
+offset_right = 85.0
+offset_bottom = 222.0
+scale = Vector2(1.5, 1.5)
+tooltip_text = "Energy / Reactor"
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="PlayerResource2" unique_id=1742749483]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0.2, 0.55, 1)
+
+[node name="reactor" type="Label" parent="PlayerResource2" unique_id=80529162]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="energy" type="Label" parent="PlayerResource2" unique_id=488283811]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "16"
+horizontal_alignment = 1
+
+[node name="PlayerResource3" type="ColorRect" parent="." unique_id=1718739505]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 272.0
+offset_right = 85.0
+offset_bottom = 312.0
+scale = Vector2(1.5, 1.5)
+tooltip_text = "Crew / Quarters"
+color = Color(1, 1, 1, 0)
+
+[node name="background" type="ColorRect" parent="PlayerResource3" unique_id=58001420]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0.35, 0.12, 1)
+
+[node name="quarters" type="Label" parent="PlayerResource3" unique_id=101232664]
+layout_mode = 0
+offset_left = -3.666666
+offset_top = 16.666664
+offset_right = 36.333336
+offset_bottom = 39.666664
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="crew" type="Label" parent="PlayerResource3" unique_id=1874092062]
+layout_mode = 0
+offset_top = 1.6666641
+offset_right = 40.0
+offset_bottom = 29.666664
+theme_override_font_sizes/font_size = 20
+text = "16"
+horizontal_alignment = 1
+
+[node name="ShieldPlatingCard" parent="." unique_id=1546922638 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 25.0
+offset_top = 490.0
+offset_right = 220.0
+offset_bottom = 700.0
+tooltip_text = "Shield Plating"
+
+[node name="TitleLabel" parent="ShieldPlatingCard" index="0"]
+text = "Shield Plating"
+
+[node name="CostLabel" parent="ShieldPlatingCard" index="1"]
+theme_override_colors/font_color = Color(1, 0.55, 0.5, 1)
+text = "3 Materials"
+
+[node name="DescriptionLabel" parent="ShieldPlatingCard" index="2"]
+text = "+4 Shields"
+
+[node name="SynthesizerUpgradeCard" parent="." unique_id=1931874927 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 232.0
+offset_top = 490.0
+offset_right = 427.0
+offset_bottom = 700.0
+tooltip_text = "Synthesizer
+Upgrade"
+
+[node name="TitleLabel" parent="SynthesizerUpgradeCard" index="0"]
+text = "Synthesizer
+Upgrade"
+
+[node name="CostLabel" parent="SynthesizerUpgradeCard" index="1"]
+theme_override_colors/font_color = Color(1, 0.55, 0.5, 1)
+text = "8 Materials"
+
+[node name="DescriptionLabel" parent="SynthesizerUpgradeCard" index="2"]
+text = "+1 Synthesizer"
+
+[node name="LaserBurstCard" parent="." unique_id=851523899 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 439.0
+offset_top = 490.0
+offset_right = 634.0
+offset_bottom = 700.0
+tooltip_text = "Laser Burst"
+
+[node name="DescriptionLabel" parent="LaserBurstCard" index="2"]
+text = "Deal 6 damage.
+Shields first."
+
+[node name="EnergyCellCard" parent="." unique_id=1499939368 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 646.0
+offset_top = 490.0
+offset_right = 841.0
+offset_bottom = 700.0
+tooltip_text = "Energy Cell"
+
+[node name="TitleLabel" parent="EnergyCellCard" index="0"]
+text = "Energy Cell"
+
+[node name="CostLabel" parent="EnergyCellCard" index="1"]
+text = "3 Energy"
+
+[node name="DescriptionLabel" parent="EnergyCellCard" index="2"]
+text = "+4 Energy
+(net +1)"
+
+[node name="QuartersUpgradeCard" parent="." unique_id=1829315618 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 853.0
+offset_top = 490.0
+offset_right = 1048.0
+offset_bottom = 700.0
+tooltip_text = "Quarters
+Upgrade"
+
+[node name="TitleLabel" parent="QuartersUpgradeCard" index="0"]
+text = "Quarters
+Upgrade"
+
+[node name="CostLabel" parent="QuartersUpgradeCard" index="1"]
+theme_override_colors/font_color = Color(0.5, 1, 0.65, 1)
+text = "8 Crew"
+
+[node name="DescriptionLabel" parent="QuartersUpgradeCard" index="2"]
+text = "+1 Quarters"
+
+[node name="TorpedoSalvoCard" parent="." unique_id=1422461878 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 1060.0
+offset_top = 490.0
+offset_right = 1255.0
+offset_bottom = 700.0
+tooltip_text = "Torpedo Salvo"
+
+[node name="TitleLabel" parent="TorpedoSalvoCard" index="0"]
+text = "Torpedo Salvo"
+
+[node name="CostLabel" parent="TorpedoSalvoCard" index="1"]
+theme_override_colors/font_color = Color(0.5, 1, 0.65, 1)
+text = "10 Crew"
+
+[node name="DescriptionLabel" parent="TorpedoSalvoCard" index="2"]
+text = "Deal 12 damage.
+Shields first."
+
+[editable path="ShieldPlatingCard"]
+[editable path="SynthesizerUpgradeCard"]
+[editable path="LaserBurstCard"]
+[editable path="EnergyCellCard"]
+[editable path="QuartersUpgradeCard"]
+[editable path="TorpedoSalvoCard"]
