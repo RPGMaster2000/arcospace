@@ -3,6 +3,15 @@
 [ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_bw3vb"]
 [ext_resource type="PackedScene" path="res://scenes/card.tscn" id="2_card"]
 
+[ext_resource type="Script" path="res://scripts/card_hand.gd" id="3_hand"]
+
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="preview_0"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="preview_1"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="preview_2"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="preview_3"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="preview_4"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
+
 [node name="Board (Control)" type="Control" unique_id=1075141435]
 layout_mode = 3
 anchors_preset = 15
@@ -280,6 +289,7 @@ text = "16"
 horizontal_alignment = 1
 
 [node name="ShieldPlatingCard" parent="." unique_id=1546922638 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_0")
 layout_mode = 0
 offset_left = 25.0
 offset_top = 490.0
@@ -287,17 +297,8 @@ offset_right = 220.0
 offset_bottom = 700.0
 tooltip_text = "Shield Plating"
 
-[node name="TitleLabel" parent="ShieldPlatingCard" index="0"]
-text = "Shield Plating"
-
-[node name="CostLabel" parent="ShieldPlatingCard" index="1"]
-theme_override_colors/font_color = Color(1, 0.55, 0.5, 1)
-text = "3 Materials"
-
-[node name="DescriptionLabel" parent="ShieldPlatingCard" index="2"]
-text = "+4 Shields"
-
 [node name="SynthesizerUpgradeCard" parent="." unique_id=1931874927 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_1")
 layout_mode = 0
 offset_left = 232.0
 offset_top = 490.0
@@ -306,18 +307,8 @@ offset_bottom = 700.0
 tooltip_text = "Synthesizer
 Upgrade"
 
-[node name="TitleLabel" parent="SynthesizerUpgradeCard" index="0"]
-text = "Synthesizer
-Upgrade"
-
-[node name="CostLabel" parent="SynthesizerUpgradeCard" index="1"]
-theme_override_colors/font_color = Color(1, 0.55, 0.5, 1)
-text = "8 Materials"
-
-[node name="DescriptionLabel" parent="SynthesizerUpgradeCard" index="2"]
-text = "+1 Synthesizer"
-
 [node name="LaserBurstCard" parent="." unique_id=851523899 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_2")
 layout_mode = 0
 offset_left = 439.0
 offset_top = 490.0
@@ -325,11 +316,8 @@ offset_right = 634.0
 offset_bottom = 700.0
 tooltip_text = "Laser Burst"
 
-[node name="DescriptionLabel" parent="LaserBurstCard" index="2"]
-text = "Deal 6 damage.
-Shields first."
-
 [node name="EnergyCellCard" parent="." unique_id=1499939368 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_3")
 layout_mode = 0
 offset_left = 646.0
 offset_top = 490.0
@@ -337,17 +325,8 @@ offset_right = 841.0
 offset_bottom = 700.0
 tooltip_text = "Energy Cell"
 
-[node name="TitleLabel" parent="EnergyCellCard" index="0"]
-text = "Energy Cell"
-
-[node name="CostLabel" parent="EnergyCellCard" index="1"]
-text = "3 Energy"
-
-[node name="DescriptionLabel" parent="EnergyCellCard" index="2"]
-text = "+4 Energy
-(net +1)"
-
 [node name="QuartersUpgradeCard" parent="." unique_id=1829315618 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_4")
 layout_mode = 0
 offset_left = 853.0
 offset_top = 490.0
@@ -356,18 +335,8 @@ offset_bottom = 700.0
 tooltip_text = "Quarters
 Upgrade"
 
-[node name="TitleLabel" parent="QuartersUpgradeCard" index="0"]
-text = "Quarters
-Upgrade"
-
-[node name="CostLabel" parent="QuartersUpgradeCard" index="1"]
-theme_override_colors/font_color = Color(0.5, 1, 0.65, 1)
-text = "8 Crew"
-
-[node name="DescriptionLabel" parent="QuartersUpgradeCard" index="2"]
-text = "+1 Quarters"
-
 [node name="TorpedoSalvoCard" parent="." unique_id=1422461878 instance=ExtResource("2_card")]
+card_data = ExtResource("preview_5")
 layout_mode = 0
 offset_left = 1060.0
 offset_top = 490.0
@@ -375,42 +344,8 @@ offset_right = 1255.0
 offset_bottom = 700.0
 tooltip_text = "Torpedo Salvo"
 
-[node name="TitleLabel" parent="TorpedoSalvoCard" index="0"]
-text = "Torpedo Salvo"
-
-[node name="CostLabel" parent="TorpedoSalvoCard" index="1"]
-theme_override_colors/font_color = Color(0.5, 1, 0.65, 1)
-text = "10 Crew"
-
-[node name="DescriptionLabel" parent="TorpedoSalvoCard" index="2"]
-text = "Deal 12 damage.
-Shields first."
-
-[node name="PreviousCards" type="Button" parent="."]
-layout_mode = 0
-offset_left = 445.0
-offset_top = 440.0
-offset_right = 540.0
-offset_bottom = 480.0
-text = "Previous"
-
-[node name="LibraryPage" type="Label" parent="."]
-layout_mode = 0
-offset_left = 540.0
-offset_top = 440.0
-offset_right = 740.0
-offset_bottom = 480.0
-text = "Test cards"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="NextCards" type="Button" parent="."]
-layout_mode = 0
-offset_left = 740.0
-offset_top = 440.0
-offset_right = 835.0
-offset_bottom = 480.0
-text = "Next"
+[node name="CardHand" type="Node" parent="."]
+script = ExtResource("3_hand")
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/card_view.gd" id="1_view"]
+
 [sub_resource type="StyleBoxFlat" id="StyleNormal"]
 bg_color = Color(0.055, 0.10, 0.18, 1)
 border_width_left = 2
@@ -37,6 +39,7 @@ corner_radius_bottom_left = 10
 corner_radius_bottom_right = 10
 
 [node name="Card" type="Button"]
+script = ExtResource("1_view")
 custom_minimum_size = Vector2(195, 210)
 offset_right = 195.0
 offset_bottom = 210.0
