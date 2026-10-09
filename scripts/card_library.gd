@@ -1,7 +1,7 @@
 extends RefCounted
 
-# HUVUDANSVAR: Samla de 28 kortresurserna i originalets ordning.
-# GÖR INTE: Utföra effekter eller hantera en korthand.
+# RESPONSIBILITY: List the 28 card resources in their original order.
+# DOES NOT: Apply effects or manage a hand.
 const CARDS = [
 	preload("res://cards/01_shield_plating.tres"),
 	preload("res://cards/02_shield_array.tres"),

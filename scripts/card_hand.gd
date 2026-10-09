@@ -1,11 +1,11 @@
 extends Node
 
-# HUVUDANSVAR: Dra en starthand och ersätta spelade kort.
-# GÖR INTE: Betala kostnader, utföra effekter eller hantera turer.
+# RESPONSIBILITY: Deal an opening hand and replace used cards.
+# DOES NOT: Pay costs, apply effects or manage turns.
 const CardLibrary = preload("res://scripts/card_library.gd")
-# Tom pool använder card_library.gd. Dra in .tres-filer för en egen testpool.
+# An empty pool uses card_library.gd. Drag in .tres files for a custom pool.
 @export var card_pool: Array[Resource] = []
-# Tom starthand ger slumpkort. Fyll i för en bestämd testhand.
+# An empty starting hand draws randomly. Assign cards for a fixed test hand.
 @export var starting_hand: Array[Resource] = []
 @export_range(1, 6, 1) var max_copies: int = 2
 var cards: Array[Resource] = []
@@ -34,7 +34,7 @@ func draw_card(excluded_slot: int = -1) -> Resource:
 		if copies < max_copies:
 			eligible.append(card)
 	if eligible.is_empty():
-		push_warning("Kortpoolen är för liten för korthandens kopiegräns.")
+		push_warning("The card pool is too small for the hand copy limit.")
 		return null
 	return eligible[rng.randi_range(0, eligible.size() - 1)]
 
@@ -42,5 +42,5 @@ func draw_card(excluded_slot: int = -1) -> Resource:
 func replace_card(slot: int) -> void:
 	if slot < 0 or slot >= cards.size():
 		return
-	# Det spelade kortet räknas inte när ersättaren dras.
+	# Exclude the used card when counting copies for its replacement.
 	cards[slot] = draw_card(slot)

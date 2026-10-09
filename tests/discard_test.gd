@@ -54,14 +54,21 @@ func run() -> void:
 	event.pressed = false
 	root.push_input(event, true)
 	check(board.player_crew == 3, "Mouse release must not discard twice")
-	# One-shot discard toggle uses the normal pressed signal (mouse/touch).
+	# Click the actual footer on an unaffordable card; the parent must not play.
 	hand.cards[0] = Library.CARDS[13] # Energy Surge: no effect, refund 1.
 	board.player_energy = 0
-	board.get_node("DiscardToggle").button_pressed = true
-	check(not button.disabled, "Discard mode must enable unaffordable cards")
-	button.pressed.emit()
-	check(board.player_energy == 1, "Toggle discard must refund only")
-	check(not board.get_node("DiscardToggle").button_pressed, "Toggle must reset after one discard")
+	board.refresh_display()
+	var footer = button.get_node("DiscardButton")
+	check(button.disabled and not footer.disabled, "Unaffordable play must still allow footer discard")
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.position = footer.get_global_rect().get_center()
+	event.global_position = event.position
+	event.pressed = true
+	root.push_input(event, true)
+	event.pressed = false
+	root.push_input(event, true)
+	check(board.player_energy == 1, "Footer must refund only, without playing the card")
+	check(footer.text.begins_with("Discard +"), "Footer must show the replacement refund")
 	board.enemy_hull = 0
 	var stopped: Array = hand.cards.duplicate()
 	var stopped_state: Dictionary = board._read_state("player")

@@ -2,83 +2,201 @@
 
 [ext_resource type="Script" path="res://scripts/card_view.gd" id="1_view"]
 
-[sub_resource type="StyleBoxFlat" id="StyleNormal"]
-bg_color = Color(0.055, 0.10, 0.18, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.25, 0.55, 0.9, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_left = 10
-corner_radius_bottom_right = 10
+[sub_resource type="SystemFont" id="BoldFont"]
+font_names = PackedStringArray("DejaVu Sans", "Arial")
+font_weight = 700
 
-[sub_resource type="StyleBoxFlat" id="StyleHover"]
-bg_color = Color(0.10, 0.20, 0.34, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.5, 0.8, 1, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_left = 10
-corner_radius_bottom_right = 10
+[sub_resource type="Theme" id="BoardTheme"]
+default_font = SubResource("BoldFont")
+Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
+Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleDisabled"]
-bg_color = Color(0.08, 0.08, 0.09, 1)
+[sub_resource type="StyleBoxFlat" id="Normal"]
+bg_color = Color(0.08, 0.15, 0.22, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.25, 0.25, 0.28, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_left = 10
-corner_radius_bottom_right = 10
+border_color = Color(0.97, 0.89, 0.69, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+bg_color = Color(0.12, 0.22, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.97, 0.83, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="Footer"]
+bg_color = Color(0.025, 0.04, 0.06, 0.65)
+border_width_left = 0
+border_width_top = 1
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.97, 0.89, 0.69, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
 
 [node name="Card" type="Button"]
-script = ExtResource("1_view")
-custom_minimum_size = Vector2(195, 210)
-offset_right = 195.0
-offset_bottom = 210.0
+custom_minimum_size = Vector2(198, 294)
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 198.0
+offset_bottom = 294.0
 mouse_default_cursor_shape = 2
-tooltip_text = "Play Laser Burst"
-theme_override_styles/normal = SubResource("StyleNormal")
-theme_override_styles/hover = SubResource("StyleHover")
-theme_override_styles/pressed = SubResource("StyleHover")
-theme_override_styles/disabled = SubResource("StyleDisabled")
+theme = SubResource("BoardTheme")
+theme_override_styles/normal = SubResource("Normal")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/pressed = SubResource("Hover")
+theme_override_styles/disabled = SubResource("Normal")
+script = ExtResource("1_view")
 
-[node name="TitleLabel" type="Label" parent="."]
+
+[node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 179.0
-offset_bottom = 76.0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 42.0
+offset_bottom = 39.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 22
-text = "Laser Burst"
-autowrap_mode = 2
+
+
+[node name="Materials" type="Polygon2D" parent="ResourceIcon"]
+polygon = PackedVector2Array(0, 0, 28, 0, 28, 28, 0, 28)
+color = Color(1, 0.42, 0.32, 1)
+
+
+[node name="Energy" type="Polygon2D" parent="ResourceIcon"]
+polygon = PackedVector2Array(14, 0, 29, 28, 0, 28)
+color = Color(0.45, 0.83, 0.96, 1)
+
+
+[node name="Crew" type="Polygon2D" parent="ResourceIcon"]
+polygon = PackedVector2Array(28.0, 14.0, 27.88, 15.827, 27.523, 17.623, 26.934, 19.358, 26.124, 21.0, 25.107, 22.523, 23.899, 23.899, 22.523, 25.107, 21.0, 26.124, 19.358, 26.934, 17.623, 27.523, 15.827, 27.88, 14.0, 28.0, 12.173, 27.88, 10.377, 27.523, 8.642, 26.934, 7.0, 26.124, 5.477, 25.107, 4.101, 23.899, 2.893, 22.523, 1.876, 21.0, 1.066, 19.358, 0.477, 17.623, 0.12, 15.827, 0.0, 14.0, 0.12, 12.173, 0.477, 10.377, 1.066, 8.642, 1.876, 7.0, 2.893, 5.477, 4.101, 4.101, 5.477, 2.893, 7.0, 1.876, 8.642, 1.066, 10.377, 0.477, 12.173, 0.12, 14.0, 0.0, 15.827, 0.12, 17.623, 0.477, 19.358, 1.066, 21.0, 1.876, 22.523, 2.893, 23.899, 4.101, 25.107, 5.477, 26.124, 7.0, 26.934, 8.642, 27.523, 10.377, 27.88, 12.173)
+color = Color(0.67, 0.85, 0.42, 1)
+
 
 [node name="CostLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 82.0
-offset_right = 179.0
-offset_bottom = 110.0
+offset_left = 52.0
+offset_top = 1.0
+offset_right = 184.0
+offset_bottom = 44.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 35
+text = "3"
+
+
+[node name="CostRule" type="Line2D" parent="."]
+points = PackedVector2Array(9, 44, 189, 44)
+width = 1.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 47.0
+offset_right = 187.0
+offset_bottom = 107.0
+mouse_filter = 2
 theme_override_font_sizes/font_size = 20
-text = "6 Energy"
+text = "SHIELD\nPLATING"
+autowrap_mode = 2
+
+
+[node name="ArtPlaceholder" type="Control" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 109.0
+offset_right = 186.0
+offset_bottom = 183.0
+mouse_filter = 2
+
+
+[node name="Backdrop" type="ColorRect" parent="ArtPlaceholder"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 174.0
+offset_bottom = 74.0
+mouse_filter = 2
+color = Color(0.01, 0.03, 0.06, 0.5)
+
+
+[node name="Grid0" type="Line2D" parent="ArtPlaceholder"]
+points = PackedVector2Array(0, 10, 174, 10)
+width = 1.0
+default_color = Color(0.35, 0.62, 0.7, 0.18)
+antialiased = true
+
+
+[node name="Grid1" type="Line2D" parent="ArtPlaceholder"]
+points = PackedVector2Array(0, 28, 174, 28)
+width = 1.0
+default_color = Color(0.35, 0.62, 0.7, 0.18)
+antialiased = true
+
+
+[node name="Grid2" type="Line2D" parent="ArtPlaceholder"]
+points = PackedVector2Array(0, 46, 174, 46)
+width = 1.0
+default_color = Color(0.35, 0.62, 0.7, 0.18)
+antialiased = true
+
+
+[node name="Grid3" type="Line2D" parent="ArtPlaceholder"]
+points = PackedVector2Array(0, 64, 174, 64)
+width = 1.0
+default_color = Color(0.35, 0.62, 0.7, 0.18)
+antialiased = true
+
+
+[node name="Ship" type="Polygon2D" parent="ArtPlaceholder"]
+polygon = PackedVector2Array(21, 24, 61, 15, 148, 37, 61, 59, 21, 50, 38, 37)
+color = Color(0.51, 0.65, 0.7, 1)
+
+
+[node name="Accent" type="Line2D" parent="ArtPlaceholder"]
+points = PackedVector2Array(45, 37, 125, 37)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
 
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 122.0
-offset_right = 179.0
-offset_bottom = 194.0
+offset_left = 13.0
+offset_top = 188.0
+offset_right = 186.0
+offset_bottom = 253.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 16
-text = "Deal 6 damage.\nShields absorb first."
+theme_override_font_sizes/font_size = 17
+text = "+4 Shields"
 autowrap_mode = 2
+vertical_alignment = 1
+
+
+[node name="DiscardButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 258.0
+offset_right = 191.0
+offset_bottom = 288.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Footer")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/pressed = SubResource("Hover")
+text = "Discard +1"

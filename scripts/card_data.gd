@@ -2,8 +2,8 @@
 extends Resource
 class_name CardData
 
-# HUVUDANSVAR: Kortets redigerbara data i Inspector.
-# GÖR INTE: Ändra spelstatus eller hantera turer.
+# RESPONSIBILITY: Store Inspector-editable card data.
+# DOES NOT: Change game state or manage turns.
 @export var card_name: String = "":
 	set(value):
 		card_name = value

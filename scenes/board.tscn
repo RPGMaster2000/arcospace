@@ -1,10 +1,8 @@
 [gd_scene format=3 uid="uid://b8oky8vk8op0d"]
 
-[ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_bw3vb"]
+[ext_resource type="Script" path="res://scripts/board.gd" id="1_board"]
 [ext_resource type="PackedScene" path="res://scenes/card.tscn" id="2_card"]
-
 [ext_resource type="Script" path="res://scripts/card_hand.gd" id="3_hand"]
-
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="preview_0"]
 [ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="preview_1"]
 [ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="preview_2"]
@@ -12,349 +10,692 @@
 [ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="preview_4"]
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
 
-[node name="Board (Control)" type="Control" unique_id=1075141435]
+[sub_resource type="SystemFont" id="BoldFont"]
+font_names = PackedStringArray("DejaVu Sans", "Arial")
+font_weight = 700
+
+[sub_resource type="Theme" id="BoardTheme"]
+default_font = SubResource("BoldFont")
+Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
+Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
+
+[node name="Board (Control)" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_bw3vb")
+theme = SubResource("BoardTheme")
+script = ExtResource("1_board")
 
-[node name="PlayerShip" type="ColorRect" parent="." unique_id=1730456445]
-layout_mode = 0
-offset_left = 180.0
-offset_top = 220.0
-offset_right = 460.0
-offset_bottom = 340.0
-color = Color(0.23921569, 1, 1, 1)
 
-[node name="EnemyShip" type="ColorRect" parent="." unique_id=1494306326]
-layout_mode = 0
-offset_left = 820.0
-offset_top = 220.0
-offset_right = 1100.0
-offset_bottom = 340.0
-color = Color(0.76939416, 0.14234477, 0.099697284, 1)
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.018, 0.039, 0.067, 1)
 
-[node name="PlayerHullLabel" type="Label" parent="." unique_id=689157574]
-layout_mode = 0
-offset_left = 180.0
-offset_top = 366.0
-offset_right = 460.0
-offset_bottom = 411.0
-theme_override_font_sizes/font_size = 28
-text = "Hull: 30"
 
-[node name="PlayerShieldsLabel" type="Label" parent="." unique_id=1233772012]
+[node name="GameTitle" type="Label" parent="."]
 layout_mode = 0
-offset_left = 180.0
-offset_top = 415.0
-offset_right = 460.0
-offset_bottom = 460.0
-theme_override_font_sizes/font_size = 28
-text = "Shields: 10"
+offset_left = 22.0
+offset_top = 6.0
+offset_right = 722.0
+offset_bottom = 58.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 42
+text = "ARCOSPACE"
 
-[node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1014125510]
-layout_mode = 0
-offset_left = 820.0
-offset_top = 365.0
-offset_right = 1100.0
-offset_bottom = 410.0
-theme_override_font_sizes/font_size = 28
-text = "Hull: 30"
 
-[node name="EnemyHullLabel" type="Label" parent="." unique_id=263807945]
-layout_mode = 0
-offset_left = 820.0
-offset_top = 415.0
-offset_right = 1100.0
-offset_bottom = 460.0
-theme_override_font_sizes/font_size = 28
-text = "Shields: 10"
+[node name="TitleRule" type="Line2D" parent="."]
+points = PackedVector2Array(24, 57, 465, 57)
+width = 1.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
 
-[node name="PlayerResource1" type="ColorRect" parent="." unique_id=680910628]
-layout_mode = 0
-offset_left = 45.0
-offset_top = 92.0
-offset_right = 85.0
-offset_bottom = 132.0
-scale = Vector2(1.5, 1.5)
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="PlayerResource1" unique_id=871765761]
+[node name="ModeLabel" type="Label" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0.43529412, 0, 0, 1)
-
-[node name="synthesizer" type="Label" parent="PlayerResource1" unique_id=1825931305]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
+offset_left = 974.0
+offset_top = 15.0
+offset_right = 1257.0
+offset_bottom = 51.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 24
+text = "PLAYER HAND"
 horizontal_alignment = 2
-vertical_alignment = 2
 
-[node name="materials" type="Label" parent="PlayerResource1" unique_id=859546636]
-layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
-text = "12"
-horizontal_alignment = 1
 
-[node name="EnemyResource1" type="ColorRect" parent="." unique_id=2061708942]
+[node name="ModeRule" type="Line2D" parent="."]
+points = PackedVector2Array(1036, 53, 1256, 53)
+width = 1.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="YouLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 1175.0
+offset_left = 24.0
+offset_top = 59.0
+offset_right = 144.0
+offset_bottom = 89.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "YOU"
+theme_override_colors/font_color = Color(0.5, 0.87, 0.94, 1)
+
+
+[node name="RivalLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1120.0
+offset_top = 59.0
+offset_right = 1256.0
+offset_bottom = 89.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "RIVAL"
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.5, 0.87, 0.94, 1)
+
+
+[node name="PlayerResource1" type="Control" parent="."]
+layout_mode = 0
+offset_left = 23.0
 offset_top = 92.0
-offset_right = 1215.0
-offset_bottom = 132.0
-scale = Vector2(1.5, 1.5)
+offset_right = 95.0
+offset_bottom = 164.0
+mouse_filter = 2
 tooltip_text = "Materials / Synthesizer"
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="EnemyResource1" unique_id=1608162921]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0.43529412, 0, 0, 1)
 
-[node name="synthesizer" type="Label" parent="EnemyResource1" unique_id=794640475]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+[node name="Shape" type="Polygon2D" parent="PlayerResource1"]
+polygon = PackedVector2Array(2, 2, 63, 2, 63, 63, 2, 63)
+color = Color(0.75, 0.18, 0.12, 1)
 
-[node name="materials" type="Label" parent="EnemyResource1" unique_id=1868164594]
+
+[node name="Outline" type="Line2D" parent="PlayerResource1"]
+points = PackedVector2Array(2, 2, 63, 2, 63, 63, 2, 63, 2, 2)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="materials" type="Label" parent="PlayerResource1"]
 layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
+offset_left = 0.0
+offset_top = 11.0
+offset_right = 66.0
+offset_bottom = 57.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="EnemyResource2" type="ColorRect" parent="." unique_id=1591482094]
+
+[node name="ProductionBadge" type="ColorRect" parent="PlayerResource1"]
 layout_mode = 0
-offset_left = 1175.0
-offset_top = 182.0
-offset_right = 1215.0
-offset_bottom = 222.0
-scale = Vector2(1.5, 1.5)
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="PlayerResource1"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(1, 0.42, 0.32, 1)
+antialiased = true
+
+
+[node name="synthesizer" type="Label" parent="PlayerResource1"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.42, 0.32, 1)
+
+
+[node name="PlayerResource2" type="Control" parent="."]
+layout_mode = 0
+offset_left = 23.0
+offset_top = 174.0
+offset_right = 95.0
+offset_bottom = 246.0
+mouse_filter = 2
 tooltip_text = "Energy / Reactor"
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="EnemyResource2" unique_id=633660565]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0, 0.2, 0.55, 1)
 
-[node name="reactor" type="Label" parent="EnemyResource2" unique_id=1498339168]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+[node name="Shape" type="Polygon2D" parent="PlayerResource2"]
+polygon = PackedVector2Array(33, 0, 67, 63, 0, 63)
+color = Color(0.12, 0.51, 0.66, 1)
 
-[node name="energy" type="Label" parent="EnemyResource2" unique_id=559152887]
+
+[node name="Outline" type="Line2D" parent="PlayerResource2"]
+points = PackedVector2Array(33, 0, 67, 63, 0, 63, 33, 0)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="energy" type="Label" parent="PlayerResource2"]
 layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
+offset_left = 0.0
+offset_top = 22.0
+offset_right = 66.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="EnemyResource3" type="ColorRect" parent="." unique_id=396234753]
+
+[node name="ProductionBadge" type="ColorRect" parent="PlayerResource2"]
 layout_mode = 0
-offset_left = 1175.0
-offset_top = 272.0
-offset_right = 1215.0
-offset_bottom = 312.0
-scale = Vector2(1.5, 1.5)
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="PlayerResource2"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(0.45, 0.83, 0.96, 1)
+antialiased = true
+
+
+[node name="reactor" type="Label" parent="PlayerResource2"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.83, 0.96, 1)
+
+
+[node name="PlayerResource3" type="Control" parent="."]
+layout_mode = 0
+offset_left = 23.0
+offset_top = 256.0
+offset_right = 95.0
+offset_bottom = 328.0
+mouse_filter = 2
 tooltip_text = "Crew / Quarters"
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="EnemyResource3" unique_id=888980435]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0, 0.35, 0.12, 1)
 
-[node name="quarters" type="Label" parent="EnemyResource3" unique_id=598862371]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+[node name="Shape" type="Polygon2D" parent="PlayerResource3"]
+polygon = PackedVector2Array(65.0, 33.0, 64.726, 37.177, 63.91, 41.282, 62.564, 45.246, 60.713, 49.0, 58.387, 52.48, 55.627, 55.627, 52.48, 58.387, 49.0, 60.713, 45.246, 62.564, 41.282, 63.91, 37.177, 64.726, 33.0, 65.0, 28.823, 64.726, 24.718, 63.91, 20.754, 62.564, 17.0, 60.713, 13.52, 58.387, 10.373, 55.627, 7.613, 52.48, 5.287, 49.0, 3.436, 45.246, 2.09, 41.282, 1.274, 37.177, 1.0, 33.0, 1.274, 28.823, 2.09, 24.718, 3.436, 20.754, 5.287, 17.0, 7.613, 13.52, 10.373, 10.373, 13.52, 7.613, 17.0, 5.287, 20.754, 3.436, 24.718, 2.09, 28.823, 1.274, 33.0, 1.0, 37.177, 1.274, 41.282, 2.09, 45.246, 3.436, 49.0, 5.287, 52.48, 7.613, 55.627, 10.373, 58.387, 13.52, 60.713, 17.0, 62.564, 20.754, 63.91, 24.718, 64.726, 28.823)
+color = Color(0.32, 0.59, 0.3, 1)
 
-[node name="crew" type="Label" parent="EnemyResource3" unique_id=1814687551]
+
+[node name="Outline" type="Line2D" parent="PlayerResource3"]
+points = PackedVector2Array(65.0, 33.0, 64.726, 37.177, 63.91, 41.282, 62.564, 45.246, 60.713, 49.0, 58.387, 52.48, 55.627, 55.627, 52.48, 58.387, 49.0, 60.713, 45.246, 62.564, 41.282, 63.91, 37.177, 64.726, 33.0, 65.0, 28.823, 64.726, 24.718, 63.91, 20.754, 62.564, 17.0, 60.713, 13.52, 58.387, 10.373, 55.627, 7.613, 52.48, 5.287, 49.0, 3.436, 45.246, 2.09, 41.282, 1.274, 37.177, 1.0, 33.0, 1.274, 28.823, 2.09, 24.718, 3.436, 20.754, 5.287, 17.0, 7.613, 13.52, 10.373, 10.373, 13.52, 7.613, 17.0, 5.287, 20.754, 3.436, 24.718, 2.09, 28.823, 1.274, 33.0, 1.0, 37.177, 1.274, 41.282, 2.09, 45.246, 3.436, 49.0, 5.287, 52.48, 7.613, 55.627, 10.373, 58.387, 13.52, 60.713, 17.0, 62.564, 20.754, 63.91, 24.718, 64.726, 28.823, 65.0, 33.0)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="crew" type="Label" parent="PlayerResource3"]
 layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
+offset_left = 0.0
+offset_top = 11.0
+offset_right = 66.0
+offset_bottom = 57.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="PlayerResource2" type="ColorRect" parent="." unique_id=1577347422]
+
+[node name="ProductionBadge" type="ColorRect" parent="PlayerResource3"]
 layout_mode = 0
-offset_left = 45.0
-offset_top = 182.0
-offset_right = 85.0
-offset_bottom = 222.0
-scale = Vector2(1.5, 1.5)
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="PlayerResource3"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(0.67, 0.85, 0.42, 1)
+antialiased = true
+
+
+[node name="quarters" type="Label" parent="PlayerResource3"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.67, 0.85, 0.42, 1)
+
+
+[node name="EnemyResource1" type="Control" parent="."]
+layout_mode = 0
+offset_left = 1186.0
+offset_top = 92.0
+offset_right = 1258.0
+offset_bottom = 164.0
+mouse_filter = 2
+tooltip_text = "Materials / Synthesizer"
+
+
+[node name="Shape" type="Polygon2D" parent="EnemyResource1"]
+polygon = PackedVector2Array(2, 2, 63, 2, 63, 63, 2, 63)
+color = Color(0.75, 0.18, 0.12, 1)
+
+
+[node name="Outline" type="Line2D" parent="EnemyResource1"]
+points = PackedVector2Array(2, 2, 63, 2, 63, 63, 2, 63, 2, 2)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="materials" type="Label" parent="EnemyResource1"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 11.0
+offset_right = 66.0
+offset_bottom = 57.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
+text = "16"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+
+[node name="ProductionBadge" type="ColorRect" parent="EnemyResource1"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="EnemyResource1"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(1, 0.42, 0.32, 1)
+antialiased = true
+
+
+[node name="synthesizer" type="Label" parent="EnemyResource1"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.42, 0.32, 1)
+
+
+[node name="EnemyResource2" type="Control" parent="."]
+layout_mode = 0
+offset_left = 1186.0
+offset_top = 174.0
+offset_right = 1258.0
+offset_bottom = 246.0
+mouse_filter = 2
 tooltip_text = "Energy / Reactor"
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="PlayerResource2" unique_id=1742749483]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0, 0.2, 0.55, 1)
 
-[node name="reactor" type="Label" parent="PlayerResource2" unique_id=80529162]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+[node name="Shape" type="Polygon2D" parent="EnemyResource2"]
+polygon = PackedVector2Array(33, 0, 67, 63, 0, 63)
+color = Color(0.12, 0.51, 0.66, 1)
 
-[node name="energy" type="Label" parent="PlayerResource2" unique_id=488283811]
+
+[node name="Outline" type="Line2D" parent="EnemyResource2"]
+points = PackedVector2Array(33, 0, 67, 63, 0, 63, 33, 0)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="energy" type="Label" parent="EnemyResource2"]
 layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
+offset_left = 0.0
+offset_top = 22.0
+offset_right = 66.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="PlayerResource3" type="ColorRect" parent="." unique_id=1718739505]
+
+[node name="ProductionBadge" type="ColorRect" parent="EnemyResource2"]
 layout_mode = 0
-offset_left = 45.0
-offset_top = 272.0
-offset_right = 85.0
-offset_bottom = 312.0
-scale = Vector2(1.5, 1.5)
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="EnemyResource2"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(0.45, 0.83, 0.96, 1)
+antialiased = true
+
+
+[node name="reactor" type="Label" parent="EnemyResource2"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.83, 0.96, 1)
+
+
+[node name="EnemyResource3" type="Control" parent="."]
+layout_mode = 0
+offset_left = 1186.0
+offset_top = 256.0
+offset_right = 1258.0
+offset_bottom = 328.0
+mouse_filter = 2
 tooltip_text = "Crew / Quarters"
-color = Color(1, 1, 1, 0)
 
-[node name="background" type="ColorRect" parent="PlayerResource3" unique_id=58001420]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0, 0.35, 0.12, 1)
 
-[node name="quarters" type="Label" parent="PlayerResource3" unique_id=101232664]
-layout_mode = 0
-offset_left = -3.666666
-offset_top = 16.666664
-offset_right = 36.333336
-offset_bottom = 39.666664
-theme_override_font_sizes/font_size = 12
-text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+[node name="Shape" type="Polygon2D" parent="EnemyResource3"]
+polygon = PackedVector2Array(65.0, 33.0, 64.726, 37.177, 63.91, 41.282, 62.564, 45.246, 60.713, 49.0, 58.387, 52.48, 55.627, 55.627, 52.48, 58.387, 49.0, 60.713, 45.246, 62.564, 41.282, 63.91, 37.177, 64.726, 33.0, 65.0, 28.823, 64.726, 24.718, 63.91, 20.754, 62.564, 17.0, 60.713, 13.52, 58.387, 10.373, 55.627, 7.613, 52.48, 5.287, 49.0, 3.436, 45.246, 2.09, 41.282, 1.274, 37.177, 1.0, 33.0, 1.274, 28.823, 2.09, 24.718, 3.436, 20.754, 5.287, 17.0, 7.613, 13.52, 10.373, 10.373, 13.52, 7.613, 17.0, 5.287, 20.754, 3.436, 24.718, 2.09, 28.823, 1.274, 33.0, 1.0, 37.177, 1.274, 41.282, 2.09, 45.246, 3.436, 49.0, 5.287, 52.48, 7.613, 55.627, 10.373, 58.387, 13.52, 60.713, 17.0, 62.564, 20.754, 63.91, 24.718, 64.726, 28.823)
+color = Color(0.32, 0.59, 0.3, 1)
 
-[node name="crew" type="Label" parent="PlayerResource3" unique_id=1874092062]
+
+[node name="Outline" type="Line2D" parent="EnemyResource3"]
+points = PackedVector2Array(65.0, 33.0, 64.726, 37.177, 63.91, 41.282, 62.564, 45.246, 60.713, 49.0, 58.387, 52.48, 55.627, 55.627, 52.48, 58.387, 49.0, 60.713, 45.246, 62.564, 41.282, 63.91, 37.177, 64.726, 33.0, 65.0, 28.823, 64.726, 24.718, 63.91, 20.754, 62.564, 17.0, 60.713, 13.52, 58.387, 10.373, 55.627, 7.613, 52.48, 5.287, 49.0, 3.436, 45.246, 2.09, 41.282, 1.274, 37.177, 1.0, 33.0, 1.274, 28.823, 2.09, 24.718, 3.436, 20.754, 5.287, 17.0, 7.613, 13.52, 10.373, 10.373, 13.52, 7.613, 17.0, 5.287, 20.754, 3.436, 24.718, 2.09, 28.823, 1.274, 33.0, 1.0, 37.177, 1.274, 41.282, 2.09, 45.246, 3.436, 49.0, 5.287, 52.48, 7.613, 55.627, 10.373, 58.387, 13.52, 60.713, 17.0, 62.564, 20.754, 63.91, 24.718, 64.726, 28.823, 65.0, 33.0)
+width = 2.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="crew" type="Label" parent="EnemyResource3"]
 layout_mode = 0
-offset_top = 1.6666641
-offset_right = 40.0
-offset_bottom = 29.666664
-theme_override_font_sizes/font_size = 20
+offset_left = 0.0
+offset_top = 11.0
+offset_right = 66.0
+offset_bottom = 57.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ShieldPlatingCard" parent="." unique_id=1546922638 instance=ExtResource("2_card")]
+
+[node name="ProductionBadge" type="ColorRect" parent="EnemyResource3"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+color = Color(0.015, 0.035, 0.06, 1)
+
+
+[node name="BadgeOutline" type="Line2D" parent="EnemyResource3"]
+points = PackedVector2Array(51, 46, 80, 46, 80, 75, 51, 75, 51, 46)
+width = 2.0
+default_color = Color(0.67, 0.85, 0.42, 1)
+antialiased = true
+
+
+[node name="quarters" type="Label" parent="EnemyResource3"]
+layout_mode = 0
+offset_left = 51.0
+offset_top = 46.0
+offset_right = 80.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.67, 0.85, 0.42, 1)
+
+
+[node name="PlayerShip" type="Node2D" parent="."]
+position = Vector2(357, 199)
+
+
+[node name="ShieldPlaceholder" type="Line2D" parent="PlayerShip"]
+points = PackedVector2Array(218.0, 0.0, 216.135, 11.878, 210.572, 23.553, 201.406, 34.824, 188.794, 45.5, 172.951, 55.397, 154.149, 64.347, 132.71, 72.195, 109.0, 78.808, 83.425, 84.073, 56.423, 87.899, 28.455, 90.221, 0.0, 91.0, -28.455, 90.221, -56.423, 87.899, -83.425, 84.073, -109.0, 78.808, -132.71, 72.195, -154.149, 64.347, -172.951, 55.397, -188.794, 45.5, -201.406, 34.824, -210.572, 23.553, -216.135, 11.878, -218.0, 0.0, -216.135, -11.878, -210.572, -23.553, -201.406, -34.824, -188.794, -45.5, -172.951, -55.397, -154.149, -64.347, -132.71, -72.195, -109.0, -78.808, -83.425, -84.073, -56.423, -87.899, -28.455, -90.221, -0.0, -91.0, 28.455, -90.221, 56.423, -87.899, 83.425, -84.073, 109.0, -78.808, 132.71, -72.195, 154.149, -64.347, 172.951, -55.397, 188.794, -45.5, 201.406, -34.824, 210.572, -23.553, 216.135, -11.878, 218, 0)
+width = 2.0
+default_color = Color(0.2, 0.65, 0.83, 0.65)
+antialiased = true
+
+
+[node name="HullPlaceholder" type="Polygon2D" parent="PlayerShip"]
+polygon = PackedVector2Array(-160, -30, -90, -61, 21, -44, 192, 0, 21, 44, -90, 61, -160, 30, -127, 0)
+color = Color(0.52, 0.67, 0.73, 1)
+
+
+[node name="HullInset" type="Polygon2D" parent="PlayerShip"]
+polygon = PackedVector2Array(-105, -21, 20, -17, 144, 0, 20, 17, -105, 21, -83, 0)
+color = Color(0.08, 0.15, 0.2, 1)
+
+
+[node name="HullStripe" type="Line2D" parent="PlayerShip"]
+points = PackedVector2Array(-90, 0, 123, 0)
+width = 3.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="EnginePlaceholder" type="Polygon2D" parent="PlayerShip"]
+polygon = PackedVector2Array(-163, -19, -185, -12, -185, 12, -163, 19)
+color = Color(0.25, 0.8, 1, 1)
+
+
+[node name="EnemyShip" type="Node2D" parent="."]
+position = Vector2(924, 199)
+
+
+[node name="ShieldPlaceholder" type="Line2D" parent="EnemyShip"]
+points = PackedVector2Array(218.0, 0.0, 216.135, 11.878, 210.572, 23.553, 201.406, 34.824, 188.794, 45.5, 172.951, 55.397, 154.149, 64.347, 132.71, 72.195, 109.0, 78.808, 83.425, 84.073, 56.423, 87.899, 28.455, 90.221, 0.0, 91.0, -28.455, 90.221, -56.423, 87.899, -83.425, 84.073, -109.0, 78.808, -132.71, 72.195, -154.149, 64.347, -172.951, 55.397, -188.794, 45.5, -201.406, 34.824, -210.572, 23.553, -216.135, 11.878, -218.0, 0.0, -216.135, -11.878, -210.572, -23.553, -201.406, -34.824, -188.794, -45.5, -172.951, -55.397, -154.149, -64.347, -132.71, -72.195, -109.0, -78.808, -83.425, -84.073, -56.423, -87.899, -28.455, -90.221, -0.0, -91.0, 28.455, -90.221, 56.423, -87.899, 83.425, -84.073, 109.0, -78.808, 132.71, -72.195, 154.149, -64.347, 172.951, -55.397, 188.794, -45.5, 201.406, -34.824, 210.572, -23.553, 216.135, -11.878, 218, 0)
+width = 2.0
+default_color = Color(0.2, 0.65, 0.83, 0.65)
+antialiased = true
+
+
+[node name="HullPlaceholder" type="Polygon2D" parent="EnemyShip"]
+polygon = PackedVector2Array(160, -30, 90, -61, -21, -44, -192, 0, -21, 44, 90, 61, 160, 30, 127, 0)
+color = Color(0.53, 0.24, 0.22, 1)
+
+
+[node name="HullInset" type="Polygon2D" parent="EnemyShip"]
+polygon = PackedVector2Array(105, -21, -20, -17, -144, 0, -20, 17, 105, 21, 83, 0)
+color = Color(0.08, 0.15, 0.2, 1)
+
+
+[node name="HullStripe" type="Line2D" parent="EnemyShip"]
+points = PackedVector2Array(90, 0, -123, 0)
+width = 3.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="EnginePlaceholder" type="Polygon2D" parent="EnemyShip"]
+polygon = PackedVector2Array(163, -19, 185, -12, 185, 12, 163, 19)
+color = Color(1, 0.3, 0.12, 1)
+
+
+[node name="Versus" type="Label" parent="."]
+layout_mode = 0
+offset_left = 607.0
+offset_top = 177.0
+offset_right = 673.0
+offset_bottom = 222.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 24
+text = "VS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+
+[node name="PlayerHullLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 208.0
+offset_top = 311.0
+offset_right = 348.0
+offset_bottom = 349.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "Hull 30"
+
+
+[node name="PlayerShieldsLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 353.0
+offset_top = 311.0
+offset_right = 579.0
+offset_bottom = 349.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "Shields 10"
+
+
+[node name="EnemyShieldsLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 788.0
+offset_top = 311.0
+offset_right = 1000.0
+offset_bottom = 349.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "Shields 10"
+
+
+[node name="EnemyHullLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1003.0
+offset_top = 311.0
+offset_right = 1173.0
+offset_bottom = 349.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "Hull 30"
+
+
+[node name="HandRule" type="Line2D" parent="."]
+points = PackedVector2Array(24, 359, 1256, 359)
+width = 1.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="HandHeading" type="Label" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 361.0
+offset_right = 254.0
+offset_bottom = 392.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 23
+text = "YOUR HAND"
+
+
+[node name="HandHeadingRule" type="Line2D" parent="."]
+points = PackedVector2Array(219, 382, 1256, 382)
+width = 1.0
+default_color = Color(0.97, 0.89, 0.69, 1)
+antialiased = true
+
+
+[node name="ShieldPlatingCard" parent="." instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 396.0
+offset_right = 219.0
+offset_bottom = 690.0
 card_data = ExtResource("preview_0")
-layout_mode = 0
-offset_left = 25.0
-offset_top = 490.0
-offset_right = 220.0
-offset_bottom = 700.0
-tooltip_text = "Shield Plating"
 
-[node name="SynthesizerUpgradeCard" parent="." unique_id=1931874927 instance=ExtResource("2_card")]
-card_data = ExtResource("preview_1")
+[node name="SynthesizerUpgradeCard" parent="." instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 232.0
-offset_top = 490.0
+offset_left = 229.0
+offset_top = 396.0
 offset_right = 427.0
-offset_bottom = 700.0
-tooltip_text = "Synthesizer
-Upgrade"
+offset_bottom = 690.0
+card_data = ExtResource("preview_1")
 
-[node name="LaserBurstCard" parent="." unique_id=851523899 instance=ExtResource("2_card")]
+[node name="LaserBurstCard" parent="." instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 437.0
+offset_top = 396.0
+offset_right = 635.0
+offset_bottom = 690.0
 card_data = ExtResource("preview_2")
-layout_mode = 0
-offset_left = 439.0
-offset_top = 490.0
-offset_right = 634.0
-offset_bottom = 700.0
-tooltip_text = "Laser Burst"
 
-[node name="EnergyCellCard" parent="." unique_id=1499939368 instance=ExtResource("2_card")]
+[node name="EnergyCellCard" parent="." instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 645.0
+offset_top = 396.0
+offset_right = 843.0
+offset_bottom = 690.0
 card_data = ExtResource("preview_3")
-layout_mode = 0
-offset_left = 646.0
-offset_top = 490.0
-offset_right = 841.0
-offset_bottom = 700.0
-tooltip_text = "Energy Cell"
 
-[node name="QuartersUpgradeCard" parent="." unique_id=1829315618 instance=ExtResource("2_card")]
-card_data = ExtResource("preview_4")
+[node name="QuartersUpgradeCard" parent="." instance=ExtResource("2_card")]
 layout_mode = 0
 offset_left = 853.0
-offset_top = 490.0
-offset_right = 1048.0
-offset_bottom = 700.0
-tooltip_text = "Quarters
-Upgrade"
+offset_top = 396.0
+offset_right = 1051.0
+offset_bottom = 690.0
+card_data = ExtResource("preview_4")
 
-[node name="TorpedoSalvoCard" parent="." unique_id=1422461878 instance=ExtResource("2_card")]
+[node name="TorpedoSalvoCard" parent="." instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 1061.0
+offset_top = 396.0
+offset_right = 1259.0
+offset_bottom = 690.0
 card_data = ExtResource("preview_5")
-layout_mode = 0
-offset_left = 1060.0
-offset_top = 490.0
-offset_right = 1255.0
-offset_bottom = 700.0
-tooltip_text = "Torpedo Salvo"
-
-[node name="DiscardToggle" type="CheckButton" parent="."]
-layout_mode = 0
-offset_left = 445.0
-offset_top = 437.0
-offset_right = 835.0
-offset_bottom = 480.0
-tooltip_text = "Enable, then click or tap a card. Right-click a card to discard directly."
-text = "Discard: recover cost / 3"
 
 [node name="CardHand" type="Node" parent="."]
 script = ExtResource("3_hand")
+
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

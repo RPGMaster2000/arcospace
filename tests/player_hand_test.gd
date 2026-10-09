@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Kör: godot --headless --path . --script res://tests/player_hand_test.gd
+# Run: godot --headless --path . --script res://tests/player_hand_test.gd
 const Library = preload("res://scripts/card_library.gd")
 const BoardScene = preload("res://scenes/board.tscn")
 var failures: int = 0
@@ -18,7 +18,7 @@ func run() -> void:
 	var hand = board.get_node("CardHand")
 	hand.starting_hand.assign([Library.CARDS[11], Library.CARDS[0], Library.CARDS[3],
 		Library.CARDS[7], Library.CARDS[17], Library.CARDS[19]])
-	# En kontrollerad pool gör det tydligt att Laser Burst ersätts.
+	# A controlled pool makes the Laser Burst replacement unambiguous.
 	hand.card_pool.assign([Library.CARDS[0], Library.CARDS[1], Library.CARDS[2]])
 	root.add_child(board)
 	check(hand.cards.size() == 6, "Opening hand must have six cards")
@@ -58,7 +58,7 @@ func run() -> void:
 	var editable: Resource = Library.CARDS[0].duplicate(true)
 	view.card_data = editable
 	editable.card_name = "Preview test"
-	check(view.get_node("TitleLabel").text == "Preview test", "Resource edits must update card labels")
+	check(view.get_node("TitleLabel").text == "PREVIEW TEST", "Resource edits must update card labels")
 	board.enemy_hull = 0
 	previous = hand.cards.duplicate()
 	board._on_card_pressed(0)

@@ -1,7 +1,7 @@
 extends RefCounted
 
-# HUVUDANSVAR: Betala och utför ett kort på två status-dictionaries.
-# GÖR INTE: Dra kort, ge turinkomst, välja AI eller ändra UI.
+# RESPONSIBILITY: Pay for and apply a card to two state dictionaries.
+# DOES NOT: Draw cards, grant turn income, choose AI moves or update the UI.
 const RESOURCES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 
@@ -16,7 +16,7 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary) -> bool:
 		var previous: int = actor.shields
 		actor.shields = enemy.shields
 		enemy.shields = previous
-	# Sköldbrytning sker före vanlig skada (Breach Charge).
+	# Shield breaking happens before regular damage (Breach Charge).
 	enemy.shields = maxi(0, enemy.shields - int(effects.get("break_shields", 0)))
 	var damage: int = int(effects.get("damage", 0))
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))

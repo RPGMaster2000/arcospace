@@ -33,10 +33,10 @@ card can legitimately be drawn again. There is no finite draw/discard pile.
 Unaffordable cards are disabled and cannot consume resources or trigger a draw.
 
 Right-click a card to discard it immediately, including an unaffordable card.
-For touch or left-click, enable the board's Discard toggle, then choose a card.
-The toggle resets after one discard. Discarding grants floor(cost / 3) in the
+For touch or left-click, press the Discard +N footer on the chosen card.
+The footer shows that card's refund and stays active when playing is unaffordable. Discarding grants floor(cost / 3) in the
 card's cost resource without paying the cost or applying any effect. It replaces
-that slot and never grants Play Again. The toggle is an editable scene node.
+that slot and never grants Play Again. The footer is an editable Button in card.tscn.
 
 This is a player-only loop. No enemy AI, turn income or full victory
 system has been added. The existing zero-Hull stop remains. Energy Surge sets
@@ -65,4 +65,22 @@ combinations. Current automated checks use Godot 4.6 headless. This project decl
 
 Discard checks: `godot --headless --path . --script res://tests/discard_test.gd`.
 Includes all 28 refunds, real GUI right-click input on an unaffordable card,
-one-shot toggle behavior, effect suppression, replacement and the zero-Hull stop.
+per-card footer behavior, effect suppression, replacement and the zero-Hull stop.
+
+## Reference layout
+
+The board follows the supplied vintage sci-fi reference proportions at 1280×720:
+large resource totals down the outside edges, small production badges, horizontal
+Hull/Shields readouts under the ship placeholders, and six taller cards below.
+Each card has a family shape and large cost, title, placeholder art, effect text,
+and a separate discard footer. Unaffordable card bodies dim while discard stays
+available. The top-right label says PLAYER HAND because turns are not implemented.
+
+All visuals are native scene nodes, polygons, lines, flat styles and a system font.
+No generated images or paid assets are used. Move/resize nodes in board.tscn;
+edit the shared card structure in card.tscn. Card family colors are in card_view.gd.
+All script/test comments are in English.
+
+Headless checks verified text fits for all 28 cards, the six card bounds, player
+hand behavior, right-click discard, and actual GUI clicks on the discard footer.
+A rendered screenshot was not available in this environment.

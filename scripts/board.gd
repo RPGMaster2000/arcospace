@@ -1,10 +1,10 @@
 extends Control
 
-# HUVUDANSVAR: Koppla korthand, korteffekter och spelplanens status.
-# GÖR INTE: Välja slumpkort, hantera turer, AI eller animationer.
+# RESPONSIBILITY: Connect the hand, card effects and board state.
+# DOES NOT: Choose random cards or manage turns, AI or animations.
 
 const CardEffects = preload("res://scripts/card_effects.gd")
-# Koppla scenens sex redigerbara kortknappar i Inspector.
+# Assign the six editable scene card buttons in the Inspector.
 @export var card_slots: Array[NodePath] = [NodePath("ShieldPlatingCard"),
 	NodePath("SynthesizerUpgradeCard"), NodePath("LaserBurstCard"),
 	NodePath("EnergyCellCard"), NodePath("QuartersUpgradeCard"), NodePath("TorpedoSalvoCard")]
@@ -64,7 +64,6 @@ func _ready() -> void:
 		var button: Button = get_node(card_slots[slot])
 		button.pressed.connect(_on_card_pressed.bind(slot))
 		button.discard_requested.connect(_discard_card.bind(slot))
-	$DiscardToggle.toggled.connect(_on_discard_toggled)
 	refresh_display()
 
 
@@ -81,9 +80,6 @@ func _write_state(side: String, state: Dictionary) -> void:
 
 
 func _on_card_pressed(slot: int) -> void:
-	if $DiscardToggle.button_pressed:
-		_discard_card(slot)
-		return
 	if resolving_card or slot < 0 or slot >= hand.cards.size():
 		return
 	if enemy_hull <= 0 or player_hull <= 0:
@@ -99,15 +95,11 @@ func _on_card_pressed(slot: int) -> void:
 		return
 	_write_state("player", actor)
 	_write_state("enemy", enemy)
-	# Sparas till en framtida turhanterare; ingen turinkomst ges här.
+	# Preserve this for a future turn controller; do not grant turn income here.
 	extra_action_requested = card.play_again
-	# Effekten är klar innan samma plats får sitt nya kort.
+	# Resolve the effect before replacing the card in the same slot.
 	hand.replace_card(slot)
 	resolving_card = false
-	refresh_display()
-
-
-func _on_discard_toggled(_enabled: bool) -> void:
 	refresh_display()
 
 
@@ -120,23 +112,21 @@ func _discard_card(slot: int) -> void:
 	if card == null:
 		return
 	resolving_card = true
-	# Återvinn en tredjedel avrundat nedåt, utan kostnad eller korteffekt.
+	# Refund one third rounded down, without paying a cost or applying an effect.
 	var resource_key: String = "player_" + card.family
 	var refund: int = int(floor(card.cost / 3.0))
 	set(resource_key, get(resource_key) + refund)
 	extra_action_requested = false
 	hand.replace_card(slot)
 	resolving_card = false
-	# Pekskärmsläget gäller en kassering; högerklick fungerar alltid direkt.
-	$DiscardToggle.set_pressed_no_signal(false)
 	refresh_display()
 
 
 func refresh_display() -> void:
-	player_hull_label.text = "Hull: %d" % player_hull
-	player_shields_label.text = "Shields: %d" % player_shields
-	enemy_hull_label.text = "Hull: %d" % enemy_hull
-	enemy_shields_label.text = "Shields: %d" % enemy_shields
+	player_hull_label.text = "Hull %d" % player_hull
+	player_shields_label.text = "Shields %d" % player_shields
+	enemy_hull_label.text = "Hull %d" % enemy_hull
+	enemy_shields_label.text = "Shields %d" % enemy_shields
 	player_materials_label.text = str(player_materials)
 	player_synthesizer_label.text = str(player_synthesizer)
 
@@ -155,6 +145,7 @@ func refresh_display() -> void:
 		var card: Resource = hand.cards[slot]
 		button.card_data = card
 		var playable: bool = card != null and enemy_hull > 0 and player_hull > 0
-		if playable and not $DiscardToggle.button_pressed:
+		if playable:
 			playable = get("player_" + card.family) >= card.cost
 		button.set_playable(playable)
+		button.set_discardable(card != null and enemy_hull > 0 and player_hull > 0)
