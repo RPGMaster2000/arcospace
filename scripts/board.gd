@@ -21,6 +21,7 @@ var resolving_card: bool = false
 @onready var hand = $CardHand
 @onready var enemy_hand = $EnemyHand
 @onready var enemy_ai = $EnemyAI
+@onready var battle_effects = $BattleEffects
 @onready var enemy_timer: Timer = $EnemyThinkTimer
 
 #PLAYER
@@ -106,10 +107,19 @@ func _begin_turn(side: String) -> void:
 	if _check_winner():
 		refresh_display()
 		return
+	var before: Dictionary = _both_states()
 	var state: Dictionary = _read_state(side)
 	MatchRules.income(state)
 	_write_state(side, state)
+	battle_effects.play_changes(before, _both_states())
+	resolving_card = battle_effects.busy
 	_check_winner()
+	refresh_display()
+	if battle_effects.busy:
+		await battle_effects.finished
+	if battle_effects.cancelling or is_queued_for_deletion():
+		return
+	resolving_card = false
 	refresh_display()
 	if winner.is_empty() and side == "enemy":
 		enemy_timer.start()
@@ -138,6 +148,10 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		_resolve_card.bind(side, slot, discard, card))
 	if motion.cancelling or not is_inside_tree() or is_queued_for_deletion():
 		return false
+	if battle_effects.busy:
+		await battle_effects.finished
+	if battle_effects.cancelling or is_queued_for_deletion():
+		return false
 	resolving_card = false
 	if _check_winner():
 		refresh_display()
@@ -148,12 +162,13 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 			enemy_timer.start()
 	else:
 		turn_number += 1
-		_begin_turn("enemy" if side == "player" else "player")
+		await _begin_turn("enemy" if side == "player" else "player")
 	action_finished.emit(side, discard)
 	return true
 
 
 func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> void:
+	var before: Dictionary = _both_states()
 	var active_hand = hand if side == "player" else enemy_hand
 	var other: String = "enemy" if side == "player" else "player"
 	var actor: Dictionary = _read_state(side)
@@ -173,8 +188,15 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		$LastActionLabel.text += " (+%d %s)" % [int(floor(card.cost / 3.0)), card.family.capitalize()]
 	elif extra_action_requested:
 		$LastActionLabel.text += " — play again"
+	battle_effects.play_changes(before, _both_states(), side,
+		card.family, 0 if discard else card.cost,
+		not discard and (card.effects.get("damage", 0) > 0 or card.effects.get("break_shields", 0) > 0))
 	_check_winner()
 	refresh_display()
+
+
+func _both_states() -> Dictionary:
+	return {"player": _read_state("player"), "enemy": _read_state("enemy")}
 
 
 func _on_enemy_timeout() -> void:
@@ -215,18 +237,18 @@ func refresh_display() -> void:
 	player_shields_label.text = "Shields %d" % player_shields
 	enemy_hull_label.text = "Hull %d" % enemy_hull
 	enemy_shields_label.text = "Shields %d" % enemy_shields
-	player_materials_label.text = str(player_materials)
+	battle_effects.set_number(player_materials_label, player_materials)
 	player_synthesizer_label.text = str(player_synthesizer)
 
-	player_energy_label.text = str(player_energy)
+	battle_effects.set_number(player_energy_label, player_energy)
 	player_reactor_label.text = str(player_reactor)
-	player_crew_label.text = str(player_crew)
+	battle_effects.set_number(player_crew_label, player_crew)
 	player_quarters_label.text = str(player_quarters)
-	enemy_materials_label.text = str(enemy_materials)
+	battle_effects.set_number(enemy_materials_label, enemy_materials)
 	enemy_synthesizer_label.text = str(enemy_synthesizer)
-	enemy_energy_label.text = str(enemy_energy)
+	battle_effects.set_number(enemy_energy_label, enemy_energy)
 	enemy_reactor_label.text = str(enemy_reactor)
-	enemy_crew_label.text = str(enemy_crew)
+	battle_effects.set_number(enemy_crew_label, enemy_crew)
 	enemy_quarters_label.text = str(enemy_quarters)
 	for slot in range(card_slots.size()):
 		var button = get_node(card_slots[slot])

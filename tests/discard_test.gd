@@ -14,6 +14,7 @@ func _initialize() -> void:
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	var board = BoardScene.instantiate()
+	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
 	root.add_child(board)
 	var hand = board.get_node("CardHand")

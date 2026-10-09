@@ -15,6 +15,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	var board = BoardScene.instantiate()
+	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
 	var hand = board.get_node("CardHand")
 	hand.starting_hand.assign([Library.CARDS[11], Library.CARDS[0], Library.CARDS[3],

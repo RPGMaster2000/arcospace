@@ -13,6 +13,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	var board = BoardScene.instantiate()
+	board.get_node("BattleEffects").enabled = false
 	var motion = board.get_node("CardMotion")
 	motion.settings.travel_seconds = 0.08
 	motion.settings.hold_seconds = 0.12
@@ -81,6 +82,7 @@ func run() -> void:
 	board.free()
 	# Closing/restarting during motion must safely destroy its running tween.
 	board = BoardScene.instantiate()
+	board.get_node("BattleEffects").enabled = false
 	root.add_child(board)
 	board.hand.cards[0] = Library.CARDS[11]
 	board._on_card_pressed(0)

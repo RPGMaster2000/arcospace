@@ -141,3 +141,38 @@ real animation timing, resolution cues, repeated-input rejection, delayed AI
 scheduling, player/enemy plays and discards, victory cleanup and scene closure.
 Rule tests disable motion locally to keep their checks immediate. Visual polish
 still needs review in the running editor; these tests run headlessly.
+
+## Generic battle feedback
+
+`BattleEffects` on the board reacts to before/after state snapshots for both sides.
+It never modifies gameplay values. Select that node in the Inspector to tune hit,
+production, repair and shield durations, count speed, shake distance and icon scale.
+Its Enabled switch disables this feedback for comparison or faster testing.
+
+- Hull damage: damped ship shake and one red Hull flash.
+- Shield damage: a bright front-facing impact arc and quick shield pulses. No red
+  Hull flash unless some damage actually reaches Hull. Shield swaps pulse the
+  losing shield without falsely creating an impact arc.
+- Resource gains (including refunds and turn income): count through each integer.
+  Effect-driven resource loss counts downward and contracts/darkens the icon.
+  Ordinary card payment does not trigger a hostile-drain pulse.
+- Production gains: brief family-color flash with subtle expansion/retraction.
+  Production loss contracts/darkens the same graphic.
+- Hull repair: a transparent blue/white gradient moves upward over the Hull.
+- Shield gains: an expanding transparent radial wave inside the shield ellipse,
+  together with a short pulse.
+
+Ship geometry comes from the existing editable placeholder nodes. The temporary
+repair/ripple overlays use `shaders/hull_repair.gdshader` and
+`shaders/shield_ripple.gdshader`; no image assets are required. Temporary geometry,
+colors, positions, scales and pivots are restored after completion or cancellation.
+
+Stat effects begin at the card's resolution cue, alongside its reading pause and
+exit. The next turn waits for both card motion and any remaining stat effects.
+Turn-start income also finishes counting before actions become available. Number
+counters are display-only; authoritative state updates immediately at resolution.
+
+Run `godot --headless --path . --script res://tests/battle_effects_test.gd` for
+integer count steps, shield-only versus Hull-hit distinction, overlay lifetime,
+production/drain transform restoration, turn waiting and cancellation checks.
+Shader appearance still needs visual review in the editor's renderer.
