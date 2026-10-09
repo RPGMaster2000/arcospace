@@ -1,16 +1,25 @@
 extends Control
 
-# RESPONSIBILITY: Connect the hand, card effects and board state.
-# DOES NOT: Choose random cards or manage turns, AI or animations.
+# RESPONSIBILITY: Coordinate both hands, turns, effects and board display.
+# DOES NOT: Choose AI moves, implement card effects or animate cards.
 
+const MatchRules = preload("res://scripts/match_rules.gd")
 const CardEffects = preload("res://scripts/card_effects.gd")
 # Assign the six editable scene card buttons in the Inspector.
 @export var card_slots: Array[NodePath] = [NodePath("ShieldPlatingCard"),
 	NodePath("SynthesizerUpgradeCard"), NodePath("LaserBurstCard"),
 	NodePath("EnergyCellCard"), NodePath("QuartersUpgradeCard"), NodePath("TorpedoSalvoCard")]
+@export_range(1, 1000, 1) var hull_goal: int = 50
+@export_range(1, 1000, 1) var resource_goal: int = 100
+var current_actor: String = "player"
+var turn_number: int = 1
+var winner: String = ""
 var extra_action_requested: bool = false
 var resolving_card: bool = false
 @onready var hand = $CardHand
+@onready var enemy_hand = $EnemyHand
+@onready var enemy_ai = $EnemyAI
+@onready var enemy_timer: Timer = $EnemyThinkTimer
 
 #PLAYER
 @export var player_hull: int = 30
@@ -60,11 +69,13 @@ var resolving_card: bool = false
 
 func _ready() -> void:
 	hand.deal(card_slots.size())
+	enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
 		var button: Button = get_node(card_slots[slot])
 		button.pressed.connect(_on_card_pressed.bind(slot))
 		button.discard_requested.connect(_discard_card.bind(slot))
-	refresh_display()
+	enemy_timer.timeout.connect(_on_enemy_timeout)
+	_begin_turn("player")
 
 
 func _read_state(side: String) -> Dictionary:
@@ -80,49 +91,108 @@ func _write_state(side: String, state: Dictionary) -> void:
 
 
 func _on_card_pressed(slot: int) -> void:
-	if resolving_card or slot < 0 or slot >= hand.cards.size():
-		return
-	if enemy_hull <= 0 or player_hull <= 0:
-		return
-	var card: Resource = hand.cards[slot]
-	if card == null:
-		return
-	var actor: Dictionary = _read_state("player")
-	var enemy: Dictionary = _read_state("enemy")
-	resolving_card = true
-	if not CardEffects.play(card, actor, enemy):
-		resolving_card = false
-		return
-	_write_state("player", actor)
-	_write_state("enemy", enemy)
-	# Preserve this for a future turn controller; do not grant turn income here.
-	extra_action_requested = card.play_again
-	# Resolve the effect before replacing the card in the same slot.
-	hand.replace_card(slot)
-	resolving_card = false
-	refresh_display()
+	_act("player", slot, false)
 
 
 func _discard_card(slot: int) -> void:
-	if resolving_card or slot < 0 or slot >= hand.cards.size():
-		return
-	if enemy_hull <= 0 or player_hull <= 0:
-		return
-	var card: Resource = hand.cards[slot]
-	if card == null:
-		return
-	resolving_card = true
-	# Refund one third rounded down, without paying a cost or applying an effect.
-	var resource_key: String = "player_" + card.family
-	var refund: int = int(floor(card.cost / 3.0))
-	set(resource_key, get(resource_key) + refund)
+	_act("player", slot, true)
+
+
+func _begin_turn(side: String) -> void:
+	current_actor = side
 	extra_action_requested = false
-	hand.replace_card(slot)
-	resolving_card = false
+	if _check_winner():
+		refresh_display()
+		return
+	var state: Dictionary = _read_state(side)
+	MatchRules.income(state)
+	_write_state(side, state)
+	_check_winner()
 	refresh_display()
+	if winner.is_empty() and side == "enemy":
+		enemy_timer.start()
+
+
+func _act(side: String, slot: int, discard: bool) -> bool:
+	if resolving_card or current_actor != side or not winner.is_empty():
+		return false
+	if _check_winner():
+		refresh_display()
+		return false
+	var active_hand = hand if side == "player" else enemy_hand
+	if slot < 0 or slot >= active_hand.cards.size():
+		return false
+	var card: Resource = active_hand.cards[slot]
+	if card == null:
+		return false
+	var other: String = "enemy" if side == "player" else "player"
+	var actor: Dictionary = _read_state(side)
+	var target: Dictionary = _read_state(other)
+	resolving_card = true
+	if discard:
+		actor[card.family] += int(floor(card.cost / 3.0))
+	elif not CardEffects.play(card, actor, target):
+		resolving_card = false
+		return false
+	_write_state(side, actor)
+	_write_state(other, target)
+	active_hand.replace_card(slot)
+	extra_action_requested = not discard and card.play_again
+	var who: String = "You" if side == "player" else "Enemy"
+	var action: String = "discarded" if discard else "played"
+	$LastActionLabel.text = "%s %s %s" % [who, action, card.card_name]
+	if discard:
+		$LastActionLabel.text += " (+%d %s)" % [int(floor(card.cost / 3.0)), card.family.capitalize()]
+	elif extra_action_requested:
+		$LastActionLabel.text += " — play again"
+	resolving_card = false
+	if _check_winner():
+		refresh_display()
+	elif extra_action_requested:
+		# Another action in the same turn: no additional production income.
+		refresh_display()
+		if side == "enemy":
+			enemy_timer.start()
+	else:
+		turn_number += 1
+		_begin_turn(other)
+	return true
+
+
+func _on_enemy_timeout() -> void:
+	if current_actor != "enemy" or not winner.is_empty():
+		return
+	var move: Dictionary = enemy_ai.choose(enemy_hand.cards, _read_state("enemy"),
+		_read_state("player"), hull_goal, resource_goal)
+	if move.is_empty():
+		# A deliberately undersized custom pool may leave the AI with no cards.
+		$LastActionLabel.text = "Enemy has no cards — passes"
+		turn_number += 1
+		_begin_turn("player")
+		return
+	_act("enemy", move.slot, move.discard)
+
+
+func _check_winner() -> bool:
+	if not winner.is_empty():
+		return true
+	var player: Dictionary = _read_state("player")
+	var enemy: Dictionary = _read_state("enemy")
+	if MatchRules.wins(player, enemy, hull_goal, resource_goal):
+		winner = "player"
+	elif MatchRules.wins(enemy, player, hull_goal, resource_goal):
+		winner = "enemy"
+	if not winner.is_empty():
+		enemy_timer.stop()
+	return not winner.is_empty()
 
 
 func refresh_display() -> void:
+	var player_can_act: bool = winner.is_empty() and current_actor == "player" and not resolving_card
+	if winner.is_empty():
+		$TurnLabel.text = "Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
+	else:
+		$TurnLabel.text = "YOU WIN" if winner == "player" else "ENEMY WINS"
 	player_hull_label.text = "Hull %d" % player_hull
 	player_shields_label.text = "Shields %d" % player_shields
 	enemy_hull_label.text = "Hull %d" % enemy_hull
@@ -144,8 +214,8 @@ func refresh_display() -> void:
 		var button = get_node(card_slots[slot])
 		var card: Resource = hand.cards[slot]
 		button.card_data = card
-		var playable: bool = card != null and enemy_hull > 0 and player_hull > 0
+		var playable: bool = card != null and player_can_act
 		if playable:
 			playable = get("player_" + card.family) >= card.cost
 		button.set_playable(playable)
-		button.set_discardable(card != null and enemy_hull > 0 and player_hull > 0)
+		button.set_discardable(card != null and player_can_act)

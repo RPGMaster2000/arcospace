@@ -1,4 +1,4 @@
-# Cards and player hand
+# Cards, hands and AI turns
 
 28 cards ported from Starship Duel (`tower-duel`), source commit
 `36a5d309aa1d8e0ed7a21c10820e0ade0f8764de`, `dist/game.mjs` and `dist/theme.mjs`.
@@ -23,25 +23,45 @@ Synthesizer/Quarters to match this Godot project.
 - Select the board root to edit player/enemy starting values or Card Slots.
   Current resource defaults remain 16. The number of linked slots sets hand size.
 
-## Player loop
+## Match loop
 
-On startup, deal six cards. Click an affordable card: pay once, resolve its effects,
+On startup, deal six cards to each side and begin the player turn. Click an affordable card: pay once, resolve its effects,
 then draw a replacement into that same slot. Other slots stay unchanged.
 Draws follow the browser game's uniform selection with replacement, with at most
 two copies per hand. The played card is excluded from the copy count, so the same
 card can legitimately be drawn again. There is no finite draw/discard pile.
 Unaffordable cards are disabled and cannot consume resources or trigger a draw.
 
-Right-click a card to discard it immediately, including an unaffordable card.
+During your turn, right-click a card to discard it, including an unaffordable card.
 For touch or left-click, press the Discard +N footer on the chosen card.
 The footer shows that card's refund and stays active when playing is unaffordable. Discarding grants floor(cost / 3) in the
 card's cost resource without paying the cost or applying any effect. It replaces
 that slot and never grants Play Again. The footer is an editable Button in card.tscn.
 
-This is a player-only loop. No enemy AI, turn income or full victory
-system has been added. The existing zero-Hull stop remains. Energy Surge sets
-`extra_action_requested` for a future turn controller; it grants no extra income.
-Resources can run low: discard for refunds, restart the scene, or increase starting values in Inspector.
+Normal plays and discards hand control to the opponent. At each new turn,
+Materials/Energy/Crew increase by Synthesizer/Reactor/Quarters production.
+The current Inspector defaults remain 16 resources and production 2: the player
+therefore opens with 18; the enemy starts at 16 until its first turn begins.
+Play Again retains the current turn without another income payment, for both sides.
+Player play/discard controls are disabled during the enemy turn and after victory.
+
+Win by reducing the opposing Hull to zero, reaching Hull 50, or holding at least
+100 of all three resources. Hull Goal and Resource Goal are editable on the board
+root. Wins are checked after effects/refunds and income, before another AI action.
+The turn label announces the winner. Restart the scene to play a new match.
+
+The enemy uses a separate six-card hand with the same draw and copy rules. It
+prefers an immediate win, then attacks an opponent at 15 Hull or less, builds
+when its own Hull is at least 40, upgrades production, then chooses a random
+legal card. If none is affordable, it discards a random card for the same refund.
+This follows Starship Duel's basic AI; it does not plan several turns ahead.
+
+### AI controls in the editor
+
+- `EnemyHand`: set an optional starting hand, card pool or copy limit.
+- `EnemyAI`: edit attack/build thresholds.
+- `EnemyThinkTimer`: edit Wait Time (default 0.9 seconds between AI actions).
+- `TurnLabel` and `LastActionLabel`: edit the status layout and appearance.
 
 ## Code responsibilities
 
@@ -50,7 +70,9 @@ Resources can run low: discard for refunds, restart the scene, or increase start
 - `card_hand.gd`: starting hand, eligible draws and slot replacement.
 - `card_effects.gd`: cost payment and effects on actor/enemy state.
 - `card_view.gd`: labels, editor preview and affordability appearance.
-- `board.gd`: connects button presses, effects, hand and displayed state.
+- `board.gd`: coordinates both hands, legal actions, turns, timers and display.
+- `enemy_ai.gd`: selects a move without changing live state.
+- `match_rules.gd`: production income and win conditions.
 
 ## Verification
 
@@ -74,7 +96,8 @@ large resource totals down the outside edges, small production badges, horizonta
 Hull/Shields readouts under the ship placeholders, and six taller cards below.
 Each card has a family shape and large cost, title, placeholder art, effect text,
 and a separate discard footer. Unaffordable card bodies dim while discard stays
-available. The top-right label says PLAYER HAND because turns are not implemented.
+available during your turn. Ship-name headings retain your board edits; a centered
+turn label and a last-action line show whose turn it is and which card was used.
 
 All visuals are native scene nodes, polygons, lines, flat styles and a system font.
 No generated images or paid assets are used. Move/resize nodes in board.tscn;
@@ -84,3 +107,8 @@ All script/test comments are in English.
 Headless checks verified text fits for all 28 cards, the six card bounds, player
 hand behavior, right-click discard, and actual GUI clicks on the discard footer.
 A rendered screenshot was not available in this environment.
+
+AI/turn checks: `godot --headless --path . --script res://tests/ai_turn_test.gd`.
+Covers actual Timer-driven play, both sides' extra actions, income timing, blocked
+player input, AI discard/refunds, choosing a winning piercing attack, all three
+win conditions and stopping AI scheduling on victory.

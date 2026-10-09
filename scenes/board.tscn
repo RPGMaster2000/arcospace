@@ -10,6 +10,8 @@
 [ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="preview_4"]
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
 
+[ext_resource type="Script" path="res://scripts/enemy_ai.gd" id="4_ai"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -567,6 +569,38 @@ card_data = ExtResource("preview_5")
 
 [node name="CardHand" type="Node" parent="." unique_id=417793868]
 script = ExtResource("3_hand")
+
+[node name="EnemyHand" type="Node" parent="."]
+script = ExtResource("3_hand")
+
+[node name="EnemyAI" type="Node" parent="."]
+script = ExtResource("4_ai")
+
+[node name="EnemyThinkTimer" type="Timer" parent="."]
+wait_time = 0.9
+one_shot = true
+
+[node name="TurnLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 485.0
+offset_top = 15.0
+offset_right = 795.0
+offset_bottom = 49.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 21
+text = "Turn 1 · You"
+horizontal_alignment = 1
+
+[node name="LastActionLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 350.0
+offset_right = 1070.0
+offset_bottom = 373.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+text = "Play a card or discard to begin"
+horizontal_alignment = 1
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

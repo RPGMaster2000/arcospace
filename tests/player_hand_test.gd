@@ -24,12 +24,15 @@ func run() -> void:
 	check(hand.cards.size() == 6, "Opening hand must have six cards")
 	var previous: Array = hand.cards.duplicate()
 	board.get_node(board.card_slots[0]).pressed.emit()
-	check(board.player_energy == 10, "Laser must cost exactly six; no turn income")
+	check(board.player_energy == 12, "Laser must cost six after opening income")
 	check(board.enemy_shields == 4 and board.enemy_hull == 30, "Laser must resolve before replacement")
 	check(hand.cards[0] != previous[0], "Played card must be replaced from the configured pool")
 	for slot in range(1, 6):
 		check(hand.cards[slot] == previous[slot], "Other slots must remain unchanged")
 	check(board.get_node(board.card_slots[0]).card_data == hand.cards[0], "View must show replacement")
+	# Isolate subsequent player-input checks from the pending AI action.
+	board.enemy_timer.stop()
+	board.current_actor = "player"
 	board.player_materials = 0
 	board.refresh_display()
 	previous = hand.cards.duplicate()
