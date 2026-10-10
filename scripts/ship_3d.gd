@@ -8,8 +8,25 @@ var hull_material: StandardMaterial3D
 var shield_material: ShaderMaterial
 var repair_material: ShaderMaterial
 var base_color: Color
+var damage_material: ShaderMaterial
+var hull_strength: int = 30
+var rest_position: Vector3
+var hover_time: float = 0.0
+var shield_was_offline: bool = false
+
+func _process(delta: float) -> void:
+	hover_time += delta
+	var phase: float = 1.7 if name == "EnemyShip" else 0.0
+	position = rest_position + Vector3(0, sin(hover_time * TAU / 7.0 + phase) * 0.07, 0)
+	if hull_strength < 5 and hull_strength > 0:
+		position += Vector3(sin(hover_time * 43.0), sin(hover_time * 57.0), 0) * 0.012
+
+func set_hull_strength(value: int) -> void:
+	hull_strength = value
+	damage_material.set_shader_parameter("damage", 0.0 if value >= 15 else (1.0 if value < 5 else 0.45))
 
 func _ready() -> void:
+	rest_position = position
 	hull_material = $Body/Hull.material_override.duplicate()
 	base_color = hull_material.albedo_color
 	for part in body.get_children():
@@ -18,7 +35,10 @@ func _ready() -> void:
 	repair_material = ShaderMaterial.new()
 	repair_material.shader = preload("res://shaders/repair_3d.gdshader")
 	repair_material.set_shader_parameter("progress", -1.0)
-	hull_material.next_pass = repair_material
+	damage_material = ShaderMaterial.new()
+	damage_material.shader = preload("res://shaders/hull_damage_3d.gdshader")
+	hull_material.next_pass = damage_material
+	damage_material.next_pass = repair_material
 	shield_material = shield.material_override.duplicate()
 	shield.material_override = shield_material
 	shield_material.set_shader_parameter("formation", 1.0)
@@ -41,11 +61,12 @@ func set_shield_strength(value: int) -> void:
 
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:
 	if increase:
+		shield_material.set_shader_parameter("keep_shell", not shield_was_offline)
 		shield_material.set_shader_parameter("formation", 0.0)
 		tween.tween_method(func(p: float): shield_material.set_shader_parameter("formation", p), 0.0, 1.0, seconds)
 	else:
 		tween.tween_method(func(p: float):
-			shield_material.set_shader_parameter("hit", absf(sin(p * PI * 6)) * (1.0 - p)), 0.0, 1.0, seconds)
+			shield_material.set_shader_parameter("hit", p), 0.001, 1.0, minf(seconds, 0.28))
 	tween.tween_callback(func():
 		shield_material.set_shader_parameter("formation", 1.0)
 		shield_material.set_shader_parameter("hit", 0.0))

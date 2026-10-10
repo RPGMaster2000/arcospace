@@ -51,6 +51,8 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 		if hull_delta > 0:
 			_repair(ship)
 		if shield_delta > 0:
+			if ship.has_method("animate_shield"):
+				ship.shield_was_offline = old.shields <= 0
 			_pulse_shield(ship, true)
 		for index in range(3):
 			var key: String = RESOURCES[index]
@@ -60,12 +62,33 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 			var effect_delta: int = delta + (paid_cost if side == paid_side and key == paid_family else 0)
 			if delta > 0 or (delta < 0 and effect_delta < 0):
 				_count(icon.get_node(key), old[key], current[key])
+			if delta > 0:
+				_resource_burst(icon, COLORS[index], false)
 			if effect_delta < 0:
 				_pulse_icon(icon, COLORS[index], false)
 			var production_delta: int = current[PRODUCTION[index]] - old[PRODUCTION[index]]
+			if production_delta > 0:
+				_resource_burst(icon, COLORS[index], true)
 			if production_delta != 0:
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
 
+
+# Draw behind the icon/badge; the effect owns no input or game state.
+func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
+	var burst := ColorRect.new()
+	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	burst.show_behind_parent = true
+	var badge: Control = icon.get_node("ProductionBadge")
+	burst.size = Vector2(155, 24) if production else Vector2(110, 80)
+	burst.position = badge.position + badge.size * 0.5 - burst.size * 0.5 if production else Vector2(-22, 32)
+	icon.add_child(burst)
+	icon.move_child(burst, 0)
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/resource_burst.gdshader")
+	material.set_shader_parameter("tint", tint)
+	material.set_shader_parameter("beam", production)
+	burst.material = material
+	_run_material(burst, material, 0.32 if production else 0.4)
 
 func _job() -> Tween:
 	busy = true

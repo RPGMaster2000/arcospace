@@ -18,6 +18,8 @@
 
 [ext_resource type="Script" path="res://scripts/turn_presentation.gd" id="7_turn"]
 
+[ext_resource type="PackedScene" path="res://scenes/match_result.tscn" id="Result"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -105,7 +107,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -161,7 +163,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -217,7 +219,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -273,7 +275,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -329,7 +331,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -385,7 +387,7 @@ layout_mode = 0
 offset_top = 11.0
 offset_right = 66.0
 offset_bottom = 57.0
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 29
 text = "16"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -637,3 +639,5 @@ script = ExtResource("7_turn")
 [editable path="EnergyCellCard"]
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
+
+[node name="MatchResult" parent="." instance=ExtResource("Result")]

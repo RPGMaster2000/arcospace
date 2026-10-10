@@ -71,6 +71,7 @@ var resolving_card: bool = false
 @onready var enemy_quarters_label: Label = $EnemyResource3/quarters
 
 func _ready() -> void:
+	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
 	hand.deal(card_slots.size())
 	enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
@@ -227,7 +228,17 @@ func _check_winner() -> bool:
 	return not winner.is_empty()
 
 
+func _restart_match() -> void:
+	# Reload the scene that is actually being played (2D or 3D).
+	var fresh: Node = load(scene_file_path).instantiate()
+	get_parent().add_child(fresh)
+	if get_tree().current_scene == self:
+		get_tree().current_scene = fresh
+	queue_free()
+
 func refresh_display() -> void:
+	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
+	$MatchResult/Panel/Title.text = "YOU WIN" if winner == "player" else "YOU LOSE"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0
