@@ -1,55 +1,86 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://bwhl34lapmlrp"]
 
+[ext_resource type="Texture2D" uid="uid://sdr8upensafa" path="res://assets/background/starfield.png" id="2_yd1a1"]
 [ext_resource type="PackedScene" path="res://scenes/ship_3d.tscn" id="Ship"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.018, 0.039, 0.067, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.45, 0.6, 0.8, 1)
 ambient_light_energy = 0.65
+
 [sub_resource type="StandardMaterial3D" id="EnemyMaterial"]
 albedo_color = Color(0.53, 0.24, 0.22, 1)
 metallic = 0.45
 roughness = 0.4
-[sub_resource type="StandardMaterial3D" id="PlanetMaterial"]
-albedo_color = Color(0.17, 0.32, 0.43, 1)
-roughness = 0.95
-[sub_resource type="SphereMesh" id="PlanetMesh"]
-radius = 0.5
-height = 1.0
-radial_segments = 24
-rings = 12
+
 [sub_resource type="StandardMaterial3D" id="EnemyEngine"]
 albedo_color = Color(1, 0.3, 0.12, 1)
 emission_enabled = true
 emission = Color(1, 0.3, 0.12, 1)
 
-[node name="Battlefield" type="Node3D"]
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i3k6e"]
+shading_mode = 0
+albedo_texture = ExtResource("2_yd1a1")
+
+[sub_resource type="QuadMesh" id="QuadMesh_y84xi"]
+
+[node name="Battlefield" type="Node3D" unique_id=584798678]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=248501462]
 environment = SubResource("Environment")
-[node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(0, 0, 15)
-projection = 1
-size = 12.8
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=459447815]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 15)
 keep_aspect = 0
 current = true
-[node name="Sun" type="DirectionalLight3D" parent="."]
-rotation = Vector3(-0.6, -0.5, -0.3)
+fov = 50.5
+size = 12.8
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=2115728314]
+transform = Transform3D(0.8207813, 0.56658334, -0.07281119, -0.39885932, 0.6596662, 0.6369862, 0.40893686, -0.49378502, 0.76742923, 0, 0, 0)
 light_color = Color(1, 0.9, 0.75, 1)
-light_energy = 1.5
-[node name="PlayerShip" parent="." instance=ExtResource("Ship")]
-position = Vector3(-2.83, -0.24, 0)
-[node name="EnemyShip" parent="." instance=ExtResource("Ship")]
-position = Vector3(2.84, -0.24, 0)
-rotation = Vector3(0, 3.1415927, 0)
+light_energy = 1.738
+
+[node name="PlayerShip" parent="." unique_id=2061140808 instance=ExtResource("Ship")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.83, -0.24, 0)
+
+[node name="Body" parent="PlayerShip" index="0"]
+transform = Transform3D(0.99680173, 0.07991469, 0, -0.07506968, 0.93636835, -0.3428978, -0.02740257, 0.34180114, 0.9393727, 0, 0, 0)
+
+[node name="Wings" parent="PlayerShip/Body" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
+
+[node name="Engine" parent="PlayerShip/Body" index="2"]
+transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0, 0)
+
+[node name="Shield" parent="PlayerShip" index="1"]
+transform = Transform3D(2.25, 0, 0, 0, 0.95, 0, 0, 0, 1.6, 0, 0, 0)
+
+[node name="EnemyShip" parent="." unique_id=2100820454 instance=ExtResource("Ship")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.84, -0.24, 0)
+
+[node name="Body" parent="EnemyShip" index="0"]
+transform = Transform3D(0.99680173, 0.07991469, 0, -0.07506968, 0.93636835, -0.3428978, -0.02740257, 0.34180114, 0.9393727, 0, 0, 0)
+
 [node name="Hull" parent="EnemyShip/Body" index="0"]
 material_override = SubResource("EnemyMaterial")
+
+[node name="Wings" parent="EnemyShip/Body" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
+
 [node name="Engine" parent="EnemyShip/Body" index="2"]
+transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0, 0)
 material_override = SubResource("EnemyEngine")
-[node name="Planet" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.7, -3)
-mesh = SubResource("PlanetMesh")
-material_override = SubResource("PlanetMaterial")
+
+[node name="Shield" parent="EnemyShip" index="1"]
+transform = Transform3D(2.25, 0, 0, 0, 0.95, 0, 0, 0, 1.6, 0, 0, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=425268941]
+transform = Transform3D(25.157, 0, 0, 0, 14.15, 0, 0, 0, 0.786, 0, 0, -3.05)
+material_override = SubResource("StandardMaterial3D_i3k6e")
+mesh = SubResource("QuadMesh_y84xi")
 
 [editable path="PlayerShip"]
 [editable path="EnemyShip"]
