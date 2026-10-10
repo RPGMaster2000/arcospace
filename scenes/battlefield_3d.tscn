@@ -56,7 +56,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
 transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0, 0)
 
 [node name="Shield" parent="PlayerShip" index="1"]
-transform = Transform3D(2.25, 0, 0, 0, 0.95, 0, 0, 0, 1.6, 0, 0, 0)
+transform = Transform3D(2.346569, 0.053582806, 0, -0.12693506, 0.99055177, 0, 0, 0, 1.671, 0, -0.12374891, 0)
 
 [node name="EnemyShip" parent="." unique_id=2100820454 instance=ExtResource("Ship")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.84, -0.24, 0)
@@ -75,7 +75,7 @@ transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0
 material_override = SubResource("EnemyEngine")
 
 [node name="Shield" parent="EnemyShip" index="1"]
-transform = Transform3D(2.25, 0, 0, 0, 0.95, 0, 0, 0, 1.6, 0, 0, 0)
+transform = Transform3D(2.3447225, 0.0664435, -3.2805758e-10, -0.15740144, 0.98977226, -9.784574e-09, -4.613554e-10, 5.8086753e-09, 1.671, 0, -0.075492814, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=425268941]
 transform = Transform3D(25.157, 0, 0, 0, 14.15, 0, 0, 0, 0.786, 0, 0, -3.05)
