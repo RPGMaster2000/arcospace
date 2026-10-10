@@ -1,0 +1,55 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/ship_3d.tscn" id="Ship"]
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.018, 0.039, 0.067, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.45, 0.6, 0.8, 1)
+ambient_light_energy = 0.65
+[sub_resource type="StandardMaterial3D" id="EnemyMaterial"]
+albedo_color = Color(0.53, 0.24, 0.22, 1)
+metallic = 0.45
+roughness = 0.4
+[sub_resource type="StandardMaterial3D" id="PlanetMaterial"]
+albedo_color = Color(0.17, 0.32, 0.43, 1)
+roughness = 0.95
+[sub_resource type="SphereMesh" id="PlanetMesh"]
+radius = 0.5
+height = 1.0
+radial_segments = 24
+rings = 12
+[sub_resource type="StandardMaterial3D" id="EnemyEngine"]
+albedo_color = Color(1, 0.3, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.3, 0.12, 1)
+
+[node name="Battlefield" type="Node3D"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 0, 15)
+projection = 1
+size = 12.8
+keep_aspect = 0
+current = true
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.6, -0.5, -0.3)
+light_color = Color(1, 0.9, 0.75, 1)
+light_energy = 1.5
+[node name="PlayerShip" parent="." instance=ExtResource("Ship")]
+position = Vector3(-2.83, -0.24, 0)
+[node name="EnemyShip" parent="." instance=ExtResource("Ship")]
+position = Vector3(2.84, -0.24, 0)
+rotation = Vector3(0, 3.1415927, 0)
+[node name="Hull" parent="EnemyShip/Body" index="0"]
+material_override = SubResource("EnemyMaterial")
+[node name="Engine" parent="EnemyShip/Body" index="2"]
+material_override = SubResource("EnemyEngine")
+[node name="Planet" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.7, -3)
+mesh = SubResource("PlanetMesh")
+material_override = SubResource("PlanetMaterial")
+
+[editable path="PlayerShip"]
+[editable path="EnemyShip"]

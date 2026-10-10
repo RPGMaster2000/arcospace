@@ -9,6 +9,9 @@ const RESOURCES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const COLORS = [Color(1, 0.35, 0.2), Color(0.25, 0.8, 1), Color(0.5, 1, 0.3)]
 @export var enabled: bool = true
+# Optional presentation targets; defaults preserve the original 2D board.
+@export var player_ship_path: NodePath = NodePath("PlayerShip")
+@export var enemy_ship_path: NodePath = NodePath("EnemyShip")
 @export_range(0.02, 0.15, 0.005) var count_step_seconds: float = 0.035
 @export_range(0.1, 2.0, 0.05) var hit_seconds: float = 0.3
 @export_range(0.1, 2.0, 0.05) var production_seconds: float = 0.28
@@ -36,7 +39,7 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 		var old: Dictionary = before[side]
 		var current: Dictionary = after[side]
 		var prefix: String = "Player" if side == "player" else "Enemy"
-		var ship: Node2D = get_parent().get_node(prefix + "Ship")
+		var ship: Node = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
 		if hull_delta < 0 or (shield_delta < 0 and impact):
@@ -109,7 +112,12 @@ func _pulse_icon(icon: Control, tint: Color, increase: bool) -> void:
 	tween.tween_callback(restore)
 
 
-func _hit(ship: Node2D, hull_hit: bool, shield_hit: bool, side: String) -> void:
+func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
+	if ship.has_method("animate_hit"):
+		ship.animate_hit(_job(), hull_hit, hit_seconds)
+		if shield_hit:
+			_pulse_shield(ship, false)
+		return
 	var origin: Vector2 = ship.position
 	var hull: Polygon2D = ship.get_node("HullPlaceholder")
 	var hull_color: Color = hull.color
@@ -144,7 +152,10 @@ func _hit(ship: Node2D, hull_hit: bool, shield_hit: bool, side: String) -> void:
 		flash.tween_callback(func(): _remove(arc))
 
 
-func _pulse_shield(ship: Node2D, increase: bool) -> void:
+func _pulse_shield(ship: Node, increase: bool) -> void:
+	if ship.has_method("animate_shield"):
+		ship.animate_shield(_job(), shield_seconds)
+		return
 	var shield: Line2D = ship.get_node("ShieldPlaceholder")
 	var size_before: Vector2 = shield.scale
 	var tint_before: Color = shield.modulate
@@ -169,7 +180,10 @@ func _pulse_shield(ship: Node2D, increase: bool) -> void:
 		_material_effect(ripple, RIPPLE_SHADER, shield_seconds)
 
 
-func _repair(ship: Node2D) -> void:
+func _repair(ship: Node) -> void:
+	if ship.has_method("animate_repair"):
+		ship.animate_repair(_job(), repair_seconds)
+		return
 	var hull: Polygon2D = ship.get_node("HullPlaceholder")
 	var wash := Polygon2D.new()
 	wash.polygon = hull.polygon
