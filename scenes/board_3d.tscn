@@ -5,31 +5,31 @@
 [ext_resource type="PackedScene" uid="uid://b8oky8vk8op0d" path="res://scenes/board.tscn" id="Board"]
 [ext_resource type="Script" uid="uid://dei73i6ba80u3" path="res://scripts/board_3d.gd" id="Script"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymbnj"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6scva"]
 bg_color = Color(0.16, 0.088, 0.08, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.985, 0.72, 0.595, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymbnj"]
+bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pdr7n"]
-bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ldg68"]
 bg_color = Color(0.16, 0.088, 0.08, 1)
 border_width_left = 2
 border_width_top = 2
@@ -41,7 +41,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dpblc"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ldg68"]
 bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
 border_width_left = 2
 border_width_top = 2
@@ -53,31 +53,31 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pu1rd"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dpblc"]
 bg_color = Color(0.08, 0.128, 0.16, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.735, 0.845, 0.845, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pu1rd"]
+bg_color = Color(0.1536, 0.19776, 0.2272, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u2j21"]
-bg_color = Color(0.1536, 0.19776, 0.2272, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u7tku"]
 bg_color = Color(0.08, 0.128, 0.16, 1)
 border_width_left = 2
 border_width_top = 2
@@ -89,7 +89,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iv5ir"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u7tku"]
 bg_color = Color(0.1536, 0.19776, 0.2272, 1)
 border_width_left = 2
 border_width_top = 2
@@ -101,31 +101,31 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wqlm3"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iv5ir"]
 bg_color = Color(0.08, 0.16, 0.103999995, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.735, 0.945, 0.66999996, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wqlm3"]
+bg_color = Color(0.1536, 0.2272, 0.17568, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p4gps"]
-bg_color = Color(0.1536, 0.2272, 0.17568, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1kj3p"]
 bg_color = Color(0.08, 0.16, 0.103999995, 1)
 border_width_left = 2
 border_width_top = 2
@@ -137,7 +137,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4gy4b"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1kj3p"]
 bg_color = Color(0.1536, 0.2272, 0.17568, 1)
 border_width_left = 2
 border_width_top = 2
@@ -149,7 +149,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="Resource" id="Resource_l2uug"]
+[sub_resource type="Resource" id="Resource_4gy4b"]
 resource_local_to_scene = true
 script = ExtResource("4_6scva")
 
@@ -159,7 +159,7 @@ script = ExtResource("Script")
 [node name="BattleView" type="SubViewportContainer" parent="." index="1" unique_id=60709116]
 layout_mode = 0
 offset_right = 1280.0
-offset_bottom = 350.0
+offset_bottom = 395.0
 mouse_filter = 2
 stretch = true
 
@@ -167,10 +167,16 @@ stretch = true
 own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
-size = Vector2i(1280, 350)
+scaling_3d_scale = 2.0
+anisotropic_filtering_level = 4
+size = Vector2i(1280, 395)
 render_target_update_mode = 4
 
 [node name="Battlefield" parent="BattleView/Viewport" index="0" unique_id=2050030905 instance=ExtResource("Battlefield")]
+
+[node name="materials" parent="PlayerResource1" parent_id_path=PackedInt32Array(2007060998) index="2" unique_id=2054428333]
+offset_top = 10.0
+offset_bottom = 56.0
 
 [node name="PlayerShip" parent="." index="12" unique_id=618961774]
 visible = false
@@ -179,204 +185,61 @@ visible = false
 visible = false
 
 [node name="ShieldPlatingCard" parent="." index="20" unique_id=2042586335]
-tooltip_text = "Shield Plating
-+4 Shields
-Right-click: discard (+1 Materials)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_ymbnj")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_pdr7n")
-theme_override_styles/hover = SubResource("StyleBoxFlat_pdr7n")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_ymbnj")
-
-[node name="ResourceIcon" parent="ShieldPlatingCard" index="0"]
-anchors_preset = 0
-
-[node name="Energy" parent="ShieldPlatingCard/ResourceIcon" index="1"]
-visible = false
-
-[node name="Crew" parent="ShieldPlatingCard/ResourceIcon" index="2"]
-visible = false
-
-[node name="TitleLabel" parent="ShieldPlatingCard" index="3"]
-text = "SHIELD PLATING"
-
-[node name="ArtPlaceholder" parent="ShieldPlatingCard" index="4"]
-anchors_preset = 0
-
-[node name="DiscardButton" parent="ShieldPlatingCard" index="6"]
-tooltip_text = "Recover 1 Materials"
+theme_override_styles/normal = SubResource("StyleBoxFlat_6scva")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ymbnj")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ymbnj")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_6scva")
 
 [node name="SynthesizerUpgradeCard" parent="." index="21" unique_id=1150386306]
-tooltip_text = "Synthesizer Upgrade
-+1 Synthesizer
-Right-click: discard (+2 Materials)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_ldg68")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_dpblc")
-theme_override_styles/hover = SubResource("StyleBoxFlat_dpblc")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_ldg68")
-
-[node name="ResourceIcon" parent="SynthesizerUpgradeCard" index="0"]
-anchors_preset = 0
-
-[node name="Energy" parent="SynthesizerUpgradeCard/ResourceIcon" index="1"]
-visible = false
-
-[node name="Crew" parent="SynthesizerUpgradeCard/ResourceIcon" index="2"]
-visible = false
-
-[node name="CostLabel" parent="SynthesizerUpgradeCard" index="1"]
-text = "8"
-
-[node name="TitleLabel" parent="SynthesizerUpgradeCard" index="3"]
-text = "SYNTHESIZER UPGRADE"
-
-[node name="ArtPlaceholder" parent="SynthesizerUpgradeCard" index="4"]
-anchors_preset = 0
-
-[node name="DescriptionLabel" parent="SynthesizerUpgradeCard" index="5"]
-text = "+1 Synthesizer"
-
-[node name="DiscardButton" parent="SynthesizerUpgradeCard" index="6"]
-tooltip_text = "Recover 2 Materials"
-text = "Discard +2"
+theme_override_styles/normal = SubResource("StyleBoxFlat_pdr7n")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ldg68")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ldg68")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_pdr7n")
 
 [node name="LaserBurstCard" parent="." index="22" unique_id=1370597201]
-tooltip_text = "Laser Burst
-Deal 6 damage
-Right-click: discard (+2 Energy)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_pu1rd")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_u2j21")
-theme_override_styles/hover = SubResource("StyleBoxFlat_u2j21")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_pu1rd")
-
-[node name="ResourceIcon" parent="LaserBurstCard" index="0"]
-anchors_preset = 0
-
-[node name="Materials" parent="LaserBurstCard/ResourceIcon" index="0"]
-visible = false
-
-[node name="Crew" parent="LaserBurstCard/ResourceIcon" index="2"]
-visible = false
-
-[node name="CostLabel" parent="LaserBurstCard" index="1"]
-text = "6"
-
-[node name="TitleLabel" parent="LaserBurstCard" index="3"]
-text = "LASER BURST"
-
-[node name="ArtPlaceholder" parent="LaserBurstCard" index="4"]
-anchors_preset = 0
-
-[node name="DescriptionLabel" parent="LaserBurstCard" index="5"]
-text = "Deal 6 damage"
-
-[node name="DiscardButton" parent="LaserBurstCard" index="6"]
-tooltip_text = "Recover 2 Energy"
-text = "Discard +2"
+theme_override_styles/normal = SubResource("StyleBoxFlat_dpblc")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pu1rd")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pu1rd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_dpblc")
 
 [node name="EnergyCellCard" parent="." index="23" unique_id=372245618]
-tooltip_text = "Energy Cell
-+4 Energy
-Right-click: discard (+1 Energy)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_u7tku")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_iv5ir")
-theme_override_styles/hover = SubResource("StyleBoxFlat_iv5ir")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_u7tku")
-
-[node name="ResourceIcon" parent="EnergyCellCard" index="0"]
-anchors_preset = 0
-
-[node name="Materials" parent="EnergyCellCard/ResourceIcon" index="0"]
-visible = false
-
-[node name="Crew" parent="EnergyCellCard/ResourceIcon" index="2"]
-visible = false
-
-[node name="TitleLabel" parent="EnergyCellCard" index="3"]
-text = "ENERGY CELL"
-
-[node name="ArtPlaceholder" parent="EnergyCellCard" index="4"]
-anchors_preset = 0
-
-[node name="DescriptionLabel" parent="EnergyCellCard" index="5"]
-text = "+4 Energy"
-
-[node name="DiscardButton" parent="EnergyCellCard" index="6"]
-tooltip_text = "Recover 1 Energy"
+theme_override_styles/normal = SubResource("StyleBoxFlat_u2j21")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_u7tku")
+theme_override_styles/hover = SubResource("StyleBoxFlat_u7tku")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_u2j21")
 
 [node name="QuartersUpgradeCard" parent="." index="24" unique_id=926793025]
-tooltip_text = "Quarters Upgrade
-+1 Quarters
-Right-click: discard (+2 Crew)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_wqlm3")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_p4gps")
-theme_override_styles/hover = SubResource("StyleBoxFlat_p4gps")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_wqlm3")
-
-[node name="ResourceIcon" parent="QuartersUpgradeCard" index="0"]
-anchors_preset = 0
-
-[node name="Materials" parent="QuartersUpgradeCard/ResourceIcon" index="0"]
-visible = false
-
-[node name="Energy" parent="QuartersUpgradeCard/ResourceIcon" index="1"]
-visible = false
-
-[node name="CostLabel" parent="QuartersUpgradeCard" index="1"]
-text = "8"
-
-[node name="TitleLabel" parent="QuartersUpgradeCard" index="3"]
-text = "QUARTERS UPGRADE"
-
-[node name="ArtPlaceholder" parent="QuartersUpgradeCard" index="4"]
-anchors_preset = 0
-
-[node name="DescriptionLabel" parent="QuartersUpgradeCard" index="5"]
-text = "+1 Quarters"
-
-[node name="DiscardButton" parent="QuartersUpgradeCard" index="6"]
-tooltip_text = "Recover 2 Crew"
-text = "Discard +2"
+theme_override_styles/normal = SubResource("StyleBoxFlat_iv5ir")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_wqlm3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_wqlm3")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_iv5ir")
 
 [node name="TorpedoSalvoCard" parent="." index="25" unique_id=464282260]
-tooltip_text = "Torpedo Salvo
-Deal 12 damage
-Right-click: discard (+3 Crew)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_1kj3p")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_4gy4b")
-theme_override_styles/hover = SubResource("StyleBoxFlat_4gy4b")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_1kj3p")
+theme_override_styles/normal = SubResource("StyleBoxFlat_p4gps")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_1kj3p")
+theme_override_styles/hover = SubResource("StyleBoxFlat_1kj3p")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_p4gps")
 
-[node name="ResourceIcon" parent="TorpedoSalvoCard" index="0"]
-anchors_preset = 0
-
-[node name="Materials" parent="TorpedoSalvoCard/ResourceIcon" index="0"]
+[node name="LastActionLabel" parent="." index="31" unique_id=285804752]
 visible = false
 
-[node name="Energy" parent="TorpedoSalvoCard/ResourceIcon" index="1"]
-visible = false
+[node name="CardMotion" parent="." index="32" unique_id=239449323]
+settings = SubResource("Resource_4gy4b")
 
-[node name="CostLabel" parent="TorpedoSalvoCard" index="1"]
-text = "10"
-
-[node name="TitleLabel" parent="TorpedoSalvoCard" index="3"]
-text = "TORPEDO SALVO"
-
-[node name="ArtPlaceholder" parent="TorpedoSalvoCard" index="4"]
-anchors_preset = 0
-
-[node name="DescriptionLabel" parent="TorpedoSalvoCard" index="5"]
-text = "Deal 12 damage"
-
-[node name="DiscardButton" parent="TorpedoSalvoCard" index="6"]
-tooltip_text = "Recover 3 Crew"
-text = "Discard +3"
-
-[node name="CardMotion" parent="." index="32"]
-settings = SubResource("Resource_l2uug")
-
-[node name="BattleEffects" parent="." index="33"]
+[node name="BattleEffects" parent="." index="33" unique_id=1779801462]
 player_ship_path = NodePath("BattleView/Viewport/Battlefield/PlayerShip")
 enemy_ship_path = NodePath("BattleView/Viewport/Battlefield/EnemyShip")
+
+[node name="EnemyTurnBanner" parent="." index="34" unique_id=306887152]
+offset_left = 347.0
+offset_top = 490.0
+offset_right = 937.0
+offset_bottom = 584.0
+theme_override_colors/font_color = Color(0.96233577, 0.5392367, 0.4330026, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 10
+theme_override_font_sizes/font_size = 60
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

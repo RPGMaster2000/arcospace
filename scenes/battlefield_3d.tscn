@@ -15,6 +15,14 @@ albedo_color = Color(0.53, 0.24, 0.22, 1)
 metallic = 0.45
 roughness = 0.4
 
+[sub_resource type="StandardMaterial3D" id="HullMaterial"]
+albedo_color = Color(0.52, 0.67, 0.73, 1)
+metallic = 0.45
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="WingMesh"]
+size = Vector3(1.5, 0.18, 2.3)
+
 [sub_resource type="StandardMaterial3D" id="EnemyEngine"]
 albedo_color = Color(1, 0.3, 0.12, 1)
 emission_enabled = true
@@ -32,10 +40,10 @@ albedo_texture = ExtResource("2_yd1a1")
 environment = SubResource("Environment")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=459447815]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 15)
+transform = Transform3D(0.7247299, 0, -0.6890331, 0, 1, 0, 0.6890331, 0, 0.7247299, -8.553824, -0.36772817, 8.510661)
 keep_aspect = 0
 current = true
-fov = 50.5
+fov = 56.0
 size = 12.8
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=2115728314]
@@ -53,16 +61,16 @@ transform = Transform3D(0.99680173, 0.07991469, 0, -0.07506968, 0.93636835, -0.3
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
 
 [node name="Engine" parent="PlayerShip/Body" index="2"]
-transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0, 0)
+transform = Transform3D(6.798655e-08, -0.99999994, 1.8626451e-09, 0.99999994, 6.798655e-08, 2.9802322e-08, -2.9802322e-08, -1.8626451e-09, 0.99999994, -1.6994147, 0.0040554404, -7.450581e-09)
 
 [node name="Shield" parent="PlayerShip" index="1"]
 transform = Transform3D(2.346569, 0.053582806, 0, -0.12693506, 0.99055177, 0, 0, 0, 1.671, 0, -0.12374891, 0)
 
 [node name="EnemyShip" parent="." unique_id=2100820454 instance=ExtResource("Ship")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.84, -0.24, 0)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.8274782, -0.24, 0)
 
 [node name="Body" parent="EnemyShip" index="0"]
-transform = Transform3D(0.99680173, 0.07991469, 0, -0.07506968, 0.93636835, -0.3428978, -0.02740257, 0.34180114, 0.9393727, 0, 0, 0)
+transform = Transform3D(0.9968017, 0.079914734, 3.3954919e-09, -0.076155856, 0.9499159, 0.30308396, 0.024220878, -0.30211458, 0.9529637, 0, 0, 0)
 
 [node name="Hull" parent="EnemyShip/Body" index="0"]
 material_override = SubResource("EnemyMaterial")
@@ -70,15 +78,20 @@ material_override = SubResource("EnemyMaterial")
 [node name="Wings" parent="EnemyShip/Body" index="1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
 
-[node name="Engine" parent="EnemyShip/Body" index="2"]
-transform = Transform3D(7.54979e-08, -1, 0, 1, 7.54979e-08, 0, 0, 0, 1, -1.75, 0, 0)
+[node name="Wings2" type="MeshInstance3D" parent="EnemyShip/Body" index="2" unique_id=615567739]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -0.65, -0.08, 0)
+material_override = SubResource("HullMaterial")
+mesh = SubResource("WingMesh")
+
+[node name="Engine" parent="EnemyShip/Body" index="3"]
+transform = Transform3D(6.61239e-08, -1.0000001, -1.8626451e-09, 1.0000001, 7.7765435e-08, -2.9802322e-08, 2.9802322e-08, 1.8626451e-09, 1.0000001, -1.6606023, 0.007167101, 7.450581e-09)
 material_override = SubResource("EnemyEngine")
 
 [node name="Shield" parent="EnemyShip" index="1"]
 transform = Transform3D(2.3447225, 0.0664435, -3.2805758e-10, -0.15740144, 0.98977226, -9.784574e-09, -4.613554e-10, 5.8086753e-09, 1.671, 0, -0.075492814, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=425268941]
-transform = Transform3D(25.157, 0, 0, 0, 14.15, 0, 0, 0, 0.786, 0, 0, -3.05)
+transform = Transform3D(18.21799, 0, -0.54204094, 0, 14.15, 0, 17.348759, 0, 0.5691991, 4.5536346, 0, -4.8249903)
 material_override = SubResource("StandardMaterial3D_i3k6e")
 mesh = SubResource("QuadMesh_y84xi")
 

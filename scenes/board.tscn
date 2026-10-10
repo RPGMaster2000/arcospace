@@ -3,31 +3,176 @@
 [ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_board"]
 [ext_resource type="PackedScene" path="res://scenes/card.tscn" id="2_card"]
 [ext_resource type="Script" uid="uid://4240bm1qqmlk" path="res://scripts/card_hand.gd" id="3_hand"]
+[ext_resource type="Script" uid="uid://cl8jthfpmpoj3" path="res://scripts/enemy_ai.gd" id="4_ai"]
+[ext_resource type="PackedScene" path="res://scenes/card_motion.tscn" id="5_motion"]
+[ext_resource type="Script" uid="uid://eq1hb45cgs7y" path="res://scripts/battle_effects.gd" id="6_effects"]
+[ext_resource type="Script" uid="uid://clkps43ws8g7d" path="res://scripts/turn_presentation.gd" id="7_turn"]
+[ext_resource type="Script" uid="uid://centsvm7vv87w" path="res://scripts/card_motion_settings.gd" id="12_ba0us"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="preview_0"]
 [ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="preview_1"]
 [ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="preview_2"]
 [ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="preview_3"]
 [ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="preview_4"]
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
-
-[ext_resource type="Script" path="res://scripts/enemy_ai.gd" id="4_ai"]
-
-[ext_resource type="PackedScene" path="res://scenes/card_motion.tscn" id="5_motion"]
-
-[ext_resource type="Script" path="res://scripts/battle_effects.gd" id="6_effects"]
-
-[ext_resource type="Script" path="res://scripts/turn_presentation.gd" id="7_turn"]
-
 [ext_resource type="PackedScene" path="res://scenes/match_result.tscn" id="Result"]
 
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
+subpixel_positioning = 0
 
 [sub_resource type="Theme" id="BoardTheme"]
 default_font = SubResource("BoldFont")
 Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1huyh"]
+bg_color = Color(0.16, 0.088, 0.08, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.985, 0.72, 0.595, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vevib"]
+bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m4vny"]
+bg_color = Color(0.16, 0.088, 0.08, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.985, 0.72, 0.595, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4bs3u"]
+bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r6ya7"]
+bg_color = Color(0.08, 0.128, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.735, 0.845, 0.845, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i85x2"]
+bg_color = Color(0.1536, 0.19776, 0.2272, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b7otg"]
+bg_color = Color(0.08, 0.128, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.735, 0.845, 0.845, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_os6cd"]
+bg_color = Color(0.1536, 0.19776, 0.2272, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v21d4"]
+bg_color = Color(0.08, 0.16, 0.103999995, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.735, 0.945, 0.66999996, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5pkjh"]
+bg_color = Color(0.1536, 0.2272, 0.17568, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0qo51"]
+bg_color = Color(0.08, 0.16, 0.103999995, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.735, 0.945, 0.66999996, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c845x"]
+bg_color = Color(0.1536, 0.2272, 0.17568, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Resource" id="Resource_sngwm"]
+resource_local_to_scene = true
+script = ExtResource("12_ba0us")
 
 [node name="Board (Control)" type="Control" unique_id=546223253]
 layout_mode = 3
@@ -474,6 +619,7 @@ color = Color(1, 0.3, 0.12, 1)
 polygon = PackedVector2Array(163, -19, 185, -12, 185, 12, 163, 19)
 
 [node name="Versus" type="Label" parent="." unique_id=807563954]
+visible = false
 layout_mode = 0
 offset_left = 607.0
 offset_top = 177.0
@@ -487,44 +633,43 @@ vertical_alignment = 1
 [node name="PlayerHullLabel" type="Label" parent="." unique_id=2109470503]
 layout_mode = 0
 offset_left = 208.0
-offset_top = 311.0
+offset_top = 320.0
 offset_right = 348.0
-offset_bottom = 349.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 358.0
+theme_override_font_sizes/font_size = 24
 text = "Hull 30"
 
 [node name="PlayerShieldsLabel" type="Label" parent="." unique_id=86968435]
 layout_mode = 0
 offset_left = 353.0
-offset_top = 311.0
+offset_top = 320.0
 offset_right = 579.0
-offset_bottom = 349.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 358.0
+theme_override_font_sizes/font_size = 24
 text = "Shields 10"
 
 [node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1691280843]
 layout_mode = 0
 offset_left = 788.0
-offset_top = 311.0
+offset_top = 320.0
 offset_right = 1000.0
-offset_bottom = 349.0
-theme_override_font_sizes/font_size = 28
+offset_bottom = 358.0
+theme_override_font_sizes/font_size = 24
 text = "Shields 10"
 
 [node name="EnemyHullLabel" type="Label" parent="." unique_id=95820666]
 layout_mode = 0
-offset_left = 1003.0
-offset_top = 311.0
-offset_right = 1173.0
-offset_bottom = 349.0
-theme_override_font_sizes/font_size = 28
+offset_left = 986.0
+offset_top = 320.0
+offset_right = 1156.0
+offset_bottom = 358.0
+theme_override_font_sizes/font_size = 24
 text = "Hull 30"
 
 [node name="HandRule" type="Line2D" parent="." unique_id=187637948]
 position = Vector2(0, 16)
 points = PackedVector2Array(24, 359, 692.4546, 358.99997, 1256, 359)
 width = 1.0
-default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 [node name="ShieldPlatingCard" parent="." unique_id=2042586335 instance=ExtResource("2_card")]
@@ -533,7 +678,33 @@ offset_left = 21.0
 offset_top = 396.0
 offset_right = 219.0
 offset_bottom = 690.0
+tooltip_text = "Shield Plating
++4 Shields
+Right-click: discard (+1 Materials)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_1huyh")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_vevib")
+theme_override_styles/hover = SubResource("StyleBoxFlat_vevib")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_1huyh")
 card_data = ExtResource("preview_0")
+
+[node name="ResourceIcon" parent="ShieldPlatingCard" index="0"]
+anchors_preset = 0
+
+[node name="Energy" parent="ShieldPlatingCard/ResourceIcon" index="1"]
+visible = false
+
+[node name="Crew" parent="ShieldPlatingCard/ResourceIcon" index="2"]
+visible = false
+
+[node name="TitleLabel" parent="ShieldPlatingCard" index="3"]
+text = "SHIELD PLATING"
+
+[node name="ArtPlaceholder" parent="ShieldPlatingCard" index="4"]
+anchors_preset = 0
+
+[node name="DiscardButton" parent="ShieldPlatingCard" index="6"]
+tooltip_text = "Recover 1 Materials"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 
 [node name="SynthesizerUpgradeCard" parent="." unique_id=1150386306 instance=ExtResource("2_card")]
 layout_mode = 0
@@ -541,7 +712,40 @@ offset_left = 229.0
 offset_top = 396.0
 offset_right = 427.0
 offset_bottom = 690.0
+tooltip_text = "Synthesizer Upgrade
++1 Synthesizer
+Right-click: discard (+2 Materials)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_m4vny")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_4bs3u")
+theme_override_styles/hover = SubResource("StyleBoxFlat_4bs3u")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_m4vny")
 card_data = ExtResource("preview_1")
+
+[node name="ResourceIcon" parent="SynthesizerUpgradeCard" index="0"]
+anchors_preset = 0
+
+[node name="Energy" parent="SynthesizerUpgradeCard/ResourceIcon" index="1"]
+visible = false
+
+[node name="Crew" parent="SynthesizerUpgradeCard/ResourceIcon" index="2"]
+visible = false
+
+[node name="CostLabel" parent="SynthesizerUpgradeCard" index="1"]
+text = "8"
+
+[node name="TitleLabel" parent="SynthesizerUpgradeCard" index="3"]
+text = "SYNTHESIZER UPGRADE"
+
+[node name="ArtPlaceholder" parent="SynthesizerUpgradeCard" index="4"]
+anchors_preset = 0
+
+[node name="DescriptionLabel" parent="SynthesizerUpgradeCard" index="5"]
+text = "+1 Synthesizer"
+
+[node name="DiscardButton" parent="SynthesizerUpgradeCard" index="6"]
+tooltip_text = "Recover 2 Materials"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
+text = "Discard +2"
 
 [node name="LaserBurstCard" parent="." unique_id=1370597201 instance=ExtResource("2_card")]
 layout_mode = 0
@@ -549,7 +753,40 @@ offset_left = 437.0
 offset_top = 396.0
 offset_right = 635.0
 offset_bottom = 690.0
+tooltip_text = "Laser Burst
+Deal 6 damage
+Right-click: discard (+2 Energy)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_r6ya7")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_i85x2")
+theme_override_styles/hover = SubResource("StyleBoxFlat_i85x2")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_r6ya7")
 card_data = ExtResource("preview_2")
+
+[node name="ResourceIcon" parent="LaserBurstCard" index="0"]
+anchors_preset = 0
+
+[node name="Materials" parent="LaserBurstCard/ResourceIcon" index="0"]
+visible = false
+
+[node name="Crew" parent="LaserBurstCard/ResourceIcon" index="2"]
+visible = false
+
+[node name="CostLabel" parent="LaserBurstCard" index="1"]
+text = "6"
+
+[node name="TitleLabel" parent="LaserBurstCard" index="3"]
+text = "LASER BURST"
+
+[node name="ArtPlaceholder" parent="LaserBurstCard" index="4"]
+anchors_preset = 0
+
+[node name="DescriptionLabel" parent="LaserBurstCard" index="5"]
+text = "Deal 6 damage"
+
+[node name="DiscardButton" parent="LaserBurstCard" index="6"]
+tooltip_text = "Recover 2 Energy"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
+text = "Discard +2"
 
 [node name="EnergyCellCard" parent="." unique_id=372245618 instance=ExtResource("2_card")]
 layout_mode = 0
@@ -557,7 +794,36 @@ offset_left = 645.0
 offset_top = 396.0
 offset_right = 843.0
 offset_bottom = 690.0
+tooltip_text = "Energy Cell
++4 Energy
+Right-click: discard (+1 Energy)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_b7otg")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_os6cd")
+theme_override_styles/hover = SubResource("StyleBoxFlat_os6cd")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_b7otg")
 card_data = ExtResource("preview_3")
+
+[node name="ResourceIcon" parent="EnergyCellCard" index="0"]
+anchors_preset = 0
+
+[node name="Materials" parent="EnergyCellCard/ResourceIcon" index="0"]
+visible = false
+
+[node name="Crew" parent="EnergyCellCard/ResourceIcon" index="2"]
+visible = false
+
+[node name="TitleLabel" parent="EnergyCellCard" index="3"]
+text = "ENERGY CELL"
+
+[node name="ArtPlaceholder" parent="EnergyCellCard" index="4"]
+anchors_preset = 0
+
+[node name="DescriptionLabel" parent="EnergyCellCard" index="5"]
+text = "+4 Energy"
+
+[node name="DiscardButton" parent="EnergyCellCard" index="6"]
+tooltip_text = "Recover 1 Energy"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 
 [node name="QuartersUpgradeCard" parent="." unique_id=926793025 instance=ExtResource("2_card")]
 layout_mode = 0
@@ -565,7 +831,40 @@ offset_left = 853.0
 offset_top = 396.0
 offset_right = 1051.0
 offset_bottom = 690.0
+tooltip_text = "Quarters Upgrade
++1 Quarters
+Right-click: discard (+2 Crew)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_v21d4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_5pkjh")
+theme_override_styles/hover = SubResource("StyleBoxFlat_5pkjh")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_v21d4")
 card_data = ExtResource("preview_4")
+
+[node name="ResourceIcon" parent="QuartersUpgradeCard" index="0"]
+anchors_preset = 0
+
+[node name="Materials" parent="QuartersUpgradeCard/ResourceIcon" index="0"]
+visible = false
+
+[node name="Energy" parent="QuartersUpgradeCard/ResourceIcon" index="1"]
+visible = false
+
+[node name="CostLabel" parent="QuartersUpgradeCard" index="1"]
+text = "8"
+
+[node name="TitleLabel" parent="QuartersUpgradeCard" index="3"]
+text = "QUARTERS UPGRADE"
+
+[node name="ArtPlaceholder" parent="QuartersUpgradeCard" index="4"]
+anchors_preset = 0
+
+[node name="DescriptionLabel" parent="QuartersUpgradeCard" index="5"]
+text = "+1 Quarters"
+
+[node name="DiscardButton" parent="QuartersUpgradeCard" index="6"]
+tooltip_text = "Recover 2 Crew"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
+text = "Discard +2"
 
 [node name="TorpedoSalvoCard" parent="." unique_id=464282260 instance=ExtResource("2_card")]
 layout_mode = 0
@@ -573,56 +872,87 @@ offset_left = 1061.0
 offset_top = 396.0
 offset_right = 1259.0
 offset_bottom = 690.0
+tooltip_text = "Torpedo Salvo
+Deal 12 damage
+Right-click: discard (+3 Crew)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_0qo51")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_c845x")
+theme_override_styles/hover = SubResource("StyleBoxFlat_c845x")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_0qo51")
 card_data = ExtResource("preview_5")
+
+[node name="ResourceIcon" parent="TorpedoSalvoCard" index="0"]
+anchors_preset = 0
+
+[node name="Materials" parent="TorpedoSalvoCard/ResourceIcon" index="0"]
+visible = false
+
+[node name="Energy" parent="TorpedoSalvoCard/ResourceIcon" index="1"]
+visible = false
+
+[node name="CostLabel" parent="TorpedoSalvoCard" index="1"]
+text = "10"
+
+[node name="TitleLabel" parent="TorpedoSalvoCard" index="3"]
+text = "TORPEDO SALVO"
+
+[node name="ArtPlaceholder" parent="TorpedoSalvoCard" index="4"]
+anchors_preset = 0
+
+[node name="DescriptionLabel" parent="TorpedoSalvoCard" index="5"]
+text = "Deal 12 damage"
+
+[node name="DiscardButton" parent="TorpedoSalvoCard" index="6"]
+tooltip_text = "Recover 3 Crew"
+theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
+text = "Discard +3"
 
 [node name="CardHand" type="Node" parent="." unique_id=417793868]
 script = ExtResource("3_hand")
 
-[node name="EnemyHand" type="Node" parent="."]
+[node name="EnemyHand" type="Node" parent="." unique_id=1270846340]
 script = ExtResource("3_hand")
 
-[node name="EnemyAI" type="Node" parent="."]
+[node name="EnemyAI" type="Node" parent="." unique_id=1820406547]
 script = ExtResource("4_ai")
 
-[node name="EnemyThinkTimer" type="Timer" parent="."]
+[node name="EnemyThinkTimer" type="Timer" parent="." unique_id=28987813]
 wait_time = 0.9
 one_shot = true
 
-[node name="TurnLabel" type="Label" parent="."]
+[node name="TurnLabel" type="Label" parent="." unique_id=238760700]
 layout_mode = 0
 offset_left = 485.0
 offset_top = 15.0
 offset_right = 795.0
 offset_bottom = 49.0
-mouse_filter = 2
 theme_override_font_sizes/font_size = 21
 text = "Turn 1 · You"
 horizontal_alignment = 1
 
-[node name="LastActionLabel" type="Label" parent="."]
+[node name="LastActionLabel" type="Label" parent="." unique_id=285804752]
 layout_mode = 0
 offset_left = 210.0
 offset_top = 350.0
 offset_right = 1070.0
 offset_bottom = 373.0
-mouse_filter = 2
 theme_override_font_sizes/font_size = 15
 text = "Play a card or discard to begin"
 horizontal_alignment = 1
 
-[node name="CardMotion" parent="." instance=ExtResource("5_motion")]
+[node name="CardMotion" parent="." unique_id=239449323 instance=ExtResource("5_motion")]
 layout_mode = 1
+settings = SubResource("Resource_sngwm")
 
-[node name="BattleEffects" type="Node" parent="."]
+[node name="BattleEffects" type="Node" parent="." unique_id=1779801462]
 script = ExtResource("6_effects")
 
-[node name="EnemyTurnBanner" type="Label" parent="."]
+[node name="EnemyTurnBanner" type="Label" parent="." unique_id=306887152]
 layout_mode = 0
 offset_left = 430.0
 offset_top = 267.0
 offset_right = 850.0
 offset_bottom = 307.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.65, 0.45, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/shadow_offset_x = 2
@@ -633,11 +963,12 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("7_turn")
 
+[node name="MatchResult" parent="." unique_id=1914324438 instance=ExtResource("Result")]
+layout_mode = 1
+
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]
 [editable path="LaserBurstCard"]
 [editable path="EnergyCellCard"]
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
-
-[node name="MatchResult" parent="." instance=ExtResource("Result")]
