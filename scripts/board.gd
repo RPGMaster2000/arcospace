@@ -228,6 +228,7 @@ func _check_winner() -> bool:
 
 
 func refresh_display() -> void:
+	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0
 	var player_can_act: bool = winner.is_empty() and current_actor == "player" and not resolving_card
@@ -259,5 +260,5 @@ func refresh_display() -> void:
 		var playable: bool = card != null and player_can_act
 		if playable:
 			playable = get("player_" + card.family) >= card.cost
-		button.set_playable(playable)
+		button.set_playable(playable, int(card != null and get("player_" + card.family) >= card.cost))
 		button.set_discardable(card != null and player_can_act)

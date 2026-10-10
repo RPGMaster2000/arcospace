@@ -42,6 +42,8 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 		var ship: Node = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
+		if hull_delta < 0 and current.shields == 0 and ship.has_method("animate_explosions"):
+			ship.animate_explosions(_job(), maxf(hit_seconds, 0.5))
 		if hull_delta < 0 or (shield_delta < 0 and impact):
 			_hit(ship, hull_delta < 0, shield_delta < 0, side)
 		elif shield_delta < 0:
@@ -154,7 +156,7 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 
 func _pulse_shield(ship: Node, increase: bool) -> void:
 	if ship.has_method("animate_shield"):
-		ship.animate_shield(_job(), shield_seconds)
+		ship.animate_shield(_job(), shield_seconds, increase)
 		return
 	var shield: Line2D = ship.get_node("ShieldPlaceholder")
 	var size_before: Vector2 = shield.scale

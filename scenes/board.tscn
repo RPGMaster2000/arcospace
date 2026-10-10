@@ -16,6 +16,8 @@
 
 [ext_resource type="Script" path="res://scripts/battle_effects.gd" id="6_effects"]
 
+[ext_resource type="Script" path="res://scripts/turn_presentation.gd" id="7_turn"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -146,19 +148,19 @@ mouse_filter = 2
 
 [node name="Shape" type="Polygon2D" parent="PlayerResource2" unique_id=609049209]
 color = Color(0.12, 0.51, 0.66, 1)
-polygon = PackedVector2Array(33, 0, 67, 63, 0, 63)
+polygon = PackedVector2Array(0, 33, 33, 7, 66, 33, 33, 59)
 
 [node name="Outline" type="Line2D" parent="PlayerResource2" unique_id=1658419309]
-points = PackedVector2Array(33, 0, 67, 63, 0, 63, 33, 0)
+points = PackedVector2Array(0, 33, 33, 7, 66, 33, 33, 59, 0, 33)
 width = 2.0
 default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 [node name="energy" type="Label" parent="PlayerResource2" unique_id=1179632290]
 layout_mode = 0
-offset_top = 22.0
+offset_top = 11.0
 offset_right = 66.0
-offset_bottom = 68.0
+offset_bottom = 57.0
 theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
@@ -314,19 +316,19 @@ mouse_filter = 2
 
 [node name="Shape" type="Polygon2D" parent="EnemyResource2" unique_id=1922745462]
 color = Color(0.12, 0.51, 0.66, 1)
-polygon = PackedVector2Array(33, 0, 67, 63, 0, 63)
+polygon = PackedVector2Array(0, 33, 33, 7, 66, 33, 33, 59)
 
 [node name="Outline" type="Line2D" parent="EnemyResource2" unique_id=990162519]
-points = PackedVector2Array(33, 0, 67, 63, 0, 63, 33, 0)
+points = PackedVector2Array(0, 33, 33, 7, 66, 33, 33, 59, 0, 33)
 width = 2.0
 default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 [node name="energy" type="Label" parent="EnemyResource2" unique_id=649610336]
 layout_mode = 0
-offset_top = 22.0
+offset_top = 11.0
 offset_right = 66.0
-offset_bottom = 68.0
+offset_bottom = 57.0
 theme_override_font_sizes/font_size = 34
 text = "16"
 horizontal_alignment = 1
@@ -611,6 +613,23 @@ layout_mode = 1
 
 [node name="BattleEffects" type="Node" parent="."]
 script = ExtResource("6_effects")
+
+[node name="EnemyTurnBanner" type="Label" parent="."]
+layout_mode = 0
+offset_left = 430.0
+offset_top = 267.0
+offset_right = 850.0
+offset_bottom = 307.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.65, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 26
+text = "ENEMY TURN"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("7_turn")
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

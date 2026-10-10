@@ -17,6 +17,8 @@ signal discard_requested
 
 func _ready() -> void:
 	$DiscardButton.pressed.connect(_on_discard_pressed)
+	# The whole hand fades on turn changes; avoid an instant disabled-text jump.
+	$DiscardButton.add_theme_color_override("font_disabled_color", $DiscardButton.get_theme_color("font_color"))
 	refresh_card()
 
 
@@ -65,10 +67,12 @@ func refresh_card() -> void:
 	tooltip_text += "\nRight-click: discard (+%d %s)" % [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
 
 
-func set_playable(playable: bool) -> void:
+func set_playable(playable: bool, affordable: int = -1) -> void:
 	disabled = not playable
+	if affordable < 0:
+		affordable = int(playable)
 	# Keep the discard footer bright and clickable even when play is unaffordable.
-	var tint: Color = Color.WHITE if playable else Color(0.48, 0.48, 0.48)
+	var tint: Color = Color.WHITE if affordable != 0 else Color(0.48, 0.48, 0.48)
 	self_modulate = tint
 	for path in ["TitleLabel", "CostLabel", "DescriptionLabel", "ResourceIcon", "ArtPlaceholder", "CostRule"]:
 		get_node(path).modulate = tint

@@ -4,5 +4,5 @@ extends "res://scripts/board.gd"
 # All card rules, input and turn handling are inherited unchanged.
 func refresh_display() -> void:
 	super.refresh_display()
-	$BattleView/Viewport/Battlefield/PlayerShip/Shield.visible = player_shields > 0
-	$BattleView/Viewport/Battlefield/EnemyShip/Shield.visible = enemy_shields > 0
+	$BattleView/Viewport/Battlefield/PlayerShip.set_shield_strength(player_shields)
+	$BattleView/Viewport/Battlefield/EnemyShip.set_shield_strength(enemy_shields)

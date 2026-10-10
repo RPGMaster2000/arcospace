@@ -1,7 +1,7 @@
 # Optional 3D feasibility experiment
 
 Open `scenes/board_3d.tscn` and press F6 (Run Current Scene).
-F5 still starts the original 2D board. No project settings were changed.
+F5 starts the 3D board, as configured in the subsequent user update.
 
 Open `scenes/battlefield_3d.tscn` to arrange the ships, planet, light and camera
 in Godot's 3D viewport. Open `scenes/ship_3d.tscn` to edit the primitive mesh
@@ -12,9 +12,11 @@ input and victory handling are shared. A transparent SubViewport renders the
 3D scene beneath the existing UI. BattleEffects has optional ship paths and
 three animation hooks; its original 2D defaults and timing remain intact.
 
-Prototype effects: hull recoil/red flash, green repair flash, and a pulsing
-shield shell that disappears at zero. The 2D frontal shield arc and repair
-sweep are not reproduced; there are no projectiles or external assets yet.
+Effects: hull recoil/red flash and small surface explosions when unshielded;
+a soft red repair sweep; a rim-gradient shield with opacity proportional to
+strength below 10 and an outward formation pulse on gains. The hand and enemy
+turn banner transition in 0.2 seconds. There are no projectiles yet.
+The user-added starfield and perspective camera are preserved.
 
 Validation: Godot 4.6 headless import and all five existing test scripts passed,
 plus board_3d_test.gd covering material isolation, hull flash/restoration,
