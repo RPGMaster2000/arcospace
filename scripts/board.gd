@@ -70,7 +70,14 @@ var resolving_card: bool = false
 @onready var enemy_crew_label: Label = $EnemyResource3/crew
 @onready var enemy_quarters_label: Label = $EnemyResource3/quarters
 
+var mode_rule_origin: Vector2
+var hand_rule_origin: Vector2
+
 func _ready() -> void:
+	mode_rule_origin = $ModeRule.position
+	hand_rule_origin = $HandRule.position
+	resized.connect(_fit_board_lines)
+	_fit_board_lines()
 	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
 	hand.deal(card_slots.size())
 	enemy_hand.deal(card_slots.size())
@@ -273,3 +280,11 @@ func refresh_display() -> void:
 			playable = get("player_" + card.family) >= card.cost
 		button.set_playable(playable, int(card != null and get("player_" + card.family) >= card.cost))
 		button.set_discardable(card != null and player_can_act)
+
+# Control nodes use editor-visible anchors; these decorative lines are Node2Ds.
+func _fit_board_lines() -> void:
+	$ModeRule.position = mode_rule_origin + Vector2(size.x - 1280.0, 0)
+	$HandRule.position = hand_rule_origin + Vector2(0, size.y - 720.0)
+	var points: PackedVector2Array = $HandRule.points
+	points[points.size() - 1].x = size.x - 24.0
+	$HandRule.points = points

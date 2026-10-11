@@ -5,9 +5,12 @@ const FADE_SECONDS: float = 0.2
 var enemy_active: bool = false
 var transition: Tween
 var resting_y: float
+var base_resting_y: float
 
 func _ready() -> void:
+	base_resting_y = position.y - (get_parent().size.y - 720.0)
 	resting_y = position.y
+	get_parent().resized.connect(_fit_banner)
 	position.y = resting_y - 100.0
 	modulate.a = 0.0
 
@@ -24,3 +27,13 @@ func show_enemy_turn(active: bool, slots: Array[NodePath]) -> void:
 	for path in slots:
 		var card: Control = get_parent().get_node(path)
 		transition.tween_property(card, "modulate", Color(0.48, 0.48, 0.48) if active else Color.WHITE, FADE_SECONDS)
+
+func _fit_banner() -> void:
+	if transition:
+		transition.kill()
+	resting_y = base_resting_y + get_parent().size.y - 720.0
+	position.y = resting_y if enemy_active else resting_y - 100.0
+	modulate.a = 1.0 if enemy_active else 0.0
+	# Finish the hand fade if resizing interrupted its shared tween.
+	for path in get_parent().card_slots:
+		get_parent().get_node(path).modulate = Color(0.48, 0.48, 0.48) if enemy_active else Color.WHITE

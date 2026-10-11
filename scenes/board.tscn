@@ -212,9 +212,13 @@ antialiased = true
 
 [node name="ModeLabel" type="Label" parent="." unique_id=1571928759]
 layout_mode = 0
-offset_left = 974.0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -306.0
 offset_top = 15.0
-offset_right = 1257.0
+offset_right = -23.0
 offset_bottom = 51.0
 theme_override_font_sizes/font_size = 26
 text = "ENEMY SHIP NAME"
@@ -397,10 +401,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource1" type="Control" parent="." unique_id=1348338541]
-anchors_preset = 0
-offset_left = 1186.0
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -94.0
 offset_top = 92.0
-offset_right = 1258.0
+offset_right = -22.0
 offset_bottom = 164.0
 tooltip_text = "Materials / Synthesizer"
 mouse_filter = 2
@@ -453,10 +461,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource2" type="Control" parent="." unique_id=1494198465]
-anchors_preset = 0
-offset_left = 1186.0
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -94.0
 offset_top = 174.0
-offset_right = 1258.0
+offset_right = -22.0
 offset_bottom = 246.0
 tooltip_text = "Energy / Reactor"
 mouse_filter = 2
@@ -509,10 +521,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource3" type="Control" parent="." unique_id=1720151133]
-anchors_preset = 0
-offset_left = 1186.0
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -94.0
 offset_top = 256.0
-offset_right = 1258.0
+offset_right = -22.0
 offset_bottom = 328.0
 tooltip_text = "Crew / Quarters"
 mouse_filter = 2
@@ -619,11 +635,15 @@ color = Color(1, 0.3, 0.12, 1)
 polygon = PackedVector2Array(163, -19, 185, -12, 185, 12, 163, 19)
 
 [node name="Versus" type="Label" parent="." unique_id=807563954]
-visible = false
 layout_mode = 0
-offset_left = 607.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.0
+anchor_bottom = 0.0
+visible = false
+offset_left = -33.0
 offset_top = 177.0
-offset_right = 673.0
+offset_right = 33.0
 offset_bottom = 222.0
 theme_override_font_sizes/font_size = 24
 text = "VS"
@@ -632,37 +652,53 @@ vertical_alignment = 1
 
 [node name="PlayerHullLabel" type="Label" parent="." unique_id=2109470503]
 layout_mode = 0
-offset_left = 208.0
-offset_top = 320.0
-offset_right = 348.0
-offset_bottom = 358.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -432.0
+offset_top = -400.0
+offset_right = -292.0
+offset_bottom = -362.0
 theme_override_font_sizes/font_size = 24
 text = "Hull 30"
 
 [node name="PlayerShieldsLabel" type="Label" parent="." unique_id=86968435]
 layout_mode = 0
-offset_left = 353.0
-offset_top = 320.0
-offset_right = 579.0
-offset_bottom = 358.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -287.0
+offset_top = -400.0
+offset_right = -61.0
+offset_bottom = -362.0
 theme_override_font_sizes/font_size = 24
 text = "Shields 10"
 
 [node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1691280843]
 layout_mode = 0
-offset_left = 788.0
-offset_top = 320.0
-offset_right = 1000.0
-offset_bottom = 358.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 148.0
+offset_top = -400.0
+offset_right = 360.0
+offset_bottom = -362.0
 theme_override_font_sizes/font_size = 24
 text = "Shields 10"
 
 [node name="EnemyHullLabel" type="Label" parent="." unique_id=95820666]
 layout_mode = 0
-offset_left = 986.0
-offset_top = 320.0
-offset_right = 1156.0
-offset_bottom = 358.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 346.0
+offset_top = -400.0
+offset_right = 516.0
+offset_bottom = -362.0
 theme_override_font_sizes/font_size = 24
 text = "Hull 30"
 
@@ -674,10 +710,14 @@ antialiased = true
 
 [node name="ShieldPlatingCard" parent="." unique_id=2042586335 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 21.0
-offset_top = 396.0
-offset_right = 219.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -619.0
+offset_top = -324.0
+offset_right = -421.0
+offset_bottom = -30.0
 tooltip_text = "Shield Plating
 +4 Shields
 Right-click: discard (+1 Materials)"
@@ -708,10 +748,14 @@ theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 
 [node name="SynthesizerUpgradeCard" parent="." unique_id=1150386306 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 229.0
-offset_top = 396.0
-offset_right = 427.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -411.0
+offset_top = -324.0
+offset_right = -213.0
+offset_bottom = -30.0
 tooltip_text = "Synthesizer Upgrade
 +1 Synthesizer
 Right-click: discard (+2 Materials)"
@@ -749,10 +793,14 @@ text = "Discard +2"
 
 [node name="LaserBurstCard" parent="." unique_id=1370597201 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 437.0
-offset_top = 396.0
-offset_right = 635.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -203.0
+offset_top = -324.0
+offset_right = -5.0
+offset_bottom = -30.0
 tooltip_text = "Laser Burst
 Deal 6 damage
 Right-click: discard (+2 Energy)"
@@ -790,10 +838,14 @@ text = "Discard +2"
 
 [node name="EnergyCellCard" parent="." unique_id=372245618 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 645.0
-offset_top = 396.0
-offset_right = 843.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = -324.0
+offset_right = 203.0
+offset_bottom = -30.0
 tooltip_text = "Energy Cell
 +4 Energy
 Right-click: discard (+1 Energy)"
@@ -827,10 +879,14 @@ theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 
 [node name="QuartersUpgradeCard" parent="." unique_id=926793025 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 853.0
-offset_top = 396.0
-offset_right = 1051.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 213.0
+offset_top = -324.0
+offset_right = 411.0
+offset_bottom = -30.0
 tooltip_text = "Quarters Upgrade
 +1 Quarters
 Right-click: discard (+2 Crew)"
@@ -868,10 +924,14 @@ text = "Discard +2"
 
 [node name="TorpedoSalvoCard" parent="." unique_id=464282260 instance=ExtResource("2_card")]
 layout_mode = 0
-offset_left = 1061.0
-offset_top = 396.0
-offset_right = 1259.0
-offset_bottom = 690.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 421.0
+offset_top = -324.0
+offset_right = 619.0
+offset_bottom = -30.0
 tooltip_text = "Torpedo Salvo
 Deal 12 damage
 Right-click: discard (+3 Crew)"
@@ -922,9 +982,13 @@ one_shot = true
 
 [node name="TurnLabel" type="Label" parent="." unique_id=238760700]
 layout_mode = 0
-offset_left = 485.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -155.0
 offset_top = 15.0
-offset_right = 795.0
+offset_right = 155.0
 offset_bottom = 49.0
 theme_override_font_sizes/font_size = 21
 text = "Turn 1 · You"
@@ -932,10 +996,14 @@ horizontal_alignment = 1
 
 [node name="LastActionLabel" type="Label" parent="." unique_id=285804752]
 layout_mode = 0
-offset_left = 210.0
-offset_top = 350.0
-offset_right = 1070.0
-offset_bottom = 373.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -430.0
+offset_top = -370.0
+offset_right = 430.0
+offset_bottom = -347.0
 theme_override_font_sizes/font_size = 15
 text = "Play a card or discard to begin"
 horizontal_alignment = 1
@@ -949,10 +1017,14 @@ script = ExtResource("6_effects")
 
 [node name="EnemyTurnBanner" type="Label" parent="." unique_id=306887152]
 layout_mode = 0
-offset_left = 430.0
-offset_top = 267.0
-offset_right = 850.0
-offset_bottom = 307.0
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = -453.0
+offset_right = 210.0
+offset_bottom = -413.0
 theme_override_colors/font_color = Color(1, 0.65, 0.45, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/shadow_offset_x = 2

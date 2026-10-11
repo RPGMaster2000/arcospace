@@ -116,3 +116,11 @@ func _exit_tree() -> void:
 		source_view.modulate = original_modulate
 	# Release any waiting action when the scene closes or restarts.
 	step_finished.emit()
+
+func _ready() -> void:
+	resized.connect(_fit_anchors)
+	_fit_anchors()
+
+func _fit_anchors() -> void:
+	$StageAnchor.position = Vector2(size.x * 0.5, 282.0 + (size.y - 720.0) * 0.5)
+	$EnemyOrigin.position = Vector2(size.x - 155.0, 190.0)
