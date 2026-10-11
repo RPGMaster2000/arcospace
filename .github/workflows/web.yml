@@ -1,0 +1,64 @@
+name: Build and deploy Arcospace Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 and matching export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="4.7.2"
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${VERSION}-stable"
+          curl -fL --retry 3 "$BASE/Godot_v${VERSION}-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${VERSION}-stable_linux.x86_64" godot
+          chmod +x godot
+          curl -fL --retry 3 "$BASE/Godot_v${VERSION}-stable_export_templates.tpz" -o templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/${VERSION}.stable"
+          unzip -q templates.tpz -d extracted_templates
+          cp -a extracted_templates/templates/. "$HOME/.local/share/godot/export_templates/${VERSION}.stable/"
+
+      - name: Import Godot resources
+        run: ./godot --headless --path . --editor --import --quit
+
+      - name: Export web build
+        run: |
+          mkdir -p build/web
+          ./godot --headless --path . --export-release Web build/web/index.html
+          test -s build/web/index.html
+          test -s build/web/index.pck
+          test -s build/web/index.wasm
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
