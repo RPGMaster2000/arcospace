@@ -18,6 +18,7 @@ var turn_number: int = 1
 var winner: String = ""
 var extra_action_requested: bool = false
 var resolving_card: bool = false
+@onready var ftl = $FTLDrive
 @onready var hand = $CardHand
 @onready var enemy_hand = $EnemyHand
 @onready var enemy_ai = $EnemyAI
@@ -79,6 +80,7 @@ func _ready() -> void:
 	resized.connect(_fit_board_lines)
 	_fit_board_lines()
 	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
+	$FTLPanel/WarpButton.pressed.connect(_warp_out)
 	hand.deal(card_slots.size())
 	enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
@@ -115,6 +117,8 @@ func _begin_turn(side: String) -> void:
 	if _check_winner():
 		refresh_display()
 		return
+	if side == "player":
+		ftl.begin_player_turn()
 	var before: Dictionary = _both_states()
 	var state: Dictionary = _read_state(side)
 	MatchRules.income(state)
@@ -187,6 +191,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		CardEffects.play(card, actor, target)
 	_write_state(side, actor)
 	_write_state(other, target)
+	ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
 	active_hand.replace_card(slot)
 	extra_action_requested = not discard and card.play_again
 	var who: String = "You" if side == "player" else "Enemy"
@@ -243,7 +248,23 @@ func _restart_match() -> void:
 		get_tree().current_scene = fresh
 	queue_free()
 
+func _warp_out() -> void:
+	if current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty():
+		return
+	if _check_winner() or not ftl.can_warp():
+		refresh_display()
+		return
+	winner = "player"
+	enemy_timer.stop()
+	$LastActionLabel.text = "FTL jump complete — escaped!"
+	refresh_display()
+	$MatchResult/Panel/Title.text = "WARP SUCCESS"
+
 func refresh_display() -> void:
+	$FTLPanel/Charge.text = "FTL %d / 8" % ftl.charge
+	$FTLPanel/Progress.value = ftl.charge
+	$FTLPanel/Status.text = "OFFLINE · %d player turns" % ftl.disabled_turns if ftl.disabled_turns > 0 else ("READY TO WARP" if ftl.can_warp() else "+1 each player turn")
+	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "YOU WIN" if winner == "player" else "YOU LOSE"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)

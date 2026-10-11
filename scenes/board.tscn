@@ -16,6 +16,9 @@
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
 [ext_resource type="PackedScene" path="res://scenes/match_result.tscn" id="Result"]
 
+[ext_resource type="Script" path="res://scripts/ftl_drive.gd" id="FTL"]
+[ext_resource type="PackedScene" path="res://scenes/ftl_panel.tscn" id="FTLPanel"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -1044,3 +1047,8 @@ layout_mode = 1
 [editable path="EnergyCellCard"]
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
+
+[node name="FTLDrive" type="Node" parent="."]
+script = ExtResource("FTL")
+
+[node name="FTLPanel" parent="." instance=ExtResource("FTLPanel")]

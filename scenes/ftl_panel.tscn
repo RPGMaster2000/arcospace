@@ -1,0 +1,59 @@
+[gd_scene format=3]
+
+[sub_resource type="StyleBoxFlat" id="PanelStyle"]
+bg_color = Color(0.015, 0.04, 0.065, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.65, 0.8, 0.7)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[node name="FTLPanel" type="Panel"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_right = 160.0
+offset_top = 53.0
+offset_bottom = 135.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Charge" type="Label" parent="."]
+offset_left = 12.0
+offset_top = 5.0
+offset_right = 195.0
+offset_bottom = 31.0
+theme_override_font_sizes/font_size = 20
+text = "FTL 0 / 8"
+
+[node name="Progress" type="ProgressBar" parent="."]
+offset_left = 12.0
+offset_top = 35.0
+offset_right = 195.0
+offset_bottom = 44.0
+max_value = 8.0
+step = 1.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="Status" type="Label" parent="."]
+offset_left = 12.0
+offset_top = 50.0
+offset_right = 308.0
+offset_bottom = 77.0
+theme_override_font_sizes/font_size = 15
+text = "+1 each player turn"
+
+[node name="WarpButton" type="Button" parent="."]
+offset_left = 210.0
+offset_top = 8.0
+offset_right = 308.0
+offset_bottom = 46.0
+theme_override_font_sizes/font_size = 19
+text = "WARP"
+disabled = true
+tooltip_text = "Win by escaping at 8/8 charge. Hull damage has a 20% chance to disable FTL for five player turns. Charge is preserved."
