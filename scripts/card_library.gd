@@ -31,4 +31,5 @@ const CARDS = [
 	preload("res://cards/26_shield_exchange.tres"),
 	preload("res://cards/27_missile_barrage.tres"),
 	preload("res://cards/28_breach_charge.tres"),
+	preload("res://cards/29_polaron_burst.tres"),
 ]
