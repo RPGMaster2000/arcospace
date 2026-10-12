@@ -15,8 +15,14 @@ func run() -> void:
 		check(drive.charge == turn + 1, "Charge once per player turn")
 	check(drive.can_warp(), "Ready at fourteen")
 	check(not drive.take_hull_damage(0, 0.0), "Shield-only hits cannot disrupt")
-	check(not drive.take_hull_damage(100, 0.2), "20 percent threshold is flat")
-	check(drive.take_hull_damage(1, 0.199), "Even one hull damage can disrupt")
+	for sample in [[0, 0.0], [1, 0.05], [4, 0.2], [10, 0.5], [12, 0.6], [100, 0.6]]:
+		check(is_equal_approx(drive.failure_chance(sample[0]), sample[1]), "Damage-scaled probability or cap incorrect")
+		if sample[0] > 0:
+			check(not drive.take_hull_damage(sample[0], drive.failure_chance(sample[0])), "Roll at threshold must not disrupt")
+			check(drive.take_hull_damage(sample[0], drive.failure_chance(sample[0]) - 0.001), "Roll below threshold must disrupt")
+			drive.disabled_turns = 0
+	check(not drive.take_hull_damage(-1, 0.0), "Hull repairs cannot disrupt")
+	check(drive.take_hull_damage(1, 0.049), "Even one hull damage can disrupt")
 	for turn in range(5):
 		drive.begin_player_turn()
 		check(not drive.can_warp() and drive.charge == 14, "Five full turns blocked, charge retained")

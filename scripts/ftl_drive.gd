@@ -6,8 +6,10 @@ extends Node
 const FULL_CHARGE: int = 14
 ## TUNE: Number of player turns with no charging or warp after an FTL failure.
 const DISABLED_TURNS: int = 5
-## TUNE: Failure probability per hull-damaging action: 0.2 = 20%, 0.0 = never, 1.0 = always.
-const FAILURE_CHANCE: float = 0.2
+## TUNE: Failure chance added per actual hull damage point; 0.05 = 5%. Shield damage does not count.
+const FAILURE_CHANCE_PER_DAMAGE: float = 0.05
+## TUNE: Maximum failure chance per damaging action; 0.60 = 60%, reached at 12 hull damage.
+const MAX_FAILURE_CHANCE: float = 0.60
 var charge: int = 0
 var disabled_turns: int = 0
 var disabled_turn_started: bool = false
@@ -24,11 +26,14 @@ func begin_player_turn() -> void:
 	if not disabled_turn_started:
 		charge = mini(FULL_CHARGE, charge + 1)
 
+func failure_chance(amount: int) -> float:
+	return clampf(amount * FAILURE_CHANCE_PER_DAMAGE, 0.0, MAX_FAILURE_CHANCE)
+
 func take_hull_damage(amount: int, roll: float = -1.0) -> bool:
 	if amount <= 0 or disabled_turns > 0:
 		return false
 	var chance_roll: float = rng.randf() if roll < 0.0 else roll
-	if chance_roll >= FAILURE_CHANCE:
+	if chance_roll >= failure_chance(amount):
 		return false
 	disabled_turns = DISABLED_TURNS
 	disabled_turn_started = false
