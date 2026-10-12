@@ -13,10 +13,11 @@ const ACTIVE_ROUNDS: int = 1
 const ASTEROID_CHANCE: float = 0.50
 ## TUNE: Damage per asteroid hit; shields absorb it first.
 const ASTEROID_DAMAGE: int = 10
-## TUNE: Nebula starts here; each full round moves by at most NEBULA_STEP percentage points.
-const NEBULA_START: int = 25
+## TUNE: Internal miss rate: 30 means 70% starting sensor efficiency.
+## Change MAX to set minimum efficiency (100 - MAX); STEP controls drift per round.
+const NEBULA_START: int = 30
 const NEBULA_STEP: int = 5
-const NEBULA_MAX: int = 60
+const NEBULA_MAX: int = 70
 var kind: int = 0
 var active: bool = false
 var next_round: int = 0
@@ -58,7 +59,7 @@ func status_text(round_number: int) -> String:
 	if kind == 0:
 		return ""
 	if kind == 4:
-		return "Targeting Sensors Affected - Miss rate: %d%%" % [miss_rate, miss_rate]
+		return "Targeting Sensor Efficiency · Hit rate: %d%%" % (100 - miss_rate)
 	if active:
 		return NAMES[kind].to_upper() + " ACTIVE · " + ("Shields offline" if kind == 3 else "Both ships affected")
 	var phrases: Array[String] = ["", "asteroids pass by", "next ion storm", "next solar flare"]
@@ -66,7 +67,7 @@ func status_text(round_number: int) -> String:
 
 func meter_value(round_number: int) -> float:
 	if kind == 4:
-		return float(miss_rate) / NEBULA_MAX * 100.0
+		return float(100 - miss_rate)
 	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
 
 static func is_combat(effects: Dictionary) -> bool:
@@ -78,7 +79,10 @@ static func is_combat(effects: Dictionary) -> bool:
 func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 	var result: Dictionary = effects.duplicate(true)
 	for key in result:
-		if result[key] is Dictionary:
+		if key == "sabotage" and result[key] is bool:
+			# Legacy true means -1 to each enemy production; ion scales this amount too.
+			result[key] = int(floor((1.0 if result[key] else 0.0) * factor))
+		elif result[key] is Dictionary:
 			result[key] = _scaled(result[key], factor)
 		elif key != "pierce" and (result[key] is int or result[key] is float):
 			# TUNE: Half effects round down, including +1 production becoming zero.

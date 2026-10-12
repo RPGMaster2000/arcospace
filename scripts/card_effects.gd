@@ -32,5 +32,5 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary) -> bool:
 		actor[key] += taken
 	if effects.get("sabotage", false):
 		for key in PRODUCTION:
-			enemy[key] = maxi(1, enemy[key] - 1)
+			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
 	return true

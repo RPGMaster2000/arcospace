@@ -3,13 +3,19 @@ extends Control
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Modifier = preload("res://scripts/combat_modifier.gd")
 const KEYS = ["materials", "energy", "crew", "synthesizer", "reactor", "quarters"]
-const DESCRIPTIONS = [
-	"No combat modifiers. Standard battle rules.",
-	"Every 6–10 full turns: the battlefield attacks each ship once, with a separate 20% hit chance. Each hit deals 5 damage, absorbed by shields first.",
-	"Every 6–10 full turns: one round where each blue card has equal chances of ×2 or ×½ effect. Costs stay the same; halves round down. Shield swaps stay swaps.",
-	"Every 6–10 full turns: both ships’ shields go offline for one round. Shield restoration has no effect. Stored shields return afterward.",
-	"Miss rate drifts by up to 5 percentage points per full turn, within 0–70%. Combat cards can miss: cost is paid and card effects are cancelled."
-]
+# Descriptions read gameplay constants so tuning the modifier updates the setup text too.
+static func description(index: int) -> String:
+	var interval = "Every %d–%d full turns" % [Modifier.MIN_INTERVAL, Modifier.MAX_INTERVAL]
+	match index:
+		1:
+			return "%s: the battlefield attacks each ship once, with a separate %d%% hit chance. Each hit deals %d damage, absorbed by shields first." % [interval, roundi(Modifier.ASTEROID_CHANCE * 100), Modifier.ASTEROID_DAMAGE]
+		2:
+			return "%s: for %d round(s), blue cards randomly have ×2 or ×½ effects, including resource gain, theft and production increases/decreases. Costs unchanged; halves round down. Shield swaps unchanged." % [interval, Modifier.ACTIVE_ROUNDS]
+		3:
+			return "%s: both ships’ shields go offline for %d round(s). Shield restoration has no effect. Stored shields return afterward." % [interval, Modifier.ACTIVE_ROUNDS]
+		4:
+			return "Targeting efficiency starts at %d%% and drifts up to %d points per full turn within %d–100%%. This is combat card hit chance. Misses still spend the cost." % [100 - Modifier.NEBULA_START, Modifier.NEBULA_STEP, 100 - Modifier.NEBULA_MAX]
+	return "No combat modifiers. Standard battle rules."
 var initial_settings: Dictionary = {}
 
 func _ready() -> void:
@@ -28,7 +34,7 @@ func _ready() -> void:
 	_describe($Panel/Modifier.selected)
 
 func _describe(index: int) -> void:
-	$Panel/Description.text = DESCRIPTIONS[index]
+	$Panel/Description.text = description(index)
 
 func read_settings() -> Dictionary:
 	var result: Dictionary = {"ftl_turns": int($Panel/FTL.value), "modifier": $Panel/Modifier.selected}
