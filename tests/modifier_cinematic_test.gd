@@ -27,6 +27,11 @@ func run() -> void:
 		check(board.resolving_card and display.get_node("ScreenFlash").modulate.a > 0, "Result flashes while input remains locked")
 		await create_timer(0.15).timeout
 		check(not board.resolving_card, "Input unlocks after result")
+	board.refresh_display()
+	var panel = board.get_node("FTLPanel")
+	check(panel.position.y >= board.get_node("PlayerHullLabel").position.y + board.get_node("PlayerHullLabel").size.y, "FTL sits below hull status")
+	display.ftl_offline()
+	check(display.get_node("ScreenFlash").modulate.a > 0, "Offline FTL flashes screen")
 	var original = root.canvas_transform
 	display.impact(1, true)
 	await create_timer(0.03).timeout
@@ -40,6 +45,10 @@ func run() -> void:
 	blue.cost = 0
 	blue.effects = {"energy":4}
 	board.hand.cards[0] = blue
+	board.modifier.ion_factor = 2.0
+	board.refresh_display()
+	var card_button = board.get_node(board.card_slots[0])
+	check(card_button.card_data.description.contains("+8 Energy") and card_button.get_theme_stylebox("normal").shadow_size > 0, "Ion cards preview doubled values with blue glow")
 	var energy: int = board.player_energy
 	board._act("player", 0, false)
 	check(board.resolving_card and board.player_energy == energy, "Ion card warning precedes resolution")

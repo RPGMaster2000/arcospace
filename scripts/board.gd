@@ -164,7 +164,7 @@ func _begin_turn(side: String) -> void:
 			announcement = modifier.asteroid_strike(player, enemy)
 			_write_state("player", player)
 			_write_state("enemy", enemy)
-			ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
+			_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
 			asteroid_event = true
 		$ModifierDisplay.announce(announcement)
 		if event_due:
@@ -172,6 +172,8 @@ func _begin_turn(side: String) -> void:
 			$ModifierDisplay.impact(modifier.kind, player_hit)
 		if not _check_winner():
 			ftl.begin_player_turn()
+			if ftl.disabled_turns > 0:
+				$ModifierDisplay.ftl_offline()
 	var state: Dictionary = _read_state(side)
 	if winner.is_empty():
 		MatchRules.income(state)
@@ -211,12 +213,12 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	refresh_display()
 	var ion_card: bool = not discard and modifier.kind == 2 and modifier.active and card.family == "energy"
 	if ion_card:
-		await $ModifierDisplay.warning(2, true)
+		await $ModifierDisplay.warning(2, true, modifier.ion_text())
 		if is_queued_for_deletion():
 			return false
 	var source: Control = get_node(card_slots[slot]) if side == "player" else null
 	var motion = $CardMotion
-	await motion.animate_action(card, source, side, discard,
+	await motion.animate_action(modifier.preview(card), source, side, discard,
 		_resolve_card.bind(side, slot, discard, card))
 	if ion_card:
 		await $ModifierDisplay.hold_result()
@@ -256,7 +258,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 			$ModifierDisplay.impact(2)
 	_write_state(side, actor)
 	_write_state(other, target)
-	ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
+	_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
 	active_hand.replace_card(slot)
 	extra_action_requested = not discard and card.play_again
 	var who: String = "You" if side == "player" else "Enemy"
@@ -377,7 +379,8 @@ func refresh_display() -> void:
 	for slot in range(card_slots.size()):
 		var button = get_node(card_slots[slot])
 		var card: Resource = hand.cards[slot]
-		button.card_data = card
+		button.card_data = modifier.preview(card)
+		button.set_ion_glow(card != null and card.family == "energy" and modifier.kind == 2 and modifier.active)
 		var playable: bool = card != null and player_can_act
 		if playable:
 			playable = get("player_" + card.family) >= card.cost
@@ -391,3 +394,7 @@ func _fit_board_lines() -> void:
 	var points: PackedVector2Array = $HandRule.points
 	points[points.size() - 1].x = size.x - 24.0
 	$HandRule.points = points
+
+func _damage_ftl(amount: int) -> void:
+	if ftl.take_hull_damage(amount):
+		$ModifierDisplay.ftl_offline()

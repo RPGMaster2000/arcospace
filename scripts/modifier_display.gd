@@ -35,7 +35,7 @@ var shake_tween: Tween
 var original_canvas: Transform2D
 var shaking: bool = false
 
-func warning(kind: int, card_effect: bool = false) -> void:
+func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> void:
 	if not cinematic_enabled:
 		return
 	var messages = {
@@ -43,7 +43,7 @@ func warning(kind: int, card_effect: bool = false) -> void:
 		2: "ION STORM APPROACHING\nEnergy systems destabilizing…",
 		3: "SOLAR FLARE INCOMING\nRadiation surge — shields failing…"
 	}
-	announce("ION SURGE\nEnergy output fluctuating…" if card_effect else messages.get(kind, ""))
+	announce(("ION SURGE\n" + effect_text) if card_effect else messages.get(kind, ""))
 	await get_tree().create_timer(warning_seconds).timeout
 
 func impact(kind: int, player_hit: bool = false) -> void:
@@ -85,3 +85,13 @@ func hold_result() -> void:
 
 func _exit_tree() -> void:
 	_restore_screen()
+
+func ftl_offline() -> void:
+	# A separate status pulse avoids replacing the modifier's central result text.
+	if not cinematic_enabled:
+		return
+	impact(1)
+	var label = get_parent().get_node("FTLPanel/Charge")
+	label.modulate = Color(1, 0.15, 0.05)
+	var pulse = create_tween()
+	pulse.tween_property(label, "modulate", Color.WHITE, 0.8)

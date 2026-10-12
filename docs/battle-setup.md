@@ -12,11 +12,11 @@ The normal launch scene is `scenes/battle_setup.tscn`. Both setup and modifier H
 | Modifier | Behavior |
 |---|---|
 | Asteroid belt | After a displayed 3–6-round countdown, the battlefield independently rolls a 50% chance to hit each ship for 10 normal damage. Shields absorb it first. The attack happens once, before the player acts, and immediately schedules the next shower. |
-| Ion storm | After a 3–6-round countdown, blue cards have a 50/50 chance of double or half numeric effects for one full round, including resource gains, drain, theft, production increases and sabotage, for both sides. Halves round down; costs, piercing fraction and extra actions stay unchanged. Shield swaps remain swaps. |
-| Solar flare | Both shields are offline for one full round. Attacks hit hull; shield gain has no effect. Existing shield points are preserved and return after the flare. Shield swapping/breaking cannot alter stored shields during the flare. |
+| Ion storm | After a 3–6-round countdown, one announced multiplier (50/50 double or half) applies to all blue cards for three full rounds, including resource gains, drain, theft, production increases and sabotage, for both sides. Halves round down; costs, piercing fraction and extra actions stay unchanged. Shield swaps remain swaps. |
+| Solar flare | Both shields are offline for three full rounds. Attacks hit hull; shield gain has no effect. Existing shield points are preserved and return after the flare. Shield swapping/breaking cannot alter stored shields during the flare. |
 | Nebula | Displays 70% starting hit rate (sensor efficiency), ranging from 30–100%. Internally starts at 30% miss rate and drifts by up to 5 percentage points each new full round, clamped to 0–70%. Combat cards (damage, shield attacks, drain, theft, sabotage, swaps) pay their cost but cancel their effects on a miss. Non-combat cards are unaffected. The bar shows the actual hit percentage. |
 
-Ion and solar events schedule a new 3–6-round countdown after their active round ends. Countdown text predicts the activation round; a central message announces activation. Asteroid outcomes and ion multipliers/misses also have central feedback. Simultaneous hull destruction is a draw.
+Ion and solar events schedule a new 3–6-round countdown after their three active rounds end. Countdown text predicts the activation round; a central message announces activation. Asteroid outcomes and ion multipliers/misses also have central feedback. Simultaneous hull destruction is a draw.
 
 ## Values to tune
 
@@ -35,3 +35,5 @@ None uses `scenes/battlefield_3d.tscn`. Each other setup selection loads its own
 - `scenes/battlefield_nebula.tscn`
 
 These start with the same visuals. Edit their backgrounds, lighting and layouts independently in Godot. Keep `Camera3D`, `MeshInstance3D` (backdrop), `PlayerShip` and `EnemyShip` node names for board wiring. Ship instances still share `ship_3d.tscn`; make ship resources unique before changing them for only one battlefield. Setup descriptions use modifier constants automatically.
+
+Ion card previews and glow use the same storm multiplier as resolution. FTL status sits below player hull/shields and flashes when disrupted and at each offline player turn.

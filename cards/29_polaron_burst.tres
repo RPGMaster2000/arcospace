@@ -10,5 +10,5 @@ cost = 10
 description = "Enemy Shields −8, also -4 energy to enemy ship"
 effects = {
 "break_shields": 8,
-"drain": {}
+"drain": {"energy": 4}
 }

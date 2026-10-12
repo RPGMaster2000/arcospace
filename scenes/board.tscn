@@ -1033,7 +1033,14 @@ layout_mode = 1
 script = ExtResource("FTL")
 
 [node name="FTLPanel" parent="." unique_id=980773763 instance=ExtResource("FTLPanel")]
-anchors_preset = 7
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -432.0
+offset_right = -61.0
+offset_top = -360.0
+offset_bottom = -333.0
 
 [node name="CombatModifier" type="Node" parent="." unique_id=807608807]
 script = ExtResource("ModifierRules")

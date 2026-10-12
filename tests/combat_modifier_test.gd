@@ -29,8 +29,24 @@ func run() -> void:
 			check(not mod.active and mod.next_round >= due + Mod.MIN_INTERVAL and mod.next_round <= due + Mod.MAX_INTERVAL, "Asteroid is instant and reschedules")
 		else:
 			check(mod.active, "Ion/solar must stay active for both ships")
-			mod.begin_round(due + 1)
-			check(not mod.active and mod.next_round >= due + 1 + Mod.MIN_INTERVAL and mod.next_round <= due + 1 + Mod.MAX_INTERVAL, "Event expires after one round and reschedules")
+			mod.begin_round(due + 2)
+			check(mod.active, "Event remains active for three consecutive rounds")
+			mod.begin_round(due + Mod.ACTIVE_ROUNDS)
+			check(not mod.active and mod.next_round >= due + Mod.ACTIVE_ROUNDS + Mod.MIN_INTERVAL and mod.next_round <= due + Mod.ACTIVE_ROUNDS + Mod.MAX_INTERVAL, "Event expires after three rounds and reschedules")
+	var polaron = load("res://cards/29_polaron_burst.tres")
+	var attacker = state()
+	var defender = state()
+	mod.configure(0)
+	mod.play(polaron, attacker, defender)
+	check(defender.energy == 16 and defender.shields == 2, "Polaron removes four enemy energy and eight shields")
+	mod.configure(2)
+	mod.begin_round(mod.next_round)
+	var preview = mod.preview(polaron)
+	attacker = state()
+	defender = state()
+	mod.play(polaron, attacker, defender, 0.99)
+	check(defender.energy == 20 - int(preview.effects.drain.energy), "Preview equals actual ion drain regardless of roll")
+	check(polaron.effects.drain.energy == 4, "Preview never mutates original card")
 	var a = state()
 	var b = state()
 	a.shields = 2
@@ -50,6 +66,7 @@ func run() -> void:
 	mod.active = true
 	var blue = card({"damage":6,"hull":3,"energy":4,"drain":{"crew":3}})
 	for roll in [0.0,0.9]:
+		mod.ion_factor = 2.0 if roll == 0 else 0.5
 		a = state()
 		b = state()
 		mod.play(blue,a,b,roll)
@@ -60,6 +77,7 @@ func run() -> void:
 	check(blue.effects.damage == 6, "Modifiers must not mutate card resources")
 	# All economic effects scale for either acting side; original resources stay intact.
 	for roll in [0.0, 0.9]:
+		mod.ion_factor = 2.0 if roll == 0 else 0.5
 		a = state()
 		b = state()
 		b.reactor = 5
@@ -130,6 +148,7 @@ func run() -> void:
 	board._discard_card(0)
 	board.enemy_timer.stop()
 	check(board.modifier.active, "Flare covers enemy action too")
+	board.modifier.ends_round = 3 # Expiry path; three-round duration checked above.
 	board._act("enemy",0,true)
 	check(board.turn_number == 3 and not board.modifier.active, "Flare ends after full round")
 	board.modifier.configure(1)

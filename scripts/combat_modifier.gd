@@ -8,7 +8,7 @@ const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula"]
 const MIN_INTERVAL: int = 3
 const MAX_INTERVAL: int = 6
 ## TUNE: Event duration in complete player/enemy rounds.
-const ACTIVE_ROUNDS: int = 1
+const ACTIVE_ROUNDS: int = 3
 ## TUNE: Independent hit chance for EACH ship when the battlefield launches a shower.
 const ASTEROID_CHANCE: float = 0.50
 ## TUNE: Damage per asteroid hit; shields absorb it first.
@@ -20,6 +20,8 @@ const NEBULA_STEP: int = 5
 const NEBULA_MAX: int = 70
 var kind: int = 0
 var active: bool = false
+# One announced multiplier applies to every blue card for the entire storm.
+var ion_factor: float = 1.0
 var next_round: int = 0
 var ends_round: int = 0
 var miss_rate: int = NEBULA_START
@@ -29,6 +31,7 @@ func configure(selection: int) -> void:
 	kind = clampi(selection, 0, NAMES.size() - 1)
 	rng.randomize()
 	active = false
+	ion_factor = 1.0
 	miss_rate = NEBULA_START
 	next_round = 1 + rng.randi_range(MIN_INTERVAL, MAX_INTERVAL)
 
@@ -41,6 +44,7 @@ func begin_round(round_number: int) -> String:
 		return "NEBULA · SENSORS UNSTABLE" if round_number == 1 else ""
 	if active and round_number >= ends_round:
 		active = false
+		ion_factor = 1.0
 		next_round = round_number + rng.randi_range(MIN_INTERVAL, MAX_INTERVAL)
 	if not active and round_number >= next_round:
 		if kind == 1:
@@ -49,6 +53,9 @@ func begin_round(round_number: int) -> String:
 			return "ASTEROID SHOWER"
 		active = true
 		ends_round = round_number + ACTIVE_ROUNDS
+		if kind == 2:
+			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
+			return "ION STORM · " + ion_text()
 		return ["", "ASTEROIDS PASSING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
 	return ""
 
@@ -61,7 +68,7 @@ func status_text(round_number: int) -> String:
 	if kind == 4:
 		return "Targeting Sensor Efficiency · Hit rate: %d%%" % (100 - miss_rate)
 	if active:
-		return NAMES[kind].to_upper() + " ACTIVE · " + ("Shields offline" if kind == 3 else "Both ships affected")
+		return NAMES[kind].to_upper() + " ACTIVE · " + ("Shields offline" if kind == 3 else ion_text()) + " · %d rounds left" % maxi(0, ends_round - round_number)
 	var phrases: Array[String] = ["", "asteroids pass by", "next ion storm", "next solar flare"]
 	return "%d turns until %s" % [maxi(0, next_round - round_number), phrases[kind]]
 
@@ -100,8 +107,8 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 		modified.effects = {}
 		notice = "MISS · NEBULA INTERFERENCE"
 	elif kind == 2 and active and card.family == "energy":
-		# TUNE: Equal chance of doubling or halving each blue card; costs never change.
-		var factor: float = 2.0 if chance < 0.5 else 0.5
+		# The already announced storm multiplier also drives the card previews.
+		var factor: float = ion_factor
 		modified.effects = _scaled(card.effects, factor)
 		notice = "ION STORM · BLUE CARD " + ("×2" if factor == 2.0 else "×½")
 	var saved_actor_shields: int = actor.shields
@@ -131,3 +138,29 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 			ships[index].hull = maxi(0, ships[index].hull - ASTEROID_DAMAGE + blocked)
 		outcomes.append(("YOU" if index == 0 else "ENEMY") + (" HIT" if hit else " MISSED"))
 	return "ASTEROID SHOWER · " + " / ".join(outcomes)
+
+func ion_text() -> String:
+	return "BLUE CARDS ×2 · Energy amplified" if ion_factor == 2.0 else "BLUE CARDS ×½ · Energy suppressed"
+
+func preview(card: Resource) -> Resource:
+	if card == null or kind != 2 or not active or card.family != "energy":
+		return card
+	var shown = card.duplicate(true)
+	shown.effects = _scaled(card.effects, ion_factor)
+	var lines: Array[String] = ["ION ×2" if ion_factor == 2.0 else "ION ×½"]
+	for key in shown.effects:
+		var value = shown.effects[key]
+		match key:
+			"damage": lines.append("Deal %d damage" % value)
+			"break_shields": lines.append("Enemy Shields −%d" % value)
+			"pierce": lines.append("%d%% bypasses Shields" % roundi(value * 100))
+			"drain", "steal":
+				for resource in value:
+					lines.append(("Steal %d %s" if key == "steal" else "Enemy −%d %s") % [value[resource], resource.capitalize()])
+			"sabotage": lines.append("Enemy production −%d each (min 1)" % int(value))
+			"swap_shields": lines.append("Swap Shields")
+			_: lines.append("%+d %s" % [value, str(key).capitalize()])
+	if card.play_again:
+		lines.append("Play again")
+	shown.description = " · ".join(lines)
+	return shown

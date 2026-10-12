@@ -10,7 +10,7 @@ static func description(index: int) -> String:
 		1:
 			return "%s: the battlefield attacks each ship once, with a separate %d%% hit chance. Each hit deals %d damage, absorbed by shields first." % [interval, roundi(Modifier.ASTEROID_CHANCE * 100), Modifier.ASTEROID_DAMAGE]
 		2:
-			return "%s: for %d round(s), blue cards randomly have ×2 or ×½ effects, including resource gain, theft and production increases/decreases. Costs unchanged; halves round down. Shield swaps unchanged." % [interval, Modifier.ACTIVE_ROUNDS]
+			return "%s: for %d round(s), one announced ×2 or ×½ multiplier applies to all blue cards, including resource gain, theft and production increases/decreases. Costs unchanged; halves round down. Shield swaps unchanged." % [interval, Modifier.ACTIVE_ROUNDS]
 		3:
 			return "%s: both ships’ shields go offline for %d round(s). Shield restoration has no effect. Stored shields return afterward." % [interval, Modifier.ACTIVE_ROUNDS]
 		4:
