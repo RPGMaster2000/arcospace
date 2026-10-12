@@ -18,6 +18,9 @@ const CardEffects = preload("res://scripts/card_effects.gd")
 var current_actor: String = "player"
 var turn_number: int = 1
 var winner: String = ""
+# Settings are assigned before adding the board to the scene tree.
+var setup_settings: Dictionary = {}
+@onready var modifier = $CombatModifier
 var extra_action_requested: bool = false
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
@@ -93,6 +96,14 @@ var mode_rule_origin: Vector2
 var hand_rule_origin: Vector2
 
 func _ready() -> void:
+	for side in ["player", "enemy"]:
+		for key in MatchRules.RESOURCES + MatchRules.PRODUCTION:
+			var setting: String = side + "_" + key
+			if setup_settings.has(setting):
+				set(setting, int(setup_settings[setting]))
+	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
+	modifier.configure(int(setup_settings.get("modifier", 0)))
+	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
 	resized.connect(_fit_board_lines)
@@ -136,13 +147,26 @@ func _begin_turn(side: String) -> void:
 	if _check_winner():
 		refresh_display()
 		return
-	if side == "player":
-		ftl.begin_player_turn()
 	var before: Dictionary = _both_states()
+	var asteroid_event: bool = false
+	if side == "player":
+		var announcement: String = modifier.begin_round(turn_number)
+		if modifier.kind == 1 and not announcement.is_empty():
+			var player: Dictionary = _read_state("player")
+			var enemy: Dictionary = _read_state("enemy")
+			announcement = modifier.asteroid_strike(player, enemy)
+			_write_state("player", player)
+			_write_state("enemy", enemy)
+			ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
+			asteroid_event = true
+		$ModifierDisplay.announce(announcement)
+		if not _check_winner():
+			ftl.begin_player_turn()
 	var state: Dictionary = _read_state(side)
-	MatchRules.income(state)
-	_write_state(side, state)
-	battle_effects.play_changes(before, _both_states())
+	if winner.is_empty():
+		MatchRules.income(state)
+		_write_state(side, state)
+	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event)
 	resolving_card = battle_effects.busy
 	_check_winner()
 	refresh_display()
@@ -192,7 +216,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		if side == "enemy":
 			enemy_timer.start()
 	else:
-		turn_number += 1
+		if side == "enemy":
+			turn_number += 1
 		await _begin_turn("enemy" if side == "player" else "player")
 	action_finished.emit(side, discard)
 	return true
@@ -207,7 +232,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	if discard:
 		actor[card.family] += int(floor(card.cost / 3.0))
 	else:
-		CardEffects.play(card, actor, target)
+		$ModifierDisplay.announce(modifier.play(card, actor, target))
 	_write_state(side, actor)
 	_write_state(other, target)
 	ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
@@ -250,7 +275,9 @@ func _check_winner() -> bool:
 		return true
 	var player: Dictionary = _read_state("player")
 	var enemy: Dictionary = _read_state("enemy")
-	if MatchRules.wins(player, enemy, hull_goal, resource_goal):
+	if player.hull <= 0 and enemy.hull <= 0:
+		winner = "draw"
+	elif MatchRules.wins(player, enemy, hull_goal, resource_goal):
 		winner = "player"
 	elif MatchRules.wins(enemy, player, hull_goal, resource_goal):
 		winner = "enemy"
@@ -262,9 +289,17 @@ func _check_winner() -> bool:
 func _restart_match() -> void:
 	# Reload the scene that is actually being played (2D or 3D).
 	var fresh: Node = load(scene_file_path).instantiate()
+	fresh.setup_settings = setup_settings.duplicate(true)
 	get_parent().add_child(fresh)
 	if get_tree().current_scene == self:
 		get_tree().current_scene = fresh
+	queue_free()
+
+func _return_to_setup() -> void:
+	var setup = load("res://scenes/battle_setup.tscn").instantiate()
+	setup.initial_settings = setup_settings.duplicate(true)
+	get_parent().add_child(setup)
+	get_tree().current_scene = setup
 	queue_free()
 
 func _warp_out() -> void:
@@ -280,30 +315,31 @@ func _warp_out() -> void:
 	$MatchResult/Panel/Title.text = "WARP SUCCESS"
 
 func refresh_display() -> void:
-	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.FULL_CHARGE]
+	$ModifierDisplay.refresh(modifier, turn_number)
+	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
 		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns
 	elif ftl.can_warp():
 		ftl_status += " · Ready"
 	$FTLPanel/Charge.text = ftl_status
-	$FTLPanel/Progress.max_value = ftl.FULL_CHARGE
+	$FTLPanel/Progress.max_value = ftl.charge_target
 	$FTLPanel/Progress.value = ftl.charge
 	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
-	$MatchResult/Panel/Title.text = "YOU WIN" if winner == "player" else "YOU LOSE"
+	$MatchResult/Panel/Title.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE")
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
-	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0
-	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0
+	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
+	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
 	var player_can_act: bool = winner.is_empty() and current_actor == "player" and not resolving_card
 	if winner.is_empty():
 		$TurnLabel.text = "Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
 	else:
-		$TurnLabel.text = "YOU WIN" if winner == "player" else "ENEMY WINS"
+		$TurnLabel.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "ENEMY WINS")
 	player_hull_label.text = "Hull %d" % player_hull
-	player_shields_label.text = "Shields %d" % player_shields
+	player_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % player_shields
 	enemy_hull_label.text = "Hull %d" % enemy_hull
-	enemy_shields_label.text = "Shields %d" % enemy_shields
+	enemy_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % enemy_shields
 	battle_effects.set_number(player_materials_label, player_materials)
 	player_synthesizer_label.text = str(player_synthesizer)
 

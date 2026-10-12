@@ -27,7 +27,7 @@ anchor_bottom = 0.5
 offset_left = -220.0
 offset_top = -115.0
 offset_right = 220.0
-offset_bottom = 115.0
+offset_bottom = 165.0
 
 [node name="Title" type="Label" parent="Panel"]
 offset_left = 20.0
@@ -46,3 +46,11 @@ offset_right = 340.0
 offset_bottom = 195.0
 theme_override_font_sizes/font_size = 26
 text = "Play Again"
+
+[node name="Configure" type="Button" parent="Panel"]
+offset_left = 100.0
+offset_top = 207.0
+offset_right = 340.0
+offset_bottom = 253.0
+theme_override_font_sizes/font_size = 19
+text = "Battle Setup"

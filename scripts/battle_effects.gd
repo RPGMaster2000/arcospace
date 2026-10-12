@@ -50,7 +50,7 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 		var ship: Node = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
-		if hull_delta < 0 and current.shields == 0 and ship.has_method("animate_explosions"):
+		if hull_delta < 0 and (current.shields == 0 or get_parent().modifier.shields_disabled()) and ship.has_method("animate_explosions"):
 			ship.animate_explosions(_job(), maxf(hit_seconds, 0.5))
 		if hull_delta < 0 or (shield_delta < 0 and impact):
 			_hit(ship, hull_delta < 0, shield_delta < 0, side)

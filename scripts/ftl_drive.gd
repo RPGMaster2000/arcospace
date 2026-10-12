@@ -4,6 +4,8 @@ extends Node
 # DOES NOT: Advance turns, resolve damage, or declare the match winner.
 ## TUNE: Increase this for more player turns before warp; the counter and bar follow automatically.
 const FULL_CHARGE: int = 14
+## TUNE: Per-match target; setup screen replaces this before the battle starts.
+var charge_target: int = FULL_CHARGE
 ## TUNE: Number of player turns with no charging or warp after an FTL failure.
 const DISABLED_TURNS: int = 5
 ## TUNE: Failure chance added per actual hull damage point; 0.05 = 5%. Shield damage does not count.
@@ -24,7 +26,7 @@ func begin_player_turn() -> void:
 		disabled_turns = maxi(0, disabled_turns - 1)
 	disabled_turn_started = disabled_turns > 0
 	if not disabled_turn_started:
-		charge = mini(FULL_CHARGE, charge + 1)
+		charge = mini(charge_target, charge + 1)
 
 func failure_chance(amount: int) -> float:
 	return clampf(amount * FAILURE_CHANCE_PER_DAMAGE, 0.0, MAX_FAILURE_CHANCE)
@@ -40,4 +42,4 @@ func take_hull_damage(amount: int, roll: float = -1.0) -> bool:
 	return true
 
 func can_warp() -> bool:
-	return charge == FULL_CHARGE and disabled_turns == 0
+	return charge == charge_target and disabled_turns == 0

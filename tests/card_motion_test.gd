@@ -33,7 +33,9 @@ func run() -> void:
 	board._on_card_pressed(0)
 	board._discard_card(1)
 	check(board.hand.cards == hand_before, "Repeated play/discard must be blocked during motion")
-	await create_timer(0.11).timeout
+	# Wait for actual arrival instead of assuming the runner sustains a frame rate.
+	await motion.step_finished
+	await process_frame
 	check(board.player_energy == 12 and board.enemy_shields == 4, "Arrival must resolve the effect exactly once")
 	check(board.resolving_card and board.current_actor == "player" and board.enemy_timer.is_stopped(), "Turn must wait through the centre hold")
 	await board.action_finished

@@ -19,6 +19,9 @@
 [ext_resource type="Script" path="res://scripts/ftl_drive.gd" id="FTL"]
 [ext_resource type="PackedScene" path="res://scenes/ftl_panel.tscn" id="FTLPanel"]
 
+[ext_resource type="Script" path="res://scripts/combat_modifier.gd" id="ModifierRules"]
+[ext_resource type="PackedScene" path="res://scenes/modifier_display.tscn" id="ModifierDisplay"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -198,6 +201,7 @@ mouse_filter = 2
 color = Color(0.018, 0.039, 0.067, 1)
 
 [node name="GameTitle" type="Label" parent="." unique_id=1499312453]
+visible = false
 layout_mode = 0
 offset_left = 22.0
 offset_top = 15.0
@@ -207,6 +211,7 @@ theme_override_font_sizes/font_size = 26
 text = "PLAYER SHIP NAME"
 
 [node name="TitleRule" type="Line2D" parent="." unique_id=1717544111]
+visible = false
 position = Vector2(-1, -7)
 points = PackedVector2Array(24, 57, 276, 57)
 width = 1.0
@@ -985,17 +990,17 @@ one_shot = true
 
 [node name="TurnLabel" type="Label" parent="." unique_id=238760700]
 layout_mode = 0
-anchor_left = 0.5
-anchor_right = 0.5
+anchor_left = 0.0
+anchor_right = 0.0
 anchor_top = 0.0
 anchor_bottom = 0.0
-offset_left = -155.0
+offset_left = 22.0
 offset_top = 15.0
-offset_right = 155.0
+offset_right = 322.0
 offset_bottom = 49.0
 theme_override_font_sizes/font_size = 21
 text = "Turn 1 · You"
-horizontal_alignment = 1
+horizontal_alignment = 0
 
 [node name="LastActionLabel" type="Label" parent="." unique_id=285804752]
 layout_mode = 0
@@ -1052,4 +1057,10 @@ layout_mode = 1
 script = ExtResource("FTL")
 
 [node name="FTLPanel" parent="." instance=ExtResource("FTLPanel")]
+layout_mode = 1
+
+[node name="CombatModifier" type="Node" parent="."]
+script = ExtResource("ModifierRules")
+
+[node name="ModifierDisplay" parent="." instance=ExtResource("ModifierDisplay")]
 layout_mode = 1

@@ -6,8 +6,8 @@ func refresh_display() -> void:
 	super.refresh_display()
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(player_hull)
 	$BattleView/Viewport/Battlefield/EnemyShip.set_hull_strength(enemy_hull)
-	$BattleView/Viewport/Battlefield/PlayerShip.set_shield_strength(player_shields)
-	$BattleView/Viewport/Battlefield/EnemyShip.set_shield_strength(enemy_shields)
+	$BattleView/Viewport/Battlefield/PlayerShip.set_shield_strength(0 if modifier.shields_disabled() else player_shields)
+	$BattleView/Viewport/Battlefield/EnemyShip.set_shield_strength(0 if modifier.shields_disabled() else enemy_shields)
 
 var backdrop_scale: Vector3
 var backdrop: MeshInstance3D
