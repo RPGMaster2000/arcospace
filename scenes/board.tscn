@@ -8,6 +8,10 @@
 [ext_resource type="Script" uid="uid://eq1hb45cgs7y" path="res://scripts/battle_effects.gd" id="6_effects"]
 [ext_resource type="Script" uid="uid://clkps43ws8g7d" path="res://scripts/turn_presentation.gd" id="7_turn"]
 [ext_resource type="Script" uid="uid://centsvm7vv87w" path="res://scripts/card_motion_settings.gd" id="12_ba0us"]
+[ext_resource type="Script" uid="uid://bge60xjyyeiyn" path="res://scripts/ftl_drive.gd" id="FTL"]
+[ext_resource type="PackedScene" path="res://scenes/ftl_panel.tscn" id="FTLPanel"]
+[ext_resource type="PackedScene" path="res://scenes/modifier_display.tscn" id="ModifierDisplay"]
+[ext_resource type="Script" uid="uid://jbsh3jp1iy7n" path="res://scripts/combat_modifier.gd" id="ModifierRules"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="preview_0"]
 [ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="preview_1"]
 [ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="preview_2"]
@@ -15,12 +19,6 @@
 [ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="preview_4"]
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
 [ext_resource type="PackedScene" path="res://scenes/match_result.tscn" id="Result"]
-
-[ext_resource type="Script" path="res://scripts/ftl_drive.gd" id="FTL"]
-[ext_resource type="PackedScene" path="res://scenes/ftl_panel.tscn" id="FTLPanel"]
-
-[ext_resource type="Script" path="res://scripts/combat_modifier.gd" id="ModifierRules"]
-[ext_resource type="PackedScene" path="res://scenes/modifier_display.tscn" id="ModifierDisplay"]
 
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
@@ -32,68 +30,44 @@ default_font = SubResource("BoldFont")
 Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1huyh"]
-bg_color = Color(0.16, 0.088, 0.08, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.985, 0.72, 0.595, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vevib"]
-bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m4vny"]
-bg_color = Color(0.16, 0.088, 0.08, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.985, 0.72, 0.595, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4bs3u"]
-bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
+bg_color = Color(0.16, 0.088, 0.08, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
+border_color = Color(0.985, 0.72, 0.595, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r6ya7"]
-bg_color = Color(0.08, 0.128, 0.16, 1)
+bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.735, 0.845, 0.845, 1)
+border_color = Color(1, 0.96, 0.8, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i85x2"]
-bg_color = Color(0.1536, 0.19776, 0.2272, 1)
+bg_color = Color(0.16, 0.088, 0.08, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.985, 0.72, 0.595, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b7otg"]
+bg_color = Color(0.2272, 0.16095999, 0.1536, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -104,7 +78,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b7otg"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_os6cd"]
 bg_color = Color(0.08, 0.128, 0.16, 1)
 border_width_left = 2
 border_width_top = 2
@@ -116,7 +90,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_os6cd"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v21d4"]
 bg_color = Color(0.1536, 0.19776, 0.2272, 1)
 border_width_left = 2
 border_width_top = 2
@@ -128,31 +102,31 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v21d4"]
-bg_color = Color(0.08, 0.16, 0.103999995, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.735, 0.945, 0.66999996, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5pkjh"]
-bg_color = Color(0.1536, 0.2272, 0.17568, 1)
+bg_color = Color(0.08, 0.128, 0.16, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.96, 0.8, 1)
+border_color = Color(0.735, 0.845, 0.845, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0qo51"]
+bg_color = Color(0.1536, 0.19776, 0.2272, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c845x"]
 bg_color = Color(0.08, 0.16, 0.103999995, 1)
 border_width_left = 2
 border_width_top = 2
@@ -164,7 +138,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c845x"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sngwm"]
 bg_color = Color(0.1536, 0.2272, 0.17568, 1)
 border_width_left = 2
 border_width_top = 2
@@ -176,7 +150,31 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="Resource" id="Resource_sngwm"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5g1vp"]
+bg_color = Color(0.08, 0.16, 0.103999995, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.735, 0.945, 0.66999996, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y0uh0"]
+bg_color = Color(0.1536, 0.2272, 0.17568, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.96, 0.8, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Resource" id="Resource_716ee"]
 resource_local_to_scene = true
 script = ExtResource("12_ba0us")
 
@@ -222,8 +220,6 @@ antialiased = true
 layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = -306.0
 offset_top = 15.0
 offset_right = -23.0
@@ -409,11 +405,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource1" type="Control" parent="." unique_id=1348338541]
-layout_mode = 0
+anchors_preset = 0
 anchor_left = 1.0
 anchor_right = 1.0
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = -94.0
 offset_top = 92.0
 offset_right = -22.0
@@ -469,11 +463,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource2" type="Control" parent="." unique_id=1494198465]
-layout_mode = 0
+anchors_preset = 0
 anchor_left = 1.0
 anchor_right = 1.0
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = -94.0
 offset_top = 174.0
 offset_right = -22.0
@@ -529,11 +521,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EnemyResource3" type="Control" parent="." unique_id=1720151133]
-layout_mode = 0
+anchors_preset = 0
 anchor_left = 1.0
 anchor_right = 1.0
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = -94.0
 offset_top = 256.0
 offset_right = -22.0
@@ -643,12 +633,10 @@ color = Color(1, 0.3, 0.12, 1)
 polygon = PackedVector2Array(163, -19, 185, -12, 185, 12, 163, 19)
 
 [node name="Versus" type="Label" parent="." unique_id=807563954]
+visible = false
 layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
-anchor_top = 0.0
-anchor_bottom = 0.0
-visible = false
 offset_left = -33.0
 offset_top = 177.0
 offset_right = 33.0
@@ -661,8 +649,8 @@ vertical_alignment = 1
 [node name="PlayerHullLabel" type="Label" parent="." unique_id=2109470503]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -432.0
 offset_top = -400.0
@@ -674,8 +662,8 @@ text = "Hull 30"
 [node name="PlayerShieldsLabel" type="Label" parent="." unique_id=86968435]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -287.0
 offset_top = -400.0
@@ -687,8 +675,8 @@ text = "Shields 10"
 [node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1691280843]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = 148.0
 offset_top = -400.0
@@ -700,8 +688,8 @@ text = "Shields 10"
 [node name="EnemyHullLabel" type="Label" parent="." unique_id=95820666]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = 346.0
 offset_top = -400.0
@@ -719,8 +707,8 @@ antialiased = true
 [node name="ShieldPlatingCard" parent="." unique_id=2042586335 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -619.0
 offset_top = -324.0
@@ -729,10 +717,10 @@ offset_bottom = -30.0
 tooltip_text = "Shield Plating
 +4 Shields
 Right-click: discard (+1 Materials)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_1huyh")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_vevib")
-theme_override_styles/hover = SubResource("StyleBoxFlat_vevib")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_1huyh")
+theme_override_styles/normal = SubResource("StyleBoxFlat_4bs3u")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_r6ya7")
+theme_override_styles/hover = SubResource("StyleBoxFlat_r6ya7")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_4bs3u")
 card_data = ExtResource("preview_0")
 
 [node name="ResourceIcon" parent="ShieldPlatingCard" index="0"]
@@ -757,8 +745,8 @@ theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 [node name="SynthesizerUpgradeCard" parent="." unique_id=1150386306 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -411.0
 offset_top = -324.0
@@ -767,10 +755,10 @@ offset_bottom = -30.0
 tooltip_text = "Synthesizer Upgrade
 +1 Synthesizer
 Right-click: discard (+2 Materials)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_m4vny")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_4bs3u")
-theme_override_styles/hover = SubResource("StyleBoxFlat_4bs3u")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_m4vny")
+theme_override_styles/normal = SubResource("StyleBoxFlat_i85x2")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_b7otg")
+theme_override_styles/hover = SubResource("StyleBoxFlat_b7otg")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_i85x2")
 card_data = ExtResource("preview_1")
 
 [node name="ResourceIcon" parent="SynthesizerUpgradeCard" index="0"]
@@ -802,8 +790,8 @@ text = "Discard +2"
 [node name="LaserBurstCard" parent="." unique_id=1370597201 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -203.0
 offset_top = -324.0
@@ -812,10 +800,10 @@ offset_bottom = -30.0
 tooltip_text = "Laser Burst
 Deal 6 damage
 Right-click: discard (+2 Energy)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_r6ya7")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_i85x2")
-theme_override_styles/hover = SubResource("StyleBoxFlat_i85x2")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_r6ya7")
+theme_override_styles/normal = SubResource("StyleBoxFlat_os6cd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_v21d4")
+theme_override_styles/hover = SubResource("StyleBoxFlat_v21d4")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_os6cd")
 card_data = ExtResource("preview_2")
 
 [node name="ResourceIcon" parent="LaserBurstCard" index="0"]
@@ -847,8 +835,8 @@ text = "Discard +2"
 [node name="EnergyCellCard" parent="." unique_id=372245618 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = 5.0
 offset_top = -324.0
@@ -857,10 +845,10 @@ offset_bottom = -30.0
 tooltip_text = "Energy Cell
 +4 Energy
 Right-click: discard (+1 Energy)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_b7otg")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_os6cd")
-theme_override_styles/hover = SubResource("StyleBoxFlat_os6cd")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_b7otg")
+theme_override_styles/normal = SubResource("StyleBoxFlat_5pkjh")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_0qo51")
+theme_override_styles/hover = SubResource("StyleBoxFlat_0qo51")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_5pkjh")
 card_data = ExtResource("preview_3")
 
 [node name="ResourceIcon" parent="EnergyCellCard" index="0"]
@@ -888,8 +876,8 @@ theme_override_colors/font_disabled_color = Color(0.97, 0.89, 0.69, 1)
 [node name="QuartersUpgradeCard" parent="." unique_id=926793025 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = 213.0
 offset_top = -324.0
@@ -898,10 +886,10 @@ offset_bottom = -30.0
 tooltip_text = "Quarters Upgrade
 +1 Quarters
 Right-click: discard (+2 Crew)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_v21d4")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_5pkjh")
-theme_override_styles/hover = SubResource("StyleBoxFlat_5pkjh")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_v21d4")
+theme_override_styles/normal = SubResource("StyleBoxFlat_c845x")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_sngwm")
+theme_override_styles/hover = SubResource("StyleBoxFlat_sngwm")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_c845x")
 card_data = ExtResource("preview_4")
 
 [node name="ResourceIcon" parent="QuartersUpgradeCard" index="0"]
@@ -933,8 +921,8 @@ text = "Discard +2"
 [node name="TorpedoSalvoCard" parent="." unique_id=464282260 instance=ExtResource("2_card")]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = 421.0
 offset_top = -324.0
@@ -943,10 +931,10 @@ offset_bottom = -30.0
 tooltip_text = "Torpedo Salvo
 Deal 12 damage
 Right-click: discard (+3 Crew)"
-theme_override_styles/normal = SubResource("StyleBoxFlat_0qo51")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_c845x")
-theme_override_styles/hover = SubResource("StyleBoxFlat_c845x")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_0qo51")
+theme_override_styles/normal = SubResource("StyleBoxFlat_5g1vp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_y0uh0")
+theme_override_styles/hover = SubResource("StyleBoxFlat_y0uh0")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_5g1vp")
 card_data = ExtResource("preview_5")
 
 [node name="ResourceIcon" parent="TorpedoSalvoCard" index="0"]
@@ -990,23 +978,18 @@ one_shot = true
 
 [node name="TurnLabel" type="Label" parent="." unique_id=238760700]
 layout_mode = 0
-anchor_left = 0.0
-anchor_right = 0.0
-anchor_top = 0.0
-anchor_bottom = 0.0
 offset_left = 22.0
 offset_top = 15.0
 offset_right = 322.0
 offset_bottom = 49.0
 theme_override_font_sizes/font_size = 21
 text = "Turn 1 · You"
-horizontal_alignment = 0
 
 [node name="LastActionLabel" type="Label" parent="." unique_id=285804752]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -430.0
 offset_top = -370.0
@@ -1018,7 +1001,7 @@ horizontal_alignment = 1
 
 [node name="CardMotion" parent="." unique_id=239449323 instance=ExtResource("5_motion")]
 layout_mode = 1
-settings = SubResource("Resource_sngwm")
+settings = SubResource("Resource_716ee")
 
 [node name="BattleEffects" type="Node" parent="." unique_id=1779801462]
 script = ExtResource("6_effects")
@@ -1026,8 +1009,8 @@ script = ExtResource("6_effects")
 [node name="EnemyTurnBanner" type="Label" parent="." unique_id=306887152]
 layout_mode = 0
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -210.0
 offset_top = -453.0
@@ -1046,21 +1029,22 @@ script = ExtResource("7_turn")
 [node name="MatchResult" parent="." unique_id=1914324438 instance=ExtResource("Result")]
 layout_mode = 1
 
+[node name="FTLDrive" type="Node" parent="." unique_id=461289179]
+script = ExtResource("FTL")
+
+[node name="FTLPanel" parent="." unique_id=980773763 instance=ExtResource("FTLPanel")]
+anchors_preset = 7
+
+[node name="CombatModifier" type="Node" parent="." unique_id=807608807]
+script = ExtResource("ModifierRules")
+
+[node name="ModifierDisplay" parent="." unique_id=1109157523 instance=ExtResource("ModifierDisplay")]
+grow_horizontal = 2
+grow_vertical = 2
+
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]
 [editable path="LaserBurstCard"]
 [editable path="EnergyCellCard"]
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
-
-[node name="FTLDrive" type="Node" parent="."]
-script = ExtResource("FTL")
-
-[node name="FTLPanel" parent="." instance=ExtResource("FTLPanel")]
-layout_mode = 1
-
-[node name="CombatModifier" type="Node" parent="."]
-script = ExtResource("ModifierRules")
-
-[node name="ModifierDisplay" parent="." instance=ExtResource("ModifierDisplay")]
-layout_mode = 1

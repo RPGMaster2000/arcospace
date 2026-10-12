@@ -5,18 +5,18 @@ extends Node
 const Effects = preload("res://scripts/card_effects.gd")
 const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula"]
 ## TUNE: Full rounds between events, counted after an event ends.
-const MIN_INTERVAL: int = 6
-const MAX_INTERVAL: int = 10
+const MIN_INTERVAL: int = 3
+const MAX_INTERVAL: int = 6
 ## TUNE: Event duration in complete player/enemy rounds.
 const ACTIVE_ROUNDS: int = 1
 ## TUNE: Independent hit chance for EACH ship when the battlefield launches a shower.
-const ASTEROID_CHANCE: float = 0.20
+const ASTEROID_CHANCE: float = 0.50
 ## TUNE: Damage per asteroid hit; shields absorb it first.
-const ASTEROID_DAMAGE: int = 5
+const ASTEROID_DAMAGE: int = 10
 ## TUNE: Nebula starts here; each full round moves by at most NEBULA_STEP percentage points.
-const NEBULA_START: int = 35
+const NEBULA_START: int = 25
 const NEBULA_STEP: int = 5
-const NEBULA_MAX: int = 70
+const NEBULA_MAX: int = 60
 var kind: int = 0
 var active: bool = false
 var next_round: int = 0
@@ -58,7 +58,7 @@ func status_text(round_number: int) -> String:
 	if kind == 0:
 		return ""
 	if kind == 4:
-		return "Targeting Sensor Efficiency: %d%% · Miss rate: %d%%" % [miss_rate, miss_rate]
+		return "Targeting Sensors Affected - Miss rate: %d%%" % [miss_rate, miss_rate]
 	if active:
 		return NAMES[kind].to_upper() + " ACTIVE · " + ("Shields offline" if kind == 3 else "Both ships affected")
 	var phrases: Array[String] = ["", "asteroids pass by", "next ion storm", "next solar flare"]
