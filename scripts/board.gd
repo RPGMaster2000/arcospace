@@ -11,7 +11,9 @@ const CardEffects = preload("res://scripts/card_effects.gd")
 @export var card_slots: Array[NodePath] = [NodePath("ShieldPlatingCard"),
 	NodePath("SynthesizerUpgradeCard"), NodePath("LaserBurstCard"),
 	NodePath("EnergyCellCard"), NodePath("QuartersUpgradeCard"), NodePath("TorpedoSalvoCard")]
+## TUNE: Hull amount that wins the match immediately.
 @export_range(1, 1000, 1) var hull_goal: int = 50
+## TUNE: Amount required in EACH of the three resources for resource victory.
 @export_range(1, 1000, 1) var resource_goal: int = 100
 var current_actor: String = "player"
 var turn_number: int = 1
@@ -26,28 +28,44 @@ var resolving_card: bool = false
 @onready var enemy_timer: Timer = $EnemyThinkTimer
 
 #PLAYER
+## TUNE: Starting hull for the player. Edit the board node in the Inspector if it has a saved override.
 @export var player_hull: int = 30
+## TUNE: Starting shields for the player. Edit the board node in the Inspector if it has a saved override.
 @export var player_shields: int = 10
 
+## TUNE: Starting materials for the player. Edit the board node in the Inspector if it has a saved override.
 @export var player_materials: int = 16
+## TUNE: Starting energy for the player. Edit the board node in the Inspector if it has a saved override.
 @export var player_energy: int = 16
+## TUNE: Starting crew for the player. Edit the board node in the Inspector if it has a saved override.
 @export var player_crew: int = 16
 
+## TUNE: Starting materials gained each player turn. Edit the board node in the Inspector if it has a saved override.
 @export var player_synthesizer: int = 2
+## TUNE: Starting energy gained each player turn. Edit the board node in the Inspector if it has a saved override.
 @export var player_reactor: int = 2
+## TUNE: Starting crew gained each player turn. Edit the board node in the Inspector if it has a saved override.
 @export var player_quarters: int = 2
 
 
 # ENEMY
+## TUNE: Starting hull for the enemy. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_hull: int = 30
+## TUNE: Starting shields for the enemy. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_shields: int = 10
 
+## TUNE: Starting materials for the enemy. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_materials: int = 16
+## TUNE: Starting energy for the enemy. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_energy: int = 16
+## TUNE: Starting crew for the enemy. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_crew: int = 16
 
+## TUNE: Starting materials gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_synthesizer: int = 2
+## TUNE: Starting energy gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_reactor: int = 2
+## TUNE: Starting crew gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
 @export var enemy_quarters: int = 2
 
 @onready var player_hull_label: Label = $PlayerHullLabel
@@ -87,6 +105,7 @@ func _ready() -> void:
 		var button: Button = get_node(card_slots[slot])
 		button.pressed.connect(_on_card_pressed.bind(slot))
 		button.discard_requested.connect(_discard_card.bind(slot))
+	# TUNE in the scene: EnemyThinkTimer > Wait Time sets the AI pause in seconds.
 	enemy_timer.timeout.connect(_on_enemy_timeout)
 	_begin_turn("player")
 
@@ -261,9 +280,15 @@ func _warp_out() -> void:
 	$MatchResult/Panel/Title.text = "WARP SUCCESS"
 
 func refresh_display() -> void:
-	$FTLPanel/Charge.text = "FTL %d / 8" % ftl.charge
+	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.FULL_CHARGE]
+	if ftl.disabled_turns > 0:
+		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns
+	elif ftl.can_warp():
+		ftl_status += " · Ready"
+	$FTLPanel/Charge.text = ftl_status
+	$FTLPanel/Progress.max_value = ftl.FULL_CHARGE
 	$FTLPanel/Progress.value = ftl.charge
-	$FTLPanel/Status.text = "OFFLINE · %d player turns" % ftl.disabled_turns if ftl.disabled_turns > 0 else ("READY TO WARP" if ftl.can_warp() else "+1 each player turn")
+	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "YOU WIN" if winner == "player" else "YOU LOSE"

@@ -2,8 +2,11 @@ extends Node
 
 # RESPONSIBILITY: Player-only FTL charge and temporary disruption state.
 # DOES NOT: Advance turns, resolve damage, or declare the match winner.
-const FULL_CHARGE: int = 8
+## TUNE: Increase this for more player turns before warp; the counter and bar follow automatically.
+const FULL_CHARGE: int = 14
+## TUNE: Number of player turns with no charging or warp after an FTL failure.
 const DISABLED_TURNS: int = 5
+## TUNE: Failure probability per hull-damaging action: 0.2 = 20%, 0.0 = never, 1.0 = always.
 const FAILURE_CHANCE: float = 0.2
 var charge: int = 0
 var disabled_turns: int = 0

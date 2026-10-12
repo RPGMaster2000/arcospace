@@ -706,7 +706,7 @@ theme_override_font_sizes/font_size = 24
 text = "Hull 30"
 
 [node name="HandRule" type="Line2D" parent="." unique_id=187637948]
-position = Vector2(0, 16)
+position = Vector2(0, 32)
 points = PackedVector2Array(24, 359, 692.4546, 358.99997, 1256, 359)
 width = 1.0
 antialiased = true
@@ -1052,3 +1052,4 @@ layout_mode = 1
 script = ExtResource("FTL")
 
 [node name="FTLPanel" parent="." instance=ExtResource("FTLPanel")]
+layout_mode = 1

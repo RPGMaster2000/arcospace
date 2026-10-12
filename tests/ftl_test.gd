@@ -10,16 +10,16 @@ func _initialize() -> void:
 func run() -> void:
 	var drive = Drive.new()
 	root.add_child(drive)
-	for turn in range(8):
+	for turn in range(14):
 		drive.begin_player_turn()
 		check(drive.charge == turn + 1, "Charge once per player turn")
-	check(drive.can_warp(), "Ready at eight")
+	check(drive.can_warp(), "Ready at fourteen")
 	check(not drive.take_hull_damage(0, 0.0), "Shield-only hits cannot disrupt")
 	check(not drive.take_hull_damage(100, 0.2), "20 percent threshold is flat")
 	check(drive.take_hull_damage(1, 0.199), "Even one hull damage can disrupt")
 	for turn in range(5):
 		drive.begin_player_turn()
-		check(not drive.can_warp() and drive.charge == 8, "Five full turns blocked, charge retained")
+		check(not drive.can_warp() and drive.charge == 14, "Five full turns blocked, charge retained")
 		check(not drive.take_hull_damage(1, 0.0), "Further hits must not extend outage")
 	drive.begin_player_turn()
 	check(drive.can_warp(), "Ready on sixth turn after outage")
@@ -38,7 +38,7 @@ func run() -> void:
 	board._begin_turn("enemy")
 	board.enemy_timer.stop()
 	check(board.ftl.charge == 1, "Enemy turn never charges")
-	board.ftl.charge = 8
+	board.ftl.charge = 14
 	board._warp_out()
 	check(board.winner.is_empty(), "Cannot warp during enemy turn")
 	board.current_actor = "player"

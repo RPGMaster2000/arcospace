@@ -17,12 +17,15 @@ var shield_was_offline: bool = false
 func _process(delta: float) -> void:
 	hover_time += delta
 	var phase: float = 1.7 if name == "EnemyShip" else 0.0
+	# TUNE: 7.0 = seconds per hover loop; 0.07 = vertical travel in 3D units.
 	position = rest_position + Vector3(0, sin(hover_time * TAU / 7.0 + phase) * 0.07, 0)
+	# TUNE: Below 5 hull, add critical shaking; 0.012 below controls shake distance.
 	if hull_strength < 5 and hull_strength > 0:
 		position += Vector3(sin(hover_time * 43.0), sin(hover_time * 57.0), 0) * 0.012
 
 func set_hull_strength(value: int) -> void:
 	hull_strength = value
+	# TUNE: Markings start below 15 hull, intensify below 5; 0.45 controls the mild coverage.
 	damage_material.set_shader_parameter("damage", 0.0 if value >= 15 else (1.0 if value < 5 else 0.45))
 
 func _ready() -> void:
@@ -57,6 +60,7 @@ func animate_hit(tween: Tween, hull_hit: bool, seconds: float) -> void:
 
 func set_shield_strength(value: int) -> void:
 	shield.visible = value > 0
+	# TUNE: 10.0 = shield strength required for full bubble opacity.
 	shield_material.set_shader_parameter("strength", clampf(value / 10.0, 0.0, 1.0))
 
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:

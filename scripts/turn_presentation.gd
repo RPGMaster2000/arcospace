@@ -1,6 +1,7 @@
 extends Label
 
 # RESPONSIBILITY: Show whose turn it is without delaying or advancing turns.
+## TUNE: Seconds for the hand dimming and enemy-turn banner transition; smaller = faster.
 const FADE_SECONDS: float = 0.2
 var enemy_active: bool = false
 var transition: Tween
