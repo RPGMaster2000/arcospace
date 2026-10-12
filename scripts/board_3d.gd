@@ -16,7 +16,8 @@ const BATTLEFIELDS = [
 	preload("res://scenes/battlefield_asteroid_belt.tscn"),
 	preload("res://scenes/battlefield_ion_storm.tscn"),
 	preload("res://scenes/battlefield_solar_flare.tscn"),
-	preload("res://scenes/battlefield_nebula.tscn")
+	preload("res://scenes/battlefield_nebula.tscn"),
+	preload("res://scenes/battlefield_temporal_rift.tscn")
 ]
 
 func _enter_tree() -> void:

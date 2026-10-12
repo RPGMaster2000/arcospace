@@ -103,6 +103,8 @@ func _ready() -> void:
 				set(setting, int(setup_settings[setting]))
 	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	modifier.configure(int(setup_settings.get("modifier", 0)))
+	for active_hand in [hand, enemy_hand]:
+		active_hand.drop_multiplier = modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position

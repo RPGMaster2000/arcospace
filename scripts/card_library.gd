@@ -1,6 +1,6 @@
 extends RefCounted
 
-# RESPONSIBILITY: List the 28 card resources in their original order.
+# RESPONSIBILITY: List the Inspector-editable card resources.
 # DOES NOT: Apply effects or manage a hand.
 const CARDS = [
 	preload("res://cards/01_shield_plating.tres"),
@@ -32,4 +32,10 @@ const CARDS = [
 	preload("res://cards/27_missile_barrage.tres"),
 	preload("res://cards/28_breach_charge.tres"),
 	preload("res://cards/29_polaron_burst.tres"),
+	preload("res://cards/30_siege_driver.tres"),
+	preload("res://cards/31_emergency_refit.tres"),
+	preload("res://cards/32_antimatter_lance.tres"),
+	preload("res://cards/33_aegis_overcharge.tres"),
+	preload("res://cards/34_sabotage_commandos.tres"),
+	preload("res://cards/35_damage_control.tres"),
 ]

@@ -4,6 +4,9 @@ class_name CardData
 
 # RESPONSIBILITY: Store Inspector-editable card data.
 # DOES NOT: Change game state or manage turns.
+## TUNE: Tier controls draw eligibility and border presentation; current rare cards are not yet added.
+@export_enum("Tier 1:1", "Tier 2:2", "Tier 3:3") var tier: int = 1
+
 ## TUNE: Card title shown in the UI; edit each cards/*.tres resource in the Inspector.
 @export var card_name: String = "":
 	set(value):

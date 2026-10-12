@@ -3,8 +3,9 @@ extends Node
 # RESPONSIBILITY: Schedule one encounter modifier and resolve its card adjustments.
 # DOES NOT: Advance turns, change hands, or present animations.
 const Effects = preload("res://scripts/card_effects.gd")
-const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula"]
+const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift"]
 ## TUNE: Full rounds between events, counted after an event ends.
+const TEMPORAL_DROP_MULTIPLIER: float = 2.0 # TUNE: Tier 2 draw multiplier for the whole battle.
 const MIN_INTERVAL: int = 3
 const MAX_INTERVAL: int = 6
 ## TUNE: Event duration in complete player/enemy rounds.
@@ -36,7 +37,7 @@ func configure(selection: int) -> void:
 	next_round = 1 + rng.randi_range(MIN_INTERVAL, MAX_INTERVAL)
 
 func begin_round(round_number: int) -> String:
-	if kind == 0:
+	if kind == 0 or kind == 5:
 		return ""
 	if kind == 4:
 		if round_number > 1:
@@ -63,6 +64,8 @@ func shields_disabled() -> bool:
 	return kind == 3 and active
 
 func status_text(round_number: int) -> String:
+	if kind == 5:
+		return "TEMPORAL RIFT · Tier 2 drop rate ×%.0f" % TEMPORAL_DROP_MULTIPLIER
 	if kind == 0:
 		return ""
 	if kind == 4:
@@ -73,6 +76,8 @@ func status_text(round_number: int) -> String:
 	return "%d turns until %s" % [maxi(0, next_round - round_number), phrases[kind]]
 
 func meter_value(round_number: int) -> float:
+	if kind == 5:
+		return 100.0
 	if kind == 4:
 		return float(100 - miss_rate)
 	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)

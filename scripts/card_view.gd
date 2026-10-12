@@ -36,6 +36,8 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func refresh_card() -> void:
+	queue_redraw()
+	set_process(card_data != null and card_data.tier > 1)
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
 		$CostLabel.text = ""
@@ -44,7 +46,7 @@ func refresh_card() -> void:
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
 		return
-	$TitleLabel.text = card_data.card_name.to_upper()
+	$TitleLabel.text = card_data.card_name.to_upper() + (" · T%d" % card_data.tier if card_data.tier > 1 else "")
 	$CostLabel.text = str(card_data.cost)
 	$DescriptionLabel.text = card_data.description
 	var colors = {"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)}
@@ -88,3 +90,29 @@ func set_ion_glow(active: bool) -> void:
 		box.shadow_color = Color(0.15, 0.55, 1.0, 0.55 if active else 0.0)
 		box.shadow_size = 9 if active else 0
 		add_theme_stylebox_override(style, box)
+
+var border_time: float = 0.0
+func _process(delta: float) -> void:
+	border_time += delta
+	queue_redraw()
+
+func _draw() -> void:
+	if card_data == null or card_data.tier < 2:
+		return
+	# TUNE: Jagged edge depth (pixels), tooth spacing and subtle pulse strength.
+	var depth: float = 2.0
+	var spacing: float = 12.0
+	var pulse: float = 0.28 + 0.10 * sin(border_time * 2.0)
+	var color = Color(0.65, 0.8, 1.0, pulse)
+	var points = PackedVector2Array()
+	var corners = [Vector2(3, 3), Vector2(size.x-3, 3), size-Vector2(3,3), Vector2(3,size.y-3), Vector2(3,3)]
+	for edge in range(4):
+		var start: Vector2 = corners[edge]
+		var end: Vector2 = corners[edge+1]
+		var steps: int = maxi(2, int(start.distance_to(end) / spacing))
+		var inward: Vector2 = (end-start).normalized().orthogonal()
+		for step in range(steps):
+			points.append(start.lerp(end, float(step)/steps) + inward * (depth if step % 2 else 0.0))
+	points.append(points[0])
+	for width in [8.0, 4.0, 1.5]:
+		draw_polyline(points, Color(color, pulse * (0.3 if width > 2 else 1.0)), width, true)

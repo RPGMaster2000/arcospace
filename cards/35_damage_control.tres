@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 2
+card_name = "Damage Control"
+family = "crew"
+cost = 12
+description = "+18 Hull, +6 Shields"
+effects = {"hull": 18, "shields": 6}

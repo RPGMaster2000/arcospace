@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 2
+card_name = "Sabotage Commandos"
+family = "crew"
+cost = 14
+description = "18 damage · Enemy production −2 each (min 1)"
+effects = {"damage": 18, "sabotage": 2}

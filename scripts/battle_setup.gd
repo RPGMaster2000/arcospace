@@ -15,6 +15,8 @@ static func description(index: int) -> String:
 			return "%s: both ships’ shields go offline for %d round(s). Shield restoration has no effect. Stored shields return afterward." % [interval, Modifier.ACTIVE_ROUNDS]
 		4:
 			return "Targeting efficiency starts at %d%% and drifts up to %d points per full turn within %d–100%%. This is combat card hit chance. Misses still spend the cost." % [100 - Modifier.NEBULA_START, Modifier.NEBULA_STEP, 100 - Modifier.NEBULA_MAX]
+		5:
+			return "Whole battle: Tier 2 draw chance doubles from 15% to 30% for both ships. Only one Tier 2 card per hand. No timed events."
 	return "No combat modifiers. Standard battle rules."
 var initial_settings: Dictionary = {}
 

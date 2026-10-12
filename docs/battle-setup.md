@@ -37,3 +37,13 @@ None uses `scenes/battlefield_3d.tscn`. Each other setup selection loads its own
 These start with the same visuals. Edit their backgrounds, lighting and layouts independently in Godot. Keep `Camera3D`, `MeshInstance3D` (backdrop), `PlayerShip` and `EnemyShip` node names for board wiring. Ship instances still share `ship_3d.tscn`; make ship resources unique before changing them for only one battlefield. Setup descriptions use modifier constants automatically.
 
 Ion card previews and glow use the same storm multiplier as resolution. FTL status sits below player hull/shields and flashes when disrupted and at each offline player turn.
+
+## Card tiers
+
+Existing cards default to Tier 1. The CardData Inspector offers Tier 1, Tier 2 and Tier 3. Six Tier 2 cards are added: Siege Driver / Emergency Refit (Materials), Antimatter Lance / Aegis Overcharge (Energy), Sabotage Commandos / Damage Control (Crew). Tier 3 is reserved; no Tier 3 cards exist yet.
+
+Each hand can hold one Tier 2 card total. This applies to starting hands and replacement draws, for both ships. Tier 1 retains the two-identical-copy limit. The draw first chooses a tier (15% Tier 2 when eligible), then uniformly selects an eligible card within that tier. If a Tier 2 is already held, draws fall back to Tier 1. Using/discarding that card opens the slot for its replacement. Custom pools without an eligible fallback can produce an empty slot.
+
+Temporal Rift is a whole-battle modifier with no periodic event. It doubles Tier 2 chance to 30% for both hands and loads `scenes/battlefield_temporal_rift.tscn`, an independent copy ready for editor changes. No other modifier is active alongside it.
+
+TUNE: `card_hand.gd` exposes tier chances and max copies. Each new `.tres` exposes tier, cost and numerical effects. `card_view.gd` exposes commented jagged depth, spacing and pulse intensity; the Tier 2 outline pulses softly and remains visible on the played-card presentation.
