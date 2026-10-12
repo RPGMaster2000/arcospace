@@ -150,6 +150,13 @@ func _begin_turn(side: String) -> void:
 	var before: Dictionary = _both_states()
 	var asteroid_event: bool = false
 	if side == "player":
+		var event_due: bool = modifier.kind in [1, 2, 3] and not modifier.active and turn_number >= modifier.next_round
+		if event_due:
+			resolving_card = true
+			refresh_display()
+			await $ModifierDisplay.warning(modifier.kind)
+			if is_queued_for_deletion():
+				return
 		var announcement: String = modifier.begin_round(turn_number)
 		if modifier.kind == 1 and not announcement.is_empty():
 			var player: Dictionary = _read_state("player")
@@ -160,6 +167,9 @@ func _begin_turn(side: String) -> void:
 			ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))
 			asteroid_event = true
 		$ModifierDisplay.announce(announcement)
+		if event_due:
+			var player_hit: bool = asteroid_event and (player_hull < int(before.player.hull) or player_shields < int(before.player.shields))
+			$ModifierDisplay.impact(modifier.kind, player_hit)
 		if not _check_winner():
 			ftl.begin_player_turn()
 	var state: Dictionary = _read_state(side)
@@ -167,9 +177,11 @@ func _begin_turn(side: String) -> void:
 		MatchRules.income(state)
 		_write_state(side, state)
 	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event)
-	resolving_card = battle_effects.busy
+	resolving_card = battle_effects.busy or resolving_card
 	_check_winner()
 	refresh_display()
+	if asteroid_event or (side == "player" and modifier.active):
+		await $ModifierDisplay.hold_result()
 	if battle_effects.busy:
 		await battle_effects.finished
 	if battle_effects.cancelling or is_queued_for_deletion():
@@ -197,10 +209,17 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	resolving_card = true
 	enemy_timer.stop()
 	refresh_display()
+	var ion_card: bool = not discard and modifier.kind == 2 and modifier.active and card.family == "energy"
+	if ion_card:
+		await $ModifierDisplay.warning(2, true)
+		if is_queued_for_deletion():
+			return false
 	var source: Control = get_node(card_slots[slot]) if side == "player" else null
 	var motion = $CardMotion
 	await motion.animate_action(card, source, side, discard,
 		_resolve_card.bind(side, slot, discard, card))
+	if ion_card:
+		await $ModifierDisplay.hold_result()
 	if motion.cancelling or not is_inside_tree() or is_queued_for_deletion():
 		return false
 	if battle_effects.busy:
@@ -233,6 +252,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		actor[card.family] += int(floor(card.cost / 3.0))
 	else:
 		$ModifierDisplay.announce(modifier.play(card, actor, target))
+		if modifier.kind == 2 and modifier.active and card.family == "energy":
+			$ModifierDisplay.impact(2)
 	_write_state(side, actor)
 	_write_state(other, target)
 	ftl.take_hull_damage(maxi(0, int(before.player.hull) - player_hull))

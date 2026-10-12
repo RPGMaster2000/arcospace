@@ -99,6 +99,7 @@ func run() -> void:
 	for selection in range(5):
 		var scene_board = load("res://scenes/board_3d.tscn").instantiate()
 		scene_board.setup_settings = {"modifier":selection}
+		scene_board.get_node("ModifierDisplay").cinematic_enabled = false
 		root.add_child(scene_board)
 		check(scene_board.get_node("BattleView/Viewport/Battlefield").scene_file_path == scene_board.BATTLEFIELDS[selection].resource_path, "Setup selects correct editable battlefield")
 		scene_board.queue_free()
@@ -115,6 +116,7 @@ func run() -> void:
 	board.setup_settings = setup.read_settings()
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
+	board.get_node("ModifierDisplay").cinematic_enabled = false
 	root.add_child(board)
 	check(board.player_materials == 10 and board.enemy_energy == 9 and board.ftl.charge_target == 20, "Setup resources and production applied before first income")
 	check(board.modifier.kind == 3 and board.turn_number == 1, "Setup modifier and first round")
