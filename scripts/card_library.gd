@@ -38,4 +38,13 @@ const CARDS = [
 	preload("res://cards/33_aegis_overcharge.tres"),
 	preload("res://cards/34_sabotage_commandos.tres"),
 	preload("res://cards/35_damage_control.tres"),
+	preload("res://cards/36_salvage_strike.tres"),
+	preload("res://cards/37_pulse_repeater.tres"),
+	preload("res://cards/38_cataclysm_protocol.tres"),
+	preload("res://cards/39_reactor_salvage.tres"),
+	preload("res://cards/40_supply_diversion.tres"),
+	preload("res://cards/41_shield_collapse.tres"),
+	preload("res://cards/42_overloaded_warhead.tres"),
+	preload("res://cards/43_emergency_reserves.tres"),
+	preload("res://cards/44_desperate_conversion.tres"),
 ]

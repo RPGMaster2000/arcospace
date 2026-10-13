@@ -272,7 +272,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		$LastActionLabel.text += " — play again"
 	battle_effects.play_changes(before, _both_states(), side,
 		card.family, 0 if discard else card.cost,
-		not discard and (card.effects.get("damage", 0) > 0 or card.effects.get("break_shields", 0) > 0))
+		not discard and (card.effects.get("damage", 0) > 0 or card.effects.get("break_shields", 0) > 0 or card.effects.has("shield_collapse_below")))
 	_check_winner()
 	refresh_display()
 

@@ -83,7 +83,7 @@ func meter_value(round_number: int) -> float:
 	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
 
 static func is_combat(effects: Dictionary) -> bool:
-	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields"]:
+	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below"]:
 		if effects.get(key, false):
 			return true
 	return false
@@ -96,7 +96,7 @@ func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 			result[key] = int(floor((1.0 if result[key] else 0.0) * factor))
 		elif result[key] is Dictionary:
 			result[key] = _scaled(result[key], factor)
-		elif key != "pierce" and (result[key] is int or result[key] is float):
+		elif key not in ["pierce", "shield_collapse_below"] and (result[key] is int or result[key] is float):
 			# TUNE: Half effects round down, including +1 production becoming zero.
 			result[key] = int(floor(float(result[key]) * factor))
 	return result
@@ -108,8 +108,8 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 	var notice: String = ""
 	var chance: float = rng.randf() if roll < 0.0 else roll
 	if kind == 4 and is_combat(card.effects) and chance < miss_rate / 100.0:
-		# A miss spends the card/cost and cancels its effects, including mixed repairs.
-		modified.effects = {}
+		# A miss cancels target/bonus effects; explicit self-damage remains an unavoidable cost.
+		modified.effects = {"self_damage": card.effects.self_damage} if card.effects.has("self_damage") else {}
 		notice = "MISS · NEBULA INTERFERENCE"
 	elif kind == 2 and active and card.family == "energy":
 		# The already announced storm multiplier also drives the card previews.
@@ -124,7 +124,7 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 		modified.effects = modified.effects.duplicate(true)
 		modified.effects.erase("shields")
 		modified.effects.erase("swap_shields")
-	Effects.play(modified, actor, target)
+	Effects.play(modified, actor, target, rng)
 	if shields_disabled():
 		# Shield strength is reserved during the flare, not destroyed or regenerated.
 		actor.shields = saved_actor_shields
@@ -164,6 +164,12 @@ func preview(card: Resource) -> Resource:
 					lines.append(("Steal %d %s" if key == "steal" else "Enemy −%d %s") % [value[resource], resource.capitalize()])
 			"sabotage": lines.append("Enemy production −%d each (min 1)" % int(value))
 			"swap_shields": lines.append("Swap Shields")
+			"random_gain": lines.append("Gain %d random resource" % value)
+			"random_gain_other": lines.append("Gain %d random other resource" % value)
+			"random_gain_range_other": lines.append("Gain %d–%d random other resource" % [value.min, value.max])
+			"production_other": lines.append("+%d %s, +%d corresponding resource" % [value.production, str(value.type).capitalize(), value.resource])
+			"self_damage": lines.append("Take %d direct Hull damage" % value)
+			"shield_collapse_below": lines.append("Remove enemy Shields if below %d" % value)
 			_: lines.append("%+d %s" % [value, str(key).capitalize()])
 	if card.play_again:
 		lines.append("Play again")

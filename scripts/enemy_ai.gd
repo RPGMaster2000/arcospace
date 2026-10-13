@@ -25,9 +25,17 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, hull_goal: int, 
 	for slot in affordable:
 		var simulated: Dictionary = actor.duplicate(true)
 		var target: Dictionary = enemy.duplicate(true)
-		Effects.play(cards[slot], simulated, target)
-		if Rules.wins(simulated, target, hull_goal, resource_goal):
+		Effects.play(cards[slot], simulated, target, null, true)
+		if simulated.hull > 0 and Rules.wins(simulated, target, hull_goal, resource_goal):
 			return {"slot": slot, "discard": false}
+	# Avoid fatal self damage when choosing a non-winning move.
+	var safe: Array[int] = []
+	for slot in affordable:
+		if int(cards[slot].effects.get("self_damage", 0)) < int(actor.hull):
+			safe.append(slot)
+	if safe.is_empty():
+		return {"slot": _pick(affordable), "discard": true}
+	affordable = safe
 	var attacks: Array[int] = []
 	var repairs: Array[int] = []
 	var upgrades: Array[int] = []
@@ -37,6 +45,8 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, hull_goal: int, 
 			attacks.append(slot)
 		if effects.get("hull", 0) > 0:
 			repairs.append(slot)
+		if effects.has("production_other"):
+			upgrades.append(slot)
 		for key in Rules.PRODUCTION:
 			if effects.get(key, 0) > 0:
 				upgrades.append(slot)

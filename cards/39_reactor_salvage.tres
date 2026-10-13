@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Reactor Salvage"
+family = "materials"
+cost = 7
+description = "+1 Reactor and +5 Energy"
+effects = {"production_other": {"type": "reactor", "production": 1, "resource": 5}}
+play_again = false

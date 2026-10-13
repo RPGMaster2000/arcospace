@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 2
+card_name = "Emergency Reserves"
+family = "energy"
+cost = 10
+description = "Gain 12–15 Materials or Crew randomly"
+effects = {"random_gain_range_other": {"min": 12, "max": 15}}
+play_again = false

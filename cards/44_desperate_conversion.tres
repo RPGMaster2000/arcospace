@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Desperate Conversion"
+family = "crew"
+cost = 5
+description = "Take 10 direct Hull damage; gain 20 Materials or Energy randomly"
+effects = {"self_damage": 10, "random_gain_other": 20}
+play_again = false

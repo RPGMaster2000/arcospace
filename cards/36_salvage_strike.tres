@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Salvage Strike"
+family = "materials"
+cost = 5
+description = "Deal 4 damage; gain 2 of a random resource"
+effects = {"damage": 4, "random_gain": 2}
+play_again = false

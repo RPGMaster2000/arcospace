@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Overloaded Warhead"
+family = "materials"
+cost = 7
+description = "Deal 10 damage; take 4 direct Hull damage"
+effects = {"damage": 10, "self_damage": 4}
+play_again = false

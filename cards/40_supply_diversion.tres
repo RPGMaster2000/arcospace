@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Supply Diversion"
+family = "crew"
+cost = 4
+description = "Gain 2 Materials or Energy randomly; play again"
+effects = {"random_gain_other": 2}
+play_again = true

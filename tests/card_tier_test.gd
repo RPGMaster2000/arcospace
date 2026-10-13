@@ -36,8 +36,8 @@ func run() -> void:
 		var actor = {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":3,"reactor":3,"quarters":3}
 		var target = actor.duplicate()
 		Effects.play(card, actor, target)
-		check(target.hull < 30 or actor.hull > 30 or actor.shields > 10, "Tier 2 actually damages or restores")
-	check(counts == {"materials":2,"energy":2,"crew":2}, "Two Tier 2 cards per resource")
+		check(target.hull < 30 or actor.hull > 30 or actor.shields > 10 or actor.materials > 100 or actor.energy > 100 or actor.crew > 100, "Tier 2 actually damages or restores")
+	check(counts == {"materials":2,"energy":3,"crew":3}, "Eight Tier 2 cards including new Crew and Energy cards")
 	hand.free()
 	var board = load("res://scenes/board_3d.tscn").instantiate()
 	board.setup_settings = {"modifier":5}

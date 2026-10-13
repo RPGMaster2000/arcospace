@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 1
+card_name = "Shield Collapse"
+family = "energy"
+cost = 6
+description = "If enemy Shields are below 10, remove them all; otherwise no effect"
+effects = {"shield_collapse_below": 10}
+play_again = false
