@@ -6,7 +6,7 @@
 script = ExtResource("1")
 card_name = "Energy Cell"
 family = "energy"
-cost = 3
-description = "+4 Energy"
-effects = {"energy": 4}
+cost = 0
+description = "+1 Materials, +1 Energy, +1 Crew"
+effects = {"materials": 1, "energy": 1, "crew": 1}
 play_again = false

@@ -112,6 +112,8 @@ func _ready() -> void:
 	_fit_board_lines()
 	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
 	$FTLPanel/WarpButton.pressed.connect(_warp_out)
+	for active_hand in [hand, enemy_hand]:
+		active_hand.current_round = turn_number
 	hand.deal(card_slots.size())
 	enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
@@ -144,6 +146,8 @@ func _discard_card(slot: int) -> void:
 
 
 func _begin_turn(side: String) -> void:
+	for active_hand in [hand, enemy_hand]:
+		active_hand.current_round = turn_number
 	current_actor = side
 	extra_action_requested = false
 	if _check_winner():

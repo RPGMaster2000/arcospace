@@ -12,6 +12,9 @@ const CardLibrary = preload("res://scripts/card_library.gd")
 @export_range(0.0, 1.0, 0.01) var tier_two_chance: float = 0.15
 ## TUNE: Tier 3 chance, reserved for future cards. Zero disables random Tier 3 draws.
 @export_range(0.0, 1.0, 0.01) var tier_three_chance: float = 0.0
+## TUNE: Tier 2 is unavailable through this full round, including opening hands.
+@export_range(0, 20, 1) var tier_two_locked_turns: int = 5
+var current_round: int = 1
 var drop_multiplier: float = 1.0
 var cards: Array[Resource] = []
 var rng := RandomNumberGenerator.new()
@@ -47,6 +50,8 @@ func draw_card(excluded_slot: int = -1) -> Resource:
 	return eligible[rng.randi_range(0, eligible.size() - 1)]
 
 func _eligible(card: Resource, excluded_slot: int) -> bool:
+	if card.tier == 2 and current_round <= tier_two_locked_turns:
+		return false
 	var copies: int = 0
 	for slot in range(cards.size()):
 		if slot == excluded_slot or cards[slot] == null:

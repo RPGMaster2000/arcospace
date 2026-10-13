@@ -47,3 +47,5 @@ Each hand can hold one Tier 2 card total. This applies to starting hands and rep
 Temporal Rift is a whole-battle modifier with no periodic event. It doubles Tier 2 chance to 30% for both hands and loads `scenes/battlefield_temporal_rift.tscn`, an independent copy ready for editor changes. No other modifier is active alongside it.
 
 TUNE: `card_hand.gd` exposes tier chances and max copies. Each new `.tres` exposes tier, cost and numerical effects. `card_view.gd` exposes commented jagged depth, spacing and pulse intensity; the Tier 2 outline pulses softly and remains visible on the played-card presentation.
+
+Tier 2 cards are blocked for both ships during full rounds 1–5, including opening/fixed hands and Temporal Rift. Draws unlock at round 6. TUNE `card_hand.gd` → `tier_two_locked_turns` to change this delay. Energy Cell now costs 0 and grants +1 Materials, +1 Energy and +1 Crew. Card descriptions use 16 px text in `scenes/card.tscn`.

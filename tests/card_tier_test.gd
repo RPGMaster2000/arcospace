@@ -11,6 +11,7 @@ func _initialize() -> void:
 func run() -> void:
 	var hand = Hand.new()
 	hand.rng.seed = 12345
+	hand.current_round = 6 # Rate checks apply after the opening lock.
 	for multiplier in [1.0, 2.0]:
 		hand.drop_multiplier = multiplier
 		var count: int = 0
