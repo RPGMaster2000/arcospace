@@ -12,7 +12,9 @@ static func _new_rng() -> RandomNumberGenerator:
 	generator.randomize()
 	return generator
 
-static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator: RandomNumberGenerator = null, simulate: bool = false) -> bool:
+static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator: RandomNumberGenerator = null, simulate: bool = false, damage_report: Dictionary = {}) -> bool:
+	damage_report.clear()
+	damage_report.merge({"actor":0,"target":0})
 	if actor[card.family] < card.cost:
 		return false
 	actor[card.family] -= card.cost
@@ -56,6 +58,7 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
+	damage_report.target = mini(enemy.hull, maxi(0, damage - blocked))
 	enemy.hull = maxi(0, enemy.hull - damage + blocked)
 	for key in RESOURCES:
 		var drain: Dictionary = effects.get("drain", {})
@@ -68,5 +71,6 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 		for key in PRODUCTION:
 			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
 	# Self damage is direct hull loss for either acting ship; shields cannot absorb it.
+	damage_report.actor = mini(actor.hull, maxi(0, int(effects.get("self_damage", 0))))
 	actor.hull = maxi(0, actor.hull - int(effects.get("self_damage", 0)))
 	return true

@@ -21,6 +21,14 @@ var escaped_by_ftl: bool = false
 var continuation_hull: int = -1
 var encounter_number: int = 1
 var next_modifier: int = -1
+var starting_player_hull: int = 0
+var player_hull_damage_taken: int = 0
+# Pending rewards belong only to this encounter, never permanent setup values.
+var pending_resource_bonus: int = 0
+var pending_shield_bonus: int = 0
+## TUNE: Next-battle rewards for tactical and strategic victories.
+const TACTICAL_RESOURCES: int = 5
+const STRATEGIC_SHIELDS: int = 10
 # Settings are assigned before adding the board to the scene tree.
 var setup_settings: Dictionary = {}
 @onready var modifier = $CombatModifier
@@ -106,6 +114,10 @@ func _ready() -> void:
 				set(setting, int(setup_settings[setting]))
 	if continuation_hull >= 0:
 		player_hull = continuation_hull
+	starting_player_hull = player_hull
+	for key in MatchRules.RESOURCES:
+		set("player_" + key, get("player_" + key) + pending_resource_bonus)
+	player_shields += pending_shield_bonus
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	modifier.configure(int(setup_settings.get("modifier", 0)))
@@ -176,6 +188,7 @@ func _begin_turn(side: String) -> void:
 			announcement = modifier.asteroid_strike(player, enemy)
 			_write_state("player", player)
 			_write_state("enemy", enemy)
+			player_hull_damage_taken += maxi(0, int(before.player.hull) - player_hull)
 			_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
 			asteroid_event = true
 		$ModifierDisplay.announce(announcement)
@@ -270,6 +283,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 			$ModifierDisplay.impact(2)
 	_write_state(side, actor)
 	_write_state(other, target)
+	if not discard:
+		player_hull_damage_taken += int(modifier.last_hull_damage.actor if side == "player" else modifier.last_hull_damage.target)
 	_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
 	active_hand.replace_card(slot)
 	extra_action_requested = not discard and card.play_again
@@ -364,6 +379,9 @@ func refresh_display() -> void:
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "WARP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
+	var method: String = "FTL escape" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
+	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, player_hull]
+	$MatchResult/Panel/Rewards.text = victory_description()
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
 	$MatchResult/Panel/NextEncounter.visible = can_continue
@@ -429,6 +447,23 @@ func _continue_encounter() -> void:
 	fresh.setup_settings.modifier = next_modifier
 	fresh.continuation_hull = player_hull
 	fresh.encounter_number = encounter_number + 1
+	fresh.pending_resource_bonus = TACTICAL_RESOURCES if tactical_victory() else 0
+	fresh.pending_shield_bonus = STRATEGIC_SHIELDS if strategic_victory() else 0
 	get_parent().add_child(fresh)
 	get_tree().current_scene = fresh
 	queue_free()
+
+func tactical_victory() -> bool:
+	return winner == "player" and player_hull > starting_player_hull
+
+func strategic_victory() -> bool:
+	var player_total: int = player_synthesizer + player_reactor + player_quarters
+	var enemy_total: int = enemy_synthesizer + enemy_reactor + enemy_quarters
+	return winner == "player" and player_total > enemy_total
+
+func victory_description() -> String:
+	if winner != "player":
+		return "No victory bonuses earned."
+	var tactical: String = "EARNED" if tactical_victory() else "Not earned"
+	var strategic: String = "EARNED" if strategic_victory() else "Not earned"
+	return "Normal victory: Destroy the enemy or escape by FTL.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]

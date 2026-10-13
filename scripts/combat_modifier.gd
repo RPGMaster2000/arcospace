@@ -26,6 +26,7 @@ var ion_factor: float = 1.0
 var next_round: int = 0
 var ends_round: int = 0
 var miss_rate: int = NEBULA_START
+var last_hull_damage: Dictionary = {"actor":0,"target":0}
 var rng := RandomNumberGenerator.new()
 
 func configure(selection: int) -> void:
@@ -124,7 +125,7 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 		modified.effects = modified.effects.duplicate(true)
 		modified.effects.erase("shields")
 		modified.effects.erase("swap_shields")
-	Effects.play(modified, actor, target, rng)
+	Effects.play(modified, actor, target, rng, false, last_hull_damage)
 	if shields_disabled():
 		# Shield strength is reserved during the flare, not destroyed or regenerated.
 		actor.shields = saved_actor_shields

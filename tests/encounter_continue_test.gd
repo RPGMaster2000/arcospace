@@ -31,7 +31,7 @@ func run() -> void:
 	battle.get_node("MatchResult/Panel/Continue").pressed.emit()
 	await process_frame
 	battle = current_scene
-	check(battle.player_hull == 17 and battle.player_shields == 10, "Only hull persists; shield resets")
+	check(battle.player_hull == 17 and battle.player_shields == 20, "Only hull persists; shield resets")
 	check(battle.player_energy == 10 and battle.player_reactor == 3, "Resources/production reset to setup plus first income")
 	check(battle.encounter_number == 2 and battle.modifier.kind == next and battle.turn_number == 1, "Fresh encounter uses previewed modifier and restarts rounds")
 	check(battle.ftl.charge == 1 and battle.ftl.disabled_turns == 0, "FTL resets")
