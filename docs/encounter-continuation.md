@@ -15,3 +15,13 @@ The expanded result panel reports the current full-round number, victory method,
 Normal victory is destroying the enemy or escaping by FTL; the existing resource victory is also reported if reached. Tactical victory requires ending with strictly more hull than the encounter started with, including carried hull as the baseline. It grants +5 Materials, Energy and Crew before next encounter income. Strategic victory compares summed Synthesizer+Reactor+Quarters against the enemy's total at victory, strictly higher, and grants +10 shields above the next encounter's reset shield value. Both bonuses stack and apply equally to escape/destruction wins. Draws/defeats earn neither. The bonus constants in board.gd are marked TUNE.
 
 Rewards are passed separately from setup values, so they expire after the immediately following encounter and cannot permanently inflate starting resources/shields. New encounters snapshot hull anew and clear the damage tally. Play Again and Battle Setup grant no continuation rewards.
+
+## Salvage and run score
+
+Defeat/draw shows a large bold battles-won count. Every player victory (including FTL escape) increments this count once. Continue carries it; Play Again/Setup begins a fresh run.
+
+Destroying the enemy in a surviving player victory grants 10 Salvage, once per result. FTL and resource victories do not grant salvage. Unspent salvage carries to the next encounter; a small counter appears below Turn in the battle's upper left.
+
+The victory panel's Repair button spends the entire salvage balance at 1 hull per salvage, stopping at 35 hull and discarding excess. It is disabled at/above 35 or with no balance, and never reduces higher hull. This is available after any victory, so saved salvage can be used after FTL escape. TUNE board.gd constants DESTRUCTION_SALVAGE, HULL_PER_SALVAGE and SALVAGE_REPAIR_CAP.
+
+Combat result hull and earned tactical/strategic bonuses are frozen before repair. Post-battle repairs cannot earn an additional tactical bonus; repaired hull is carried into the next encounter as its new baseline.

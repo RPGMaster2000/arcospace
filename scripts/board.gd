@@ -21,6 +21,16 @@ var escaped_by_ftl: bool = false
 var continuation_hull: int = -1
 var encounter_number: int = 1
 var next_modifier: int = -1
+var salvage: int = 0
+var battles_won: int = 0
+var result_recorded: bool = false
+var earned_tactical: bool = false
+var earned_strategic: bool = false
+var result_hull: int = 0
+## TUNE: Salvage per destroyed enemy, hull repaired per salvage, and repair ceiling.
+const DESTRUCTION_SALVAGE: int = 10
+const HULL_PER_SALVAGE: int = 1
+const SALVAGE_REPAIR_CAP: int = 35
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
 # Pending rewards belong only to this encounter, never permanent setup values.
@@ -118,6 +128,7 @@ func _ready() -> void:
 	for key in MatchRules.RESOURCES:
 		set("player_" + key, get("player_" + key) + pending_resource_bonus)
 	player_shields += pending_shield_bonus
+	$MatchResult/Panel/Repair.pressed.connect(_repair_with_salvage)
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	modifier.configure(int(setup_settings.get("modifier", 0)))
@@ -366,6 +377,14 @@ func _warp_out() -> void:
 	$MatchResult/Panel/Title.text = "WARP SUCCESS"
 
 func refresh_display() -> void:
+	_record_result()
+	$SalvageLabel.text = "Salvage %d" % salvage
+	$MatchResult/Panel/BattlesWon.visible = winner in ["enemy", "draw"]
+	$MatchResult/Panel/BattlesWon.text = "%d BATTLES WON" % battles_won
+	$MatchResult/Panel/Rewards.visible = winner == "player"
+	$MatchResult/Panel/Repair.visible = winner == "player"
+	$MatchResult/Panel/Repair.disabled = salvage <= 0 or player_hull >= SALVAGE_REPAIR_CAP or resolving_card or battle_effects.busy
+	$MatchResult/Panel/Repair.text = "Spend %d Salvage · Repair to %d Hull" % [salvage, mini(SALVAGE_REPAIR_CAP, player_hull + salvage * HULL_PER_SALVAGE)] if player_hull < SALVAGE_REPAIR_CAP else "Hull %d · No repair needed" % player_hull
 	$ModifierDisplay.refresh(modifier, turn_number)
 	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
@@ -380,7 +399,7 @@ func refresh_display() -> void:
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "WARP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
 	var method: String = "FTL escape" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
-	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, player_hull]
+	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, result_hull if result_recorded else player_hull]
 	$MatchResult/Panel/Rewards.text = victory_description()
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
@@ -447,6 +466,8 @@ func _continue_encounter() -> void:
 	fresh.setup_settings.modifier = next_modifier
 	fresh.continuation_hull = player_hull
 	fresh.encounter_number = encounter_number + 1
+	fresh.salvage = salvage
+	fresh.battles_won = battles_won
 	fresh.pending_resource_bonus = TACTICAL_RESOURCES if tactical_victory() else 0
 	fresh.pending_shield_bonus = STRATEGIC_SHIELDS if strategic_victory() else 0
 	get_parent().add_child(fresh)
@@ -454,9 +475,13 @@ func _continue_encounter() -> void:
 	queue_free()
 
 func tactical_victory() -> bool:
+	if result_recorded:
+		return earned_tactical
 	return winner == "player" and player_hull > starting_player_hull
 
 func strategic_victory() -> bool:
+	if result_recorded:
+		return earned_strategic
 	var player_total: int = player_synthesizer + player_reactor + player_quarters
 	var enemy_total: int = enemy_synthesizer + enemy_reactor + enemy_quarters
 	return winner == "player" and player_total > enemy_total
@@ -467,3 +492,25 @@ func victory_description() -> String:
 	var tactical: String = "EARNED" if tactical_victory() else "Not earned"
 	var strategic: String = "EARNED" if strategic_victory() else "Not earned"
 	return "Normal victory: Destroy the enemy or escape by FTL.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
+
+func _record_result() -> void:
+	if winner.is_empty() or result_recorded:
+		return
+	# Freeze combat rewards before post-battle salvage repair changes hull.
+	earned_tactical = tactical_victory()
+	earned_strategic = strategic_victory()
+	result_hull = player_hull
+	result_recorded = true
+	if winner == "player":
+		battles_won += 1
+		if enemy_hull <= 0 and not escaped_by_ftl:
+			salvage += DESTRUCTION_SALVAGE
+
+func _repair_with_salvage() -> void:
+	if winner != "player" or salvage <= 0 or player_hull >= SALVAGE_REPAIR_CAP or resolving_card or battle_effects.busy:
+		return
+	_record_result()
+	# Spend the full balance in one action; excess beyond the cap is discarded.
+	player_hull = mini(SALVAGE_REPAIR_CAP, player_hull + salvage * HULL_PER_SALVAGE)
+	salvage = 0
+	refresh_display()

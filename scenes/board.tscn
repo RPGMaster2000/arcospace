@@ -1055,3 +1055,12 @@ grow_vertical = 2
 [editable path="EnergyCellCard"]
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
+
+[node name="SalvageLabel" type="Label" parent="."]
+offset_left = 22.0
+offset_top = 50.0
+offset_right = 180.0
+offset_bottom = 74.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "Salvage 0"
