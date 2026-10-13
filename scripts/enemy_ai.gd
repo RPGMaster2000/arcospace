@@ -8,7 +8,7 @@ const Rules = preload("res://scripts/match_rules.gd")
 @export var build_from_hull: int = 40
 var rng := RandomNumberGenerator.new()
 
-func choose(cards: Array, actor: Dictionary, enemy: Dictionary, hull_goal: int, resource_goal: int) -> Dictionary:
+func choose(cards: Array, actor: Dictionary, enemy: Dictionary, resource_goal: int) -> Dictionary:
 	var held: Array[int] = []
 	var affordable: Array[int] = []
 	for slot in range(cards.size()):
@@ -26,7 +26,7 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, hull_goal: int, 
 		var simulated: Dictionary = actor.duplicate(true)
 		var target: Dictionary = enemy.duplicate(true)
 		Effects.play(cards[slot], simulated, target, null, true)
-		if simulated.hull > 0 and Rules.wins(simulated, target, hull_goal, resource_goal):
+		if simulated.hull > 0 and Rules.wins(simulated, target, resource_goal):
 			return {"slot": slot, "discard": false}
 	# Avoid fatal self damage when choosing a non-winning move.
 	var safe: Array[int] = []

@@ -11,13 +11,16 @@ const CardEffects = preload("res://scripts/card_effects.gd")
 @export var card_slots: Array[NodePath] = [NodePath("ShieldPlatingCard"),
 	NodePath("SynthesizerUpgradeCard"), NodePath("LaserBurstCard"),
 	NodePath("EnergyCellCard"), NodePath("QuartersUpgradeCard"), NodePath("TorpedoSalvoCard")]
-## TUNE: Hull amount that wins the match immediately.
-@export_range(1, 1000, 1) var hull_goal: int = 50
 ## TUNE: Amount required in EACH of the three resources for resource victory.
 @export_range(1, 1000, 1) var resource_goal: int = 100
 var current_actor: String = "player"
 var turn_number: int = 1
 var winner: String = ""
+var escaped_by_ftl: bool = false
+# A continuation carries only hull; setup resources/production and shields reset normally.
+var continuation_hull: int = -1
+var encounter_number: int = 1
+var next_modifier: int = -1
 # Settings are assigned before adding the board to the scene tree.
 var setup_settings: Dictionary = {}
 @onready var modifier = $CombatModifier
@@ -101,6 +104,9 @@ func _ready() -> void:
 			var setting: String = side + "_" + key
 			if setup_settings.has(setting):
 				set(setting, int(setup_settings[setting]))
+	if continuation_hull >= 0:
+		player_hull = continuation_hull
+	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	modifier.configure(int(setup_settings.get("modifier", 0)))
 	for active_hand in [hand, enemy_hand]:
@@ -289,7 +295,7 @@ func _on_enemy_timeout() -> void:
 	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
 	var move: Dictionary = enemy_ai.choose(enemy_hand.cards, _read_state("enemy"),
-		_read_state("player"), hull_goal, resource_goal)
+		_read_state("player"), resource_goal)
 	if move.is_empty():
 		# A deliberately undersized custom pool may leave the AI with no cards.
 		$LastActionLabel.text = "Enemy has no cards — passes"
@@ -306,9 +312,9 @@ func _check_winner() -> bool:
 	var enemy: Dictionary = _read_state("enemy")
 	if player.hull <= 0 and enemy.hull <= 0:
 		winner = "draw"
-	elif MatchRules.wins(player, enemy, hull_goal, resource_goal):
+	elif MatchRules.wins(player, enemy, resource_goal):
 		winner = "player"
-	elif MatchRules.wins(enemy, player, hull_goal, resource_goal):
+	elif MatchRules.wins(enemy, player, resource_goal):
 		winner = "enemy"
 	if not winner.is_empty():
 		enemy_timer.stop()
@@ -338,6 +344,7 @@ func _warp_out() -> void:
 		refresh_display()
 		return
 	winner = "player"
+	escaped_by_ftl = true
 	enemy_timer.stop()
 	$LastActionLabel.text = "FTL jump complete — escaped!"
 	refresh_display()
@@ -356,7 +363,15 @@ func refresh_display() -> void:
 	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
-	$MatchResult/Panel/Title.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE")
+	$MatchResult/Panel/Title.text = "WARP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
+	var can_continue: bool = winner == "player" and player_hull > 0
+	$MatchResult/Panel/Continue.visible = can_continue
+	$MatchResult/Panel/NextEncounter.visible = can_continue
+	if can_continue:
+		if next_modifier < 0:
+			# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
+			next_modifier = randi_range(1, modifier.NAMES.size() - 1)
+		$MatchResult/Panel/NextEncounter.text = "Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
@@ -404,3 +419,16 @@ func _fit_board_lines() -> void:
 func _damage_ftl(amount: int) -> void:
 	if ftl.take_hull_damage(amount):
 		$ModifierDisplay.ftl_offline()
+
+func _continue_encounter() -> void:
+	if winner != "player" or player_hull <= 0 or resolving_card or battle_effects.busy:
+		return
+	$MatchResult/Panel/Continue.disabled = true
+	var fresh = load(scene_file_path).instantiate()
+	fresh.setup_settings = setup_settings.duplicate(true)
+	fresh.setup_settings.modifier = next_modifier
+	fresh.continuation_hull = player_hull
+	fresh.encounter_number = encounter_number + 1
+	get_parent().add_child(fresh)
+	get_tree().current_scene = fresh
+	queue_free()

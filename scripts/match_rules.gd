@@ -5,8 +5,8 @@ extends RefCounted
 const RESOURCES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 
-static func wins(actor: Dictionary, enemy: Dictionary, hull_goal: int, resource_goal: int) -> bool:
-	if enemy.hull <= 0 or actor.hull >= hull_goal:
+static func wins(actor: Dictionary, enemy: Dictionary, resource_goal: int) -> bool:
+	if enemy.hull <= 0:
 		return true
 	for key in RESOURCES:
 		if actor[key] < resource_goal:
