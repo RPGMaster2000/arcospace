@@ -13,6 +13,10 @@ func run() -> void:
 	var light = board.engine_light
 	var base: float = board.engine_base_energy
 	check(light != null and is_equal_approx(base,0.3), "User-authored engine light found")
+	board.ftl.disabled_turns = 2
+	board.ftl.disabled_turn_started = true
+	board._begin_turn("player")
+	check(board.get_node("ModifierDisplay/FTLFlash").text.is_empty(), "Unchanged offline state never repeats flash")
 	board.ftl.disabled_turns = 1
 	board.ftl.disabled_turn_started = true
 	board._process(0)
@@ -35,7 +39,7 @@ func run() -> void:
 	var center = container.position + board.battle_camera.unproject_position(ship.global_position) * container.size / Vector2(viewport.size)
 	var hull_y: float = board.player_hull_label.position.y + board.player_hull_label.size.y*0.5
 	var panel = board.get_node("FTLPanel")
-	check(absf((center.y - panel.position.y-panel.size.y*0.5) - (hull_y-center.y)) < 1, "FTL and Hull mirrored vertically")
+	check(absf((center.y - panel.position.y-panel.size.y*0.5 + board.ftl_position_offset.y) - (hull_y-center.y)) < 1, "FTL and Hull mirrored vertically")
 	check(board.player_shields_label.get_theme_font_size("font_size") == board.player_hull_label.get_theme_font_size("font_size"), "Matching status font sizes")
 	board.queue_free()
 	await process_frame

@@ -216,8 +216,6 @@ func _begin_turn(side: String) -> void:
 			ftl.begin_player_turn()
 			if was_offline and ftl.disabled_turns == 0:
 				$ModifierDisplay.ftl_online(ftl.can_warp())
-			if ftl.disabled_turns > 0:
-				$ModifierDisplay.ftl_offline()
 	var state: Dictionary = _read_state(side)
 	if winner.is_empty():
 		MatchRules.income(state)
