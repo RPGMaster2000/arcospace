@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ship_name = "Sentinel"
+subtitle = "Shielded Defender"
 role = "Defensive"
 summary = "Heavy shields and strong Reactor."
 hull_capacity = 32

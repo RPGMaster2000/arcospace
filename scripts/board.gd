@@ -411,6 +411,10 @@ func _warp_out() -> void:
 	$MatchResult/Panel/Title.text = "WARP SUCCESS"
 
 func refresh_display() -> void:
+	$ModeLabel.text = enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship"
+	$ModeLabel/Subtitle.text = enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel"
+	$ModeLabel.add_theme_font_size_override("font_size", $TurnLabel.get_theme_font_size("font_size"))
+	$ModeLabel/Subtitle.add_theme_font_size_override("font_size", $SalvageLabel.get_theme_font_size("font_size"))
 	_record_result()
 	$SalvageLabel.text = "Salvage %d" % salvage
 	$MatchResult/Panel/BattlesWon.visible = winner in ["enemy", "draw"]

@@ -225,13 +225,23 @@ anchor_right = 1.0
 offset_left = -306.0
 offset_top = 15.0
 offset_right = -23.0
-offset_bottom = 51.0
-theme_override_font_sizes/font_size = 26
-text = "ENEMY SHIP NAME"
+offset_bottom = 49.0
+theme_override_font_sizes/font_size = 21
+text = "Enemy Ship"
+horizontal_alignment = 2
+
+[node name="Subtitle" type="Label" parent="ModeLabel"]
+layout_mode = 0
+anchor_right = 1.0
+offset_top = 35.0
+offset_bottom = 59.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "Unknown Vessel"
 horizontal_alignment = 2
 
 [node name="ModeRule" type="Line2D" parent="." unique_id=1421697366]
-position = Vector2(-101.918945, -7.2162323)
+position = Vector2(-101.918945, 22.783768)
 scale = Vector2(1.081081, 1.0810814)
 points = PackedVector2Array(1036, 53, 1256, 53)
 width = 1.0

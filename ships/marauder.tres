@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ship_name = "Marauder"
+subtitle = "Energy Raider"
 role = "Offensive"
 summary = "Energy-rich attacker."
 hull_capacity = 27

@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ship_name = "Reclaimer"
+subtitle = "Armored Harvester"
 role = "Economic"
 summary = "Strong Hull and Materials production."
 hull_capacity = 40
