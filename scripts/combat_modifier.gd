@@ -17,7 +17,7 @@ const ASTEROID_DAMAGE: int = 10
 ## TUNE: Internal miss rate: 30 means 70% starting sensor efficiency.
 ## Change MAX to set minimum efficiency (100 - MAX); STEP controls drift per round.
 const NEBULA_START: int = 30
-const NEBULA_STEP: int = 5
+const NEBULA_STEP: int = 10
 const NEBULA_MAX: int = 70
 var kind: int = 0
 var active: bool = false
@@ -58,7 +58,7 @@ func begin_round(round_number: int) -> String:
 		if kind == 2:
 			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
 			return "ION STORM · " + ion_text()
-		return ["", "ASTEROIDS PASSING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
+		return ["", "ASTEROIDS INCOMING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
 	return ""
 
 func shields_disabled() -> bool:
@@ -146,7 +146,7 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 	return "ASTEROID SHOWER · " + " / ".join(outcomes)
 
 func ion_text() -> String:
-	return "BLUE CARDS ×2 · Energy amplified" if ion_factor == 2.0 else "BLUE CARDS ×½ · Energy suppressed"
+	return "ENERGY cards are powered up!" if ion_factor == 2.0 else "ENERGY cards are surpressed!"
 
 func preview(card: Resource) -> Resource:
 	if card == null or kind != 2 or not active or card.family != "energy":

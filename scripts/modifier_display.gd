@@ -41,7 +41,7 @@ func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> 
 	var messages = {
 		1: "ASTEROID SHOWER INBOUND\nBrace for impact…",
 		2: "ION STORM APPROACHING\nEnergy systems destabilizing…",
-		3: "SOLAR FLARE INCOMING\nRadiation surge — shields failing…"
+		3: "SOLAR FLARE INCOMING\n Shield emitters failing…"
 	}
 	announce(("ION SURGE\n" + effect_text) if card_effect else messages.get(kind, ""))
 	await get_tree().create_timer(warning_seconds).timeout
