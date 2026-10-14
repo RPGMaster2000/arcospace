@@ -22,7 +22,6 @@ jobs:
     env:
       GODOT_VERSION: 4.7.2
       BUILD_TOOLS_VERSION: 36.1.0
-      GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/arcospace-debug.keystore
       GODOT_ANDROID_KEYSTORE_DEBUG_USER: ${{ secrets.ANDROID_DEBUG_KEY_ALIAS || 'androiddebugkey' }}
       GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: ${{ secrets.ANDROID_DEBUG_KEY_PASSWORD || 'android' }}
     steps:
@@ -70,6 +69,8 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$RUNNER_TEMP/arcospace-debug.keystore"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$GODOT_ANDROID_KEYSTORE_DEBUG_PATH" >> "$GITHUB_ENV"
           if [[ -n "$KEYSTORE_BASE64" ]]; then
             printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$GODOT_ANDROID_KEYSTORE_DEBUG_PATH"
             echo 'Signing: reusable private debug key from repository secrets.' >> "$GITHUB_STEP_SUMMARY"
