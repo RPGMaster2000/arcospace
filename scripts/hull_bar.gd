@@ -5,22 +5,12 @@ extends Control
 @export var hull_color: Color = Color(0.72, 0.20, 0.18)
 @export var plating_color: Color = Color(0.78, 0.57, 0.28)
 var hull: int = 30
-var capacity: int = 35
+var capacity: int = 30
 func update_hull(value: int, limit: int) -> void:
 	hull = value
 	capacity = maxi(1, limit)
-	$Plating.text = "+%d Ablative Plating" % maxi(0, hull - capacity) if hull > capacity else ""
 	tooltip_text = "Permanent Hull: %d/%d · Ablative Plating: %d" % [mini(hull,capacity), capacity, maxi(0,hull-capacity)]
 	queue_redraw()
-func _ready() -> void:
-	var label = Label.new()
-	label.name = "Plating"
-	label.position = Vector2(0,-54)
-	label.add_theme_font_size_override("font_size",14)
-	label.add_theme_color_override("font_color",plating_color)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(label)
-	update_hull(hull,capacity)
 func _draw() -> void:
 	var total: float = float(maxi(capacity,hull))
 	var boundary: float = size.x * capacity / total

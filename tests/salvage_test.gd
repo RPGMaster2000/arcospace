@@ -17,7 +17,7 @@ func run() -> void:
 	for repeat in range(5): board.refresh_display()
 	check(board.salvage == 10 and board.battles_won == 1, "Destruction counted and awarded once")
 	board.get_node("MatchResult/Panel/Repair").pressed.emit()
-	check(board.player_hull == 35 and board.salvage == 0, "Repair caps at 35 and discards excess")
+	check(board.player_hull == 30 and board.salvage == 9, "Repair reaches capacity and preserves unspent salvage")
 	check(not board.tactical_victory(), "Repair cannot turn combat loss of hull into tactical victory")
 	board._continue_encounter()
 	await process_frame
@@ -25,14 +25,14 @@ func run() -> void:
 	if board.battle_effects.busy: await board.battle_effects.finished
 	await process_frame
 	board.battle_effects.enabled = false
-	check(board.player_hull == 35 and board.battles_won == 1, "Repaired hull and victories persist")
+	check(board.player_hull == 30 and board.battles_won == 1, "Repaired hull and victories persist")
 	board.salvage = 7
 	board.ftl.charge = board.ftl.charge_target
 	board._warp_out()
 	board.refresh_display()
 	check(board.salvage == 7 and board.battles_won == 2, "FTL counts victory without salvage award")
 	board._repair_with_salvage()
-	check(board.salvage == 7 and board.player_hull == 35, "No waste when hull is already at repair cap")
+	check(board.salvage == 7 and board.player_hull == 30, "No waste when hull is already at repair cap")
 	board._continue_encounter()
 	await process_frame
 	board = current_scene

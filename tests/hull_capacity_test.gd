@@ -28,7 +28,8 @@ func run() -> void:
 	board.get_node("BattleEffects").enabled = false
 	root.add_child(board)
 	current_scene = board
-	check(board.player_hull_capacity == 35, "Starter capacity is 35")
+	check(board.player_hull_capacity == 30 and board.enemy_hull_capacity == 30, "Both starter capacities are 30")
+	board.player_hull_capacity = 35 # Exercise configurable capacities.
 	check(board.permanent_damage(48,30,35) == 5 and board.permanent_damage(50,40,35) == 0, "FTL excludes consumed plating")
 	board.player_hull = 50
 	board.player_shields = 0
@@ -47,7 +48,7 @@ func run() -> void:
 	board.enemy_hull = 0
 	board._check_winner()
 	board.refresh_display()
-	check(board.get_node("PlayerHullBar/Plating").text == "+5 Ablative Plating", "Bar identifies temporary excess at custom capacity")
+	check(board.player_hull_label.text == "Hull 50/45" and board.player_hull_label.get_theme_color("font_color") == board.get_node("PlayerHullBar").plating_color, "Bar identifies temporary excess at custom capacity")
 	board._continue_encounter()
 	await process_frame
 	board = current_scene

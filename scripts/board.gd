@@ -14,8 +14,8 @@ const CardEffects = preload("res://scripts/card_effects.gd")
 ## TUNE: Amount required in EACH of the three resources for resource victory.
 @export_range(1, 1000, 1) var resource_goal: int = 100
 ## TUNE in Board3D Inspector: permanent capacity for each ship; excess is temporary plating.
-@export_range(1, 1000, 1) var player_hull_capacity: int = 35
-@export_range(1, 1000, 1) var enemy_hull_capacity: int = 35
+@export_range(1, 1000, 1) var player_hull_capacity: int = 30
+@export_range(1, 1000, 1) var enemy_hull_capacity: int = 30
 var current_actor: String = "player"
 var turn_number: int = 1
 var winner: String = ""
@@ -30,10 +30,10 @@ var result_recorded: bool = false
 var earned_tactical: bool = false
 var earned_strategic: bool = false
 var result_hull: int = 0
-## TUNE: Salvage per destroyed enemy, hull repaired per salvage, and repair ceiling.
+## TUNE: Salvage per destroyed enemy and Hull restored per selected salvage.
 const DESTRUCTION_SALVAGE: int = 10
 const HULL_PER_SALVAGE: int = 1
-const SALVAGE_REPAIR_CAP: int = 35
+var repair_spend: int = -1
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
 # Pending rewards belong only to this encounter, never permanent setup values.
@@ -131,6 +131,8 @@ func _ready() -> void:
 	for key in MatchRules.RESOURCES:
 		set("player_" + key, get("player_" + key) + pending_resource_bonus)
 	player_shields += pending_shield_bonus
+	$MatchResult/Panel/RepairMinus.pressed.connect(_adjust_repair_spend.bind(-1))
+	$MatchResult/Panel/RepairPlus.pressed.connect(_adjust_repair_spend.bind(1))
 	$MatchResult/Panel/Repair.pressed.connect(_repair_with_salvage)
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
@@ -389,9 +391,16 @@ func refresh_display() -> void:
 	$MatchResult/Panel/BattlesWon.visible = winner in ["enemy", "draw"]
 	$MatchResult/Panel/BattlesWon.text = "%d BATTLES WON" % battles_won
 	$MatchResult/Panel/Rewards.visible = winner == "player"
-	$MatchResult/Panel/Repair.visible = winner == "player"
-	$MatchResult/Panel/Repair.disabled = salvage <= 0 or player_hull >= mini(SALVAGE_REPAIR_CAP, player_hull_capacity) or resolving_card or battle_effects.busy
-	$MatchResult/Panel/Repair.text = "Spend %d Salvage · Repair to %d Hull" % [salvage, mini(mini(SALVAGE_REPAIR_CAP, player_hull_capacity), player_hull + salvage * HULL_PER_SALVAGE)] if player_hull < mini(SALVAGE_REPAIR_CAP, player_hull_capacity) else "Hull %d · No repair needed" % player_hull
+	var repair_limit: int = _repair_spend_limit()
+	if winner == "player":
+		repair_spend = repair_limit if repair_spend < 0 else clampi(repair_spend, 0, repair_limit)
+	for path in ["Repair", "RepairMinus", "RepairPlus", "RepairAmount"]:
+		get_node("MatchResult/Panel/" + path).visible = winner == "player"
+	$MatchResult/Panel/Repair.disabled = repair_spend <= 0 or resolving_card or battle_effects.busy
+	$MatchResult/Panel/RepairMinus.disabled = repair_spend <= 0 or resolving_card or battle_effects.busy
+	$MatchResult/Panel/RepairPlus.disabled = repair_spend >= repair_limit or resolving_card or battle_effects.busy
+	$MatchResult/Panel/RepairAmount.text = "Spend %d / %d Salvage" % [maxi(0, repair_spend), salvage]
+	$MatchResult/Panel/Repair.text = "Repair to %d/%d Hull" % [player_hull + maxi(0, repair_spend) * HULL_PER_SALVAGE, player_hull_capacity]
 	$ModifierDisplay.refresh(modifier, turn_number)
 	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
@@ -424,10 +433,12 @@ func refresh_display() -> void:
 		$TurnLabel.text = "Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
 	else:
 		$TurnLabel.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "ENEMY WINS")
-	player_hull_label.text = "Hull %d/%d" % [mini(player_hull, player_hull_capacity), player_hull_capacity]
+	player_hull_label.text = "Hull %d/%d" % [player_hull, player_hull_capacity]
+	player_hull_label.add_theme_color_override("font_color", $PlayerHullBar.plating_color if player_hull > player_hull_capacity else Color.WHITE)
 	$PlayerHullBar.update_hull(player_hull, player_hull_capacity)
 	player_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % player_shields
-	enemy_hull_label.text = "Hull %d/%d" % [mini(enemy_hull, enemy_hull_capacity), enemy_hull_capacity]
+	enemy_hull_label.text = "Hull %d/%d" % [enemy_hull, enemy_hull_capacity]
+	enemy_hull_label.add_theme_color_override("font_color", $EnemyHullBar.plating_color if enemy_hull > enemy_hull_capacity else Color.WHITE)
 	$EnemyHullBar.update_hull(enemy_hull, enemy_hull_capacity)
 	enemy_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % enemy_shields
 	battle_effects.set_number(player_materials_label, player_materials)
@@ -517,13 +528,23 @@ func _record_result() -> void:
 		if enemy_hull <= 0 and not escaped_by_ftl:
 			salvage += DESTRUCTION_SALVAGE
 
+func _repair_spend_limit() -> int:
+	return mini(salvage, maxi(0, player_hull_capacity - player_hull) / HULL_PER_SALVAGE)
+
+func _adjust_repair_spend(change: int) -> void:
+	if winner != "player" or resolving_card or battle_effects.busy:
+		return
+	repair_spend = clampi(maxi(0, repair_spend) + change, 0, _repair_spend_limit())
+	refresh_display()
+
 func _repair_with_salvage() -> void:
-	if winner != "player" or salvage <= 0 or player_hull >= mini(SALVAGE_REPAIR_CAP, player_hull_capacity) or resolving_card or battle_effects.busy:
+	if winner != "player" or repair_spend <= 0 or resolving_card or battle_effects.busy:
 		return
 	_record_result()
-	# Spend the full balance in one action; excess beyond the cap is discarded.
-	player_hull = mini(mini(SALVAGE_REPAIR_CAP, player_hull_capacity), player_hull + salvage * HULL_PER_SALVAGE)
-	salvage = 0
+	var spent: int = mini(repair_spend, _repair_spend_limit())
+	player_hull += spent * HULL_PER_SALVAGE
+	salvage -= spent
+	repair_spend = -1
 	refresh_display()
 
 static func permanent_damage(before: int, after: int, capacity: int) -> int:

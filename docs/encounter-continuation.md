@@ -22,6 +22,6 @@ Defeat/draw shows a large bold battles-won count. Every player victory (includin
 
 Destroying the enemy in a surviving player victory grants 10 Salvage, once per result. FTL and resource victories do not grant salvage. Unspent salvage carries to the next encounter; a small counter appears below Turn in the battle's upper left.
 
-The victory panel's Repair button spends the entire salvage balance at 1 hull per salvage, stopping at 35 hull and discarding excess. It is disabled at/above 35 or with no balance, and never reduces higher hull. This is available after any victory, so saved salvage can be used after FTL escape. TUNE board.gd constants DESTRUCTION_SALVAGE, HULL_PER_SALVAGE and SALVAGE_REPAIR_CAP.
+The victory panel's −/+ controls select spending at 1 Hull per Salvage, defaulting to the smaller of available salvage and missing Hull. Spending cannot exceed either limit. Repair deducts only the selected amount; the rest remains. Repairs stop at configured Hull capacity (default 30) and never reduce excess Hull. This is available after any victory, so saved salvage can be used after FTL escape. TUNE board.gd constants DESTRUCTION_SALVAGE, HULL_PER_SALVAGE and the exported player_hull_capacity.
 
 Combat result hull and earned tactical/strategic bonuses are frozen before repair. Post-battle repairs cannot earn an additional tactical bonus; repaired hull is carried into the next encounter as its new baseline.
