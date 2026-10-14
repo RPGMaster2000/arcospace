@@ -5,6 +5,10 @@ extends Control
 
 signal action_finished(side: String, discarded: bool)
 
+const Ships = preload("res://scripts/ship_library.gd")
+var player_ship_data: Resource
+var enemy_ship_data: Resource
+
 const MatchRules = preload("res://scripts/match_rules.gd")
 const CardEffects = preload("res://scripts/card_effects.gd")
 # Assign the six editable scene card buttons in the Inspector.
@@ -119,7 +123,26 @@ var resolving_card: bool = false
 var mode_rule_origin: Vector2
 var hand_rule_origin: Vector2
 
+func _enter_tree() -> void:
+	# Ship selection persists in setup settings. Enemy is rolled anew per board instance.
+	if setup_settings.has("player_ship"):
+		player_ship_data = Ships.PLAYERS[clampi(int(setup_settings.player_ship), 0, Ships.PLAYERS.size()-1)]
+		var generator = RandomNumberGenerator.new()
+		generator.randomize()
+		enemy_ship_data = Ships.ENEMIES[generator.randi_range(0, Ships.ENEMIES.size()-1)]
+
+func _apply_ship(side: String, data: Resource) -> void:
+	if data == null:
+		return
+	set(side + "_hull_capacity", data.hull_capacity)
+	set(side + "_hull", data.hull_capacity)
+	set(side + "_shields", data.shields)
+	for key in MatchRules.RESOURCES + MatchRules.PRODUCTION:
+		set(side + "_" + key, data.get(key))
+
 func _ready() -> void:
+	_apply_ship("player", player_ship_data)
+	_apply_ship("enemy", enemy_ship_data)
 	for side in ["player", "enemy"]:
 		for key in MatchRules.RESOURCES + MatchRules.PRODUCTION:
 			var setting: String = side + "_" + key
@@ -135,7 +158,8 @@ func _ready() -> void:
 	$MatchResult/Panel/RepairPlus.pressed.connect(_adjust_repair_spend.bind(1))
 	$MatchResult/Panel/Repair.pressed.connect(_repair_with_salvage)
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
-	ftl.charge_target = maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
+	ftl.charge_target = player_ship_data.ftl_turns if player_ship_data != null else maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
+	ftl.failure_multiplier = 1.0 - player_ship_data.ftl_resistance if player_ship_data != null else 1.0
 	modifier.configure(int(setup_settings.get("modifier", 0)))
 	for active_hand in [hand, enemy_hand]:
 		active_hand.drop_multiplier = modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0

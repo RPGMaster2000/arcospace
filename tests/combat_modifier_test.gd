@@ -125,18 +125,15 @@ func run() -> void:
 	# Exercise real setup controls, board initialization and round flow.
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(setup)
-	setup.get_node("Panel/player_materials").value = 7
-	setup.get_node("Panel/player_synthesizer").value = 3
-	setup.get_node("Panel/enemy_energy").value = 9
-	setup.get_node("Panel/FTL").value = 20
-	setup.get_node("Panel/Modifier").select(3)
+	setup._select(2)
 	var board = load("res://scenes/board_3d.tscn").instantiate()
 	board.setup_settings = setup.read_settings()
+	board.setup_settings.modifier = 3
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
 	board.get_node("ModifierDisplay").cinematic_enabled = false
 	root.add_child(board)
-	check(board.player_materials == 10 and board.enemy_energy == 9 and board.ftl.charge_target == 20, "Setup resources and production applied before first income")
+	check(board.player_materials == 17 and board.enemy_energy == board.enemy_ship_data.energy and board.ftl.charge_target == 17, "Setup resources and production applied before first income")
 	check(board.modifier.kind == 3 and board.turn_number == 1, "Setup modifier and first round")
 	board.modifier.next_round = 2
 	board._discard_card(0)
@@ -159,7 +156,7 @@ func run() -> void:
 	board.enemy_timer.stop()
 	board._act("enemy",0,true)
 	check(board.turn_number == 4 and board.get_node("ModifierDisplay/Flash").text.begins_with("ASTEROID SHOWER"), "Battlefield itself must trigger the shower at its scheduled round")
-	check(old_player_shields - board.player_shields in [0,Mod.ASTEROID_DAMAGE] and old_enemy_shields - board.enemy_shields in [0,Mod.ASTEROID_DAMAGE], "Shower applies one normal hit or miss per ship")
+	check(old_player_shields - board.player_shields in [0,mini(old_player_shields,Mod.ASTEROID_DAMAGE)] and old_enemy_shields - board.enemy_shields in [0,mini(old_enemy_shields,Mod.ASTEROID_DAMAGE)], "Shower applies one normal hit or miss per ship")
 	var shields_after: int = board.player_shields
 	board._discard_card(0)
 	board.enemy_timer.stop()
@@ -168,11 +165,11 @@ func run() -> void:
 	board._return_to_setup()
 	await process_frame
 	var returned = current_scene
-	check(returned.get_node("Panel/player_materials").value == 7 and returned.get_node("Panel/FTL").value == 20, "Return to setup preserves configuration")
-	returned.get_node("Panel/Start").pressed.emit()
+	check(returned.selected_ship == 2, "Return to setup preserves ship selection")
+	returned.get_node("Start").pressed.emit()
 	await process_frame
 	var restarted = current_scene
-	check(restarted.setup_settings.player_materials == 7 and restarted.modifier.kind == 3, "Begin Battle uses the configured controls")
+	check(restarted.setup_settings.player_ship == 2 and restarted.player_ship_data.ship_name == "Bastion", "Begin Battle uses selected ship")
 	restarted.queue_free()
 	setup.queue_free()
 	await process_frame

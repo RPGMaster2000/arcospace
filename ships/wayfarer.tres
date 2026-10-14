@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ship_name = "Wayfarer"
+role = "Balanced"
+summary = "Balanced economy; average escape speed."
+hull_capacity = 35
+shields = 10
+materials = 10
+energy = 10
+crew = 10
+synthesizer = 2
+reactor = 2
+quarters = 2
+ftl_turns = 14
+ftl_resistance = 0
+hull_color = Color(0.52, 0.67, 0.78, 1)

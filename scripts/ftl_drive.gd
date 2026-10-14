@@ -12,6 +12,8 @@ const DISABLED_TURNS: int = 5
 const FAILURE_CHANCE_PER_DAMAGE: float = 0.05
 ## TUNE: Maximum failure chance per damaging action; 0.60 = 60%, reached at 12 hull damage.
 const MAX_FAILURE_CHANCE: float = 0.60
+## TUNE: Applied after existing damage scaling/cap; ship profile supplies this factor.
+var failure_multiplier: float = 1.0
 var charge: int = 0
 var disabled_turns: int = 0
 var disabled_turn_started: bool = false
@@ -29,7 +31,7 @@ func begin_player_turn() -> void:
 		charge = mini(charge_target, charge + 1)
 
 func failure_chance(amount: int) -> float:
-	return clampf(amount * FAILURE_CHANCE_PER_DAMAGE, 0.0, MAX_FAILURE_CHANCE)
+	return clampf(minf(maxf(0, amount * FAILURE_CHANCE_PER_DAMAGE), MAX_FAILURE_CHANCE) * failure_multiplier, 0.0, 1.0)
 
 func take_hull_damage(amount: int, roll: float = -1.0) -> bool:
 	if amount <= 0 or disabled_turns > 0:

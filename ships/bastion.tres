@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ship_name = "Bastion"
+role = "Armored / Industrial"
+summary = "Strong Hull and industry; slow, vulnerable FTL."
+hull_capacity = 42
+shields = 6
+materials = 14
+energy = 8
+crew = 10
+synthesizer = 3
+reactor = 1
+quarters = 2
+ftl_turns = 17
+ftl_resistance = -0.1
+hull_color = Color(0.7, 0.48, 0.25, 1)

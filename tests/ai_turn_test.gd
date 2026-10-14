@@ -20,7 +20,7 @@ func run() -> void:
 	check(board.player_energy == 18 and board.enemy_energy == 16, "Opening income only belongs to player")
 	board.hand.cards[0] = Library.CARDS[13]
 	board._on_card_pressed(0)
-	check(board.current_actor == "player" and board.player_energy == 19, "Player play-again must not grant income")
+	check(board.current_actor == "player" and board.player_energy == 21, "Player play-again must not grant income")
 	board.hand.cards[0] = Library.CARDS[0]
 	board._on_card_pressed(0)
 	check(board.current_actor == "enemy" and board.enemy_energy == 18, "Normal play must begin enemy turn with income")
@@ -35,7 +35,7 @@ func run() -> void:
 	await create_timer(0.06).timeout
 	check(board.current_actor == "player", "Timer must trigger enemy play and return control")
 	check(board.player_shields == 8, "Enemy Laser Burst must damage player shields")
-	check(board.enemy_energy == 12 and board.player_energy == 21, "AI pays once; next player turn grants income once")
+	check(board.enemy_energy == 12 and board.player_energy == 23, "AI pays once; next player turn grants income once")
 	check(board.enemy_hand.cards.size() == 1, "AI must replace its used card")
 	# Enemy extra action stays on the same turn with no repeated income.
 	board._begin_turn("enemy")
@@ -43,7 +43,7 @@ func run() -> void:
 	board.enemy_hand.cards.assign([Library.CARDS[13]])
 	var energy: int = board.enemy_energy
 	board._on_enemy_timeout()
-	check(board.current_actor == "enemy" and board.enemy_energy == energy + 1, "AI play-again must retain control without income")
+	check(board.current_actor == "enemy" and board.enemy_energy == energy + 3, "AI play-again must retain control without income")
 	check(not board.enemy_timer.is_stopped(), "AI extra action must schedule a new think delay")
 	board.enemy_timer.stop()
 	# No affordable cards: discard, with refund only, then return control.

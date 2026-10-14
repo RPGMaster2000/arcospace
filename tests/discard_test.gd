@@ -16,6 +16,7 @@ func run() -> void:
 	var board = BoardScene.instantiate()
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
+	board.resource_goal = 100000 # Refund loop must not trigger a resource victory.
 	root.add_child(board)
 	var hand = board.get_node("CardHand")
 	for card in Library.CARDS:
@@ -63,7 +64,7 @@ func run() -> void:
 	board.enemy_timer.stop()
 	board.current_actor = "player"
 	# Click the actual footer on an unaffordable card; the parent must not play.
-	hand.cards[0] = Library.CARDS[13] # Energy Surge: no effect, refund 1.
+	hand.cards[0] = Library.CARDS[11] # Laser Burst: discard refund 2, no attack.
 	board.player_energy = 0
 	board.refresh_display()
 	var footer = button.get_node("DiscardButton")
@@ -75,7 +76,7 @@ func run() -> void:
 	root.push_input(event, true)
 	event.pressed = false
 	root.push_input(event, true)
-	check(board.player_energy == 1, "Footer must refund only, without playing the card")
+	check(board.player_energy == 2, "Footer must refund only, without playing the card")
 	check(footer.text.begins_with("Discard +"), "Footer must show the replacement refund")
 	board.enemy_hull = 0
 	var stopped: Array = hand.cards.duplicate()

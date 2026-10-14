@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ship_name = "Marauder"
+role = "Offensive"
+summary = "Energy-rich attacker."
+hull_capacity = 27
+shields = 5
+materials = 8
+energy = 15
+crew = 10
+synthesizer = 1
+reactor = 3
+quarters = 2
+ftl_turns = 14
+ftl_resistance = 0
+hull_color = Color(0.4, 0.12, 0.12, 1)

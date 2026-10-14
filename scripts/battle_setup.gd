@@ -1,52 +1,44 @@
 extends Control
 # RESPONSIBILITY: Read setup controls and configure a new board before its _ready runs.
 const BOARD = preload("res://scenes/board_3d.tscn")
-const Modifier = preload("res://scripts/combat_modifier.gd")
-const KEYS = ["materials", "energy", "crew", "synthesizer", "reactor", "quarters"]
-# Descriptions read gameplay constants so tuning the modifier updates the setup text too.
-static func description(index: int) -> String:
-	var interval = "Every %d–%d full turns" % [Modifier.MIN_INTERVAL, Modifier.MAX_INTERVAL]
-	match index:
-		1:
-			return "%s: the battlefield attacks each ship once, with a separate %d%% hit chance. Each hit deals %d damage, absorbed by shields first." % [interval, roundi(Modifier.ASTEROID_CHANCE * 100), Modifier.ASTEROID_DAMAGE]
-		2:
-			return "%s: for %d round(s), one announced ×2 or ×½ multiplier applies to all blue cards, including resource gain, theft and production increases/decreases. Costs unchanged; halves round down. Shield swaps unchanged." % [interval, Modifier.ACTIVE_ROUNDS]
-		3:
-			return "%s: both ships’ shields go offline for %d round(s). Shield restoration has no effect. Stored shields return afterward." % [interval, Modifier.ACTIVE_ROUNDS]
-		4:
-			return "Targeting efficiency starts at %d%% and drifts up to %d points per full turn within %d–100%%. This is combat card hit chance. Misses still spend the cost." % [100 - Modifier.NEBULA_START, Modifier.NEBULA_STEP, 100 - Modifier.NEBULA_MAX]
-		5:
-			return "Whole battle: Tier 2 draw chance doubles from 15% to 30% for both ships. Tier 2 unlocks after turn 5; only one per hand. No timed events."
-	return "No combat modifiers. Standard battle rules."
+const Ships = preload("res://scripts/ship_library.gd")
+@export var preview_model: PackedScene = preload("res://scenes/ship_3d.tscn")
 var initial_settings: Dictionary = {}
+var selected_ship: int = 0
 
 func _ready() -> void:
-	for title in Modifier.NAMES:
-		$Panel/Modifier.add_item(title)
-	$Panel/Modifier.item_selected.connect(_describe)
-	$Panel/Start.pressed.connect(_start)
-	for side in ["player", "enemy"]:
-		for key in KEYS:
-			var control: SpinBox = get_node("Panel/" + side + "_" + key)
-			if initial_settings.has(side + "_" + key):
-				control.value = initial_settings[side + "_" + key]
-	if initial_settings.has("ftl_turns"):
-		$Panel/FTL.value = initial_settings.ftl_turns
-	$Panel/Modifier.select(int(initial_settings.get("modifier", 0)))
-	_describe($Panel/Modifier.selected)
+	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, 2)
+	$Start.pressed.connect(_start)
+	for index in range(3):
+		var data = Ships.PLAYERS[index]
+		var panel = get_node("Ships/Ship%d" % index)
+		panel.get_node("Name").text = data.ship_name.to_upper() + " · " + data.role
+		var resistance: String = "%+d%%" % roundi(data.ftl_resistance * 100) if data.ftl_resistance != 0 else "Normal"
+		panel.get_node("Stats").text = "Hull %d · Shields %d\nMaterials %d · Energy %d · Crew %d\nFabricator %d · Reactor %d · Hangar %d\nFTL %d turns · Resistance %s" % [data.hull_capacity, data.shields, data.materials, data.energy, data.crew, data.synthesizer, data.reactor, data.quarters, data.ftl_turns, resistance]
+		panel.get_node("Summary").text = data.summary
+		panel.get_node("Select").pressed.connect(_select.bind(index))
+		_preview(panel.get_node("Preview/Viewport"), data)
+	_select(selected_ship)
 
-func _describe(index: int) -> void:
-	$Panel/Description.text = description(index)
+func _preview(viewport: SubViewport, data: Resource) -> void:
+	var model = (data.model_scene if data.model_scene != null else preview_model).instantiate()
+	viewport.add_child(model)
+	model.set_hull_color(data.hull_color)
+	model.set_hull_strength(data.hull_capacity)
+	model.set_shield_strength(data.shields)
+
+func _select(index: int) -> void:
+	selected_ship = index
+	for slot in range(3):
+		var button: Button = get_node("Ships/Ship%d/Select" % slot)
+		button.text = "SELECTED" if slot == selected_ship else "Select ship"
+		button.modulate = Color(0.5, 0.9, 1) if slot == selected_ship else Color.WHITE
 
 func read_settings() -> Dictionary:
-	var result: Dictionary = {"ftl_turns": int($Panel/FTL.value), "modifier": $Panel/Modifier.selected}
-	for side in ["player", "enemy"]:
-		for key in KEYS:
-			result[side + "_" + key] = int(get_node("Panel/" + side + "_" + key).value)
-	return result
+	return {"player_ship": selected_ship, "modifier": 0}
 
 func _start() -> void:
-	$Panel/Start.disabled = true
+	$Start.disabled = true
 	var board = BOARD.instantiate()
 	board.setup_settings = read_settings()
 	get_parent().add_child(board)

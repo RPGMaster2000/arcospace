@@ -126,3 +126,8 @@ func animate_explosions(tween: Tween, seconds: float) -> void:
 	tween.tween_callback(func():
 		for flash in flashes:
 			flash.queue_free())
+
+func set_hull_color(color: Color) -> void:
+	# Each instance already owns a duplicated Hull material; effect materials stay untouched.
+	base_color = color
+	hull_material.albedo_color = color

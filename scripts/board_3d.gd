@@ -21,16 +21,27 @@ const BATTLEFIELDS = [
 ]
 
 func _enter_tree() -> void:
+	super._enter_tree()
 	# Replace before child _ready callbacks cache the ships for visual effects.
 	var selection: int = clampi(int(setup_settings.get("modifier", 0)), 0, BATTLEFIELDS.size() - 1)
-	if selection == 0:
-		return
+
 	var viewport = $BattleView/Viewport
 	var previous = viewport.get_node("Battlefield")
 	viewport.remove_child(previous)
 	previous.free()
 	var battlefield = BATTLEFIELDS[selection].instantiate()
 	battlefield.name = "Battlefield"
+	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:
+		var data = pair[1]
+		if data != null and data.model_scene != null:
+			var old = battlefield.get_node(pair[0])
+			var location = old.transform
+			battlefield.remove_child(old)
+			old.free()
+			var model = data.model_scene.instantiate()
+			model.name = pair[0]
+			model.transform = location
+			battlefield.add_child(model)
 	viewport.add_child(battlefield)
 
 var backdrop_scale: Vector3
@@ -54,6 +65,9 @@ func _ready() -> void:
 	if engine_light:
 		engine_base_energy = engine_light.light_energy
 	super._ready()
+	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:
+		if pair[1] != null:
+			$BattleView/Viewport/Battlefield.get_node(pair[0]).set_hull_color(pair[1].hull_color)
 	_fit_ftl()
 
 func _fit_backdrop() -> void:

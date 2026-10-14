@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ship_name = "Sentinel"
+role = "Defensive"
+summary = "Heavy shields and strong Reactor."
+hull_capacity = 32
+shields = 18
+materials = 8
+energy = 12
+crew = 10
+synthesizer = 1
+reactor = 3
+quarters = 2
+ftl_turns = 14
+ftl_resistance = 0
+hull_color = Color(0.15, 0.56, 0.53, 1)
