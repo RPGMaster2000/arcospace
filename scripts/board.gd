@@ -212,7 +212,10 @@ func _begin_turn(side: String) -> void:
 			var player_hit: bool = asteroid_event and (player_hull < int(before.player.hull) or player_shields < int(before.player.shields))
 			$ModifierDisplay.impact(modifier.kind, player_hit)
 		if not _check_winner():
+			var was_offline: bool = ftl.disabled_turns > 0
 			ftl.begin_player_turn()
+			if was_offline and ftl.disabled_turns == 0:
+				$ModifierDisplay.ftl_online(ftl.can_warp())
 			if ftl.disabled_turns > 0:
 				$ModifierDisplay.ftl_offline()
 	var state: Dictionary = _read_state(side)
@@ -434,11 +437,11 @@ func refresh_display() -> void:
 	else:
 		$TurnLabel.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "ENEMY WINS")
 	player_hull_label.text = "Hull %d/%d" % [player_hull, player_hull_capacity]
-	player_hull_label.add_theme_color_override("font_color", $PlayerHullBar.plating_color if player_hull > player_hull_capacity else Color.WHITE)
+	player_hull_label.add_theme_color_override("font_color", $PlayerHullBar.plating_color if player_hull > player_hull_capacity else Color(0.82, 0.84, 0.87))
 	$PlayerHullBar.update_hull(player_hull, player_hull_capacity)
 	player_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % player_shields
 	enemy_hull_label.text = "Hull %d/%d" % [enemy_hull, enemy_hull_capacity]
-	enemy_hull_label.add_theme_color_override("font_color", $EnemyHullBar.plating_color if enemy_hull > enemy_hull_capacity else Color.WHITE)
+	enemy_hull_label.add_theme_color_override("font_color", $EnemyHullBar.plating_color if enemy_hull > enemy_hull_capacity else Color(0.82, 0.84, 0.87))
 	$EnemyHullBar.update_hull(enemy_hull, enemy_hull_capacity)
 	enemy_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % enemy_shields
 	battle_effects.set_number(player_materials_label, player_materials)

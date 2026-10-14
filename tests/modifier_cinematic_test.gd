@@ -29,9 +29,9 @@ func run() -> void:
 		check(not board.resolving_card, "Input unlocks after result")
 	board.refresh_display()
 	var panel = board.get_node("FTLPanel")
-	check(panel.position.y >= board.get_node("PlayerHullLabel").position.y + board.get_node("PlayerHullLabel").size.y, "FTL sits below hull status")
+	check(panel.position.y < board.get_node("PlayerHullLabel").position.y, "FTL sits above ship status")
 	display.ftl_offline()
-	check(display.get_node("ScreenFlash").modulate.a > 0, "Offline FTL flashes screen")
+	check(display.get_node("FTLTint").color.a > 0, "Offline FTL flashes screen")
 	var original = root.canvas_transform
 	display.impact(1, true)
 	await create_timer(0.03).timeout

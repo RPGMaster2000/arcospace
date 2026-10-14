@@ -50,10 +50,44 @@ func _ready() -> void:
 	backdrop_scale = backdrop.scale
 	resized.connect(_fit_backdrop)
 	_fit_backdrop()
+	engine_light = get_node_or_null("BattleView/Viewport/Battlefield/PlayerShip/Body/OmniLight3D")
+	if engine_light:
+		engine_base_energy = engine_light.light_energy
 	super._ready()
+	_fit_ftl()
 
 func _fit_backdrop() -> void:
 	# The flat starfield must cover the extra camera view as well as the viewport.
 	var height_scale: float = maxf(1.0, (size.y - 325.0) / 395.0)
 	battle_camera.fov = rad_to_deg(2.0 * atan(tan(deg_to_rad(baseline_fov) * 0.5) * height_scale))
 	backdrop.scale = backdrop_scale * maxf(height_scale, size.x / 1280.0)
+	_fit_ftl()
+
+## TUNE: Engine light factors relative to its scene-authored brightness.
+@export var engine_offline_factor: float = 0.3
+@export var engine_ready_factor: float = 1.4
+@export var engine_pulse_depth: float = 0.10
+@export var engine_pulse_speed: float = 2.0
+var engine_light: OmniLight3D
+var engine_base_energy: float = 0.0
+var engine_phase: float = 0.0
+
+func _process(delta: float) -> void:
+	if not engine_light:
+		return
+	engine_phase += delta * engine_pulse_speed
+	var factor: float = engine_offline_factor if ftl.disabled_turns > 0 else 1.0
+	if ftl.can_warp():
+		factor = engine_ready_factor * (1.0 + engine_pulse_depth * sin(engine_phase))
+	engine_light.light_energy = engine_base_energy * factor
+
+func _fit_ftl() -> void:
+	if not battle_camera:
+		return
+	var container: Control = $BattleView
+	var viewport: SubViewport = $BattleView/Viewport
+	var ship: Node3D = $BattleView/Viewport/Battlefield/PlayerShip
+	var ship_center: Vector2 = container.position + battle_camera.unproject_position(ship.global_position) * container.size / Vector2(viewport.size)
+	var hull_center: float = $PlayerHullLabel.position.y + $PlayerHullLabel.size.y * 0.5
+	# Mirror Hull status vertically about the ship, and center FTL horizontally on it.
+	$FTLPanel.position = Vector2(ship_center.x - $FTLPanel.size.x * 0.5, ship_center.y * 2.0 - hull_center - $FTLPanel.size.y * 0.5)

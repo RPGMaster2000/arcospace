@@ -86,12 +86,28 @@ func hold_result() -> void:
 func _exit_tree() -> void:
 	_restore_screen()
 
+## TUNE: FTL transitions hold longer than modifier flashes; offline adds one second.
+@export var ftl_offline_seconds: float = 1.45
+@export var ftl_online_seconds: float = 0.65
+var ftl_tween: Tween
+
 func ftl_offline() -> void:
-	# A separate status pulse avoids replacing the modifier's central result text.
+	_ftl_event("FTL OFFLINE", Color(1, 0.12, 0.04), ftl_offline_seconds, 0.32)
+
+func ftl_online(fully_charged: bool) -> void:
+	_ftl_event("FTL ONLINE" if fully_charged else "FTL REPAIRED · RESUMING CHARGING", Color(0.25, 0.65, 1), ftl_online_seconds, 0.16)
+
+func _ftl_event(message: String, color: Color, seconds: float, strength: float) -> void:
 	if not cinematic_enabled:
 		return
-	impact(1)
+	if ftl_tween:
+		ftl_tween.kill()
+	$FTLFlash.text = message
+	$FTLFlash.modulate = Color(color, 1.0)
+	$FTLTint.color = Color(color, strength)
 	var label = get_parent().get_node("FTLPanel/Charge")
-	label.modulate = Color(1, 0.15, 0.05)
-	var pulse = create_tween()
-	pulse.tween_property(label, "modulate", Color.WHITE, 0.8)
+	label.modulate = color
+	ftl_tween = create_tween().set_parallel(true)
+	ftl_tween.tween_property($FTLTint, "color:a", 0.0, seconds)
+	ftl_tween.tween_property($FTLFlash, "modulate:a", 0.0, 0.4).set_delay(seconds)
+	ftl_tween.tween_property(label, "modulate", Color.WHITE, seconds)

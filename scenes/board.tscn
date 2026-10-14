@@ -671,8 +671,10 @@ offset_left = -287.0
 offset_top = -400.0
 offset_right = -61.0
 offset_bottom = -362.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "Shields 10"
+
+theme_override_colors/font_color = Color(0.42, 0.73, 0.95, 1)
 
 [node name="EnemyShieldsLabel" type="Label" parent="." unique_id=1691280843]
 layout_mode = 0
@@ -680,12 +682,14 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 148.0
+offset_left = 61.0
 offset_top = -400.0
-offset_right = 360.0
+offset_right = 287.0
 offset_bottom = -362.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "Shields 10"
+
+theme_override_colors/font_color = Color(0.42, 0.73, 0.95, 1)
 
 [node name="EnemyHullLabel" type="Label" parent="." unique_id=95820666]
 layout_mode = 0
@@ -693,9 +697,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 346.0
+offset_left = 292.0
 offset_top = -400.0
-offset_right = 516.0
+offset_right = 432.0
 offset_bottom = -362.0
 theme_override_font_sizes/font_size = 20
 text = "Hull 30"
@@ -1041,8 +1045,8 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = -432.0
 offset_right = -61.0
-offset_top = -360.0
-offset_bottom = -333.0
+offset_top = -630.0
+offset_bottom = -603.0
 
 [node name="CombatModifier" type="Node" parent="." unique_id=807608807]
 script = ExtResource("ModifierRules")

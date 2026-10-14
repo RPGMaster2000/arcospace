@@ -37,7 +37,7 @@ func run() -> void:
 	check(not board.get_node("PlayerHullBar").has_node("Plating"), "Redundant plating text removed")
 	board.player_hull = 35
 	board.refresh_display()
-	check(board.player_hull_label.get_theme_color("font_color") == Color.WHITE, "Color resets at capacity")
+	check(board.player_hull_label.get_theme_color("font_color") == Color(0.82,0.84,0.87), "Color resets at capacity")
 	board.queue_free()
 	await process_frame
 	print("Repair selection checks: %d failures" % failures)
