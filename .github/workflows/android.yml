@@ -1,0 +1,129 @@
+name: Build Android debug APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-debug-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    env:
+      GODOT_VERSION: 4.7.2
+      BUILD_TOOLS_VERSION: 36.1.0
+      GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/arcospace-debug.keystore
+      GODOT_ANDROID_KEYSTORE_DEBUG_USER: ${{ secrets.ANDROID_DEBUG_KEY_ALIAS || 'androiddebugkey' }}
+      GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: ${{ secrets.ANDROID_DEBUG_KEY_PASSWORD || 'android' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17.0.16+8'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '13114758'
+
+      - name: Install isolated Android SDK
+        run: |
+          set -euo pipefail
+          SDK="$RUNNER_TEMP/android-sdk"
+          mkdir -p "$SDK/licenses"
+          cp "$ANDROID_HOME/licenses/"* "$SDK/licenses/"
+          sdkmanager --sdk_root="$SDK" "platform-tools" "platforms;android-36" "build-tools;$BUILD_TOOLS_VERSION"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+
+      - name: Install matching Godot engine and export templates
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          curl -fL --retry 3 "$BASE/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o godot.zip
+          curl -fL --retry 3 "$BASE/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o templates.tpz
+          echo 'cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4  godot.zip' | sha256sum -c -
+          echo 'f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011  templates.tpz' | sha256sum -c -
+          mkdir -p godot-bin "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          unzip -q godot.zip -d godot-bin
+          mv "godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot
+          chmod +x godot-bin/godot
+          echo "$RUNNER_TEMP/godot-bin" >> "$GITHUB_PATH"
+          unzip -q templates.tpz -d extracted_templates
+          cp -a extracted_templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+
+      - name: Prepare private debug signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          if [[ -n "$KEYSTORE_BASE64" ]]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$GODOT_ANDROID_KEYSTORE_DEBUG_PATH"
+            echo 'Signing: reusable private debug key from repository secrets.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            keytool -genkeypair -noprompt -storetype JKS \
+              -keystore "$GODOT_ANDROID_KEYSTORE_DEBUG_PATH" \
+              -alias "$GODOT_ANDROID_KEYSTORE_DEBUG_USER" \
+              -storepass:env GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD \
+              -keypass:env GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname 'CN=Arcospace CI Debug,O=Development,C=SE'
+            echo '::warning::Temporary signing key: APKs from different runs require uninstalling the previous app. Configure ANDROID_DEBUG_KEYSTORE_BASE64 for updates in place.'
+            echo 'Signing: temporary key. Installing over another run or phone-exported APK will usually fail; uninstalling deletes local app data.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Configure Godot and import resources
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          godot --version
+          godot --headless --path . --editor --import --quit
+
+      - name: Export and verify debug APK
+        run: |
+          set -euo pipefail
+          mkdir -p build/android
+          # Only the Android preset has version/code; Web remains untouched.
+          sed -i "s/^version\/code=.*/version\/code=$GITHUB_RUN_NUMBER/" export_presets.cfg
+          APK="build/android/arcospace-debug.apk"
+          godot --headless --path . --export-debug Android "$APK"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --verbose --print-certs "$APK" | tee build/android/signature.txt
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt" dump badging "$APK" | tee build/android/package.txt
+          grep -q "package: name='com.example.arcospace'" build/android/package.txt
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt" dump xmltree "$APK" AndroidManifest.xml > build/android/manifest.txt
+          grep -Eq 'android:screenOrientation.*0x0$' build/android/manifest.txt
+          sha256sum "$APK" > build/android/SHA256SUMS.txt
+          echo "APK exported and signature verified from commit $GITHUB_SHA. Physical-device gameplay has not been tested by CI." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload downloadable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: arcospace-android-debug-${{ github.run_number }}-${{ github.sha }}
+          path: build/android/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f -- "$GODOT_ANDROID_KEYSTORE_DEBUG_PATH"
