@@ -112,9 +112,10 @@ jobs:
           godot --headless --path . --export-debug Android "$APK"
           test -s "$APK"
           "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --verbose --print-certs "$APK" | tee build/android/signature.txt
-          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt" dump badging "$APK" | tee build/android/package.txt
-          grep -q "package: name='com.example.arcospace'" build/android/package.txt
-          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt" dump xmltree "$APK" AndroidManifest.xml > build/android/manifest.txt
+          # Inspect raw manifest attributes; aapt's badging summary rejects
+          # template feature attributes that reference resource values.
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/aapt" dump xmltree "$APK" AndroidManifest.xml | tee build/android/manifest.txt
+          grep -q 'package="com.example.arcospace"' build/android/manifest.txt
           grep -Eq 'android:screenOrientation.*0x0$' build/android/manifest.txt
           sha256sum "$APK" > build/android/SHA256SUMS.txt
           echo "APK exported and signature verified from commit $GITHUB_SHA. Physical-device gameplay has not been tested by CI." >> "$GITHUB_STEP_SUMMARY"
