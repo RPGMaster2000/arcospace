@@ -31,7 +31,10 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, resource_goal: i
 	# Avoid fatal self damage when choosing a non-winning move.
 	var safe: Array[int] = []
 	for slot in affordable:
-		if int(cards[slot].effects.get("self_damage", 0)) < int(actor.hull):
+		var safe_actor: Dictionary = actor.duplicate(true)
+		var safe_target: Dictionary = enemy.duplicate(true)
+		Effects.play(cards[slot], safe_actor, safe_target, null, true)
+		if safe_actor.hull > 0:
 			safe.append(slot)
 	if safe.is_empty():
 		return {"slot": _pick(affordable), "discard": true}

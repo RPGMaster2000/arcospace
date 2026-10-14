@@ -49,6 +49,15 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 		var previous: int = actor.shields
 		actor.shields = enemy.shields
 		enemy.shields = previous
+	var backlash: int = 0
+	var collapse: Dictionary = effects.get("shield_collapse", {})
+	if not collapse.is_empty():
+		if enemy.shields >= int(collapse.get("threshold", 10)):
+			# AI assumes the harmful outcome, without sampling combat RNG.
+			var source = combat_rng if generator == null else generator
+			if simulate or source.randf() < float(collapse.get("chance", 0.5)):
+				backlash = int(collapse.get("self_damage", 10))
+		enemy.shields = 0
 	# Strict threshold checked at resolution; exactly the threshold never qualifies.
 	if effects.has("shield_collapse_below") and enemy.shields < int(effects.shield_collapse_below):
 		enemy.shields = 0
@@ -73,6 +82,10 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
 	# Self damage is direct hull loss for either acting ship; shields cannot absorb it.
 	damage_report.actor_before = actor.hull
-	damage_report.actor = mini(actor.hull, maxi(0, int(effects.get("self_damage", 0))))
-	actor.hull = maxi(0, actor.hull - int(effects.get("self_damage", 0)))
+	var regular_self: int = maxi(0, int(effects.get("self_damage_regular", 0))) + backlash
+	var self_blocked: int = mini(actor.shields, regular_self)
+	actor.shields -= self_blocked
+	var hull_loss: int = regular_self - self_blocked + maxi(0, int(effects.get("self_damage", 0)))
+	damage_report.actor = mini(actor.hull, hull_loss)
+	actor.hull = maxi(0, actor.hull - hull_loss)
 	return true

@@ -28,7 +28,7 @@ func run() -> void:
 		var b = state()
 		b.shields = strength
 		Effects.play(collapse,a,b,generator)
-		check(b.shields == (0 if strength < 10 else strength), "Strict shield threshold uses current state")
+		check(b.shields == 0, "Shield Collapse removes shields at all strengths")
 	var a = state()
 	var b = state()
 	Effects.play(Library.CARDS[41],a,b,generator)
@@ -43,7 +43,7 @@ func run() -> void:
 		b = state()
 		Effects.play(Library.CARDS[42],a,b,generator)
 		var gain: int = a.materials - 40 + a.crew - 40
-		check(gain >= 12 and gain <= 15 and a.energy == 30, "Reserve range and exclusion")
+		check(gain >= 12 and gain <= 15 and a.energy == 27, "Reserve range and exclusion")
 		selection_counts["materials" if a.materials > 40 else "crew"] += 1
 	check(absi(selection_counts.materials - selection_counts.crew) < 250, "Cross resources have equal odds")
 	var ai = load("res://scripts/enemy_ai.gd").new()
@@ -55,6 +55,7 @@ func run() -> void:
 	ai.choose(new_cards,a,b,100)
 	check(a == old_a and b == old_b and Effects.combat_rng.state == random_state, "AI cannot consume combat RNG or mutate live states")
 	a.hull = 5
+	a.shields = 0
 	var move = ai.choose([Library.CARDS[43]],a,b,100)
 	check(move.discard, "AI discards fatal conversion rather than falsely claiming resource victory")
 	ai.free()
@@ -69,7 +70,7 @@ func run() -> void:
 		mod.play(Library.CARDS[42],a,b)
 		var gained: int = a.materials - 40 + a.crew - 40
 		check(gained >= preview.effects.random_gain_range_other.min and gained <= preview.effects.random_gain_range_other.max, "Ion preview range equals actual gain")
-		check(mod.preview(collapse).effects.shield_collapse_below == 10, "Ion does not alter conditional threshold")
+		check(mod.preview(collapse).effects.shield_collapse.threshold == 10, "Ion does not alter conditional threshold")
 	mod.configure(4)
 	mod.miss_rate = 70
 	a = state()

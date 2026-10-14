@@ -84,7 +84,7 @@ func meter_value(round_number: int) -> float:
 	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
 
 static func is_combat(effects: Dictionary) -> bool:
-	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below"]:
+	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below", "shield_collapse"]:
 		if effects.get(key, false):
 			return true
 	return false
@@ -97,7 +97,7 @@ func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 			result[key] = int(floor((1.0 if result[key] else 0.0) * factor))
 		elif result[key] is Dictionary:
 			result[key] = _scaled(result[key], factor)
-		elif key not in ["pierce", "shield_collapse_below"] and (result[key] is int or result[key] is float):
+		elif key not in ["pierce", "shield_collapse_below", "threshold", "chance"] and (result[key] is int or result[key] is float):
 			# TUNE: Half effects round down, including +1 production becoming zero.
 			result[key] = int(floor(float(result[key]) * factor))
 	return result
@@ -169,6 +169,8 @@ func preview(card: Resource) -> Resource:
 			"random_gain_other": lines.append("Gain %d random other resource" % value)
 			"random_gain_range_other": lines.append("Gain %d–%d random other resource" % [value.min, value.max])
 			"production_other": lines.append("+%d %s, +%d corresponding resource" % [value.production, str(value.type).capitalize(), value.resource])
+			"self_damage_regular": lines.append("Take %d regular dmg" % value)
+			"shield_collapse": lines.append("Remove enemy Shld; ≥%d: %d%% risk of %d self dmg" % [value.threshold, roundi(value.chance*100), value.self_damage])
 			"self_damage": lines.append("Take %d direct Hull damage" % value)
 			"shield_collapse_below": lines.append("Remove enemy Shields if below %d" % value)
 			_: lines.append("%+d %s" % [value, str(key).capitalize()])

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 card_name = "EMP Pulse"
 family = "energy"
-cost = 7
-description = "Enemy resources −3 each"
-effects = {"drain": {"materials": 3, "energy": 3, "crew": 3}}
+cost = 8
+description = "Enemy resources −7 each"
+effects = {"drain": {"materials": 7, "energy": 7, "crew": 7}}
 play_again = false

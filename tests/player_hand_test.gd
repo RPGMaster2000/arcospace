@@ -53,11 +53,11 @@ func run() -> void:
 			check(hand.cards.size() == 6, "Replacement must preserve hand size")
 			for card in hand.cards:
 				check(card != null and hand.cards.count(card) <= 2, "No more than two copies")
-	# Energy Surge retains its metadata, pays 4 and grants 5 only.
+	# Energy Surge retains its metadata, costs zero and grants 3 only.
 	hand.cards[0] = Library.CARDS[13]
 	board.player_energy = 16
 	board._on_card_pressed(0)
-	check(board.player_energy == 17 and board.extra_action_requested, "Play-again must not grant income")
+	check(board.player_energy == 19 and board.extra_action_requested, "Play-again must not grant income")
 	# Card resource edits propagate to the scene preview/view.
 	var view = board.get_node(board.card_slots[0])
 	var editable: Resource = Library.CARDS[0].duplicate(true)

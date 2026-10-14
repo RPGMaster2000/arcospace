@@ -7,6 +7,6 @@ script = ExtResource("1")
 tier = 2
 card_name = "Sabotage Commandos"
 family = "crew"
-cost = 14
+cost = 18
 description = "18 damage · Enemy production −2 each (min 1)"
 effects = {"damage": 18, "sabotage": 2}
