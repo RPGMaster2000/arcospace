@@ -58,6 +58,7 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
+	damage_report.target_before = enemy.hull
 	damage_report.target = mini(enemy.hull, maxi(0, damage - blocked))
 	enemy.hull = maxi(0, enemy.hull - damage + blocked)
 	for key in RESOURCES:
@@ -71,6 +72,7 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 		for key in PRODUCTION:
 			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
 	# Self damage is direct hull loss for either acting ship; shields cannot absorb it.
+	damage_report.actor_before = actor.hull
 	damage_report.actor = mini(actor.hull, maxi(0, int(effects.get("self_damage", 0))))
 	actor.hull = maxi(0, actor.hull - int(effects.get("self_damage", 0)))
 	return true

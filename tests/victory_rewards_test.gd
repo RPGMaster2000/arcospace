@@ -30,7 +30,7 @@ func run() -> void:
 	board._continue_encounter()
 	await process_frame
 	board = current_scene
-	check(board.player_hull == 40 and board.starting_player_hull == 40, "Carried hull becomes new baseline")
+	check(board.player_hull == 35 and board.starting_player_hull == 35, "Carried hull becomes new baseline")
 	check(board.player_materials == 23 and board.player_energy == 23 and board.player_crew == 23, "Tactical adds five each before normal income")
 	check(board.player_shields == 20, "Strategic adds ten reset shields")
 	check(board.player_hull_damage_taken == 0, "Damage resets per encounter")

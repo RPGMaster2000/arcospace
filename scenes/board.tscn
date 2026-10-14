@@ -20,6 +20,8 @@
 [ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="preview_5"]
 [ext_resource type="PackedScene" path="res://scenes/match_result.tscn" id="Result"]
 
+[ext_resource type="Script" path="res://scripts/hull_bar.gd" id="HullBar"]
+
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
 font_weight = 700
@@ -656,7 +658,7 @@ offset_left = -432.0
 offset_top = -400.0
 offset_right = -292.0
 offset_bottom = -362.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "Hull 30"
 
 [node name="PlayerShieldsLabel" type="Label" parent="." unique_id=86968435]
@@ -695,7 +697,7 @@ offset_left = 346.0
 offset_top = -400.0
 offset_right = 516.0
 offset_bottom = -362.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "Hull 30"
 
 [node name="HandRule" type="Line2D" parent="." unique_id=187637948]
@@ -1064,3 +1066,27 @@ offset_bottom = 74.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 16
 text = "Salvage 0"
+
+[node name="PlayerHullBar" type="Control" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -432.0
+offset_right = -292.0
+offset_top = -370.0
+offset_bottom = -362.0
+mouse_filter = 2
+script = ExtResource("HullBar")
+
+[node name="EnemyHullBar" type="Control" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 292.0
+offset_right = 432.0
+offset_top = -370.0
+offset_bottom = -362.0
+mouse_filter = 2
+script = ExtResource("HullBar")

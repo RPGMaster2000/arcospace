@@ -13,6 +13,9 @@ const CardEffects = preload("res://scripts/card_effects.gd")
 	NodePath("EnergyCellCard"), NodePath("QuartersUpgradeCard"), NodePath("TorpedoSalvoCard")]
 ## TUNE: Amount required in EACH of the three resources for resource victory.
 @export_range(1, 1000, 1) var resource_goal: int = 100
+## TUNE in Board3D Inspector: permanent capacity for each ship; excess is temporary plating.
+@export_range(1, 1000, 1) var player_hull_capacity: int = 35
+@export_range(1, 1000, 1) var enemy_hull_capacity: int = 35
 var current_actor: String = "player"
 var turn_number: int = 1
 var winner: String = ""
@@ -123,7 +126,7 @@ func _ready() -> void:
 			if setup_settings.has(setting):
 				set(setting, int(setup_settings[setting]))
 	if continuation_hull >= 0:
-		player_hull = continuation_hull
+		player_hull = mini(continuation_hull, player_hull_capacity)
 	starting_player_hull = player_hull
 	for key in MatchRules.RESOURCES:
 		set("player_" + key, get("player_" + key) + pending_resource_bonus)
@@ -200,7 +203,7 @@ func _begin_turn(side: String) -> void:
 			_write_state("player", player)
 			_write_state("enemy", enemy)
 			player_hull_damage_taken += maxi(0, int(before.player.hull) - player_hull)
-			_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
+			_damage_ftl(permanent_damage(int(before.player.hull), player_hull, player_hull_capacity))
 			asteroid_event = true
 		$ModifierDisplay.announce(announcement)
 		if event_due:
@@ -296,7 +299,11 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	_write_state(other, target)
 	if not discard:
 		player_hull_damage_taken += int(modifier.last_hull_damage.actor if side == "player" else modifier.last_hull_damage.target)
-	_damage_ftl(maxi(0, int(before.player.hull) - player_hull))
+	if not discard:
+		var key: String = "actor" if side == "player" else "target"
+		var report: Dictionary = modifier.last_hull_damage
+		var attack_before: int = int(report.get(key + "_before", player_hull))
+		_damage_ftl(permanent_damage(attack_before, attack_before - int(report.get(key, 0)), player_hull_capacity))
 	active_hand.replace_card(slot)
 	extra_action_requested = not discard and card.play_again
 	var who: String = "You" if side == "player" else "Enemy"
@@ -383,8 +390,8 @@ func refresh_display() -> void:
 	$MatchResult/Panel/BattlesWon.text = "%d BATTLES WON" % battles_won
 	$MatchResult/Panel/Rewards.visible = winner == "player"
 	$MatchResult/Panel/Repair.visible = winner == "player"
-	$MatchResult/Panel/Repair.disabled = salvage <= 0 or player_hull >= SALVAGE_REPAIR_CAP or resolving_card or battle_effects.busy
-	$MatchResult/Panel/Repair.text = "Spend %d Salvage · Repair to %d Hull" % [salvage, mini(SALVAGE_REPAIR_CAP, player_hull + salvage * HULL_PER_SALVAGE)] if player_hull < SALVAGE_REPAIR_CAP else "Hull %d · No repair needed" % player_hull
+	$MatchResult/Panel/Repair.disabled = salvage <= 0 or player_hull >= mini(SALVAGE_REPAIR_CAP, player_hull_capacity) or resolving_card or battle_effects.busy
+	$MatchResult/Panel/Repair.text = "Spend %d Salvage · Repair to %d Hull" % [salvage, mini(mini(SALVAGE_REPAIR_CAP, player_hull_capacity), player_hull + salvage * HULL_PER_SALVAGE)] if player_hull < mini(SALVAGE_REPAIR_CAP, player_hull_capacity) else "Hull %d · No repair needed" % player_hull
 	$ModifierDisplay.refresh(modifier, turn_number)
 	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
@@ -417,9 +424,11 @@ func refresh_display() -> void:
 		$TurnLabel.text = "Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
 	else:
 		$TurnLabel.text = "DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "ENEMY WINS")
-	player_hull_label.text = "Hull %d" % player_hull
+	player_hull_label.text = "Hull %d/%d" % [mini(player_hull, player_hull_capacity), player_hull_capacity]
+	$PlayerHullBar.update_hull(player_hull, player_hull_capacity)
 	player_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % player_shields
-	enemy_hull_label.text = "Hull %d" % enemy_hull
+	enemy_hull_label.text = "Hull %d/%d" % [mini(enemy_hull, enemy_hull_capacity), enemy_hull_capacity]
+	$EnemyHullBar.update_hull(enemy_hull, enemy_hull_capacity)
 	enemy_shields_label.text = "Shields OFF" if modifier.shields_disabled() else "Shields %d" % enemy_shields
 	battle_effects.set_number(player_materials_label, player_materials)
 	player_synthesizer_label.text = str(player_synthesizer)
@@ -464,7 +473,9 @@ func _continue_encounter() -> void:
 	var fresh = load(scene_file_path).instantiate()
 	fresh.setup_settings = setup_settings.duplicate(true)
 	fresh.setup_settings.modifier = next_modifier
-	fresh.continuation_hull = player_hull
+	fresh.player_hull_capacity = player_hull_capacity
+	fresh.enemy_hull_capacity = enemy_hull_capacity
+	fresh.continuation_hull = mini(player_hull, player_hull_capacity)
 	fresh.encounter_number = encounter_number + 1
 	fresh.salvage = salvage
 	fresh.battles_won = battles_won
@@ -507,10 +518,13 @@ func _record_result() -> void:
 			salvage += DESTRUCTION_SALVAGE
 
 func _repair_with_salvage() -> void:
-	if winner != "player" or salvage <= 0 or player_hull >= SALVAGE_REPAIR_CAP or resolving_card or battle_effects.busy:
+	if winner != "player" or salvage <= 0 or player_hull >= mini(SALVAGE_REPAIR_CAP, player_hull_capacity) or resolving_card or battle_effects.busy:
 		return
 	_record_result()
 	# Spend the full balance in one action; excess beyond the cap is discarded.
-	player_hull = mini(SALVAGE_REPAIR_CAP, player_hull + salvage * HULL_PER_SALVAGE)
+	player_hull = mini(mini(SALVAGE_REPAIR_CAP, player_hull_capacity), player_hull + salvage * HULL_PER_SALVAGE)
 	salvage = 0
 	refresh_display()
+
+static func permanent_damage(before: int, after: int, capacity: int) -> int:
+	return maxi(0, mini(before, capacity) - mini(after, capacity))
