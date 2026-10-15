@@ -137,6 +137,8 @@ func _enter_tree() -> void:
 		enemy_ship_data = Ships.ENEMIES[generator.randi_range(0, Ships.ENEMIES.size()-1)]
 		if setup_settings.has("enemy_ship"):
 			enemy_ship_data = Ships.ENEMIES[clampi(int(setup_settings.enemy_ship), 0, Ships.ENEMIES.size() - 1)]
+		if setup_settings.has("enemy_data"):
+			enemy_ship_data = setup_settings.enemy_data
 
 func _apply_ship(side: String, data: Resource) -> void:
 	if data == null:
@@ -422,9 +424,9 @@ func _warp_out() -> void:
 	winner = "player"
 	escaped_by_ftl = true
 	enemy_timer.stop()
-	$LastActionLabel.text = "FTL jump complete — escaped!"
+	$LastActionLabel.text = "Emergency Jump complete — escaped!"
 	refresh_display()
-	$MatchResult/Panel/Title.text = "WARP SUCCESS"
+	$MatchResult/Panel/Title.text = "JUMP SUCCESS"
 
 func refresh_display() -> void:
 	$ModeLabel.text = enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship"
@@ -447,7 +449,7 @@ func refresh_display() -> void:
 	$MatchResult/Panel/RepairAmount.text = "Spend %d / %d Salvage" % [maxi(0, repair_spend), salvage]
 	$MatchResult/Panel/Repair.text = "Repair to %d/%d Hull" % [player_hull + maxi(0, repair_spend) * HULL_PER_SALVAGE, player_hull_capacity]
 	$ModifierDisplay.refresh(modifier, turn_number)
-	var ftl_status: String = "FTL %d / %d" % [ftl.charge, ftl.charge_target]
+	var ftl_status: String = "Emergency Jump %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
 		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns
 	elif ftl.can_warp():
@@ -458,8 +460,8 @@ func refresh_display() -> void:
 	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
-	$MatchResult/Panel/Title.text = "WARP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
-	var method: String = "FTL escape" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
+	$MatchResult/Panel/Title.text = "JUMP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
+	var method: String = "Emergency Jump" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
 	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, result_hull if result_recorded else player_hull]
 	$MatchResult/Panel/Rewards.text = victory_description()
 	var can_continue: bool = winner == "player" and player_hull > 0
@@ -566,8 +568,8 @@ func victory_description() -> String:
 	var tactical: String = "EARNED" if tactical_victory() else "Not earned"
 	var strategic: String = "EARNED" if strategic_victory() else "Not earned"
 	if expedition != null:
-		return "Combat reward: +%d Salvage (%s).\nTactical [%s]: Finish with more Hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Strongest bonus per attribute is kept.\nContinue to choose an encounter or freely jump to a new system." % [expedition.victory_salvage(self), "FTL escape" if escaped_by_ftl else ("destruction" if enemy_hull <= 0 else "resource victory"), tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
-	return "Normal victory: Destroy the enemy or escape by FTL.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
+		return "Combat reward: +%d Salvage (%s). FTL Drive: %d / %d.\nTactical [%s]: Finish with more Hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Strongest bonus per attribute is kept.\nContinue to choose an encounter or jump when the FTL Drive is charged." % [expedition.victory_salvage(self), "Emergency Jump" if escaped_by_ftl else ("destruction" if enemy_hull <= 0 else "resource victory"), expedition.ftl_charge, expedition.required_ftl_charge, tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
+	return "Normal victory: Destroy the enemy or escape by Emergency Jump.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
 
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded:

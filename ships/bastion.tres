@@ -6,7 +6,7 @@
 script = ExtResource("1")
 ship_name = "Bastion"
 role = "Armored / Industrial"
-summary = "Strong Hull and industry; slow, vulnerable FTL."
+summary = "Strong Hull and industry; slow, vulnerable Emergency Jump."
 hull_capacity = 42
 shields = 6
 materials = 14

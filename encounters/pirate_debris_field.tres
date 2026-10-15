@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+
+[sub_resource type="Resource" id="Success0"]
+script = ExtResource("Outcome")
+blurb = "Disposable drones map a safe corridor; stray debris scars your hull."
+salvage = 1
+hull = -1
+
+[sub_resource type="Resource" id="Failure0"]
+script = ExtResource("Outcome")
+blurb = "Disposable drones map a safe corridor; stray debris scars your hull."
+salvage = 1
+hull = -1
+
+[sub_resource type="Resource" id="Approach0"]
+script = ExtResource("Approach")
+title = "Drone perimeter scan"
+requirement = ""
+minimum_production = 3
+success_chance = 1
+success = SubResource("Success0")
+failure = SubResource("Failure0")
+
+[sub_resource type="Resource" id="Success1"]
+script = ExtResource("Outcome")
+blurb = "You recover a rich haul despite explosive debris."
+salvage = 10
+hull = -3
+
+[sub_resource type="Resource" id="Failure1"]
+script = ExtResource("Outcome")
+blurb = "A trap destroys most of the cargo."
+salvage = 4
+hull = -5
+
+[sub_resource type="Resource" id="Approach1"]
+script = ExtResource("Approach")
+title = "Recover cargo"
+requirement = ""
+minimum_production = 3
+success_chance = 0.65
+success = SubResource("Success1")
+failure = SubResource("Failure1")
+
+[sub_resource type="Resource" id="Success2"]
+script = ExtResource("Outcome")
+blurb = "Engineering crews recover a uncommon schematic."
+card_reward = true
+minimum_card_tier = 2
+hull = -2
+
+[sub_resource type="Resource" id="Failure2"]
+script = ExtResource("Outcome")
+blurb = "The trap detonates; some salvage survives."
+salvage = 5
+hull = -3
+
+[sub_resource type="Resource" id="Approach2"]
+script = ExtResource("Approach")
+title = "Disarm wreckage"
+requirement = "synthesizer"
+minimum_production = 3
+success_chance = 0.8
+success = SubResource("Success2")
+failure = SubResource("Failure2")
+
+[sub_resource type="Resource" id="Success3"]
+script = ExtResource("Outcome")
+blurb = "Boarding teams seize uncommon technology."
+card_reward = true
+minimum_card_tier = 2
+salvage = 5
+hull = -4
+
+[sub_resource type="Resource" id="Failure3"]
+script = ExtResource("Outcome")
+blurb = "Your teams retreat with damaged equipment."
+salvage = 6
+hull = -6
+
+[sub_resource type="Resource" id="Approach3"]
+script = ExtResource("Approach")
+title = "Board pirate flagship"
+requirement = "quarters"
+minimum_production = 3
+success_chance = 0.7
+success = SubResource("Success3")
+failure = SubResource("Failure3")
+
+[resource]
+script = ExtResource("Poi")
+title = "Pirate Debris Field"
+description = "Booby-trapped salvage always threatens the hull."
+hazardous = true
+approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

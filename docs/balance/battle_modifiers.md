@@ -1,0 +1,23 @@
+# Battle modifiers
+
+Generated numerical constants: `scripts/combat_modifier.gd`, `ftl_drive.gd`, `board.gd`, and expedition Resources. Serialized combat names (`FTLDrive`, `ftl_turns`, `ftl_resistance`) remain for scene compatibility; they mean **Emergency Jump**, not interstellar FTL Drive.
+
+| Modifier | Exact behavior / duration | Adjust |
+|---|---|---|
+| PoI bonuses / penalties | Per attribute: strongest positive plus strongest negative, independently; no accumulation. Pending until next battle, then consumed once; resource/production floor 0. Emergency Jump starting charge capped to ship target; offline uses strongest duration. Travel does not consume modifiers. | Outcome.next_battle; scripts/expedition_state.gd |
+| Supported next-battle keys | materials, energy, crew, shields, synthesizer, reactor, quarters, emergency_jump_charge, emergency_jump_offline (positive duration) | encounters/*.tres → approaches → outcome |
+| Hull / plating | Hull persists capped to ship capacity between battles. Battle repairs above capacity become plating; damage consumes plating before permanent Hull. Plating clears between battles. PoI/victory repairs cannot create plating. | ShipData.hull_capacity; card effects; board.gd |
+| Shipyard production | Chosen production upgrade adds permanently for expedition; only permanent base+upgrade production unlocks PoI approaches. Battle card production and PoI temporary production do not carry. | Trading Outpost outcome.production_choice |
+| Tactical victory | +5 each starting Materials/Energy/Crew next battle if finish Hull exceeds starting Hull (plating can qualify); escapes eligible; strongest-merging | board.gd: TACTICAL_RESOURCES |
+| Strategic victory | +10 starting Shields next battle if final total production exceeds enemy total; escapes eligible; strongest-merging | board.gd: STRATEGIC_SHIELDS |
+| Emergency Jump | +1 charge each normal player turn, including first; extra actions give 0. Ship-specific target. Disabled turns give 0 charge and prevent escape; charge is retained. | ships/*.tres: ftl_turns; ftl_drive.gd |
+| Emergency Jump disruption | Chance = clamp(min(permanent Hull damage × 0.05, 0.6) × (1 − ship resistance), 0, 1); disabled for 5 full player turns. Shields/plating alone do not trigger. No new disruption while already offline. | ftl_drive.gd constants; ShipData.ftl_resistance |
+| Interstellar FTL Drive | Required = PoI count + 1. PoIs +1 plus optional extra; enemy defeat/escape gives profile reward once. Reset on system entry. Can leave at threshold without clearing rest. | ship.interstellar_ftl_reward; outcome.extra_ftl_charge; expedition_state.gd |
+| Event timing | First event round 1 + random integer 3–6; next event 3–6 rounds after previous ends; active events last 3 full rounds. One random modifier (0–5, uniform) per generated enemy. | combat_modifier.gd; expedition_state.gd |
+| Asteroid belt | 50.0% independent hit per ship, 10 Shield-first damage; instant, repeats every 3–6 rounds | combat_modifier.gd: ASTEROID_*, *_INTERVAL |
+| Ion storm | 50% ×2 / 50% ×0.5 Energy card effects for 3 rounds; half rounds down. Cost unchanged. Recursively scales numbers except pierce, shield_collapse_below, threshold, chance; legacy sabotage true counts as 1. | combat_modifier.gd: begin_round, _scaled |
+| Solar flare | Shields unavailable for 3 rounds; stored Shields restored afterward. Shield gains and swapping ignored during flare. | combat_modifier.gd: ACTIVE_ROUNDS, play |
+| Nebula | Initial miss 30%; each later full round adds uniform integer −10…+10, clamped 0–70%. Miss cancels combat card effects except direct self_damage; card cost paid. Whole battle. | combat_modifier.gd: NEBULA_*; is_combat |
+| Temporal Rift | Tier 2 draw chance ×2.0 for entire battle (15% → 30%); early-round lock and hand caps remain. | combat_modifier.gd: TEMPORAL_DROP_MULTIPLIER; CardHand |
+
+Resource victory requires each resource ≥100 by default (`Board.resource_goal`). Turn income equals current production. Expedition state is in memory only; restart/ship selection/app exit ends the run. **Planned, not implemented:** persistent save/load. No other expedition currency, travel spending, hidden rank multipliers, or permanent card-effect upgrades.

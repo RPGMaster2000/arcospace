@@ -10,6 +10,7 @@ var view: VBoxContainer
 var stats: Label
 var pending: Label
 var jump_button: Button
+var return_button: Button
 var title: Label
 var ui: MarginContainer
 var view_kind: String = ""
@@ -47,8 +48,14 @@ func _build_ui() -> void:
 	view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.add_theme_constant_override("separation", 10)
 	scroll.add_child(view)
+	return_button = Button.new()
+	return_button.text = "Return to encounters"
+	return_button.custom_minimum_size.y = 48
+	return_button.add_theme_font_size_override("font_size", 20)
+	return_button.pressed.connect(show_system)
+	column.add_child(return_button)
 	jump_button = Button.new()
-	jump_button.text = "Jump to Next System — free"
+	jump_button.text = "Jump to Next System"
 	jump_button.custom_minimum_size.y = 52
 	jump_button.add_theme_font_size_override("font_size", 21)
 	jump_button.pressed.connect(_jump)
@@ -79,12 +86,14 @@ func _clear(kind: String) -> void:
 		view.remove_child(child)
 		child.queue_free()
 	ui.show()
+	return_button.visible = kind == "poi"
 	title.text = state.system_name + " — " + state.ship().ship_name
 	stats.text = "Hull %d/%d  ·  Salvage %d  ·  Fabricator %d / Reactor %d / Hangar %d  ·  Cards acquired %d" % [
 		state.hull, state.ship().hull_capacity, state.salvage, state.production("synthesizer"),
 		state.production("reactor"), state.production("quarters"), state.acquired_cards.size()]
 	pending.text = "Next battle: " + state.pending_description()
-	jump_button.disabled = not state.pending_choice.is_empty() or state.hull <= 0
+	jump_button.text = "FTL Drive %d / %d — Jump to Next System" % [state.ftl_charge, state.required_ftl_charge]
+	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 
 func start_expedition() -> void:
@@ -107,9 +116,10 @@ func show_system() -> void:
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
 		var prefix: String = "Battle" if encounter.kind == "battle" else "PoI"
-		var suffix: String = " — Completed" if encounter.completed else ""
+		var suffix: String = " — Completed" if encounter.completed else " · +%d FTL" % state.encounter_charge(index)
+		if encounter.kind == "poi" and encounter.poi.hazardous: prefix = "Hazardous PoI"
 		_button("%d. %s · %s%s" % [index + 1, prefix, encounter.title, suffix], visit.bind(index), encounter.completed)
-	view.add_child(_label("Travel is free. PoIs offer one approach or service per visit. Jumping preserves Hull, Salvage, cards, upgrades and pending bonuses.", 17))
+	view.add_child(_label("Complete PoIs or defeat/escape enemies to charge the FTL Drive. PoIs offer one approach or service per visit. Jumping preserves Hull, Salvage, cards, upgrades and pending bonuses.", 17))
 
 func visit(index: int) -> void:
 	if not state.can_visit(index):
@@ -123,7 +133,7 @@ func show_poi(index: int) -> void:
 	selected_encounter = index
 	_clear("poi")
 	var poi: Resource = state.encounters[index].poi
-	view.add_child(_label(poi.title + " — " + poi.description, 24))
+	view.add_child(_label(poi.title + " — " + poi.description + " Completion: +1 FTL Drive charge.", 24))
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
 		var reason: String = state.locked_reason(approach)
@@ -135,7 +145,11 @@ func show_poi(index: int) -> void:
 		if not reason.is_empty():
 			text += "\nLOCKED — " + reason
 		_button(text, _approach.bind(index, slot), not reason.is_empty(), 100)
-	_button("Back to encounters", show_system)
+	if state.can_survey(index):
+		_button("Navigation survey · +1 FTL Drive charge · No loot\nNext battle penalty: " + state.describe_modifiers(state.rules.survey_penalty), _survey.bind(index))
+
+func _survey(index: int) -> void:
+	if state.survey(index): show_outcome()
 
 func _approach(index: int, slot: int) -> void:
 	if state.resolve_approach(index, slot):
@@ -191,7 +205,7 @@ func start_battle(index: int) -> void:
 	battle = BOARD.instantiate()
 	battle.expedition = state
 	battle.expedition_encounter = index
-	battle.setup_settings = {"player_ship":state.player_ship, "enemy_ship":encounter.enemy, "modifier":encounter.modifier}
+	battle.setup_settings = {"player_ship":state.player_ship, "enemy_ship":encounter.enemy, "enemy_data":state.enemy_profile(encounter), "modifier":encounter.modifier}
 	battle.expedition_continue.connect(_battle_finished)
 	battle.expedition_restart.connect(_restart)
 	battle.expedition_exit.connect(_exit)

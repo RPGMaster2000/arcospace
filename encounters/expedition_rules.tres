@@ -9,14 +9,26 @@
 [ext_resource type="Resource" path="res://encounters/trading_outpost.tres" id="4"]
 [ext_resource type="Resource" path="res://encounters/spatial_anomaly.tres" id="5"]
 
+[ext_resource type="Resource" path="res://encounters/radiation_nebula.tres" id="H0"]
+[ext_resource type="Resource" path="res://encounters/distress_signal.tres" id="H1"]
+[ext_resource type="Resource" path="res://encounters/pirate_debris_field.tres" id="H2"]
+[ext_resource type="Resource" path="res://encounters/unstable_wormhole.tres" id="H3"]
+[ext_resource type="Resource" path="res://encounters/quarantined_colony.tres" id="H4"]
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="Resource" path="res://ships/marauder.tres" id="E0"]
+[ext_resource type="Resource" path="res://ships/sentinel.tres" id="E1"]
+[ext_resource type="Resource" path="res://ships/reclaimer.tres" id="E2"]
+[ext_resource type="Resource" path="res://ships/marauder_vanguard.tres" id="E3"]
+[ext_resource type="Resource" path="res://ships/sentinel_dreadnought.tres" id="E4"]
+
 [resource]
 script = ExtResource("Rules")
-pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4")])
 encounters_per_system = 6
-minimum_battles = 2
-maximum_battles = 3
+minimum_battles = 1
+maximum_battles = 2
 destruction_salvage = 10
 resource_victory_salvage = 6
-escape_salvage = 0
 unavailable_upgrade_salvage = 4
 debug_seed = 0
+enemy_ships = Array[ExtResource("Ship")]([ExtResource("E0"), ExtResource("E1"), ExtResource("E2"), ExtResource("E3"), ExtResource("E4")])

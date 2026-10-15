@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ship_name = "Sentinel Dreadnought"
+subtitle = "Armored Dreadnought"
+role = "Boss"
+hull_capacity = 55
+shields = 22
+materials = 15
+energy = 15
+crew = 15
+synthesizer = 3
+reactor = 3
+quarters = 3
+enemy_rank = 2
+interstellar_ftl_reward = 3
+destruction_salvage_reward = 30
+encounter_weight = 0.15
+hull_color = Color(0.4, 0.12, 0.12, 1)

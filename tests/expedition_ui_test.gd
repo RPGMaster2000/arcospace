@@ -43,6 +43,9 @@ func run() -> void:
 		host.state.encounters[0] = {"kind":"poi", "poi":host.rules.pois[index], "title":host.rules.pois[index].title, "completed":false}
 		host.show_poi(0)
 		await snapshot("poi-%d" % index)
+		check(host.return_button.visible and host.jump_button.disabled == (not host.state.can_jump()), "Return and drive state shown")
+		host.return_button.pressed.emit()
+		check(host.view_kind == "system" and not host.state.encounters[0].completed, "Return does not consume encounter")
 	host.state.encounters[0] = {"kind":"poi", "poi":host.rules.pois[4], "title":"Trading Outpost", "completed":false}
 	host._approach(0, 2)
 	check(host.state.pending_choice == "card", "Card selection visible after reward")

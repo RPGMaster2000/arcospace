@@ -42,9 +42,11 @@ func run_tests() -> void:
 		for encounter in run.encounters:
 			if encounter.kind == "battle": battles += 1
 			else: pois += 1
-		check(run.encounters.size() == 6 and battles >= 2 and pois >= 3, "Every system has six encounters and accessible battles/PoIs")
-		check(run.generate_system(), "Jump has no completion requirement")
-	check(run.system_number == 51 and run.salvage == 0, "Unlimited free jumps")
+		check(run.encounters.size() == 6 and battles >= 1 and battles <= 2 and pois >= 4, "Every system has six encounters and accessible battles/PoIs")
+		check(not run.generate_system(), "Uncharged drive blocks travel")
+		run.ftl_charge = run.required_ftl_charge
+		check(run.generate_system(), "Charged drive permits travel")
+	check(run.system_number == 51 and run.salvage == 0, "Repeated charged jumps")
 	# Every authored outcome is exercised, including both sides of risk rolls.
 	for poi in Rules.pois:
 		check(poi.approaches.size() == 4, "Four approaches per PoI")
@@ -57,7 +59,7 @@ func run_tests() -> void:
 				for key in State.PRODUCTION: run.production_upgrades[key] = 3
 				put_poi(run, poi)
 				var expected: Resource = approach.success if roll < approach.success_chance else approach.failure
-				var positive: bool = expected.salvage > 0 or expected.hull > 0 or expected.card_reward or expected.upgrade_card or expected.resource_choice > 0 or expected.production_choice > 0
+				var positive: bool = run.encounter_charge(0) >= 1 # Every PoI grants navigation progress.
 				for amount in expected.next_battle.values(): positive = positive or amount > 0
 				check(positive, "Every authored success/failure grants a reward")
 				check(run.resolve_approach(0, slot, roll), "Accessible approach resolves")
@@ -82,7 +84,8 @@ func run_tests() -> void:
 				elif expected.production_choice > 0:
 					var before: int = run.production("quarters")
 					check(run.choose_attribute("quarters") and run.production("quarters") == before + 1, "Shipyard production choice applied")
-				check(run.generate_system(), "Finished PoI permits free jump")
+				run.ftl_charge = run.required_ftl_charge
+				check(run.generate_system(), "Ready drive permits jump")
 	# Thresholds depend on production, including expedition improvements, never ship names.
 	run = fresh()
 	var industrial: Resource = Rules.pois[0].approaches[2]
@@ -103,7 +106,7 @@ func run_tests() -> void:
 	run.hull = 17
 	run.salvage = 11
 	run.production_upgrades.quarters = 2
-	run.add_modifiers({"energy":3, "reactor":1, "ftl_charge":999, "ftl_offline":2, "shields":-4})
+	run.add_modifiers({"energy":3, "reactor":1, "emergency_jump_charge":999, "emergency_jump_offline":2, "shields":-4})
 	run.add_modifiers({"energy":5, "reactor":2, "shields":-3})
 	run.add_modifiers({"energy":-999, "synthesizer":-999, "crew":-999})
 	check(run.modifier_value("reactor") == 2 and run.modifier_value("shields") == -4, "Strongest bonus/penalty rather than accumulation")
@@ -123,12 +126,12 @@ func run_tests() -> void:
 	board.refresh_display()
 	var after_reward: int = board.salvage
 	board.refresh_display()
-	check(board.salvage == 21 and after_reward == board.salvage, "Combat Salvage once")
+	check(board.salvage == 11 + run.victory_salvage(board) and after_reward == board.salvage, "Combat Salvage once")
 	check(run.hull == run.ship().hull_capacity and run.salvage == board.salvage, "Plating stripped at result; Salvage synced")
 	board.player_hull = 20
 	board.repair_spend = 5
 	board._repair_with_salvage()
-	check(run.hull == 25 and run.salvage == 16, "Victory repair uses same expedition currency and Hull")
+	check(run.hull == 25 and run.salvage == after_reward - 5, "Victory repair uses same expedition currency and Hull")
 	board.free()
 	run.pending_bonuses.clear() # Isolate next encounter from earned tactical/strategic bonuses.
 	run.pending_penalties.clear()
@@ -137,7 +140,7 @@ func run_tests() -> void:
 	check(board.player_quarters == run.ship().quarters + 2, "Shipyard production persists")
 	board.ftl.charge = board.ftl.charge_target
 	board._warp_out()
-	check(board.salvage == 16, "FTL escape grants no combat Salvage")
+	check(board.salvage == after_reward - 5, "FTL escape grants no combat Salvage")
 	board.free()
 	run = fresh()
 	board = make_board(run)
@@ -167,6 +170,7 @@ func run_tests() -> void:
 	check(run.shared_pool()[2] == base and base.upgrade_level == 0, "Enemy pool never receives player upgrade")
 	hand.free()
 	run.active_battle = -1
+	run.ftl_charge = run.required_ftl_charge
 	check(run.generate_system() and run.acquired_cards.size() == 15 and run.upgraded_cards.size() == 1, "Cards and upgrades persist across systems")
 	# Upgrade caps remain effective after repeated Resource duplication.
 	for n in range(2):
@@ -188,12 +192,13 @@ func run_tests() -> void:
 	check(run.salvage == before_fallback + Rules.unavailable_upgrade_salvage and run.pending_choice.is_empty(), "Research fallback grants Salvage")
 	# Pending effects survive travel and harmless PoIs, and strong penalties coexist with bonuses.
 	run = fresh()
-	run.add_modifiers({"energy":5, "ftl_offline":1})
+	run.add_modifiers({"energy":5, "emergency_jump_offline":1})
 	run.add_modifiers({"energy":-3})
 	put_poi(run, Rules.pois[0])
 	run.resolve_approach(0, 0, 0.0)
+	run.ftl_charge = run.required_ftl_charge
 	run.generate_system()
-	check(run.modifier_value("energy") == 2 and run.modifier_value("ftl_offline") == 1, "Travel and PoI do not consume temporary modifiers")
+	check(run.modifier_value("energy") == 2 and run.modifier_value("emergency_jump_offline") == 1, "Travel and PoI do not consume temporary modifiers")
 	board = make_board(run)
 	check(board.player_energy == run.ship().energy + 2 + board.player_reactor, "Opposing extrema apply together")
 	check(board.ftl.disabled_turns == 1 and board.ftl.charge == 0, "One-turn offline blocks first-turn charging")
@@ -220,6 +225,7 @@ func run_tests() -> void:
 	check(host.view_kind == "system" and host.battle == null, "No mandatory opening battle")
 	for index in range(host.state.encounters.size()):
 		if host.state.encounters[index].kind == "battle":
+			host.state.encounters[index].enemy_data = load("res://ships/marauder.tres")
 			host.visit(index)
 			break
 	var battle = host.battle
@@ -239,8 +245,9 @@ func run_tests() -> void:
 	host.show_system()
 	check(host.state.encounters[5].completed, "Completed list row remains unavailable")
 	var old_system: int = host.state.system_number
+	host.state.ftl_charge = host.state.required_ftl_charge
 	host._jump()
-	check(host.state.system_number == old_system + 1 and host.state.hull == 20 and host.state.salvage == 13, "Free jump preserves expedition state")
+	check(host.state.system_number == old_system + 1 and host.state.hull == 20 and host.state.salvage == 13, "Charged jump preserves expedition state")
 	for index in range(host.state.encounters.size() - 1, -1, -1):
 		if host.state.encounters[index].kind == "battle":
 			host.visit(index)

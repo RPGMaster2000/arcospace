@@ -26,8 +26,8 @@ failure = SubResource("Failure0")
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
-blurb = "Exotic particles precharge the FTL drive."
-next_battle = {"ftl_charge":3}
+blurb = "Exotic particles precharge Emergency Jump."
+next_battle = {"emergency_jump_charge":3}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
@@ -48,13 +48,13 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "A stable corridor precharges your drive."
-next_battle = {"ftl_charge":4}
+next_battle = {"emergency_jump_charge":4}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
-blurb = "Useful data is recovered, but FTL is offline for the first turn."
+blurb = "Useful data is recovered, but Emergency Jump is offline for the first turn."
 salvage = 5
-next_battle = {"ftl_offline":1}
+next_battle = {"emergency_jump_offline":1}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -69,17 +69,17 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Specialist teams tune the drive to the anomaly."
-next_battle = {"ftl_charge":5}
+next_battle = {"emergency_jump_charge":5}
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
-blurb = "Readings are valuable, but FTL needs two turns to recalibrate."
+blurb = "Readings are valuable, but Emergency Jump needs two turns to recalibrate."
 salvage = 6
-next_battle = {"ftl_offline":2}
+next_battle = {"emergency_jump_offline":2}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
-title = "Reinforce FTL systems"
+title = "Reinforce Emergency Jump systems"
 requirement = "quarters"
 minimum_production = 3
 salvage_cost = 0
@@ -90,5 +90,5 @@ failure = SubResource("Failure3")
 [resource]
 script = ExtResource("Poi")
 title = "Spatial Anomaly"
-description = "Investigate unstable space to aid your next FTL jump."
+description = "Investigate unstable space to aid your next Emergency Jump."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

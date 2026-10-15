@@ -22,7 +22,7 @@ offset_right = 270.0
 offset_bottom = 20.0
 theme_override_colors/font_color = Color(0.7, 0.79, 0.82, 1)
 theme_override_font_sizes/font_size = 15
-text = "FTL 0 / 14"
+text = "Emergency Jump 0 / 14"
 mouse_filter = 2
 
 [node name="Progress" type="ProgressBar" parent="."]
@@ -38,12 +38,12 @@ mouse_filter = 2
 
 [node name="WarpButton" type="Button" parent="."]
 visible = false
-offset_left = 280.0
+offset_left = 240.0
 offset_top = -1.0
-offset_right = 365.0
+offset_right = 395.0
 offset_bottom = 27.0
 theme_override_font_sizes/font_size = 15
-text = "WARP"
+text = "Emergency Jump"
 flat = true
 disabled = true
-tooltip_text = "Escape to win when FTL is fully charged and online."
+tooltip_text = "Escape to win when Emergency Jump is fully charged and online."

@@ -7,12 +7,14 @@ const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const RESOURCES = ["materials", "energy", "crew"]
 const LABELS = {"synthesizer":"Fabricator", "reactor":"Reactor", "quarters":"Hangar",
 	"materials":"Materials", "energy":"Energy", "crew":"Crew", "shields":"Shields",
-	"ftl_charge":"FTL charge", "ftl_offline":"FTL offline turns"}
+	"emergency_jump_charge":"Emergency Jump charge", "emergency_jump_offline":"Emergency Jump offline turns"}
 var rules: Resource
 var player_ship: int = 0
 var hull: int = 0
 var salvage: int = 0
 var battles_won: int = 0
+var ftl_charge: int = 0
+var required_ftl_charge: int = 0
 var system_number: int = 0
 var system_name: String = ""
 var encounters: Array[Dictionary] = []
@@ -58,34 +60,113 @@ func ship() -> Resource:
 func production(key: String) -> int:
 	return int(ship().get(key)) + int(production_upgrades.get(key, 0))
 
+func can_jump() -> bool:
+	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge
+
+func _weighted_index(items: Array) -> int:
+	var total: float = 0.0
+	for item in items: total += maxf(0.01, item.encounter_weight)
+	var roll: float = rng.randf() * total
+	for index in range(items.size()):
+		roll -= maxf(0.01, items[index].encounter_weight)
+		if roll <= 0: return index
+	return items.size() - 1
+
 func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
+	if system_number > 0 and not can_jump(): return false
+	var ordinary: Array = []
+	var hazardous: Array = []
+	for poi in rules.pois:
+		if poi.hazardous: hazardous.append(poi)
+		else: ordinary.append(poi)
+	var enemies: Array = rules.enemy_ships.duplicate()
+	if enemies.is_empty(): enemies.assign(Ships.ENEMIES)
+	var count: int = maxi(2, rules.encounters_per_system)
+	var compositions: Array[Dictionary] = []
+	var total_weight: float = 0.0
+	for battles in range(1, count + 1):
+		for hazards in range(count - battles + 1):
+			var normal: int = count - battles - hazards
+			if battles < rules.minimum_battles or battles > rules.maximum_battles: continue
+			if normal < rules.minimum_ordinary or normal > rules.maximum_ordinary: continue
+			if hazards < rules.minimum_hazardous or hazards > rules.maximum_hazardous: continue
+			if (normal > 0 and ordinary.is_empty()) or (hazards > 0 and hazardous.is_empty()): continue
+			var weight: float = pow(maxf(.01, rules.battle_weight), battles) * pow(maxf(.01, rules.ordinary_weight), normal) * pow(maxf(.01, rules.hazardous_weight), hazards)
+			total_weight += weight
+			compositions.append({"battle":battles, "ordinary":normal, "hazardous":hazards, "weight":weight})
+	var composition: Dictionary
+	if compositions.is_empty():
+		push_warning("Encounter bounds cannot fill a system. Falling back to one enemy and available PoIs (or all enemies if no PoIs exist).")
+		composition = {"battle":1, "ordinary":count - 1 if not ordinary.is_empty() else 0, "hazardous":count - 1 if ordinary.is_empty() and not hazardous.is_empty() else 0}
+		if ordinary.is_empty() and hazardous.is_empty(): composition.battle = count
+	else:
+		var roll: float = rng.randf() * total_weight
+		composition = compositions.back()
+		for candidate in compositions:
+			roll -= candidate.weight
+			if roll <= 0:
+				composition = candidate
+				break
 	system_number += 1
 	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
 	encounters.clear()
-	var count: int = maxi(2, rules.encounters_per_system)
-	var low: int = clampi(rules.minimum_battles, 1, count - 1)
-	var high: int = clampi(rules.maximum_battles, low, count - 1)
-	var battles: int = rng.randi_range(low, high)
-	var available_pois: Array = rules.pois.duplicate()
-	for index in range(count):
-		if index < battles or rules.pois.is_empty():
-			var enemy: int = rng.randi_range(0, Ships.ENEMIES.size() - 1)
-			encounters.append({"kind":"battle", "enemy":enemy, "modifier":rng.randi_range(0, 5),
-				"title":Ships.ENEMIES[enemy].ship_name, "completed":false})
-		else:
-			if available_pois.is_empty():
-				available_pois = rules.pois.duplicate()
-			var poi: Resource = available_pois.pop_at(rng.randi_range(0, available_pois.size() - 1))
-			encounters.append({"kind":"poi", "poi":poi, "title":poi.title, "completed":false})
-	# Use this expedition's RNG, not Array.shuffle's global RNG.
+	ftl_charge = 0
+	required_ftl_charge = int(composition.ordinary) + int(composition.hazardous) + 1
+	for category in ["ordinary", "hazardous", "battle"]:
+		var library: Array = enemies if category == "battle" else (ordinary if category == "ordinary" else hazardous)
+		var available: Array = library.duplicate()
+		for slot in range(int(composition[category])):
+			if available.is_empty(): available = library.duplicate()
+			var entry: Resource = available.pop_at(_weighted_index(available))
+			if category == "battle":
+				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "modifier":rng.randi_range(0, 5), "title":entry.ship_name, "completed":false, "charge_awarded":false})
+			else:
+				encounters.append({"kind":"poi", "poi":entry, "title":entry.title, "completed":false, "charge_awarded":false})
 	for index in range(encounters.size() - 1, 0, -1):
 		var other: int = rng.randi_range(0, index)
 		var swap: Dictionary = encounters[index]
 		encounters[index] = encounters[other]
 		encounters[other] = swap
+	return true
+
+func enemy_profile(encounter: Dictionary) -> Resource:
+	return encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
+
+func encounter_charge(index: int) -> int:
+	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
+
+func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
+	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false): return false
+	encounters[index].completed = true
+	encounters[index].charge_awarded = true
+	ftl_charge += encounter_charge(index) + maxi(0, extra_charge)
+	return true
+
+## Conservative remaining charge: ignores optional wormhole bonuses.
+func remaining_ftl_charge() -> int:
+	var result: int = 0
+	for index in range(encounters.size()):
+		if not encounters[index].completed and not encounters[index].get("charge_awarded", false):
+			result += encounter_charge(index)
+	return result
+
+func can_survey(index: int) -> bool:
+	if not can_visit(index) or encounters[index].kind != "poi": return false
+	for approach in encounters[index].poi.approaches:
+		if not locked_reason(approach).is_empty(): continue
+		var worst: int = approach.success.hull
+		if approach.success_chance < 1: worst = mini(worst, approach.failure.hull)
+		if hull + worst > 0: return false
+	return true
+
+func survey(index: int) -> bool:
+	if not can_survey(index): return false
+	_complete_encounter(index)
+	add_modifiers(rules.survey_penalty)
+	last_outcome = "Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: " + describe_modifiers(rules.survey_penalty)
 	return true
 
 func can_visit(index: int) -> bool:
@@ -110,13 +191,13 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	if not locked_reason(approach).is_empty():
 		return false
 	salvage -= approach.salvage_cost
-	encounters[index].completed = true
 	var roll: float = rng.randf() if forced_roll < 0 else forced_roll
 	var success: bool = roll < approach.success_chance
 	var outcome: Resource = approach.success if success else approach.failure
+	_complete_encounter(index, outcome.extra_ftl_charge)
 	# The roll and seed are printed for reproducing balance reports.
-	print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
-	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
+	if rules.log_rolls: print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
+	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome) + "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	salvage += outcome.salvage
@@ -231,8 +312,8 @@ func begin_battle(board: Node, index: int = -1) -> void:
 		board.set("player_" + key, maxi(0, production(key) + modifier_value(key)))
 	for key in RESOURCES + ["shields"]:
 		board.set("player_" + key, maxi(0, int(ship().get(key)) + modifier_value(key)))
-	board.ftl.charge = clampi(modifier_value("ftl_charge"), 0, board.ftl.charge_target)
-	board.ftl.disabled_turns = maxi(0, modifier_value("ftl_offline"))
+	board.ftl.charge = clampi(modifier_value("emergency_jump_charge"), 0, board.ftl.charge_target)
+	board.ftl.disabled_turns = maxi(0, modifier_value("emergency_jump_offline"))
 	board.hand.card_pool = player_pool()
 	board.enemy_hand.card_pool = shared_pool()
 	pending_bonuses.clear()
@@ -240,13 +321,20 @@ func begin_battle(board: Node, index: int = -1) -> void:
 
 func victory_salvage(board: Node) -> int:
 	if board.escaped_by_ftl:
-		return rules.escape_salvage
-	return rules.destruction_salvage if board.enemy_hull <= 0 else rules.resource_victory_salvage
+		return 0
+	var destruction: int = rules.destruction_salvage
+	if active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].kind == "battle":
+		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
+	return destruction if board.enemy_hull <= 0 else rules.resource_victory_salvage
 
 func record_battle(board: Node) -> void:
 	sync_battle(board)
 	if active_battle >= 0 and active_battle < encounters.size():
-		encounters[active_battle].completed = true
+		if board.winner == "player":
+			# Escape and destruction both complete navigation; Salvage remains separate.
+			if not _complete_encounter(active_battle): return
+		else:
+			return
 	if board.winner == "player":
 		if board.earned_tactical:
 			add_modifiers({"materials":board.TACTICAL_RESOURCES, "energy":board.TACTICAL_RESOURCES, "crew":board.TACTICAL_RESOURCES})
@@ -258,8 +346,15 @@ func sync_battle(board: Node) -> void:
 	salvage = board.salvage
 	battles_won = board.battles_won
 
+func describe_modifiers(values: Dictionary) -> String:
+	var parts: Array[String] = []
+	for key in values:
+		parts.append("%+d %s" % [values[key], LABELS.get(key, key)])
+	return " · ".join(parts)
+
 func describe_outcome(outcome: Resource) -> String:
 	var parts: Array[String] = []
+	if outcome.extra_ftl_charge > 0: parts.append("+%d extra FTL Drive charge" % outcome.extra_ftl_charge)
 	if outcome.salvage != 0: parts.append("%+d Salvage" % outcome.salvage)
 	if outcome.hull != 0: parts.append("%+d permanent Hull" % outcome.hull)
 	for key in outcome.next_battle:

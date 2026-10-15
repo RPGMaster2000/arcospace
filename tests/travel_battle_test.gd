@@ -1,0 +1,41 @@
+extends SceneTree
+const State = preload("res://scripts/expedition_state.gd")
+const Rules = preload("res://encounters/expedition_rules.tres")
+var failures: int = 0
+func check(ok: bool, message: String) -> void:
+	if not ok:
+		failures += 1
+		push_error(message)
+func _initialize() -> void:
+	call_deferred("run")
+func run() -> void:
+	for ship_index in range(3):
+		for enemy in Rules.enemy_ships:
+			var host = load("res://scenes/expedition.tscn").instantiate()
+			host.selected_ship = ship_index
+			root.add_child(host)
+			host.state.encounters[0] = {"kind":"battle", "enemy":0, "enemy_data":enemy, "modifier":0, "completed":false, "title":enemy.ship_name}
+			host.start_battle(0)
+			var battle = host.battle
+			battle.battle_effects.enabled = false
+			if battle.battle_effects.busy: await battle.battle_effects.finished
+			check(battle.enemy_ship_data == enemy and battle.enemy_hull == enemy.hull_capacity, "Inspector enemy profile reaches real battle")
+			check(battle.ftl.charge_target == host.state.ship().ftl_turns, "Ship-specific Emergency Jump duration preserved")
+			battle.ftl.charge = battle.ftl.charge_target
+			battle.refresh_display()
+			await process_frame
+			var label = battle.get_node("FTLPanel/Charge")
+			var button = battle.get_node("FTLPanel/WarpButton")
+			var text_width: float = label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
+			check(label.position.x + text_width < button.position.x, "Emergency Jump label and button do not overlap")
+			battle._warp_out()
+			check(battle.escaped_by_ftl and battle.winner == "player", "Live Emergency Jump succeeds")
+			check(host.state.ftl_charge == enemy.interstellar_ftl_reward and host.state.salvage == 0, "Live escape grants full charge and zero Salvage")
+			battle.refresh_display()
+			check(host.state.ftl_charge == enemy.interstellar_ftl_reward, "Refresh does not repeat reward")
+			battle._continue_encounter()
+			check(host.view_kind == "system" and host.state.encounters[0].completed and not host.state.can_visit(0), "Escape completes encounter through result screen")
+			host.free()
+			await process_frame
+	print("Travel battle integration: 15 ship/enemy combinations, %d failures" % failures)
+	quit(1 if failures else 0)

@@ -23,3 +23,9 @@ class_name ShipData
 ## EDIT: Optional replacement model; empty retains the existing battlefield ship.
 ## Custom models must support the ship_3d.gd animation API and Body/Shield nodes.
 @export var model_scene: PackedScene
+
+@export_group("Enemy expedition rewards")
+@export_enum("Standard", "Elite", "Boss") var enemy_rank: int = 0
+@export_range(1, 10, 1) var interstellar_ftl_reward: int = 1
+@export_range(0, 1000, 1) var destruction_salvage_reward: int = 10
+@export_range(0.01, 100, 0.01) var encounter_weight: float = 1.0

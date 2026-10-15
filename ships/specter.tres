@@ -6,7 +6,7 @@
 script = ExtResource("1")
 ship_name = "Specter"
 role = "Recon / FTL"
-summary = "Fast, resistant FTL; fragile Hull and low Materials production."
+summary = "Fast, resistant Emergency Jump; fragile Hull and low Materials production."
 hull_capacity = 28
 shields = 15
 materials = 8

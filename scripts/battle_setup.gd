@@ -14,7 +14,7 @@ func _ready() -> void:
 		var panel = get_node("Ships/Ship%d" % index)
 		panel.get_node("Name").text = data.ship_name.to_upper() + " · " + data.role
 		var resistance: String = "%+d%%" % roundi(data.ftl_resistance * 100) if data.ftl_resistance != 0 else "Normal"
-		panel.get_node("Stats").text = "Hull %d · Shields %d\nMaterials %d · Energy %d · Crew %d\nFabricator %d · Reactor %d · Hangar %d\nFTL %d turns · Resistance %s" % [data.hull_capacity, data.shields, data.materials, data.energy, data.crew, data.synthesizer, data.reactor, data.quarters, data.ftl_turns, resistance]
+		panel.get_node("Stats").text = "Hull %d · Shields %d\nMaterials %d · Energy %d · Crew %d\nFabricator %d · Reactor %d · Hangar %d\nEmergency Jump %d turns · Resistance %s" % [data.hull_capacity, data.shields, data.materials, data.energy, data.crew, data.synthesizer, data.reactor, data.quarters, data.ftl_turns, resistance]
 		panel.get_node("Summary").text = data.summary
 		panel.get_node("Select").pressed.connect(_select.bind(index))
 		_preview(panel.get_node("Preview/Viewport"), data)

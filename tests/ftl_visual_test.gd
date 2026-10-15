@@ -32,7 +32,7 @@ func run() -> void:
 	board.ftl.disabled_turns = 1
 	board.ftl.disabled_turn_started = true
 	board._begin_turn("player")
-	check(board.get_node("ModifierDisplay/FTLFlash").text == "FTL ONLINE", "Fully charged repaired FTL announces online")
+	check(board.get_node("ModifierDisplay/FTLFlash").text == "EMERGENCY JUMP ONLINE", "Fully charged repaired FTL announces online")
 	var container = board.get_node("BattleView")
 	var viewport = board.get_node("BattleView/Viewport")
 	var ship = viewport.get_node("Battlefield/PlayerShip")
