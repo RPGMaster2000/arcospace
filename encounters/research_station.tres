@@ -27,13 +27,14 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "A recovered design improves one of your cards."
+salvage = 5
 upgrade_card = true
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "A power surge drains reserves, but the data has salvage value."
-salvage = 4
-next_battle = {"energy":-3}
+salvage = 2
+next_battle = {"energy": -3}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -48,13 +49,14 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Analysis reveals a more efficient card design."
+salvage = 7
 upgrade_card = true
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
-blurb = "The analysis strains the reactor, but useful data survives."
-salvage = 5
-next_battle = {"reactor":-1}
+blurb = "The analysis drains energy reserves, but useful data survives."
+salvage = 3
+next_battle = {"energy": -4}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -69,14 +71,14 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "A refined design and spare parts are recovered."
+salvage = 9
 upgrade_card = true
-salvage = 3
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Fabrication consumes supplies but yields valuable research."
-salvage = 5
-next_battle = {"materials":-3}
+salvage = 4
+next_battle = {"materials": -5}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

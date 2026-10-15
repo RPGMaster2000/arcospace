@@ -1,0 +1,62 @@
+{
+  "mining_operation": [
+    [1, {"salvage": 3}, {"salvage": 3}],
+    [0.75, {"salvage": 6}, {"salvage": 2, "next_battle": {"materials": -3}}],
+    [0.85, {"salvage": 9}, {"salvage": 4, "next_battle": {"materials": -4}}],
+    [0.55, {"salvage": 14, "card_reward": true}, {"salvage": 5, "next_battle": {"materials": -6}}]
+  ],
+  "gas_giant": [
+    [1, {"next_battle": {"energy": 3}}, {"next_battle": {"energy": 3}}],
+    [0.75, {"next_battle": {"energy": 6}}, {"next_battle": {"energy": 2, "shields": -3}}],
+    [0.9, {"salvage": 2, "next_battle": {"energy": 8}}, {"next_battle": {"energy": 3, "shields": -4}}],
+    [0.6, {"salvage": 5, "next_battle": {"energy": 12}}, {"next_battle": {"energy": 4, "crew": -5}}]
+  ],
+  "derelict_starship": [
+    [1, {"salvage": 3}, {"salvage": 3}],
+    [0.7, {"salvage": 5, "card_reward": true}, {"salvage": 2, "next_battle": {"crew": -3}}],
+    [0.85, {"salvage": 7, "card_reward": true}, {"salvage": 3, "next_battle": {"materials": -4}}],
+    [0.75, {"salvage": 9, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 4, "next_battle": {"crew": -5}}]
+  ],
+  "research_station": [
+    [1, {"salvage": 3}, {"salvage": 3}],
+    [0.7, {"salvage": 5, "upgrade_card": true}, {"salvage": 2, "next_battle": {"energy": -3}}],
+    [0.85, {"salvage": 7, "upgrade_card": true}, {"salvage": 3, "next_battle": {"energy": -4}}],
+    [0.75, {"salvage": 9, "upgrade_card": true}, {"salvage": 4, "next_battle": {"materials": -5}}]
+  ],
+  "spatial_anomaly": [
+    [1, {"salvage": 3}, {"salvage": 3}],
+    [0.7, {"salvage": 5, "next_battle": {"emergency_jump_charge": 2}}, {"salvage": 2, "next_battle": {"shields": -3}}],
+    [0.85, {"salvage": 7, "next_battle": {"emergency_jump_charge": 3}}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}],
+    [0.75, {"salvage": 9, "next_battle": {"emergency_jump_charge": 5}}, {"salvage": 4, "next_battle": {"emergency_jump_offline": 2}}]
+  ],
+  "radiation_nebula": [
+    [1, {"salvage": 3, "next_battle": {"shields": -2}}, {"salvage": 3, "next_battle": {"shields": -2}}],
+    [0.75, {"salvage": 8, "next_battle": {"shields": -3}}, {"salvage": 2, "next_battle": {"shields": -5}}],
+    [0.7, {"salvage": 10, "next_battle": {"energy": 5, "shields": -4}}, {"salvage": 3, "next_battle": {"energy": -6}}],
+    [0.85, {"salvage": 12, "next_battle": {"energy": 5}, "hull": -2}, {"salvage": 4, "hull": -4}]
+  ],
+  "distress_signal": [
+    [1, {"salvage": 3, "next_battle": {"crew": -2}}, {"salvage": 3, "next_battle": {"crew": -2}}],
+    [0.7, {"salvage": 5, "next_battle": {"crew": -2}, "card_reward": true}, {"salvage": 2, "next_battle": {"crew": -4}}],
+    [0.85, {"salvage": 7, "next_battle": {"crew": -2}, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 3, "next_battle": {"crew": -4}}],
+    [1, {"salvage": 8, "next_battle": {"crew": 3, "materials": -4}}, {"salvage": 8, "next_battle": {"crew": 3, "materials": -4}}]
+  ],
+  "pirate_debris_field": [
+    [1, {"salvage": 3, "hull": -1}, {"salvage": 3, "hull": -1}],
+    [0.65, {"salvage": 10, "hull": -2}, {"salvage": 2, "hull": -5}],
+    [0.8, {"salvage": 10, "hull": -2, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 4, "hull": -4}],
+    [0.7, {"salvage": 14, "hull": -4, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 5, "hull": -7}]
+  ],
+  "unstable_wormhole": [
+    [1, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}],
+    [0.65, {"salvage": 5, "extra_ftl_charge": 1}, {"salvage": 2, "next_battle": {"shields": -4}}],
+    [0.8, {"salvage": 7, "extra_ftl_charge": 2}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 2}}],
+    [0.75, {"salvage": 9, "extra_ftl_charge": 2}, {"salvage": 4, "next_battle": {"energy": -4}}]
+  ],
+  "quarantined_colony": [
+    [1, {"salvage": 3, "next_battle": {"materials": -2}}, {"salvage": 3, "next_battle": {"materials": -2}}],
+    [1, {"next_battle": {"crew": -3}, "hull": 6}, {"next_battle": {"crew": -3}, "hull": 6}],
+    [0.8, {"salvage": 6, "next_battle": {"energy": -3}, "upgrade_card": true}, {"salvage": 3, "next_battle": {"energy": -5}}],
+    [0.85, {"salvage": 8, "next_battle": {"crew": -3}, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 4, "next_battle": {"crew": -5}}]
+  ]
+}

@@ -27,13 +27,14 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "Your boarding party recovers usable technology."
+salvage = 5
 card_reward = true
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
-blurb = "A booby trap damages your hull; scrap is still recovered."
-salvage = 4
-hull = -3
+blurb = "A booby trap cuts the recovery short and exhausts the boarding crew."
+salvage = 2
+next_battle = {"crew": -3}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -48,13 +49,14 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Engineers recover a selection of intact systems."
+salvage = 7
 card_reward = true
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "Unstable machinery ruptures, leaving valuable scrap."
-salvage = 5
-hull = -2
+salvage = 3
+next_battle = {"materials": -4}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -69,14 +71,15 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Specialist teams secure advanced equipment."
+salvage = 9
 card_reward = true
 minimum_card_tier = 2
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "The teams recover salvage but return exhausted."
-salvage = 5
-next_battle = {"crew":-3}
+salvage = 4
+next_battle = {"crew": -5}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

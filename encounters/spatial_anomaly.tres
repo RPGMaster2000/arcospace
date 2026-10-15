@@ -27,13 +27,14 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "Exotic particles precharge Emergency Jump."
-next_battle = {"emergency_jump_charge":3}
+salvage = 5
+next_battle = {"emergency_jump_charge": 2}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "Particles strain the shields, but your readings are valuable."
-salvage = 4
-next_battle = {"shields":-3}
+salvage = 2
+next_battle = {"shields": -3}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -48,13 +49,14 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "A stable corridor precharges your drive."
-next_battle = {"emergency_jump_charge":4}
+salvage = 7
+next_battle = {"emergency_jump_charge": 3}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "Useful data is recovered, but Emergency Jump is offline for the first turn."
-salvage = 5
-next_battle = {"emergency_jump_offline":1}
+salvage = 3
+next_battle = {"emergency_jump_offline": 1}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -69,13 +71,14 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Specialist teams tune the drive to the anomaly."
-next_battle = {"emergency_jump_charge":5}
+salvage = 9
+next_battle = {"emergency_jump_charge": 5}
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Readings are valuable, but Emergency Jump needs two turns to recalibrate."
-salvage = 6
-next_battle = {"emergency_jump_offline":2}
+salvage = 4
+next_battle = {"emergency_jump_offline": 2}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

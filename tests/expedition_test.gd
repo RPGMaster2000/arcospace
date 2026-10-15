@@ -98,10 +98,10 @@ func run_tests() -> void:
 	run.production_upgrades.synthesizer = 0
 	check(not run.locked_reason(industrial).is_empty(), "Next-battle production does not unlock permanent approaches")
 	run.salvage = 3
-	check(not run.locked_reason(Rules.pois[4].approaches[1]).is_empty(), "Insufficient Salvage locks paid services")
+	check(not run.locked_reason(Rules.trading_outpost.approaches[1]).is_empty(), "Insufficient Salvage locks paid services")
 	run.salvage = 30
-	check(not run.locked_reason(Rules.pois[4].approaches[0]).is_empty(), "Full Hull cannot waste a repair purchase")
-	# Multiple PoIs merge extrema; resources/production never fall below zero.
+	check(not run.locked_reason(Rules.trading_outpost.approaches[0]).is_empty(), "Full Hull cannot waste a repair purchase")
+	# Multiple PoIs add resources and Shields; production is unaffected.
 	run = fresh(1)
 	run.hull = 17
 	run.salvage = 11
@@ -109,11 +109,11 @@ func run_tests() -> void:
 	run.add_modifiers({"energy":3, "reactor":1, "emergency_jump_charge":999, "emergency_jump_offline":2, "shields":-4})
 	run.add_modifiers({"energy":5, "reactor":2, "shields":-3})
 	run.add_modifiers({"energy":-999, "synthesizer":-999, "crew":-999})
-	check(run.modifier_value("reactor") == 2 and run.modifier_value("shields") == -4, "Strongest bonus/penalty rather than accumulation")
+	check(run.modifier_value("reactor") == 0 and run.modifier_value("shields") == -7, "Production ignored; Shields accumulate")
 	var board = make_board(run)
 	check(board.player_hull == 17 and board.salvage == 11, "Battle uses persistent Hull and Salvage")
 	check(board.enemy_ship_data.ship_name == "Sentinel", "Selected encounter enemy is honored")
-	check(board.player_energy == board.player_reactor and board.player_crew == board.player_quarters and board.player_synthesizer == 0, "Clamp before first-turn income")
+	check(board.player_energy == run.ship().energy - floori(run.ship().energy * 0.5) + 8 + board.player_reactor and board.player_crew == run.ship().crew - floori(run.ship().crew * 0.5) + board.player_quarters and board.player_synthesizer == run.production("synthesizer"), "Half-base penalty cap before first-turn income; production intact")
 	check(board.ftl.charge == board.ftl.charge_target and board.ftl.disabled_turns == 2 and not board.ftl.can_warp(), "FTL bonus capped; two-turn offline blocks warp")
 	board.ftl.begin_player_turn()
 	check(board.ftl.disabled_turns == 1, "Second player turn offline")
@@ -189,7 +189,7 @@ func run_tests() -> void:
 	put_poi(run, Rules.pois[3])
 	var before_fallback: int = run.salvage
 	check(run.resolve_approach(0, 1, 0.0), "Research resolves with exhausted upgrade pool")
-	check(run.salvage == before_fallback + Rules.unavailable_upgrade_salvage and run.pending_choice.is_empty(), "Research fallback grants Salvage")
+	check(run.salvage == before_fallback + 5 + Rules.unavailable_upgrade_salvage and run.pending_choice.is_empty(), "Research fallback grants Salvage")
 	# Pending effects survive travel and harmless PoIs, and strong penalties coexist with bonuses.
 	run = fresh()
 	run.add_modifiers({"energy":5, "emergency_jump_offline":1})
@@ -200,7 +200,7 @@ func run_tests() -> void:
 	run.generate_system()
 	check(run.modifier_value("energy") == 2 and run.modifier_value("emergency_jump_offline") == 1, "Travel and PoI do not consume temporary modifiers")
 	board = make_board(run)
-	check(board.player_energy == run.ship().energy + 2 + board.player_reactor, "Opposing extrema apply together")
+	check(board.player_energy == run.ship().energy + 2 + board.player_reactor, "Opposing modifiers apply together")
 	check(board.ftl.disabled_turns == 1 and board.ftl.charge == 0, "One-turn offline blocks first-turn charging")
 	board.ftl.begin_player_turn()
 	check(board.ftl.disabled_turns == 0 and board.ftl.charge == 1, "One-turn offline expires on second turn")
@@ -208,14 +208,13 @@ func run_tests() -> void:
 	# Low-Hull risk is real; no negative Hull, repeated charge or accidental resurrection.
 	run = fresh()
 	run.hull = 1
-	put_poi(run, Rules.pois[0])
-	check(run.resolve_approach(0, 1, 0.99) and run.hull == 0 and run.salvage == 3, "Fatal PoI still grants its reward and clamps Hull")
+	put_poi(run, load("res://encounters/pirate_debris_field.tres"))
+	check(run.resolve_approach(0, 1, 0.99) and run.hull == 0 and run.salvage == 2, "Fatal PoI still grants its reward and clamps Hull")
 	check(not run.generate_system() and not run.can_visit(0), "Destroyed expedition cannot travel")
 	run = fresh()
 	run.hull -= 2
 	run.salvage = 5
-	put_poi(run, Rules.pois[4])
-	check(run.resolve_approach(0, 0) and run.hull == run.ship().hull_capacity and run.salvage == 0, "Outpost repairs capped at capacity with exact price")
+	check(run.resolve_approach(run.SERVICE_INDEX, 0) and run.hull == run.ship().hull_capacity and run.salvage == 0, "Outpost repairs capped at capacity with exact price")
 	# Live scene flow: opening battle -> result -> list -> PoI -> list -> chosen battle.
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.rules = Rules.duplicate(true)

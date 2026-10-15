@@ -4,11 +4,11 @@
 
 Choose a ship and **Begin Expedition** to open the system grid. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a battle victory (including Emergency Jump), the existing result screen offers repairs and **Star System**, returning to the list. Battles and PoIs can be visited in any order. Completed entries are disabled.
 
-Each system has six encounters, targeting 3–4 ordinary PoIs, 0–2 hazardous PoIs and 1–2 enemies. The FTL Drive requires **PoI count + 1** charge. Completing a PoI grants +1; defeating **or escaping** an enemy grants its profile reward (standard 1, elite 2, boss 3). Wormhole outcomes may add extra charge. Rewards are single-use, and travel charge resets in each new system. Escape grants no combat Salvage.
+Each system has six progression encounters plus a separate optional Trading Outpost, targeting 3–4 ordinary PoIs, 0–2 hazardous PoIs and 1–2 enemies. The FTL Drive requires **PoI count + 1** charge. Completing a PoI grants +1; defeating **or escaping** an enemy grants its profile reward (standard 1, elite 2, boss 3). Wormhole outcomes may add extra charge. Rewards are single-use, and travel charge resets in each new system. Escape grants no combat Salvage.
 
-Once charged, jump or continue exploring. Pending card/resource/production choices must be resolved first. Emergency Jump retains the original combat charging and disruption mechanics; it is distinct from interstellar FTL Drive progress. If a PoI has no affordable, unlocked approach guaranteed to preserve at least 1 Hull, a navigation survey can complete it for its normal charge, forfeiting loot and imposing −1 Reactor next battle. This covers broke outpost visits and dangerous debris fields at 1 Hull.
+Once charged, jump or continue exploring. Pending card/resource/production choices must be resolved first. Emergency Jump retains the original combat charging and disruption mechanics; it is distinct from interstellar FTL Drive progress. If a PoI has no affordable, unlocked approach guaranteed to preserve at least 1 Hull, a navigation survey can complete it for its normal charge, forfeiting loot and imposing −3 Energy next battle. This covers dangerous debris fields at 1 Hull. Trading Outpost is a separate service station: zero travel charge, no requirement increase, no survey, and free entry/return without purchasing. It never replaces one of the six encounters or blocks departure.
 
-A PoI is a single visit: tap an approach/service to select it, then press Confirm Approach to execute it, resolve any reward choice, and Continue. Return is available over the banner before confirming; it does not consume the encounter. Each approach shows requirements, cost, success/failure probabilities, and exact rewards/penalties.
+A PoI is a single visit: tap an approach to select it, then press Confirm Approach to execute it, resolve any reward choice, and Continue. Return is available over the banner before confirming; it does not consume the encounter. Each approach shows requirements, cost, success/failure probabilities, and exact rewards/penalties.
 
 Run state is held in memory for this prototype, not saved to disk. New Expedition, returning to ship selection and starting again, or closing the game resets it. Ship selection, permanent Hull, Salvage, acquired card weight and upgrades persist across encounters and charged system jumps. Battle resource stockpiles and combat-only production improvements reset.
 
@@ -16,7 +16,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 
 | Open in FileSystem | Inspector fields |
 |---|---|
-| `encounters/expedition_rules.tres` | PoI library, encounters per system, category counts/weights, enemy registry, resource-victory Salvage, survey penalty, exhausted-upgrade fallback, debug seed |
+| `encounters/expedition_rules.tres` | PoI library, separate Trading Outpost Resource, encounters per system, category counts/weights, enemy registry, resource-victory Salvage, survey penalty, exhausted-upgrade fallback, debug seed |
 | Any ordinary/hazardous `encounters/*.tres` | Title/description; expand **Approaches**, then any of the four approach resources |
 | Approach resource | Title, required production, minimum production (default 3), Salvage cost, success chance, Success and Failure |
 | Success / Failure resource | Blurb, Salvage, permanent Hull, Next Battle dictionary, card reward/minimum tier, upgrade reward, resource choice, production choice, extra interstellar FTL charge |
@@ -26,23 +26,25 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 
 Production names in code and resource dictionary keys map to the existing game:
 - `synthesizer` = Fabricator, `reactor` = Reactor, `quarters` = Hangar.
-- Next Battle accepts `materials`, `energy`, `crew`, `shields`, those three production keys, `emergency_jump_charge`, and `emergency_jump_offline`.
+- Next Battle accepts `materials`, `energy`, `crew`, `shields`, `emergency_jump_charge`, and `emergency_jump_offline`.
 - Use positive amounts for bonuses, negative for penalties. `emergency_jump_offline` is a positive number of initial player turns without charging/warp.
 - Immediate `hull` is signed and capped between zero and ship capacity. Fatal PoI damage ends the expedition. Outpost repair never creates Ablative Plating.
 - Each outcome should have a positive reward. Card/upgrade/resource-choice/production-choice are mutually exclusive choice types per outcome; immediate Salvage/Hull and temporary modifiers can accompany any one.
 - Probabilities are 0–1. Both outcomes must be authored even for guaranteed approaches (the supplied resources do this).
 
-The strongest bonus and strongest penalty are stored separately per attribute, and their net amount applies to the next battle. They do not add repeatedly: +3 then +5 Energy becomes +5, while a −3 Energy penalty remains separately and produces a net +2. Production/resource results clamp to zero before the normal first-turn income. Temporary modifiers survive PoIs and system jumps, then are consumed once at battle initialization. Permanent outpost production upgrades do accumulate. PoI requirements use ship starting production plus permanent upgrades, excluding next-battle boosts and combat-only upgrades.
+Bonuses and penalties stack additively and are stored separately. For each of Materials, Energy and Crew, the starting amount is `max(0, Base + TotalPositive - min(abs(TotalNegative), floor(Base * 0.5)))`. Base is the unmodified ship value; bonuses do not enlarge the negative cap. For example, base 8, +3 and −12 yields 7. Positive bonuses have no PoI cap. Shields add both signs with a floor of zero. These amounts apply before unchanged normal first-turn production income. There are no temporary production modifiers; permanent outpost production upgrades still accumulate and unlock approach requirements.
+
+Pending modifiers survive PoIs, service visits and system jumps, then are consumed once at battle initialization. A repeated initialization call on the same board cannot reset or reapply them. Emergency Jump offline turns use the longest individual duration rather than their sum.
 
 Emergency Jump charge is capped at the selected ship's requirement. It is granted before the existing first-turn charge tick. An offline penalty suppresses that tick for exactly the specified initial turns.
 
 ## Salvage and card progression
 
-Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, resource victory **6**, Emergency Jump **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same strongest-per-attribute pending modifiers. The victory-screen repair service remains one Salvage per Hull, with its existing adjustable spending control.
+Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, resource victory **6**, Emergency Jump **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same additive pending modifiers. The victory-screen repair service remains one Salvage per Hull, with its existing adjustable spending control.
 
-Outposts offer exactly the four requested services, one per encounter: 5 Salvage/5 Hull; 4 Salvage/+5 resource next battle; 8 Salvage/card; 12 Salvage/+1 expedition production. Full-Hull repair is locked; partial repairs still cost 5 and cap at capacity.
+Outposts offer exactly the four requested services, one per system visit: 5 Salvage/5 Hull; 4 Salvage/+5 resource next battle; 8 Salvage/card; 12 Salvage/+1 expedition production. Full-Hull repair is locked; partial repairs still cost 5 and cap at capacity.
 
-All card rewards offer **three distinct library cards** and allow one selection, including Engineering Recovery (the later temporary-selection requirement takes precedence over the earlier two-card table entry). Boarding teams offer Tier 2 or better only. Tiers display as Common/Uncommon/Rare; no new rarity mechanics were introduced.
+All card rewards offer **three distinct library cards** and allow one selection, including Engineering Recovery. Boarding teams offer Tier 2 or better only. Tiers display as Common/Uncommon/Rare; no new rarity mechanics were introduced.
 
 The existing library is already the entire base draw pool. Acquisition therefore adds a weighted entry to the **shared player/enemy pool** for this expedition, rather than removing or replacing a card. The original six-card hand, maximum two identical cards, Tier 2 opening lock and one-per-tier hand restriction remain. Tier restrictions still apply to acquired cards.
 
@@ -69,9 +71,10 @@ Basic shield restoration is substantially cheaper per point than persistent Hull
 
 ## Verification
 
-Run with Godot 4.7.2:
+Run with Godot 4 (verified here with 4.5.1):
 ```sh
 godot --headless --path . --editor --import --quit
+godot --headless --path . --script tests/poi_reward_overhaul_test.gd -- --write-report
 godot --headless --path . --script tests/ftl_progression_test.gd
 godot --headless --path . --script tests/expedition_test.gd
 godot --headless --path . --script tests/expedition_ui_test.gd
@@ -95,3 +98,13 @@ For debugging: set Rules **Debug Seed** to a nonzero integer. Systems, card offe
 Regenerate from current Resources with `godot --headless --path . --script tools/generate_balance_docs.gd`. The progression test simulates 10,000 systems, including randomized completion orders, all-escape routes, low Hull, repeat results and remaining obtainable charge. It tests progression availability, not guaranteed combat survival.
 
 For banner artwork, compact grids, icon fallbacks and touch validation, see [Android UI](android_ui.md).
+
+## Reward overhaul balance checks
+
+All ten non-trading PoIs use the authored success/failure tables in [PoIs](balance/pois.md); existing approach requirements are unchanged. Failed risky approaches give consolation loot plus a penalty. Hazardous guaranteed options retain their listed costs. Hull and Salvage apply immediately; resource and Shield changes apply next battle. Spatial Anomaly grants combat Emergency Jump charge; Unstable Wormhole grants interstellar travel charge.
+
+`tests/poi_reward_table.json` pins every authored chance and outcome. `tests/poi_reward_overhaul_test.gd` verifies all six requested profiles (three enemies as hypothetical players), five PoI successes/failures before battle (four ordinary plus one hazardous), independent ten-PoI maximum-bonus/penalty envelopes, mixed signs, odd-base floor rounding, production preservation, actual opening-hand affordability, Emergency Jump caps/offline timing, all service prices/choices, zero-Salvage departure, survey safety and duplicate guards. Ten-PoI cases use controlled modifier injection outside the normal six-encounter generator.
+
+See [measured opening affordability](balance/reward_verification.md) for 512 deterministic hands per ship/scenario, using actual costs, unchanged tier restrictions and production. These checks measure economy and progression availability, not win rates or guaranteed combat survival. Positive stacking is intentionally uncapped, so repeated Energy rewards can produce very strong openings; a 50% resource penalty cap also does not protect Hull or Shields.
+
+Validation for this overhaul used Godot 4.5.1 headless: editor import succeeded; 26 of 27 test scripts passed, including the new reward regression, all six baseline affordability sweeps, Android geometry checks and 10,000-system progression simulation. `travel_battle_test.gd` reports 15 Emergency Jump label/button overlap assertions on both unchanged `776e391` and this implementation with the same runtime. Its escape/reward assertions pass. This existing layout failure was left untouched to keep unrelated UI work separate. Godot 4.7 and physical Android rendering were not tested here.

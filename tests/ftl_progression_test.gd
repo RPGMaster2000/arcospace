@@ -114,14 +114,14 @@ func run_tests() -> void:
 		check(run.can_jump(), "Every completed system permits travel, including all escapes")
 		check(run.generate_system() and run.ftl_charge == 0, "Jump resets travel charge")
 	check(ranks.size() == 3 and compositions.size() >= 15 and escapes > 10000 and surveys > 0, "Varied composition, strength, escapes and survey coverage")
-	# Every hazardous branch imposes a real drawback; safe first option works at 1 Hull.
+	# Wormhole successes can be penalty-free; other hazardous branches have drawbacks.
 	for poi in Rules.pois:
 		if not poi.hazardous: continue
 		for approach in poi.approaches:
 			for outcome in [approach.success, approach.failure]:
 				var drawback: bool = approach.salvage_cost > 0 or outcome.hull < 0 or int(outcome.next_battle.get("emergency_jump_offline", 0)) > 0
 				for key in outcome.next_battle: drawback = drawback or outcome.next_battle[key] < 0
-				check(drawback, "Hazard always carries drawback")
+				check(drawback or (poi.resource_path.ends_with("unstable_wormhole.tres") and outcome.extra_ftl_charge > 0), "Hazard drawback or successful travel shortcut")
 		var low_run = State.new()
 		low_run.start(0, config, 42)
 		low_run.hull = 1

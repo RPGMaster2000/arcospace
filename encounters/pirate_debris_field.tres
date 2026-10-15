@@ -7,13 +7,13 @@
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "Disposable drones map a safe corridor; stray debris scars your hull."
-salvage = 1
+salvage = 3
 hull = -1
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Disposable drones map a safe corridor; stray debris scars your hull."
-salvage = 1
+salvage = 3
 hull = -1
 
 [sub_resource type="Resource" id="Approach0"]
@@ -29,12 +29,12 @@ failure = SubResource("Failure0")
 script = ExtResource("Outcome")
 blurb = "You recover a rich haul despite explosive debris."
 salvage = 10
-hull = -3
+hull = -2
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "A trap destroys most of the cargo."
-salvage = 4
+salvage = 2
 hull = -5
 
 [sub_resource type="Resource" id="Approach1"]
@@ -49,15 +49,16 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Engineering crews recover a uncommon schematic."
+salvage = 10
+hull = -2
 card_reward = true
 minimum_card_tier = 2
-hull = -2
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "The trap detonates; some salvage survives."
-salvage = 5
-hull = -3
+salvage = 4
+hull = -4
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -71,16 +72,16 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Boarding teams seize uncommon technology."
+salvage = 14
+hull = -4
 card_reward = true
 minimum_card_tier = 2
-salvage = 5
-hull = -4
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Your teams retreat with damaged equipment."
-salvage = 6
-hull = -6
+salvage = 5
+hull = -7
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

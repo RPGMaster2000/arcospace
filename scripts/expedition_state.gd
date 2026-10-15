@@ -18,6 +18,10 @@ var required_ftl_charge: int = 0
 var system_number: int = 0
 var system_name: String = ""
 var encounters: Array[Dictionary] = []
+# Independent service visit, deliberately outside the six progression encounters.
+const SERVICE_INDEX = -2
+var service: Dictionary = {}
+
 var production_upgrades: Dictionary = {}
 var pending_bonuses: Dictionary = {}
 var pending_penalties: Dictionary = {}
@@ -30,6 +34,9 @@ var last_outcome: String = ""
 var active_battle: int = -1
 var rng := RandomNumberGenerator.new()
 var seed_used: int = 0
+
+func encounter_at(index: int) -> Dictionary:
+	return service if index == SERVICE_INDEX else encounters[index]
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	rules = configuration
@@ -113,6 +120,9 @@ func generate_system() -> bool:
 	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
 	encounters.clear()
+	service = {}
+	if rules.trading_outpost != null:
+		service = {"kind":"service", "poi":rules.trading_outpost, "title":rules.trading_outpost.title, "completed":false}
 	ftl_charge = 0
 	required_ftl_charge = int(composition.ordinary) + int(composition.hazardous) + 1
 	for category in ["ordinary", "hazardous", "battle"]:
@@ -136,9 +146,14 @@ func enemy_profile(encounter: Dictionary) -> Resource:
 	return encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
 
 func encounter_charge(index: int) -> int:
+	if index == SERVICE_INDEX: return 0
 	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
 
 func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
+	if index == SERVICE_INDEX:
+		if service.is_empty() or service.completed: return false
+		service.completed = true
+		return true
 	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false): return false
 	encounters[index].completed = true
 	encounters[index].charge_awarded = true
@@ -154,7 +169,7 @@ func remaining_ftl_charge() -> int:
 	return result
 
 func can_survey(index: int) -> bool:
-	if not can_visit(index) or encounters[index].kind != "poi": return false
+	if not can_visit(index) or index == SERVICE_INDEX or encounters[index].kind != "poi": return false
 	for approach in encounters[index].poi.approaches:
 		if not locked_reason(approach).is_empty(): continue
 		var worst: int = approach.success.hull
@@ -170,7 +185,9 @@ func survey(index: int) -> bool:
 	return true
 
 func can_visit(index: int) -> bool:
-	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and index >= 0 and index < encounters.size() and not encounters[index].completed
+	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty(): return false
+	if index == SERVICE_INDEX: return not service.is_empty() and not service.completed
+	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
 func locked_reason(approach: Resource) -> String:
 	if not approach.requirement.is_empty() and production(approach.requirement) < approach.minimum_production:
@@ -182,9 +199,9 @@ func locked_reason(approach: Resource) -> String:
 	return ""
 
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
-	if not can_visit(index) or encounters[index].kind != "poi":
+	if not can_visit(index) or encounter_at(index).kind not in ["poi", "service"]:
 		return false
-	var poi: Resource = encounters[index].poi
+	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
 		return false
 	var approach: Resource = poi.approaches[approach_index]
@@ -194,10 +211,14 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	var roll: float = rng.randf() if forced_roll < 0 else forced_roll
 	var success: bool = roll < approach.success_chance
 	var outcome: Resource = approach.success if success else approach.failure
-	_complete_encounter(index, outcome.extra_ftl_charge)
+	if not _complete_encounter(index, outcome.extra_ftl_charge): return false
 	# The roll and seed are printed for reproducing balance reports.
 	if rules.log_rolls: print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
-	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome) + "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
+	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
+	if index != SERVICE_INDEX:
+		last_outcome += "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
+	else:
+		last_outcome += "\nService used. No travel FTL charge or travel requirement change."
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	salvage += outcome.salvage
@@ -223,13 +244,24 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 func add_modifiers(values: Dictionary) -> void:
 	for key in values:
 		var amount: int = int(values[key])
-		if amount > 0:
+		# Temporary production modifiers are unsupported; outpost upgrades use their own ledger.
+		if key in PRODUCTION: continue
+		if key == "emergency_jump_offline":
 			pending_bonuses[key] = maxi(int(pending_bonuses.get(key, 0)), amount)
+		elif amount > 0:
+			pending_bonuses[key] = int(pending_bonuses.get(key, 0)) + amount
 		elif amount < 0:
-			pending_penalties[key] = mini(int(pending_penalties.get(key, 0)), amount)
+			pending_penalties[key] = int(pending_penalties.get(key, 0)) + amount
 
 func modifier_value(key: String) -> int:
 	return int(pending_bonuses.get(key, 0)) + int(pending_penalties.get(key, 0))
+
+## Resource penalties cap against unmodified ship starts, before normal turn income.
+func starting_value(profile: Resource, key: String) -> int:
+	var base: int = int(profile.get(key))
+	var penalty: int = absi(int(pending_penalties.get(key, 0)))
+	if key in RESOURCES: penalty = mini(penalty, floori(base * 0.5))
+	return maxi(0, base + int(pending_bonuses.get(key, 0)) - penalty)
 
 func shared_pool() -> Array[Resource]:
 	var pool: Array[Resource] = []
@@ -304,14 +336,17 @@ func choose_attribute(key: String) -> bool:
 	return true
 
 func begin_battle(board: Node, index: int = -1) -> void:
+	# Re-entrant initialization of this board must not reset stats or consume twice.
+	if board.get_meta("expedition_initialized", 0) == get_instance_id(): return
+	board.set_meta("expedition_initialized", get_instance_id())
 	active_battle = index
 	board.player_hull = hull
 	board.salvage = salvage
 	board.battles_won = battles_won
 	for key in PRODUCTION:
-		board.set("player_" + key, maxi(0, production(key) + modifier_value(key)))
+		board.set("player_" + key, maxi(0, production(key)))
 	for key in RESOURCES + ["shields"]:
-		board.set("player_" + key, maxi(0, int(ship().get(key)) + modifier_value(key)))
+		board.set("player_" + key, starting_value(ship(), key))
 	board.ftl.charge = clampi(modifier_value("emergency_jump_charge"), 0, board.ftl.charge_target)
 	board.ftl.disabled_turns = maxi(0, modifier_value("emergency_jump_offline"))
 	board.hand.card_pool = player_pool()

@@ -7,11 +7,13 @@
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "Your navigation scan succeeds, but radiation drains the shields."
+salvage = 3
 next_battle = {"shields": -2}
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Your navigation scan succeeds, but radiation drains the shields."
+salvage = 3
 next_battle = {"shields": -2}
 
 [sub_resource type="Resource" id="Approach0"]
@@ -25,62 +27,65 @@ failure = SubResource("Failure0")
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
-blurb = "Isotopes recovered; radiation scars the hull."
-salvage = 5
-hull = -3
+blurb = "Isotopes are recovered at the expense of shielding."
+salvage = 8
+next_battle = {"shields": -3}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
-blurb = "Isotopes recovered; radiation scars the hull."
-salvage = 5
-hull = -3
+blurb = "Radiation strains the shields; only a few isotopes are recovered."
+salvage = 2
+next_battle = {"shields": -5}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
 title = "Collect isotopes"
 requirement = ""
 minimum_production = 3
-success_chance = 1
+success_chance = 0.75
 success = SubResource("Success1")
 failure = SubResource("Failure1")
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
-blurb = "The reactor is primed at the expense of shielding."
-next_battle = {"reactor": 1, "shields": -5}
+blurb = "Energy-rich particles are recovered at the expense of shielding."
+salvage = 10
+next_battle = {"energy": 5, "shields": -4}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
-blurb = "The reactor is primed at the expense of shielding."
-next_battle = {"reactor": 1, "shields": -5}
+blurb = "The recovery drains energy reserves, but a little salvage survives."
+salvage = 3
+next_battle = {"energy": -6}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
 title = "Harvest particles"
 requirement = "synthesizer"
 minimum_production = 3
-success_chance = 1
+success_chance = 0.7
 success = SubResource("Success2")
 failure = SubResource("Failure2")
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Specialist shielding limits the damage to your salvage team."
-salvage = 7
+salvage = 12
+next_battle = {"energy": 5}
 hull = -2
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Specialist shielding limits the damage to your salvage team."
-salvage = 7
-hull = -2
+salvage = 4
+hull = -4
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Shielded expedition"
 requirement = "reactor"
 minimum_production = 3
-success_chance = 1
+success_chance = 0.85
 success = SubResource("Success3")
 failure = SubResource("Failure3")
 

@@ -7,13 +7,13 @@
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "Your safe-distance survey disrupts Emergency Jump calibration."
-salvage = 2
+salvage = 3
 next_battle = {"emergency_jump_offline": 1}
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Your safe-distance survey disrupts Emergency Jump calibration."
-salvage = 2
+salvage = 3
 next_battle = {"emergency_jump_offline": 1}
 
 [sub_resource type="Resource" id="Approach0"]
@@ -28,13 +28,13 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "The shortcut contributes extra interstellar charge."
+salvage = 5
 extra_ftl_charge = 1
-next_battle = {"emergency_jump_offline": 2}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "The probe maps only the perimeter and strains shielding."
-salvage = 3
+salvage = 2
 next_battle = {"shields": -4}
 
 [sub_resource type="Resource" id="Approach1"]
@@ -49,14 +49,14 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "A stable corridor supplies two extra travel charges."
+salvage = 7
 extra_ftl_charge = 2
-next_battle = {"emergency_jump_offline": 2}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "The corridor closes after its first readings."
-salvage = 5
-next_battle = {"emergency_jump_offline": 3}
+salvage = 3
+next_battle = {"emergency_jump_offline": 2}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -69,22 +69,22 @@ failure = SubResource("Failure2")
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
-blurb = "The probe primes Emergency Jump; hull conduits burn out."
-next_battle = {"emergency_jump_charge": 5}
-hull = -2
+blurb = "The reinforced probe charts a shortcut and recovers valuable readings."
+salvage = 9
+extra_ftl_charge = 2
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
-blurb = "The probe primes Emergency Jump; hull conduits burn out."
-next_battle = {"emergency_jump_charge": 5}
-hull = -2
+blurb = "The probe drains energy reserves, but a few valuable readings survive."
+salvage = 4
+next_battle = {"energy": -4}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Reinforce transit probe"
 requirement = "synthesizer"
 minimum_production = 3
-success_chance = 1
+success_chance = 0.75
 success = SubResource("Success3")
 failure = SubResource("Failure3")
 

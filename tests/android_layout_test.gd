@@ -150,8 +150,8 @@ func run() -> void:
 	poi_at_zero(many)
 	check(host.header.image.texture == many.banner_texture and host.header.image.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED, "Inspector banner uses aspect-preserving crop")
 	check(Presentation.icon("gas_giant",host.get_theme_default_font(),true) == "[GAS]", "Reliable Android text fallback")
-	check(Presentation.classification({"kind":"poi","poi":Rules.pois[5]}) == "special", "Anomaly blue classification")
-	check(Presentation.classification({"kind":"poi","poi":Rules.pois[6]}) == "hazard", "Hazard orange classification")
+	check(Presentation.classification({"kind":"poi","poi":load("res://encounters/spatial_anomaly.tres")}) == "special", "Anomaly blue classification")
+	check(Presentation.classification({"kind":"poi","poi":load("res://encounters/radiation_nebula.tres")}) == "hazard", "Hazard orange classification")
 	# Existing ship comparison cards remain navigable and fit their children.
 	host._exit()
 	await settle()

@@ -5,8 +5,9 @@ class_name EncounterOutcome
 @export var salvage: int = 0
 ## Positive repairs permanent Hull only; negative damage can end the expedition.
 @export var hull: int = 0
-## Keys: materials, energy, crew, shields, synthesizer, reactor, quarters, emergency_jump_charge, emergency_jump_offline.
-## Signed values: bonuses and penalties are tracked separately, strongest of each wins.
+## Keys: materials, energy, crew, shields, emergency_jump_charge, emergency_jump_offline.
+## Signed values: bonuses and penalties add separately; resource penalties cap at half base.
+## Emergency Jump offline uses the longest individual duration.
 @export var next_battle: Dictionary = {}
 @export var card_reward: bool = false
 @export_range(1, 3, 1) var minimum_card_tier: int = 1

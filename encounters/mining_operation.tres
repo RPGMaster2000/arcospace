@@ -27,13 +27,13 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "The extraction drones return loaded."
-salvage = 7
+salvage = 6
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
-blurb = "A drill collapse damages the hull, but some ore is recovered."
-salvage = 3
-hull = -3
+blurb = "A drill collapse consumes supplies, but some ore is recovered."
+salvage = 2
+next_battle = {"materials": -3}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -54,7 +54,7 @@ salvage = 9
 script = ExtResource("Outcome")
 blurb = "A machinery failure cuts the haul short."
 salvage = 4
-hull = -3
+next_battle = {"materials": -4}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -70,12 +70,13 @@ failure = SubResource("Failure2")
 script = ExtResource("Outcome")
 blurb = "The core yields a valuable mineral vein."
 salvage = 14
+card_reward = true
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Seismic debris strikes the ship during recovery."
-salvage = 6
-hull = -7
+salvage = 5
+next_battle = {"materials": -6}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

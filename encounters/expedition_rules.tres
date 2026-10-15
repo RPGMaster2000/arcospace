@@ -23,7 +23,8 @@
 
 [resource]
 script = ExtResource("Rules")
-pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4")])
+trading_outpost = ExtResource("4")
+pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4")])
 encounters_per_system = 6
 minimum_battles = 1
 maximum_battles = 2

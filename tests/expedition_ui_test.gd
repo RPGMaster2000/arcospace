@@ -46,8 +46,9 @@ func run() -> void:
 		check(host.return_button.visible and host.jump_button.disabled == (not host.state.can_jump()), "Return and drive state shown")
 		host.return_button.pressed.emit()
 		check(host.view_kind == "system" and not host.state.encounters[0].completed, "Return does not consume encounter")
-	host.state.encounters[0] = {"kind":"poi", "poi":host.rules.pois[4], "title":"Trading Outpost", "completed":false}
-	host._approach(0, 2)
+	host.show_poi(host.state.SERVICE_INDEX)
+	check(host.approach_note.text.contains("No travel FTL"), "Service identified separately")
+	host._approach(host.state.SERVICE_INDEX, 2)
 	check(host.state.pending_choice == "card", "Card selection visible after reward")
 	await snapshot("cards")
 	var before: int = host.state.acquired_cards.size()

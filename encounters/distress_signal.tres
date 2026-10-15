@@ -7,13 +7,13 @@
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "You chart the signal and relay rescue coordinates."
-salvage = 2
+salvage = 3
 next_battle = {"crew": -2}
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "You chart the signal and relay rescue coordinates."
-salvage = 2
+salvage = 3
 next_battle = {"crew": -2}
 
 [sub_resource type="Resource" id="Approach0"]
@@ -28,13 +28,14 @@ failure = SubResource("Failure0")
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
 blurb = "The survivors share a useful schematic."
+salvage = 5
+next_battle = {"crew": -2}
 card_reward = true
-next_battle = {"crew": -3}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "No survivors remain; the search still recovers supplies."
-salvage = 3
+salvage = 2
 next_battle = {"crew": -4}
 
 [sub_resource type="Resource" id="Approach1"]
@@ -49,15 +50,16 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Your trained teams recover an uncommon schematic."
+salvage = 7
+next_battle = {"crew": -2}
 card_reward = true
 minimum_card_tier = 2
-next_battle = {"crew": -2}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "Your crew recovers only the cargo."
-salvage = 5
-next_battle = {"crew": -3}
+salvage = 3
+next_battle = {"crew": -4}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -72,13 +74,13 @@ failure = SubResource("Failure2")
 script = ExtResource("Outcome")
 blurb = "Relief work earns valuable equipment."
 salvage = 8
-next_battle = {"materials": -4}
+next_battle = {"crew": 3, "materials": -4}
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Relief work earns valuable equipment."
 salvage = 8
-next_battle = {"materials": -4}
+next_battle = {"crew": 3, "materials": -4}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

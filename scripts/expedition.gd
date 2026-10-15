@@ -9,6 +9,7 @@ const Header = preload("res://scenes/poi_header.tscn")
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
 ## Android font availability varies; readable abbreviations are the reliable default.
 @export var text_icons_on_android: bool = true
+var approach_note: Label
 var selected_ship: int = 0
 var state: Resource
 var battle: Node
@@ -79,6 +80,7 @@ func _build_ui() -> void:
 	footer.add_theme_constant_override("separation", 16)
 	column.add_child(footer)
 	var shared = _label("All approaches grant +1 FTL Drive charge", 20)
+	approach_note = shared
 	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(shared)
 	confirm_button = Button.new()
@@ -100,8 +102,11 @@ func _process(_delta: float) -> void:
 	var bar = scroll.get_v_scroll_bar()
 	more_hint.visible = bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
 	if view_kind == "system" and is_instance_valid(grid):
-		# Fit all six tiles; long translated/custom titles may still request vertical scrolling.
-		for tile in grid.get_children(): tile.minimum_height = maxf(100, (scroll.size.y - 12) / 2)
+		# Fit six tiles plus the separate service button in the existing scroll area.
+		var available_height: float = scroll.size.y - 12
+		for child in view.get_children():
+			if child != grid: available_height -= child.size.y + view.get_theme_constant("separation")
+		for tile in grid.get_children(): tile.minimum_height = maxf(100, available_height / 2)
 
 func _label(text: String, font_size: int = 20) -> Label:
 	var label = Label.new()
@@ -201,9 +206,12 @@ func show_system() -> void:
 		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
 		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
 
+	if not state.service.is_empty():
+		_button("Trading Outpost · Service station · No travel FTL · " + ("Service used" if state.service.completed else "Optional; free to leave"), visit.bind(state.SERVICE_INDEX), state.service.completed)
+
 func visit(index: int) -> void:
 	if not state.can_visit(index): return
-	if state.encounters[index].kind == "battle": start_battle(index)
+	if state.encounter_at(index).kind == "battle": start_battle(index)
 	else: show_poi(index)
 
 func approach_text(approach: Resource) -> String:
@@ -221,14 +229,17 @@ func approach_text(approach: Resource) -> String:
 func show_poi(index: int) -> void:
 	selected_encounter = index
 	_clear("poi")
-	var poi: Resource = state.encounters[index].poi
+	var poi: Resource = state.encounter_at(index).poi
+	var is_service: bool = index == state.SERVICE_INDEX
+	approach_note.text = "Service station · No travel FTL · Free to leave" if is_service else "All approaches grant +1 FTL Drive charge"
+	confirm_button.text = "Purchase Service" if is_service else "Confirm Approach"
 	header.configure(poi)
 	var options = _grid(2)
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
 		var key: String = approach.requirement if not approach.requirement.is_empty() else Presentation.poi_key(poi)
 		var button = _tile(options, _icon(key) + "  " + approach.title, approach_text(approach),
-			Presentation.COLORS[Presentation.classification(state.encounters[index])], _select_approach.bind(slot), not state.locked_reason(approach).is_empty())
+			Presentation.COLORS[Presentation.classification(state.encounter_at(index))], _select_approach.bind(slot), not state.locked_reason(approach).is_empty())
 		approach_buttons.append(button)
 	if state.can_survey(index):
 		var survey = _tile(options, _icon("approach") + "  Navigation survey", "No loot. Next battle: " + state.describe_modifiers(state.rules.survey_penalty), Presentation.COLORS.special, _select_approach.bind(-2))
@@ -239,7 +250,7 @@ func _select_approach(slot: int) -> void:
 	if slot == -2:
 		if not state.can_survey(selected_encounter): return
 	else:
-		var poi: Resource = state.encounters[selected_encounter].poi
+		var poi: Resource = state.encounter_at(selected_encounter).poi
 		if slot < 0 or slot >= poi.approaches.size() or not state.locked_reason(poi.approaches[slot]).is_empty(): return
 	selected_approach = slot
 	for index in range(approach_buttons.size()):

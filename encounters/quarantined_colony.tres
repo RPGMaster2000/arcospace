@@ -6,15 +6,15 @@
 
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
-blurb = "Quarantine protocols consume next-battle fabrication capacity."
+blurb = "Quarantine protocols consume supplies reserved for the next battle."
 salvage = 3
-next_battle = {"synthesizer": -1}
+next_battle = {"materials": -2}
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
-blurb = "Quarantine protocols consume next-battle fabrication capacity."
+blurb = "Quarantine protocols consume supplies reserved for the next battle."
 salvage = 3
-next_battle = {"synthesizer": -1}
+next_battle = {"materials": -2}
 
 [sub_resource type="Resource" id="Approach0"]
 script = ExtResource("Approach")
@@ -27,15 +27,15 @@ failure = SubResource("Failure0")
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
-blurb = "Colony engineers repair your hull; decontamination ties up the hangar."
+blurb = "Colony engineers repair your hull; decontamination occupies your crew."
+next_battle = {"crew": -3}
 hull = 6
-next_battle = {"quarters": -1}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
-blurb = "Colony engineers repair your hull; decontamination ties up the hangar."
+blurb = "Colony engineers repair your hull; decontamination occupies your crew."
+next_battle = {"crew": -3}
 hull = 6
-next_battle = {"quarters": -1}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -49,14 +49,15 @@ failure = SubResource("Failure1")
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Sterilized research improves a card."
+salvage = 6
+next_battle = {"energy": -3}
 upgrade_card = true
-next_battle = {"reactor": -1}
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "The research is lost, but the equipment has value."
-salvage = 4
-next_battle = {"reactor": -1}
+salvage = 3
+next_battle = {"energy": -5}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -70,15 +71,16 @@ failure = SubResource("Failure2")
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "The scientists share an uncommon schematic."
+salvage = 8
+next_battle = {"crew": -3}
 card_reward = true
 minimum_card_tier = 2
-next_battle = {"quarters": -1}
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Only the laboratory cargo is safe to evacuate."
-salvage = 5
-next_battle = {"quarters": -1}
+salvage = 4
+next_battle = {"crew": -5}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
