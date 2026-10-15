@@ -1,8 +1,15 @@
 extends Resource
 class_name ExpeditionRules
 
-## Optional service station in addition to the progression encounters; one service per system visit.
+## Optional repeatable services, independent of the six progression encounters.
 @export var trading_outpost: PoiData
+## TUNE: First station system and subsequent gaps. Bounds are clamped to 2–3 at runtime.
+@export_range(2, 3, 1) var minimum_station_interval: int = 2
+@export_range(2, 3, 1) var maximum_station_interval: int = 3
+## TUNE: Shipyard base price lives in trading_outpost.tres → Approaches → Shipyard.
+## First price increase (25 → 40); subsequent increases add acceleration: 15, 20, 25, ...
+@export_range(0, 1000, 1) var production_price_increment: int = 15
+@export_range(0, 1000, 1) var production_price_acceleration: int = 5
 @export var pois: Array[PoiData] = []
 @export_range(2, 20, 1) var encounters_per_system: int = 6
 @export_range(1, 19, 1) var minimum_battles: int = 1

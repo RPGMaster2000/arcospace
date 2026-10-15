@@ -8,7 +8,7 @@ Generated from `encounters/expedition_rules.tres` and all referenced PoI Resourc
 | Hazardous | 0 / 2 | 0.8 |
 | Enemy | 1 / 2 | 1.0 |
 
-Total 6 progression encounters plus a separate optional Trading Outpost; requirement = actual non-trading PoI count + 1. Service visits give zero charge and do not increase the requirement. Valid count combinations are sampled with weight ordinary_weight^ordinary × hazardous_weight^hazards × battle_weight^enemies. Each category samples Resources by encounter_weight without replacement until exhausted. At least 1 enemy; reward floor 1. Invalid bounds warn and fall back to one enemy plus available PoIs (all enemies if no PoIs). No hidden reduction in travel requirement. Tune counts/weights/registry in `encounters/expedition_rules.tres`; type weights in each PoI/ship Resource.
+Total 6 progression encounters plus an independently scheduled optional Trading Outpost; requirement = actual non-trading PoI count + 1. Service visits give zero charge and do not increase the requirement. Valid count combinations are sampled with weight ordinary_weight^ordinary × hazardous_weight^hazards × battle_weight^enemies. Each category samples Resources by encounter_weight without replacement until exhausted. At least 1 enemy; reward floor 1. Invalid bounds warn and fall back to one enemy plus available PoIs (all enemies if no PoIs). No hidden reduction in travel requirement. Tune counts/weights/registry in `encounters/expedition_rules.tres`; type weights in each PoI/ship Resource.
 
 ## Ordinary
 
@@ -126,19 +126,23 @@ Edit `encounters/quarantined_colony.tres`; expand Approaches → Success / Failu
 
 ## Services
 
+First station: system 2–3; subsequent system-number intervals 2–3, hard cap 3. The seeded station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no travel charge, requirement increase, penalties or survey. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.
+
+Repairs select 0 through min(available Salvage, missing permanent Hull), cost 1 Salvage per Hull, and never create plating. Zero selection cannot confirm. The shared rate/limit rule is `scripts/repair_rules.gd`, also used by post-battle repairs. Supply/card base prices and shipyard base price are editable in `encounters/trading_outpost.tres` approach Salvage Cost; supply amount/production amount remain editable outcome Resources. Shipyard cost for purchase n: base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2. Current increment 15, acceleration 5; prices 25, 40, 60, 85, 115, 150, 190. Counter combines all production categories and resets only when a later station appears; permanent upgrades persist. Intervals and escalation parameters: `ExpeditionRules` Inspector. The table shows initial prices; repair amount is variable.
+
 ### Trading Outpost
 
 Edit `encounters/trading_outpost.tres`; expand Approaches → Success / Failure. Generation weight (ignored for service stations): 1.0. All listed effects in a guaranteed row happen together; randomized rows show the complete outcome of each branch.
 
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
-| Emergency repairs | None | 5 | 100.0% | +5 permanent Hull | Not rolled |
-| Purchase supplies | None | 4 | 100.0% | +5 starting resource of choice next battle | Not rolled |
-| Acquire card | None | 8 | 100.0% | Choose 1 of 3 cards | Not rolled |
-| Shipyard improvements | None | 12 | 100.0% | +1 production of choice for expedition | Not rolled |
+| Hull repairs | None | 1 | 100.0% | +1 permanent Hull | Not rolled |
+| Purchase supplies | None | 7 | 100.0% | +5 starting resource of choice next battle | Not rolled |
+| Acquire card | None | 15 | 100.0% | Choose 1 of 3 cards | Not rolled |
+| Shipyard improvements | None | 25 | 100.0% | +1 production of choice for expedition | Not rolled |
 
 ## Progression safeguard
 
-If a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and grants only that PoI's +1 charge, with guaranteed next-battle penalty `{"energy":-3}`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. One service per system visit; unused service never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.
+If a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and grants only that PoI's +1 charge, with guaranteed next-battle penalty `{"energy":-3}`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. Unlimited affordable services and free revisits while present; ignoring a station never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.
 
 All escaped enemies complete normally and award their full profile charge. Repeated result/approach calls cannot award more charge. Charge resets on entering the next system; unspent charge does not carry. Pending choices must be resolved before leaving. Hull 0 ends the expedition; voluntarily lethal approaches and battle losses remain possible. The simulation guarantees charge availability for surviving players, not victory against every enemy. **Not implemented:** hostile follow-up battles from pirate debris; current pirate hazards use Hull costs.

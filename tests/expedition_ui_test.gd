@@ -46,6 +46,9 @@ func run() -> void:
 		check(host.return_button.visible and host.jump_button.disabled == (not host.state.can_jump()), "Return and drive state shown")
 		host.return_button.pressed.emit()
 		check(host.view_kind == "system" and not host.state.encounters[0].completed, "Return does not consume encounter")
+	while host.state.service.is_empty():
+		host.state.ftl_charge = host.state.required_ftl_charge
+		host.state.generate_system()
 	host.show_poi(host.state.SERVICE_INDEX)
 	check(host.approach_note.text.contains("No travel FTL"), "Service identified separately")
 	host._approach(host.state.SERVICE_INDEX, 2)
@@ -54,6 +57,7 @@ func run() -> void:
 	var before: int = host.state.acquired_cards.size()
 	host.grid.get_child(1).pressed.emit()
 	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real selection button grants exactly one card")
+	check(host.view_kind == "poi" and host.selected_encounter == host.state.SERVICE_INDEX, "Card purchase returns directly to station")
 	await snapshot("outcome")
 	host.state.pending_choice = "upgrade"
 	host.show_outcome()

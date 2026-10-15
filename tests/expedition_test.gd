@@ -214,7 +214,10 @@ func run_tests() -> void:
 	run = fresh()
 	run.hull -= 2
 	run.salvage = 5
-	check(run.resolve_approach(run.SERVICE_INDEX, 0) and run.hull == run.ship().hull_capacity and run.salvage == 0, "Outpost repairs capped at capacity with exact price")
+	while run.service.is_empty():
+		run.ftl_charge = run.required_ftl_charge
+		run.generate_system()
+	check(run.purchase_service(0, run.service_revision, 2) and run.hull == run.ship().hull_capacity and run.salvage == 3, "Outpost repairs selected Hull with exact one-to-one price")
 	# Live scene flow: opening battle -> result -> list -> PoI -> list -> chosen battle.
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.rules = Rules.duplicate(true)

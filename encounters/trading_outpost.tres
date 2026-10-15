@@ -7,19 +7,19 @@
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "The dock crew restores damaged hull plating."
-hull = 5
+hull = 1
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "The dock crew restores damaged hull plating."
-hull = 5
+hull = 1
 
 [sub_resource type="Resource" id="Approach0"]
 script = ExtResource("Approach")
-title = "Emergency repairs"
+title = "Hull repairs"
 requirement = ""
 minimum_production = 3
-salvage_cost = 5
+salvage_cost = 1
 success_chance = 1
 success = SubResource("Success0")
 failure = SubResource("Failure0")
@@ -39,7 +39,7 @@ script = ExtResource("Approach")
 title = "Purchase supplies"
 requirement = ""
 minimum_production = 3
-salvage_cost = 4
+salvage_cost = 7
 success_chance = 1
 success = SubResource("Success1")
 failure = SubResource("Failure1")
@@ -59,7 +59,7 @@ script = ExtResource("Approach")
 title = "Acquire card"
 requirement = ""
 minimum_production = 3
-salvage_cost = 8
+salvage_cost = 15
 success_chance = 1
 success = SubResource("Success2")
 failure = SubResource("Failure2")
@@ -79,7 +79,7 @@ script = ExtResource("Approach")
 title = "Shipyard improvements"
 requirement = ""
 minimum_production = 3
-salvage_cost = 12
+salvage_cost = 25
 success_chance = 1
 success = SubResource("Success3")
 failure = SubResource("Failure3")
@@ -87,5 +87,5 @@ failure = SubResource("Failure3")
 [resource]
 script = ExtResource("Poi")
 title = "Trading Outpost"
-description = "Choose one service for this visit. Salvage spent on power cannot also repair Hull."
+description = "Repeat affordable services freely. Repairs cost 1 Salvage per Hull; shipyard prices rise with each upgrade."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

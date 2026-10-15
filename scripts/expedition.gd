@@ -10,6 +10,9 @@ const Header = preload("res://scenes/poi_header.tscn")
 ## Android font availability varies; readable abbreviations are the reliable default.
 @export var text_icons_on_android: bool = true
 var approach_note: Label
+var repair_selector: HSlider
+var service_confirmation_revision: int = -1
+var return_to_outpost: bool = false
 var selected_ship: int = 0
 var state: Resource
 var battle: Node
@@ -83,6 +86,11 @@ func _build_ui() -> void:
 	approach_note = shared
 	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(shared)
+	repair_selector = HSlider.new()
+	repair_selector.custom_minimum_size = Vector2(180, 60)
+	repair_selector.step = 1
+	repair_selector.value_changed.connect(_repair_selection_changed)
+	footer.add_child(repair_selector)
 	confirm_button = Button.new()
 	confirm_button.text = "Confirm Approach"
 	confirm_button.custom_minimum_size = Vector2(330, 60)
@@ -145,7 +153,7 @@ func _tile(parent: Node, heading: String, details: String, color: Color, callbac
 	button.disabled = disabled
 	button.refresh_style()
 	button.pressed.connect(func():
-		if scroll.allows_activation() and not button.disabled: callback.call())
+		if button.is_inside_tree() and scroll.allows_activation() and not button.disabled: callback.call())
 	parent.add_child(button)
 	return button
 
@@ -155,6 +163,9 @@ func _icon(key: String) -> String:
 func _clear(kind: String) -> void:
 	view_kind = kind
 	selected_approach = -1
+	service_confirmation_revision = -1
+	repair_selector.hide()
+	repair_selector.set_value_no_signal(0)
 	approach_buttons.clear()
 	grid = null
 	for child in view.get_children():
@@ -190,6 +201,7 @@ func show_system() -> void:
 	if not state.pending_choice.is_empty():
 		show_outcome()
 		return
+	return_to_outpost = false
 	_clear("system")
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
@@ -207,7 +219,7 @@ func show_system() -> void:
 		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
 
 	if not state.service.is_empty():
-		_button("Trading Outpost · Service station · No travel FTL · " + ("Service used" if state.service.completed else "Optional; free to leave"), visit.bind(state.SERVICE_INDEX), state.service.completed)
+		_button("Trading Outpost · Service station · No travel FTL · Free to return", visit.bind(state.SERVICE_INDEX))
 
 func visit(index: int) -> void:
 	if not state.can_visit(index): return
@@ -227,12 +239,14 @@ func approach_text(approach: Resource) -> String:
 	return "\n".join(lines)
 
 func show_poi(index: int) -> void:
+	if index == state.SERVICE_INDEX:
+		show_outpost()
+		return
 	selected_encounter = index
 	_clear("poi")
 	var poi: Resource = state.encounter_at(index).poi
-	var is_service: bool = index == state.SERVICE_INDEX
-	approach_note.text = "Service station · No travel FTL · Free to leave" if is_service else "All approaches grant +1 FTL Drive charge"
-	confirm_button.text = "Purchase Service" if is_service else "Confirm Approach"
+	approach_note.text = "All approaches grant +1 FTL Drive charge"
+	confirm_button.text = "Confirm Approach"
 	header.configure(poi)
 	var options = _grid(2)
 	for slot in range(poi.approaches.size()):
@@ -245,9 +259,55 @@ func show_poi(index: int) -> void:
 		var survey = _tile(options, _icon("approach") + "  Navigation survey", "No loot. Next battle: " + state.describe_modifiers(state.rules.survey_penalty), Presentation.COLORS.special, _select_approach.bind(-2))
 		approach_buttons.append(survey)
 
+func show_outpost() -> void:
+	if not state.can_visit(state.SERVICE_INDEX):
+		if not state.pending_choice.is_empty(): show_outcome()
+		else: show_system()
+		return
+	return_to_outpost = false
+	selected_encounter = state.SERVICE_INDEX
+	_clear("poi")
+	service_confirmation_revision = state.service_revision
+	header.configure(state.service.poi)
+	# Station choices do not need the travel bar or a long pending-combat ledger.
+	jump_button.hide()
+	pending.hide()
+	approach_note.text = "Service station · No travel FTL · Free to leave"
+	confirm_button.text = "Purchase Service"
+	var options = _grid(2)
+	for slot in range(state.service.poi.approaches.size()):
+		var approach: Resource = state.service.poi.approaches[slot]
+		var details: String
+		if approach.success.hull > 0:
+			details = "1 Salvage / Hull · Select repair amount"
+		else:
+			details = "%d Salvage · %s" % [state.service_cost(slot), state.describe_outcome(approach.success)]
+		var reason: String = state.service_locked_reason(slot)
+		if not reason.is_empty(): details += "\nLOCKED — " + reason
+		approach_buttons.append(_tile(options, approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty()))
+	# Wrapped labels can retain a tall temporary minimum after a choice screen.
+	ui.set_deferred("size", size)
+
+func _repair_selection_changed(_value: float) -> void:
+	if selected_encounter != state.SERVICE_INDEX or not state.service_is_repair(selected_approach) or view_kind != "poi": return
+	var amount: int = int(repair_selector.value)
+	approach_note.text = "+%d Hull → %d/%d · Cost %d Salvage" % [amount, state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
+	confirm_button.disabled = amount <= 0 or amount > state.station_repair_limit() or service_confirmation_revision != state.service_revision
+
+func _purchase_finished() -> void:
+	if not state.pending_choice.is_empty():
+		show_outcome()
+	elif return_to_outpost:
+		show_outpost()
+		approach_note.text = "Purchase complete · No travel FTL · Free to leave"
+	else:
+		show_outcome()
+
 func _select_approach(slot: int) -> void:
 	if view_kind != "poi" or not state.can_visit(selected_encounter): return
-	if slot == -2:
+	if selected_encounter == state.SERVICE_INDEX:
+		if not state.service_locked_reason(slot).is_empty(): return
+	elif slot == -2:
 		if not state.can_survey(selected_encounter): return
 	else:
 		var poi: Resource = state.encounter_at(selected_encounter).poi
@@ -258,6 +318,14 @@ func _select_approach(slot: int) -> void:
 		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
 		button.refresh_style()
 	confirm_button.disabled = false
+	if selected_encounter == state.SERVICE_INDEX:
+		repair_selector.visible = state.service_is_repair(slot)
+		if state.service_is_repair(slot):
+			repair_selector.max_value = state.station_repair_limit()
+			repair_selector.set_value_no_signal(0)
+			_repair_selection_changed(0)
+		else:
+			approach_note.text = "Cost %d Salvage · Balance after purchase: %d" % [state.service_cost(slot), state.salvage - state.service_cost(slot)]
 
 func _confirm_approach() -> void:
 	if view_kind != "poi" or confirm_button.disabled: return
@@ -269,6 +337,11 @@ func _survey(index: int) -> void:
 	if state.survey(index): show_outcome()
 
 func _approach(index: int, slot: int) -> void:
+	if index == state.SERVICE_INDEX:
+		if state.purchase_service(slot, service_confirmation_revision, int(repair_selector.value)):
+			return_to_outpost = true
+			_purchase_finished()
+		return
 	if state.resolve_approach(index, slot): show_outcome()
 
 func show_outcome() -> void:
@@ -308,13 +381,13 @@ func _card_text(card: Resource) -> String:
 
 
 func _choose_card(index: int) -> void:
-	if state.choose_card(index): show_outcome()
+	if state.choose_card(index): _purchase_finished()
 
 func _upgrade(key: String) -> void:
 	if state.choose_upgrade(key): show_outcome()
 
 func _attribute(key: String) -> void:
-	if state.choose_attribute(key): show_outcome()
+	if state.choose_attribute(key): _purchase_finished()
 
 func _jump() -> void:
 	if state.generate_system():

@@ -143,19 +143,21 @@ func sequence(profile: Resource, count: int, success: bool) -> Resource:
 
 func services_and_navigation() -> void:
 	var run = fresh()
+	while run.service.is_empty():
+		run.ftl_charge = run.required_ftl_charge
+		check(run.generate_system(), "Reach scheduled service station")
 	var requirement: int = run.required_ftl_charge
 	var remaining: int = run.remaining_ftl_charge()
 	check(run.encounters.size() == 6 and run.can_visit(State.SERVICE_INDEX), "Six encounters plus accessible service")
 	check(not run.can_survey(State.SERVICE_INDEX) and not run.survey(State.SERVICE_INDEX), "Service never uses survey")
-	for slot in range(4): check(not run.resolve_approach(State.SERVICE_INDEX, slot), "Zero Salvage cannot buy")
+	for slot in range(4): check(not run.purchase_service(slot, run.service_revision, 1), "Zero Salvage cannot buy")
 	check(run.ftl_charge == 0 and run.required_ftl_charge == requirement and run.remaining_ftl_charge() == remaining and run.pending_penalties.is_empty(), "Declining service changes no accounting")
 	for slot in range(4):
-		run = fresh()
-		run.salvage = 20
-		run.hull -= 5
-		var price: int = [5,4,8,12][slot]
-		check(run.resolve_approach(State.SERVICE_INDEX, slot), "Purchase service")
-		check(run.salvage == 20 - price and run.ftl_charge == 0 and run.required_ftl_charge == requirement and run.remaining_ftl_charge() == remaining, "Service exact price; zero charge/capacity change")
+		run.salvage = 30
+		run.hull = run.ship().hull_capacity - 5
+		var price: int = [5,7,15,25][slot]
+		check(run.purchase_service(slot, run.service_revision, 5), "Purchase service")
+		check(run.salvage == 30 - price and run.ftl_charge == 0 and run.required_ftl_charge == requirement and run.remaining_ftl_charge() == remaining, "Service exact price; zero charge/capacity change")
 		if slot == 0: check(run.hull == run.ship().hull_capacity, "Repair five")
 		if slot == 1:
 			check(run.choose_attribute("materials") and not run.choose_attribute("materials") and run.modifier_value("materials") == 5, "Supply choice once")
@@ -163,9 +165,7 @@ func services_and_navigation() -> void:
 		if slot == 3:
 			var before: int = run.production("reactor")
 			check(run.choose_attribute("reactor") and not run.choose_attribute("reactor") and run.production("reactor") == before + 1, "Permanent upgrade once")
-		check(not run.resolve_approach(State.SERVICE_INDEX, 1), "One service per system visit")
-		run.ftl_charge = requirement
-		check(run.generate_system() and run.can_visit(State.SERVICE_INDEX), "New system refreshes service")
+		check(run.can_visit(State.SERVICE_INDEX), "Service remains available after purchase")
 	run = fresh()
 	run.hull = 1
 	run.encounters.assign([{"kind":"poi", "poi":load("res://encounters/pirate_debris_field.tres"), "completed":false}])

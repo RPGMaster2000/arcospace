@@ -2,6 +2,7 @@ extends Resource
 class_name ExpeditionState
 
 const Ships = preload("res://scripts/ship_library.gd")
+const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/card_library.gd")
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const RESOURCES = ["materials", "energy", "crew"]
@@ -21,6 +22,11 @@ var encounters: Array[Dictionary] = []
 # Independent service visit, deliberately outside the six progression encounters.
 const SERVICE_INDEX = -2
 var service: Dictionary = {}
+var next_outpost_system: int = 0
+var station_production_purchases: int = 0
+# Each confirmation carries this revision; an old confirmation can never spend twice.
+var service_revision: int = 0
+var station_rng := RandomNumberGenerator.new()
 
 var production_upgrades: Dictionary = {}
 var pending_bonuses: Dictionary = {}
@@ -45,6 +51,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	salvage = 0
 	battles_won = 0
 	system_number = 0
+	next_outpost_system = 0
+	station_production_purchases = 0
+	service_revision += 1
 	production_upgrades.clear()
 	pending_bonuses.clear()
 	pending_penalties.clear()
@@ -59,6 +68,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	else:
 		rng.seed = chosen_seed
 	seed_used = rng.seed
+	# Separate stream: station frequency cannot change six-encounter generation or loot rolls.
+	station_rng.seed = seed_used ^ 0x53544154494F4E
+	next_outpost_system = _station_interval()
 	generate_system()
 
 func ship() -> Resource:
@@ -78,6 +90,11 @@ func _weighted_index(items: Array) -> int:
 		roll -= maxf(0.01, items[index].encounter_weight)
 		if roll <= 0: return index
 	return items.size() - 1
+
+func _station_interval() -> int:
+	var low: int = clampi(rules.minimum_station_interval, 2, 3)
+	var high: int = clampi(rules.maximum_station_interval, low, 3)
+	return station_rng.randi_range(low, high)
 
 func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
@@ -121,8 +138,12 @@ func generate_system() -> bool:
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
 	encounters.clear()
 	service = {}
-	if rules.trading_outpost != null:
-		service = {"kind":"service", "poi":rules.trading_outpost, "title":rules.trading_outpost.title, "completed":false}
+	if system_number >= next_outpost_system:
+		if rules.trading_outpost != null:
+			service = {"kind":"service", "poi":rules.trading_outpost, "title":rules.trading_outpost.title, "completed":false}
+			station_production_purchases = 0
+		next_outpost_system = system_number + _station_interval()
+	service_revision += 1
 	ftl_charge = 0
 	required_ftl_charge = int(composition.ordinary) + int(composition.hazardous) + 1
 	for category in ["ordinary", "hazardous", "battle"]:
@@ -150,10 +171,7 @@ func encounter_charge(index: int) -> int:
 	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
 
 func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
-	if index == SERVICE_INDEX:
-		if service.is_empty() or service.completed: return false
-		service.completed = true
-		return true
+	if index == SERVICE_INDEX: return false
 	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false): return false
 	encounters[index].completed = true
 	encounters[index].charge_awarded = true
@@ -186,7 +204,7 @@ func survey(index: int) -> bool:
 
 func can_visit(index: int) -> bool:
 	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty(): return false
-	if index == SERVICE_INDEX: return not service.is_empty() and not service.completed
+	if index == SERVICE_INDEX: return not service.is_empty()
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
 func locked_reason(approach: Resource) -> String:
@@ -199,7 +217,7 @@ func locked_reason(approach: Resource) -> String:
 	return ""
 
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
-	if not can_visit(index) or encounter_at(index).kind not in ["poi", "service"]:
+	if index == SERVICE_INDEX or not can_visit(index) or encounter_at(index).kind != "poi":
 		return false
 	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
@@ -215,12 +233,13 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	# The roll and seed are printed for reproducing balance reports.
 	if rules.log_rolls: print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
-	if index != SERVICE_INDEX:
-		last_outcome += "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
-	else:
-		last_outcome += "\nService used. No travel FTL charge or travel requirement change."
+	last_outcome += "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
+	_apply_outcome(outcome)
+	return true
+
+func _apply_outcome(outcome: Resource) -> void:
 	salvage += outcome.salvage
 	hull = clampi(hull + outcome.hull, 0, ship().hull_capacity)
 	add_modifiers(outcome.next_battle)
@@ -239,6 +258,49 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	elif outcome.production_choice > 0:
 		pending_choice = "production"
 		choice_amount = outcome.production_choice
+
+## Maximum repair selection uses the same numerical rule as post-battle repairs.
+func station_repair_limit() -> int:
+	return Repairs.max_spend(hull, ship().hull_capacity, salvage) * Repairs.HULL_PER_SALVAGE
+
+func service_is_repair(slot: int) -> bool:
+	return not service.is_empty() and slot >= 0 and slot < service.poi.approaches.size() and service.poi.approaches[slot].success.hull > 0
+
+func service_cost(slot: int, repair_amount: int = 1) -> int:
+	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size(): return 0
+	var approach: Resource = service.poi.approaches[slot]
+	if approach.success.hull > 0: return maxi(0, repair_amount) / Repairs.HULL_PER_SALVAGE
+	if approach.success.production_choice > 0:
+		var bought: int = station_production_purchases
+		return approach.salvage_cost + rules.production_price_increment * bought + rules.production_price_acceleration * bought * (bought - 1) / 2
+	return approach.salvage_cost
+
+func service_locked_reason(slot: int) -> String:
+	if not can_visit(SERVICE_INDEX): return "Station unavailable or resolve pending choice first"
+	if slot < 0 or slot >= service.poi.approaches.size(): return "Unknown service"
+	var approach: Resource = service.poi.approaches[slot]
+	if approach.success.hull > 0 and hull >= ship().hull_capacity: return "Hull already full"
+	var cost: int = service_cost(slot)
+	if salvage < cost: return "Requires %d Salvage (you have %d)" % [cost, salvage]
+	return ""
+
+func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
+	if revision != service_revision or not service_locked_reason(slot).is_empty(): return false
+	var outcome: Resource = service.poi.approaches[slot].success
+	if outcome.hull > 0 and (repair_amount <= 0 or repair_amount > station_repair_limit()): return false
+	var cost: int = service_cost(slot, repair_amount)
+	if cost < 0 or cost > salvage: return false
+	# Validate everything before spending; consume confirmation before applying any reward.
+	salvage -= cost
+	service_revision += 1
+	last_outcome = "Spent %d Salvage. " % cost
+	if outcome.hull > 0:
+		hull = mini(ship().hull_capacity, hull + repair_amount)
+		last_outcome += "Repaired %d permanent Hull." % repair_amount
+	else:
+		if outcome.production_choice > 0: station_production_purchases += 1
+		last_outcome += describe_outcome(outcome)
+		_apply_outcome(outcome)
 	return true
 
 func add_modifiers(values: Dictionary) -> void:

@@ -41,7 +41,8 @@ var earned_strategic: bool = false
 var result_hull: int = 0
 ## TUNE: Salvage per destroyed enemy and Hull restored per selected salvage.
 const DESTRUCTION_SALVAGE: int = 10
-const HULL_PER_SALVAGE: int = 1
+const Repairs = preload("res://scripts/repair_rules.gd")
+const HULL_PER_SALVAGE: int = Repairs.HULL_PER_SALVAGE
 var repair_spend: int = -1
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
@@ -589,7 +590,7 @@ func _record_result() -> void:
 		expedition.record_battle(self)
 
 func _repair_spend_limit() -> int:
-	return mini(salvage, maxi(0, player_hull_capacity - player_hull) / HULL_PER_SALVAGE)
+	return Repairs.max_spend(player_hull, player_hull_capacity, salvage)
 
 func _adjust_repair_spend(change: int) -> void:
 	if winner != "player" or resolving_card or battle_effects.busy:

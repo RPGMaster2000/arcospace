@@ -24,6 +24,10 @@
 [resource]
 script = ExtResource("Rules")
 trading_outpost = ExtResource("4")
+minimum_station_interval = 2
+maximum_station_interval = 3
+production_price_increment = 15
+production_price_acceleration = 5
 pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4")])
 encounters_per_system = 6
 minimum_battles = 1
