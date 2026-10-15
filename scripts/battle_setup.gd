@@ -19,6 +19,8 @@ func _ready() -> void:
 		panel.get_node("Select").pressed.connect(_select.bind(index))
 		_preview(panel.get_node("Preview/Viewport"), data)
 	_select(selected_ship)
+	resized.connect(_layout_cards)
+	_layout_cards()
 
 func _preview(viewport: SubViewport, data: Resource) -> void:
 	var model = (data.model_scene if data.model_scene != null else preview_model).instantiate()
@@ -44,3 +46,48 @@ func _start() -> void:
 	get_parent().add_child(board)
 	get_tree().current_scene = board
 	queue_free()
+
+# Preserve the existing preview nodes and selection logic; only fit their controls.
+func _layout_cards() -> void:
+	$Instructions.text = "Choose your ship. Shields protect Hull; Emergency Jump offers a combat escape."
+	$Instructions.offset_top = 70
+	$Instructions.offset_bottom = 104
+	$Ships.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	$Ships.offset_left = 16
+	$Ships.offset_right = -16
+	$Ships.offset_top = 116
+	$Ships.offset_bottom = -90
+	$Start.custom_minimum_size.y = 64
+	$Start.offset_top = -76
+	$Start.offset_bottom = -12
+	preload("res://scripts/ui/encounter_presentation.gd").action($Start, true)
+	for index in range(3):
+		var panel = get_node("Ships/Ship%d" % index)
+		panel.custom_minimum_size = Vector2.ZERO
+		if not panel.resized.is_connected(_fit_card.bind(panel)):
+			panel.resized.connect(_fit_card.bind(panel))
+		_fit_card(panel)
+
+func _fit_card(panel: Control) -> void:
+	for key in ["Name", "Preview", "Stats", "Summary", "Select"]:
+		var item: Control = panel.get_node(key)
+		item.anchor_left = 0
+		item.anchor_right = 1
+		item.offset_left = 14
+		item.offset_right = -14
+	panel.get_node("Name").offset_top = 8
+	panel.get_node("Name").offset_bottom = 62
+	panel.get_node("Preview").offset_top = 68
+	panel.get_node("Preview").offset_bottom = 140
+	var stats: Label = panel.get_node("Stats")
+	stats.offset_top = 152
+	stats.offset_bottom = panel.size.y - 182
+	stats.add_theme_font_size_override("font_size", 21)
+	var summary: Label = panel.get_node("Summary")
+	summary.offset_top = panel.size.y - 176
+	summary.offset_bottom = panel.size.y - 84
+	summary.add_theme_font_size_override("font_size", 20)
+	var select: Button = panel.get_node("Select")
+	select.offset_top = panel.size.y - 76
+	select.offset_bottom = panel.size.y - 12
+	preload("res://scripts/ui/encounter_presentation.gd").action(select)

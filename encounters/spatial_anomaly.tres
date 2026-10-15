@@ -90,5 +90,6 @@ failure = SubResource("Failure3")
 [resource]
 script = ExtResource("Poi")
 title = "Spatial Anomaly"
+anomalous_presentation = true
 description = "Investigate unstable space to aid your next Emergency Jump."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

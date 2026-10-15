@@ -1,8 +1,14 @@
 extends Control
-# Owns the run and routes between the existing battle scene and one reusable text UI.
+# UI routing only; ExpeditionState owns all rewards, requirements and progression.
 const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
+const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
+const Tile = preload("res://scripts/ui/encounter_tile.gd")
+const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
+const Header = preload("res://scenes/poi_header.tscn")
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
+## Android font availability varies; readable abbreviations are the reliable default.
+@export var text_icons_on_android: bool = true
 var selected_ship: int = 0
 var state: Resource
 var battle: Node
@@ -11,8 +17,17 @@ var stats: Label
 var pending: Label
 var jump_button: Button
 var return_button: Button
+var confirm_button: Button
 var title: Label
 var ui: MarginContainer
+var scroll: ScrollContainer
+var header: PanelContainer
+var footer: HBoxContainer
+var more_hint: Label
+var progress: ProgressBar
+var grid: GridContainer
+var selected_approach: int = -1
+var approach_buttons: Array[Button] = []
 var view_kind: String = ""
 var selected_encounter: int = -1
 
@@ -22,84 +37,148 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	var backdrop = ColorRect.new()
-	backdrop.color = Color(0.025, 0.04, 0.065)
+	backdrop.color = Color("0e1a28")
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	ui = MarginContainer.new()
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
-		ui.add_theme_constant_override("margin_" + edge, 24)
+		ui.add_theme_constant_override("margin_" + edge, 16)
 	add_child(ui)
 	var column = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	ui.add_child(column)
-	title = _label("", 28)
+	title = _label("", 30)
 	column.add_child(title)
 	stats = _label("", 20)
 	column.add_child(stats)
-	pending = _label("", 17)
+	pending = _label("", 18)
 	column.add_child(pending)
-	var scroll = ScrollContainer.new()
+	header = Header.instantiate()
+	column.add_child(header)
+	header.return_requested.connect(show_system)
+	return_button = header.return_button
+	progress = ProgressBar.new()
+	progress.custom_minimum_size.y = 8
+	progress.show_percentage = false
+	progress.add_theme_stylebox_override("background", Presentation.style(Color("394653")))
+	progress.add_theme_stylebox_override("fill", Presentation.style(Presentation.COLORS.special, true))
+	column.add_child(progress)
+	scroll = TouchScroll.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	column.add_child(scroll)
 	view = VBoxContainer.new()
 	view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.add_theme_constant_override("separation", 10)
 	scroll.add_child(view)
-	return_button = Button.new()
-	return_button.text = "Return to encounters"
-	return_button.custom_minimum_size.y = 48
-	return_button.add_theme_font_size_override("font_size", 20)
-	return_button.pressed.connect(show_system)
-	column.add_child(return_button)
+	more_hint = _label("More options below — swipe or scroll", 16)
+	more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(more_hint)
+	footer = HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 16)
+	column.add_child(footer)
+	var shared = _label("All approaches grant +1 FTL Drive charge", 20)
+	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.add_child(shared)
+	confirm_button = Button.new()
+	confirm_button.text = "Confirm Approach"
+	confirm_button.custom_minimum_size = Vector2(330, 60)
+	confirm_button.add_theme_font_size_override("font_size", 23)
+	Presentation.action(confirm_button, true)
+	confirm_button.pressed.connect(_confirm_approach)
+	footer.add_child(confirm_button)
 	jump_button = Button.new()
-	jump_button.text = "Jump to Next System"
-	jump_button.custom_minimum_size.y = 52
+	jump_button.custom_minimum_size.y = 56
 	jump_button.add_theme_font_size_override("font_size", 21)
+	Presentation.action(jump_button)
 	jump_button.pressed.connect(_jump)
 	column.add_child(jump_button)
+
+func _process(_delta: float) -> void:
+	if not ui.visible: return
+	var bar = scroll.get_v_scroll_bar()
+	more_hint.visible = bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
+	if view_kind == "system" and is_instance_valid(grid):
+		# Fit all six tiles; long translated/custom titles may still request vertical scrolling.
+		for tile in grid.get_children(): tile.minimum_height = maxf(100, (scroll.size.y - 12) / 2)
 
 func _label(text: String, font_size: int = 20) -> Label:
 	var label = Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", font_size)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
 
 func _button(text: String, callback: Callable, disabled: bool = false, height: float = 64) -> Button:
 	var button = Button.new()
 	button.text = text
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.custom_minimum_size.y = height
-	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_font_size_override("font_size", 22)
 	button.disabled = disabled
-	button.pressed.connect(callback)
+	Presentation.action(button)
+	button.pressed.connect(func():
+		if scroll.allows_activation(): callback.call())
 	view.add_child(button)
 	return button
 
+func _grid(columns: int) -> GridContainer:
+	var result = GridContainer.new()
+	result.columns = columns
+	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result.add_theme_constant_override("h_separation", 12)
+	result.add_theme_constant_override("v_separation", 12)
+	view.add_child(result)
+	grid = result
+	return result
+
+func _tile(parent: Node, heading: String, details: String, color: Color, callback: Callable, disabled: bool = false, centered: bool = false) -> Button:
+	var button = Tile.new()
+	button.configure(heading, details, color, centered)
+	button.disabled = disabled
+	button.refresh_style()
+	button.pressed.connect(func():
+		if scroll.allows_activation() and not button.disabled: callback.call())
+	parent.add_child(button)
+	return button
+
+func _icon(key: String) -> String:
+	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
+
 func _clear(kind: String) -> void:
 	view_kind = kind
+	selected_approach = -1
+	approach_buttons.clear()
+	grid = null
 	for child in view.get_children():
 		view.remove_child(child)
 		child.queue_free()
+	scroll.scroll_vertical = 0
 	ui.show()
+	header.visible = kind == "poi"
 	return_button.visible = kind == "poi"
-	title.text = state.system_name + " — " + state.ship().ship_name
-	stats.text = "Hull %d/%d  ·  Salvage %d  ·  Fabricator %d / Reactor %d / Hangar %d  ·  Cards acquired %d" % [
-		state.hull, state.ship().hull_capacity, state.salvage, state.production("synthesizer"),
-		state.production("reactor"), state.production("quarters"), state.acquired_cards.size()]
+	footer.visible = kind == "poi"
+	confirm_button.disabled = true
+	title.visible = kind != "poi"
+	progress.visible = kind == "system"
+	progress.max_value = state.required_ftl_charge
+	progress.value = state.ftl_charge
+	title.text = "System Encounters — " + state.system_name if kind == "system" else "Encounter Result"
+	stats.text = "%s · Hull %d/%d · Salvage %d · Fabricator %d / Reactor %d / Hangar %d" % [
+		state.ship().ship_name, state.hull, state.ship().hull_capacity, state.salvage,
+		state.production("synthesizer"), state.production("reactor"), state.production("quarters")]
 	pending.text = "Next battle: " + state.pending_description()
-	jump_button.text = "FTL Drive %d / %d — Jump to Next System" % [state.ftl_charge, state.required_ftl_charge]
+	pending.visible = state.pending_description() != "None"
+	jump_button.text = "FTL Drive %d / %d · %s" % [state.ftl_charge, state.required_ftl_charge,
+		"Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 
 func start_expedition() -> void:
 	state = State.new()
 	state.start(selected_ship, rules)
-	# No mandatory opening encounter: every battle returns here through victory.
 	show_system()
 
 func show_system() -> void:
@@ -112,76 +191,110 @@ func show_system() -> void:
 		_button("Start a new expedition", _restart)
 		_button("Choose another ship", _exit)
 		return
-	view.add_child(_label("Choose any encounter. Completed encounters cannot be revisited."))
+	var cards = _grid(3)
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
-		var prefix: String = "Battle" if encounter.kind == "battle" else "PoI"
-		var suffix: String = " — Completed" if encounter.completed else " · +%d FTL" % state.encounter_charge(index)
-		if encounter.kind == "poi" and encounter.poi.hazardous: prefix = "Hazardous PoI"
-		_button("%d. %s · %s%s" % [index + 1, prefix, encounter.title, suffix], visit.bind(index), encounter.completed)
-	view.add_child(_label("Complete PoIs or defeat/escape enemies to charge the FTL Drive. PoIs offer one approach or service per visit. Jumping preserves Hull, Salvage, cards, upgrades and pending bonuses.", 17))
+		var category: String = Presentation.classification(encounter)
+		var key: String = "battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
+		var descriptor: String = {"ordinary":"Ordinary PoI", "hazard":"Hazardous PoI", "battle":"Enemy", "special":"Anomalous PoI"}[category]
+		if encounter.kind == "battle": descriptor = ["Enemy", "Elite enemy", "Boss enemy"][state.enemy_profile(encounter).enemy_rank]
+		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
+		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
 
 func visit(index: int) -> void:
-	if not state.can_visit(index):
-		return
-	if state.encounters[index].kind == "battle":
-		start_battle(index)
-	else:
-		show_poi(index)
+	if not state.can_visit(index): return
+	if state.encounters[index].kind == "battle": start_battle(index)
+	else: show_poi(index)
+
+func approach_text(approach: Resource) -> String:
+	var lines: Array[String] = []
+	if not approach.requirement.is_empty():
+		lines.append("%s ≥%d (ship: %d)" % [state.LABELS[approach.requirement], approach.minimum_production, state.production(approach.requirement)])
+	if approach.salvage_cost > 0: lines.append("Cost: %d Salvage" % approach.salvage_cost)
+	lines.append("%s%% — %s" % [String.num(approach.success_chance * 100, 2), state.describe_outcome(approach.success)])
+	if approach.success_chance < 1:
+		lines.append("%s%% — %s" % [String.num((1.0 - approach.success_chance) * 100, 2), state.describe_outcome(approach.failure)])
+	var reason: String = state.locked_reason(approach)
+	if not reason.is_empty(): lines.append("LOCKED — " + reason)
+	return "\n".join(lines)
 
 func show_poi(index: int) -> void:
 	selected_encounter = index
 	_clear("poi")
 	var poi: Resource = state.encounters[index].poi
-	view.add_child(_label(poi.title + " — " + poi.description + " Completion: +1 FTL Drive charge.", 24))
+	header.configure(poi)
+	var options = _grid(2)
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
-		var reason: String = state.locked_reason(approach)
-		var requirement: String = "No production requirement" if approach.requirement.is_empty() else "%s ≥%d" % [state.LABELS[approach.requirement], approach.minimum_production]
-		var cost: String = "Free" if approach.salvage_cost == 0 else "%d Salvage" % approach.salvage_cost
-		var text: String = "%s · %s · %s\n%d%%: %s" % [approach.title, requirement, cost, roundi(approach.success_chance * 100), state.describe_outcome(approach.success)]
-		if approach.success_chance < 1:
-			text += "\n%d%%: %s" % [roundi((1.0 - approach.success_chance) * 100), state.describe_outcome(approach.failure)]
-		if not reason.is_empty():
-			text += "\nLOCKED — " + reason
-		_button(text, _approach.bind(index, slot), not reason.is_empty(), 100)
+		var key: String = approach.requirement if not approach.requirement.is_empty() else Presentation.poi_key(poi)
+		var button = _tile(options, _icon(key) + "  " + approach.title, approach_text(approach),
+			Presentation.COLORS[Presentation.classification(state.encounters[index])], _select_approach.bind(slot), not state.locked_reason(approach).is_empty())
+		approach_buttons.append(button)
 	if state.can_survey(index):
-		_button("Navigation survey · +1 FTL Drive charge · No loot\nNext battle penalty: " + state.describe_modifiers(state.rules.survey_penalty), _survey.bind(index))
+		var survey = _tile(options, _icon("approach") + "  Navigation survey", "No loot. Next battle: " + state.describe_modifiers(state.rules.survey_penalty), Presentation.COLORS.special, _select_approach.bind(-2))
+		approach_buttons.append(survey)
+
+func _select_approach(slot: int) -> void:
+	if view_kind != "poi" or not state.can_visit(selected_encounter): return
+	if slot == -2:
+		if not state.can_survey(selected_encounter): return
+	else:
+		var poi: Resource = state.encounters[selected_encounter].poi
+		if slot < 0 or slot >= poi.approaches.size() or not state.locked_reason(poi.approaches[slot]).is_empty(): return
+	selected_approach = slot
+	for index in range(approach_buttons.size()):
+		var button = approach_buttons[index]
+		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
+		button.refresh_style()
+	confirm_button.disabled = false
+
+func _confirm_approach() -> void:
+	if view_kind != "poi" or confirm_button.disabled: return
+	confirm_button.disabled = true
+	if selected_approach == -2: _survey(selected_encounter)
+	elif selected_approach >= 0: _approach(selected_encounter, selected_approach)
 
 func _survey(index: int) -> void:
 	if state.survey(index): show_outcome()
 
 func _approach(index: int, slot: int) -> void:
-	if state.resolve_approach(index, slot):
-		show_outcome()
+	if state.resolve_approach(index, slot): show_outcome()
 
 func show_outcome() -> void:
 	_clear("outcome")
-	view.add_child(_label(state.last_outcome, 22))
+	var result = PanelContainer.new()
+	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
+	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
+	result.add_child(_label(state.last_outcome, 22))
+	view.add_child(result)
 	match state.pending_choice:
 		"card":
-			view.add_child(_label("Choose exactly one card. It adds a draw opportunity to the shared pool; existing cards remain.", 18))
+			view.add_child(_label("Choose one card to add to the shared draw pool.", 20))
+			var offers = _grid(3)
 			for index in range(state.card_offers.size()):
-				_button(_card_text(state.card_offers[index]), _choose_card.bind(index), false, 110)
+				var card: Resource = state.card_offers[index]
+				_tile(offers, _icon("card") + " " + card.card_name, _card_text(card), Presentation.COLORS.special, _choose_card.bind(index))
 		"upgrade":
-			view.add_child(_label("Choose a player card to upgrade. Costs fall; effects and enemy copies stay unchanged.", 18))
+			view.add_child(_label("Upgrade a player card. Enemy copies remain unchanged.", 20))
+			var choices = _grid(3)
 			for card in state.upgrade_candidates():
 				var reduction: int = mini(card.upgrade_cost_reduction, card.cost - 1)
-				_button(_card_text(card) + "\nUpgrade: cost −%d" % reduction, _upgrade.bind(card.identity_key()), false, 110)
+				_tile(choices, card.card_name, _card_text(card) + "\nUpgrade: cost −%d" % reduction, Presentation.COLORS.special, _upgrade.bind(card.identity_key()))
 		"resource", "production":
+			var choices = _grid(3)
 			var keys: Array = state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION
 			for key in keys:
-				_button("+%d %s" % [state.choice_amount, state.LABELS[key]], _attribute.bind(key))
+				_tile(choices, state.LABELS[key], "+%d" % state.choice_amount, Presentation.COLORS.special, _attribute.bind(key))
 		_:
-			if state.hull <= 0:
-				view.add_child(_label("The damage destroyed your ship. This expedition is over.", 22))
+			if state.hull <= 0: view.add_child(_label("The damage destroyed your ship. This expedition is over.", 22))
 			_button("Continue", show_system)
 
 func _card_text(card: Resource) -> String:
 	var rarity: String = ["Common", "Uncommon", "Rare"][clampi(card.tier - 1, 0, 2)]
-	return "%s%s · %s · Cost %d %s · %s\n%s" % [card.card_name,
-		" +%d" % card.upgrade_level if card.upgrade_level > 0 else "",
-		card.family.capitalize(), card.cost, card.family.capitalize(), rarity, card.description]
+	return "Cost %d %s · %s%s\n%s" % [card.cost, card.family.capitalize(), rarity,
+		" · Upgrade %d" % card.upgrade_level if card.upgrade_level > 0 else "", card.description]
+
 
 func _choose_card(index: int) -> void:
 	if state.choose_card(index): show_outcome()

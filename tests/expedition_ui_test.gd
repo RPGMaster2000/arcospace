@@ -51,7 +51,7 @@ func run() -> void:
 	check(host.state.pending_choice == "card", "Card selection visible after reward")
 	await snapshot("cards")
 	var before: int = host.state.acquired_cards.size()
-	host.view.get_child(2).pressed.emit()
+	host.grid.get_child(1).pressed.emit()
 	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real selection button grants exactly one card")
 	await snapshot("outcome")
 	host.state.pending_choice = "upgrade"

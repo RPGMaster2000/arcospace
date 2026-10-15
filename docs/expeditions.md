@@ -2,13 +2,13 @@
 
 ## Playing the prototype
 
-Choose a ship and **Begin Expedition** to open the system list. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a battle victory (including Emergency Jump), the existing result screen offers repairs and **Star System**, returning to the list. Battles and PoIs can be visited in any order. Completed entries are disabled.
+Choose a ship and **Begin Expedition** to open the system grid. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a battle victory (including Emergency Jump), the existing result screen offers repairs and **Star System**, returning to the list. Battles and PoIs can be visited in any order. Completed entries are disabled.
 
 Each system has six encounters, targeting 3–4 ordinary PoIs, 0–2 hazardous PoIs and 1–2 enemies. The FTL Drive requires **PoI count + 1** charge. Completing a PoI grants +1; defeating **or escaping** an enemy grants its profile reward (standard 1, elite 2, boss 3). Wormhole outcomes may add extra charge. Rewards are single-use, and travel charge resets in each new system. Escape grants no combat Salvage.
 
 Once charged, jump or continue exploring. Pending card/resource/production choices must be resolved first. Emergency Jump retains the original combat charging and disruption mechanics; it is distinct from interstellar FTL Drive progress. If a PoI has no affordable, unlocked approach guaranteed to preserve at least 1 Hull, a navigation survey can complete it for its normal charge, forfeiting loot and imposing −1 Reactor next battle. This covers broke outpost visits and dangerous debris fields at 1 Hull.
 
-A PoI is a single visit: select one of its four approaches/services, resolve any choice, then Continue. You can back out before committing. Each approach shows requirements, cost, success/failure probabilities, and exact rewards/penalties.
+A PoI is a single visit: tap an approach/service to select it, then press Confirm Approach to execute it, resolve any reward choice, and Continue. Return is available over the banner before confirming; it does not consume the encounter. Each approach shows requirements, cost, success/failure probabilities, and exact rewards/penalties.
 
 Run state is held in memory for this prototype, not saved to disk. New Expedition, returning to ship selection and starting again, or closing the game resets it. Ship selection, permanent Hull, Salvage, acquired card weight and upgrades persist across encounters and charged system jumps. Battle resource stockpiles and combat-only production improvements reset.
 
@@ -93,3 +93,5 @@ For debugging: set Rules **Debug Seed** to a nonzero integer. Systems, card offe
 - [PoIs and generation](balance/pois.md)
 
 Regenerate from current Resources with `godot --headless --path . --script tools/generate_balance_docs.gd`. The progression test simulates 10,000 systems, including randomized completion orders, all-escape routes, low Hull, repeat results and remaining obtainable charge. It tests progression availability, not guaranteed combat survival.
+
+For banner artwork, compact grids, icon fallbacks and touch validation, see [Android UI](android_ui.md).
