@@ -30,7 +30,7 @@ func run() -> void:
 	b = state()
 	Effects.play(Library.CARDS[24],a,b)
 	check(a.energy == 42 and b.materials == 43 and b.energy == 43 and b.crew == 43, "EMP eight cost seven each")
-	for pair in [[29,18],[30,15],[31,20],[32,15],[33,18],[34,15],[37,20],[42,13]]:
+	for pair in [[29,18],[30,20],[31,20],[32,16],[33,18],[34,23],[37,26],[42,13]]:
 		check(Library.CARDS[pair[0]].cost == pair[1], "Tier two costs increased and rounded up")
 	var rng = RandomNumberGenerator.new()
 	rng.seed = 765

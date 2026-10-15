@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ExpeditionRules" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition_rules.gd" id="Rules"]
+[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Resource" path="res://encounters/mining_operation.tres" id="0"]
+[ext_resource type="Resource" path="res://encounters/gas_giant.tres" id="1"]
+[ext_resource type="Resource" path="res://encounters/derelict_starship.tres" id="2"]
+[ext_resource type="Resource" path="res://encounters/research_station.tres" id="3"]
+[ext_resource type="Resource" path="res://encounters/trading_outpost.tres" id="4"]
+[ext_resource type="Resource" path="res://encounters/spatial_anomaly.tres" id="5"]
+
+[resource]
+script = ExtResource("Rules")
+pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+encounters_per_system = 6
+minimum_battles = 2
+maximum_battles = 3
+destruction_salvage = 10
+resource_victory_salvage = 6
+escape_salvage = 0
+unavailable_upgrade_salvage = 4
+debug_seed = 0

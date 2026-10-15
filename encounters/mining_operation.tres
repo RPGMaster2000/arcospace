@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+
+[sub_resource type="Resource" id="Success0"]
+script = ExtResource("Outcome")
+blurb = "Loose ore is recovered safely."
+salvage = 3
+
+[sub_resource type="Resource" id="Failure0"]
+script = ExtResource("Outcome")
+blurb = "Loose ore is recovered safely."
+salvage = 3
+
+[sub_resource type="Resource" id="Approach0"]
+script = ExtResource("Approach")
+title = "Surface collection"
+requirement = ""
+minimum_production = 3
+salvage_cost = 0
+success_chance = 1
+success = SubResource("Success0")
+failure = SubResource("Failure0")
+
+[sub_resource type="Resource" id="Success1"]
+script = ExtResource("Outcome")
+blurb = "The extraction drones return loaded."
+salvage = 7
+
+[sub_resource type="Resource" id="Failure1"]
+script = ExtResource("Outcome")
+blurb = "A drill collapse damages the hull, but some ore is recovered."
+salvage = 3
+hull = -3
+
+[sub_resource type="Resource" id="Approach1"]
+script = ExtResource("Approach")
+title = "Automated extraction"
+requirement = ""
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.75
+success = SubResource("Success1")
+failure = SubResource("Failure1")
+
+[sub_resource type="Resource" id="Success2"]
+script = ExtResource("Outcome")
+blurb = "Your fabricator processes a rich deposit."
+salvage = 9
+
+[sub_resource type="Resource" id="Failure2"]
+script = ExtResource("Outcome")
+blurb = "A machinery failure cuts the haul short."
+salvage = 4
+hull = -3
+
+[sub_resource type="Resource" id="Approach2"]
+script = ExtResource("Approach")
+title = "Industrial extraction"
+requirement = "synthesizer"
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.85
+success = SubResource("Success2")
+failure = SubResource("Failure2")
+
+[sub_resource type="Resource" id="Success3"]
+script = ExtResource("Outcome")
+blurb = "The core yields a valuable mineral vein."
+salvage = 14
+
+[sub_resource type="Resource" id="Failure3"]
+script = ExtResource("Outcome")
+blurb = "Seismic debris strikes the ship during recovery."
+salvage = 6
+hull = -7
+
+[sub_resource type="Resource" id="Approach3"]
+script = ExtResource("Approach")
+title = "Deep-core mining"
+requirement = "synthesizer"
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.55
+success = SubResource("Success3")
+failure = SubResource("Failure3")
+
+[resource]
+script = ExtResource("Poi")
+title = "Mining Operation"
+description = "Choose how deeply to mine the mineral seams."
+approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

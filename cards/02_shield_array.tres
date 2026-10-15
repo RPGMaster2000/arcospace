@@ -6,7 +6,7 @@
 script = ExtResource("1")
 card_name = "Shield Array"
 family = "materials"
-cost = 6
+cost = 4
 description = "+8 Shields"
 effects = {"shields": 8}
 play_again = false

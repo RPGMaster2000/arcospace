@@ -6,6 +6,13 @@ class_name CardData
 # DOES NOT: Change game state or manage turns.
 ## TUNE: Tier controls draw eligibility and border presentation; current rare cards are not yet added.
 @export_enum("Tier 1:1", "Tier 2:2", "Tier 3:3") var tier: int = 1
+## TUNE: Expedition upgrades reduce cost, never below one. Zero disables upgrades.
+@export_range(0, 10, 1) var upgrade_cost_reduction: int = 1
+@export_range(0, 10, 1) var max_upgrades: int = 3
+var upgrade_level: int = 0
+
+func identity_key() -> String:
+	return str(get_meta("card_identity", resource_path if not resource_path.is_empty() else card_name))
 
 ## TUNE: Card title shown in the UI; edit each cards/*.tres resource in the Inspector.
 @export var card_name: String = "":

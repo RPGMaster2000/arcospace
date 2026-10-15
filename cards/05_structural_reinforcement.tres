@@ -6,7 +6,7 @@
 script = ExtResource("1")
 card_name = "Structural Reinforcement"
 family = "materials"
-cost = 7
+cost = 6
 description = "+5 Shields, +2 Hull"
 effects = {"shields": 5, "hull": 2}
 play_again = false

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 card_name = "Hull Nanobots"
 family = "energy"
-cost = 5
+cost = 7
 description = "+5 Hull"
 effects = {"hull": 5}
 play_again = false

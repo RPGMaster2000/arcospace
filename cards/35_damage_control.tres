@@ -7,6 +7,6 @@ script = ExtResource("1")
 tier = 2
 card_name = "Damage Control"
 family = "crew"
-cost = 15
+cost = 23
 description = "+18 Hull, +6 Shields"
 effects = {"hull": 18, "shields": 6}

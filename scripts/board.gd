@@ -4,6 +4,11 @@ extends Control
 # DOES NOT: Choose AI moves, implement card effects or animate cards.
 
 signal action_finished(side: String, discarded: bool)
+signal expedition_continue
+signal expedition_restart
+signal expedition_exit
+var expedition: Resource
+var expedition_encounter: int = -1
 
 const Ships = preload("res://scripts/ship_library.gd")
 var player_ship_data: Resource
@@ -130,6 +135,8 @@ func _enter_tree() -> void:
 		var generator = RandomNumberGenerator.new()
 		generator.randomize()
 		enemy_ship_data = Ships.ENEMIES[generator.randi_range(0, Ships.ENEMIES.size()-1)]
+		if setup_settings.has("enemy_ship"):
+			enemy_ship_data = Ships.ENEMIES[clampi(int(setup_settings.enemy_ship), 0, Ships.ENEMIES.size() - 1)]
 
 func _apply_ship(side: String, data: Resource) -> void:
 	if data == null:
@@ -160,6 +167,9 @@ func _ready() -> void:
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = player_ship_data.ftl_turns if player_ship_data != null else maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	ftl.failure_multiplier = 1.0 - player_ship_data.ftl_resistance if player_ship_data != null else 1.0
+	if expedition != null:
+		expedition.begin_battle(self, expedition_encounter)
+		starting_player_hull = player_hull
 	modifier.configure(int(setup_settings.get("modifier", 0)))
 	for active_hand in [hand, enemy_hand]:
 		active_hand.drop_multiplier = modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0
@@ -382,6 +392,9 @@ func _check_winner() -> bool:
 
 
 func _restart_match() -> void:
+	if expedition != null:
+		expedition_restart.emit()
+		return
 	# Reload the scene that is actually being played (2D or 3D).
 	var fresh: Node = load(scene_file_path).instantiate()
 	fresh.setup_settings = setup_settings.duplicate(true)
@@ -391,6 +404,9 @@ func _restart_match() -> void:
 	queue_free()
 
 func _return_to_setup() -> void:
+	if expedition != null:
+		expedition_exit.emit()
+		return
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	setup.initial_settings = setup_settings.duplicate(true)
 	get_parent().add_child(setup)
@@ -449,11 +465,15 @@ func refresh_display() -> void:
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
 	$MatchResult/Panel/NextEncounter.visible = can_continue
-	if can_continue:
+	if can_continue and expedition == null:
 		if next_modifier < 0:
 			# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
 			next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 		$MatchResult/Panel/NextEncounter.text = "Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
+	if expedition != null:
+		$MatchResult/Panel/Continue.text = "Star System"
+		$MatchResult/Panel/NextEncounter.text = "Choose your next encounter or jump to a new system."
+		$MatchResult/Panel/PlayAgain.text = "New Expedition"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
@@ -510,6 +530,9 @@ func _continue_encounter() -> void:
 	if winner != "player" or player_hull <= 0 or resolving_card or battle_effects.busy:
 		return
 	$MatchResult/Panel/Continue.disabled = true
+	if expedition != null:
+		expedition_continue.emit()
+		return
 	var fresh = load(scene_file_path).instantiate()
 	fresh.setup_settings = setup_settings.duplicate(true)
 	fresh.setup_settings.modifier = next_modifier
@@ -542,6 +565,8 @@ func victory_description() -> String:
 		return "No victory bonuses earned."
 	var tactical: String = "EARNED" if tactical_victory() else "Not earned"
 	var strategic: String = "EARNED" if strategic_victory() else "Not earned"
+	if expedition != null:
+		return "Combat reward: +%d Salvage (%s).\nTactical [%s]: Finish with more Hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Strongest bonus per attribute is kept.\nContinue to choose an encounter or freely jump to a new system." % [expedition.victory_salvage(self), "FTL escape" if escaped_by_ftl else ("destruction" if enemy_hull <= 0 else "resource victory"), tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
 	return "Normal victory: Destroy the enemy or escape by FTL.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
 
 func _record_result() -> void:
@@ -554,8 +579,12 @@ func _record_result() -> void:
 	result_recorded = true
 	if winner == "player":
 		battles_won += 1
-		if enemy_hull <= 0 and not escaped_by_ftl:
+		if expedition != null:
+			salvage += expedition.victory_salvage(self)
+		elif enemy_hull <= 0 and not escaped_by_ftl:
 			salvage += DESTRUCTION_SALVAGE
+	if expedition != null:
+		expedition.record_battle(self)
 
 func _repair_spend_limit() -> int:
 	return mini(salvage, maxi(0, player_hull_capacity - player_hull) / HULL_PER_SALVAGE)
@@ -573,6 +602,8 @@ func _repair_with_salvage() -> void:
 	var spent: int = mini(repair_spend, _repair_spend_limit())
 	player_hull += spent * HULL_PER_SALVAGE
 	salvage -= spent
+	if expedition != null:
+		expedition.sync_battle(self)
 	repair_spend = -1
 	refresh_display()
 

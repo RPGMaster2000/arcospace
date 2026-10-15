@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+
+[sub_resource type="Resource" id="Success0"]
+script = ExtResource("Outcome")
+blurb = "Safe readings yield valuable navigation data."
+salvage = 3
+
+[sub_resource type="Resource" id="Failure0"]
+script = ExtResource("Outcome")
+blurb = "Safe readings yield valuable navigation data."
+salvage = 3
+
+[sub_resource type="Resource" id="Approach0"]
+script = ExtResource("Approach")
+title = "Passive observation"
+requirement = ""
+minimum_production = 3
+salvage_cost = 0
+success_chance = 1
+success = SubResource("Success0")
+failure = SubResource("Failure0")
+
+[sub_resource type="Resource" id="Success1"]
+script = ExtResource("Outcome")
+blurb = "Exotic particles precharge the FTL drive."
+next_battle = {"ftl_charge":3}
+
+[sub_resource type="Resource" id="Failure1"]
+script = ExtResource("Outcome")
+blurb = "Particles strain the shields, but your readings are valuable."
+salvage = 4
+next_battle = {"shields":-3}
+
+[sub_resource type="Resource" id="Approach1"]
+script = ExtResource("Approach")
+title = "Collect exotic particles"
+requirement = ""
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.7
+success = SubResource("Success1")
+failure = SubResource("Failure1")
+
+[sub_resource type="Resource" id="Success2"]
+script = ExtResource("Outcome")
+blurb = "A stable corridor precharges your drive."
+next_battle = {"ftl_charge":4}
+
+[sub_resource type="Resource" id="Failure2"]
+script = ExtResource("Outcome")
+blurb = "Useful data is recovered, but FTL is offline for the first turn."
+salvage = 5
+next_battle = {"ftl_offline":1}
+
+[sub_resource type="Resource" id="Approach2"]
+script = ExtResource("Approach")
+title = "Stabilize anomaly"
+requirement = "reactor"
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.85
+success = SubResource("Success2")
+failure = SubResource("Failure2")
+
+[sub_resource type="Resource" id="Success3"]
+script = ExtResource("Outcome")
+blurb = "Specialist teams tune the drive to the anomaly."
+next_battle = {"ftl_charge":5}
+
+[sub_resource type="Resource" id="Failure3"]
+script = ExtResource("Outcome")
+blurb = "Readings are valuable, but FTL needs two turns to recalibrate."
+salvage = 6
+next_battle = {"ftl_offline":2}
+
+[sub_resource type="Resource" id="Approach3"]
+script = ExtResource("Approach")
+title = "Reinforce FTL systems"
+requirement = "quarters"
+minimum_production = 3
+salvage_cost = 0
+success_chance = 0.75
+success = SubResource("Success3")
+failure = SubResource("Failure3")
+
+[resource]
+script = ExtResource("Poi")
+title = "Spatial Anomaly"
+description = "Investigate unstable space to aid your next FTL jump."
+approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])

@@ -112,7 +112,7 @@ func run() -> void:
 	for round_number in range(2,300):
 		var old: int = mod.miss_rate
 		mod.begin_round(round_number)
-		check(mod.miss_rate >= 0 and mod.miss_rate <= 70 and absi(mod.miss_rate-old) <= 5, "Nebula must drift within bounds")
+		check(mod.miss_rate >= 0 and mod.miss_rate <= Mod.NEBULA_MAX and absi(mod.miss_rate-old) <= Mod.NEBULA_STEP, "Nebula must drift within configured bounds")
 	mod.queue_free()
 	for selection in range(5):
 		var scene_board = load("res://scenes/board_3d.tscn").instantiate()
@@ -169,7 +169,7 @@ func run() -> void:
 	returned.get_node("Start").pressed.emit()
 	await process_frame
 	var restarted = current_scene
-	check(restarted.setup_settings.player_ship == 2 and restarted.player_ship_data.ship_name == "Bastion", "Begin Battle uses selected ship")
+	check(restarted.state.player_ship == 2 and restarted.state.ship().ship_name == "Bastion", "Begin expedition uses selected ship")
 	restarted.queue_free()
 	setup.queue_free()
 	await process_frame

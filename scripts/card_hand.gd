@@ -33,7 +33,8 @@ func draw_card(excluded_slot: int = -1) -> Resource:
 	var pool: Array = card_pool if not card_pool.is_empty() else CardLibrary.CARDS
 	var buckets: Dictionary = {1: [], 2: [], 3: []}
 	for card in pool:
-		if card != null and _eligible(card, excluded_slot) and not buckets[card.tier].has(card):
+		# Repeated pool entries represent acquired draw weight, not extra hand slots.
+		if card != null and _eligible(card, excluded_slot):
 			buckets[card.tier].append(card)
 	var roll: float = rng.randf()
 	var tier: int = 1
@@ -58,7 +59,7 @@ func _eligible(card: Resource, excluded_slot: int) -> bool:
 			continue
 		if card.tier > 1 and cards[slot].tier == card.tier:
 			return false
-		if cards[slot] == card:
+		if cards[slot].identity_key() == card.identity_key():
 			copies += 1
 	return copies < max_copies
 

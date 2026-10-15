@@ -7,6 +7,6 @@ script = ExtResource("1")
 tier = 2
 card_name = "Aegis Overcharge"
 family = "energy"
-cost = 15
+cost = 16
 description = "+20 Shields, +6 Hull"
 effects = {"shields": 20, "hull": 6}

@@ -39,8 +39,8 @@ func read_settings() -> Dictionary:
 
 func _start() -> void:
 	$Start.disabled = true
-	var board = BOARD.instantiate()
-	board.setup_settings = read_settings()
+	var board = load("res://scenes/expedition.tscn").instantiate()
+	board.selected_ship = selected_ship
 	get_parent().add_child(board)
 	get_tree().current_scene = board
 	queue_free()
