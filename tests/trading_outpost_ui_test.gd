@@ -15,7 +15,7 @@ func settle() -> void:
 func geometry() -> void:
 	var viewport: Rect2 = root.get_visible_rect()
 	check(viewport.encloses(host.ui.get_global_rect()), "Station UI inside landscape viewport %s / %s" % [viewport, host.ui.get_global_rect()])
-	check(viewport.encloses(host.return_button.get_global_rect()) and viewport.encloses(host.confirm_button.get_global_rect()), "Station Return and Confirm stay visible %s / %s" % [viewport, host.confirm_button.get_global_rect()])
+	check(viewport.encloses(host.return_button.get_global_rect()) and (not host.confirmation.shade.visible or viewport.encloses(host.confirm_button.get_global_rect())), "Station Return and Confirm stay visible %s / %s" % [viewport, host.confirm_button.get_global_rect()])
 	check(host.return_button.size.y >= 48 and host.confirm_button.size.y >= 48, "Fixed touch targets")
 	check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "Four services fit without unnecessary scrolling %s / %s" % [host.scroll.size, host.grid.size])
 	for tile in host.approach_buttons:

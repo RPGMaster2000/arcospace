@@ -3,7 +3,7 @@ extends Button
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var icon_label: Label
 var heading: Label
-var details: Label
+var details: Control
 var content: MarginContainer
 var accent: Color = Presentation.COLORS.special
 var selected: bool = false
@@ -43,6 +43,29 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 	column.add_child(heading)
 	column.add_child(details)
 	content.minimum_size_changed.connect(update_minimum_size)
+	refresh_style()
+
+func set_rich_details(value: String) -> void:
+	var column = details.get_parent()
+	column.remove_child(details)
+	details.queue_free()
+	var rich = RichTextLabel.new()
+	rich.bbcode_enabled = true
+	rich.fit_content = true
+	rich.scroll_active = false
+	rich.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rich.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rich.add_theme_font_override("normal_font", Presentation.UI_FONT)
+	var bold = FontVariation.new()
+	bold.base_font = ThemeDB.fallback_font
+	bold.variation_embolden = .7
+	bold.fallbacks = [Presentation.EMOJI_FONT]
+	rich.add_theme_font_override("bold_font", bold)
+	rich.add_theme_font_size_override("normal_font_size", 22)
+	rich.add_theme_font_size_override("bold_font_size", 22)
+	rich.text = value
+	details = rich
+	column.add_child(details)
 	refresh_style()
 
 func _process(_delta: float) -> void:

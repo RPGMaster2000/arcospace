@@ -22,6 +22,7 @@ var legend: Button
 var heading_row: HBoxContainer
 var jump_button: Button
 var return_button: Button
+var confirmation: CanvasLayer
 var confirm_button: Button
 var title: Label
 var ui: MarginContainer
@@ -69,7 +70,6 @@ func _build_ui() -> void:
 	header = Header.instantiate()
 	column.add_child(header)
 	header.return_requested.connect(show_system)
-	header.legend_requested.connect(func(): resource_bar.overlay.show_legend())
 	return_button = header.return_button
 	scroll = TouchScroll.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -83,8 +83,12 @@ func _build_ui() -> void:
 	column.add_child(more_hint)
 	footer = HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 16)
-	column.add_child(footer)
-	var shared = _label("All approaches grant +1 FTL Drive charge", 20)
+	confirmation = preload("res://scripts/ui/approach_confirmation.gd").new()
+	add_child(confirmation)
+	confirmation.cancelled.connect(_cancel_approach)
+	confirmation.column.add_child(footer)
+	confirmation.column.move_child(footer, 1)
+	var shared = _label("", 20)
 	approach_note = shared
 	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(shared)
@@ -93,13 +97,8 @@ func _build_ui() -> void:
 	repair_selector.step = 1
 	repair_selector.value_changed.connect(_repair_selection_changed)
 	footer.add_child(repair_selector)
-	confirm_button = Button.new()
-	confirm_button.text = "Confirm Approach"
-	confirm_button.custom_minimum_size = Vector2(300, 48)
-	confirm_button.add_theme_font_size_override("font_size", 23)
-	Presentation.action(confirm_button, true)
+	confirm_button = confirmation.initiate
 	confirm_button.pressed.connect(_confirm_approach)
-	footer.add_child(confirm_button)
 	jump_button = Button.new()
 	jump_button.custom_minimum_size.y = 48
 	jump_button.add_theme_font_size_override("font_size", 21)
@@ -165,6 +164,7 @@ func _icon(key: String) -> String:
 
 func _clear(kind: String) -> void:
 	resource_bar.overlay.dismiss()
+	confirmation.dismiss()
 	view_kind = kind
 	selected_approach = -1
 	service_confirmation_revision = -1
@@ -179,11 +179,11 @@ func _clear(kind: String) -> void:
 	ui.show()
 	header.visible = kind == "poi"
 	return_button.visible = kind == "poi"
-	footer.visible = kind == "poi"
+	footer.hide()
 	confirm_button.disabled = true
-	heading_row.visible = kind != "poi"
+	heading_row.show()
 	title.visible = true
-	title.text = "System Encounters — " + state.system_name if kind == "system" else (state.ship().ship_name + " · Expedition" if kind == "poi" else "Encounter Result")
+	title.text = "System Encounters — " + state.system_name
 	resource_bar.exploration(state)
 	jump_button.text = "%s FTL Drive %d/%d · %s" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge, "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
 	jump_button.disabled = not state.can_jump()
@@ -232,21 +232,44 @@ func show_battle_preview(index: int) -> void:
 	if not state.can_visit(index): return
 	_clear("preview")
 	var encounter: Dictionary = state.encounters[index]
-	title.text = encounter.title
-	view.add_child(_label(State.Modifiers.NAMES[encounter.modifier], 28))
+	view.add_child(_label(encounter.title + " · " + State.Modifiers.NAMES[encounter.modifier], 28))
 	view.add_child(_label(State.Modifiers.description(encounter.modifier), 24))
-	view.add_child(_label("Next battle: " + state.pending_description(), 22))
+	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
 	_button("Enter combat", start_battle.bind(index))
 	_button("Return", show_system)
+
+# Keep balance/state descriptions intact; compact only the exploration presentation.
+func compact_text(value: String) -> String:
+	return value.replace(" next battle", "").replace("Next battle: ", "").replace("permanent Hull", "Hull").replace("starting resource of choice", "resource of choice").replace("for expedition", "(expedition)")
+
+func compact_outcome(outcome: Resource) -> String:
+	return compact_text(state.describe_outcome(outcome))
+
+func highlight_outcome(value: String) -> String:
+	var expression = RegEx.new()
+	expression.compile(r"[+-]\d+[^·\n]*|\d+(?:\.\d+)?%")
+	var result = ""
+	var offset = 0
+	for matched in expression.search_all(value):
+		result += value.substr(offset, matched.get_start() - offset)
+		var part: String = matched.get_string()
+		if part.ends_with("%"):
+			result += "[b]" + part + "[/b]"
+		else:
+			# Offline turns are a penalty despite their positive counter.
+			var color = "f49b97" if part.begins_with("-") or part.to_lower().contains("offline") else "9ce3b2"
+			result += "[b][color=" + color + "]" + part + "[/color][/b]"
+		offset = matched.get_end()
+	return result + value.substr(offset)
 
 func approach_text(approach: Resource) -> String:
 	var lines: Array[String] = []
 	if not approach.requirement.is_empty():
 		lines.append("%s ≥%d (ship: %d)" % [state.LABELS[approach.requirement], approach.minimum_production, state.production(approach.requirement)])
 	if approach.salvage_cost > 0: lines.append("Cost: %d Salvage" % approach.salvage_cost)
-	lines.append("%s%% — %s" % [String.num(approach.success_chance * 100, 2), state.describe_outcome(approach.success)])
+	lines.append("%s%% — %s" % [String.num(approach.success_chance * 100, 2).trim_suffix(".0"), compact_outcome(approach.success)])
 	if approach.success_chance < 1:
-		lines.append("%s%% — %s" % [String.num((1.0 - approach.success_chance) * 100, 2), state.describe_outcome(approach.failure)])
+		lines.append("%s%% — %s" % [String.num((1.0 - approach.success_chance) * 100, 2).trim_suffix(".0"), compact_outcome(approach.failure)])
 	var reason: String = state.locked_reason(approach)
 	if not reason.is_empty(): lines.append("LOCKED" if reason.begins_with("Requires " + state.LABELS.get(approach.requirement, "missing")) else "LOCKED — " + reason)
 	return "\n".join(lines)
@@ -258,8 +281,8 @@ func show_poi(index: int) -> void:
 	selected_encounter = index
 	_clear("poi")
 	var poi: Resource = state.encounter_at(index).poi
-	approach_note.text = "All approaches grant +1 FTL Drive charge"
-	confirm_button.text = "Confirm Approach"
+	approach_note.text = ""
+	confirm_button.text = "Initiate"
 	header.configure(poi)
 	var options = _grid(2)
 	for slot in range(poi.approaches.size()):
@@ -267,9 +290,10 @@ func show_poi(index: int) -> void:
 		var key: String = Presentation.approach_key(poi, slot)
 		var button = _tile(options, _icon(key) + "  " + approach.title, approach_text(approach),
 			Presentation.COLORS[Presentation.classification(state.encounter_at(index))], _select_approach.bind(slot), not state.locked_reason(approach).is_empty())
+		button.set_rich_details(highlight_outcome(approach_text(approach)))
 		approach_buttons.append(button)
 	if state.can_survey(index):
-		var survey = _tile(options, _icon("approach") + "  Navigation survey", "No loot. Next battle: " + state.describe_modifiers(state.rules.survey_penalty), Presentation.COLORS.special, _select_approach.bind(-2))
+		var survey = _tile(options, _icon("approach") + "  Navigation survey", "No loot · " + state.describe_modifiers(state.rules.survey_penalty), Presentation.COLORS.special, _select_approach.bind(-2))
 		approach_buttons.append(survey)
 
 func show_outpost() -> void:
@@ -285,7 +309,7 @@ func show_outpost() -> void:
 	# Station choices do not need the travel bar or a long pending-combat ledger.
 	jump_button.hide()
 	approach_note.text = "Service station · No travel FTL · Free to leave"
-	confirm_button.text = "Purchase Service"
+	confirm_button.text = "Initiate"
 	var options = _grid(2)
 	for slot in range(state.service.poi.approaches.size()):
 		var approach: Resource = state.service.poi.approaches[slot]
@@ -293,10 +317,12 @@ func show_outpost() -> void:
 		if approach.success.hull > 0:
 			details = "1 Salvage / Hull · Select repair amount"
 		else:
-			details = "%d Salvage · %s" % [state.service_cost(slot), state.describe_outcome(approach.success)]
+			details = "%d Salvage · %s" % [state.service_cost(slot), compact_outcome(approach.success)]
 		var reason: String = state.service_locked_reason(slot)
 		if not reason.is_empty(): details += "\nLOCKED — " + reason
-		approach_buttons.append(_tile(options, approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty()))
+		var button = _tile(options, approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty())
+		button.set_rich_details(highlight_outcome(details))
+		approach_buttons.append(button)
 	# Wrapped labels can retain a tall temporary minimum after a choice screen.
 	ui.set_deferred("size", size)
 
@@ -325,6 +351,7 @@ func _select_approach(slot: int) -> void:
 		var poi: Resource = state.encounter_at(selected_encounter).poi
 		if slot < 0 or slot >= poi.approaches.size() or not state.locked_reason(poi.approaches[slot]).is_empty(): return
 	selected_approach = slot
+	footer.visible = selected_encounter == state.SERVICE_INDEX
 	for index in range(approach_buttons.size()):
 		var button = approach_buttons[index]
 		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
@@ -339,9 +366,23 @@ func _select_approach(slot: int) -> void:
 		else:
 			approach_note.text = "Cost %d Salvage · Balance after purchase: %d" % [state.service_cost(slot), state.salvage - state.service_cost(slot)]
 
-func _confirm_approach() -> void:
-	if view_kind != "poi" or confirm_button.disabled: return
+	var selected_title: String = "Navigation survey" if slot == -2 else state.encounter_at(selected_encounter).poi.approaches[slot].title
+	confirmation.present(selected_title)
+
+func _cancel_approach() -> void:
+	confirmation.dismiss()
+	selected_approach = -1
 	confirm_button.disabled = true
+	repair_selector.hide()
+	repair_selector.set_value_no_signal(0)
+	for button in approach_buttons:
+		button.selected = false
+		button.refresh_style()
+
+func _confirm_approach() -> void:
+	if view_kind != "poi" or not confirmation.shade.visible or confirm_button.disabled: return
+	confirm_button.disabled = true
+	confirmation.dismiss()
 	if selected_approach == -2: _survey(selected_encounter)
 	elif selected_approach >= 0: _approach(selected_encounter, selected_approach)
 
@@ -362,7 +403,7 @@ func show_outcome() -> void:
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
-	result.add_child(_label(state.last_outcome, 22))
+	result.add_child(_label(compact_text(state.last_outcome), 22))
 	view.add_child(result)
 	match state.pending_choice:
 		"card":

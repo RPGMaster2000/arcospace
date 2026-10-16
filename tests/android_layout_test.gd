@@ -23,7 +23,7 @@ func verify_geometry() -> void:
 	check(viewport_rect.encloses(host.ui.get_global_rect()), "UI inside viewport")
 	check(host.scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "No horizontal scrolling")
 	if host.view_kind == "poi":
-		check(viewport_rect.encloses(host.return_button.get_global_rect()) and viewport_rect.encloses(host.confirm_button.get_global_rect()), "Fixed Return and Confirm remain visible")
+		check(viewport_rect.encloses(host.return_button.get_global_rect()) and (not host.confirmation.shade.visible or viewport_rect.encloses(host.confirm_button.get_global_rect())), "Fixed Return and Confirm remain visible")
 		check(host.return_button.size.y >= 48 and host.confirm_button.size.y >= 48, "Touch-sized fixed controls")
 	if is_instance_valid(host.grid):
 		for tile in host.grid.get_children():
@@ -64,11 +64,12 @@ func run() -> void:
 			for slot in range(poi.approaches.size()):
 				var approach: Resource = poi.approaches[slot]
 				var button = host.approach_buttons[slot]
-				check(button.details.text.contains(host.state.describe_outcome(approach.success)), "Exact success values")
-				check(button.details.text.contains(String.num(approach.success_chance * 100, 2) + "%"), "Exact probability")
+				check(button.details.get_parsed_text().contains(host.compact_outcome(approach.success)), "Exact success values")
+				check(button.details.text.contains(String.num(approach.success_chance * 100, 2).trim_suffix(".0") + "%"), "Exact probability")
 				if approach.success_chance < 1:
-					check(button.details.text.contains(host.state.describe_outcome(approach.failure)), "Exact failure values")
+					check(button.details.get_parsed_text().contains(host.compact_outcome(approach.failure)), "Exact failure values")
 				check(button.disabled == (not host.state.locked_reason(approach).is_empty()), "Actual selected-ship requirements")
+				host._cancel_approach()
 				button.pressed.emit()
 				check(not host.state.encounters[0].completed and host.state.salvage == 30 and host.state.hull == 20, "Selecting never executes")
 			verify_geometry()

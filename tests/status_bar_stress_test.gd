@@ -76,4 +76,4 @@ func run() -> void:
 	quit(1 if failures else 0)
 func safe_controls() -> bool:
 	var safe: Rect2 = root.get_visible_rect().grow(-23)
-	return safe.encloses(host.return_button.get_global_rect()) and safe.encloses(host.confirm_button.get_global_rect())
+	return safe.encloses(host.return_button.get_global_rect()) and (not host.confirmation.shade.visible or safe.encloses(host.confirm_button.get_global_rect()))
