@@ -8,7 +8,7 @@ Continue retains permanent player Hull up to the selected capacity and applies e
 
 ## Edit attributes in Godot
 
-Select any resource in ships/ (wayfarer.tres, specter.tres, bastion.tres, marauder.tres, sentinel.tres, reclaimer.tres). The Inspector exposes Hull Capacity, Shields, Materials/Energy/Crew, Synthesizer (Fabricator), Reactor, Quarters (Hangar), FTL Turns, FTL Resistance, Hull Color and optional Model Scene. Edit the numbers here; the menu reads them automatically. ShipData is defined in scripts/ship_data.gd; scripts/ship_library.gd lists the six profiles.
+Select any resource in ships/ (wayfarer.tres, specter.tres, bastion.tres, marauder.tres, sentinel.tres, reclaimer.tres). The Inspector exposes Hull Capacity, Shields, Materials/Energy/Crew, Synthesizer, Reactor, Quarters, FTL Turns, FTL Resistance, Hull Color and optional Model Scene. Edit the numbers here; the menu reads them automatically. ShipData is defined in scripts/ship_data.gd; scripts/ship_library.gd lists the six profiles.
 
 FTL Resistance is a fraction: 0.25 multiplies the existing capped probability by 0.75; -0.10 multiplies it by 1.10. Normal remains 1.0. For four permanent Hull damage the probabilities are 20% / 15% / 22%. At the existing damage cap they become 60% / 45% / 66%. Duration, charge preservation and plating immunity remain unchanged.
 

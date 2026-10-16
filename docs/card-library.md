@@ -2,8 +2,8 @@
 
 28 cards ported from Starship Duel (`tower-duel`), source commit
 `36a5d309aa1d8e0ed7a21c10820e0ade0f8764de`, `dist/game.mjs` and `dist/theme.mjs`.
-Costs and effect order match that source. Fabricator/Hangar are named
-Synthesizer/Quarters to match this Godot project.
+Costs and effect order match that source. Production uses the project names
+Synthesizer, Reactor and Quarters.
 
 ## In the editor
 

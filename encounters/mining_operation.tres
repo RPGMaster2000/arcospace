@@ -47,7 +47,7 @@ failure = SubResource("Failure1")
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
-blurb = "Your fabricator processes a rich deposit."
+blurb = "Your synthesizer processes a rich deposit."
 salvage = 9
 
 [sub_resource type="Resource" id="Failure2"]

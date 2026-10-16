@@ -7,7 +7,7 @@ const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/card_library.gd")
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const RESOURCES = ["materials", "energy", "crew"]
-const LABELS = {"synthesizer":"Fabricator", "reactor":"Reactor", "quarters":"Hangar",
+const LABELS = {"synthesizer":"Synthesizer", "reactor":"Reactor", "quarters":"Quarters",
 	"materials":"Materials", "energy":"Energy", "crew":"Crew", "shields":"Shields",
 	"emergency_jump_charge":"Emergency Jump charge", "emergency_jump_offline":"Emergency Jump offline turns"}
 var rules: Resource

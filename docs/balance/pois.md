@@ -20,8 +20,8 @@ Edit `encounters/mining_operation.tres`; expand Approaches → Success / Failure
 |---|---|---|---|---|---|
 | Surface collection | None | 0 | 100.0% | +3 Salvage | Not rolled |
 | Automated extraction | None | 0 | 75.0% | +6 Salvage | 25.0%: +2 Salvage · -3 Materials next battle |
-| Industrial extraction | Fabricator ≥3 | 0 | 85.0% | +9 Salvage | 15.0%: +4 Salvage · -4 Materials next battle |
-| Deep-core mining | Fabricator ≥3 | 0 | 55.0% | +14 Salvage · Choose 1 of 3 cards | 45.0%: +5 Salvage · -6 Materials next battle |
+| Industrial extraction | Synthesizer ≥3 | 0 | 85.0% | +9 Salvage | 15.0%: +4 Salvage · -4 Materials next battle |
+| Deep-core mining | Synthesizer ≥3 | 0 | 55.0% | +14 Salvage · Choose 1 of 3 cards | 45.0%: +5 Salvage · -6 Materials next battle |
 
 ### Gas Giant
 
@@ -32,7 +32,7 @@ Edit `encounters/gas_giant.tres`; expand Approaches → Success / Failure. Gener
 | Atmospheric sampling | None | 0 | 100.0% | +3 Energy next battle | Not rolled |
 | Gas harvesting | None | 0 | 75.0% | +6 Energy next battle | 25.0%: +2 Energy next battle · -3 Shields next battle |
 | Precision skimming | Reactor ≥3 | 0 | 90.0% | +2 Salvage · +8 Energy next battle | 10.0%: +3 Energy next battle · -4 Shields next battle |
-| Deep atmospheric dive | Hangar ≥3 | 0 | 60.0% | +5 Salvage · +12 Energy next battle | 40.0%: +4 Energy next battle · -5 Crew next battle |
+| Deep atmospheric dive | Quarters ≥3 | 0 | 60.0% | +5 Salvage · +12 Energy next battle | 40.0%: +4 Energy next battle · -5 Crew next battle |
 
 ### Derelict Starship
 
@@ -42,8 +42,8 @@ Edit `encounters/derelict_starship.tres`; expand Approaches → Success / Failur
 |---|---|---|---|---|---|
 | External salvage | None | 0 | 100.0% | +3 Salvage | Not rolled |
 | Board the wreck | None | 0 | 70.0% | +5 Salvage · Choose 1 of 3 cards | 30.0%: +2 Salvage · -3 Crew next battle |
-| Engineering recovery | Fabricator ≥3 | 0 | 85.0% | +7 Salvage · Choose 1 of 3 cards | 15.0%: +3 Salvage · -4 Materials next battle |
-| Deploy boarding teams | Hangar ≥3 | 0 | 75.0% | +9 Salvage · Choose 1 of 3 uncommon-or-better cards | 25.0%: +4 Salvage · -5 Crew next battle |
+| Engineering recovery | Synthesizer ≥3 | 0 | 85.0% | +7 Salvage · Choose 1 of 3 cards | 15.0%: +3 Salvage · -4 Materials next battle |
+| Deploy boarding teams | Quarters ≥3 | 0 | 75.0% | +9 Salvage · Choose 1 of 3 uncommon-or-better cards | 25.0%: +4 Salvage · -5 Crew next battle |
 
 ### Abandoned Research Station
 
@@ -54,7 +54,7 @@ Edit `encounters/research_station.tres`; expand Approaches → Success / Failure
 | Recover research data | None | 0 | 100.0% | +3 Salvage | Not rolled |
 | Access experimental database | None | 0 | 70.0% | +5 Salvage · Upgrade one player card | 30.0%: +2 Salvage · -3 Energy next battle |
 | High-energy analysis | Reactor ≥3 | 0 | 85.0% | +7 Salvage · Upgrade one player card | 15.0%: +3 Salvage · -4 Energy next battle |
-| Advanced fabrication | Fabricator ≥3 | 0 | 75.0% | +9 Salvage · Upgrade one player card | 25.0%: +4 Salvage · -5 Materials next battle |
+| Advanced fabrication | Synthesizer ≥3 | 0 | 75.0% | +9 Salvage · Upgrade one player card | 25.0%: +4 Salvage · -5 Materials next battle |
 
 ### Spatial Anomaly
 
@@ -65,7 +65,7 @@ Edit `encounters/spatial_anomaly.tres`; expand Approaches → Success / Failure.
 | Passive observation | None | 0 | 100.0% | +3 Salvage | Not rolled |
 | Collect exotic particles | None | 0 | 70.0% | +5 Salvage · +2 Emergency Jump charge next battle | 30.0%: +2 Salvage · -3 Shields next battle |
 | Stabilize anomaly | Reactor ≥3 | 0 | 85.0% | +7 Salvage · +3 Emergency Jump charge next battle | 15.0%: +3 Salvage · +1 Emergency Jump offline turns next battle |
-| Reinforce Emergency Jump systems | Hangar ≥3 | 0 | 75.0% | +9 Salvage · +5 Emergency Jump charge next battle | 25.0%: +4 Salvage · +2 Emergency Jump offline turns next battle |
+| Reinforce Emergency Jump systems | Quarters ≥3 | 0 | 75.0% | +9 Salvage · +5 Emergency Jump charge next battle | 25.0%: +4 Salvage · +2 Emergency Jump offline turns next battle |
 
 ## Hazardous
 
@@ -77,7 +77,7 @@ Edit `encounters/radiation_nebula.tres`; expand Approaches → Success / Failure
 |---|---|---|---|---|---|
 | Quick scan | None | 0 | 100.0% | +3 Salvage · -2 Shields next battle | Not rolled |
 | Collect isotopes | None | 0 | 75.0% | +8 Salvage · -3 Shields next battle | 25.0%: +2 Salvage · -5 Shields next battle |
-| Harvest particles | Fabricator ≥3 | 0 | 70.0% | +10 Salvage · +5 Energy next battle · -4 Shields next battle | 30.0%: +3 Salvage · -6 Energy next battle |
+| Harvest particles | Synthesizer ≥3 | 0 | 70.0% | +10 Salvage · +5 Energy next battle · -4 Shields next battle | 30.0%: +3 Salvage · -6 Energy next battle |
 | Shielded expedition | Reactor ≥3 | 0 | 85.0% | +12 Salvage · -2 permanent Hull · +5 Energy next battle | 15.0%: +4 Salvage · -4 permanent Hull |
 
 ### Distress Signal
@@ -88,8 +88,8 @@ Edit `encounters/distress_signal.tres`; expand Approaches → Success / Failure.
 |---|---|---|---|---|---|
 | Relay coordinates | None | 0 | 100.0% | +3 Salvage · -2 Crew next battle | Not rolled |
 | Dispatch rescue crew | None | 0 | 70.0% | +5 Salvage · -2 Crew next battle · Choose 1 of 3 cards | 30.0%: +2 Salvage · -4 Crew next battle |
-| Specialist rescue | Hangar ≥3 | 0 | 85.0% | +7 Salvage · -2 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +3 Salvage · -4 Crew next battle |
-| Fabricate relief kits | Fabricator ≥3 | 0 | 100.0% | +8 Salvage · +3 Crew next battle · -4 Materials next battle | Not rolled |
+| Specialist rescue | Quarters ≥3 | 0 | 85.0% | +7 Salvage · -2 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +3 Salvage · -4 Crew next battle |
+| Fabricate relief kits | Synthesizer ≥3 | 0 | 100.0% | +8 Salvage · +3 Crew next battle · -4 Materials next battle | Not rolled |
 
 ### Pirate Debris Field
 
@@ -99,8 +99,8 @@ Edit `encounters/pirate_debris_field.tres`; expand Approaches → Success / Fail
 |---|---|---|---|---|---|
 | Drone perimeter scan | None | 0 | 100.0% | +3 Salvage · -1 permanent Hull | Not rolled |
 | Recover cargo | None | 0 | 65.0% | +10 Salvage · -2 permanent Hull | 35.0%: +2 Salvage · -5 permanent Hull |
-| Disarm wreckage | Fabricator ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 20.0%: +4 Salvage · -4 permanent Hull |
-| Board pirate flagship | Hangar ≥3 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 30.0%: +5 Salvage · -7 permanent Hull |
+| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 20.0%: +4 Salvage · -4 permanent Hull |
+| Board pirate flagship | Quarters ≥3 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 30.0%: +5 Salvage · -7 permanent Hull |
 
 ### Unstable Wormhole
 
@@ -111,7 +111,7 @@ Edit `encounters/unstable_wormhole.tres`; expand Approaches → Success / Failur
 | Map the perimeter | None | 0 | 100.0% | +3 Salvage · +1 Emergency Jump offline turns next battle | Not rolled |
 | Probe the shortcut | None | 0 | 65.0% | +1 extra FTL Drive charge · +5 Salvage | 35.0%: +2 Salvage · -4 Shields next battle |
 | Stabilize corridor | Reactor ≥3 | 0 | 80.0% | +2 extra FTL Drive charge · +7 Salvage | 20.0%: +3 Salvage · +2 Emergency Jump offline turns next battle |
-| Reinforce transit probe | Fabricator ≥3 | 0 | 75.0% | +2 extra FTL Drive charge · +9 Salvage | 25.0%: +4 Salvage · -4 Energy next battle |
+| Reinforce transit probe | Synthesizer ≥3 | 0 | 75.0% | +2 extra FTL Drive charge · +9 Salvage | 25.0%: +4 Salvage · -4 Energy next battle |
 
 ### Quarantined Colony
 
@@ -122,7 +122,7 @@ Edit `encounters/quarantined_colony.tres`; expand Approaches → Success / Failu
 | Remote supply exchange | None | 0 | 100.0% | +3 Salvage · -2 Materials next battle | Not rolled |
 | Accept medical repairs | None | 0 | 100.0% | +6 permanent Hull · -3 Crew next battle | Not rolled |
 | Recover research | Reactor ≥3 | 0 | 80.0% | +6 Salvage · -3 Energy next battle · Upgrade one player card | 20.0%: +3 Salvage · -5 Energy next battle |
-| Evacuate scientists | Hangar ≥3 | 0 | 85.0% | +8 Salvage · -3 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +4 Salvage · -5 Crew next battle |
+| Evacuate scientists | Quarters ≥3 | 0 | 85.0% | +8 Salvage · -3 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +4 Salvage · -5 Crew next battle |
 
 ## Services
 

@@ -108,6 +108,7 @@ func _build_ui() -> void:
 	jump_button = Button.new()
 	jump_button.custom_minimum_size.y = 56
 	jump_button.add_theme_font_size_override("font_size", 21)
+	jump_button.add_theme_font_override("font", Presentation.UI_FONT)
 	Presentation.action(jump_button)
 	jump_button.pressed.connect(_jump)
 	column.add_child(jump_button)
@@ -191,7 +192,7 @@ func _clear(kind: String) -> void:
 	progress.value = state.ftl_charge
 	title.text = "System Encounters — " + state.system_name if kind == "system" else (state.ship().ship_name + " · Expedition" if kind == "poi" else "Encounter Result")
 	resource_bar.exploration(state)
-	jump_button.text = "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "FTL Drive · Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)
+	jump_button.text = "%s FTL Drive %d/%d · %s" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge, "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 

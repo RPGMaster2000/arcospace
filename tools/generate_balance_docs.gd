@@ -26,8 +26,8 @@ func write_doc(name: String, contents: String) -> void:
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://docs/balance")
-	var text: String = "# Ships\n\nGenerated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the indicated `.tres` in Godot; regenerate after balancing. M/E/C = Materials/Energy/Crew; F/R/H = Fabricator/Reactor/Hangar. Production identifiers: `synthesizer` / `reactor` / `quarters`.\n\n"
-	text += "| Ship | Type / special attribute | Hull / Shields | M/E/C | F/R/H | Emergency Jump turns / resistance | Rank | FTL reward (defeat **or escape**) | Destruction Salvage | Generation weight | Edit |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
+	var text: String = "# Ships\n\nGenerated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the indicated `.tres` in Godot; regenerate after balancing. M/E/C = Materials/Energy/Crew; S/R/Q = Synthesizer/Reactor/Quarters. Production identifiers: `synthesizer` / `reactor` / `quarters`.\n\n"
+	text += "| Ship | Type / special attribute | Hull / Shields | M/E/C | S/R/Q | Emergency Jump turns / resistance | Rank | FTL reward (defeat **or escape**) | Destruction Salvage | Generation weight | Edit |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
 	var profiles: Array = Ships.PLAYERS.duplicate()
 	profiles.append_array(Rules.enemy_ships)
 	for ship in profiles:

@@ -25,7 +25,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 | `scenes/expedition.tscn` root | Rules resource used by the run |
 
 Production names in code and resource dictionary keys map to the existing game:
-- `synthesizer` = Fabricator, `reactor` = Reactor, `quarters` = Hangar.
+- `synthesizer` = Synthesizer, `reactor` = Reactor, `quarters` = Quarters.
 - Next Battle accepts `materials`, `energy`, `crew`, `shields`, `emergency_jump_charge`, and `emergency_jump_offline`.
 - Use positive amounts for bonuses, negative for penalties. `emergency_jump_offline` is a positive number of initial player turns without charging/warp.
 - Immediate `hull` is signed and capped between zero and ship capacity. Fatal PoI damage ends the expedition. Outpost repair never creates Ablative Plating.
@@ -55,7 +55,7 @@ A present station remains available until leaving its system. Buy any affordable
 
 Hull repairs share `RepairRules.HULL_PER_SALVAGE` and `max_spend` with the unchanged post-battle repair flow. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
 
-Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Fabricator, Reactor and Hangar purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
+Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
 
 All card rewards offer **three distinct library cards** and allow one selection, including Engineering Recovery. Boarding teams offer Tier 2 or better only. Tiers display as Common/Uncommon/Rare; no new rarity mechanics were introduced.
 
