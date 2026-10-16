@@ -1,6 +1,7 @@
 extends Button
 # Label children wrap without imposing a horizontal minimum on GridContainer.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
+var icon_label: Label
 var heading: Label
 var details: Label
 var content: MarginContainer
@@ -26,7 +27,14 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 	column.add_theme_constant_override("separation", 6)
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(column)
+	if centered and title.contains("\n"):
+		icon_label = _label(title.get_slice("\n", 0), 44)
+		icon_label.add_theme_font_override("font", Presentation.UI_FONT)
+		icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		column.add_child(icon_label)
+		title = title.substr(title.find("\n") + 1)
 	heading = _label(title, 24)
+	heading.add_theme_font_override("font", Presentation.UI_FONT)
 	details = _label(body, 21)
 	if centered:
 		heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -38,7 +46,8 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(content):
-		custom_minimum_size.y = maxf(minimum_height, heading.get_combined_minimum_size().y + details.get_combined_minimum_size().y + 30)
+		var icon_height: float = icon_label.get_combined_minimum_size().y + 6 if is_instance_valid(icon_label) else 0
+		custom_minimum_size.y = maxf(minimum_height, icon_height + heading.get_combined_minimum_size().y + details.get_combined_minimum_size().y + 30)
 
 func _label(value: String, font_size: int) -> Label:
 	var label = Label.new()
@@ -54,6 +63,7 @@ func refresh_style() -> void:
 	var focus = Presentation.style(Color("a8d9fc"), true)
 	focus.bg_color = Color.TRANSPARENT
 	add_theme_stylebox_override("focus", focus)
+	if is_instance_valid(icon_label): icon_label.modulate = Color("82909f") if disabled else Color.WHITE
 	if is_instance_valid(heading):
 		heading.modulate = Color("82909f") if disabled else Color("f3f6fa")
 		details.modulate = Color("82909f") if disabled else Color("c2d7e7")

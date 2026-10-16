@@ -13,7 +13,7 @@ This pass changes presentation and input routing only. ExpeditionState remains r
 | Header → Maximum Height | Default 156 logical pixels; preferred aspect 5.5:1, capped to 24% of viewport height for short landscape screens |
 | `scripts/ui/encounter_presentation.gd` | Central emoji/text mappings and subdued colors; swap mappings here for future icon assets |
 | PoI → Anomalous Presentation | Blue presentation classification; hazardous PoIs remain orange, enemy encounters red, other PoIs green |
-| Expedition → Text Icons On Android | Default true: portable abbreviations on Android. Else glyph support is checked before using emoji, with text fallback |
+| Expedition → Text Icons On Android | Default false: bundled color emoji on Android and desktop. Enable only to prefer abbreviations; missing glyphs still use text fallback |
 | `scripts/ui/encounter_tile.gd` | Wrapped labels, selection outlines, content-driven height; no reward lines removed to fit |
 | `scripts/ui/encounter_scroll.gd` | Native vertical touch scrolling, 12-pixel drag threshold and 180-ms release guard against swipe selection |
 | `scripts/battle_setup.gd` | Responsive comparison-card placement, preserving preview nodes and ship selection |
@@ -35,4 +35,4 @@ godot --headless --path . --script tests/ftl_progression_test.gd
 
 Rendered tests cover 1280×720, 1560×720, 960×540, 1280×480 and 686×384 using the existing canvas scaling. To capture images under `.godot/testlogs/`, run the layout test with `--rendering-method gl_compatibility` instead of `--headless`.
 
-All 26 Godot test scripts passed, including 2,637 layout assertions and the unchanged 10,000-system progression simulation. Native Android hardware, device-specific font rendering, display cutouts and OS gestures were not available for testing. Android defaults to text icons to avoid relying on device emoji fonts. Long or expanded approaches intentionally scroll vertically instead of truncating rewards.
+All 26 Godot test scripts passed, including 2,637 layout assertions and the unchanged 10,000-system progression simulation. Native Android hardware, device-specific font rendering, display cutouts and OS gestures were not available for testing. A bundled subset of Noto Color Emoji supplies icons without depending on device fonts; see `assets/fonts/README.md`. Long or expanded approaches intentionally scroll vertically instead of truncating rewards.

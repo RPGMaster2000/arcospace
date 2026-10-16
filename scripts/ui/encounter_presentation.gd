@@ -1,21 +1,31 @@
 extends RefCounted
 # Presentation only: replace glyphs here later without touching encounter logic.
+const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
+const UI_FONT = preload("res://assets/fonts/emoji_ui.tres")
 const ICONS = {
- "mining_operation":["⛏", "MINE"], "gas_giant":["🪐", "GAS"],
- "derelict_starship":["🚀", "WRECK"], "research_station":["🔬", "LAB"],
- "trading_outpost":["⚖", "TRADE"], "spatial_anomaly":["✦", "RIFT"],
- "radiation_nebula":["☢", "RAD"], "distress_signal":["📡", "SOS"],
- "pirate_debris_field":["☠", "DEBRIS"], "unstable_wormhole":["🌀", "RIFT"],
- "quarantined_colony":["⚕", "COLONY"], "battle":["⚔", "COMBAT"],
+ "mining_operation":["⛏️", "MINE"], "gas_giant":["🪐", "GAS"],
+ "derelict_starship":["🚀", "WRECK"], "research_station":["🛰️", "LAB"],
+ "trading_outpost":["⚖", "TRADE"], "spatial_anomaly":["✨", "RIFT"],
+ "radiation_nebula":["☢️", "RAD"], "distress_signal":["📡", "SOS"],
+ "pirate_debris_field":["☠️", "DEBRIS"], "unstable_wormhole":["🌀", "RIFT"],
+ "quarantined_colony":["⚕️", "COLONY"], "battle":["🚀", "COMBAT"],
  "synthesizer":["⚒", "FAB"], "reactor":["⚡", "REACTOR"], "quarters":["🚀", "HANGAR"],
- "approach":["◆", "SCAN"], "card":["▣", "CARD"]}
+ "approach":["🔎", "SCAN"], "card":["🃏", "CARD"],
+ "automated":["⚙️", "AUTO"], "industrial":["🏭", "INDUSTRY"], "deep_mining":["💎", "CORE"],
+ "elite":["⚔️", "ELITE"], "boss":["⚔️", "BOSS"]}
 const COLORS = {"ordinary":Color("5d9c7b"), "hazard":Color("d69b58"), "battle":Color("ce7777"), "special":Color("6aa7d7")}
 
 static func icon(key: String, font: Font, text_only: bool = false) -> String:
 	var entry: Array = ICONS.get(key, ICONS.approach)
-	if not text_only and font.has_char(str(entry[0]).unicode_at(0)):
+	if not text_only and (EMOJI_FONT.has_char(str(entry[0]).unicode_at(0)) or font.has_char(str(entry[0]).unicode_at(0))):
 		return entry[0]
 	return "[" + str(entry[1]) + "]"
+
+static func approach_key(poi: Resource, slot: int) -> String:
+	if poi_key(poi) == "mining_operation" and slot < 4:
+		return ["mining_operation", "automated", "industrial", "deep_mining"][slot]
+	var requirement: String = poi.approaches[slot].requirement
+	return requirement if not requirement.is_empty() else poi_key(poi)
 
 static func classification(encounter: Dictionary) -> String:
 	if encounter.kind == "battle": return "battle"

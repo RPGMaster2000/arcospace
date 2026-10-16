@@ -1,0 +1,4 @@
+[gd_resource type="FontVariation" load_steps=2 format=3]
+[ext_resource type="FontFile" path="res://assets/fonts/ArcospaceEmoji.ttf" id="Emoji"]
+[resource]
+fallbacks = Array[Font]([ExtResource("Emoji")])

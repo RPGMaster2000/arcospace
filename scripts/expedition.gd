@@ -7,8 +7,8 @@ const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
 const Header = preload("res://scenes/poi_header.tscn")
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
-## Android font availability varies; readable abbreviations are the reliable default.
-@export var text_icons_on_android: bool = true
+## Optional accessibility preference; bundled emoji render by default on Android.
+@export var text_icons_on_android: bool = false
 var approach_note: Label
 var repair_selector: HSlider
 var service_confirmation_revision: int = -1
@@ -214,7 +214,10 @@ func show_system() -> void:
 		var category: String = Presentation.classification(encounter)
 		var key: String = "battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
 		var descriptor: String = {"ordinary":"Ordinary PoI", "hazard":"Hazardous PoI", "battle":"Enemy", "special":"Anomalous PoI"}[category]
-		if encounter.kind == "battle": descriptor = ["Enemy", "Elite enemy", "Boss enemy"][state.enemy_profile(encounter).enemy_rank]
+		if encounter.kind == "battle":
+			var rank: int = state.enemy_profile(encounter).enemy_rank
+			descriptor = ["Enemy", "Elite enemy", "Boss enemy"][rank]
+			key = ["battle", "elite", "boss"][rank]
 		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
 		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
 
@@ -251,7 +254,7 @@ func show_poi(index: int) -> void:
 	var options = _grid(2)
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
-		var key: String = approach.requirement if not approach.requirement.is_empty() else Presentation.poi_key(poi)
+		var key: String = Presentation.approach_key(poi, slot)
 		var button = _tile(options, _icon(key) + "  " + approach.title, approach_text(approach),
 			Presentation.COLORS[Presentation.classification(state.encounter_at(index))], _select_approach.bind(slot), not state.locked_reason(approach).is_empty())
 		approach_buttons.append(button)
