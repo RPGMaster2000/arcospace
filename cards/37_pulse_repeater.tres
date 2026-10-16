@@ -11,3 +11,4 @@ cost = 6
 description = "Deal 3 damage; play again"
 effects = {"damage": 3}
 play_again = true
+upgrade_effects = [{"damage":5},{"damage":7}]

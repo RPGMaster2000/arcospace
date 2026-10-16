@@ -10,3 +10,4 @@ family = "crew"
 cost = 18
 description = "18 damage · Enemy production −2 each (min 1)"
 effects = {"damage": 18, "sabotage": 2}
+upgrade_effects = [{"damage":22,"sabotage":2,"drain":{"energy":3}},{"damage":26,"sabotage":2,"drain":{"energy":6}}]

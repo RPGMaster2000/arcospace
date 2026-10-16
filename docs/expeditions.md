@@ -20,7 +20,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 | Any ordinary/hazardous `encounters/*.tres` | Title/description; expand **Approaches**, then any of the four approach resources |
 | Approach resource | Title, required production, minimum production (default 3), Salvage cost, success chance, Success and Failure |
 | Success / Failure resource | Blurb, Salvage, permanent Hull, Next Battle dictionary, card reward/minimum tier, upgrade reward, resource choice, production choice, extra interstellar FTL charge |
-| `cards/*.tres` | Cost/effects/description/tier, Upgrade Cost Reduction (default 1), Max Upgrades (default 3) |
+| `cards/*.tres` | Base cost/effects/description/rarity, two Upgrade Effects dictionaries, Max Upgrades (2); costs unchanged |
 | `ships/wayfarer.tres`, `specter.tres`, `bastion.tres` | Starting stats and production; no ship names are used in approach eligibility |
 | `scenes/expedition.tscn` root | Rules resource used by the run |
 
@@ -50,18 +50,18 @@ A present station remains available until leaving its system. Buy any affordable
 |---|---|---|
 | Hull repairs | 1 Salvage per selected Hull | Select 0 through the lesser of affordable and missing permanent Hull; zero cannot confirm; no plating |
 | Purchase supplies | 7 Salvage | Choose +5 Materials, Energy or Crew next battle; repeated purchases add |
-| Acquire card | 15 Salvage | Draw three fresh offers and choose one; existing shared-pool mechanics |
+| Acquire card | 15 Salvage | Up to three distinct unowned offers; choose one for the player pool |
 | Shipyard improvements | 25, 40, 60, 85, 115, 150, 190, … | Choose +1 permanent expedition production |
 
 Hull repairs share `RepairRules.HULL_PER_SALVAGE` and `max_spend` with the unchanged post-battle repair flow. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
 
 Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
 
-All card rewards offer **three distinct library cards** and allow one selection, including Engineering Recovery. Boarding teams offer Tier 2 or better only. Tiers display as Common/Uncommon/Rare; no new rarity mechanics were introduced.
+Card rewards offer **three distinct unowned cards** when available and allow one selection, including Engineering Recovery. Smaller eligible pools show fewer choices; exhaustion resolves with an explanation. Boarding teams offer Tier 2 or better only. Mixed-tier rewards favor Tier 2 at 60% per slot. Tiers display as Common/Uncommon/Rare.
 
-The existing library is already the entire base draw pool. Acquisition therefore adds a weighted entry to the **shared player/enemy pool** for this expedition, rather than removing or replacing a card. The original six-card hand, maximum two identical cards, Tier 2 opening lock and one-per-tier hand restriction remain. Tier restrictions still apply to acquired cards.
+Each player ship starts with its own 25 of 36 Tier 1 identities. Acquisitions add new identities to the **player-only expedition pool**, at configurable ×3 draw weight within rarity. Enemies retain the full, unmodified library. Six-card hands, maximum two identical cards and one-per-higher-tier restrictions remain. Tier 2 unlocks in round 3 for both sides.
 
-An upgrade reduces one card's resource cost, with a floor of one and a default maximum of three upgrades. It affects all player draw entries of that card using a private resource copy; enemy cards and shared assets are unchanged. Upgraded and original copies share an identity for hand limits. If no card can be upgraded, research grants 4 Salvage instead (editable).
+Each identity supports two effect upgrades (+ and ++), preserving its original cost, rarity and extra-action flag. A private upgraded Resource replaces every player copy in both pool and hand; upgrades persist for this expedition. Enemy Resources remain at base level. If no card can be upgraded, research grants 4 Salvage instead (editable). Exact effects and starting memberships: `docs/balance/cards.md`.
 
 ## Restoration balance
 
@@ -127,3 +127,4 @@ Validation for the preceding PoI overhaul used Godot 4.5.1 headless: editor impo
 The station economy regression sweeps 200 debug seeds through 30 systems, verifies both first-station positions and both intervals, and compares against generation with stations disabled. It tests repeat purchases of all four services on Wayfarer, Specter and Bastion, invalid amounts/affordability, stale confirmations, pending-choice guards, shared repairs, additive supplies in a real battle, seven production prices, reset/persistence and Inspector tuning. The station UI regression exercises real controls at five existing landscape sizes (1280×720, 1560×720, 960×540, 1280×480, 686×384), including double confirmations, repeat choices, free Return/revisit, locked services and repair previews.
 
 Station overhaul validation used Godot 4.5.1 headless: editor/Resource import succeeded; 28 of 29 test scripts passed. New economy tests passed 47,176 checks and station UI passed 1,050 checks. Existing PoI regression passed 93,953 checks, progression simulation passed 426,100 checks over 10,000 systems, and Android layout passed 2,435 assertions. `travel_battle_test.gd` retains the same 15 label/button overlap failures, independently reproduced on untouched `b0f065a` with this runtime; escape/reward assertions pass. No physical Android or Godot 4.7 rendering was performed.
+

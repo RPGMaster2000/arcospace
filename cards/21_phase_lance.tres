@@ -10,3 +10,4 @@ cost = 9
 description = "10 damage · 50% bypasses Shields"
 effects = {"damage": 10, "pierce": 0.5}
 play_again = false
+upgrade_effects = [{"damage":13,"pierce":0.6},{"damage":16,"pierce":0.75}]

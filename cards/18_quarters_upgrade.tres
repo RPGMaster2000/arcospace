@@ -10,3 +10,4 @@ cost = 8
 description = "+1 Quarters"
 effects = {"quarters": 1}
 play_again = false
+upgrade_effects = [{"quarters":1,"crew":4},{"quarters":1,"crew":7,"shields":5}]

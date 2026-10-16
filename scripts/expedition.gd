@@ -407,7 +407,7 @@ func show_outcome() -> void:
 	view.add_child(result)
 	match state.pending_choice:
 		"card":
-			view.add_child(_label("Choose one card to add to the shared draw pool.", 20))
+			view.add_child(_label("Choose one card to add to your expedition pool.", 20))
 			var offers = _grid(3)
 			for index in range(state.card_offers.size()):
 				var card: Resource = state.card_offers[index]
@@ -416,8 +416,8 @@ func show_outcome() -> void:
 			view.add_child(_label("Upgrade a player card. Enemy copies remain unchanged.", 20))
 			var choices = _grid(3)
 			for card in state.upgrade_candidates():
-				var reduction: int = mini(card.upgrade_cost_reduction, card.cost - 1)
-				_tile(choices, card.card_name, _card_text(card) + "\nUpgrade: cost −%d" % reduction, Presentation.COLORS.special, _upgrade.bind(card.identity_key()))
+				var enhanced: Resource = card.with_upgrade(card.upgrade_level + 1)
+				_tile(choices, enhanced.card_name, _card_text(card) + "\n→ " + _card_text(enhanced), Presentation.COLORS.special, _upgrade.bind(card.identity_key()))
 		"resource", "production":
 			var choices = _grid(3)
 			var keys: Array = state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION

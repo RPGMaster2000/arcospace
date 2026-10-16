@@ -10,3 +10,4 @@ cost = 0
 description = "+1 Materials, +1 Energy, +1 Crew"
 effects = {"materials": 1, "energy": 1, "crew": 1}
 play_again = false
+upgrade_effects = [{"materials":2,"energy":2,"crew":2},{"materials":3,"energy":3,"crew":3}]

@@ -11,3 +11,4 @@ cost = 6
 description = "Remove all enemy Shld. If ≥10: 50% risk of 10 self dmg."
 effects = {"shield_collapse": {"threshold": 10, "chance": 0.5, "self_damage": 10}}
 play_again = false
+upgrade_effects = [{"shield_collapse":{"threshold":10,"chance":0.35,"self_damage":7}},{"shield_collapse":{"threshold":10,"chance":0.2,"self_damage":4}}]

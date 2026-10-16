@@ -11,3 +11,4 @@ cost = 13
 description = "Gain 12–15 Materials or Crew randomly"
 effects = {"random_gain_range_other": {"min": 12, "max": 15}}
 play_again = false
+upgrade_effects = [{"random_gain_range_other":{"min":16,"max":18}},{"random_gain_range_other":{"min":19,"max":22}}]

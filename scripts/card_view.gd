@@ -49,6 +49,19 @@ func refresh_card() -> void:
 	$TitleLabel.text = card_data.card_name.to_upper() + (" · T%d" % card_data.tier if card_data.tier > 1 else "")
 	$CostLabel.text = str(card_data.cost)
 	$DescriptionLabel.text = card_data.description
+	# Enhanced effects may need a fourth line. Borrow only decorative art space;
+	# keep the existing readable font, card size and discard hit target.
+	$DescriptionLabel.offset_top = 188.0
+	$ArtPlaceholder.offset_top = 109.0
+	$ArtPlaceholder.offset_bottom = 183.0
+	$ArtPlaceholder.visible = true
+	if card_data.upgrade_level > 0:
+		var required: float = $DescriptionLabel.get_minimum_size().y
+		var extra: float = clampf(required - 65.0, 0.0, 60.0)
+		$DescriptionLabel.offset_top -= extra
+		$ArtPlaceholder.offset_bottom -= extra
+		$ArtPlaceholder.offset_top = maxf(109.0, $TitleLabel.position.y + $TitleLabel.get_minimum_size().y + 2.0)
+		$ArtPlaceholder.visible = $ArtPlaceholder.offset_top < $ArtPlaceholder.offset_bottom
 	var colors = {"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)}
 	var color: Color = colors.get(card_data.family, Color.WHITE)
 	for icon in $ResourceIcon.get_children():
@@ -116,3 +129,4 @@ func _draw() -> void:
 	points.append(points[0])
 	for width in [8.0, 4.0, 1.5]:
 		draw_polyline(points, Color(color, pulse * (0.3 if width > 2 else 1.0)), width, true)
+

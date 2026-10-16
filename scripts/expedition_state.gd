@@ -34,6 +34,7 @@ var pending_bonuses: Dictionary = {}
 var pending_penalties: Dictionary = {}
 var acquired_cards: Array[Resource] = []
 var upgraded_cards: Dictionary = {}
+var active_player_hand: Node
 var pending_choice: String = ""
 var choice_amount: int = 0
 var card_offers: Array[Resource] = []
@@ -60,6 +61,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	pending_penalties.clear()
 	acquired_cards.clear()
 	upgraded_cards.clear()
+	active_player_hand = null
 	pending_choice = ""
 	card_offers.clear()
 	active_battle = -1
@@ -247,6 +249,9 @@ func _apply_outcome(outcome: Resource) -> void:
 	if outcome.card_reward:
 		pending_choice = "card"
 		card_offers = random_card_offers(outcome.minimum_card_tier)
+		if card_offers.is_empty():
+			pending_choice = ""
+			last_outcome += "\nNo unowned cards meet this reward's minimum tier."
 	elif outcome.upgrade_card:
 		if upgrade_candidates().is_empty():
 			salvage += rules.unavailable_upgrade_salvage
@@ -280,6 +285,8 @@ func service_locked_reason(slot: int) -> String:
 	if not can_visit(SERVICE_INDEX): return "Station unavailable or resolve pending choice first"
 	if slot < 0 or slot >= service.poi.approaches.size(): return "Unknown service"
 	var approach: Resource = service.poi.approaches[slot]
+	if approach.success.card_reward and available_reward_cards(approach.success.minimum_card_tier).is_empty():
+		return "No unowned cards meet this reward's minimum tier"
 	if approach.success.hull > 0 and hull >= ship().hull_capacity: return "Hull already full"
 	var cost: int = service_cost(slot)
 	if salvage < cost: return "Requires %d Salvage (you have %d)" % [cost, salvage]
@@ -326,62 +333,84 @@ func starting_value(profile: Resource, key: String) -> int:
 	if key in RESOURCES: penalty = mini(penalty, floori(base * 0.5))
 	return maxi(0, base + int(pending_bonuses.get(key, 0)) - penalty)
 
+## Compatibility name: always the unmodified enemy library, never expedition acquisitions.
 func shared_pool() -> Array[Resource]:
 	var pool: Array[Resource] = []
 	pool.assign(Cards.CARDS)
-	pool.append_array(acquired_cards)
 	return pool
 
 func player_pool() -> Array[Resource]:
 	var result: Array[Resource] = []
-	for card in shared_pool():
-		result.append(upgraded_cards.get(card.identity_key(), card))
+	var starting: Array = ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
+	var seen: Dictionary = {}
+	for card in starting + acquired_cards:
+		var key: String = card.identity_key()
+		if seen.has(key): continue
+		seen[key] = true
+		result.append(upgraded_cards.get(key, card))
 	return result
 
-func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
+func acquired_draw_weights() -> Dictionary:
+	var result: Dictionary = {}
+	for card in acquired_cards:
+		result[card.identity_key()] = rules.acquired_card_draw_weight
+	return result
+
+func available_reward_cards(minimum_tier: int = 1) -> Array[Resource]:
+	var owned: Dictionary = {}
+	for card in player_pool(): owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
 	for card in Cards.CARDS:
-		if card.tier >= minimum_tier:
+		if card.tier >= minimum_tier and not owned.has(card.identity_key()):
 			candidates.append(card)
+	return candidates
+
+func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
+	var candidates: Array[Resource] = available_reward_cards(minimum_tier)
 	var offers: Array[Resource] = []
 	for slot in range(mini(3, candidates.size())):
-		var index: int = rng.randi_range(0, candidates.size() - 1)
-		offers.append(candidates.pop_at(index))
+		var preferred_tier: int = 2 if rng.randf() < rules.reward_tier_two_chance else 1
+		var bucket: Array[Resource] = []
+		for card in candidates:
+			if card.tier == preferred_tier: bucket.append(card)
+		if bucket.is_empty(): bucket.assign(candidates)
+		var chosen: Resource = bucket[rng.randi_range(0, bucket.size() - 1)]
+		offers.append(chosen)
+		candidates.erase(chosen)
 	return offers
 
 func choose_card(index: int) -> bool:
 	if pending_choice != "card" or index < 0 or index >= card_offers.size():
 		return false
 	var chosen: Resource = card_offers[index]
+	for card in player_pool():
+		if card.identity_key() == chosen.identity_key(): return false
 	acquired_cards.append(chosen)
-	last_outcome += "\nAcquired %s: added to the shared draw pool." % chosen.card_name
+	if is_instance_valid(active_player_hand):
+		active_player_hand.card_pool = player_pool()
+		active_player_hand.identity_weights = acquired_draw_weights()
+	last_outcome += "\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)." % [chosen.card_name, rules.acquired_card_draw_weight]
 	pending_choice = ""
 	card_offers.clear()
 	return true
 
 func upgrade_candidates() -> Array[Resource]:
 	var result: Array[Resource] = []
-	var seen: Dictionary = {}
 	for card in player_pool():
-		var key: String = card.identity_key()
-		if not seen.has(key) and card.upgrade_level < card.max_upgrades and card.upgrade_cost_reduction > 0 and card.cost > 1:
+		if card.upgrade_level < mini(2, mini(card.max_upgrades, card.upgrade_effects.size())):
 			result.append(card)
-			seen[key] = true
 	return result
 
 func choose_upgrade(key: String) -> bool:
 	if pending_choice != "upgrade":
 		return false
 	for card in upgrade_candidates():
-		if card.identity_key() != key:
-			continue
-		var copy: Resource = card.duplicate(true)
-		copy.set_meta("card_identity", key)
-		# Resource.duplicate copies exported fields, not this runtime counter.
-		copy.upgrade_level = card.upgrade_level + 1
-		copy.cost = maxi(1, card.cost - card.upgrade_cost_reduction)
+		if card.identity_key() != key: continue
+		var copy: Resource = card.with_upgrade(card.upgrade_level + 1)
 		upgraded_cards[key] = copy
-		last_outcome += "\nUpgraded %s: cost %d → %d (player only)." % [card.card_name, card.cost, copy.cost]
+		if is_instance_valid(active_player_hand):
+			active_player_hand.apply_upgrades(upgraded_cards)
+		last_outcome += "\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
 		pending_choice = ""
 		return true
 	return false
@@ -412,7 +441,9 @@ func begin_battle(board: Node, index: int = -1) -> void:
 		board.set("player_" + key, starting_value(ship(), key))
 	board.ftl.charge = clampi(modifier_value("emergency_jump_charge"), 0, board.ftl.charge_target)
 	board.ftl.disabled_turns = maxi(0, modifier_value("emergency_jump_offline"))
+	active_player_hand = board.hand
 	board.hand.card_pool = player_pool()
+	board.hand.identity_weights = acquired_draw_weights()
 	board.enemy_hand.card_pool = shared_pool()
 	pending_bonuses.clear()
 	pending_penalties.clear()

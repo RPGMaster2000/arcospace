@@ -12,3 +12,4 @@ effects = {
 "break_shields": 8,
 "drain": {"energy": 4}
 }
+upgrade_effects = [{"break_shields":11,"drain":{"energy":6}},{"break_shields":14,"drain":{"energy":8},"damage":3}]

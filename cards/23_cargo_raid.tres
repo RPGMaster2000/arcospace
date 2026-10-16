@@ -10,3 +10,4 @@ cost = 6
 description = "4 damage · Steal up to 4 Materials"
 effects = {"damage": 4, "steal": {"materials": 4}}
 play_again = false
+upgrade_effects = [{"damage":6,"steal":{"materials":6}},{"damage":9,"steal":{"materials":8}}]

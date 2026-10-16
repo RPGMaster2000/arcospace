@@ -170,6 +170,14 @@ func _ready() -> void:
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = player_ship_data.ftl_turns if player_ship_data != null else maxi(1, int(setup_settings.get("ftl_turns", ftl.FULL_CHARGE)))
 	ftl.failure_multiplier = 1.0 - player_ship_data.ftl_resistance if player_ship_data != null else 1.0
+	if player_ship_data != null and hand.card_pool.is_empty() and not player_ship_data.starting_cards.is_empty():
+		hand.card_pool.assign(player_ship_data.starting_cards)
+	if enemy_ship_data != null:
+		enemy_hand.family_weights = enemy_ship_data.card_family_weights
+		enemy_hand.effect_weights = enemy_ship_data.card_effect_weights
+		enemy_ai.tactical_weights = enemy_ship_data.tactical_weights
+		enemy_ai.tactical_variation = enemy_ship_data.tactical_variation
+		enemy_ai.hull_capacity = enemy_ship_data.hull_capacity
 	if expedition != null:
 		expedition.begin_battle(self, expedition_encounter)
 		starting_player_hull = player_hull

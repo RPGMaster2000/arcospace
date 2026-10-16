@@ -10,3 +10,4 @@ cost = 6
 description = "Steal up to 4 Crew"
 effects = {"steal": {"crew": 4}}
 play_again = false
+upgrade_effects = [{"steal":{"crew":6},"hull":2},{"steal":{"crew":8},"hull":4}]

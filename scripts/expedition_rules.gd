@@ -32,3 +32,9 @@ class_name ExpeditionRules
 @export var debug_seed: int = 0
 
 @export var log_rolls: bool = true
+
+@export_group("Card rewards")
+## TUNE: Tier selection per reward slot when both tiers have unowned candidates.
+@export_range(0.0, 1.0, 0.01) var reward_tier_two_chance: float = 0.60
+## TUNE: Acquired identity draw weight relative to starting identities (within its rarity).
+@export_range(1.0, 10.0, 0.1) var acquired_card_draw_weight: float = 3.0

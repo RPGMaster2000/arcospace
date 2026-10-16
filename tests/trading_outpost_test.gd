@@ -66,7 +66,10 @@ func schedule_checks() -> void:
 		if not shopping.service.is_empty():
 			shopping.salvage = 100
 			for n in range(2):
-				check(shopping.purchase_service(2, shopping.service_revision) and shopping.choose_card(0), "Shopping consumes loot RNG independently")
+				if shopping.available_reward_cards().is_empty():
+					check(not shopping.purchase_service(2, shopping.service_revision), "Exhausted card service cannot spend Salvage")
+				else:
+					check(shopping.purchase_service(2, shopping.service_revision) and shopping.choose_card(0), "Shopping consumes loot RNG independently")
 		advance(shopping)
 		advance(ignoring)
 	for interval in [2,3]:
@@ -131,7 +134,7 @@ func economy_checks(ship_index: int) -> void:
 		check(not run.purchase_service(1, run.service_revision) and not run.generate_system(), "Card selection blocks spending and departure")
 		check(not run.choose_card(3) and run.pending_choice == "card", "Invalid card choice leaves selection pending")
 		check(run.choose_card(n % 3) and not run.choose_card(n % 3) and not run.purchase_service(2, revision), "Card selection and confirmation cannot duplicate")
-	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == run.player_pool().size(), "Acquisition and shared draw pool unchanged")
+	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == 44 and run.player_pool().size() == 28, "Acquisitions extend only the ship's player pool")
 	run.salvage = 14
 	check(not run.purchase_service(2, run.service_revision) and run.salvage == 14, "Card affordability verified before spending")
 	run.salvage = 1000
@@ -186,3 +189,4 @@ func run_tests() -> void:
 	check(Rules.trading_outpost.approaches[3].salvage_cost == 25 and Rules.production_price_increment == 15 and Rules.production_price_acceleration == 5, "Purchases and test tuning never mutate shared authored prices")
 	print("Trading Outpost: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+

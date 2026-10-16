@@ -4,12 +4,55 @@ class_name CardData
 
 # RESPONSIBILITY: Store Inspector-editable card data.
 # DOES NOT: Change game state or manage turns.
-## TUNE: Tier controls draw eligibility and border presentation; current rare cards are not yet added.
+## TUNE: Original rarity controls draw eligibility and border presentation, independently of upgrades.
 @export_enum("Tier 1:1", "Tier 2:2", "Tier 3:3") var tier: int = 1
-## TUNE: Expedition upgrades reduce cost, never below one. Zero disables upgrades.
-@export_range(0, 10, 1) var upgrade_cost_reduction: int = 1
-@export_range(0, 10, 1) var max_upgrades: int = 3
-var upgrade_level: int = 0
+## TUNE: Complete replacement effects for Upgrade I and II. Base effects/cost stay unchanged.
+@export var upgrade_effects: Array[Dictionary] = []
+@export_range(0, 2, 1) var max_upgrades: int = 2
+@export_range(0, 2, 1) var upgrade_level: int = 0
+
+func with_upgrade(level: int) -> Resource:
+	var result: Resource = duplicate(false)
+	result.set_meta("card_identity", identity_key())
+	result.upgrade_level = clampi(level, 0, mini(2, mini(max_upgrades, upgrade_effects.size())))
+	if result.upgrade_level > 0:
+		result.effects = upgrade_effects[result.upgrade_level - 1].duplicate(true)
+		result.card_name = card_name.trim_suffix("++").trim_suffix("+") + "+".repeat(result.upgrade_level)
+		result.description = describe_effects(result.effects)
+		if play_again: result.description += "; play again"
+	return result
+
+## Descriptions derive from the same effect data used by combat, including nested effects.
+static func describe_effects(values: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	for key in values:
+		var value = values[key]
+		match key:
+			"damage": parts.append("%d damage" % value)
+			"pierce": parts.append("%d%% bypasses Shields" % roundi(float(value) * 100))
+			"break_shields": parts.append("Enemy -%d Shields" % value)
+			"swap_shields": parts.append("Swap Shields with enemy")
+			"sabotage": parts.append("Enemy all prod -%d (min 1)" % int(value))
+			"steal", "drain":
+				if key == "drain" and value.size() == 3 and value.get("materials") == value.get("energy") and value.get("energy") == value.get("crew"):
+					parts.append("Enemy -%d all resources" % value.materials)
+					continue
+				for resource in value:
+					parts.append(("Steal ≤%d %s" if key == "steal" else "Enemy -%d %s") % [value[resource], resource.capitalize()])
+			"production_other":
+				var production: String = value.type
+				var resource: String = {"synthesizer":"Materials", "reactor":"Energy", "quarters":"Crew"}[production]
+				parts.append("+%d %s, +%d %s" % [value.production, production.capitalize(), value.resource, resource])
+			"random_gain": parts.append("+%d random resource" % value)
+			"random_gain_other": parts.append("+%d random other resource" % value)
+			"random_gain_range_other": parts.append("+%d–%d random other resource" % [value.min, value.max])
+			"shield_collapse":
+				parts.append("Clear enemy Shld; ≥%d: %d%% risk %d Shield-first self dmg" % [value.threshold, roundi(float(value.chance) * 100), value.self_damage])
+			"shield_collapse_below": parts.append("Remove enemy Shields if below %d" % value)
+			"self_damage": parts.append("Take %d direct Hull dmg" % value)
+			"self_damage_regular": parts.append("Take %d regular dmg" % value)
+			_: parts.append("%+d %s" % [int(value), str(key).capitalize()])
+	return "; ".join(parts)
 
 func identity_key() -> String:
 	return str(get_meta("card_identity", resource_path if not resource_path.is_empty() else card_name))

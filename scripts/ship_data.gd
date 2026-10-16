@@ -29,3 +29,14 @@ class_name ShipData
 @export_range(1, 10, 1) var interstellar_ftl_reward: int = 1
 @export_range(0, 1000, 1) var destruction_salvage_reward: int = 10
 @export_range(0.01, 100, 0.01) var encounter_weight: float = 1.0
+
+@export_group("Card pools and enemy preferences")
+## TUNE: Player starting identities. Empty uses the original library for custom/test ships.
+@export var starting_cards: Array[Resource] = []
+## TUNE: Positive soft multipliers; omitted families/effects retain weight 1.
+@export var card_family_weights: Dictionary = {}
+@export var card_effect_weights: Dictionary = {}
+## TUNE: Scores for damage, Hull, Shields, production, resources and disruption.
+@export var tactical_weights: Dictionary = {}
+## TUNE: Random score variation; elites use less variation for more consistent decisions.
+@export_range(0.0, 1.0, 0.01) var tactical_variation: float = 0.25

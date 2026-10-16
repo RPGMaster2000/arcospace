@@ -19,3 +19,8 @@ quarters = 2
 ftl_turns = 14
 ftl_resistance = 0
 hull_color = Color(0.4, 0.12, 0.12, 1)
+
+card_family_weights = {"energy":1.7,"crew":1.15}
+card_effect_weights = {"damage":1.8,"steal":1.7}
+tactical_weights = {"damage":1.8,"hull":0.65,"shields":0.2,"production":2.8,"resources":0.25,"disruption":0.5,"play_again":1.5}
+tactical_variation = 0.25

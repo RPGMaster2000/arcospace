@@ -10,3 +10,4 @@ cost = 8
 description = "+1 Synthesizer"
 effects = {"synthesizer": 1}
 play_again = false
+upgrade_effects = [{"synthesizer":1,"materials":4},{"synthesizer":1,"materials":7,"shields":5}]

@@ -10,3 +10,4 @@ cost = 3
 description = "+6 Shields"
 effects = {"shields": 6}
 play_again = false
+upgrade_effects = [{"shields":9,"energy":1},{"shields":12,"energy":2}]

@@ -10,3 +10,4 @@ cost = 9
 description = "Enemy production −1 each (min 1)"
 effects = {"sabotage": true}
 play_again = false
+upgrade_effects = [{"sabotage":1,"drain":{"energy":3}},{"sabotage":1,"drain":{"energy":6},"damage":3}]

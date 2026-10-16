@@ -73,12 +73,12 @@ func run_tests() -> void:
 					for card in run.card_offers: check(card.tier >= expected.minimum_card_tier, "Rarity floor")
 					check(not run.generate_system(), "Cannot lose a paid choice by jumping")
 					check(run.choose_card(1) and not run.choose_card(1), "Select exactly once")
-					check(run.shared_pool().size() == Library.CARDS.size() + 1, "Card adds to shared pool without replacement")
+					check(run.shared_pool().size() == Library.CARDS.size(), "Acquisition never changes enemy pool")
 				elif expected.upgrade_card:
 					var card: Resource = run.upgrade_candidates()[0]
 					var before_cost: int = card.cost
 					check(run.choose_upgrade(card.identity_key()), "Choose upgrade")
-					check(card.cost == before_cost and run.upgraded_cards[card.identity_key()].cost < before_cost, "Upgrade never mutates library")
+					check(card.cost == before_cost and run.upgraded_cards[card.identity_key()].cost == before_cost, "Upgrade never mutates library")
 				elif expected.resource_choice > 0:
 					check(run.choose_attribute("energy") and run.modifier_value("energy") == expected.resource_choice, "Supply choice applied")
 				elif expected.production_choice > 0:
@@ -173,10 +173,10 @@ func run_tests() -> void:
 	run.ftl_charge = run.required_ftl_charge
 	check(run.generate_system() and run.acquired_cards.size() == 15 and run.upgraded_cards.size() == 1, "Cards and upgrades persist across systems")
 	# Upgrade caps remain effective after repeated Resource duplication.
-	for n in range(2):
+	for n in range(1):
 		run.pending_choice = "upgrade"
 		check(run.choose_upgrade(base.identity_key()), "Upgrade up to configured limit")
-	check(run.upgraded_cards[base.identity_key()].upgrade_level == 3, "Upgrade level accumulates")
+	check(run.upgraded_cards[base.identity_key()].upgrade_level == 2, "Upgrade level accumulates")
 	run.pending_choice = "upgrade"
 	check(not run.choose_upgrade(base.identity_key()), "Upgrade cap enforced")
 	run.pending_choice = ""

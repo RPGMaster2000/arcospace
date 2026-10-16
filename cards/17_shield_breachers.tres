@@ -10,3 +10,4 @@ cost = 7
 description = "Enemy −8 Shields"
 effects = {"break_shields": 8}
 play_again = false
+upgrade_effects = [{"break_shields":11,"damage":3},{"break_shields":14,"damage":5}]

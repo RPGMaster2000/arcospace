@@ -10,3 +10,4 @@ cost = 0
 description = "+3 Energy · Play again"
 effects = {"energy": 3}
 play_again = true
+upgrade_effects = [{"energy":4},{"energy":5}]

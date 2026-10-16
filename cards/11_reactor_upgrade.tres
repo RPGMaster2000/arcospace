@@ -10,3 +10,4 @@ cost = 8
 description = "+1 Reactor"
 effects = {"reactor": 1}
 play_again = false
+upgrade_effects = [{"reactor":1,"energy":4},{"reactor":1,"energy":7,"shields":5}]

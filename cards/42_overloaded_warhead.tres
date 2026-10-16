@@ -11,3 +11,4 @@ cost = 7
 description = "Deal 10 damage; take 4 direct Hull damage"
 effects = {"damage": 10, "self_damage": 4}
 play_again = false
+upgrade_effects = [{"damage":13,"self_damage":3},{"damage":16,"self_damage":2}]

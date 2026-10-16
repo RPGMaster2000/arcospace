@@ -10,3 +10,4 @@ family = "energy"
 cost = 20
 description = "20 damage · 50% bypasses Shields"
 effects = {"damage": 20, "pierce": 0.5}
+upgrade_effects = [{"damage":24,"pierce":0.6},{"damage":28,"pierce":0.75}]

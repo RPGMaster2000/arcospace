@@ -10,3 +10,4 @@ cost = 13
 description = "16 damage"
 effects = {"damage": 16}
 play_again = false
+upgrade_effects = [{"damage":21},{"damage":26,"break_shields":4}]

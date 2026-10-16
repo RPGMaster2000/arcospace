@@ -2,6 +2,32 @@
 
 [ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
 
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="card_0"]
+[ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="card_1"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="card_2"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="card_3"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="card_4"]
+[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="card_5"]
+[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="card_6"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="card_7"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="card_8"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="card_9"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="card_10"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="card_11"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="card_12"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="card_13"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="card_14"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="card_15"]
+[ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="card_16"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="card_17"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="card_18"]
+[ext_resource type="Resource" path="res://cards/29_polaron_burst.tres" id="card_19"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="card_20"]
+[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="card_21"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="card_22"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="card_23"]
+[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="card_24"]
+
 [resource]
 script = ExtResource("1")
 ship_name = "Bastion"
@@ -18,3 +44,5 @@ quarters = 2
 ftl_turns = 17
 ftl_resistance = -0.1
 hull_color = Color(0.7, 0.48, 0.25, 1)
+
+starting_cards = Array[Resource]([ExtResource("card_0"), ExtResource("card_1"), ExtResource("card_2"), ExtResource("card_3"), ExtResource("card_4"), ExtResource("card_5"), ExtResource("card_6"), ExtResource("card_7"), ExtResource("card_8"), ExtResource("card_9"), ExtResource("card_10"), ExtResource("card_11"), ExtResource("card_12"), ExtResource("card_13"), ExtResource("card_14"), ExtResource("card_15"), ExtResource("card_16"), ExtResource("card_17"), ExtResource("card_18"), ExtResource("card_19"), ExtResource("card_20"), ExtResource("card_21"), ExtResource("card_22"), ExtResource("card_23"), ExtResource("card_24")])

@@ -13,3 +13,4 @@ effects = {
 "hull": 6,
 "shields": 20
 }
+upgrade_effects = [{"hull":8,"shields":26},{"hull":10,"shields":32}]

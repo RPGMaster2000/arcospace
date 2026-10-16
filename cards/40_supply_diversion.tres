@@ -11,3 +11,4 @@ cost = 4
 description = "Gain 2 Materials or Energy randomly; play again"
 effects = {"random_gain_other": 2}
 play_again = true
+upgrade_effects = [{"random_gain_other":3},{"random_gain_other":4}]

@@ -10,3 +10,4 @@ cost = 10
 description = "+8 Hull"
 effects = {"hull": 8}
 play_again = false
+upgrade_effects = [{"hull":10,"shields":4},{"hull":14,"shields":8}]

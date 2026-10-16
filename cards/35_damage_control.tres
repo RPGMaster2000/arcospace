@@ -10,3 +10,4 @@ family = "crew"
 cost = 23
 description = "+18 Hull, +6 Shields"
 effects = {"hull": 18, "shields": 6}
+upgrade_effects = [{"hull":22,"shields":10},{"hull":26,"shields":14}]

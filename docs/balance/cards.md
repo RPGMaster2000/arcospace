@@ -2,58 +2,60 @@
 
 Generated from `scripts/card_library.gd` and loaded CardData Resources. Edit each listed `.tres`; descriptions are presentation only, `effects` controls gameplay. Costs spend the listed family. Effects below are exact unmodified values.
 
-| Card | Family / cost | Rarity | Exact effects | Hull / Shields restored | Extra action | Upgrade reduction / maximum levels | Edit |
-|---|---|---|---|---|---|---|---|
-| Shield Plating | materials / 3 | Common | `{"shields":4}` | 0 / 4 | false | 1 / 3 | `cards/01_shield_plating.tres` |
-| Shield Array | materials / 4 | Common | `{"shields":8}` | 0 / 8 | false | 1 / 3 | `cards/02_shield_array.tres` |
-| Hull Patch | materials / 7 | Common | `{"hull":5}` | 5 / 0 | false | 1 / 3 | `cards/03_hull_patch.tres` |
-| Synthesizer Upgrade | materials / 8 | Common | `{"synthesizer":1}` | 0 / 0 | false | 1 / 3 | `cards/04_synthesizer_upgrade.tres` |
-| Structural Reinforcement | materials / 6 | Common | `{"hull":2,"shields":5}` | 2 / 5 | false | 1 / 3 | `cards/05_structural_reinforcement.tres` |
-| Shield Disruptor | materials / 6 | Common | `{"break_shields":6}` | 0 / 0 | false | 1 / 3 | `cards/06_shield_disruptor.tres` |
-| Hull Overhaul | materials / 10 | Common | `{"hull":8}` | 8 / 0 | false | 1 / 3 | `cards/07_hull_overhaul.tres` |
-| Energy Cell | energy / 0 | Common | `{"crew":1,"energy":1,"materials":1}` | 0 / 0 | false | 1 / 3 | `cards/08_energy_cell.tres` |
-| Hull Nanobots | energy / 7 | Common | `{"hull":5}` | 5 / 0 | false | 1 / 3 | `cards/09_hull_nanobots.tres` |
-| Shield Recharge | energy / 3 | Common | `{"shields":6}` | 0 / 6 | false | 1 / 3 | `cards/10_shield_recharge.tres` |
-| Reactor Upgrade | energy / 8 | Common | `{"reactor":1}` | 0 / 0 | false | 1 / 3 | `cards/11_reactor_upgrade.tres` |
-| Laser Burst | energy / 6 | Common | `{"damage":6}` | 0 / 0 | false | 1 / 3 | `cards/12_laser_burst.tres` |
-| Plasma Strike | energy / 9 | Common | `{"damage":10}` | 0 / 0 | false | 1 / 3 | `cards/13_plasma_strike.tres` |
-| Energy Surge | energy / 0 | Common | `{"energy":3}` | 0 / 0 | true | 1 / 3 | `cards/14_energy_surge.tres` |
-| Boarding Party | crew / 4 | Common | `{"damage":4}` | 0 / 0 | false | 1 / 3 | `cards/15_boarding_party.tres` |
-| Missile Team | crew / 6 | Common | `{"damage":6}` | 0 / 0 | false | 1 / 3 | `cards/16_missile_team.tres` |
-| Shield Breachers | crew / 7 | Common | `{"break_shields":8}` | 0 / 0 | false | 1 / 3 | `cards/17_shield_breachers.tres` |
-| Quarters Upgrade | crew / 8 | Common | `{"quarters":1}` | 0 / 0 | false | 1 / 3 | `cards/18_quarters_upgrade.tres` |
-| System Disruption | crew / 9 | Common | `{"sabotage":true}` | 0 / 0 | false | 1 / 3 | `cards/19_system_disruption.tres` |
-| Torpedo Salvo | crew / 10 | Common | `{"damage":12}` | 0 / 0 | false | 1 / 3 | `cards/20_torpedo_salvo.tres` |
-| Phase Lance | energy / 9 | Common | `{"damage":10,"pierce":0.5}` | 0 / 0 | false | 1 / 3 | `cards/21_phase_lance.tres` |
-| Energy Siphon | crew / 5 | Common | `{"steal":{"energy":5}}` | 0 / 0 | false | 1 / 3 | `cards/22_energy_siphon.tres` |
-| Cargo Raid | crew / 6 | Common | `{"damage":4,"steal":{"materials":4}}` | 0 / 0 | false | 1 / 3 | `cards/23_cargo_raid.tres` |
-| Crew Capture | materials / 6 | Common | `{"steal":{"crew":4}}` | 0 / 0 | false | 1 / 3 | `cards/24_crew_capture.tres` |
-| EMP Pulse | energy / 8 | Common | `{"drain":{"crew":7,"energy":7,"materials":7}}` | 0 / 0 | false | 1 / 3 | `cards/25_emp_pulse.tres` |
-| Shield Exchange | energy / 8 | Common | `{"swap_shields":true}` | 0 / 0 | false | 1 / 3 | `cards/26_shield_exchange.tres` |
-| Missile Barrage | crew / 13 | Common | `{"damage":16}` | 0 / 0 | false | 1 / 3 | `cards/27_missile_barrage.tres` |
-| Breach Charge | materials / 8 | Common | `{"break_shields":8,"damage":4}` | 0 / 0 | false | 1 / 3 | `cards/28_breach_charge.tres` |
-| Polaron Burst | energy / 10 | Common | `{"break_shields":8,"drain":{"energy":4}}` | 0 / 0 | false | 1 / 3 | `cards/29_polaron_burst.tres` |
-| Siege Driver | materials / 18 | Uncommon | `{"damage":24}` | 0 / 0 | false | 1 / 3 | `cards/30_siege_driver.tres` |
-| Emergency Refit | materials / 20 | Uncommon | `{"hull":14,"shields":8}` | 14 / 8 | false | 1 / 3 | `cards/31_emergency_refit.tres` |
-| Antimatter Lance | energy / 20 | Uncommon | `{"damage":20,"pierce":0.5}` | 0 / 0 | false | 1 / 3 | `cards/32_antimatter_lance.tres` |
-| Aegis Overcharge | energy / 16 | Uncommon | `{"hull":6,"shields":20}` | 6 / 20 | false | 1 / 3 | `cards/33_aegis_overcharge.tres` |
-| Sabotage Commandos | crew / 18 | Uncommon | `{"damage":18,"sabotage":2}` | 0 / 0 | false | 1 / 3 | `cards/34_sabotage_commandos.tres` |
-| Damage Control | crew / 23 | Uncommon | `{"hull":18,"shields":6}` | 18 / 6 | false | 1 / 3 | `cards/35_damage_control.tres` |
-| Salvage Strike | materials / 5 | Common | `{"damage":4,"random_gain":2}` | 0 / 0 | false | 1 / 3 | `cards/36_salvage_strike.tres` |
-| Pulse Repeater | energy / 6 | Common | `{"damage":3}` | 0 / 0 | true | 1 / 3 | `cards/37_pulse_repeater.tres` |
-| Cataclysm Protocol | crew / 26 | Uncommon | `{"damage":18,"hull":15}` | 15 / 0 | false | 1 / 3 | `cards/38_cataclysm_protocol.tres` |
-| Reactor Salvage | materials / 7 | Common | `{"production_other":{"production":1,"resource":5,"type":"reactor"}}` | 0 / 0 | false | 1 / 3 | `cards/39_reactor_salvage.tres` |
-| Supply Diversion | crew / 4 | Common | `{"random_gain_other":2}` | 0 / 0 | true | 1 / 3 | `cards/40_supply_diversion.tres` |
-| Shield Collapse | energy / 6 | Common | `{"shield_collapse":{"chance":0.5,"self_damage":10,"threshold":10}}` | 0 / 0 | false | 1 / 3 | `cards/41_shield_collapse.tres` |
-| Overloaded Warhead | materials / 7 | Common | `{"damage":10,"self_damage":4}` | 0 / 0 | false | 1 / 3 | `cards/42_overloaded_warhead.tres` |
-| Emergency Reserves | energy / 13 | Uncommon | `{"random_gain_range_other":{"max":15,"min":12}}` | 0 / 0 | false | 1 / 3 | `cards/43_emergency_reserves.tres` |
-| Desperate Conversion | crew / 9 | Common | `{"random_gain_other":20,"self_damage_regular":8}` | 0 / 0 | false | 1 / 3 | `cards/44_desperate_conversion.tres` |
+| Card | Family / unchanged cost | Rarity | Base effects | Upgrade I | Upgrade II | Extra action (all levels) | Wayfarer | Specter | Bastion | Resource |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Shield Plating | materials / 3 | Tier 1 | `{"shields":4}` | `{"materials":1,"shields":7}` | `{"materials":2,"shields":10}` | false | true | true | true | `cards/01_shield_plating.tres` |
+| Shield Array | materials / 4 | Tier 1 | `{"shields":8}` | `{"shields":12}` | `{"hull":2,"shields":16}` | false | true | false | true | `cards/02_shield_array.tres` |
+| Hull Patch | materials / 7 | Tier 1 | `{"hull":5}` | `{"hull":7,"shields":2}` | `{"hull":10,"shields":3}` | false | true | false | true | `cards/03_hull_patch.tres` |
+| Synthesizer Upgrade | materials / 8 | Tier 1 | `{"synthesizer":1}` | `{"materials":4,"synthesizer":1}` | `{"materials":7,"shields":5,"synthesizer":1}` | false | true | true | true | `cards/04_synthesizer_upgrade.tres` |
+| Structural Reinforcement | materials / 6 | Tier 1 | `{"hull":2,"shields":5}` | `{"hull":3,"shields":8}` | `{"hull":5,"shields":11}` | false | true | false | true | `cards/05_structural_reinforcement.tres` |
+| Shield Disruptor | materials / 6 | Tier 1 | `{"break_shields":6}` | `{"break_shields":9,"damage":2}` | `{"break_shields":12,"damage":4}` | false | false | true | true | `cards/06_shield_disruptor.tres` |
+| Hull Overhaul | materials / 10 | Tier 1 | `{"hull":8}` | `{"hull":10,"shields":4}` | `{"hull":14,"shields":8}` | false | true | false | true | `cards/07_hull_overhaul.tres` |
+| Energy Cell | energy / 0 | Tier 1 | `{"crew":1,"energy":1,"materials":1}` | `{"crew":2,"energy":2,"materials":2}` | `{"crew":3,"energy":3,"materials":3}` | false | true | true | true | `cards/08_energy_cell.tres` |
+| Hull Nanobots | energy / 7 | Tier 1 | `{"hull":5}` | `{"energy":2,"hull":7}` | `{"energy":3,"hull":10}` | false | true | true | false | `cards/09_hull_nanobots.tres` |
+| Shield Recharge | energy / 3 | Tier 1 | `{"shields":6}` | `{"energy":1,"shields":9}` | `{"energy":2,"shields":12}` | false | true | true | false | `cards/10_shield_recharge.tres` |
+| Reactor Upgrade | energy / 8 | Tier 1 | `{"reactor":1}` | `{"energy":4,"reactor":1}` | `{"energy":7,"reactor":1,"shields":5}` | false | true | true | false | `cards/11_reactor_upgrade.tres` |
+| Laser Burst | energy / 6 | Tier 1 | `{"damage":6}` | `{"damage":9,"energy":2}` | `{"damage":12,"energy":3}` | false | true | true | true | `cards/12_laser_burst.tres` |
+| Plasma Strike | energy / 9 | Tier 1 | `{"damage":10}` | `{"break_shields":2,"damage":14}` | `{"break_shields":4,"damage":18}` | false | true | true | true | `cards/13_plasma_strike.tres` |
+| Energy Surge | energy / 0 | Tier 1 | `{"energy":3}` | `{"energy":4}` | `{"energy":5}` | true | true | true | false | `cards/14_energy_surge.tres` |
+| Boarding Party | crew / 4 | Tier 1 | `{"damage":4}` | `{"damage":6,"steal":{"materials":2}}` | `{"damage":8,"steal":{"materials":3}}` | false | true | true | true | `cards/15_boarding_party.tres` |
+| Missile Team | crew / 6 | Tier 1 | `{"damage":6}` | `{"break_shields":2,"damage":9}` | `{"break_shields":3,"damage":12}` | false | true | true | true | `cards/16_missile_team.tres` |
+| Shield Breachers | crew / 7 | Tier 1 | `{"break_shields":8}` | `{"break_shields":11,"damage":3}` | `{"break_shields":14,"damage":5}` | false | false | false | true | `cards/17_shield_breachers.tres` |
+| Quarters Upgrade | crew / 8 | Tier 1 | `{"quarters":1}` | `{"crew":4,"quarters":1}` | `{"crew":7,"quarters":1,"shields":5}` | false | true | true | true | `cards/18_quarters_upgrade.tres` |
+| System Disruption | crew / 9 | Tier 1 | `{"sabotage":true}` | `{"drain":{"energy":3},"sabotage":1}` | `{"damage":3,"drain":{"energy":6},"sabotage":1}` | false | false | true | false | `cards/19_system_disruption.tres` |
+| Torpedo Salvo | crew / 10 | Tier 1 | `{"damage":12}` | `{"break_shields":2,"damage":16}` | `{"break_shields":4,"damage":20}` | false | true | false | true | `cards/20_torpedo_salvo.tres` |
+| Phase Lance | energy / 9 | Tier 1 | `{"damage":10,"pierce":0.5}` | `{"damage":13,"pierce":0.6}` | `{"damage":16,"pierce":0.75}` | false | true | true | false | `cards/21_phase_lance.tres` |
+| Energy Siphon | crew / 5 | Tier 1 | `{"steal":{"energy":5}}` | `{"shields":3,"steal":{"energy":7}}` | `{"shields":6,"steal":{"energy":9}}` | false | false | true | false | `cards/22_energy_siphon.tres` |
+| Cargo Raid | crew / 6 | Tier 1 | `{"damage":4,"steal":{"materials":4}}` | `{"damage":6,"steal":{"materials":6}}` | `{"damage":9,"steal":{"materials":8}}` | false | true | true | true | `cards/23_cargo_raid.tres` |
+| Crew Capture | materials / 6 | Tier 1 | `{"steal":{"crew":4}}` | `{"hull":2,"steal":{"crew":6}}` | `{"hull":4,"steal":{"crew":8}}` | false | false | false | true | `cards/24_crew_capture.tres` |
+| EMP Pulse | energy / 8 | Tier 1 | `{"drain":{"crew":7,"energy":7,"materials":7}}` | `{"drain":{"crew":9,"energy":9,"materials":9},"shields":3}` | `{"drain":{"crew":11,"energy":11,"materials":11},"shields":6}` | false | false | true | false | `cards/25_emp_pulse.tres` |
+| Shield Exchange | energy / 8 | Tier 1 | `{"swap_shields":true}` | `{"damage":3,"swap_shields":true}` | `{"damage":6,"energy":2,"swap_shields":true}` | false | false | true | false | `cards/26_shield_exchange.tres` |
+| Missile Barrage | crew / 13 | Tier 1 | `{"damage":16}` | `{"damage":21}` | `{"break_shields":4,"damage":26}` | false | true | false | true | `cards/27_missile_barrage.tres` |
+| Breach Charge | materials / 8 | Tier 1 | `{"break_shields":8,"damage":4}` | `{"break_shields":11,"damage":6}` | `{"break_shields":14,"damage":9}` | false | true | false | true | `cards/28_breach_charge.tres` |
+| Polaron Burst | energy / 10 | Tier 1 | `{"break_shields":8,"drain":{"energy":4}}` | `{"break_shields":11,"drain":{"energy":6}}` | `{"break_shields":14,"damage":3,"drain":{"energy":8}}` | false | false | true | true | `cards/29_polaron_burst.tres` |
+| Siege Driver | materials / 18 | Tier 2 | `{"damage":24}` | `{"break_shields":3,"damage":29}` | `{"break_shields":6,"damage":34}` | false | false | false | false | `cards/30_siege_driver.tres` |
+| Emergency Refit | materials / 20 | Tier 2 | `{"hull":14,"shields":8}` | `{"hull":18,"shields":12}` | `{"hull":22,"shields":16}` | false | false | false | false | `cards/31_emergency_refit.tres` |
+| Antimatter Lance | energy / 20 | Tier 2 | `{"damage":20,"pierce":0.5}` | `{"damage":24,"pierce":0.6}` | `{"damage":28,"pierce":0.75}` | false | false | false | false | `cards/32_antimatter_lance.tres` |
+| Omega Overcharge | energy / 16 | Tier 2 | `{"hull":6,"shields":20}` | `{"hull":8,"shields":26}` | `{"hull":10,"shields":32}` | false | false | false | false | `cards/33_omega_overcharge.tres` |
+| Sabotage Commandos | crew / 18 | Tier 2 | `{"damage":18,"sabotage":2}` | `{"damage":22,"drain":{"energy":3},"sabotage":2}` | `{"damage":26,"drain":{"energy":6},"sabotage":2}` | false | false | false | false | `cards/34_sabotage_commandos.tres` |
+| Damage Control | crew / 23 | Tier 2 | `{"hull":18,"shields":6}` | `{"hull":22,"shields":10}` | `{"hull":26,"shields":14}` | false | false | false | false | `cards/35_damage_control.tres` |
+| Salvage Strike | materials / 5 | Tier 1 | `{"damage":4,"random_gain":2}` | `{"damage":6,"random_gain":3}` | `{"damage":9,"random_gain":4}` | false | true | false | true | `cards/36_salvage_strike.tres` |
+| Pulse Repeater | energy / 6 | Tier 1 | `{"damage":3}` | `{"damage":5}` | `{"damage":7}` | true | true | true | false | `cards/37_pulse_repeater.tres` |
+| Cataclysm Protocol | crew / 26 | Tier 2 | `{"damage":18,"hull":15}` | `{"damage":22,"hull":18}` | `{"damage":26,"hull":21}` | false | false | false | false | `cards/38_cataclysm_protocol.tres` |
+| Reactor Salvage | materials / 7 | Tier 1 | `{"production_other":{"production":1,"resource":5,"type":"reactor"}}` | `{"production_other":{"production":1,"resource":8,"type":"reactor"}}` | `{"production_other":{"production":1,"resource":11,"type":"reactor"},"shields":4}` | false | false | true | true | `cards/39_reactor_salvage.tres` |
+| Supply Diversion | crew / 4 | Tier 1 | `{"random_gain_other":2}` | `{"random_gain_other":3}` | `{"random_gain_other":4}` | true | true | true | true | `cards/40_supply_diversion.tres` |
+| Shield Collapse | energy / 6 | Tier 1 | `{"shield_collapse":{"chance":0.5,"self_damage":10,"threshold":10}}` | `{"shield_collapse":{"chance":0.35,"self_damage":7,"threshold":10}}` | `{"shield_collapse":{"chance":0.2,"self_damage":4,"threshold":10}}` | false | false | true | false | `cards/41_shield_collapse.tres` |
+| Overloaded Warhead | materials / 7 | Tier 1 | `{"damage":10,"self_damage":4}` | `{"damage":13,"self_damage":3}` | `{"damage":16,"self_damage":2}` | false | true | false | true | `cards/42_overloaded_warhead.tres` |
+| Emergency Reserves | energy / 13 | Tier 2 | `{"random_gain_range_other":{"max":15,"min":12}}` | `{"random_gain_range_other":{"max":18,"min":16}}` | `{"random_gain_range_other":{"max":22,"min":19}}` | false | false | false | false | `cards/43_emergency_reserves.tres` |
+| Desperate Conversion | crew / 9 | Tier 1 | `{"random_gain_other":20,"self_damage_regular":8}` | `{"random_gain_other":23,"self_damage_regular":6}` | `{"random_gain_other":26,"self_damage_regular":4}` | false | false | true | true | `cards/44_desperate_conversion.tres` |
 
 ## Draws and upgrades
 
-Six-card hands; maximum 2 copies per identity and at most one card of each tier above Common. Tier 2 draw chance 15.0%, locked through round 5; Tier 3 chance 0.0%. Temporal Rift multiplies Tier 2 chance by 2.0. Missing eligible higher-tier bucket falls back to Common. Tune CardHand/EnemyHand in `scenes/board.tscn` or defaults in `scripts/card_hand.gd`.
+Six-card hands; maximum 2 copies per identity and at most one card of each tier above Common. Tier 2 draw chance 15.0%, locked through round 2; Tier 3 chance 0.0%. Temporal Rift multiplies Tier 2 chance by 2.0. Missing eligible higher-tier bucket falls back to Common. Tune CardHand/EnemyHand in `scenes/board.tscn` or defaults in `scripts/card_hand.gd`.
 
-Acquisitions offer 3 distinct library cards (respecting the reward tier floor), choose exactly 1; add a weighted entry to both ships' shared expedition pool. Upgrades clone player identities only: cost decreases by the table amount per level, floor 1; effects unchanged. Enemy copies and library Resources are never changed. Fully exhausted upgrade candidates grant 4 Salvage instead. Tune `CardData` fields / `ExpeditionRules.unavailable_upgrade_salvage`.
+Acquisitions offer up to 3 distinct unowned identities, choose 1; 60% Tier 2 / 40% Tier 1 per slot when both buckets have candidates (configurable). A missing bucket falls back to remaining eligible identities without violating the minimum tier. Fewer than three eligible identities show fewer choices; exhaustion resolves immediately with an explanation and no currency change. Acquired identities use ×3.0 draw weight within rarity, player only; rarity odds and hand caps remain unchanged. Starting identities each weigh 1. Inspector: `encounters/expedition_rules.tres` → Reward Tier Two Chance / Acquired Card Draw Weight.
+
+Every card has two full replacement effect dictionaries on its CardData Resource. Upgrade level is independent of rarity; cost and extra-action flag stay unchanged. All player copies, including held cards, resolve to the upgraded identity; enemies always retain base Resources. Production stays +1 per play; upgraded production cards gain immediate resources/defense. Play-again cards gain no new action grants or cost refunds. Hull gains can still create existing Ablative Plating; high-cost repairs scale conservatively. Fully upgraded research retains the existing 4 Salvage fallback.
 
 ## Effect keys (`scripts/card_effects.gd`)
 

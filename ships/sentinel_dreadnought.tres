@@ -20,3 +20,8 @@ interstellar_ftl_reward = 3
 destruction_salvage_reward = 30
 encounter_weight = 0.15
 hull_color = Color(0.4, 0.12, 0.12, 1)
+
+card_family_weights = {"energy":1.15}
+card_effect_weights = {"hull":1.8,"shields":2,"production":1.3,"disruption":1.6}
+tactical_weights = {"damage":0.9,"hull":1.5,"shields":0.95,"production":4,"resources":0.3,"disruption":0.8,"play_again":1}
+tactical_variation = 0.08
