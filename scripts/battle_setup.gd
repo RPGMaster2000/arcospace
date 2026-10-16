@@ -7,6 +7,15 @@ var initial_settings: Dictionary = {}
 var selected_ship: int = 0
 
 func _ready() -> void:
+	var overlay = preload("res://scripts/ui/info_overlay.gd").new()
+	add_child(overlay)
+	var legend = Button.new()
+	legend.text = "Legend"
+	legend.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	legend.position = Vector2(size.x - 130, 12)
+	legend.custom_minimum_size = Vector2(110, 48)
+	add_child(legend)
+	legend.pressed.connect(overlay.show_legend)
 	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, 2)
 	$Start.pressed.connect(_start)
 	for index in range(3):

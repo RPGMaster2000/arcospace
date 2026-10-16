@@ -12,7 +12,31 @@ const ICONS = {
  "synthesizer":["⚒", "FAB"], "reactor":["⚡", "REACTOR"], "quarters":["🚀", "HANGAR"],
  "approach":["🔎", "SCAN"], "card":["🃏", "CARD"],
  "automated":["⚙️", "AUTO"], "industrial":["🏭", "INDUSTRY"], "deep_mining":["💎", "CORE"],
- "elite":["⚔️", "ELITE"], "boss":["⚔️", "BOSS"]}
+ "elite":["⚔️", "ELITE"], "boss":["⚔️", "BOSS"],
+ "hull":["❤️", "HULL"], "shields":["🛡️", "SHIELDS"], "salvage":["🔧", "SALVAGE"],
+ "materials":["🔩", "MATERIALS"], "energy":["⚡", "ENERGY"], "crew":["👥", "CREW"],
+ "travel":["✨", "FTL"], "jump":["🚀", "JUMP"], "hazard":["⚠️", "HAZARD"]}
+const MEANINGS = {
+ "hull":"Hull — permanent damage persists; excess Hull is temporary Ablative Plating.",
+ "shields":"Shields — temporary protection, reset between battles.",
+ "salvage":"Salvage — persistent expedition currency for repairs and services.",
+ "materials":"Materials — combat resource produced by Fabricator.",
+ "energy":"Energy — combat resource produced by Reactor.",
+ "crew":"Crew — combat resource produced by Hangar.",
+ "synthesizer":"Fabricator — Materials gained each player turn.",
+ "reactor":"Reactor — Energy gained each player turn.",
+ "quarters":"Hangar — Crew gained each player turn.",
+ "travel":"FTL Drive — interstellar charge; resets on entering a new system.",
+ "jump":"Emergency Jump — combat escape charge, separate from interstellar travel.",
+ "hazard":"Hazard / modifier — tap to inspect conditions and effects.",
+ "card":"Cards — acquired cards join the expedition's shared draw pool."}
+
+static func meaning(key: String) -> String:
+	return MEANINGS.get(key, key.replace("_", " ").capitalize())
+
+static func modifier_key(kind: int) -> String:
+	return ["approach", "mining_operation", "energy", "hazard", "radiation_nebula", "spatial_anomaly"][clampi(kind, 0, 5)]
+
 const COLORS = {"ordinary":Color("5d9c7b"), "hazard":Color("d69b58"), "battle":Color("ce7777"), "special":Color("6aa7d7")}
 
 static func icon(key: String, font: Font, text_only: bool = false) -> String:

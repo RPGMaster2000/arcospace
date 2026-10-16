@@ -46,7 +46,7 @@ func run_tests() -> void:
 			host.state.hull = host.state.ship().hull_capacity - 18
 			host.show_outpost()
 			await settle()
-			check(host.approach_buttons.size() == 4 and host.stats.text.contains("Salvage 1000"), "Four services and current balance shown")
+			check(host.approach_buttons.size() == 4 and host.resource_bar.entries.salvage.text.contains("1000"), "Four services and current balance shown")
 			check(host.approach_buttons[3].details.text.contains(str(host.state.service_cost(3))), "Current escalating price shown")
 			geometry()
 			var ftl: int = host.state.ftl_charge
@@ -62,7 +62,7 @@ func run_tests() -> void:
 			host.confirm_button.pressed.emit()
 			host.confirm_button.pressed.emit()
 			check(host.state.salvage == 988 and host.state.hull == host.state.ship().hull_capacity - 6 and host.view_kind == "poi", "Single repair confirmation; direct station refresh")
-			check(host.stats.text.contains("Salvage 988") and host.confirm_button.disabled, "Balance refreshed; new selection required")
+			check(host.resource_bar.entries.salvage.text.contains("988") and host.confirm_button.disabled, "Balance refreshed; new selection required")
 			# Repeat every service without leaving the menu; old choice controls cannot fire twice.
 			for slot in [0,1,2,3,1,2,3]:
 				var price: int = host.state.service_cost(slot, 1)

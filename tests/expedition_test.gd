@@ -229,6 +229,8 @@ func run_tests() -> void:
 		if host.state.encounters[index].kind == "battle":
 			host.state.encounters[index].enemy_data = load("res://ships/marauder.tres")
 			host.visit(index)
+			check(host.view_kind == "preview" and host.battle == null, "Enemy preview precedes battle")
+			host.view.get_child(3).pressed.emit()
 			break
 	var battle = host.battle
 	battle.battle_effects.enabled = false
@@ -253,6 +255,8 @@ func run_tests() -> void:
 	for index in range(host.state.encounters.size() - 1, -1, -1):
 		if host.state.encounters[index].kind == "battle":
 			host.visit(index)
+			check(host.view_kind == "preview" and host.battle == null, "Enemy preview precedes battle")
+			host.view.get_child(3).pressed.emit()
 			check(host.view_kind == "battle" and host.battle.player_hull == 20, "Choose arbitrary battle from new system")
 			break
 	host.free()

@@ -7,6 +7,7 @@ signal action_finished(side: String, discarded: bool)
 signal expedition_continue
 signal expedition_restart
 signal expedition_exit
+var resource_bar: HFlowContainer
 var expedition: Resource
 var expedition_encounter: int = -1
 
@@ -151,6 +152,23 @@ func _apply_ship(side: String, data: Resource) -> void:
 		set(side + "_" + key, data.get(key))
 
 func _ready() -> void:
+	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
+	add_child(resource_bar)
+	resource_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	resource_bar.offset_left = 12
+	resource_bar.offset_right = -150
+	resource_bar.offset_top = 78
+	resource_bar.offset_bottom = 178
+	var legend = Button.new()
+	legend.name = "Legend"
+	legend.text = "Legend"
+	legend.position = Vector2(580, 568)
+	legend.custom_minimum_size = Vector2(130, 48)
+	preload("res://scripts/ui/encounter_presentation.gd").action(legend)
+	$MatchResult/Panel.add_child(legend)
+	legend.pressed.connect(resource_bar.overlay.show_legend)
+	for path in ["PlayerResource1", "PlayerResource2", "PlayerResource3", "PlayerHullLabel", "PlayerShieldsLabel", "SalvageLabel", "FTLPanel/Charge"]:
+		get_node(path).hide()
 	_apply_ship("player", player_ship_data)
 	_apply_ship("enemy", enemy_ship_data)
 	for side in ["player", "enemy"]:
@@ -450,6 +468,8 @@ func refresh_display() -> void:
 	$MatchResult/Panel/RepairAmount.text = "Spend %d / %d Salvage" % [maxi(0, repair_spend), salvage]
 	$MatchResult/Panel/Repair.text = "Repair to %d/%d Hull" % [player_hull + maxi(0, repair_spend) * HULL_PER_SALVAGE, player_hull_capacity]
 	$ModifierDisplay.refresh(modifier, turn_number)
+	$ModifierDisplay/Meter.hide()
+	resource_bar.combat(self)
 	var ftl_status: String = "Emergency Jump %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
 		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns

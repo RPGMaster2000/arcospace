@@ -36,3 +36,12 @@ godot --headless --path . --script tests/ftl_progression_test.gd
 Rendered tests cover 1280×720, 1560×720, 960×540, 1280×480 and 686×384 using the existing canvas scaling. To capture images under `.godot/testlogs/`, run the layout test with `--rendering-method gl_compatibility` instead of `--headless`.
 
 All 26 Godot test scripts passed, including 2,637 layout assertions and the unchanged 10,000-system progression simulation. Native Android hardware, device-specific font rendering, display cutouts and OS gestures were not available for testing. A bundled subset of Noto Color Emoji supplies icons without depending on device fonts; see `assets/fonts/README.md`. Long or expanded approaches intentionally scroll vertically instead of truncating rewards.
+
+
+## Shared status and encounter previews
+
+- `scripts/ui/resource_bar.gd`: wrapping, touch-sized status entries shared by exploration and combat. Exploration shows permanent Hull, Salvage, interstellar charge and expedition production; resource/Shield values marked **Next** are next-battle starts before turn income. Combat shows live stocks with production in parentheses, Emergency Jump and environmental condition/countdown. Tap any entry for details; desktop hover shows the same tooltip.
+- `scripts/ui/info_overlay.gd`: one reusable, dismissible modal for resource details and the Legend. It blocks underlying buttons, supports touch scrolling and Escape/Close. The Legend is available in ship selection, system, PoI and reward menus.
+- Icons and explanations: `scripts/ui/encounter_presentation.gd`. The bundled font includes all mapped emoji; regenerate using `tools/subset_emoji_font.py` when adding symbols. Text-only fallbacks remain available.
+- Enemy modifiers were already stored during generation. `CombatModifier.roll_encounter` preserves the original uniform 0–5 draw and RNG consumption. System tiles show the stored name; selecting an enemy opens an effects preview with Enter Combat / Return. Previewing consumes no rewards or modifiers. Event timing and in-battle rolls remain unchanged.
+- Menu margins, tile padding and banner height are reduced; native vertical scrolling remains for genuinely overflowing choices. Tests cover 16:9, 21:9, 20:9 and small Android landscape dimensions.

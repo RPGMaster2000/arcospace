@@ -1,6 +1,6 @@
 # Bundled emoji
 
-ArcospaceEmoji.ttf is a 38,488-byte subset of Noto Color Emoji (CBDT/CBLC bitmap color font), renamed Arcospace Emoji. Only the UI icon glyphs are included; no system emoji font is required.
+ArcospaceEmoji.ttf is a 46,904-byte subset of Noto Color Emoji (CBDT/CBLC bitmap color font), renamed Arcospace Emoji. Only the UI icon glyphs are included; no system emoji font is required.
 
 - Upstream: https://github.com/googlefonts/noto-emoji
 - Pinned revision: `e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e`

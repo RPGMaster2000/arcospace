@@ -17,8 +17,8 @@ var selected_ship: int = 0
 var state: Resource
 var battle: Node
 var view: VBoxContainer
-var stats: Label
-var pending: Label
+var resource_bar: HFlowContainer
+var legend: Button
 var jump_button: Button
 var return_button: Button
 var confirm_button: Button
@@ -48,17 +48,24 @@ func _build_ui() -> void:
 	ui = MarginContainer.new()
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
-		ui.add_theme_constant_override("margin_" + edge, 16)
+		ui.add_theme_constant_override("margin_" + edge, 10)
 	add_child(ui)
 	var column = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
+	column.add_theme_constant_override("separation", 4)
 	ui.add_child(column)
 	title = _label("", 30)
-	column.add_child(title)
-	stats = _label("", 20)
-	column.add_child(stats)
-	pending = _label("", 18)
-	column.add_child(pending)
+	var heading_row = HBoxContainer.new()
+	column.add_child(heading_row)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_row.add_child(title)
+	legend = Button.new()
+	legend.text = "Legend"
+	legend.custom_minimum_size = Vector2(100, 48)
+	Presentation.action(legend)
+	heading_row.add_child(legend)
+	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
+	column.add_child(resource_bar)
+	legend.pressed.connect(func(): resource_bar.overlay.show_legend())
 	header = Header.instantiate()
 	column.add_child(header)
 	header.return_requested.connect(show_system)
@@ -111,7 +118,7 @@ func _process(_delta: float) -> void:
 	more_hint.visible = bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
 	if view_kind == "system" and is_instance_valid(grid):
 		# Fit six tiles plus the separate service button in the existing scroll area.
-		var available_height: float = scroll.size.y - 12
+		var available_height: float = scroll.size.y - 14
 		for child in view.get_children():
 			if child != grid: available_height -= child.size.y + view.get_theme_constant("separation")
 		for tile in grid.get_children(): tile.minimum_height = maxf(100, available_height / 2)
@@ -161,6 +168,7 @@ func _icon(key: String) -> String:
 	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
 
 func _clear(kind: String) -> void:
+	resource_bar.overlay.dismiss()
 	view_kind = kind
 	selected_approach = -1
 	service_confirmation_revision = -1
@@ -177,18 +185,13 @@ func _clear(kind: String) -> void:
 	return_button.visible = kind == "poi"
 	footer.visible = kind == "poi"
 	confirm_button.disabled = true
-	title.visible = kind != "poi"
+	title.visible = true
 	progress.visible = kind == "system"
 	progress.max_value = state.required_ftl_charge
 	progress.value = state.ftl_charge
-	title.text = "System Encounters — " + state.system_name if kind == "system" else "Encounter Result"
-	stats.text = "%s · Hull %d/%d · Salvage %d · Fabricator %d / Reactor %d / Hangar %d" % [
-		state.ship().ship_name, state.hull, state.ship().hull_capacity, state.salvage,
-		state.production("synthesizer"), state.production("reactor"), state.production("quarters")]
-	pending.text = "Next battle: " + state.pending_description()
-	pending.visible = state.pending_description() != "None"
-	jump_button.text = "FTL Drive %d / %d · %s" % [state.ftl_charge, state.required_ftl_charge,
-		"Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
+	title.text = "System Encounters — " + state.system_name if kind == "system" else (state.ship().ship_name + " · Expedition" if kind == "poi" else "Encounter Result")
+	resource_bar.exploration(state)
+	jump_button.text = "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "FTL Drive · Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 
@@ -219,6 +222,8 @@ func show_system() -> void:
 			descriptor = ["Enemy", "Elite enemy", "Boss enemy"][rank]
 			key = ["battle", "elite", "boss"][rank]
 		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
+		if encounter.kind == "battle" and not encounter.completed:
+			status += "\n" + _icon(Presentation.modifier_key(encounter.modifier)) + " " + State.Modifiers.NAMES[encounter.modifier]
 		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
 
 	if not state.service.is_empty():
@@ -226,8 +231,19 @@ func show_system() -> void:
 
 func visit(index: int) -> void:
 	if not state.can_visit(index): return
-	if state.encounter_at(index).kind == "battle": start_battle(index)
+	if state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
+
+func show_battle_preview(index: int) -> void:
+	if not state.can_visit(index): return
+	_clear("preview")
+	var encounter: Dictionary = state.encounters[index]
+	title.text = encounter.title
+	view.add_child(_label(State.Modifiers.NAMES[encounter.modifier], 28))
+	view.add_child(_label(State.Modifiers.description(encounter.modifier), 24))
+	view.add_child(_label("Next battle: " + state.pending_description(), 22))
+	_button("Enter combat", start_battle.bind(index))
+	_button("Return", show_system)
 
 func approach_text(approach: Resource) -> String:
 	var lines: Array[String] = []
@@ -274,7 +290,6 @@ func show_outpost() -> void:
 	header.configure(state.service.poi)
 	# Station choices do not need the travel bar or a long pending-combat ledger.
 	jump_button.hide()
-	pending.hide()
 	approach_note.text = "Service station · No travel FTL · Free to leave"
 	confirm_button.text = "Purchase Service"
 	var options = _grid(2)

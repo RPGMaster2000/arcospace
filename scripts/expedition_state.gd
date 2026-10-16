@@ -1,6 +1,7 @@
 extends Resource
 class_name ExpeditionState
 
+const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Ships = preload("res://scripts/ship_library.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/card_library.gd")
@@ -153,7 +154,7 @@ func generate_system() -> bool:
 			if available.is_empty(): available = library.duplicate()
 			var entry: Resource = available.pop_at(_weighted_index(available))
 			if category == "battle":
-				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "modifier":rng.randi_range(0, 5), "title":entry.ship_name, "completed":false, "charge_awarded":false})
+				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "modifier":Modifiers.roll_encounter(rng), "title":entry.ship_name, "completed":false, "charge_awarded":false})
 			else:
 				encounters.append({"kind":"poi", "poi":entry, "title":entry.title, "completed":false, "charge_awarded":false})
 	for index in range(encounters.size() - 1, 0, -1):

@@ -29,6 +29,20 @@ var miss_rate: int = NEBULA_START
 var last_hull_damage: Dictionary = {"actor":0,"target":0}
 var rng := RandomNumberGenerator.new()
 
+## Expedition distribution remains uniform, including None. Keep one RNG draw.
+static func roll_encounter(generator: RandomNumberGenerator) -> int:
+	return generator.randi_range(0, NAMES.size() - 1)
+
+static func description(selection: int) -> String:
+	var timing = "First event on round %d–%d, then %d–%d rounds after each event ends" % [1 + MIN_INTERVAL, 1 + MAX_INTERVAL, MIN_INTERVAL, MAX_INTERVAL]
+	match selection:
+		1: return "%s: each ship independently has a %d%% chance of taking %d damage, Shields first." % [timing, roundi(ASTEROID_CHANCE * 100), ASTEROID_DAMAGE]
+		2: return "%s: Energy card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged." % [timing, ACTIVE_ROUNDS]
+		3: return "%s: both ships' Shields go offline for %d rounds. Stored Shields return afterward; restoration is suppressed during the flare." % [timing, ACTIVE_ROUNDS]
+		4: return "Both ships start at %d%% combat-card hit rate. Miss chance drifts by up to %d points each round (0–%d%%). Misses still cost resources and retain explicit self-damage." % [100 - NEBULA_START, NEBULA_STEP, NEBULA_MAX]
+		5: return "Tier 2 card draw chance ×%.0f for both hands throughout this battle. Early-round locks and hand caps still apply." % TEMPORAL_DROP_MULTIPLIER
+	return "No environmental battle modifier. Pending expedition effects still apply."
+
 func configure(selection: int) -> void:
 	kind = clampi(selection, 0, NAMES.size() - 1)
 	rng.randomize()
