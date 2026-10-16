@@ -11,6 +11,7 @@ var expedition: Resource
 var expedition_encounter: int = -1
 
 const Ships = preload("res://scripts/ship_library.gd")
+const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 var player_ship_data: Resource
 var enemy_ship_data: Resource
 
@@ -151,6 +152,8 @@ func _apply_ship(side: String, data: Resource) -> void:
 		set(side + "_" + key, data.get(key))
 
 func _ready() -> void:
+	$MatchResult/Panel/Details.add_theme_font_override("font", ResultPresentation.UI_FONT)
+	$MatchResult/Panel/Rewards.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	_apply_ship("player", player_ship_data)
 	_apply_ship("enemy", enemy_ship_data)
 	for side in ["player", "enemy"]:
@@ -476,14 +479,15 @@ func refresh_display() -> void:
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "JUMP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
 	var method: String = "Emergency Jump" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
-	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, result_hull if result_recorded else player_hull]
+	$MatchResult/Panel/Details.text = "%s · Turn %d\n❤️ %d → %d · Damage taken: %d" % [method, turn_number, starting_player_hull, result_hull if result_recorded else player_hull, player_hull_damage_taken]
 	$MatchResult/Panel/Rewards.text = victory_description()
+	$MatchResult/Panel/Rewards.visible = not $MatchResult/Panel/Rewards.text.is_empty()
 	var defeated: bool = winner in ["enemy", "draw"]
 	$MatchResult/Panel/PlayAgain.visible = not defeated
 	$MatchResult/Panel/Configure.text = "Select Ship" if defeated else "Battle Setup"
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
-	$MatchResult/Panel/NextEncounter.visible = can_continue
+	$MatchResult/Panel/NextEncounter.visible = can_continue and expedition == null
 	if can_continue and expedition == null:
 		if next_modifier < 0:
 			# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
@@ -491,7 +495,6 @@ func refresh_display() -> void:
 		$MatchResult/Panel/NextEncounter.text = "Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
 	if expedition != null:
 		$MatchResult/Panel/Continue.text = "Star System"
-		$MatchResult/Panel/NextEncounter.text = "Choose your next encounter or jump to a new system."
 		$MatchResult/Panel/PlayAgain.text = "New Expedition"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
@@ -604,15 +607,24 @@ func strategic_victory() -> bool:
 	return winner == "player" and player_total > enemy_total
 
 func victory_description() -> String:
-	if winner != "player":
-		return "No victory bonuses earned."
-	var tactical: String = "EARNED" if tactical_victory() else "Not earned"
-	var strategic: String = "EARNED" if strategic_victory() else "Not earned"
+	if winner != "player": return ""
+	var lines: PackedStringArray = []
+	var bonuses: PackedStringArray = []
 	if expedition != null:
+		lines.append("🪨 +%d Salvage · 🚀 FTL %d/%d" % [expedition.victory_salvage(self), expedition.ftl_charge, expedition.required_ftl_charge])
 		var elite_bonus: int = expedition.elite_resource_reward(self)
-		var elite_text: String = "\nElite defeated: +%d Materials, Energy and Crew next battle." % elite_bonus if elite_bonus > 0 else ""
-		return "Combat reward: +%d Salvage (%s). FTL Drive: %d / %d.%s\nTactical [%s]: Finish with more Hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack for the next battle.\nContinue to choose an encounter or jump when the FTL Drive is charged." % [expedition.victory_salvage(self), "Emergency Jump" if escaped_by_ftl else ("destruction" if enemy_hull <= 0 else "resource victory"), expedition.ftl_charge, expedition.required_ftl_charge, elite_text, tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
-	return "Normal victory: Destroy the enemy or escape by Emergency Jump.\nTactical victory [%s]: Finish with more hull than you started.\nNext battle: +%d Materials, Energy and Crew.\nStrategic victory [%s]: Finish with higher total production than the enemy.\nNext battle: +%d Shields. Bonuses stack when both are earned." % [tactical, TACTICAL_RESOURCES, strategic, STRATEGIC_SHIELDS]
+		if elite_bonus > 0: bonuses.append("Elite: " + _resource_reward_text(elite_bonus))
+	elif enemy_hull <= 0 and not escaped_by_ftl:
+		lines.append("🪨 +%d Salvage" % DESTRUCTION_SALVAGE)
+	if tactical_victory(): bonuses.append("Tactical: " + _resource_reward_text(TACTICAL_RESOURCES))
+	if strategic_victory(): bonuses.append("Strategic: 🛡️ +%d" % STRATEGIC_SHIELDS)
+	if not bonuses.is_empty():
+		lines.append("Next battle")
+		lines.append_array(bonuses)
+	return "\n".join(lines)
+
+func _resource_reward_text(amount: int) -> String:
+	return "🛠️ +%d · ⚡ +%d · 👥 +%d" % [amount, amount, amount]
 
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded:
