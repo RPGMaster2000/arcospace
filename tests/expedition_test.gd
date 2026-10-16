@@ -244,7 +244,7 @@ func run_tests() -> void:
 	check(host.view_kind == "system" and host.state.hull == 20 and host.state.salvage == 10, "Victory Continue returns to list")
 	host.state.encounters[5] = {"kind":"poi", "poi":Rules.pois[0], "title":"Mining Operation", "completed":false}
 	host.visit(5)
-	host._approach(5, 0)
+	await host._approach(5, 0)
 	check(host.view_kind == "outcome" and host.state.salvage == 13, "PoI reachable out of order with immediate rewards")
 	host.show_system()
 	check(host.state.encounters[5].completed, "Completed list row remains unavailable")

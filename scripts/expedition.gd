@@ -22,6 +22,11 @@ var battle: Node
 var view: VBoxContainer
 var resource_bar: HFlowContainer
 var legend: Button
+var deck_button: Button
+var current_deck_viewer: CanvasLayer
+var outcome_flash: CanvasLayer
+var presenting_outcome: bool = false
+var mission_header: Label
 var heading_row: HBoxContainer
 var jump_button: Button
 var return_button: Button
@@ -48,6 +53,10 @@ func _ready() -> void:
 		if is_instance_valid(card_gallery): card_gallery.set_interaction_enabled(false))
 	card_inspector.closed.connect(func():
 		if is_instance_valid(card_gallery): card_gallery.set_interaction_enabled(true))
+	current_deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
+	add_child(current_deck_viewer)
+	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
+	add_child(outcome_flash)
 	start_expedition()
 
 func _build_ui() -> void:
@@ -66,9 +75,16 @@ func _build_ui() -> void:
 	ui.add_child(column)
 	title = _label("", 30)
 	heading_row = HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 8)
 	column.add_child(heading_row)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading_row.add_child(title)
+	deck_button = Button.new()
+	deck_button.text = "Deck"
+	deck_button.custom_minimum_size = Vector2(90, 48)
+	Presentation.action(deck_button)
+	deck_button.pressed.connect(_show_current_deck)
+	heading_row.add_child(deck_button)
 	legend = Button.new()
 	legend.text = "Legend"
 	legend.custom_minimum_size = Vector2(100, 48)
@@ -174,6 +190,8 @@ func _icon(key: String) -> String:
 	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
 
 func _clear(kind: String) -> void:
+	if is_instance_valid(current_deck_viewer): current_deck_viewer.dismiss()
+	mission_header = null
 	if is_instance_valid(card_inspector): card_inspector.dismiss()
 	card_gallery = null
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
@@ -393,7 +411,7 @@ func _cancel_approach() -> void:
 		button.refresh_style()
 
 func _confirm_approach() -> void:
-	if view_kind != "poi" or not confirmation.shade.visible or confirm_button.disabled: return
+	if presenting_outcome or view_kind != "poi" or not confirmation.shade.visible or confirm_button.disabled: return
 	confirm_button.disabled = true
 	confirmation.dismiss()
 	if selected_approach == -2: _survey(selected_encounter)
@@ -403,15 +421,26 @@ func _survey(index: int) -> void:
 	if state.survey(index): show_outcome()
 
 func _approach(index: int, slot: int) -> void:
+	if presenting_outcome: return
 	if index == state.SERVICE_INDEX:
 		if state.purchase_service(slot, service_confirmation_revision, int(repair_selector.value)):
 			return_to_outpost = true
 			_purchase_finished()
 		return
-	if state.resolve_approach(index, slot): show_outcome()
+	if state.resolve_approach(index, slot):
+		presenting_outcome = true
+		var resolved_state: Resource = state
+		await outcome_flash.play(state.last_poi_success == 1)
+		presenting_outcome = false
+		if not is_queued_for_deletion() and state == resolved_state: show_outcome()
 
 func show_outcome() -> void:
 	_clear("outcome")
+	if state.last_poi_success >= 0:
+		mission_header = _label("Mission Successful" if state.last_poi_success == 1 else "Mission Compromised", 32)
+		mission_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		mission_header.add_theme_color_override("font_color", Color("91e6ad") if state.last_poi_success == 1 else Color("ee928b"))
+		view.add_child(mission_header)
 	var result = PanelContainer.new()
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
@@ -446,6 +475,7 @@ func _choose_card(index: int) -> void:
 func _show_card_gallery(cards: Array) -> void:
 	jump_button.hide()
 	card_gallery = CardGallery.new()
+	card_gallery.show_toolbar = state.pending_choice != "card"
 	card_gallery.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	card_gallery.custom_minimum_size.y = 250
 	view.add_child(card_gallery)
@@ -457,6 +487,12 @@ func _preview_card(card: Resource) -> void:
 		card_inspector.present(card)
 	elif state.pending_choice == "upgrade" and card in state.upgrade_candidates():
 		card_inspector.present(card, card.with_upgrade(card.upgrade_level + 1))
+
+func _show_current_deck() -> void:
+	if presenting_outcome: return
+	card_inspector.dismiss()
+	resource_bar.overlay.dismiss()
+	current_deck_viewer.show_cards(state.player_pool(), state.ship().ship_name + " · Current deck · Read only")
 
 func _confirm_card(card: Resource) -> void:
 	# The existing state methods validate eligibility and consume each choice once.

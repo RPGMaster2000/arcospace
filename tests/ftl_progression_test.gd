@@ -80,7 +80,9 @@ func run_tests() -> void:
 				result.enemy_hull = 20 if result.escaped_by_ftl else 0
 				run.active_battle = index
 				var loot: int = run.victory_salvage(result)
-				check(loot == (0 if result.escaped_by_ftl else run.enemy_profile(encounter).destruction_salvage_reward), "Escape/destruction Salvage independent of FTL")
+				var profile: Resource = run.enemy_profile(encounter)
+				var multiplier: int = Rules.elite_salvage_multiplier if profile.enemy_rank == 1 else 1
+				check(loot == (0 if result.escaped_by_ftl else profile.destruction_salvage_reward * multiplier), "Escape/destruction Salvage independent of FTL; Elite multiplier applies")
 				result.salvage += loot
 				run.record_battle(result)
 				check(run.ftl_charge == before + run.encounter_charge(index), "Escape and destruction earn profile charge")
@@ -129,3 +131,4 @@ func run_tests() -> void:
 		check(low_run.can_survey(0) or (poi.approaches[0].requirement.is_empty() and poi.approaches[0].salvage_cost == 0 and poi.approaches[0].success.hull >= 0 and poi.approaches[0].failure.hull >= 0), "Unrestricted safe option or survey at 1 Hull")
 	print("Progression: 10000 systems, %d checks, %d escapes, %d surveys, %d compositions, %d ranks, %d failures" % [checks, escapes, surveys, compositions.size(), ranks.size(), failures])
 	quit(1 if failures else 0)
+

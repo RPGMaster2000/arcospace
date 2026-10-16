@@ -91,6 +91,7 @@ func run() -> void:
 		click(host.confirm_button.get_global_rect().get_center())
 		host.confirm_button.pressed.emit()
 		check(host.state.salvage == salvage + 3 and host.state.ftl_charge == ftl + 1, "Initiate applies reward exactly once")
+		while host.presenting_outcome: await process_frame
 		await settle()
 		check(header_rects() == rectangles and host.title.text == title, "Outcome preserves exploration header")
 		host.show_system()
@@ -100,3 +101,4 @@ func run() -> void:
 	await process_frame
 	print("PoI confirmation: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+

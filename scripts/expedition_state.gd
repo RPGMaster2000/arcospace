@@ -39,6 +39,8 @@ var pending_choice: String = ""
 var choice_amount: int = 0
 var card_offers: Array[Resource] = []
 var last_outcome: String = ""
+# -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
+var last_poi_success: int = -1
 var active_battle: int = -1
 var rng := RandomNumberGenerator.new()
 var seed_used: int = 0
@@ -62,6 +64,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	acquired_cards.clear()
 	upgraded_cards.clear()
 	active_player_hand = null
+	last_poi_success = -1
 	pending_choice = ""
 	card_offers.clear()
 	active_battle = -1
@@ -200,6 +203,7 @@ func can_survey(index: int) -> bool:
 
 func survey(index: int) -> bool:
 	if not can_survey(index): return false
+	last_poi_success = -1
 	_complete_encounter(index)
 	add_modifiers(rules.survey_penalty)
 	last_outcome = "Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: " + describe_modifiers(rules.survey_penalty)
@@ -233,6 +237,7 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	var success: bool = roll < approach.success_chance
 	var outcome: Resource = approach.success if success else approach.failure
 	if not _complete_encounter(index, outcome.extra_ftl_charge): return false
+	last_poi_success = 1 if success else 0
 	# The roll and seed are printed for reproducing balance reports.
 	if rules.log_rolls: print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
@@ -299,6 +304,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 	var cost: int = service_cost(slot, repair_amount)
 	if cost < 0 or cost > salvage: return false
 	# Validate everything before spending; consume confirmation before applying any reward.
+	last_poi_success = -1
 	salvage -= cost
 	service_revision += 1
 	last_outcome = "Spent %d Salvage. " % cost
@@ -431,6 +437,7 @@ func begin_battle(board: Node, index: int = -1) -> void:
 	# Re-entrant initialization of this board must not reset stats or consume twice.
 	if board.get_meta("expedition_initialized", 0) == get_instance_id(): return
 	board.set_meta("expedition_initialized", get_instance_id())
+	last_poi_success = -1
 	active_battle = index
 	board.player_hull = hull
 	board.salvage = salvage
@@ -454,7 +461,14 @@ func victory_salvage(board: Node) -> int:
 	var destruction: int = rules.destruction_salvage
 	if active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].kind == "battle":
 		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
-	return destruction if board.enemy_hull <= 0 else rules.resource_victory_salvage
+	var reward: int = destruction if board.enemy_hull <= 0 else rules.resource_victory_salvage
+	return reward * rules.elite_salvage_multiplier if _elite_defeated(board) else reward
+
+func _elite_defeated(board: Node) -> bool:
+	return board.winner == "player" and not board.escaped_by_ftl and active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].kind == "battle" and enemy_profile(encounters[active_battle]).enemy_rank == 1
+
+func elite_resource_reward(board: Node) -> int:
+	return rules.elite_resource_bonus if _elite_defeated(board) else 0
 
 func record_battle(board: Node) -> void:
 	sync_battle(board)
@@ -465,6 +479,9 @@ func record_battle(board: Node) -> void:
 		else:
 			return
 	if board.winner == "player":
+		var elite_bonus: int = elite_resource_reward(board)
+		if elite_bonus > 0:
+			add_modifiers({"materials":elite_bonus, "energy":elite_bonus, "crew":elite_bonus})
 		if board.earned_tactical:
 			add_modifiers({"materials":board.TACTICAL_RESOURCES, "energy":board.TACTICAL_RESOURCES, "crew":board.TACTICAL_RESOURCES})
 		if board.earned_strategic:

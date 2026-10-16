@@ -39,3 +39,15 @@ Existing Android checks cover 2,435 assertions, station UI 1,050, crowded bars 4
 Run `godot --headless --path . --script tests/ui_overhaul_test.gd`. Running the same test with a rendering driver also writes review PNGs to ignored `.godot/testlogs/overhaul-*.png`. Windows OpenGL rendering was exercised and screenshots inspected for ship selection, deck browsing, comparison, PoI and combat layouts. The environment cannot write Godot's usual user log/editor/shader cache or read the system certificate store; these environment diagnostics also occur on the baseline.
 
 Physical Android touch/GPU behavior, APK export, and Vulkan/mobile renderer behavior were not tested on a device. Galleries currently use direct drag scrolling without added custom fling physics. No persistent UI settings or new save format were introduced.
+
+## Outcome feedback and current deck
+
+Acquisition choices hide the entire category/sort/count toolbar; upgrade galleries and read-only deck galleries retain browsing controls. The Deck button beside Legend opens the actual expedition pool, including acquisitions and current identity upgrades.
+
+Completed rolled PoI approaches display a one-second green (success) or red (failure) overlay before revealing rewards. Input is blocked during the pulse; rewards roll and apply once. Reward headers read Mission Successful or Mission Compromised. Surveys, services and battles do not reuse stale PoI headers. Tune the pulse duration on scripts/ui/outcome_flash.gd.
+
+Elite victories grant double Salvage and +3 of each next-battle resource, once, stacking with existing bonuses. Escape remains zero Salvage and grants no Elite bonus. See docs/balance/ships.md and ExpeditionRules Inspector fields.
+
+
+Follow-up validation: all 36 automated test scripts pass on Godot 4.7.2. The new reward_feedback_test.gd makes 310 checks across every enemy profile, destruction/resource/escape/loss outcomes, stacked and once-only bonuses, next-battle consumption, current upgraded decks, toolbar visibility, both PoI branches and one-second reveal timing. Editor import has no script parse/compile errors. Windows OpenGL screenshots of the current deck, green/red pulses and both mission headers were inspected. Physical Android testing remains unverified.
+

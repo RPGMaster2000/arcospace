@@ -46,10 +46,13 @@ func _ready() -> void:
 	shade.hide()
 
 func show_ship(ship: Resource) -> void:
+	show_cards(ship.starting_cards if not ship.starting_cards.is_empty() else Library.CARDS, ship.ship_name + " · Starting deck · Read only")
+
+func show_cards(values: Array, caption: String) -> void:
 	previous_focus = get_viewport().gui_get_focus_owner()
 	inspector.dismiss()
-	title.text = ship.ship_name + " · Starting deck · Read only"
-	gallery.set_cards(ship.starting_cards if not ship.starting_cards.is_empty() else Library.CARDS)
+	title.text = caption
+	gallery.set_cards(values)
 	shade.show()
 	return_button.grab_focus()
 

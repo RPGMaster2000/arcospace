@@ -169,7 +169,7 @@ func run() -> void:
 	returned.get_node("Start").pressed.emit()
 	await process_frame
 	var restarted = current_scene
-	check(restarted.state.player_ship == 2 and restarted.state.ship().ship_name == "Titania", "Begin expedition uses selected ship")
+	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")
 	restarted.queue_free()
 	setup.queue_free()
 	await process_frame

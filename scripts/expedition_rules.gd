@@ -26,6 +26,10 @@ class_name ExpeditionRules
 @export var survey_penalty: Dictionary = {"energy": -3}
 @export var destruction_salvage: int = 10
 @export var resource_victory_salvage: int = 6
+## TUNE: Elite rank only; multiply its existing destruction/resource-victory reward.
+@export_range(1, 10, 1) var elite_salvage_multiplier: int = 2
+## TUNE: Added to each resource next battle after defeating an Elite; stacks with tactical rewards.
+@export_range(0, 100, 1) var elite_resource_bonus: int = 3
 ## Safety net if every card has reached its upgrade limit.
 @export var unavailable_upgrade_salvage: int = 4
 ## 0 randomizes a new expedition; a nonzero value reproduces systems, offers and PoI rolls.

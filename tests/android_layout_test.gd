@@ -85,6 +85,7 @@ func run() -> void:
 	host.confirm_button.pressed.emit()
 	host.confirm_button.pressed.emit()
 	check(host.state.salvage == 33 and host.state.ftl_charge == before + 1 and host.state.encounters[0].completed, "Confirm grants exactly one unchanged reward")
+	while host.presenting_outcome: await process_frame
 	host.show_system()
 	check(host.grid.get_child(0).disabled, "Completed tile stays disabled")
 	# Six encounter cards fit common landscape viewports; all PoIs remain readable.
@@ -170,3 +171,4 @@ func run() -> void:
 	await process_frame
 	print("Android layout checks: %d assertions, %d failures" % [assertions, failures])
 	quit(1 if failures else 0)
+

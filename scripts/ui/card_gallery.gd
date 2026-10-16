@@ -6,6 +6,7 @@ const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var cards: Array[Resource] = []
 var visible_cards: Array[Resource] = []
 var category: String = "All"
+var show_toolbar: bool = true
 var sort_mode: int = 0
 var filters: HFlowContainer
 var sorting: OptionButton
@@ -18,6 +19,7 @@ func _ready() -> void:
 	filters = HFlowContainer.new()
 	filters.add_theme_constant_override("h_separation", 8)
 	add_child(filters)
+	filters.visible = show_toolbar
 	for value in ["All", "Attack", "Defense", "Production", "Utility"]:
 		var button = Button.new()
 		button.text = value
