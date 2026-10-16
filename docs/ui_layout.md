@@ -54,3 +54,6 @@ Follow-up validation: all 36 automated test scripts pass on Godot 4.7.2. The new
 
 Victory summaries use compact resource icons and amounts, one shared Next battle heading, and only earned Elite/tactical/strategic bonus rows. Condition explanations and repeated Star System navigation instructions are omitted. Hull changes and damage taken remain visible. Presentation only: reward qualification, values and persistence are unchanged. Verified with victory/reward, UI-overhaul, Android-layout, Salvage and travel-battle regressions plus Windows OpenGL rendering; physical Android remains unverified.
 
+
+Result navigation now has one Select Ship destination for every result; a fresh expedition begins only after ship confirmation. At full combat Emergency Jump charge, the FTL label/bar are replaced in place by a 48-pixel-high Jump button. A charged offline drive keeps a red, disabled Jump offline button with remaining turns in its tooltip. Turn/input eligibility and FTL charging/disruption rules remain unchanged. Seven relevant regression scripts pass; charged online/offline rendering was inspected on Windows OpenGL. Physical Android remains unverified.
+

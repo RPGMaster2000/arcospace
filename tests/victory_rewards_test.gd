@@ -73,6 +73,7 @@ func run() -> void:
 	board.refresh_display()
 	check(expedition.pending_bonuses == bonuses_before, "Rendering summary does not grant rewards")
 	check(not board.get_node("MatchResult/Panel/NextEncounter").visible, "Star System button needs no repeated instructions")
+	check(not board.get_node("MatchResult/Panel/PlayAgain").visible and board.get_node("MatchResult/Panel/Configure").text == "Select Ship", "Victory has one Select Ship destination")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.godot/testlogs/compact-victory.png")

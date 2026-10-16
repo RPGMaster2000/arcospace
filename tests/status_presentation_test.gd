@@ -42,13 +42,17 @@ func run() -> void:
 		board.refresh_display()
 		check(board.get_node("MatchResult").visible, "Match result should be visible")
 		check(not board._act("player", 0, false), "Finished match must block cards")
-	board.get_node("MatchResult/Panel/PlayAgain").pressed.emit()
+	board.get_node("MatchResult/Panel/Configure").pressed.emit()
 	await process_frame
 	var fresh = current_scene
-	check(fresh != board and fresh.winner.is_empty(), "Play Again must create a fresh match")
-	check(fresh.player_hull == 30 and fresh.enemy_hull == 30 and fresh.turn_number == 1, "Restart must reset hull and turns")
-	check(fresh.hand.cards.size() == 6 and not fresh.get_node("MatchResult").visible, "Restart must deal a playable hand and hide the result")
+	check(fresh.scene_file_path.ends_with("battle_setup.tscn"), "Select Ship returns to initial selection")
+	check(fresh.get("state") == null, "Selecting a ship is required before a new expedition")
+	fresh._start()
+	await process_frame
+	fresh = current_scene
+	check(fresh.state != null and fresh.state.hull == fresh.state.ship().hull_capacity, "Confirming ship starts a fresh expedition")
 	fresh.queue_free()
 	await process_frame
 	print("Status presentation checks: %d failures" % failures)
 	quit(1 if failures else 0)
+

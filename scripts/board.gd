@@ -192,7 +192,6 @@ func _ready() -> void:
 	hand_rule_origin = $HandRule.position
 	resized.connect(_fit_board_lines)
 	_fit_board_lines()
-	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
 	$FTLPanel/WarpButton.pressed.connect(_warp_out)
 	$FTLPanel/WarpButton.flat = false
 	$FTLPanel/WarpButton.add_theme_font_size_override("font_size", 18)
@@ -474,7 +473,11 @@ func refresh_display() -> void:
 	$FTLPanel/Charge.text = ftl_status.replace("Emergency Jump ", "Jump ").replace(" · Offline (", " · Off (")
 	$FTLPanel/Progress.max_value = ftl.charge_target
 	$FTLPanel/Progress.value = ftl.charge
-	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
+	var charged: bool = ftl.charge >= ftl.charge_target and winner.is_empty()
+	$FTLPanel/Charge.visible = not charged
+	$FTLPanel/Progress.visible = not charged
+	$FTLPanel/WarpButton.visible = charged
+	_update_jump_style()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "JUMP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
@@ -482,9 +485,8 @@ func refresh_display() -> void:
 	$MatchResult/Panel/Details.text = "%s · Turn %d\n❤️ %d → %d · Damage taken: %d" % [method, turn_number, starting_player_hull, result_hull if result_recorded else player_hull, player_hull_damage_taken]
 	$MatchResult/Panel/Rewards.text = victory_description()
 	$MatchResult/Panel/Rewards.visible = not $MatchResult/Panel/Rewards.text.is_empty()
-	var defeated: bool = winner in ["enemy", "draw"]
-	$MatchResult/Panel/PlayAgain.visible = not defeated
-	$MatchResult/Panel/Configure.text = "Select Ship" if defeated else "Battle Setup"
+	$MatchResult/Panel/PlayAgain.hide()
+	$MatchResult/Panel/Configure.text = "Select Ship"
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
 	$MatchResult/Panel/NextEncounter.visible = can_continue and expedition == null
@@ -495,7 +497,6 @@ func refresh_display() -> void:
 		$MatchResult/Panel/NextEncounter.text = "Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
 	if expedition != null:
 		$MatchResult/Panel/Continue.text = "Star System"
-		$MatchResult/Panel/PlayAgain.text = "New Expedition"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
@@ -563,10 +564,25 @@ func _fit_combat_controls() -> void:
 	_fit_jump_button()
 
 func _fit_jump_button() -> void:
-	var card_scale: float = minf(1.0, (size.x - 82) / (198 * 6))
 	var button: Button = $FTLPanel/WarpButton
-	button.size = Vector2(104, 48)
-	button.position = Vector2(size.x - 120, size.y - 12 - 294 * card_scale - 54) - $FTLPanel.position
+	button.size = Vector2($FTLPanel/Progress.size.x, 48)
+	button.position = Vector2(0, -10)
+
+func _update_jump_style() -> void:
+	var button: Button = $FTLPanel/WarpButton
+	var offline: bool = ftl.disabled_turns > 0
+	button.text = "Jump offline" if offline else "Jump"
+	button.tooltip_text = "Offline: %d turns remaining." % ftl.disabled_turns if offline else "Escape by Emergency Jump."
+	if button.has_meta("offline_style") and button.get_meta("offline_style") == offline: return
+	button.set_meta("offline_style", offline)
+	ResultPresentation.action(button)
+	if offline:
+		for key in ["normal", "hover", "pressed", "disabled"]:
+			var box: StyleBoxFlat = button.get_theme_stylebox(key).duplicate()
+			box.bg_color = Color("702b35")
+			box.border_color = Color("ef7e88")
+			button.add_theme_stylebox_override(key, box)
+		button.add_theme_color_override("font_disabled_color", Color("ffd3d7"))
 
 func _damage_ftl(amount: int) -> void:
 	if ftl.take_hull_damage(amount):

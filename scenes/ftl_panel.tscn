@@ -38,10 +38,9 @@ mouse_filter = 2
 
 [node name="WarpButton" type="Button" parent="."]
 visible = false
-offset_left = 174.0
-offset_top = -1.0
-offset_right = 278.0
-offset_bottom = 47.0
+offset_top = -10.0
+offset_right = 154.0
+offset_bottom = 38.0
 theme_override_font_sizes/font_size = 15
 text = "Jump"
 flat = true

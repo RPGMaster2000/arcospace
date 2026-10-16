@@ -26,8 +26,7 @@ func run() -> void:
 			await process_frame
 			var label = battle.get_node("FTLPanel/Charge")
 			var button = battle.get_node("FTLPanel/WarpButton")
-			var text_width: float = label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
-			check(label.position.x + text_width < button.position.x, "Emergency Jump label and button do not overlap")
+			check(not label.visible and not battle.get_node("FTLPanel/Progress").visible and button.visible and is_equal_approx(button.position.x, 0), "Charged Jump replaces the FTL display")
 			battle._warp_out()
 			check(battle.escaped_by_ftl and battle.winner == "player", "Live Emergency Jump succeeds")
 			check(host.state.ftl_charge == enemy.interstellar_ftl_reward and host.state.salvage == 0, "Live escape grants full charge and zero Salvage")
@@ -39,3 +38,4 @@ func run() -> void:
 			await process_frame
 	print("Travel battle integration: 15 ship/enemy combinations, %d failures" % failures)
 	quit(1 if failures else 0)
+
