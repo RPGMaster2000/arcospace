@@ -35,7 +35,7 @@ const CARDS = [
 	preload("res://cards/30_siege_driver.tres"),
 	preload("res://cards/31_emergency_refit.tres"),
 	preload("res://cards/32_antimatter_lance.tres"),
-	preload("res://cards/33_aegis_overcharge.tres"),
+	preload("res://cards/33_omega_overcharge.tres"),
 	preload("res://cards/34_sabotage_commandos.tres"),
 	preload("res://cards/35_damage_control.tres"),
 	preload("res://cards/36_salvage_strike.tres"),

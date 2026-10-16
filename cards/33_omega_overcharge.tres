@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" format=3 uid="uid://75o7a6xo30vk"]
+
+[ext_resource type="Script" uid="uid://bi6mjed83xpxi" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier = 2
+card_name = "Omega Overcharge"
+family = "energy"
+cost = 16
+description = "+20 Shields, +6 Hull"
+effects = {
+"hull": 6,
+"shields": 20
+}
