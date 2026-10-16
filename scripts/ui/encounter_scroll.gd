@@ -1,6 +1,9 @@
 extends ScrollContainer
 # Native Godot touch scrolling; cancel button activation after a drag, including its release frame.
 @export var drag_threshold: float = 12.0
+## Nested card Buttons need explicit ScreenDrag handling; ordinary PoI scrolling stays native.
+@export var explicit_touch_drag: bool = false
+var touch_scroll_origin: int = 0
 var touch_index: int = -1
 var touch_origin: Vector2
 var dragged: bool = false
@@ -20,6 +23,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and touch_index == -1 and get_global_rect().has_point(event.position):
 			touch_index = event.index
 			touch_origin = event.position
+			touch_scroll_origin = scroll_vertical
 			dragged = false
 		elif not event.pressed and event.index == touch_index:
 			if dragged: blocked_until = Time.get_ticks_msec() + 180
@@ -28,6 +32,9 @@ func _input(event: InputEvent) -> void:
 		if event.position.distance_to(touch_origin) >= drag_threshold:
 			dragged = true
 			blocked_until = Time.get_ticks_msec() + 180
+			if explicit_touch_drag:
+				scroll_vertical = touch_scroll_origin + roundi(touch_origin.y - event.position.y)
+				get_viewport().set_input_as_handled()
 
 func _scroll_started() -> void:
 	dragged = true
@@ -38,3 +45,4 @@ func _scroll_ended() -> void:
 
 func allows_activation() -> bool:
 	return Time.get_ticks_msec() >= blocked_until and not (touch_index >= 0 and dragged)
+

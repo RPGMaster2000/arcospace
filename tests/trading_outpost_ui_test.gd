@@ -75,8 +75,9 @@ func run_tests() -> void:
 				host.confirm_button.pressed.emit()
 				if slot > 0:
 					check(host.view_kind == "outcome" and not host.state.pending_choice.is_empty(), "Paid choice presented before another purchase")
-					var stale_choice: Button = host.grid.get_child(0)
+					var stale_choice: Button = host.card_gallery.grid.get_child(0) if slot == 2 else host.grid.get_child(0)
 					stale_choice.pressed.emit()
+					if slot == 2: host.card_inspector.confirm_button.pressed.emit()
 					stale_choice.pressed.emit()
 				check(host.state.salvage == balance - price and host.view_kind == "poi" and host.state.pending_choice.is_empty(), "Each service spends once and returns to station")
 				if slot == 1: check(host.state.modifier_value("materials") == material_bonus + 5, "UI supplies add five exactly once")
@@ -97,3 +98,4 @@ func run_tests() -> void:
 	await process_frame
 	print("Trading Outpost UI: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+

@@ -108,3 +108,6 @@ func _fit_ftl() -> void:
 	var hull_center: float = $PlayerHullLabel.position.y + $PlayerHullLabel.size.y * 0.5
 	# Mirror Hull status vertically about the ship, and center FTL horizontally on it.
 	$FTLPanel.position = Vector2(ship_center.x - $FTLPanel.size.x * 0.5, ship_center.y * 2.0 - hull_center - $FTLPanel.size.y * 0.5) + ftl_position_offset
+	$FTLPanel.position.x = clampf($FTLPanel.position.x, 16, size.x - $FTLPanel.size.x - 16)
+	_fit_jump_button()
+

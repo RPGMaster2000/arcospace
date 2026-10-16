@@ -6,6 +6,9 @@ const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
 const Header = preload("res://scenes/poi_header.tscn")
+const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+var card_gallery: VBoxContainer
+var card_inspector: CanvasLayer
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
 ## Optional accessibility preference; bundled emoji render by default on Android.
 @export var text_icons_on_android: bool = false
@@ -38,6 +41,13 @@ var selected_encounter: int = -1
 
 func _ready() -> void:
 	_build_ui()
+	card_inspector = preload("res://scripts/ui/card_inspector.gd").new()
+	add_child(card_inspector)
+	card_inspector.confirmed.connect(_confirm_card)
+	card_inspector.opened.connect(func():
+		if is_instance_valid(card_gallery): card_gallery.set_interaction_enabled(false))
+	card_inspector.closed.connect(func():
+		if is_instance_valid(card_gallery): card_gallery.set_interaction_enabled(true))
 	start_expedition()
 
 func _build_ui() -> void:
@@ -76,6 +86,7 @@ func _build_ui() -> void:
 	column.add_child(scroll)
 	view = VBoxContainer.new()
 	view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	view.add_theme_constant_override("separation", 10)
 	scroll.add_child(view)
 	more_hint = _label("More options below — swipe or scroll", 16)
@@ -163,6 +174,9 @@ func _icon(key: String) -> String:
 	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
 
 func _clear(kind: String) -> void:
+	if is_instance_valid(card_inspector): card_inspector.dismiss()
+	card_gallery = null
+	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
 	confirmation.dismiss()
 	view_kind = kind
@@ -202,8 +216,7 @@ func show_system() -> void:
 	_clear("system")
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
-		_button("Start a new expedition", _restart)
-		_button("Choose another ship", _exit)
+		_button("Select Ship", _exit)
 		return
 	var cards = _grid(3)
 	for index in range(state.encounters.size()):
@@ -403,21 +416,15 @@ func show_outcome() -> void:
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
-	result.add_child(_label(compact_text(state.last_outcome), 22))
+	var picking_card: bool = state.pending_choice in ["card", "upgrade"]
+	result.add_child(_label(("Acquire one card" if state.pending_choice == "card" else "Upgrade a card") if picking_card else compact_text(state.last_outcome), 26 if picking_card else 22))
+	result.tooltip_text = state.last_outcome if picking_card else ""
 	view.add_child(result)
 	match state.pending_choice:
 		"card":
-			view.add_child(_label("Choose one card to add to your expedition pool.", 20))
-			var offers = _grid(3)
-			for index in range(state.card_offers.size()):
-				var card: Resource = state.card_offers[index]
-				_tile(offers, _icon("card") + " " + card.card_name, _card_text(card), Presentation.COLORS.special, _choose_card.bind(index))
+			_show_card_gallery(state.card_offers)
 		"upgrade":
-			view.add_child(_label("Upgrade a player card. Enemy copies remain unchanged.", 20))
-			var choices = _grid(3)
-			for card in state.upgrade_candidates():
-				var enhanced: Resource = card.with_upgrade(card.upgrade_level + 1)
-				_tile(choices, enhanced.card_name, _card_text(card) + "\n→ " + _card_text(enhanced), Presentation.COLORS.special, _upgrade.bind(card.identity_key()))
+			_show_card_gallery(state.upgrade_candidates())
 		"resource", "production":
 			var choices = _grid(3)
 			var keys: Array = state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION
@@ -435,6 +442,26 @@ func _card_text(card: Resource) -> String:
 
 func _choose_card(index: int) -> void:
 	if state.choose_card(index): _purchase_finished()
+
+func _show_card_gallery(cards: Array) -> void:
+	jump_button.hide()
+	card_gallery = CardGallery.new()
+	card_gallery.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	card_gallery.custom_minimum_size.y = 250
+	view.add_child(card_gallery)
+	card_gallery.set_cards(cards)
+	card_gallery.card_selected.connect(_preview_card)
+
+func _preview_card(card: Resource) -> void:
+	if state.pending_choice == "card" and card in state.card_offers:
+		card_inspector.present(card)
+	elif state.pending_choice == "upgrade" and card in state.upgrade_candidates():
+		card_inspector.present(card, card.with_upgrade(card.upgrade_level + 1))
+
+func _confirm_card(card: Resource) -> void:
+	# The existing state methods validate eligibility and consume each choice once.
+	if state.pending_choice == "card": _choose_card(state.card_offers.find(card))
+	elif state.pending_choice == "upgrade": _upgrade(card.identity_key())
 
 func _upgrade(key: String) -> void:
 	if state.choose_upgrade(key): show_outcome()

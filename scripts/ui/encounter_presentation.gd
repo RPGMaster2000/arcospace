@@ -29,7 +29,7 @@ const MEANINGS = {
  "travel":"FTL Drive — interstellar charge; resets on entering a new system.",
  "jump":"Emergency Jump — combat escape charge, separate from interstellar travel.",
  "hazard":"Hazard / modifier — tap to inspect conditions and effects.",
- "card":"Cards — acquired cards join the expedition's shared draw pool."}
+ "card":"Cards - acquired cards join your expedition pool; enemies keep the base library."}
 
 static func meaning(key: String) -> String:
 	return MEANINGS.get(key, key.replace("_", " ").capitalize())
@@ -73,6 +73,10 @@ static func style(accent: Color, selected: bool = false, muted: bool = false) ->
 	return box
 
 static func action(button: Button, primary: bool = false) -> void:
+	var focus = style(COLORS.special, true)
+	focus.bg_color = Color(0, 0, 0, 0)
+	focus.border_color = Color("98c6ef")
+	button.add_theme_stylebox_override("focus", focus)
 	for key in ["normal", "hover", "pressed", "disabled"]:
 		var box = style(COLORS.special, key == "pressed", key == "disabled")
 		if primary and key != "disabled": box.bg_color = Color("e8f1f7")
@@ -80,3 +84,4 @@ static func action(button: Button, primary: bool = false) -> void:
 	for key in ["font_color", "font_hover_color", "font_pressed_color"]:
 		button.add_theme_color_override(key, Color("172b3b") if primary else Color("e3edf6"))
 	button.add_theme_color_override("font_disabled_color", Color("a7b8c9"))
+

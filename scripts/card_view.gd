@@ -2,6 +2,7 @@
 extends Button
 
 signal discard_requested
+var discard_target_height: float = 48.0
 
 # RESPONSIBILITY: Display a card resource in the editor and at runtime.
 # DOES NOT: Apply effects or draw cards.
@@ -51,17 +52,21 @@ func refresh_card() -> void:
 	$DescriptionLabel.text = card_data.description
 	# Enhanced effects may need a fourth line. Borrow only decorative art space;
 	# keep the existing readable font, card size and discard hit target.
+	$DiscardButton.offset_top = 294.0 - discard_target_height
+	$DiscardButton.offset_bottom = 294.0
+	$DiscardButton.custom_minimum_size.y = discard_target_height
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
 	$DescriptionLabel.offset_top = 188.0
 	$ArtPlaceholder.offset_top = 109.0
 	$ArtPlaceholder.offset_bottom = 183.0
 	$ArtPlaceholder.visible = true
-	if card_data.upgrade_level > 0:
-		var required: float = $DescriptionLabel.get_minimum_size().y
-		var extra: float = clampf(required - 65.0, 0.0, 60.0)
-		$DescriptionLabel.offset_top -= extra
-		$ArtPlaceholder.offset_bottom -= extra
-		$ArtPlaceholder.offset_top = maxf(109.0, $TitleLabel.position.y + $TitleLabel.get_minimum_size().y + 2.0)
-		$ArtPlaceholder.visible = $ArtPlaceholder.offset_top < $ArtPlaceholder.offset_bottom
+	var required: float = $DescriptionLabel.get_minimum_size().y
+	var extra: float = maxf(0, required - ($DescriptionLabel.offset_bottom - 188.0))
+	$DescriptionLabel.offset_top -= extra
+	$ArtPlaceholder.offset_bottom = $DescriptionLabel.offset_top - 5
+	$ArtPlaceholder.offset_top = maxf(109.0, $TitleLabel.position.y + $TitleLabel.get_minimum_size().y + 2.0)
+	$ArtPlaceholder.visible = $ArtPlaceholder.offset_top < $ArtPlaceholder.offset_bottom
+	fit_placeholder_art()
 	var colors = {"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)}
 	var color: Color = colors.get(card_data.family, Color.WHITE)
 	for icon in $ResourceIcon.get_children():
@@ -91,6 +96,13 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 	self_modulate = tint
 	for path in ["TitleLabel", "CostLabel", "DescriptionLabel", "ResourceIcon", "ArtPlaceholder", "CostRule"]:
 		get_node(path).modulate = tint
+
+func fit_placeholder_art() -> void:
+	# Existing primitive art uses a 174×74 design surface; scale its children to fit.
+	$ArtPlaceholder.clip_contents = true
+	var height: float = maxf(0, $ArtPlaceholder.offset_bottom - $ArtPlaceholder.offset_top)
+	for child in $ArtPlaceholder.get_children():
+		child.scale.y = height / 74.0
 
 
 func set_discardable(allowed: bool) -> void:

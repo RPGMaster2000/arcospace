@@ -55,7 +55,9 @@ func run() -> void:
 	check(host.state.pending_choice == "card", "Card selection visible after reward")
 	await snapshot("cards")
 	var before: int = host.state.acquired_cards.size()
-	host.grid.get_child(1).pressed.emit()
+	host.card_gallery.grid.get_child(1).pressed.emit()
+	check(host.state.acquired_cards.size() == before, "Preview requires confirmation")
+	host.card_inspector.confirm_button.pressed.emit()
 	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real selection button grants exactly one card")
 	check(host.view_kind == "poi" and host.selected_encounter == host.state.SERVICE_INDEX, "Card purchase returns directly to station")
 	await snapshot("outcome")
@@ -79,3 +81,4 @@ func run() -> void:
 	await process_frame
 	print("Expedition UI checks: %d failures" % failures)
 	quit(1 if failures else 0)
+

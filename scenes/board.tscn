@@ -1056,7 +1056,7 @@ anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = -432.0
-offset_right = -61.0
+offset_right = -184.0
 offset_top = -630.0
 offset_bottom = -603.0
 
@@ -1106,3 +1106,4 @@ offset_top = -370.0
 offset_bottom = -362.0
 mouse_filter = 2
 script = ExtResource("HullBar")
+

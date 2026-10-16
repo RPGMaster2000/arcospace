@@ -191,6 +191,9 @@ func _ready() -> void:
 	_fit_board_lines()
 	$MatchResult/Panel/PlayAgain.pressed.connect(_restart_match)
 	$FTLPanel/WarpButton.pressed.connect(_warp_out)
+	$FTLPanel/WarpButton.flat = false
+	$FTLPanel/WarpButton.add_theme_font_size_override("font_size", 18)
+	preload("res://scripts/ui/encounter_presentation.gd").action($FTLPanel/WarpButton)
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
 	hand.deal(card_slots.size())
@@ -464,6 +467,8 @@ func refresh_display() -> void:
 	elif ftl.can_warp():
 		ftl_status += " · Ready"
 	$FTLPanel/Charge.text = ftl_status
+	$FTLPanel/Charge.tooltip_text = ftl_status
+	$FTLPanel/Charge.text = ftl_status.replace("Emergency Jump ", "Jump ").replace(" · Offline (", " · Off (")
 	$FTLPanel/Progress.max_value = ftl.charge_target
 	$FTLPanel/Progress.value = ftl.charge
 	$FTLPanel/WarpButton.visible = ftl.can_warp() and winner.is_empty()
@@ -473,6 +478,9 @@ func refresh_display() -> void:
 	var method: String = "Emergency Jump" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
 	$MatchResult/Panel/Details.text = "%s · %d turns\nHull damage taken: %d · Hull: %d → %d" % [method, turn_number, player_hull_damage_taken, starting_player_hull, result_hull if result_recorded else player_hull]
 	$MatchResult/Panel/Rewards.text = victory_description()
+	var defeated: bool = winner in ["enemy", "draw"]
+	$MatchResult/Panel/PlayAgain.visible = not defeated
+	$MatchResult/Panel/Configure.text = "Select Ship" if defeated else "Battle Setup"
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
 	$MatchResult/Panel/NextEncounter.visible = can_continue
@@ -532,6 +540,30 @@ func _fit_board_lines() -> void:
 	var points: PackedVector2Array = $HandRule.points
 	points[points.size() - 1].x = size.x - 24.0
 	$HandRule.points = points
+	_fit_combat_controls()
+
+func _fit_combat_controls() -> void:
+	var gap: float = 10.0
+	var card_scale: float = minf(1.0, (size.x - 32 - gap * 5) / (198 * 6))
+	var hand_width: float = 198 * card_scale * 6 + gap * 5
+	for index in range(card_slots.size()):
+		var card: Control = get_node(card_slots[index])
+		card.scale = Vector2.ONE * card_scale
+		card.position = Vector2((size.x - hand_width) / 2 + index * (198 * card_scale + gap), size.y - 12 - 294 * card_scale)
+		card.discard_target_height = 48.0 / card_scale
+		card.get_node("DiscardButton").add_theme_font_size_override("font_size", roundi(18 / card_scale))
+		if card.card_data != null: card.refresh_card()
+	var hand_top: float = size.y - 12 - 294 * card_scale
+	$HandRule.position.y = hand_top - 8 - 359
+	$LastActionLabel.position = Vector2(16, hand_top - 32)
+	$LastActionLabel.size.x = size.x - 160
+	_fit_jump_button()
+
+func _fit_jump_button() -> void:
+	var card_scale: float = minf(1.0, (size.x - 82) / (198 * 6))
+	var button: Button = $FTLPanel/WarpButton
+	button.size = Vector2(104, 48)
+	button.position = Vector2(size.x - 120, size.y - 12 - 294 * card_scale - 54) - $FTLPanel.position
 
 func _damage_ftl(amount: int) -> void:
 	if ftl.take_hull_damage(amount):

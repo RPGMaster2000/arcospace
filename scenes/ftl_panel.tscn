@@ -12,22 +12,22 @@ anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = -432.0
-offset_right = -61.0
+offset_right = -184.0
 offset_top = -362.0
 offset_bottom = -335.0
 mouse_filter = 2
 
 [node name="Charge" type="Label" parent="."]
-offset_right = 270.0
+offset_right = 248.0
 offset_bottom = 20.0
 theme_override_colors/font_color = Color(0.7, 0.79, 0.82, 1)
-theme_override_font_sizes/font_size = 15
-text = "Emergency Jump 0 / 14"
+theme_override_font_sizes/font_size = 14
+text = "Jump 0 / 14"
 mouse_filter = 2
 
 [node name="Progress" type="ProgressBar" parent="."]
 offset_top = 23.0
-offset_right = 230.0
+offset_right = 154.0
 offset_bottom = 27.0
 theme_override_styles/background = SubResource("Track")
 theme_override_styles/fill = SubResource("Fill")
@@ -38,12 +38,13 @@ mouse_filter = 2
 
 [node name="WarpButton" type="Button" parent="."]
 visible = false
-offset_left = 240.0
+offset_left = 174.0
 offset_top = -1.0
-offset_right = 395.0
-offset_bottom = 27.0
+offset_right = 278.0
+offset_bottom = 47.0
 theme_override_font_sizes/font_size = 15
-text = "Emergency Jump"
+text = "Jump"
 flat = true
 disabled = true
 tooltip_text = "Escape to win when Emergency Jump is fully charged and online."
+
