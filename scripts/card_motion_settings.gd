@@ -7,11 +7,11 @@ class_name CardMotionSettings
 ## TUNE: Set false to skip card animations.
 @export var enabled: bool = true
 ## TUNE: Seconds for a played card to reach the center; smaller = faster.
-@export_range(0.01, 3.0, 0.01) var travel_seconds: float = 0.22
+@export_range(0.01, 3.0, 0.01) var travel_seconds: float = 0.32
 ## TUNE: Seconds the played card stays in the center for reading.
-@export_range(0.01, 3.0, 0.01) var hold_seconds: float = 0.5
+@export_range(0.01, 3.0, 0.01) var hold_seconds: float = 0.7
 ## TUNE: Seconds for the played card to leave and fade.
-@export_range(0.01, 3.0, 0.01) var exit_seconds: float = 0.24
+@export_range(0.01, 3.0, 0.01) var exit_seconds: float = 0.44
 ## TUNE: Seconds for the discard scanner to dissolve the card.
 @export_range(0.01, 3.0, 0.01) var discard_seconds: float = 0.44
 ## TUNE: Seconds for a replacement card to appear.

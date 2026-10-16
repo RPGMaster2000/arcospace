@@ -42,7 +42,7 @@ func _initialize() -> void:
 	text += "\nTactical scoring preserves affordable immediate wins and fatal-self-damage avoidance. It values public-state deltas and expected random gains; it cannot inspect player cards or sample future combat outcomes. Elites/bosses use lower score variation. Rank does not bypass costs or turn rules.\n"
 	write_doc("ships", text)
 	text = "# Cards\n\nGenerated from `scripts/card_library.gd` and loaded CardData Resources. Edit each listed `.tres`; descriptions are presentation only, `effects` controls gameplay. Costs spend the listed family. Effects below are exact unmodified values.\n\n"
-	text += "| Card | Family / unchanged cost | Rarity | Base effects | Upgrade I | Upgrade II | Extra action (all levels) | Wayfarer | Specter | Bastion | Resource |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
+	text += "| Card | Family / unchanged cost | Rarity | Base effects | Upgrade I | Upgrade II | Extra action (all levels) | Endeavour | Thunderbolt | Titania | Resource |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
 	for card in Cards.CARDS:
 		text += row([card.card_name, "%s / %d" % [card.family, card.cost], "Tier %d" % card.tier, "`" + JSON.stringify(card.effects) + "`", "`" + JSON.stringify(card.upgrade_effects[0]) + "`", "`" + JSON.stringify(card.upgrade_effects[1]) + "`", card.play_again, card in Ships.PLAYERS[0].starting_cards, card in Ships.PLAYERS[1].starting_cards, card in Ships.PLAYERS[2].starting_cards, source(card)])
 	var hand = Hand.new()

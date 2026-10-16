@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://vrbw38iq4201"]
+
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_s4cye"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="2_yl715"]
+[ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="3_y4laj"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="4_w1360"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="5_8878s"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="6_txc25"]
+[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="7_37uxw"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="8_y6ers"]
+[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="9_f6jp0"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="10_qhkbw"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="11_1kxrh"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="12_fx4ch"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="13_yul68"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="14_17l0k"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="15_u4cbb"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="16_xpis4"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="17_idu6q"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="18_y5y22"]
+[ext_resource type="Resource" path="res://cards/21_phase_lance.tres" id="19_c7h0u"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="20_ud640"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="21_0g1po"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="22_fnksp"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="23_x4v8c"]
+[ext_resource type="Resource" path="res://cards/37_pulse_repeater.tres" id="24_8r51o"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="25_xwr6a"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="26_akyf6"]
+
+[resource]
+script = ExtResource("1_s4cye")
+ship_name = "Endeavour "
+summary = "Balanced economy; average escape speed."
+hull_color = Color(0.52, 0.67, 0.78, 1)
+starting_cards = Array[Resource]([ExtResource("2_yl715"), ExtResource("3_y4laj"), ExtResource("4_w1360"), ExtResource("5_8878s"), ExtResource("6_txc25"), ExtResource("7_37uxw"), ExtResource("8_y6ers"), ExtResource("9_f6jp0"), ExtResource("10_qhkbw"), ExtResource("11_1kxrh"), ExtResource("12_fx4ch"), ExtResource("13_yul68"), ExtResource("14_17l0k"), ExtResource("15_u4cbb"), ExtResource("16_xpis4"), ExtResource("17_idu6q"), ExtResource("18_y5y22"), ExtResource("19_c7h0u"), ExtResource("20_ud640"), ExtResource("21_0g1po"), ExtResource("22_fnksp"), ExtResource("23_x4v8c"), ExtResource("24_8r51o"), ExtResource("25_xwr6a"), ExtResource("26_akyf6")])

@@ -1,92 +1,100 @@
-[gd_resource type="Resource" script_class="PoiData" format=3]
+[gd_resource type="Resource" script_class="PoiData" format=3 uid="uid://s5b8p46e2tm1"]
 
-[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
-[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
-[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
-
-[sub_resource type="Resource" id="Success0"]
-script = ExtResource("Outcome")
-blurb = "Quarantine protocols consume supplies reserved for the next battle."
-salvage = 3
-next_battle = {"materials": -2}
+[ext_resource type="Script" uid="uid://jy07blmtpbty" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" uid="uid://c7nkepq0ocquq" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/poi_data.gd" id="Poi"]
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Quarantine protocols consume supplies reserved for the next battle."
 salvage = 3
-next_battle = {"materials": -2}
+next_battle = {
+"materials": -2
+}
+
+[sub_resource type="Resource" id="Success0"]
+script = ExtResource("Outcome")
+blurb = "Quarantine protocols consume supplies reserved for the next battle."
+salvage = 3
+next_battle = {
+"materials": -2
+}
 
 [sub_resource type="Resource" id="Approach0"]
 script = ExtResource("Approach")
 title = "Remote supply exchange"
-requirement = ""
-minimum_production = 3
-success_chance = 1
 success = SubResource("Success0")
 failure = SubResource("Failure0")
-
-[sub_resource type="Resource" id="Success1"]
-script = ExtResource("Outcome")
-blurb = "Colony engineers repair your hull; decontamination occupies your crew."
-next_battle = {"crew": -3}
-hull = 6
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "Colony engineers repair your hull; decontamination occupies your crew."
-next_battle = {"crew": -3}
 hull = 6
+next_battle = {
+"crew": -3
+}
+
+[sub_resource type="Resource" id="Success1"]
+script = ExtResource("Outcome")
+blurb = "Colony engineers repair your hull; decontamination occupies your crew."
+hull = 6
+next_battle = {
+"crew": -3
+}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
 title = "Accept medical repairs"
-requirement = ""
-minimum_production = 3
-success_chance = 1
 success = SubResource("Success1")
 failure = SubResource("Failure1")
-
-[sub_resource type="Resource" id="Success2"]
-script = ExtResource("Outcome")
-blurb = "Sterilized research improves a card."
-salvage = 6
-next_battle = {"energy": -3}
-upgrade_card = true
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
 blurb = "The research is lost, but the equipment has value."
 salvage = 3
-next_battle = {"energy": -5}
+next_battle = {
+"energy": -5
+}
+
+[sub_resource type="Resource" id="Success2"]
+script = ExtResource("Outcome")
+blurb = "Sterilized research improves a card."
+salvage = 6
+next_battle = {
+"energy": -3
+}
+upgrade_card = true
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
 title = "Recover research"
 requirement = "reactor"
-minimum_production = 3
 success_chance = 0.8
 success = SubResource("Success2")
 failure = SubResource("Failure2")
-
-[sub_resource type="Resource" id="Success3"]
-script = ExtResource("Outcome")
-blurb = "The scientists share an uncommon schematic."
-salvage = 8
-next_battle = {"crew": -3}
-card_reward = true
-minimum_card_tier = 2
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
 blurb = "Only the laboratory cargo is safe to evacuate."
 salvage = 4
-next_battle = {"crew": -5}
+next_battle = {
+"crew": -5
+}
+
+[sub_resource type="Resource" id="Success3"]
+script = ExtResource("Outcome")
+blurb = "The scientists share an uncommon schematic."
+salvage = 8
+next_battle = {
+"crew": -3
+}
+card_reward = true
+minimum_card_tier = 2
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Evacuate scientists"
 requirement = "quarters"
-minimum_production = 3
 success_chance = 0.85
 success = SubResource("Success3")
 failure = SubResource("Failure3")
@@ -95,5 +103,5 @@ failure = SubResource("Failure3")
 script = ExtResource("Poi")
 title = "Quarantined Colony"
 description = "Decontamination diverts production from your next battle."
-hazardous = true
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])
+hazardous = true

@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="ShipData" format=3]
+[gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://bn64pn4sw3tli"]
 
-[ext_resource type="Script" path="res://scripts/ship_data.gd" id="1"]
-
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="card_0"]
 [ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="card_1"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="card_2"]
@@ -21,7 +20,7 @@
 [ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="card_16"]
 [ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="card_17"]
 [ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="card_18"]
-[ext_resource type="Resource" path="res://cards/29_polaron_burst.tres" id="card_19"]
+[ext_resource type="Resource" uid="uid://cl4dsr38cjwy7" path="res://cards/29_polaron_burst.tres" id="card_19"]
 [ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="card_20"]
 [ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="card_21"]
 [ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="card_22"]
@@ -30,19 +29,16 @@
 
 [resource]
 script = ExtResource("1")
-ship_name = "Bastion"
+ship_name = "Titiania"
 role = "Armored / Industrial"
 summary = "Strong Hull and industry; slow, vulnerable Emergency Jump."
 hull_capacity = 42
 shields = 6
 materials = 14
 energy = 8
-crew = 10
 synthesizer = 3
 reactor = 1
-quarters = 2
 ftl_turns = 17
 ftl_resistance = -0.1
 hull_color = Color(0.7, 0.48, 0.25, 1)
-
 starting_cards = Array[Resource]([ExtResource("card_0"), ExtResource("card_1"), ExtResource("card_2"), ExtResource("card_3"), ExtResource("card_4"), ExtResource("card_5"), ExtResource("card_6"), ExtResource("card_7"), ExtResource("card_8"), ExtResource("card_9"), ExtResource("card_10"), ExtResource("card_11"), ExtResource("card_12"), ExtResource("card_13"), ExtResource("card_14"), ExtResource("card_15"), ExtResource("card_16"), ExtResource("card_17"), ExtResource("card_18"), ExtResource("card_19"), ExtResource("card_20"), ExtResource("card_21"), ExtResource("card_22"), ExtResource("card_23"), ExtResource("card_24")])

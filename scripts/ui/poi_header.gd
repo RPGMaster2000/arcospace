@@ -2,7 +2,7 @@ extends PanelContainer
 # Image, backing and overlays remain separate so artwork can be replaced independently.
 signal return_requested
 @export var banner_texture: Texture2D
-@export var maximum_height: float = 88.0
+@export var maximum_height: float = 100.0
 @onready var image: TextureRect = $Image
 @onready var title: Label = $Overlay/Title
 @onready var return_button: Button = $Overlay/Return

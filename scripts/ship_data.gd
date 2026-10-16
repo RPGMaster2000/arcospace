@@ -2,7 +2,7 @@ extends Resource
 class_name ShipData
 # RESPONSIBILITY: Inspector-editable ship starting values and optional model.
 ## TUNE: All statistics here apply when starting a fresh encounter.
-@export var ship_name: String = "Wayfarer"
+@export var ship_name: String = "Endeavour"
 ## EDIT: Two-word ship type and defining property for the battle header.
 @export var subtitle: String = "Balanced Cruiser"
 @export var role: String = "Balanced"

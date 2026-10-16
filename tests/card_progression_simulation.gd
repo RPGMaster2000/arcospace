@@ -46,10 +46,10 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 			# Three acquired identities and three upgrades, no production/Salvage bonuses.
 			var acquired: Array = [29,31,37]
 			var upgrades: Dictionary = {6:2,11:1}
-			if player.ship_name == "Specter":
+			if player.ship_name == "Thunderbolt":
 				acquired = [31,32,42]
 				upgrades = {8:2,11:1}
-			elif player.ship_name == "Bastion":
+			elif player.ship_name == "Titania":
 				acquired = [29,30,37]
 				upgrades = {6:2,27:1}
 			for index in acquired:

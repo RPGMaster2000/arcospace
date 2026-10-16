@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="PoiData" format=3]
+[gd_resource type="Resource" script_class="PoiData" format=3 uid="uid://bk0a7y2ecipl8"]
 
-[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
-[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
-[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+[ext_resource type="Script" uid="uid://jy07blmtpbty" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" uid="uid://c7nkepq0ocquq" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/poi_data.gd" id="Poi"]
 
-[sub_resource type="Resource" id="Success0"]
+[sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Accessible components are stripped from the wreck."
 salvage = 3
 
-[sub_resource type="Resource" id="Failure0"]
+[sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "Accessible components are stripped from the wreck."
 salvage = 3
@@ -17,12 +17,16 @@ salvage = 3
 [sub_resource type="Resource" id="Approach0"]
 script = ExtResource("Approach")
 title = "External salvage"
-requirement = ""
-minimum_production = 3
-salvage_cost = 0
-success_chance = 1
 success = SubResource("Success0")
 failure = SubResource("Failure0")
+
+[sub_resource type="Resource" id="Failure1"]
+script = ExtResource("Outcome")
+blurb = "A booby trap cuts the recovery short and exhausts the boarding crew."
+salvage = 2
+next_battle = {
+"crew": -3
+}
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
@@ -30,21 +34,20 @@ blurb = "Your boarding party recovers usable technology."
 salvage = 5
 card_reward = true
 
-[sub_resource type="Resource" id="Failure1"]
-script = ExtResource("Outcome")
-blurb = "A booby trap cuts the recovery short and exhausts the boarding crew."
-salvage = 2
-next_battle = {"crew": -3}
-
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
 title = "Board the wreck"
-requirement = ""
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.7
 success = SubResource("Success1")
 failure = SubResource("Failure1")
+
+[sub_resource type="Resource" id="Failure2"]
+script = ExtResource("Outcome")
+blurb = "Unstable machinery ruptures, leaving valuable scrap."
+salvage = 3
+next_battle = {
+"materials": -4
+}
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
@@ -52,21 +55,21 @@ blurb = "Engineers recover a selection of intact systems."
 salvage = 7
 card_reward = true
 
-[sub_resource type="Resource" id="Failure2"]
-script = ExtResource("Outcome")
-blurb = "Unstable machinery ruptures, leaving valuable scrap."
-salvage = 3
-next_battle = {"materials": -4}
-
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
 title = "Engineering recovery"
 requirement = "synthesizer"
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.85
 success = SubResource("Success2")
 failure = SubResource("Failure2")
+
+[sub_resource type="Resource" id="Failure3"]
+script = ExtResource("Outcome")
+blurb = "The teams recover salvage but return exhausted."
+salvage = 4
+next_battle = {
+"crew": -5
+}
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
@@ -75,18 +78,10 @@ salvage = 9
 card_reward = true
 minimum_card_tier = 2
 
-[sub_resource type="Resource" id="Failure3"]
-script = ExtResource("Outcome")
-blurb = "The teams recover salvage but return exhausted."
-salvage = 4
-next_battle = {"crew": -5}
-
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Deploy boarding teams"
 requirement = "quarters"
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.75
 success = SubResource("Success3")
 failure = SubResource("Failure3")

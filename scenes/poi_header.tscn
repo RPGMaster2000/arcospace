@@ -1,53 +1,60 @@
-[gd_scene load_steps=3 format=3]
-[ext_resource type="Script" path="res://scripts/ui/poi_header.gd" id="Script"]
+[gd_scene format=3 uid="uid://dh3ho8xm3xm64"]
+
+[ext_resource type="Script" uid="uid://40hx5osghg4x" path="res://scripts/ui/poi_header.gd" id="Script"]
+
 [sub_resource type="StyleBoxFlat" id="Backing"]
-bg_color = Color(0.12, 0.20, 0.29, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.27, 0.40, 0.52, 1)
+bg_color = Color(0.12156863, 0.2, 0.2901961, 0)
+draw_center = false
+border_color = Color(0.27058825, 0.4, 0.52156866, 0)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
-corner_radius_bottom_left = 12
 corner_radius_bottom_right = 12
-[node name="PoiHeader" type="PanelContainer"]
+corner_radius_bottom_left = 12
+
+[node name="PoiHeader" type="PanelContainer" unique_id=562842896]
 custom_minimum_size = Vector2(0, 100)
 mouse_filter = 2
-script = ExtResource("Script")
 theme_override_styles/panel = SubResource("Backing")
-[node name="Image" type="TextureRect" parent="."]
+script = ExtResource("Script")
+
+[node name="Image" type="TextureRect" parent="." unique_id=1558920053]
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
-[node name="TextBacking" type="ColorRect" parent="."]
+
+[node name="TextBacking" type="ColorRect" parent="." unique_id=1546385084]
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.03, 0.06, 0.09, 0.36)
-[node name="Overlay" type="Control" parent="."]
+
+[node name="Overlay" type="Control" parent="." unique_id=912321464]
 layout_mode = 2
 mouse_filter = 2
-[node name="Placeholder" type="Label" parent="Overlay"]
+
+[node name="Placeholder" type="Label" parent="Overlay" unique_id=868095265]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 14.0
 offset_right = 450.0
 offset_bottom = 38.0
-text = "PANORAMIC IMAGE PLACEHOLDER"
-theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.6, 0.72, 0.83, 1)
-mouse_filter = 2
-[node name="Caption" type="Label" parent="Overlay"]
+theme_override_font_sizes/font_size = 15
+text = "PANORAMIC IMAGE PLACEHOLDER"
+
+[node name="Caption" type="Label" parent="Overlay" unique_id=627230100]
+layout_mode = 0
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
 offset_top = -63.0
 offset_right = 400.0
 offset_bottom = -43.0
-text = "POINT OF INTEREST"
 theme_override_font_sizes/font_size = 16
-mouse_filter = 2
-[node name="Title" type="Label" parent="Overlay"]
+text = "POINT OF INTEREST"
+
+[node name="Title" type="Label" parent="Overlay" unique_id=1768112524]
+layout_mode = 0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -57,13 +64,14 @@ offset_right = -190.0
 offset_bottom = -8.0
 theme_override_font_sizes/font_size = 30
 text = "Point of Interest"
-mouse_filter = 2
-[node name="Return" type="Button" parent="Overlay"]
+
+[node name="Return" type="Button" parent="Overlay" unique_id=1335152092]
+layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -172.0
 offset_top = 12.0
 offset_right = -12.0
 offset_bottom = 68.0
-text = "Return"
 theme_override_font_sizes/font_size = 22
+text = "Return"

@@ -68,7 +68,7 @@ func run() -> void:
 	replacement_profile.model_scene = null
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
-	check(menu.selected_ship == 0, "Wayfarer default")
+	check(menu.selected_ship == 0, "Endeavour default")
 	menu._select(1)
 	check(menu.read_settings().player_ship == 1, "Selected ship controls battle settings")
 	check(not menu.has_node("Panel/player_materials"), "Old starting options removed")

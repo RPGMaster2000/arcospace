@@ -141,4 +141,3 @@ func _draw() -> void:
 	points.append(points[0])
 	for width in [8.0, 4.0, 1.5]:
 		draw_polyline(points, Color(color, pulse * (0.3 if width > 2 else 1.0)), width, true)
-

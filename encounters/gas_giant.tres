@@ -1,87 +1,95 @@
-[gd_resource type="Resource" script_class="PoiData" format=3]
+[gd_resource type="Resource" script_class="PoiData" format=3 uid="uid://b4bt4al43tyb2"]
 
-[ext_resource type="Script" path="res://scripts/poi_data.gd" id="Poi"]
-[ext_resource type="Script" path="res://scripts/encounter_approach.gd" id="Approach"]
-[ext_resource type="Script" path="res://scripts/encounter_outcome.gd" id="Outcome"]
-
-[sub_resource type="Resource" id="Success0"]
-script = ExtResource("Outcome")
-blurb = "Fuel samples are safely condensed."
-next_battle = {"energy": 3}
+[ext_resource type="Script" uid="uid://jy07blmtpbty" path="res://scripts/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" uid="uid://c7nkepq0ocquq" path="res://scripts/encounter_outcome.gd" id="Outcome"]
+[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/poi_data.gd" id="Poi"]
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
 blurb = "Fuel samples are safely condensed."
-next_battle = {"energy": 3}
+next_battle = {
+"energy": 3
+}
+
+[sub_resource type="Resource" id="Success0"]
+script = ExtResource("Outcome")
+blurb = "Fuel samples are safely condensed."
+next_battle = {
+"energy": 3
+}
 
 [sub_resource type="Resource" id="Approach0"]
 script = ExtResource("Approach")
 title = "Atmospheric sampling"
-requirement = ""
-minimum_production = 3
-salvage_cost = 0
-success_chance = 1
 success = SubResource("Success0")
 failure = SubResource("Failure0")
-
-[sub_resource type="Resource" id="Success1"]
-script = ExtResource("Outcome")
-blurb = "High-grade fuel replenishes your energy reserves."
-next_battle = {"energy": 6}
 
 [sub_resource type="Resource" id="Failure1"]
 script = ExtResource("Outcome")
 blurb = "Turbulence strains the shields, but fuel is recovered."
-next_battle = {"energy": 2, "shields": -3}
+next_battle = {
+"energy": 2,
+"shields": -3
+}
+
+[sub_resource type="Resource" id="Success1"]
+script = ExtResource("Outcome")
+blurb = "High-grade fuel replenishes your energy reserves."
+next_battle = {
+"energy": 6
+}
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
 title = "Gas harvesting"
-requirement = ""
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.75
 success = SubResource("Success1")
 failure = SubResource("Failure1")
+
+[sub_resource type="Resource" id="Failure2"]
+script = ExtResource("Outcome")
+blurb = "The skimmer gathers fuel but stresses the shields."
+next_battle = {
+"energy": 3,
+"shields": -4
+}
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
 blurb = "Precise skimming captures a clean fuel stream."
 salvage = 2
-next_battle = {"energy": 8}
-
-[sub_resource type="Resource" id="Failure2"]
-script = ExtResource("Outcome")
-blurb = "The skimmer gathers fuel but stresses the shields."
-next_battle = {"energy": 3, "shields": -4}
+next_battle = {
+"energy": 8
+}
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
 title = "Precision skimming"
 requirement = "reactor"
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.9
 success = SubResource("Success2")
 failure = SubResource("Failure2")
+
+[sub_resource type="Resource" id="Failure3"]
+script = ExtResource("Outcome")
+blurb = "Fuel is recovered, but crews need time to recover."
+next_battle = {
+"crew": -5,
+"energy": 4
+}
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "Your crews secure exceptional reactor fuel."
 salvage = 5
-next_battle = {"energy": 12}
-
-[sub_resource type="Resource" id="Failure3"]
-script = ExtResource("Outcome")
-blurb = "Fuel is recovered, but crews need time to recover."
-next_battle = {"energy": 4, "crew": -5}
+next_battle = {
+"energy": 12
+}
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Deep atmospheric dive"
 requirement = "quarters"
-minimum_production = 3
-salvage_cost = 0
 success_chance = 0.6
 success = SubResource("Success3")
 failure = SubResource("Failure3")
