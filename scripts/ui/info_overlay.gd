@@ -3,7 +3,7 @@ extends CanvasLayer
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
 var panel: PanelContainer
-var body: Label
+var body: RichTextLabel
 var close: Button
 var previous_focus: Control
 var desired_height: float = 320
@@ -28,11 +28,20 @@ func _ready() -> void:
 	var scroll = preload("res://scripts/ui/encounter_scroll.gd").new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
-	body = Label.new()
+	body = RichTextLabel.new()
+	body.bbcode_enabled = true
+	body.fit_content = true
+	body.scroll_active = false
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_font_override("font", Presentation.UI_FONT)
-	body.add_theme_font_size_override("font_size", 22)
+	body.add_theme_font_override("normal_font", Presentation.UI_FONT)
+	var bold_font = FontVariation.new()
+	bold_font.base_font = ThemeDB.fallback_font
+	bold_font.variation_embolden = 0.7
+	bold_font.fallbacks = [Presentation.EMOJI_FONT]
+	body.add_theme_font_override("bold_font", bold_font)
+	body.add_theme_font_size_override("normal_font_size", 22)
+	body.add_theme_font_size_override("bold_font_size", 22)
 	scroll.add_child(body)
 	shade.resized.connect(_fit)
 	_fit()
@@ -40,8 +49,8 @@ func _ready() -> void:
 
 func _fit() -> void:
 	var height: float = minf(desired_height, shade.size.y - 48)
-	panel.position = Vector2(maxf(12, (shade.size.x - 900) / 2), (shade.size.y - height) / 2)
-	panel.size = Vector2(minf(900, shade.size.x - 24), height)
+	panel.position = Vector2(maxf(24, (shade.size.x - 760) / 2), (shade.size.y - height) / 2)
+	panel.size = Vector2(minf(760, shade.size.x - 48), height)
 
 func show_text(value: String) -> void:
 	desired_height = 320
@@ -52,7 +61,7 @@ func show_text(value: String) -> void:
 	_fit()
 
 func show_legend() -> void:
-	var lines: Array[String] = ["ICON LEGEND"]
+	var lines: Array[String] = ["[font_size=28][b]Icon legend[/b][/font_size]"]
 	var keys: Array = Presentation.MEANINGS.keys()
 	for key in Presentation.ICONS:
 		if not keys.has(key): keys.append(key)

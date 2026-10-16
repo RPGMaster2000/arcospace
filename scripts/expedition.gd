@@ -19,6 +19,7 @@ var battle: Node
 var view: VBoxContainer
 var resource_bar: HFlowContainer
 var legend: Button
+var heading_row: HBoxContainer
 var jump_button: Button
 var return_button: Button
 var confirm_button: Button
@@ -28,7 +29,6 @@ var scroll: ScrollContainer
 var header: PanelContainer
 var footer: HBoxContainer
 var more_hint: Label
-var progress: ProgressBar
 var grid: GridContainer
 var selected_approach: int = -1
 var approach_buttons: Array[Button] = []
@@ -48,13 +48,13 @@ func _build_ui() -> void:
 	ui = MarginContainer.new()
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
-		ui.add_theme_constant_override("margin_" + edge, 10)
+		ui.add_theme_constant_override("margin_" + edge, 24)
 	add_child(ui)
 	var column = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
 	ui.add_child(column)
 	title = _label("", 30)
-	var heading_row = HBoxContainer.new()
+	heading_row = HBoxContainer.new()
 	column.add_child(heading_row)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading_row.add_child(title)
@@ -69,13 +69,8 @@ func _build_ui() -> void:
 	header = Header.instantiate()
 	column.add_child(header)
 	header.return_requested.connect(show_system)
+	header.legend_requested.connect(func(): resource_bar.overlay.show_legend())
 	return_button = header.return_button
-	progress = ProgressBar.new()
-	progress.custom_minimum_size.y = 8
-	progress.show_percentage = false
-	progress.add_theme_stylebox_override("background", Presentation.style(Color("394653")))
-	progress.add_theme_stylebox_override("fill", Presentation.style(Presentation.COLORS.special, true))
-	column.add_child(progress)
 	scroll = TouchScroll.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -100,13 +95,13 @@ func _build_ui() -> void:
 	footer.add_child(repair_selector)
 	confirm_button = Button.new()
 	confirm_button.text = "Confirm Approach"
-	confirm_button.custom_minimum_size = Vector2(330, 60)
+	confirm_button.custom_minimum_size = Vector2(300, 48)
 	confirm_button.add_theme_font_size_override("font_size", 23)
 	Presentation.action(confirm_button, true)
 	confirm_button.pressed.connect(_confirm_approach)
 	footer.add_child(confirm_button)
 	jump_button = Button.new()
-	jump_button.custom_minimum_size.y = 56
+	jump_button.custom_minimum_size.y = 48
 	jump_button.add_theme_font_size_override("font_size", 21)
 	jump_button.add_theme_font_override("font", Presentation.UI_FONT)
 	Presentation.action(jump_button)
@@ -149,8 +144,8 @@ func _grid(columns: int) -> GridContainer:
 	var result = GridContainer.new()
 	result.columns = columns
 	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	result.add_theme_constant_override("h_separation", 12)
-	result.add_theme_constant_override("v_separation", 12)
+	result.add_theme_constant_override("h_separation", 10)
+	result.add_theme_constant_override("v_separation", 10)
 	view.add_child(result)
 	grid = result
 	return result
@@ -186,10 +181,8 @@ func _clear(kind: String) -> void:
 	return_button.visible = kind == "poi"
 	footer.visible = kind == "poi"
 	confirm_button.disabled = true
+	heading_row.visible = kind != "poi"
 	title.visible = true
-	progress.visible = kind == "system"
-	progress.max_value = state.required_ftl_charge
-	progress.value = state.ftl_charge
 	title.text = "System Encounters — " + state.system_name if kind == "system" else (state.ship().ship_name + " · Expedition" if kind == "poi" else "Encounter Result")
 	resource_bar.exploration(state)
 	jump_button.text = "%s FTL Drive %d/%d · %s" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge, "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
@@ -255,7 +248,7 @@ func approach_text(approach: Resource) -> String:
 	if approach.success_chance < 1:
 		lines.append("%s%% — %s" % [String.num((1.0 - approach.success_chance) * 100, 2), state.describe_outcome(approach.failure)])
 	var reason: String = state.locked_reason(approach)
-	if not reason.is_empty(): lines.append("LOCKED — " + reason)
+	if not reason.is_empty(): lines.append("LOCKED" if reason.begins_with("Requires " + state.LABELS.get(approach.requirement, "missing")) else "LOCKED — " + reason)
 	return "\n".join(lines)
 
 func show_poi(index: int) -> void:

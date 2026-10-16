@@ -33,9 +33,9 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 		icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		column.add_child(icon_label)
 		title = title.substr(title.find("\n") + 1)
-	heading = _label(title, 24)
+	heading = _label(title, 23)
 	heading.add_theme_font_override("font", Presentation.UI_FONT)
-	details = _label(body, 21)
+	details = _label(body, 20)
 	details.add_theme_font_override("font", Presentation.UI_FONT)
 	if centered:
 		heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

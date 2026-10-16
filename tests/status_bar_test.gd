@@ -71,8 +71,8 @@ func run() -> void:
 	check(host.state.encounters[enemy_index].modifier == assigned, "PoI completion preserves modifier")
 	host.state.add_modifiers({"energy":5, "crew":-3})
 	host.show_system()
-	check(host.resource_bar.entries.energy.text == "⚡ 10 +5", "Base reserve plus green bonus")
-	check(host.resource_bar.entries.crew.text.ends_with("10 -3"), "Base reserve plus red penalty")
+	check(host.resource_bar.entries.energy.text == "⚡ +2/t · 10 Energy +5", "Base reserve plus green bonus")
+	check(host.resource_bar.entries.crew.text.ends_with("10 Crew -3"), "Base reserve plus red penalty")
 	check(not host.resource_bar.entries.has("travel") and not host.resource_bar.entries.has("hazard"), "Removed duplicate FTL and effects entries")
 	check(host.resource_bar.entries.keys().slice(0,3) == ["hull", "shields", "salvage"], "Hull, Shields, Salvage order")
 	check(host.resource_bar.entries.jump.text.ends_with("Nominal"), "Unmodified Emergency Jump nominal")
@@ -81,7 +81,7 @@ func run() -> void:
 	check(host.resource_bar.entries.crew.get_node("Values/Adjustment").get_theme_color("font_color") == host.resource_bar.NEGATIVE, "Negative color")
 	host.state.add_modifiers({"energy":-100, "emergency_jump_charge":2, "emergency_jump_offline":3})
 	host.show_system()
-	check(host.resource_bar.entries.energy.text == "⚡ 10", "Effective capped net zero omits adjustment")
+	check(host.resource_bar.entries.energy.text == "⚡ +2/t · 10 Energy", "Effective capped net zero omits adjustment")
 	check(host.resource_bar.entries.jump.text.ends_with("Disabled -3 · Boost +2"), "Offline and boost coexist without hiding either")
 	host.state.pending_penalties.erase("energy")
 	host.show_system()
@@ -92,10 +92,10 @@ func run() -> void:
 	host.state.pending_bonuses.erase("emergency_jump_offline")
 	host.state.production_upgrades.synthesizer = 1
 	host.show_system()
-	check(host.resource_bar.entries.energy.text == "⚡ 10 -3", "Mixed effects display net negative")
+	check(host.resource_bar.entries.energy.text == "⚡ +2/t · 10 Energy -3", "Mixed effects display net negative")
 	check(host.resource_bar.entries.energy.get_node("Values/Adjustment").get_theme_color("font_color") == host.resource_bar.NEGATIVE, "Mixed net negative is red")
 	check(host.resource_bar.entries.jump.text.ends_with("Boost +2"), "Boost-only status")
-	check(host.resource_bar.entries.synthesizer.text.ends_with("2/t +1"), "Production improvements displayed separately")
+	check(host.resource_bar.entries.materials.text.contains("+3/t") and not host.resource_bar.entries.has("synthesizer"), "Production combined with resource")
 	host.state.pending_bonuses = saved_bonuses
 	host.state.pending_penalties = saved_penalties
 	host.state.production_upgrades.clear()

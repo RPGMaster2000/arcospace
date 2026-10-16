@@ -12,7 +12,7 @@ func _ready() -> void:
 	var legend = Button.new()
 	legend.text = "Legend"
 	legend.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	legend.position = Vector2(size.x - 130, 12)
+	legend.position = Vector2(size.x - 134, 24)
 	legend.custom_minimum_size = Vector2(110, 48)
 	add_child(legend)
 	legend.pressed.connect(overlay.show_legend)
@@ -59,16 +59,18 @@ func _start() -> void:
 # Preserve the existing preview nodes and selection logic; only fit their controls.
 func _layout_cards() -> void:
 	$Instructions.text = "Choose your ship. Shields protect Hull; Emergency Jump offers a combat escape."
-	$Instructions.offset_top = 70
-	$Instructions.offset_bottom = 104
+	$Logo.offset_top = 24
+	$Logo.offset_bottom = 79
+	$Instructions.offset_top = 84
+	$Instructions.offset_bottom = 108
 	$Ships.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	$Ships.offset_left = 16
-	$Ships.offset_right = -16
+	$Ships.offset_left = 24
+	$Ships.offset_right = -24
 	$Ships.offset_top = 116
-	$Ships.offset_bottom = -90
+	$Ships.offset_bottom = -100
 	$Start.custom_minimum_size.y = 64
-	$Start.offset_top = -76
-	$Start.offset_bottom = -12
+	$Start.offset_top = -88
+	$Start.offset_bottom = -24
 	preload("res://scripts/ui/encounter_presentation.gd").action($Start, true)
 	for index in range(3):
 		var panel = get_node("Ships/Ship%d" % index)
