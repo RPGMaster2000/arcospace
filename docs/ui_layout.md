@@ -60,7 +60,7 @@ Result navigation now has one Select Ship destination for every result; a fresh 
 
 ## Power Allocation
 
-The 64-pixel-wide current-mode emoji button uses the existing action strip above the hand (this battle UI plays cards directly; it has no separate Play/End Turn column). Its anchor is identical at 16:9 and 21:9. It does not change hand width, positions, card dimensions or existing landscape scaling.
+The 64-pixel-wide current-mode emoji button sits beside the projected player ship, near its engine side. Its anchor uses the ship presentation center plus a fraction of BattleView height at every aspect ratio. It does not change hand width, positions, card dimensions or existing landscape scaling.
 
 The reusable `scripts/ui/power_allocation_popup.gd` overlays a darkened battlefield with four centered 2×2 touch targets, active-mode highlighting, short hints, static weight indicators, and Back/outside-tap dismissal. Keyboard focus stays within the popup. The battle is not paused and allocation remains free during either turn. Choosing a mode changes only future player draw weights; opening/closing/selecting never redraws held cards. Each battle starts Balanced, with two Materials-cost, two Energy-cost and two Crew-cost player cards. Enemy drawing/AI is unchanged.
 
@@ -69,3 +69,11 @@ Configuration and the per-card primary category table are in `docs/balance/cards
 Validation: `tests/power_allocation_test.gd` includes 48,000 sampled draws, exact legacy Balanced sequence comparisons, rarity/cap regressions, 600 seeded ship openings, snapshot checks for hands/resources/FTL/RNG, and real mouse/ScreenTouch input on all three ships at 1280×720, 1680×720, 960×540 and 800×450. OpenGL screenshots were inspected at desktop, ultrawide and Android landscape sizes. Synthetic touch is verified; physical Android device/GPU behavior and APK export remain unverified.
 
 Final validation: all 37 automated Godot 4.7.2 test scripts pass after the 2/2/2 opening addition; the allocation test passes 16,948 checks. Editor import reports no script parse/compile errors. All 44 card Resource files match the starting commit exactly after excluding the added category metadata; enemy ships/AI, encounter definitions, upgrades, effects, FTL and project configuration remain unchanged.
+
+## Expedition milestones update
+
+Power Allocation retains its existing popup, weights and input behavior. `Board3D.allocation_presentation_offset` defaults to (-0.56, 0.02), measured in fractions of the battle presentation height from the projected player ship center. Position clamps protect the resource column, top HUD, Hull/Shields and hand. No model-specific engine coordinates, hand resizing or ultrawide-only branch is used. The 2D board has a ship-centered fallback.
+
+The system FTL control shows carried starting charge normally and explicitly says Resolve Boss first when a milestone is unresolved. Boss tiles say Mandatory Boss; the preview explains Victory or Emergency Jump and shows effective level/Hull/Shields. Normal PoI navigation and six-slot layout remain unchanged. Full formulas and Inspector paths are in the ship/PoI balance references.
+
+Validation is performed by the Godot regression workflow on an isolated branch before publishing main because the local execution environment is unavailable. Physical Android gameplay and device GPU rendering remain unverified.

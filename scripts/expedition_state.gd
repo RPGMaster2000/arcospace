@@ -91,11 +91,13 @@ func can_jump() -> bool:
 	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge and not mandatory_boss_pending()
 
 func mandatory_boss_pending() -> bool:
-	if not rules.progression.is_boss_system(system_number): return false
+	var found: bool = false
 	for encounter in encounters:
-		if encounter.get("mandatory_boss", false): return not encounter.completed
-	# Fail closed if a malformed/custom system loses its mandatory encounter.
-	return true
+		if encounter.get("mandatory_boss", false):
+			found = true
+			if not encounter.completed: return true
+	# Fail closed if a malformed/custom milestone loses its mandatory encounter.
+	return not found and rules.progression.is_boss_system(system_number)
 
 func difficulty_level() -> int:
 	return rules.progression.difficulty_level(system_number)

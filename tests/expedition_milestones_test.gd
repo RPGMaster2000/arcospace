@@ -46,6 +46,12 @@ func boss_index(run: Resource) -> int:
 func _initialize() -> void:
 	call_deferred("run_tests")
 
+func capture(label: String) -> void:
+	if DisplayServer.get_name() == "headless": return
+	DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("res://.godot/testlogs/milestone-" + label + ".png")
+
 func run_tests() -> void:
 	for surplus in [0,1,2,4,100]:
 		var run = fresh()
@@ -156,6 +162,7 @@ func run_tests() -> void:
 		host.show_system()
 		for n in range(5): await process_frame
 		check(host.jump_button.disabled and host.jump_button.text.contains("Resolve Boss"), "UI explains mandatory lock despite sufficient charge")
+		await capture("system-" + str(dimensions.x))
 		var index: int = boss_index(host.state)
 		var scaled: Resource = host.state.enemy_profile(host.state.encounters[index])
 		host.start_battle(index)
@@ -163,6 +170,7 @@ func run_tests() -> void:
 		battle.get_node("BattleEffects").enabled = false
 		if battle.battle_effects.busy: await battle.battle_effects.finished
 		check(battle.enemy_hull_capacity == scaled.hull_capacity and battle.enemy_hull == scaled.hull_capacity and battle.enemy_energy == scaled.energy, "Battle uses the effective scaled profile")
+		await capture("battle-" + str(dimensions.x))
 		battle.ftl.charge = battle.ftl.charge_target
 		battle.ftl.disabled_turns = 0
 		battle._warp_out()
