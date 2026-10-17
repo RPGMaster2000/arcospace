@@ -52,7 +52,16 @@ func capture(label: String) -> void:
 	if DisplayServer.get_name() == "headless": return
 	DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
 	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png("res://.godot/testlogs/milestone-" + label + ".png")
+	var image: Image = root.get_texture().get_image()
+	image.save_png("res://.godot/testlogs/milestone-" + label + ".png")
+	# Small rendered QA crop is readable remotely even when the local workspace is offline.
+	if label == "battle-1280":
+		var crop: Image = image.get_region(Rect2i(0,0,720,400))
+		var encoded: String = Marshalls.raw_to_base64(crop.save_png_to_buffer())
+		print("UI_PREVIEW_BEGIN")
+		for offset in range(0, encoded.length(), 4096):
+			print("UI_PREVIEW_CHUNK:" + encoded.substr(offset,4096))
+		print("UI_PREVIEW_END")
 
 func run_tests() -> void:
 	for surplus in [0,1,2,4,100]:
