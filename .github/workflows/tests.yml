@@ -1,0 +1,49 @@
+name: Godot regression tests
+on:
+  push:
+    branches: [main, codex/expedition-progression-validation]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip -o "$RUNNER_TEMP/godot.zip"
+          echo "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4  $RUNNER_TEMP/godot.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot-bin"
+          chmod +x "$RUNNER_TEMP/godot-bin/Godot_v4.7.2-stable_linux.x86_64"
+          echo "$RUNNER_TEMP/godot-bin" >> "$GITHUB_PATH"
+      - name: Import and run all regression scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results
+          GODOT=Godot_v4.7.2-stable_linux.x86_64
+          "$GODOT" --headless --path . --editor --import --quit > test-results/import.log 2>&1
+          if grep -Eq 'SCRIPT ERROR|Parse Error|Compile Error' test-results/import.log; then cat test-results/import.log; exit 1; fi
+          failed=0
+          for script in tests/*_test.gd; do
+            name="$(basename "$script" .gd)"
+            status=0
+            timeout 120 "$GODOT" --headless --path . --script "$script" > "test-results/$name.log" 2>&1 || status=$?
+            if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|[1-9][0-9]* failures|Assertion failed' "test-results/$name.log"; then
+              echo "FAIL $name ($status)"
+              cat "test-results/$name.log"
+              failed=1
+            else
+              echo "PASS $name"
+            fi
+          done
+          exit "$failed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-test-results
+          path: test-results/
