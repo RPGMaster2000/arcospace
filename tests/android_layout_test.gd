@@ -46,6 +46,7 @@ func mouse(position: Vector2, pressed: bool, button: int = MOUSE_BUTTON_LEFT) ->
 
 func run() -> void:
 	host = Host.instantiate()
+	host.use_star_map = false # Keep coverage of the preserved grid presentation.
 	host.rules = Rules.duplicate(true)
 	host.rules.log_rolls = false
 	host.rules.debug_seed = 789

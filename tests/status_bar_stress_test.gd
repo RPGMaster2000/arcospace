@@ -27,6 +27,7 @@ func screenshot(name: String) -> void:
 		root.get_texture().get_image().save_png("res://.godot/testlogs/dark-" + name + ".png")
 func run() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_star_map = false # Keep coverage of the preserved grid presentation.
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 789
 	host.rules.log_rolls = false

@@ -9,6 +9,12 @@ const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
 var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
+@export var use_star_map: bool = true
+@export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
+var star_map: Control
+var map_system: int = -1
+var map_destination: int = -1
+
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
 ## Optional accessibility preference; bundled emoji render by default on Android.
 @export var text_icons_on_android: bool = false
@@ -207,6 +213,8 @@ func _clear(kind: String) -> void:
 	for child in view.get_children():
 		view.remove_child(child)
 		child.queue_free()
+	star_map = null
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if kind == "system" and use_star_map else ScrollContainer.SCROLL_MODE_AUTO
 	scroll.scroll_vertical = 0
 	ui.show()
 	header.visible = kind == "poi"
@@ -227,6 +235,8 @@ func _clear(kind: String) -> void:
 	jump_button.visible = state.hull > 0
 
 func start_expedition() -> void:
+	map_system = -1
+	map_destination = -1
 	state = State.new()
 	state.start(selected_ship, rules)
 	show_system()
@@ -240,6 +250,9 @@ func show_system() -> void:
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
 		_button("Select Ship", _exit)
+		return
+	if use_star_map:
+		_show_star_map()
 		return
 	var cards = _grid(3)
 	for index in range(state.encounters.size()):
@@ -258,6 +271,32 @@ func show_system() -> void:
 
 	if not state.service.is_empty():
 		_button("Trading Outpost · Service station · No travel FTL · Free to return", visit.bind(state.SERVICE_INDEX))
+
+func _show_star_map() -> void:
+	if map_system != state.system_number:
+		map_system = state.system_number
+		map_destination = -1
+	var entries: Array = []
+	for index in range(state.encounters.size()):
+		var encounter: Dictionary = state.encounters[index]
+		var key: String = "battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
+		var detail: String = "+%d FTL" % state.encounter_charge(index)
+		if encounter.kind == "battle":
+			key = ["battle", "elite", "boss"][state.enemy_profile(encounter).enemy_rank]
+			if encounter.get("mandatory_boss", false): detail = "Mandatory Boss · " + detail
+		var tooltip: String = detail
+		if encounter.kind == "battle": tooltip += "\n" + State.Modifiers.NAMES[encounter.modifier]
+		entries.append({"index":index, "text":("✓ " if encounter.completed else _icon(key) + " ") + encounter.title + "\n" + ("Completed" if encounter.completed else detail), "tooltip":tooltip, "color":Presentation.COLORS[Presentation.classification(encounter)], "completed":encounter.completed})
+	if not state.service.is_empty():
+		entries.append({"index":state.SERVICE_INDEX, "text":_icon("trading_outpost") + " Trading Outpost\nFree return · 0 FTL", "tooltip":"Independent service station", "color":Color("8fcab7"), "completed":false})
+	star_map = preload("res://scripts/ui/star_map.gd").new()
+	star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	view.add_child(star_map)
+	star_map.configure(entries, map_destination, star_map_travel_duration)
+	star_map.arrived.connect(func(index: int):
+		map_destination = index
+		visit(index))
 
 func visit(index: int) -> void:
 	if not state.can_visit(index): return

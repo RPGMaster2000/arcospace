@@ -47,6 +47,7 @@ func run() -> void:
 			if character.unicode_at(0) != 0xfe0f: check(Presentation.EMOJI_FONT.has_char(character.unicode_at(0)), "Bundled glyph " + key)
 		check(Presentation.icon(key, ThemeDB.fallback_font, true).begins_with("["), "Readable forced fallback")
 	var host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_star_map = false # Preserve grid input coverage.
 	host.rules = Rules.duplicate(true)
 	host.rules.log_rolls = false
 	host.rules.debug_seed = 789
