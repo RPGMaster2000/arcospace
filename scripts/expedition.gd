@@ -268,12 +268,15 @@ func show_battle_preview(index: int) -> void:
 	if not state.can_visit(index): return
 	_clear("preview")
 	var encounter: Dictionary = state.encounters[index]
-	view.add_child(_label(encounter.title + " · " + State.Modifiers.NAMES[encounter.modifier], 28))
-	if encounter.get("mandatory_boss", false):
-		view.add_child(_label("Mandatory Boss · Victory or Emergency Jump", 22))
 	var enemy: Resource = state.enemy_profile(encounter)
-	view.add_child(_label("Lv %d · %s %d · %s %d" % [state.difficulty_level(), _icon("hull"), enemy.hull_capacity, _icon("shields"), enemy.shields], 22))
-	view.add_child(_label(State.Modifiers.description(encounter.modifier), 24))
+	var heading: String = encounter.title + " · " + State.Modifiers.NAMES[encounter.modifier] + " · Lv %d" % state.difficulty_level()
+	if encounter.get("mandatory_boss", false): heading = "Mandatory Boss · " + heading
+	var preview_title = _label(heading, 28)
+	preview_title.tooltip_text = "Hull %d · Shields %d" % [enemy.hull_capacity, enemy.shields]
+	view.add_child(preview_title)
+	var details: String = State.Modifiers.description(encounter.modifier)
+	if encounter.get("mandatory_boss", false): details += "\nResolve by victory or Emergency Jump."
+	view.add_child(_label(details, 24))
 	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
 	_button("Enter combat", start_battle.bind(index))
 	_button("Return", show_system)
