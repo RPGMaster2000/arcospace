@@ -11,7 +11,7 @@ var entries: Dictionary = {}
 var markup = RegEx.create_from_string("\\[.*?\\]")
 
 func _ready() -> void:
-	add_theme_constant_override("h_separation", 4)
+	add_theme_constant_override("h_separation", 6)
 	add_theme_constant_override("v_separation", 2)
 	overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(overlay)
@@ -25,13 +25,13 @@ func put(key: String, value: String, detail: String = "", adjustment: String = "
 		Presentation.action(button)
 		for style in ["normal", "hover", "pressed", "disabled"]:
 			var box: StyleBoxFlat = button.get_theme_stylebox(style).duplicate()
-			box.bg_color = FAMILY_COLORS.get(key, Color("192b3c"))
-			box.border_color = box.bg_color.lightened(.32)
+			box.bg_color = FAMILY_COLORS.get(key, Color("282a29ff"))
+			box.border_color = box.bg_color.lightened(.12)
 			if style == "hover": box.bg_color = box.bg_color.lightened(.08)
 			box.content_margin_left = 8
 			box.content_margin_right = 8
-			box.content_margin_top = 2
-			box.content_margin_bottom = 2
+			box.content_margin_top = 1
+			box.content_margin_bottom = 1
 			button.add_theme_stylebox_override(style, box)
 		# Button text retains sizing/accessibility; child labels color each adjustment.
 		for color in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:

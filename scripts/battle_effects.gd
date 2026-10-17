@@ -14,13 +14,13 @@ const COLORS = [Color(1, 0.35, 0.2), Color(0.25, 0.8, 1), Color(0.5, 1, 0.3)]
 @export var player_ship_path: NodePath = NodePath("PlayerShip")
 @export var enemy_ship_path: NodePath = NodePath("EnemyShip")
 ## TUNE: Seconds between each integer when resources count up; smaller = faster.
-@export_range(0.02, 0.15, 0.005) var count_step_seconds: float = 0.035
+@export_range(0.02, 0.15, 0.005) var count_step_seconds: float = 0.065
 ## TUNE: Seconds for ship hit/recoil feedback.
-@export_range(0.1, 2.0, 0.05) var hit_seconds: float = 0.3
+@export_range(0.1, 2.0, 0.05) var hit_seconds: float = 0.6
 ## TUNE: Seconds for the production icon pulse.
-@export_range(0.1, 2.0, 0.05) var production_seconds: float = 0.28
+@export_range(0.1, 2.0, 0.05) var production_seconds: float = 0.48
 ## TUNE: Seconds for the hull repair sweep.
-@export_range(0.2, 3.0, 0.05) var repair_seconds: float = 1.0
+@export_range(0.2, 3.0, 0.05) var repair_seconds: float = 0.75
 ## TUNE: Seconds for shield activation/upgrade; 3D hit ripples are capped at 0.28 seconds.
 @export_range(0.2, 3.0, 0.05) var shield_seconds: float = 0.55
 ## TUNE: 2D ship shake distance in pixels; this does not change 3D recoil.

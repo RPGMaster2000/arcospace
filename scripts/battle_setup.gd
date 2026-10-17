@@ -148,4 +148,3 @@ func _fit_card(panel: Control) -> void:
 
 func _icon(key: String) -> String:
 	return Presentation.icon(key, Presentation.UI_FONT)
-
