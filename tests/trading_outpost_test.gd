@@ -32,6 +32,18 @@ func reach_station(run: Resource) -> void:
 func accounting(run: Resource) -> Array:
 	return [run.ftl_charge, run.required_ftl_charge, run.remaining_ftl_charge(), run.encounters.duplicate(true), run.pending_penalties.duplicate()]
 
+func encounter_signature(run: Resource) -> Array:
+	# Separate cloned configurations may own distinct Boss Resources with equal values.
+	var result: Array = []
+	for entry in run.encounters:
+		var snapshot: Dictionary = entry.duplicate()
+		if entry.kind == "battle":
+			var profile: Resource = run.enemy_profile(entry)
+			snapshot.erase("enemy_data")
+			snapshot["enemy_stats"] = [profile.ship_name, profile.enemy_rank, profile.hull_capacity, profile.shields, profile.materials, profile.energy, profile.crew, profile.synthesizer, profile.reactor, profile.quarters, profile.interstellar_ftl_reward, profile.destruction_salvage_reward]
+		result.append(snapshot)
+	return result
+
 func schedule_checks() -> void:
 	var firsts: Dictionary = {}
 	var gaps: Dictionary = {}
@@ -43,8 +55,8 @@ func schedule_checks() -> void:
 		var previous: int = 0
 		check(run.system_number == 1 and run.service.is_empty() and run.next_outpost_system in [2,3], "No system-one station; first scheduled in two or three")
 		for system in range(1, 31):
-			check(run.system_name == twin.system_name and run.encounters == twin.encounters and run.service == twin.service and run.next_outpost_system == twin.next_outpost_system, "Debug seed reproduces station schedule and systems")
-			check(run.encounters == without.encounters and run.required_ftl_charge == without.required_ftl_charge and run.rng.state == without.rng.state, "Station stream independent of encounters and travel accounting")
+			check(run.system_name == twin.system_name and encounter_signature(run) == encounter_signature(twin) and run.service == twin.service and run.next_outpost_system == twin.next_outpost_system, "Debug seed reproduces station schedule and systems")
+			check(encounter_signature(run) == encounter_signature(without) and run.required_ftl_charge == without.required_ftl_charge and run.rng.state == without.rng.state, "Station stream independent of encounters and travel accounting")
 			check(run.encounters.size() == 6, "Station never replaces a progression encounter")
 			var poi_count: int = 0
 			for entry in run.encounters:
