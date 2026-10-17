@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "offense"
 card_name = "Boarding Party"
 family = "crew"
 cost = 4

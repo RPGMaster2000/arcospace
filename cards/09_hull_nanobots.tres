@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "defense"
 card_name = "Hull Nanobots"
 family = "energy"
 cost = 7

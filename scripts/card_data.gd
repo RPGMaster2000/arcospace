@@ -6,6 +6,8 @@ class_name CardData
 # DOES NOT: Change game state or manage turns.
 ## TUNE: Original rarity controls draw eligibility and border presentation, independently of upgrades.
 @export_enum("Tier 1:1", "Tier 2:2", "Tier 3:3") var tier: int = 1
+## TUNE: One primary Power Allocation purpose. Upgrades retain this identity category.
+@export_enum("offense", "defense", "systems") var allocation_category: String = "systems"
 ## TUNE: Complete replacement effects for Upgrade I and II. Base effects/cost stay unchanged.
 @export var upgrade_effects: Array[Dictionary] = []
 @export_range(0, 2, 1) var max_upgrades: int = 2

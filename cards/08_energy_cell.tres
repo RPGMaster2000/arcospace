@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "systems"
 card_name = "Energy Cell"
 family = "energy"
 cost = 0

@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "offense"
 tier = 2
 card_name = "Antimatter Lance"
 family = "energy"

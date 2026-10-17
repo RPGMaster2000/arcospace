@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "systems"
 card_name = "Quarters Upgrade"
 family = "crew"
 cost = 8

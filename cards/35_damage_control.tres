@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "defense"
 tier = 2
 card_name = "Damage Control"
 family = "crew"

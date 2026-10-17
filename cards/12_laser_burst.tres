@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "offense"
 card_name = "Laser Burst"
 family = "energy"
 cost = 6

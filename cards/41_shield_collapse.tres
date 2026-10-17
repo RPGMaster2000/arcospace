@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "offense"
 tier = 1
 card_name = "Shield Collapse"
 family = "energy"

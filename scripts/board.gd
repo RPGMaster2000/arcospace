@@ -9,6 +9,10 @@ signal expedition_restart
 signal expedition_exit
 var expedition: Resource
 var expedition_encounter: int = -1
+## TUNE: Static Power Allocation weight; copied into the player hand at battle start.
+@export var allocation_settings: Resource = preload("res://resources/power_allocation.tres")
+var allocation_button: Button
+var allocation_popup: CanvasLayer
 
 const Ships = preload("res://scripts/ship_library.gd")
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -187,6 +191,7 @@ func _ready() -> void:
 	modifier.configure(int(setup_settings.get("modifier", 0)))
 	for active_hand in [hand, enemy_hand]:
 		active_hand.drop_multiplier = modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0
+	_setup_allocation()
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
@@ -198,7 +203,7 @@ func _ready() -> void:
 	preload("res://scripts/ui/encounter_presentation.gd").action($FTLPanel/WarpButton)
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
-	hand.deal(card_slots.size())
+	hand.deal_player_opening()
 	enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
 		var button: Button = get_node(card_slots[slot])
@@ -479,6 +484,8 @@ func refresh_display() -> void:
 	$FTLPanel/WarpButton.visible = charged
 	_update_jump_style()
 	$FTLPanel/WarpButton.disabled = not ftl.can_warp() or current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty()
+	allocation_button.visible = winner.is_empty()
+	if not winner.is_empty(): allocation_popup.dismiss()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
 	$MatchResult/Panel/Title.text = "JUMP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
 	var method: String = "Emergency Jump" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
@@ -561,7 +568,31 @@ func _fit_combat_controls() -> void:
 	$HandRule.position.y = hand_top - 8 - 359
 	$LastActionLabel.position = Vector2(16, hand_top - 32)
 	$LastActionLabel.size.x = size.x - 160
+	if is_instance_valid(allocation_button):
+		# Same action-strip anchor at every landscape aspect; cards keep their existing layout.
+		allocation_button.position = Vector2(size.x - 80, hand_top - 60)
 	_fit_jump_button()
+
+func _setup_allocation() -> void:
+	hand.configure_player_allocation(allocation_settings.matching_draw_weight)
+	allocation_popup = preload("res://scripts/ui/power_allocation_popup.gd").new()
+	add_child(allocation_popup)
+	allocation_button = Button.new()
+	allocation_button.name = "PowerAllocation"
+	allocation_button.custom_minimum_size = Vector2(64, 48)
+	allocation_button.add_theme_font_override("font", ResultPresentation.UI_FONT)
+	allocation_button.add_theme_font_size_override("font_size", 26)
+	ResultPresentation.action(allocation_button)
+	add_child(allocation_button)
+	allocation_popup.mode_selected.connect(_select_allocation)
+	allocation_button.pressed.connect(func(): allocation_popup.present(hand.allocation_mode, hand._allocation_multiplier))
+	_select_allocation("balanced")
+
+func _select_allocation(mode: String) -> void:
+	if not hand.select_allocation(mode): return
+	var index: int = allocation_popup.MODES.find(mode)
+	allocation_button.text = allocation_popup.ICONS[index]
+	allocation_button.tooltip_text = "Power Allocation · " + allocation_popup.NAMES[index]
 
 func _fit_jump_button() -> void:
 	var button: Button = $FTLPanel/WarpButton

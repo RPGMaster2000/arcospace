@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+allocation_category = "systems"
 tier = 1
 card_name = "Supply Diversion"
 family = "crew"
