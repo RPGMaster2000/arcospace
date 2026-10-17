@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition_progression.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ftl_carryover_cap = 2
+systems_per_difficulty = 3
+hull_bonus_per_level = 2
+shields_bonus_per_level = 1
+resource_bonus_per_level = 1
+production_bonus_per_level = 0.25
+elite_probability_increase = 0.025
+maximum_elite_probability = 0.35
+boss_interval = 6

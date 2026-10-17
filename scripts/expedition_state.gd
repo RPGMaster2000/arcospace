@@ -55,6 +55,8 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	salvage = 0
 	battles_won = 0
 	system_number = 0
+	ftl_charge = 0
+	required_ftl_charge = 0
 	next_outpost_system = 0
 	station_production_purchases = 0
 	service_revision += 1
@@ -86,7 +88,28 @@ func production(key: String) -> int:
 	return int(ship().get(key)) + int(production_upgrades.get(key, 0))
 
 func can_jump() -> bool:
-	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge
+	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge and not mandatory_boss_pending()
+
+func mandatory_boss_pending() -> bool:
+	if not rules.progression.is_boss_system(system_number): return false
+	for encounter in encounters:
+		if encounter.get("mandatory_boss", false): return not encounter.completed
+	# Fail closed if a malformed/custom system loses its mandatory encounter.
+	return true
+
+func difficulty_level() -> int:
+	return rules.progression.difficulty_level(system_number)
+
+func _enemy_index(items: Array) -> int:
+	if difficulty_level() == 1: return _weighted_index(items)
+	var elites: Array = []
+	var others: Array = []
+	for profile in items:
+		if profile.enemy_rank == 1: elites.append(profile)
+		else: others.append(profile)
+	if elites.is_empty() or others.is_empty(): return _weighted_index(items)
+	var bucket: Array = elites if rng.randf() < rules.progression.elite_probability(items, system_number) else others
+	return items.find(bucket[_weighted_index(bucket)])
 
 func _weighted_index(items: Array) -> int:
 	var total: float = 0.0
@@ -106,6 +129,7 @@ func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
 	if system_number > 0 and not can_jump(): return false
+	var carried_charge: int = rules.progression.carryover(ftl_charge, required_ftl_charge) if system_number > 0 else 0
 	var ordinary: Array = []
 	var hazardous: Array = []
 	for poi in rules.pois:
@@ -150,16 +174,30 @@ func generate_system() -> bool:
 			station_production_purchases = 0
 		next_outpost_system = system_number + _station_interval()
 	service_revision += 1
-	ftl_charge = 0
+	ftl_charge = carried_charge
 	required_ftl_charge = int(composition.ordinary) + int(composition.hazardous) + 1
+	var boss_system: bool = rules.progression.is_boss_system(system_number)
+	var boss_added: bool = false
+	# Milestones have one Boss, replacing an existing enemy slot, never a PoI.
+	if boss_system:
+		var ordinary_enemies: Array = []
+		for profile in enemies:
+			if profile.enemy_rank != 2: ordinary_enemies.append(profile)
+		if not ordinary_enemies.is_empty(): enemies = ordinary_enemies
 	for category in ["ordinary", "hazardous", "battle"]:
 		var library: Array = enemies if category == "battle" else (ordinary if category == "ordinary" else hazardous)
 		var available: Array = library.duplicate()
 		for slot in range(int(composition[category])):
 			if available.is_empty(): available = library.duplicate()
-			var entry: Resource = available.pop_at(_weighted_index(available))
+			var mandatory: bool = category == "battle" and boss_system and not boss_added
+			var entry: Resource
+			if mandatory:
+				entry = rules.progression.mandatory_boss_profile()
+				boss_added = true
+			else:
+				entry = available.pop_at(_enemy_index(available) if category == "battle" else _weighted_index(available))
 			if category == "battle":
-				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "modifier":Modifiers.roll_encounter(rng), "title":entry.ship_name, "completed":false, "charge_awarded":false})
+				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "system_number":system_number, "mandatory_boss":mandatory, "modifier":Modifiers.roll_encounter(rng), "title":entry.ship_name, "completed":false, "charge_awarded":false})
 			else:
 				encounters.append({"kind":"poi", "poi":entry, "title":entry.title, "completed":false, "charge_awarded":false})
 	for index in range(encounters.size() - 1, 0, -1):
@@ -170,7 +208,8 @@ func generate_system() -> bool:
 	return true
 
 func enemy_profile(encounter: Dictionary) -> Resource:
-	return encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
+	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
+	return rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)))
 
 func encounter_charge(index: int) -> int:
 	if index == SERVICE_INDEX: return 0
@@ -476,6 +515,7 @@ func record_battle(board: Node) -> void:
 		if board.winner == "player":
 			# Escape and destruction both complete navigation; Salvage remains separate.
 			if not _complete_encounter(active_battle): return
+			encounters[active_battle].resolution = "escaped" if board.escaped_by_ftl else "defeated"
 		else:
 			return
 	if board.winner == "player":

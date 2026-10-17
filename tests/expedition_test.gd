@@ -44,6 +44,9 @@ func run_tests() -> void:
 			else: pois += 1
 		check(run.encounters.size() == 6 and battles >= 1 and battles <= 2 and pois >= 4, "Every system has six encounters and accessible battles/PoIs")
 		check(not run.generate_system(), "Uncharged drive blocks travel")
+		# This long-run generation fixture simulates completing each mandatory battle.
+		for entry in run.encounters:
+			if entry.get("mandatory_boss", false): entry.completed = true
 		run.ftl_charge = run.required_ftl_charge
 		check(run.generate_system(), "Charged drive permits travel")
 	check(run.system_number == 51 and run.salvage == 0, "Repeated charged jumps")

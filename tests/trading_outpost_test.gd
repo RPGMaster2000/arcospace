@@ -20,6 +20,9 @@ func fresh(ship_index: int = 0, seed_value: int = 42) -> Resource:
 	return run
 
 func advance(run: Resource) -> void:
+	# Isolate station scheduling while respecting the new mandatory encounter gate.
+	for entry in run.encounters:
+		if entry.get("mandatory_boss", false): entry.completed = true
 	run.ftl_charge = run.required_ftl_charge
 	check(run.generate_system(), "Charged ship may leave an ignored station")
 
