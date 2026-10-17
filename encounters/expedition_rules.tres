@@ -21,8 +21,11 @@
 [ext_resource type="Resource" path="res://ships/marauder_vanguard.tres" id="E3"]
 [ext_resource type="Resource" path="res://ships/sentinel_dreadnought.tres" id="E4"]
 
+[ext_resource type="Resource" path="res://resources/expedition_progression.tres" id="Progression"]
+
 [resource]
 script = ExtResource("Rules")
+progression = ExtResource("Progression")
 trading_outpost = ExtResource("4")
 minimum_station_interval = 2
 maximum_station_interval = 3

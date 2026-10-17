@@ -27,6 +27,8 @@ func check(ok: bool, message: String) -> void:
 func fresh(seed_value: int = 2041) -> Resource:
 	var run = State.new()
 	var config: Resource = Rules.duplicate(true)
+	# Explicitly isolate the script-default nested configuration before tuning Inspector values.
+	config.progression = Rules.progression.duplicate(true)
 	config.log_rolls = false
 	run.start(0, config, seed_value)
 	return run
