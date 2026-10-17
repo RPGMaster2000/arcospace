@@ -110,3 +110,19 @@ func _fit_ftl() -> void:
 	$FTLPanel.position = Vector2(ship_center.x - $FTLPanel.size.x * 0.5, ship_center.y * 2.0 - hull_center - $FTLPanel.size.y * 0.5) + ftl_position_offset
 	$FTLPanel.position.x = clampf($FTLPanel.position.x, 16, size.x - $FTLPanel.size.x - 16)
 	_fit_jump_button()
+	_fit_allocation_button()
+
+## TUNE: Ship-relative offset as fractions of the battle presentation height, not engine coordinates.
+@export var allocation_presentation_offset: Vector2 = Vector2(-0.56, 0.02)
+
+func _fit_allocation_button() -> void:
+	if not is_instance_valid(allocation_button) or not battle_camera: return
+	var area: Control = $BattleView
+	var viewport: SubViewport = $BattleView/Viewport
+	var player: Node3D = $BattleView/Viewport/Battlefield/PlayerShip
+	var center: Vector2 = area.position + battle_camera.unproject_position(player.global_position) * area.size / Vector2(viewport.size)
+	var location: Vector2 = center + allocation_presentation_offset * area.size.y - allocation_button.size * 0.5
+	# Keep the resource column, top HUD, Hull/Shields and hand accessible.
+	location.x = clampf(location.x, 136, size.x - allocation_button.size.x - 16)
+	location.y = clampf(location.y, 80, minf($PlayerHullLabel.position.y - allocation_button.size.y - 12, size.y - 340))
+	allocation_button.position = location

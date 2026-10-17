@@ -42,3 +42,7 @@ class_name ExpeditionRules
 @export_range(0.0, 1.0, 0.01) var reward_tier_two_chance: float = 0.60
 ## TUNE: Acquired identity draw weight relative to starting identities (within its rarity).
 @export_range(1.0, 10.0, 0.1) var acquired_card_draw_weight: float = 3.0
+
+@export_group("Expedition progression")
+## TUNE: Carryover, system difficulty and recurring mandatory Boss configuration.
+@export var progression: Resource = preload("res://resources/expedition_progression.tres")

@@ -114,7 +114,8 @@ func run_tests() -> void:
 			check(run.ftl_charge + run.remaining_ftl_charge() >= run.required_ftl_charge, "Remaining capacity after every decision")
 			check(run.can_jump() == (run.ftl_charge >= run.required_ftl_charge), "Can leave immediately at threshold")
 		check(run.can_jump(), "Every completed system permits travel, including all escapes")
-		check(run.generate_system() and run.ftl_charge == 0, "Jump resets travel charge")
+		var expected_carry: int = run.rules.progression.carryover(run.ftl_charge, run.required_ftl_charge)
+		check(run.generate_system() and run.ftl_charge == expected_carry, "Jump carries only capped surplus charge")
 	check(ranks.size() == 3 and compositions.size() >= 15 and escapes > 10000 and surveys > 0, "Varied composition, strength, escapes and survey coverage")
 	# Wormhole successes can be penalty-free; other hazardous branches have drawbacks.
 	for poi in Rules.pois:

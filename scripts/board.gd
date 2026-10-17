@@ -568,10 +568,13 @@ func _fit_combat_controls() -> void:
 	$HandRule.position.y = hand_top - 8 - 359
 	$LastActionLabel.position = Vector2(16, hand_top - 32)
 	$LastActionLabel.size.x = size.x - 160
-	if is_instance_valid(allocation_button):
-		# Same action-strip anchor at every landscape aspect; cards keep their existing layout.
-		allocation_button.position = Vector2(size.x - 80, hand_top - 60)
+	_fit_allocation_button()
 	_fit_jump_button()
+
+func _fit_allocation_button() -> void:
+	if not is_instance_valid(allocation_button): return
+	# 2D fallback uses the ship presentation center; 3D boards override this projection.
+	allocation_button.position = $PlayerShip.position + Vector2(-150, 0) - allocation_button.size * 0.5
 
 func _setup_allocation() -> void:
 	hand.configure_player_allocation(allocation_settings.matching_draw_weight)

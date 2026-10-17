@@ -218,6 +218,11 @@ func _clear(kind: String) -> void:
 	title.text = "System Encounters — " + state.system_name
 	resource_bar.exploration(state)
 	jump_button.text = "%s FTL Drive %d/%d · %s" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge, "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
+	if state.mandatory_boss_pending():
+		jump_button.text = "%s FTL Drive %d/%d · Resolve Boss first" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge]
+		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by Emergency Jump before leaving this system."
+	else:
+		jump_button.tooltip_text = "Surplus FTL carries forward, up to %d." % state.rules.progression.ftl_carryover_cap
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 
@@ -244,7 +249,7 @@ func show_system() -> void:
 		var descriptor: String = {"ordinary":"Ordinary PoI", "hazard":"Hazardous PoI", "battle":"Enemy", "special":"Anomalous PoI"}[category]
 		if encounter.kind == "battle":
 			var rank: int = state.enemy_profile(encounter).enemy_rank
-			descriptor = ["Enemy", "Elite enemy", "Boss enemy"][rank]
+			descriptor = "Mandatory Boss" if encounter.get("mandatory_boss", false) else ["Enemy", "Elite enemy", "Boss enemy"][rank]
 			key = ["battle", "elite", "boss"][rank]
 		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
 		if encounter.kind == "battle" and not encounter.completed:
@@ -263,8 +268,15 @@ func show_battle_preview(index: int) -> void:
 	if not state.can_visit(index): return
 	_clear("preview")
 	var encounter: Dictionary = state.encounters[index]
-	view.add_child(_label(encounter.title + " · " + State.Modifiers.NAMES[encounter.modifier], 28))
-	view.add_child(_label(State.Modifiers.description(encounter.modifier), 24))
+	var enemy: Resource = state.enemy_profile(encounter)
+	var heading: String = encounter.title + " · " + State.Modifiers.NAMES[encounter.modifier] + " · Lv %d" % state.difficulty_level()
+	if encounter.get("mandatory_boss", false): heading = "Mandatory Boss · " + heading
+	var preview_title = _label(heading, 28)
+	preview_title.tooltip_text = "Hull %d · Shields %d" % [enemy.hull_capacity, enemy.shields]
+	view.add_child(preview_title)
+	var details: String = State.Modifiers.description(encounter.modifier)
+	if encounter.get("mandatory_boss", false): details += "\nResolve by victory or Emergency Jump."
+	view.add_child(_label(details, 24))
 	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
 	_button("Enter combat", start_battle.bind(index))
 	_button("Return", show_system)
