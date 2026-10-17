@@ -86,6 +86,18 @@ func run_tests() -> void:
 			for key in State.PRODUCTION: check(scaled.get(key) == base.get(key)+floori(steps*0.25), "Production scales conservatively")
 			check(before == [base.hull_capacity,base.shields,base.materials,base.energy,base.crew,base.synthesizer,base.reactor,base.quarters], "Shared ShipData never mutated")
 			check(scaled.interstellar_ftl_reward == base.interstellar_ftl_reward and scaled.destruction_salvage_reward == base.destruction_salvage_reward and scaled.card_effect_weights == base.card_effect_weights, "Rewards and enemy preferences unmodified")
+	var custom_progression: Resource = Progression.duplicate(true)
+	custom_progression.systems_per_difficulty = 2
+	custom_progression.hull_bonus_per_level = 5
+	custom_progression.shields_bonus_per_level = 2
+	custom_progression.resource_bonus_per_level = 3
+	custom_progression.production_bonus_per_level = 0.5
+	custom_progression.elite_probability_increase = 0.1
+	custom_progression.maximum_elite_probability = 0.2
+	var base_profile: Resource = Rules.enemy_ships[0]
+	var custom_enemy: Resource = custom_progression.scaled_enemy(base_profile,5)
+	check(custom_enemy.hull_capacity == base_profile.hull_capacity+10 and custom_enemy.shields == base_profile.shields+4 and custom_enemy.energy == base_profile.energy+6 and custom_enemy.reactor == base_profile.reactor+1, "Inspector bonuses and difficulty interval control effective stats")
+	check(is_equal_approx(custom_progression.elite_probability(Rules.enemy_ships,5),0.2), "Inspector Elite increment and cap control probability")
 	var last_probability: float = 0
 	for system in range(1,101):
 		var probability: float = Progression.elite_probability(Rules.enemy_ships,system)
@@ -157,6 +169,7 @@ func run_tests() -> void:
 	tuned.system_number = 3
 	tuned.ftl_charge = tuned.required_ftl_charge
 	check(tuned.generate_system() and tuned.mandatory_boss_pending(), "Inspector Boss interval applies")
+	check(Progression.boss_interval == 6, "Tuning cloned configurations never changes shared defaults")
 	var invalid = fresh()
 	invalid.rules.minimum_battles = 0
 	invalid.rules.maximum_battles = 0
@@ -175,6 +188,10 @@ func run_tests() -> void:
 		check(host.jump_button.disabled and host.jump_button.text.contains("Resolve Boss"), "UI explains mandatory lock despite sufficient charge")
 		await capture("system-" + str(dimensions.x))
 		var index: int = boss_index(host.state)
+		if index < 0:
+			check(false, "Live milestone must have a mandatory Boss")
+			host.free()
+			continue
 		var scaled: Resource = host.state.enemy_profile(host.state.encounters[index])
 		host.start_battle(index)
 		var battle = host.battle
