@@ -31,7 +31,7 @@
 script = ExtResource("1")
 ship_name = "Titiania"
 role = "Armored / Industrial"
-summary = "Strong Hull and industry; slow, vulnerable Emergency Jump."
+summary = "Strong Hull and industry; slow, vulnerable EMP Pulse."
 hull_capacity = 42
 shields = 6
 materials = 14

@@ -109,9 +109,9 @@ func exploration(state: Resource) -> void:
 	put("salvage", str(state.salvage), heading("salvage", "Salvage") + "\n\n[b]%d[/b]\nRepairs · Cards · Supplies · Production" % state.salvage)
 	for pair in [["materials", "synthesizer"], ["energy", "reactor"], ["crew", "quarters"]]:
 		starting_resource(state, pair[0], pair[1])
-	var boost: int = clampi(state.modifier_value("emergency_jump_charge"), 0, state.ship().ftl_turns)
-	var offline: int = maxi(0, state.modifier_value("emergency_jump_offline"))
-	var detail: String = heading("jump", "Emergency Jump") + "\n\n[b]Next battle[/b]\nCharge  [b]%d / %d[/b]\nOffline  [b]%d turns[/b]\nCombat escape; separate from system travel." % [boost, state.ship().ftl_turns, offline]
+	var boost: int = clampi(state.modifier_value("emp_pulse_charge"), 0, state.ship().ftl_turns)
+	var offline: int = maxi(0, state.modifier_value("emp_pulse_offline"))
+	var detail: String = heading("jump", "EMP Pulse") + "\n\n[b]Next battle[/b]\nCharge  [b]%d / %d[/b]\nOffline  [b]%d turns[/b]\nCombat escape; separate from system travel." % [boost, state.ship().ftl_turns, offline]
 	if offline > 0:
 		put("jump", "", detail, "Disabled -%d" % offline, true, "Boost +%d" % boost if boost else "")
 	elif boost > 0:

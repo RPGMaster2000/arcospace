@@ -41,7 +41,7 @@ func run() -> void:
 	battle.ftl.charge = battle.ftl.charge_target
 	battle._warp_out()
 	battle.refresh_display()
-	check(battle.get_node("MatchResult/Panel/Title").text == "JUMP SUCCESS" and battle.get_node("MatchResult/Panel/Continue").visible, "Escape result survives refresh and allows Continue")
+	check(battle.get_node("MatchResult/Panel/Title").text == "EMP PULSE SUCCESS" and battle.get_node("MatchResult/Panel/Continue").visible, "Escape result survives refresh and allows Continue")
 	battle.queue_free()
 	await process_frame
 	battle = board()

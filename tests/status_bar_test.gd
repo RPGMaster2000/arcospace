@@ -76,11 +76,11 @@ func run() -> void:
 	check(host.resource_bar.entries.crew.text.ends_with("10 Crew -3"), "Base reserve plus red penalty")
 	check(not host.resource_bar.entries.has("travel") and not host.resource_bar.entries.has("hazard"), "Removed duplicate FTL and effects entries")
 	check(host.resource_bar.entries.keys().slice(0,3) == ["hull", "shields", "salvage"], "Hull, Shields, Salvage order")
-	check(host.resource_bar.entries.jump.text.ends_with("Nominal"), "Unmodified Emergency Jump nominal")
+	check(host.resource_bar.entries.jump.text.ends_with("Nominal"), "Unmodified EMP Pulse nominal")
 	check(Presentation.meaning("synthesizer").begins_with("Synthesizer") and Presentation.meaning("quarters").begins_with("Quarters"), "Production names consistent")
 	check(host.resource_bar.entries.energy.get_node("Values/Adjustment").get_theme_color("font_color") == host.resource_bar.POSITIVE, "Positive color")
 	check(host.resource_bar.entries.crew.get_node("Values/Adjustment").get_theme_color("font_color") == host.resource_bar.NEGATIVE, "Negative color")
-	host.state.add_modifiers({"energy":-100, "emergency_jump_charge":2, "emergency_jump_offline":3})
+	host.state.add_modifiers({"energy":-100, "emp_pulse_charge":2, "emp_pulse_offline":3})
 	host.show_system()
 	check(host.resource_bar.entries.energy.text == "⚡ +2/t · 10 Energy", "Effective capped net zero omits adjustment")
 	check(host.resource_bar.entries.jump.text.ends_with("Disabled -3 · Boost +2"), "Offline and boost coexist without hiding either")
@@ -90,7 +90,7 @@ func run() -> void:
 	var saved_penalties: Dictionary = host.state.pending_penalties.duplicate()
 	host.state.pending_bonuses.energy = 2
 	host.state.pending_penalties.energy = -5
-	host.state.pending_bonuses.erase("emergency_jump_offline")
+	host.state.pending_bonuses.erase("emp_pulse_offline")
 	host.state.production_upgrades.synthesizer = 1
 	host.show_system()
 	check(host.resource_bar.entries.energy.text == "⚡ +2/t · 10 Energy -3", "Mixed effects display net negative")
@@ -107,7 +107,7 @@ func run() -> void:
 	click_at(host.legend.get_global_rect().get_center())
 	await settle()
 	check(host.resource_bar.overlay.shade.visible, "Legend opens")
-	check(host.resource_bar.overlay.body.text.contains("Emergency Jump"), "Legend has icon explanations")
+	check(host.resource_bar.overlay.body.text.contains("EMP Pulse"), "Legend has icon explanations")
 	await shot("legend")
 	click_at(host.grid.get_child(enemy_index).get_global_rect().get_center())
 	check(host.view_kind == "system", "Modal blocks underlying encounter activation")
@@ -146,7 +146,7 @@ func run() -> void:
 		board.salvage = 12
 		board.refresh_display()
 		check(board.get_node("PlayerResource2").visible and board.get_node("PlayerHullLabel").visible, "Original battle resource and Hull UI restored")
-		check(board.get_node("SalvageLabel").visible and board.get_node("FTLPanel/Charge").visible, "Original Salvage and Emergency Jump UI restored")
+		check(board.get_node("SalvageLabel").visible and board.get_node("FTLPanel/Charge").visible, "Original Salvage and EMP Pulse UI restored")
 		check(board.get_node("PlayerResource2/energy").text == "37", "Original resource values update")
 		for child in board.get_children(): check(not child is HFlowContainer, "No exploration bar in combat")
 		if kind == 2:

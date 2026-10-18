@@ -1,7 +1,7 @@
 name: Godot regression tests
 on:
   push:
-    branches: [main, codex/expedition-progression-validation]
+    branches: [main, codex/expedition-progression-validation, codex/music-emp-pulse]
   workflow_dispatch:
 permissions:
   contents: read

@@ -122,7 +122,7 @@ func run_tests() -> void:
 		if not poi.hazardous: continue
 		for approach in poi.approaches:
 			for outcome in [approach.success, approach.failure]:
-				var drawback: bool = approach.salvage_cost > 0 or outcome.hull < 0 or int(outcome.next_battle.get("emergency_jump_offline", 0)) > 0
+				var drawback: bool = approach.salvage_cost > 0 or outcome.hull < 0 or int(outcome.next_battle.get("emp_pulse_offline", 0)) > 0
 				for key in outcome.next_battle: drawback = drawback or outcome.next_battle[key] < 0
 				check(drawback or (poi.resource_path.ends_with("unstable_wormhole.tres") and outcome.extra_ftl_charge > 0), "Hazard drawback or successful travel shortcut")
 		var low_run = State.new()

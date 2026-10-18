@@ -11,7 +11,7 @@ const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const RESOURCES = ["materials", "energy", "crew"]
 const LABELS = {"synthesizer":"Synthesizer", "reactor":"Reactor", "quarters":"Quarters",
 	"materials":"Materials", "energy":"Energy", "crew":"Crew", "shields":"Shields",
-	"emergency_jump_charge":"Emergency Jump charge", "emergency_jump_offline":"Emergency Jump offline turns"}
+	"emp_pulse_charge":"EMP Pulse charge", "emp_pulse_offline":"EMP Pulse offline turns"}
 var rules: Resource
 var player_ship: int = 0
 var hull: int = 0
@@ -406,7 +406,7 @@ func add_modifiers(values: Dictionary) -> void:
 		var amount: int = int(values[key])
 		# Temporary production modifiers are unsupported; outpost upgrades use their own ledger.
 		if key in PRODUCTION: continue
-		if key == "emergency_jump_offline":
+		if key == "emp_pulse_offline":
 			pending_bonuses[key] = maxi(int(pending_bonuses.get(key, 0)), amount)
 		elif amount > 0:
 			pending_bonuses[key] = int(pending_bonuses.get(key, 0)) + amount
@@ -535,8 +535,8 @@ func begin_battle(board: Node, index: int = -1) -> void:
 		board.set("player_" + key, maxi(0, production(key)))
 	for key in RESOURCES + ["shields"]:
 		board.set("player_" + key, starting_value(ship(), key))
-	board.ftl.charge = clampi(modifier_value("emergency_jump_charge"), 0, board.ftl.charge_target)
-	board.ftl.disabled_turns = maxi(0, modifier_value("emergency_jump_offline"))
+	board.ftl.charge = clampi(modifier_value("emp_pulse_charge"), 0, board.ftl.charge_target)
+	board.ftl.disabled_turns = maxi(0, modifier_value("emp_pulse_offline"))
 	active_player_hand = board.hand
 	board.hand.card_pool = player_pool()
 	board.hand.identity_weights = acquired_draw_weights()

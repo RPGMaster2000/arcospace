@@ -15,7 +15,7 @@ const ICONS = {
  "elite":["⚔️", "ELITE"], "boss":["⚔️", "BOSS"],
  "hull":["❤️", "HULL"], "shields":["🛡️", "SHIELDS"], "salvage":["🪨", "SALVAGE"],
  "materials":["🛠️", "MATERIALS"], "energy":["⚡", "ENERGY"], "crew":["👥", "CREW"],
- "travel":["🌌", "FTL"], "jump":["🚀", "JUMP"], "hazard":["⚠️", "HAZARD"]}
+ "travel":["🌌", "FTL"], "jump":["⚡", "EMP"], "hazard":["⚠️", "HAZARD"]}
 const MEANINGS = {
  "hull":"Hull — permanent damage persists; excess Hull is temporary Ablative Plating.",
  "shields":"Shields — temporary protection, reset between battles.",
@@ -27,7 +27,7 @@ const MEANINGS = {
  "reactor":"Reactor — Energy gained each player turn.",
  "quarters":"Quarters — Crew gained each player turn.",
  "travel":"FTL Drive — interstellar charge; resets on entering a new system.",
- "jump":"Emergency Jump — combat escape charge, separate from interstellar travel.",
+ "jump":"EMP Pulse — combat escape charge, separate from interstellar travel.",
  "hazard":"Hazard / modifier — tap to inspect conditions and effects.",
  "card":"Cards - acquired cards join your expedition pool; enemies keep the base library."}
 

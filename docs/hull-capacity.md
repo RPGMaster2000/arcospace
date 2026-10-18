@@ -49,7 +49,7 @@ production prices and other services are unchanged. Post-battle repairs cost **2
 There is still **one Hull integer**, with no separate armor stat. `begin_battle()`
 copies its full value to the board, including purchased plating. `sync_battle()` still
 caps carried Hull, both when the result is recorded and on return after optional
-repairs. Destruction victory, resource victory and successful Emergency Jump therefore
+repairs. Destruction victory, resource victory and successful EMP Pulse therefore
 all discard leftover plating. Returning to ship selection starts no new expedition
 until confirmation; it does not carry the old expedition's plating into a fresh run.
 Combat damage, card repairs and FTL disruption calculations are unchanged.

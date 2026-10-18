@@ -1,5 +1,5 @@
 extends SceneTree
-# Deterministic balance diagnostic, not a full match: no modifiers or Emergency Jump.
+# Deterministic balance diagnostic, not a full match: no modifiers or EMP Pulse.
 # Baseline reproduces the previous full pools, round-six unlock and unweighted enemy AI.
 const Cards = preload("res://scripts/card_library.gd")
 const Ships = preload("res://scripts/ship_library.gd")

@@ -20,7 +20,7 @@ func run() -> void:
 			battle.battle_effects.enabled = false
 			if battle.battle_effects.busy: await battle.battle_effects.finished
 			check(battle.enemy_ship_data == enemy and battle.enemy_hull == enemy.hull_capacity, "Inspector enemy profile reaches real battle")
-			check(battle.ftl.charge_target == host.state.ship().ftl_turns, "Ship-specific Emergency Jump duration preserved")
+			check(battle.ftl.charge_target == host.state.ship().ftl_turns, "Ship-specific EMP Pulse duration preserved")
 			battle.ftl.charge = battle.ftl.charge_target
 			battle.refresh_display()
 			await process_frame
@@ -28,7 +28,7 @@ func run() -> void:
 			var button = battle.get_node("FTLPanel/WarpButton")
 			check(not label.visible and not battle.get_node("FTLPanel/Progress").visible and button.visible and is_equal_approx(button.position.x, 0), "Charged Jump replaces the FTL display")
 			battle._warp_out()
-			check(battle.escaped_by_ftl and battle.winner == "player", "Live Emergency Jump succeeds")
+			check(battle.escaped_by_ftl and battle.winner == "player", "Live EMP Pulse succeeds")
 			check(host.state.ftl_charge == enemy.interstellar_ftl_reward and host.state.salvage == 0, "Live escape grants full charge and zero Salvage")
 			battle.refresh_display()
 			check(host.state.ftl_charge == enemy.interstellar_ftl_reward, "Refresh does not repeat reward")

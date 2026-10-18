@@ -114,6 +114,7 @@ func _build_ui() -> void:
 	legend.custom_minimum_size = Vector2(100, 48)
 	Presentation.action(legend)
 	heading_row.add_child(legend)
+	heading_row.add_child(preload("res://scripts/ui/music_button.gd").new())
 	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
 	resource_bar.pulse_period = hull_pulse_period
 	resource_bar.pulse_scale = hull_pulse_scale
@@ -258,7 +259,7 @@ func _clear(kind: String) -> void:
 	jump_button.text = "%s FTL Drive %d/%d · %s" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge, "Jump to Next System" if state.ftl_charge >= state.required_ftl_charge else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)]
 	if state.mandatory_boss_pending():
 		jump_button.text = "%s FTL Drive %d/%d · Resolve Boss first" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge]
-		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by Emergency Jump before leaving this system."
+		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:
 		jump_button.tooltip_text = "Surplus FTL carries forward, up to %d." % state.rules.progression.ftl_carryover_cap
 	jump_button.disabled = not state.can_jump()
@@ -272,6 +273,7 @@ func start_expedition() -> void:
 	show_system()
 
 func show_system() -> void:
+	get_node("/root/Music").play_starmap()
 	if not state.pending_choice.is_empty():
 		show_outcome()
 		return
@@ -345,7 +347,7 @@ func show_battle_preview(index: int) -> void:
 	preview_title.tooltip_text = "Hull %d · Shields %d" % [enemy.hull_capacity, enemy.shields]
 	view.add_child(preview_title)
 	var details: String = State.Modifiers.description(encounter.modifier)
-	if encounter.get("mandatory_boss", false): details += "\nResolve by victory or Emergency Jump."
+	if encounter.get("mandatory_boss", false): details += "\nResolve by victory or EMP Pulse."
 	view.add_child(_label(details, 24))
 	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
 	_button("Enter combat", start_battle.bind(index))

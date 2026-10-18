@@ -42,7 +42,7 @@ The regression suite includes layout assertions and the 10,000-system progressio
 
 ## Exploration status and encounter previews
 
-- `scripts/ui/resource_bar.gd`: seven exploration indicators: Hull, Shields, Salvage, Materials/Synthesizer, Energy/Reactor, Crew/Quarters and Emergency Jump. A resource reads `⚡ +2/t · 10 Energy +5`; production is the expedition total and the colored suffix is the effective pending reserve adjustment. Existing caps and stacking rules are unchanged. Dark red, blue and green backgrounds distinguish resource families.
+- `scripts/ui/resource_bar.gd`: seven exploration indicators: Hull, Shields, Salvage, Materials/Synthesizer, Energy/Reactor, Crew/Quarters and EMP Pulse. A resource reads `⚡ +2/t · 10 Energy +5`; production is the expedition total and the colored suffix is the effective pending reserve adjustment. Existing caps and stacking rules are unchanged. Dark red, blue and green backgrounds distinguish resource families.
 - `scripts/ui/info_overlay.gd` uses compact rich text: a bold icon/title, production per turn and next-battle reserve calculation. Desktop tooltips contain plain text. The original battle HUD remains unchanged.
 - Exploration menus and popups reserve 24 logical pixels at each edge. The redundant upper FTL meter is removed; charge and travel action appear only in the bottom control. PoIs retain the shared top Legend and omit duplicated requirement explanations. Vertical scrolling remains available for additional approaches and long card lists.
 - `scripts/ui/info_overlay.gd`: one reusable, dismissible modal for resource details and the Legend. It blocks underlying buttons, supports touch scrolling and Escape/Close. The Legend is available in ship selection, system, PoI and reward menus.

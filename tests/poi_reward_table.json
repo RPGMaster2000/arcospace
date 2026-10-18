@@ -25,9 +25,9 @@
   ],
   "spatial_anomaly": [
     [1, {"salvage": 3}, {"salvage": 3}],
-    [0.7, {"salvage": 5, "next_battle": {"emergency_jump_charge": 2}}, {"salvage": 2, "next_battle": {"shields": -3}}],
-    [0.85, {"salvage": 7, "next_battle": {"emergency_jump_charge": 3}}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}],
-    [0.75, {"salvage": 9, "next_battle": {"emergency_jump_charge": 5}}, {"salvage": 4, "next_battle": {"emergency_jump_offline": 2}}]
+    [0.7, {"salvage": 5, "next_battle": {"emp_pulse_charge": 2}}, {"salvage": 2, "next_battle": {"shields": -3}}],
+    [0.85, {"salvage": 7, "next_battle": {"emp_pulse_charge": 3}}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 1}}],
+    [0.75, {"salvage": 9, "next_battle": {"emp_pulse_charge": 5}}, {"salvage": 4, "next_battle": {"emp_pulse_offline": 2}}]
   ],
   "radiation_nebula": [
     [1, {"salvage": 3, "next_battle": {"shields": -2}}, {"salvage": 3, "next_battle": {"shields": -2}}],
@@ -48,9 +48,9 @@
     [0.7, {"salvage": 14, "hull": -4, "card_reward": true, "minimum_card_tier": 2}, {"salvage": 5, "hull": -7}]
   ],
   "unstable_wormhole": [
-    [1, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 1}}],
+    [1, {"salvage": 3, "next_battle": {"emp_pulse_offline": 1}}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 1}}],
     [0.65, {"salvage": 5, "extra_ftl_charge": 1}, {"salvage": 2, "next_battle": {"shields": -4}}],
-    [0.8, {"salvage": 7, "extra_ftl_charge": 2}, {"salvage": 3, "next_battle": {"emergency_jump_offline": 2}}],
+    [0.8, {"salvage": 7, "extra_ftl_charge": 2}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 2}}],
     [0.75, {"salvage": 9, "extra_ftl_charge": 2}, {"salvage": 4, "next_battle": {"energy": -4}}]
   ],
   "quarantined_colony": [

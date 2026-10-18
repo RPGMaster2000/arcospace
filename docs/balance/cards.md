@@ -74,7 +74,7 @@ Every card has two full replacement effect dictionaries on its CardData Resource
 | `shield_collapse_below` | Remove all enemy Shields strictly below threshold |
 | `self_damage` / `self_damage_regular` | Direct Hull/plating loss / Shield-first damage |
 
-Discard gives floor(cost / 3) matching resources (`scripts/board.gd`). Extra actions grant no turn income or Emergency Jump charge. **Planned, not implemented:** Tier 3 card library, deck trimming. Pirate rewards currently use Uncommon-or-better, the highest populated tier; no empty rare selection screen.
+Discard gives floor(cost / 3) matching resources (`scripts/board.gd`). Extra actions grant no turn income or EMP Pulse charge. **Planned, not implemented:** Tier 3 card library, deck trimming. Pirate rewards currently use Uncommon-or-better, the highest populated tier; no empty rare selection screen.
 
 ## Power Allocation
 

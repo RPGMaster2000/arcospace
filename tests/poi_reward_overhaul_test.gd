@@ -197,16 +197,16 @@ func run_tests() -> void:
 				for approach in poi.approaches:
 					for outcome in [approach.success, approach.failure]:
 						for key in outcome.next_battle:
-							if key == "emergency_jump_offline": continue
+							if key == "emp_pulse_offline": continue
 							var amount: int = outcome.next_battle[key]
 							extrema[key] = maxi(extrema.get(key, 0), amount) if positive else mini(extrema.get(key, 0), amount)
 			for n in range(10): run.add_modifiers(extrema)
 			measure(run, "10-PoI max " + ("bonuses" if positive else "penalties"))
 		var run = fresh(profile)
 		for n in range(10):
-			run.add_modifiers({"materials":3, "energy":2, "crew":1, "shields":2, "emergency_jump_charge":5, "emergency_jump_offline":1})
-			run.add_modifiers({"materials":-12, "energy":-12, "crew":-12, "shields":-3, "emergency_jump_offline":2})
-		check(run.modifier_value("materials") == -90 and run.modifier_value("emergency_jump_offline") == 2, "Signed totals and longest offline")
+			run.add_modifiers({"materials":3, "energy":2, "crew":1, "shields":2, "emp_pulse_charge":5, "emp_pulse_offline":1})
+			run.add_modifiers({"materials":-12, "energy":-12, "crew":-12, "shields":-3, "emp_pulse_offline":2})
+		check(run.modifier_value("materials") == -90 and run.modifier_value("emp_pulse_offline") == 2, "Signed totals and longest offline")
 		var shield_start: int = maxi(0, profile.shields - 10)
 		var board = board_for(run)
 		check(board.player_shields == shield_start and board.ftl.charge == profile.ftl_turns and board.ftl.disabled_turns == 2, "Stacked Shields, ship charge cap, longest offline")

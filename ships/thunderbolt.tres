@@ -31,7 +31,7 @@
 script = ExtResource("1_lsw76")
 ship_name = "Thunderbolt"
 role = "Recon / FTL"
-summary = "Fast, resistant Emergency Jump; fragile Hull and low Materials production."
+summary = "Fast, resistant EMP Pulse; fragile Hull and low Materials production."
 hull_capacity = 28
 shields = 15
 materials = 8

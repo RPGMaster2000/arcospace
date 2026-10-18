@@ -159,6 +159,7 @@ func _apply_ship(side: String, data: Resource) -> void:
 
 # Initialize ship stats and expedition overrides before dealing hands and starting turn income.
 func _ready() -> void:
+	get_node("/root/Music").play_battle()
 	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
 	repair_preview.position = Vector2(30, 270)
 	repair_preview.size = Vector2(680, 70)
@@ -458,9 +459,9 @@ func _warp_out() -> void:
 	winner = "player"
 	escaped_by_ftl = true
 	enemy_timer.stop()
-	$LastActionLabel.text = "Emergency Jump complete — escaped!"
+	$LastActionLabel.text = "EMP Pulse complete — escaped!"
 	refresh_display()
-	$MatchResult/Panel/Title.text = "JUMP SUCCESS"
+	$MatchResult/Panel/Title.text = "EMP PULSE SUCCESS"
 
 # Refresh controls from authoritative state; _record_result also commits a finished battle once.
 # Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
@@ -490,14 +491,14 @@ func refresh_display() -> void:
 	if repair_limit == 0:
 		$MatchResult/Panel/Repair.text = "Hull full" if player_hull >= player_hull_capacity else "Need 2 Salvage"
 	$ModifierDisplay.refresh(modifier, turn_number)
-	var ftl_status: String = "Emergency Jump %d / %d" % [ftl.charge, ftl.charge_target]
+	var ftl_status: String = "EMP Pulse %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
 		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns
 	elif ftl.can_warp():
 		ftl_status += " · Ready"
 	$FTLPanel/Charge.text = ftl_status
 	$FTLPanel/Charge.tooltip_text = ftl_status
-	$FTLPanel/Charge.text = ftl_status.replace("Emergency Jump ", "Jump ").replace(" · Offline (", " · Off (")
+	$FTLPanel/Charge.text = ftl_status.replace("EMP Pulse ", "EMP ").replace(" · Offline (", " · Off (")
 	$FTLPanel/Progress.max_value = ftl.charge_target
 	$FTLPanel/Progress.value = ftl.charge
 	var charged: bool = ftl.charge >= ftl.charge_target and winner.is_empty()
@@ -509,8 +510,8 @@ func refresh_display() -> void:
 	allocation_button.visible = winner.is_empty()
 	if not winner.is_empty(): allocation_popup.dismiss()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
-	$MatchResult/Panel/Title.text = "JUMP SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
-	var method: String = "Emergency Jump" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
+	$MatchResult/Panel/Title.text = "EMP PULSE SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
+	var method: String = "EMP Pulse" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
 	$MatchResult/Panel/Details.text = "%s · Turn %d\n❤️ %d → %d · Damage taken: %d" % [method, turn_number, starting_player_hull, result_hull if result_recorded else player_hull, player_hull_damage_taken]
 	$MatchResult/Panel/Rewards.text = victory_description()
 	$MatchResult/Panel/Rewards.visible = not $MatchResult/Panel/Rewards.text.is_empty()
@@ -627,8 +628,8 @@ func _fit_jump_button() -> void:
 func _update_jump_style() -> void:
 	var button: Button = $FTLPanel/WarpButton
 	var offline: bool = ftl.disabled_turns > 0
-	button.text = "Jump offline" if offline else "Jump"
-	button.tooltip_text = "Offline: %d turns remaining." % ftl.disabled_turns if offline else "Escape by Emergency Jump."
+	button.text = "EMP offline" if offline else "EMP Pulse"
+	button.tooltip_text = "Offline: %d turns remaining." % ftl.disabled_turns if offline else "Escape by EMP Pulse."
 	if button.has_meta("offline_style") and button.get_meta("offline_style") == offline: return
 	button.set_meta("offline_style", offline)
 	ResultPresentation.action(button)
@@ -701,6 +702,7 @@ func _resource_reward_text(amount: int) -> String:
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded:
 		return
+	get_node("/root/Music").play_result(winner == "player" and not escaped_by_ftl)
 	# Freeze combat rewards before post-battle salvage repair changes hull.
 	earned_tactical = tactical_victory()
 	earned_strategic = strategic_victory()

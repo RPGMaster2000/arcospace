@@ -21,7 +21,7 @@ Descriptions and comparison values remain data-driven. The existing primitive pl
 
 - PoI and station approach grids align to the bottom of their existing expandable scroll region. Their panoramic header and Return remain fixed. Overflow still scrolls; approach confirmation stays in the existing bottom modal.
 - Combat cards end 12 logical pixels above the bottom edge. Discard targets are 48 logical pixels high; the hand fits the available width. Jump is a separate 104×48 bottom action above the hand, preserving the existing signal and node path. Last-action text and the decorative hand divider follow the hand geometry.
-- FTL charge track width is 154, previously 230 (33% smaller). Panel width is 248, previously 371. Charge text remains readable at 14 px, with the full Emergency Jump description in its tooltip. The charge bar retains ship-relative framing; the Jump action is positioned independently at the bottom.
+- FTL charge track width is 154, previously 230 (33% smaller). Panel width is 248, previously 371. Charge text remains readable at 14 px, with the full EMP Pulse description in its tooltip. The charge bar retains ship-relative framing; the Jump action is positioned independently at the bottom.
 - Ship selection removes general instructions, uses the existing bundled icon/legend system for resource/production values, and preserves Hull, Shields, Jump duration and resistance. Ship traits remain in tooltips. Larger existing 3D previews use aspect-aware orthographic framing. The selected panel remains highlighted. View Deck and Begin Expedition share a compact bottom row.
 - Defeat/draw hides New Expedition and offers Select Ship, routing to the initial selection screen. No expedition starts until Begin Expedition is confirmed there. Victory/escape actions retain their existing flow.
 - Shared focus outlines, panel borders and button styles follow the existing encounter presentation helper. No asset generation/import is part of this change.
@@ -55,7 +55,7 @@ Follow-up validation: all 36 automated test scripts pass on Godot 4.7.2. The new
 Victory summaries use compact resource icons and amounts, one shared Next battle heading, and only earned Elite/tactical/strategic bonus rows. Condition explanations and repeated Star System navigation instructions are omitted. Hull changes and damage taken remain visible. Presentation only: reward qualification, values and persistence are unchanged. Verified with victory/reward, UI-overhaul, Android-layout, Salvage and travel-battle regressions plus Windows OpenGL rendering; physical Android remains unverified.
 
 
-Result navigation now has one Select Ship destination for every result; a fresh expedition begins only after ship confirmation. At full combat Emergency Jump charge, the FTL label/bar are replaced in place by a 48-pixel-high Jump button. A charged offline drive keeps a red, disabled Jump offline button with remaining turns in its tooltip. Turn/input eligibility and FTL charging/disruption rules remain unchanged. Seven relevant regression scripts pass; charged online/offline rendering was inspected on Windows OpenGL. Physical Android remains unverified.
+Result navigation now has one Select Ship destination for every result; a fresh expedition begins only after ship confirmation. At full combat EMP Pulse charge, the FTL label/bar are replaced in place by a 48-pixel-high Jump button. A charged offline drive keeps a red, disabled Jump offline button with remaining turns in its tooltip. Turn/input eligibility and FTL charging/disruption rules remain unchanged. Seven relevant regression scripts pass; charged online/offline rendering was inspected on Windows OpenGL. Physical Android remains unverified.
 
 
 ## Power Allocation
@@ -74,7 +74,7 @@ Final validation: all 37 automated Godot 4.7.2 test scripts pass after the 2/2/2
 
 Power Allocation retains its existing popup, weights and input behavior. `Board3D.allocation_presentation_offset` defaults to (-0.56, 0.02), measured in fractions of the battle presentation height from the projected player ship center. Position clamps protect the resource column, top HUD, Hull/Shields and hand. No model-specific engine coordinates, hand resizing or ultrawide-only branch is used. The 2D board has a ship-centered fallback.
 
-The system FTL control shows carried starting charge normally and explicitly says Resolve Boss first when a milestone is unresolved. Boss tiles say Mandatory Boss; the preview explains Victory or Emergency Jump and shows effective level/Hull/Shields. Normal PoI navigation and six-slot layout remain unchanged. Full formulas and Inspector paths are in the ship/PoI balance references.
+The system FTL control shows carried starting charge normally and explicitly says Resolve Boss first when a milestone is unresolved. Boss tiles say Mandatory Boss; the preview explains Victory or EMP Pulse and shows effective level/Hull/Shields. Normal PoI navigation and six-slot layout remain unchanged. Full formulas and Inspector paths are in the ship/PoI balance references.
 
 Validation is performed by the Godot regression workflow on an isolated branch before publishing main because the local execution environment is unavailable. Physical Android gameplay and device GPU rendering remain unverified.
 

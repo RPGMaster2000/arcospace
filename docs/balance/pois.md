@@ -63,9 +63,9 @@ Edit `encounters/spatial_anomaly.tres`; expand Approaches → Success / Failure.
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
 | Passive observation | None | 0 | 100.0% | +3 Salvage | Not rolled |
-| Collect exotic particles | None | 0 | 70.0% | +5 Salvage · +2 Emergency Jump charge next battle | 30.0%: +2 Salvage · -3 Shields next battle |
-| Stabilize anomaly | Reactor ≥3 | 0 | 85.0% | +7 Salvage · +3 Emergency Jump charge next battle | 15.0%: +3 Salvage · +1 Emergency Jump offline turns next battle |
-| Reinforce Emergency Jump systems | Quarters ≥3 | 0 | 75.0% | +9 Salvage · +5 Emergency Jump charge next battle | 25.0%: +4 Salvage · +2 Emergency Jump offline turns next battle |
+| Collect exotic particles | None | 0 | 70.0% | +5 Salvage · +2 EMP Pulse charge next battle | 30.0%: +2 Salvage · -3 Shields next battle |
+| Stabilize anomaly | Reactor ≥3 | 0 | 85.0% | +7 Salvage · +3 EMP Pulse charge next battle | 15.0%: +3 Salvage · +1 EMP Pulse offline turns next battle |
+| Reinforce EMP Pulse systems | Quarters ≥3 | 0 | 75.0% | +9 Salvage · +5 EMP Pulse charge next battle | 25.0%: +4 Salvage · +2 EMP Pulse offline turns next battle |
 
 ## Hazardous
 
@@ -108,9 +108,9 @@ Edit `encounters/unstable_wormhole.tres`; expand Approaches → Success / Failur
 
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
-| Map the perimeter | None | 0 | 100.0% | +3 Salvage · +1 Emergency Jump offline turns next battle | Not rolled |
+| Map the perimeter | None | 0 | 100.0% | +3 Salvage · +1 EMP Pulse offline turns next battle | Not rolled |
 | Probe the shortcut | None | 0 | 65.0% | +1 extra FTL Drive charge · +5 Salvage | 35.0%: +2 Salvage · -4 Shields next battle |
-| Stabilize corridor | Reactor ≥3 | 0 | 80.0% | +2 extra FTL Drive charge · +7 Salvage | 20.0%: +3 Salvage · +2 Emergency Jump offline turns next battle |
+| Stabilize corridor | Reactor ≥3 | 0 | 80.0% | +2 extra FTL Drive charge · +7 Salvage | 20.0%: +3 Salvage · +2 EMP Pulse offline turns next battle |
 | Reinforce transit probe | Synthesizer ≥3 | 0 | 75.0% | +2 extra FTL Drive charge · +9 Salvage | 25.0%: +4 Salvage · -4 Energy next battle |
 
 ### Quarantined Colony
@@ -180,4 +180,4 @@ Normal-system carryover is `min(cap, max(0, current_ftl - required_ftl))`, cap d
 
 Systems 6, 12, 18, 24, … replace one enemy slot with a mandatory Sentinel Dreadnought (or the configured existing Boss). They keep six slots, all PoI slots, their normal requirement, and the independent station schedule. Only one encounter is marked mandatory. Missing milestone metadata fails closed. Sufficient FTL never bypasses an unresolved Boss; a blocked jump consumes no charge or RNG.
 
-Combat victory or successful existing Emergency Jump marks the encounter complete and grants the profile's 3 FTL once. Destruction retains 30 Salvage; resource victory retains 6; escape grants 0 Salvage. Resolution records `defeated` versus `escaped` for future defeat-only reward checks. Escape does not perform a system transition: return to the system screen and use the ordinary FTL transition, including carryover, once. Boss stats use the same level formula: system 6 has 57 Hull / 23 Shields / 16 of each resource / 3 of each production; system 12 has 61 / 25 / 18 / 3.
+Combat victory or successful existing EMP Pulse marks the encounter complete and grants the profile's 3 FTL once. Destruction retains 30 Salvage; resource victory retains 6; escape grants 0 Salvage. Resolution records `defeated` versus `escaped` for future defeat-only reward checks. Escape does not perform a system transition: return to the system screen and use the ordinary FTL transition, including carryover, once. Boss stats use the same level formula: system 6 has 57 Hull / 23 Shields / 16 of each resource / 3 of each production; system 12 has 61 / 25 / 18 / 3.

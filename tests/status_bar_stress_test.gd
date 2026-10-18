@@ -43,7 +43,7 @@ func run() -> void:
 				for key in ["materials", "energy", "crew", "shields"]:
 					host.state.add_modifiers({key:-999999})
 					if mode == "extreme mixed": host.state.add_modifiers({key:999999})
-				host.state.add_modifiers({"emergency_jump_charge":999999, "emergency_jump_offline":999999})
+				host.state.add_modifiers({"emp_pulse_charge":999999, "emp_pulse_offline":999999})
 				if mode == "extreme mixed":
 					for key in host.state.PRODUCTION: host.state.production_upgrades[key] = 999
 			host.show_system()

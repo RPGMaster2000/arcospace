@@ -30,10 +30,10 @@ next_battle = {
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
-blurb = "Exotic particles precharge Emergency Jump."
+blurb = "Exotic particles precharge EMP Pulse."
 salvage = 5
 next_battle = {
-"emergency_jump_charge": 2
+"emp_pulse_charge": 2
 }
 
 [sub_resource type="Resource" id="Approach1"]
@@ -45,10 +45,10 @@ failure = SubResource("Failure1")
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
-blurb = "Useful data is recovered, but Emergency Jump is offline for the first turn."
+blurb = "Useful data is recovered, but EMP Pulse is offline for the first turn."
 salvage = 3
 next_battle = {
-"emergency_jump_offline": 1
+"emp_pulse_offline": 1
 }
 
 [sub_resource type="Resource" id="Success2"]
@@ -56,7 +56,7 @@ script = ExtResource("Outcome")
 blurb = "A stable corridor precharges your drive."
 salvage = 7
 next_battle = {
-"emergency_jump_charge": 3
+"emp_pulse_charge": 3
 }
 
 [sub_resource type="Resource" id="Approach2"]
@@ -69,10 +69,10 @@ failure = SubResource("Failure2")
 
 [sub_resource type="Resource" id="Failure3"]
 script = ExtResource("Outcome")
-blurb = "Readings are valuable, but Emergency Jump needs two turns to recalibrate."
+blurb = "Readings are valuable, but EMP Pulse needs two turns to recalibrate."
 salvage = 4
 next_battle = {
-"emergency_jump_offline": 2
+"emp_pulse_offline": 2
 }
 
 [sub_resource type="Resource" id="Success3"]
@@ -80,12 +80,12 @@ script = ExtResource("Outcome")
 blurb = "Specialist teams tune the drive to the anomaly."
 salvage = 9
 next_battle = {
-"emergency_jump_charge": 5
+"emp_pulse_charge": 5
 }
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
-title = "Reinforce Emergency Jump systems"
+title = "Reinforce EMP Pulse systems"
 requirement = "quarters"
 success_chance = 0.75
 success = SubResource("Success3")
@@ -94,6 +94,6 @@ failure = SubResource("Failure3")
 [resource]
 script = ExtResource("Poi")
 title = "Spatial Anomaly"
-description = "Investigate unstable space to aid your next Emergency Jump."
+description = "Investigate unstable space to aid your next EMP Pulse."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])
 anomalous_presentation = true

@@ -157,7 +157,7 @@ func run_tests() -> void:
 				check(run.mandatory_boss_pending() and not run.can_jump(), "Defeat never resolves mandatory Boss")
 			else:
 				check(run.encounters[index].resolution == ("escaped" if outcome == "escaped" else "defeated"), "Resolution explicitly distinguishes escape and defeat")
-				check(after == charge_before+3 and not run.mandatory_boss_pending() and run.can_jump(), "Both wins and Emergency Jump unlock normal progression and profile FTL")
+				check(after == charge_before+3 and not run.mandatory_boss_pending() and run.can_jump(), "Both wins and EMP Pulse unlock normal progression and profile FTL")
 				check(run.generate_system() and run.system_number == system+1 and run.ftl_charge == 2, "Exactly one normal transition with capped carryover")
 			result.free()
 	var malformed = milestone(18,6)
@@ -176,7 +176,7 @@ func run_tests() -> void:
 	invalid.system_number = 5
 	invalid.ftl_charge = invalid.required_ftl_charge
 	check(invalid.generate_system() and invalid.encounters.size() == 6 and boss_index(invalid) >= 0, "Invalid composition cannot omit milestone")
-	# Live scene checks: carried counter, blocked button, scaled battle and real Emergency Jump.
+	# Live scene checks: carried counter, blocked button, scaled battle and real EMP Pulse.
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(800,450)]:
 		root.size = dimensions
 		var host = load("res://scenes/expedition.tscn").instantiate()
@@ -202,7 +202,7 @@ func run_tests() -> void:
 		battle.ftl.charge = battle.ftl.charge_target
 		battle.ftl.disabled_turns = 0
 		battle._warp_out()
-		check(battle.escaped_by_ftl and host.state.system_number == 6 and host.state.encounters[index].completed and battle.salvage == 0, "Real Boss Emergency Jump resolves without a system jump or defeat loot")
+		check(battle.escaped_by_ftl and host.state.system_number == 6 and host.state.encounters[index].completed and battle.salvage == 0, "Real Boss EMP Pulse resolves without a system jump or defeat loot")
 		host._battle_finished()
 		check(not host.jump_button.disabled, "Returning from escaped Boss unlocks system navigation")
 		host._jump()

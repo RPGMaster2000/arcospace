@@ -140,7 +140,7 @@ to prevent stale/double purchases; free return never awards FTL.
 
 ### Two different FTL counters
 
-- [ftl_drive.gd](../scripts/ftl_drive.gd): battle-only **Emergency Jump**, charged on
+- [ftl_drive.gd](../scripts/ftl_drive.gd): battle-only **EMP Pulse**, charged on
   player turns. Ship `ftl_turns`/`ftl_resistance` configure it; `_warp_out()` resolves
   escape without generating another system. The current code/UI still uses this name.
 - `ExpeditionState.ftl_charge`: **interstellar** progression. `generate_system()` uses

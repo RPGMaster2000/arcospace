@@ -6,18 +6,18 @@
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")
-blurb = "Your safe-distance survey disrupts Emergency Jump calibration."
+blurb = "Your safe-distance survey disrupts EMP Pulse calibration."
 salvage = 3
 next_battle = {
-"emergency_jump_offline": 1
+"emp_pulse_offline": 1
 }
 
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
-blurb = "Your safe-distance survey disrupts Emergency Jump calibration."
+blurb = "Your safe-distance survey disrupts EMP Pulse calibration."
 salvage = 3
 next_battle = {
-"emergency_jump_offline": 1
+"emp_pulse_offline": 1
 }
 
 [sub_resource type="Resource" id="Approach0"]
@@ -52,7 +52,7 @@ script = ExtResource("Outcome")
 blurb = "The corridor closes after its first readings."
 salvage = 3
 next_battle = {
-"emergency_jump_offline": 2
+"emp_pulse_offline": 2
 }
 
 [sub_resource type="Resource" id="Success2"]

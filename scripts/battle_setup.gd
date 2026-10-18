@@ -9,9 +9,13 @@ var initial_settings: Dictionary = {}
 var selected_ship: int = 0
 var deck_viewer: CanvasLayer
 var deck_button: Button
+var music_button: Button
 var legend_button: Button
 
 func _ready() -> void:
+	get_node("/root/Music").play_starmap()
+	music_button = preload("res://scripts/ui/music_button.gd").new()
+	add_child(music_button)
 	var overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(overlay)
 	var legend = Button.new()
@@ -42,10 +46,10 @@ func _ready() -> void:
 		var stats: Label = panel.get_node("Stats")
 		stats.add_theme_font_override("font", Presentation.UI_FONT)
 		stats.text = "%s %d   %s %d\n%s %d   %s %d   %s %d\n%s %d   %s %d   %s %d" % [_icon("hull"), data.hull_capacity, _icon("shields"), data.shields, _icon("materials"), data.materials, _icon("energy"), data.energy, _icon("crew"), data.crew, _icon("synthesizer"), data.synthesizer, _icon("reactor"), data.reactor, _icon("quarters"), data.quarters]
-		stats.tooltip_text = "Hull / Shields\nMaterials / Energy / Crew\nSynthesizer / Reactor / Quarters\nEmergency Jump turns and resistance\n" + data.summary
+		stats.tooltip_text = "Hull / Shields\nMaterials / Energy / Crew\nSynthesizer / Reactor / Quarters\nEMP Pulse turns and resistance\n" + data.summary
 		panel.get_node("Summary").add_theme_font_override("font", Presentation.UI_FONT)
 		panel.get_node("Summary").text = "%s %dt   %+.0f%% resistance" % [_icon("jump"), data.ftl_turns, data.ftl_resistance * 100]
-		panel.get_node("Summary").tooltip_text = data.role + " · " + data.summary + "\nEmergency Jump duration and failure resistance"
+		panel.get_node("Summary").tooltip_text = data.role + " · " + data.summary + "\nEMP Pulse duration and failure resistance"
 		panel.tooltip_text = data.summary
 		panel.get_node("Select").pressed.connect(_select.bind(index))
 		_preview(panel.get_node("Preview/Viewport"), data)
@@ -105,7 +109,12 @@ func _layout_cards() -> void:
 	deck_button.offset_right = -32
 	deck_button.offset_top = $Start.offset_top
 	deck_button.offset_bottom = $Start.offset_bottom
-	legend_button.position = Vector2(size.x - 130, 8)
+	legend_button.position = Vector2(size.x - 190, 8)
+	music_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	music_button.offset_left = -64
+	music_button.offset_right = -16
+	music_button.offset_top = 8
+	music_button.offset_bottom = 56
 	preload("res://scripts/ui/encounter_presentation.gd").action($Start, true)
 	for index in range(3):
 		var panel = get_node("Ships/Ship%d" % index)

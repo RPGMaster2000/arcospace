@@ -8,7 +8,7 @@ Validated with Godot 4.7.2 on Windows against main `16f9a53be64841cb3c4ca79ec35d
 - The additional upgrade UI test covers all 88 variants with normal and both Ion Storm previews: descriptions retain 16 px text and do not overlap discard buttons. Long descriptions borrow decorative art space only. Titles retain upgrade suffixes.
 - Existing Android layout checks: 2,435 assertions; crowded resource bars: 4,095; status/modifier checks: 10,657. Touch targets and synthetic input pass; a physical Android run, APK export and actual touch/GPU behavior were not verified.
 - FTL progression: 10,000 systems, 426,069 checks; PoI overhaul: 93,950 checks; Trading Outpost: 47,176 checks. Card reward tests now account for player-only, nonduplicate acquisition and exhaustion. Authored PoI outcomes, encounter probabilities, station prices, Salvage awards and FTL code are unchanged.
-- One existing test remains failing: `travel_battle_test.gd` reports the Emergency Jump label/button overlap assertion in all 15 combinations. The identical 15 failures reproduce on untouched baseline code; its other battle/profile/escape assertions pass. No unrelated FTL/layout changes were made.
+- One existing test remains failing: `travel_battle_test.gd` reports the EMP Pulse label/button overlap assertion in all 15 combinations. The identical 15 failures reproduce on untouched baseline code; its other battle/profile/escape assertions pass. No unrelated FTL/layout changes were made.
 - Headless editor import has no script parse/compile errors. This restricted environment cannot write Godot's normal user log/editor cache or read the system certificate store; those environment messages also occur on baseline.
 
 Run with `godot --headless --path . --script tests/card_progression_test.gd`; substitute another test script to run it. Regenerate tables using `tools/generate_balance_docs.gd`.
@@ -17,7 +17,7 @@ Run with `godot --headless --path . --script tests/card_progression_test.gd`; su
 
 `tests/card_progression_simulation.gd` runs seeds 1–10 against each of five enemy profiles for every player ship: 450 battles across three policies. Raw output: `tests/card_progression_simulation_results.json`. Baseline models the previous full player pool, round-six unlock and original enemy AI priorities; it uses the current RNG implementation, so it is a policy comparison rather than a bit-for-bit replay of historical draws.
 
-This is a combat-only heuristic diagnostic: no battle modifiers, Emergency Jump, expedition production upgrades, rewards or human decisions. Forty-round unfinished matches are unresolved. The player uses the existing simple AI; these figures are not human win-rate estimates.
+This is a combat-only heuristic diagnostic: no battle modifiers, EMP Pulse, expedition production upgrades, rewards or human decisions. Forty-round unfinished matches are unresolved. The player uses the existing simple AI; these figures are not human win-rate estimates.
 
 | Policy | Wayfarer W/L/unresolved | Specter W/L/unresolved | Bastion W/L/unresolved |
 |---|---|---|---|

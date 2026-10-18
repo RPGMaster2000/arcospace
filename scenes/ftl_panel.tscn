@@ -42,8 +42,8 @@ offset_top = -10.0
 offset_right = 154.0
 offset_bottom = 38.0
 theme_override_font_sizes/font_size = 15
-text = "Jump"
+text = "EMP Pulse"
 flat = true
 disabled = true
-tooltip_text = "Escape to win when Emergency Jump is fully charged and online."
+tooltip_text = "Escape to win when EMP Pulse is fully charged and online."
 

@@ -92,10 +92,10 @@ func _exit_tree() -> void:
 var ftl_tween: Tween
 
 func ftl_offline() -> void:
-	_ftl_event("EMERGENCY JUMP OFFLINE", Color(1, 0.12, 0.04), ftl_offline_seconds, 0.32)
+	_ftl_event("EMP PULSE OFFLINE", Color(1, 0.12, 0.04), ftl_offline_seconds, 0.32)
 
 func ftl_online(fully_charged: bool) -> void:
-	_ftl_event("EMERGENCY JUMP ONLINE" if fully_charged else "EMERGENCY JUMP REPAIRED · RESUMING CHARGING", Color(0.25, 0.65, 1), ftl_online_seconds, 0.16)
+	_ftl_event("EMP PULSE ONLINE" if fully_charged else "EMP PULSE REPAIRED · RESUMING CHARGING", Color(0.25, 0.65, 1), ftl_online_seconds, 0.16)
 
 func _ftl_event(message: String, color: Color, seconds: float, strength: float) -> void:
 	if not cinematic_enabled:

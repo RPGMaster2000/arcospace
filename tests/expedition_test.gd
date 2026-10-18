@@ -109,7 +109,7 @@ func run_tests() -> void:
 	run.hull = 17
 	run.salvage = 11
 	run.production_upgrades.quarters = 2
-	run.add_modifiers({"energy":3, "reactor":1, "emergency_jump_charge":999, "emergency_jump_offline":2, "shields":-4})
+	run.add_modifiers({"energy":3, "reactor":1, "emp_pulse_charge":999, "emp_pulse_offline":2, "shields":-4})
 	run.add_modifiers({"energy":5, "reactor":2, "shields":-3})
 	run.add_modifiers({"energy":-999, "synthesizer":-999, "crew":-999})
 	check(run.modifier_value("reactor") == 0 and run.modifier_value("shields") == -7, "Production ignored; Shields accumulate")
@@ -195,13 +195,13 @@ func run_tests() -> void:
 	check(run.salvage == before_fallback + 5 + Rules.unavailable_upgrade_salvage and run.pending_choice.is_empty(), "Research fallback grants Salvage")
 	# Pending effects survive travel and harmless PoIs, and strong penalties coexist with bonuses.
 	run = fresh()
-	run.add_modifiers({"energy":5, "emergency_jump_offline":1})
+	run.add_modifiers({"energy":5, "emp_pulse_offline":1})
 	run.add_modifiers({"energy":-3})
 	put_poi(run, Rules.pois[0])
 	run.resolve_approach(0, 0, 0.0)
 	run.ftl_charge = run.required_ftl_charge
 	run.generate_system()
-	check(run.modifier_value("energy") == 2 and run.modifier_value("emergency_jump_offline") == 1, "Travel and PoI do not consume temporary modifiers")
+	check(run.modifier_value("energy") == 2 and run.modifier_value("emp_pulse_offline") == 1, "Travel and PoI do not consume temporary modifiers")
 	board = make_board(run)
 	check(board.player_energy == run.ship().energy + 2 + board.player_reactor, "Opposing modifiers apply together")
 	check(board.ftl.disabled_turns == 1 and board.ftl.charge == 0, "One-turn offline blocks first-turn charging")
