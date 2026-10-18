@@ -57,6 +57,7 @@ func run() -> void:
 		check(overlay.body.text.contains("2 Salvage / Hull") and overlay.body.text.contains("Maximum affordable: 6"), "Accurate price and affordable quantity")
 		host.field_selector.value = 4
 		check(host.state.salvage == 12 and host.field_confirm.text.contains("8 Salvage"), "Selection previews exact cost without spending")
+		check(host.field_preview.bar.preview_hull == cap-5 and host.field_preview.cost_text.text.contains("12 → 4") and host.field_preview.hull_text.text.contains("+4 Hull"), "Bar and balance connect selected gain to Salvage spending")
 		await settle()
 		check(root.get_visible_rect().encloses(overlay.panel.get_global_rect()), "Modal fits landscape")
 		check(overlay.panel.get_global_rect().encloses(host.field_confirm.get_global_rect()) and host.field_confirm.size.y >= 48, "Confirm remains visible and touch sized")
@@ -99,6 +100,7 @@ func run() -> void:
 		host._select_approach(0)
 		host.repair_selector.value = 4
 		check(host.approach_note.text.contains("Cost 8") and host.approach_note.text.contains("plating"), "Station plating preview shows 2:1 cost")
+		check(host.station_preview.visible and host.station_preview.bar.preview_hull == cap+4 and not host.approach_note.visible, "Shared plating preview replaces duplicate prose")
 		await capture("plating-"+str(dimensions.x))
 		host._confirm_approach()
 		check(host.state.hull == cap+4, "Station installs selected plating")

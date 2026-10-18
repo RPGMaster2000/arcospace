@@ -40,7 +40,7 @@ Emergency Jump charge is capped at the selected ship's requirement. It is grante
 
 ## Salvage and card progression
 
-Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, resource victory **6**, Emergency Jump **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same additive pending modifiers. The victory-screen repair service remains one Salvage per Hull, with its existing adjustable spending control.
+Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, resource victory **6**, Emergency Jump **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same additive pending modifiers. The victory-screen repair service costs two Salvage per Hull, with its adjustable quantity control and Hull/Salvage preview.
 
 The first Trading Outpost appears in system 2 or 3, chosen randomly. Later stations are 2 or 3 system numbers apart. `next_outpost_system` stores the next scheduled system; an independent RNG derived from the debug seed makes this deterministic without changing six-encounter or loot rolls. `ExpeditionRules.minimum_station_interval` / `maximum_station_interval` default to 2/3 and are hard-clamped to that range.
 
@@ -53,7 +53,7 @@ A present station remains available until leaving its system. Buy any affordable
 | Acquire card | 15 Salvage | Up to three distinct unowned offers; choose one for the player pool |
 | Shipyard improvements | 25, 40, 60, 85, 115, 150, 190, … | Choose +1 permanent expedition production |
 
-Hull services and field repairs use shared `RepairRules.max_quantity` bounds; the unchanged post-battle flow uses `max_spend` at 1 Salvage/Hull. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
+Hull services and field repairs use shared `RepairRules.max_quantity` bounds; the post-battle flow uses `max_spend` at 2 Salvage/Hull. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
 
 Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
 
