@@ -13,6 +13,7 @@ class_name CardData
 @export_range(0, 2, 1) var max_upgrades: int = 2
 @export_range(0, 2, 1) var upgrade_level: int = 0
 
+# Return a separate player definition with a stable identity; upgrade entries replace, rather than add to, base effects.
 func with_upgrade(level: int) -> Resource:
 	var result: Resource = duplicate(false)
 	result.set_meta("card_identity", identity_key())

@@ -1,4 +1,6 @@
 extends Control
+# RESPONSIBILITY: Draw destination markers and tween the ship to a selected destination.
+# DOES NOT: Generate encounters, spend resources or grant rewards.
 # Presentation only. The expedition controller supplies markers and handles arrival.
 signal arrived(index: int)
 const POINTS = [Vector2(.21,.23), Vector2(.5,.15), Vector2(.79,.23), Vector2(.21,.70), Vector2(.5,.83), Vector2(.79,.70)]
@@ -40,6 +42,7 @@ func _layout() -> void:
 		button.position = destination(index) * size - target_size / 2
 	queue_redraw()
 
+# Lock further destination input until arrival; leaving the tree kills travel instead of opening a stale encounter.
 func travel(index: int) -> void:
 	if traveling or not markers.has(index) or markers[index].disabled: return
 	traveling = true

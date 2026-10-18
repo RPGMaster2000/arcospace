@@ -1,7 +1,7 @@
 extends "res://scripts/board.gd"
 
 # RESPONSIBILITY: Connect the optional 3D presentation to the existing board.
-# All card rules, input and turn handling are inherited unchanged.
+# DOES NOT: Redefine card rules, input or turn handling; these are inherited from board.gd.
 func refresh_display() -> void:
 	super.refresh_display()
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(mini(player_hull, player_hull_capacity))
@@ -20,6 +20,7 @@ const BATTLEFIELDS = [
 	preload("res://scenes/battlefield_temporal_rift.tscn")
 ]
 
+# Install the selected battlefield/model before child _ready callbacks cache presentation nodes.
 func _enter_tree() -> void:
 	super._enter_tree()
 	# Replace before child _ready callbacks cache the ships for visual effects.

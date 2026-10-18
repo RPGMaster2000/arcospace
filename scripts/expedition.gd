@@ -1,5 +1,6 @@
 extends Control
-# UI routing only; ExpeditionState owns all rewards, requirements and progression.
+# RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
+# DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -9,7 +10,9 @@ const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
 var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
+# TUNE: Disable to restore the original grid; both presentations use the same encounter state.
 @export var use_star_map: bool = true
+# TUNE: Seconds before a selected map destination opens; no travel cost or rules change.
 @export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
 var star_map: Control
 var map_system: int = -1
@@ -65,6 +68,7 @@ func _ready() -> void:
 	add_child(outcome_flash)
 	start_expedition()
 
+# Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
 	var backdrop = ColorRect.new()
 	backdrop.color = Color("0e1a28")
@@ -195,6 +199,7 @@ func _tile(parent: Node, heading: String, details: String, color: Color, callbac
 func _icon(key: String) -> String:
 	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
 
+# Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
 func _clear(kind: String) -> void:
 	if is_instance_valid(current_deck_viewer): current_deck_viewer.dismiss()
 	mission_header = null
@@ -272,6 +277,7 @@ func show_system() -> void:
 	if not state.service.is_empty():
 		_button("Trading Outpost · Service station · No travel FTL · Free to return", visit.bind(state.SERVICE_INDEX))
 
+# Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _show_star_map() -> void:
 	if map_system != state.system_number:
 		map_system = state.system_number
@@ -560,6 +566,7 @@ func _jump() -> void:
 	if state.generate_system():
 		show_system()
 
+# Set expedition/profile references and signal callbacks before add_child triggers Board initialization.
 func start_battle(index: int) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
@@ -575,6 +582,7 @@ func start_battle(index: int) -> void:
 	battle.expedition_exit.connect(_exit)
 	add_child(battle)
 
+# Continue returns here after result recording; sync post-battle repairs before removing the board.
 func _battle_finished() -> void:
 	state.sync_battle(battle)
 	state.active_battle = -1

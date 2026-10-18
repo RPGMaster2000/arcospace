@@ -11,6 +11,7 @@ var active_tween: Tween
 var source_view: Control
 var original_modulate: Color = Color.WHITE
 
+# Invoke the supplied resolution callback once at the visual cue; Board owns the callback and turn lock.
 func animate_action(card: Resource, source: Control, side: String, discard: bool, resolve: Callable) -> void:
 	if not settings.enabled:
 		resolve.call()

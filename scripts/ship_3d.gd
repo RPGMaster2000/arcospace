@@ -1,4 +1,5 @@
 extends Node3D
+# DOES NOT: Decide damage or repair amounts; Board supplies the resulting strengths.
 
 # RESPONSIBILITY: Animate the prototype mesh; never change combat state.
 # BattleEffects owns these tweens, so existing turn timing stays intact.
@@ -28,6 +29,7 @@ func set_hull_strength(value: int) -> void:
 	# TUNE: Markings start below 15 hull, intensify below 5; 0.45 controls the mild coverage.
 	damage_material.set_shader_parameter("damage", 0.0 if value >= 15 else (1.0 if value < 5 else 0.45))
 
+# Duplicate per-instance materials so a hit/repair shader cannot change another ship's appearance.
 func _ready() -> void:
 	rest_position = position
 	hull_material = $Body/Hull.material_override.duplicate()

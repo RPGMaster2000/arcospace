@@ -11,6 +11,7 @@ var tactical_weights: Dictionary = {}
 var tactical_variation: float = 0.25
 var hull_capacity: int = 35
 
+# Prefer safe immediate wins, then configured tactical scores or fallback priorities; discard if nothing is affordable.
 func choose(cards: Array, actor: Dictionary, enemy: Dictionary, resource_goal: int) -> Dictionary:
 	var held: Array[int] = []
 	var affordable: Array[int] = []

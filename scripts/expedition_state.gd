@@ -1,4 +1,6 @@
 extends Resource
+# RESPONSIBILITY: Own expedition state, generation, rewards and battle handoff.
+# DOES NOT: Create UI nodes, animate travel or resolve individual combat actions.
 class_name ExpeditionState
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
@@ -127,6 +129,8 @@ func _station_interval() -> int:
 	var high: int = clampi(rules.maximum_station_interval, low, 3)
 	return station_rng.randi_range(low, high)
 
+# Generate encounters from one rules registry; both map and grid read this same array.
+# Carryover and mandatory Boss replacement happen here, independently of presentation.
 func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
@@ -217,6 +221,7 @@ func encounter_charge(index: int) -> int:
 	if index == SERVICE_INDEX: return 0
 	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
 
+# Single completion gate: award travel charge once, shared by PoI resolution and battle results.
 func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
 	if index == SERVICE_INDEX: return false
 	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false): return false
@@ -264,6 +269,8 @@ func locked_reason(approach: Resource) -> String:
 		return "Hull already full"
 	return ""
 
+# Validate/pay the approach, roll its outcome and complete the PoI before applying rewards.
+# forced_roll is a deterministic test hook; normal play uses this expedition's RNG.
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
 	if index == SERVICE_INDEX or not can_visit(index) or encounter_at(index).kind != "poi":
 		return false
@@ -288,6 +295,8 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	_apply_outcome(outcome)
 	return true
 
+# Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
+# EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
 func _apply_outcome(outcome: Resource) -> void:
 	salvage += outcome.salvage
 	hull = clampi(hull + outcome.hull, 0, ship().hull_capacity)
@@ -338,6 +347,7 @@ func service_locked_reason(slot: int) -> String:
 	if salvage < cost: return "Requires %d Salvage (you have %d)" % [cost, salvage]
 	return ""
 
+# Use a confirmation revision to reject stale purchases; services never complete a progression PoI.
 func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 	if revision != service_revision or not service_locked_reason(slot).is_empty(): return false
 	var outcome: Resource = service.poi.approaches[slot].success
@@ -386,6 +396,7 @@ func shared_pool() -> Array[Resource]:
 	pool.assign(Cards.CARDS)
 	return pool
 
+# Build owned identities with player-only upgrade copies; shared_pool remains the enemy base library.
 func player_pool() -> Array[Resource]:
 	var result: Array[Resource] = []
 	var starting: Array = ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
@@ -448,6 +459,7 @@ func upgrade_candidates() -> Array[Resource]:
 			result.append(card)
 	return result
 
+# Replace an identity in the expedition ledger and all active hand copies, never shared card Resources.
 func choose_upgrade(key: String) -> bool:
 	if pending_choice != "upgrade":
 		return false
@@ -474,6 +486,8 @@ func choose_attribute(key: String) -> bool:
 	pending_choice = ""
 	return true
 
+# Transfer persistent state and pending bonuses into a ready board, then consume temporary modifiers.
+# Called by Board._ready before dealing cards; production upgrades remain in the expedition ledger.
 func begin_battle(board: Node, index: int = -1) -> void:
 	# Re-entrant initialization of this board must not reset stats or consume twice.
 	if board.get_meta("expedition_initialized", 0) == get_instance_id(): return
@@ -511,6 +525,8 @@ func _elite_defeated(board: Node) -> bool:
 func elite_resource_reward(board: Node) -> int:
 	return rules.elite_resource_bonus if _elite_defeated(board) else 0
 
+# Persist a latched board result and complete the encounter once; escape resolves Boss navigation too.
+# Board._record_result calculates Salvage first; escape and destruction keep distinct reward rules.
 func record_battle(board: Node) -> void:
 	sync_battle(board)
 	if active_battle >= 0 and active_battle < encounters.size():

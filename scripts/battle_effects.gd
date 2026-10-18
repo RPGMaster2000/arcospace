@@ -40,6 +40,7 @@ func set_number(label: Label, value: int) -> void:
 		label.text = str(value)
 
 
+# Compare committed snapshots to schedule visuals; these deltas must never be applied to gameplay again.
 func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "", paid_family: String = "", paid_cost: int = 0, impact: bool = false) -> void:
 	if not enabled:
 		return
@@ -98,6 +99,7 @@ func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
 	burst.material = material
 	_run_material(burst, material, 0.32 if production else 0.4)
 
+# Register a presentation tween so Board can await finished only after every visual job completes.
 func _job() -> Tween:
 	busy = true
 	jobs += 1
