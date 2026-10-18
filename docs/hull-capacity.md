@@ -42,7 +42,7 @@ in place, using the same confirmation and quantity selector:
 amount, funds and confirmation revision before spending; successful transactions
 consume that revision. Field UI clears its selected amount after confirmation, so
 repeated signals cannot repeat the same purchase. Station availability, escalating
-production prices and other services are unchanged. Post-battle repairs remain **1:1**.
+production prices and other services are unchanged. Post-battle repairs cost **2 Salvage/Hull**, matching field repairs; station repairs remain **1 Salvage/Hull**.
 
 ### Plating handoff and the agreed PoI rule
 
@@ -81,3 +81,7 @@ transactions, noncombat retention and the three surviving battle result paths.
 reset, immediate HUD refresh, same-slot station transitions and the original grid.
 Its rendered mode captures 1280×720, 1680×720, 960×540 and 686×384. Emulated input and
 desktop rendering do not establish physical Android behavior/performance.
+
+### Repair previews
+
+Field, post-battle and station selectors share `scripts/ui/repair_preview.gd`: current Hull → resulting Hull, a red current-Hull bar with a green repair segment (amber for plating), and Salvage before → after with total cost and unit rate. Selection is preview-only until Confirm. Minus/plus on the result screen select individual Hull points, capped by `floor(Salvage / 2)` and missing capacity. `RepairRules.RESULT_SALVAGE_PER_HULL` controls its 2:1 rate. Combat repair cards are unchanged.

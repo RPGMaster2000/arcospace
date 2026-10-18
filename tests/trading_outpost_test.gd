@@ -125,7 +125,7 @@ func economy_checks(ship_index: int) -> void:
 	run.salvage = 2
 	check(run.station_repair_limit() == 2 and not run.purchase_service(0, run.service_revision, 3), "Cannot repair beyond available Salvage")
 	check(run.purchase_service(0, run.service_revision, 2) and run.salvage == 0, "Last two Salvage repair two Hull")
-	check(Repairs.HULL_PER_SALVAGE == 1, "Shared victory/station repair rate")
+	check(Repairs.RESULT_SALVAGE_PER_HULL == 2, "Post-battle repairs cost two Salvage; station repair remains one")
 	run.salvage = 100
 	for n in range(3):
 		revision = run.service_revision

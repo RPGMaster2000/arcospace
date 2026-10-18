@@ -44,10 +44,12 @@ var result_recorded: bool = false
 var earned_tactical: bool = false
 var earned_strategic: bool = false
 var result_hull: int = 0
-## TUNE: Salvage per destroyed enemy and Hull restored per selected salvage.
+## TUNE: Salvage per destroyed enemy; repair rates live in RepairRules.
 const DESTRUCTION_SALVAGE: int = 10
 const Repairs = preload("res://scripts/repair_rules.gd")
-const HULL_PER_SALVAGE: int = Repairs.HULL_PER_SALVAGE
+const RESULT_SALVAGE_PER_HULL: int = Repairs.RESULT_SALVAGE_PER_HULL
+var repair_preview: VBoxContainer
+# Legacy name; the selector now counts Hull points, not Salvage units.
 var repair_spend: int = -1
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
@@ -157,6 +159,10 @@ func _apply_ship(side: String, data: Resource) -> void:
 
 # Initialize ship stats and expedition overrides before dealing hands and starting turn income.
 func _ready() -> void:
+	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
+	repair_preview.position = Vector2(30, 270)
+	repair_preview.size = Vector2(680, 70)
+	$MatchResult/Panel.add_child(repair_preview)
 	$MatchResult/Panel/Details.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	$MatchResult/Panel/Rewards.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	_apply_ship("player", player_ship_data)
@@ -476,8 +482,13 @@ func refresh_display() -> void:
 	$MatchResult/Panel/Repair.disabled = repair_spend <= 0 or resolving_card or battle_effects.busy
 	$MatchResult/Panel/RepairMinus.disabled = repair_spend <= 0 or resolving_card or battle_effects.busy
 	$MatchResult/Panel/RepairPlus.disabled = repair_spend >= repair_limit or resolving_card or battle_effects.busy
-	$MatchResult/Panel/RepairAmount.text = "Spend %d / %d Salvage" % [maxi(0, repair_spend), salvage]
-	$MatchResult/Panel/Repair.text = "Repair to %d/%d Hull" % [player_hull + maxi(0, repair_spend) * HULL_PER_SALVAGE, player_hull_capacity]
+	var repair_amount: int = maxi(0, repair_spend)
+	repair_preview.visible = winner == "player"
+	repair_preview.show_repair(player_hull, player_hull_capacity, salvage, repair_amount, RESULT_SALVAGE_PER_HULL)
+	$MatchResult/Panel/RepairAmount.text = "+%d Hull" % repair_amount
+	$MatchResult/Panel/Repair.text = "Confirm · %d Salvage" % Repairs.quantity_cost(repair_amount, RESULT_SALVAGE_PER_HULL)
+	if repair_limit == 0:
+		$MatchResult/Panel/Repair.text = "Hull full" if player_hull >= player_hull_capacity else "Need 2 Salvage"
 	$ModifierDisplay.refresh(modifier, turn_number)
 	var ftl_status: String = "Emergency Jump %d / %d" % [ftl.charge, ftl.charge_target]
 	if ftl.disabled_turns > 0:
@@ -718,8 +729,8 @@ func _repair_with_salvage() -> void:
 		return
 	_record_result()
 	var spent: int = mini(repair_spend, _repair_spend_limit())
-	player_hull += spent * HULL_PER_SALVAGE
-	salvage -= spent
+	player_hull += spent
+	salvage -= Repairs.quantity_cost(spent, RESULT_SALVAGE_PER_HULL)
 	if expedition != null:
 		expedition.sync_battle(self)
 	repair_spend = -1

@@ -20,6 +20,8 @@ var card_inspector: CanvasLayer
 @export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
 @export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
 @export_group("")
+var field_preview: VBoxContainer
+var station_preview: VBoxContainer
 var field_selector: HSlider
 var field_confirm: Button
 var field_minus: Button
@@ -141,6 +143,10 @@ func _build_ui() -> void:
 	confirmation.cancelled.connect(_cancel_approach)
 	confirmation.column.add_child(footer)
 	confirmation.column.move_child(footer, 1)
+	station_preview = preload("res://scripts/ui/repair_preview.gd").new()
+	confirmation.column.add_child(station_preview)
+	confirmation.column.move_child(station_preview, 1)
+	station_preview.hide()
 	var shared = _label("", 20)
 	approach_note = shared
 	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -229,6 +235,7 @@ func _clear(kind: String) -> void:
 	resource_bar.field_repairs_enabled = state.field_repairs_open
 	selected_approach = -1
 	service_confirmation_revision = -1
+	station_preview.hide()
 	repair_selector.hide()
 	repair_selector.set_value_no_signal(0)
 	approach_buttons.clear()
@@ -436,6 +443,7 @@ func _repair_selection_changed(_value: float) -> void:
 	if selected_encounter != state.SERVICE_INDEX or not state.service_is_repair(selected_approach) or view_kind != "poi": return
 	var amount: int = int(repair_selector.value)
 	approach_note.text = "+%d %s → Hull %d/%d · Cost %d Salvage" % [amount, "plating" if state.station_plating_mode() else "Hull", state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
+	station_preview.show_repair(state.hull, state.ship().hull_capacity, state.salvage, amount, state.station_hull_unit_cost(), state.station_plating_mode())
 	confirm_button.disabled = amount <= 0 or amount > state.station_repair_limit() or service_confirmation_revision != state.service_revision
 
 func _purchase_finished() -> void:
@@ -458,6 +466,8 @@ func _select_approach(slot: int) -> void:
 		if slot < 0 or slot >= poi.approaches.size() or not state.locked_reason(poi.approaches[slot]).is_empty(): return
 	selected_approach = slot
 	footer.visible = selected_encounter == state.SERVICE_INDEX
+	station_preview.visible = selected_encounter == state.SERVICE_INDEX and state.service_is_repair(slot)
+	approach_note.visible = not station_preview.visible
 	for index in range(approach_buttons.size()):
 		var button = approach_buttons[index]
 		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
@@ -629,6 +639,8 @@ func _exit() -> void:
 
 func _build_field_repairs() -> void:
 	var extra: VBoxContainer = resource_bar.overlay.extra
+	field_preview = preload("res://scripts/ui/repair_preview.gd").new()
+	extra.add_child(field_preview)
 	var row = HBoxContainer.new()
 	extra.add_child(row)
 	field_minus = Button.new()
@@ -672,7 +684,8 @@ func _update_field_repair(_value: float) -> void:
 	field_selector.max_value = limit
 	var amount: int = mini(int(field_selector.value), limit)
 	var cost: int = State.Repairs.quantity_cost(amount, State.Repairs.FIELD_SALVAGE_PER_HULL)
-	var text: String = resource_bar.heading("hull", "Hull") + "\n\n[b]Hull %d/%d · Salvage %d[/b]\nPermanent Hull carries between battles. Excess is temporary plating.\nField repair: 2 Salvage / Hull · Maximum affordable: %d\n\n[b]Repair +%d Hull → %d/%d · Cost %d Salvage[/b]" % [state.hull, state.ship().hull_capacity, state.salvage, limit, amount, state.hull + amount, state.ship().hull_capacity, cost]
+	var text: String = resource_bar.heading("hull", "Hull") + "\nField repair: 2 Salvage / Hull · Maximum affordable: %d\nPermanent Hull carries between battles. Excess is temporary plating." % limit
+	field_preview.show_repair(state.hull, state.ship().hull_capacity, state.salvage, amount, State.Repairs.FIELD_SALVAGE_PER_HULL)
 	if state.hull >= state.ship().hull_capacity:
 		text += "\nHull full · Field repairs cannot create Ablative Plating."
 	elif limit == 0:

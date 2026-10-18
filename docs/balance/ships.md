@@ -15,7 +15,7 @@ Generated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the in
 
 Enemy profiles also serialize Emergency Jump defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.
 
-Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cannot be farmed. Resource victory: 6 Salvage (Elite: 12) and full profile FTL reward. Elite victories additionally grant +3 Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: 1 Hull per Salvage, capped at capacity. Standalone combat destruction fallback: 10 Salvage. Enemy registry and resource-victory Salvage: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.
+Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cannot be farmed. Resource victory: 6 Salvage (Elite: 12) and full profile FTL reward. Elite victories additionally grant +3 Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: 2 Salvage per Hull, capped at capacity. Standalone combat destruction fallback: 10 Salvage. Enemy registry and resource-victory Salvage: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.
 
 ## Card preferences
 

@@ -17,7 +17,7 @@ func run() -> void:
 	for repeat in range(5): board.refresh_display()
 	check(board.salvage == 10 and board.battles_won == 1, "Destruction counted and awarded once")
 	board.get_node("MatchResult/Panel/Repair").pressed.emit()
-	check(board.player_hull == 30 and board.salvage == 9, "Repair reaches capacity and preserves unspent salvage")
+	check(board.player_hull == 30 and board.salvage == 8, "Repair reaches capacity and preserves unspent salvage")
 	check(not board.tactical_victory(), "Repair cannot turn combat loss of hull into tactical victory")
 	board._continue_encounter()
 	await process_frame
