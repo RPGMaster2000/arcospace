@@ -11,11 +11,7 @@ func run() -> void:
 	board.get_node("BattleEffects").enabled = false
 	root.add_child(board)
 	board.player_hull = 27
-	board.salvage = 1
-	board.refresh_display()
-	check(board.repair_spend == 0 and board.get_node("MatchResult/Panel/Repair").disabled, "Odd insufficient Salvage cannot repair")
-	board.salvage = 2
-	board.repair_spend = -10
+	board.salvage = 20
 	board.winner = "player"
 	board.refresh_display()
 	check(board.repair_spend == 3, "Default fills missing hull with capacity thirty")
@@ -33,7 +29,11 @@ func run() -> void:
 	board.repair_spend = -1
 	board.refresh_display()
 	check(board.repair_spend == 7, "Fourteen remaining Salvage affords seven Hull")
+	board.salvage = 1
+	board.refresh_display()
+	check(board.repair_spend == 0 and board.get_node("MatchResult/Panel/Repair").disabled, "Odd insufficient Salvage cannot repair")
 	board.salvage = 2
+	board.repair_spend = -1
 	board.refresh_display()
 	check(board.repair_spend == 1, "Selection bounded by floor(Salvage / 2)")
 	board.player_hull = 43
