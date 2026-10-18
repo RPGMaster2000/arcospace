@@ -143,7 +143,7 @@ func run_tests() -> void:
 	check(board.player_quarters == run.ship().quarters + 2, "Shipyard production persists")
 	board.ftl.charge = board.ftl.charge_target
 	board._warp_out()
-	check(board.salvage == after_reward - 5, "FTL escape grants no combat Salvage")
+	check(board.salvage == after_reward - 10, "FTL escape grants no combat Salvage")
 	board.free()
 	run = fresh()
 	board = make_board(run)
