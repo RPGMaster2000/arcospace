@@ -1,7 +1,7 @@
 extends "res://scripts/board.gd"
 
 # RESPONSIBILITY: Connect the optional 3D presentation to the existing board.
-# All card rules, input and turn handling are inherited unchanged.
+# DOES NOT: Redefine card rules, input or turn handling; these are inherited from board.gd.
 func refresh_display() -> void:
 	super.refresh_display()
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(mini(player_hull, player_hull_capacity))
@@ -20,6 +20,11 @@ const BATTLEFIELDS = [
 	preload("res://scenes/battlefield_temporal_rift.tscn")
 ]
 
+## TUNE: Optional normal-only presentation override; leave empty for Deep Space.
+## Drag battlefield_planetary_orbit.tscn here to use that normal variant. No RNG or modifier changes.
+@export var normal_battlefield: PackedScene
+
+# Install the selected battlefield/model before child _ready callbacks cache presentation nodes.
 func _enter_tree() -> void:
 	super._enter_tree()
 	# Replace before child _ready callbacks cache the ships for visual effects.
@@ -29,7 +34,8 @@ func _enter_tree() -> void:
 	var previous = viewport.get_node("Battlefield")
 	viewport.remove_child(previous)
 	previous.free()
-	var battlefield = BATTLEFIELDS[selection].instantiate()
+	var scene: PackedScene = normal_battlefield if selection == 0 and normal_battlefield != null else BATTLEFIELDS[selection]
+	var battlefield = scene.instantiate()
 	battlefield.name = "Battlefield"
 	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:
 		var data = pair[1]

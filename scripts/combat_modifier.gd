@@ -116,6 +116,7 @@ func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 			result[key] = int(floor(float(result[key]) * factor))
 	return result
 
+# Resolve a temporary card copy through CardEffects, preserving shared definitions and reserved flare Shields.
 func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0) -> String:
 	if actor[card.family] < card.cost:
 		return ""
@@ -162,6 +163,7 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 func ion_text() -> String:
 	return "ENERGY cards are powered up!" if ion_factor == 2.0 else "ENERGY cards are surpressed!"
 
+# Return presentation data for the active Ion multiplier; never apply a real combat action here.
 func preview(card: Resource) -> Resource:
 	if card == null or kind != 2 or not active or card.family != "energy":
 		return card

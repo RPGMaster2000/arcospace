@@ -77,3 +77,25 @@ Power Allocation retains its existing popup, weights and input behavior. `Board3
 The system FTL control shows carried starting charge normally and explicitly says Resolve Boss first when a milestone is unresolved. Boss tiles say Mandatory Boss; the preview explains Victory or Emergency Jump and shows effective level/Hull/Shields. Normal PoI navigation and six-slot layout remain unchanged. Full formulas and Inspector paths are in the ship/PoI balance references.
 
 Validation is performed by the Godot regression workflow on an isolated branch before publishing main because the local execution environment is unavailable. Physical Android gameplay and device GPU rendering remain unverified.
+
+### Minimal star-map prototype
+
+`scenes/expedition.tscn` → Expedition Inspector: `use_star_map` defaults to **true**.
+Disable it to restore the unchanged 3×2 encounter grid. `star_map_travel_duration`
+controls presentation-only travel (default **1.4 seconds**).
+
+`scripts/ui/star_map.gd` draws a static star field, central star and triangle ship;
+its six touch targets consume the existing generated encounters. A separate service
+marker preserves the Trading Outpost's free revisits and zero FTL. Arrival calls the
+existing encounter router. Completed destinations are disabled; returning preserves
+ship position, while a new system/expedition resets it. FTL/Boss rules remain in
+ExpeditionState. Travel is a short, non-skippable animation; repeated taps are ignored.
+No assets, combat layout or balancing values change.
+
+Battlefield lighting, procedural backgrounds and the optional normal Planetary Orbit
+scene are documented in [battlefield_environments.md](battlefield_environments.md).
+Their lights/materials are scene-local; the board only adjusts background framing.
+
+The system Hull status reuses its existing info overlay for field repairs. Heartbeat
+exports and the conditional Outpost repair/plating controls are described in
+[hull-capacity.md](hull-capacity.md#field-repairs-and-outpost-plating).

@@ -1,4 +1,5 @@
 extends HFlowContainer
+signal hull_requested
 # Exploration only: ship starting reserves plus effective pending adjustments.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const POSITIVE = Color("8ce4ad")
@@ -6,12 +7,19 @@ const NEGATIVE = Color("ffacb5")
 const FAMILY_COLORS = {"materials":Color("3b252c"), "synthesizer":Color("3b252c"),
 	"energy":Color("20354d"), "reactor":Color("20354d"),
 	"crew":Color("253c30"), "quarters":Color("253c30")}
+# Copied from Expedition's Inspector settings; only the Hull button is animated.
+var pulse_period: float = 1.45
+var pulse_scale: float = 1.03
+var pulse_intensity: float = 0.22
+var field_repairs_enabled: bool = false
+var heartbeat_active: bool = false
+var pulse_elapsed: float = 0.0
 var overlay: CanvasLayer
 var entries: Dictionary = {}
 var markup = RegEx.create_from_string("\\[.*?\\]")
 
 func _ready() -> void:
-	add_theme_constant_override("h_separation", 4)
+	add_theme_constant_override("h_separation", 6)
 	add_theme_constant_override("v_separation", 2)
 	overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(overlay)
@@ -25,13 +33,13 @@ func put(key: String, value: String, detail: String = "", adjustment: String = "
 		Presentation.action(button)
 		for style in ["normal", "hover", "pressed", "disabled"]:
 			var box: StyleBoxFlat = button.get_theme_stylebox(style).duplicate()
-			box.bg_color = FAMILY_COLORS.get(key, Color("192b3c"))
-			box.border_color = box.bg_color.lightened(.32)
+			box.bg_color = FAMILY_COLORS.get(key, Color("282a29ff"))
+			box.border_color = box.bg_color.lightened(.12)
 			if style == "hover": box.bg_color = box.bg_color.lightened(.08)
 			box.content_margin_left = 8
 			box.content_margin_right = 8
-			box.content_margin_top = 2
-			box.content_margin_bottom = 2
+			box.content_margin_top = 1
+			box.content_margin_bottom = 1
 			button.add_theme_stylebox_override(style, box)
 		# Button text retains sizing/accessibility; child labels color each adjustment.
 		for color in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:
@@ -51,7 +59,9 @@ func put(key: String, value: String, detail: String = "", adjustment: String = "
 			label.add_theme_font_size_override("font_size", 20)
 			label.add_theme_color_override("font_color", Color("edf3fa"))
 			row.add_child(label)
-		button.pressed.connect(func(): overlay.show_text(button.get_meta("description", button.tooltip_text)))
+		button.pressed.connect(func():
+			if key == "hull": hull_requested.emit()
+			else: overlay.show_text(button.get_meta("description", button.tooltip_text)))
 		entries[key] = button
 		add_child(button)
 	var entry: Button = entries[key]
@@ -93,6 +103,8 @@ func starting_resource(state: Resource, key: String, production: String = "") ->
 
 func exploration(state: Resource) -> void:
 	put("hull", "%d/%d" % [state.hull, state.ship().hull_capacity], heading("hull", "Hull") + "\n\n[b]%d / %d[/b]\nCarries between battles.\nExcess → temporary plating." % [state.hull, state.ship().hull_capacity])
+	entries.hull.get_node("Values/Base").add_theme_color_override("font_color", Color(0.78, 0.57, 0.28) if state.hull > state.ship().hull_capacity else Color("edf3fa"))
+	set_heartbeat(field_repairs_enabled and state.hull > 0 and state.hull < state.ship().hull_capacity)
 	starting_resource(state, "shields")
 	put("salvage", str(state.salvage), heading("salvage", "Salvage") + "\n\n[b]%d[/b]\nRepairs · Cards · Supplies · Production" % state.salvage)
 	for pair in [["materials", "synthesizer"], ["energy", "reactor"], ["crew", "quarters"]]:
@@ -106,3 +118,21 @@ func exploration(state: Resource) -> void:
 		put("jump", "", detail, "Boost +%d" % boost)
 	else:
 		put("jump", "Nominal", detail)
+
+func set_heartbeat(active: bool) -> void:
+	heartbeat_active = active
+	if not active and entries.has("hull"):
+		pulse_elapsed = 0.0
+		entries.hull.scale = Vector2.ONE
+		entries.hull.modulate = Color.WHITE
+
+func _process(delta: float) -> void:
+	if not heartbeat_active or not is_visible_in_tree(): return
+	pulse_elapsed += delta
+	var phase: float = fmod(pulse_elapsed, maxf(0.5, pulse_period)) / maxf(0.5, pulse_period)
+	# Two soft beats and a long rest; scale affects drawing, never container layout.
+	var beat: float = minf(1.0, exp(-pow((phase - 0.14) / 0.055, 2)) + 0.6 * exp(-pow((phase - 0.30) / 0.065, 2)))
+	var button: Button = entries.hull
+	button.pivot_offset = button.size * 0.5
+	button.scale = Vector2.ONE * (1.0 + (pulse_scale - 1.0) * beat)
+	button.modulate = Color.WHITE.lerp(Color(1.0, 0.2, 0.2), pulse_intensity * beat)

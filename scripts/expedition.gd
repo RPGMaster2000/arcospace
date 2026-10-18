@@ -1,5 +1,6 @@
 extends Control
-# UI routing only; ExpeditionState owns all rewards, requirements and progression.
+# RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
+# DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -9,6 +10,25 @@ const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
 var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
+# TUNE: Disable to restore the original grid; both presentations use the same encounter state.
+@export var use_star_map: bool = true
+# TUNE: Seconds before a selected map destination opens; no travel cost or rules change.
+@export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
+@export_group("Hull warning")
+## TUNE: Seconds per soft double heartbeat, maximum draw scale, and red tint strength.
+@export_range(1.0, 3.0, 0.05) var hull_pulse_period: float = 1.45
+@export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
+@export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
+@export_group("")
+var field_selector: HSlider
+var field_confirm: Button
+var field_minus: Button
+var field_plus: Button
+var field_confirmation_revision: int = -1
+var star_map: Control
+var map_system: int = -1
+var map_destination: int = -1
+
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
 ## Optional accessibility preference; bundled emoji render by default on Android.
 @export var text_icons_on_android: bool = false
@@ -57,8 +77,10 @@ func _ready() -> void:
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
 	add_child(outcome_flash)
+	_build_field_repairs()
 	start_expedition()
 
+# Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
 	var backdrop = ColorRect.new()
 	backdrop.color = Color("0e1a28")
@@ -91,7 +113,11 @@ func _build_ui() -> void:
 	Presentation.action(legend)
 	heading_row.add_child(legend)
 	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
+	resource_bar.pulse_period = hull_pulse_period
+	resource_bar.pulse_scale = hull_pulse_scale
+	resource_bar.pulse_intensity = hull_pulse_intensity
 	column.add_child(resource_bar)
+	resource_bar.hull_requested.connect(_show_hull_info)
 	legend.pressed.connect(func(): resource_bar.overlay.show_legend())
 	header = Header.instantiate()
 	column.add_child(header)
@@ -189,6 +215,7 @@ func _tile(parent: Node, heading: String, details: String, color: Color, callbac
 func _icon(key: String) -> String:
 	return Presentation.icon(key, get_theme_default_font(), text_icons_on_android and OS.has_feature("android"))
 
+# Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
 func _clear(kind: String) -> void:
 	if is_instance_valid(current_deck_viewer): current_deck_viewer.dismiss()
 	mission_header = null
@@ -198,6 +225,8 @@ func _clear(kind: String) -> void:
 	resource_bar.overlay.dismiss()
 	confirmation.dismiss()
 	view_kind = kind
+	state.field_repairs_open = kind == "system" and state.hull > 0
+	resource_bar.field_repairs_enabled = state.field_repairs_open
 	selected_approach = -1
 	service_confirmation_revision = -1
 	repair_selector.hide()
@@ -207,6 +236,8 @@ func _clear(kind: String) -> void:
 	for child in view.get_children():
 		view.remove_child(child)
 		child.queue_free()
+	star_map = null
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if kind == "system" and use_star_map else ScrollContainer.SCROLL_MODE_AUTO
 	scroll.scroll_vertical = 0
 	ui.show()
 	header.visible = kind == "poi"
@@ -227,6 +258,8 @@ func _clear(kind: String) -> void:
 	jump_button.visible = state.hull > 0
 
 func start_expedition() -> void:
+	map_system = -1
+	map_destination = -1
 	state = State.new()
 	state.start(selected_ship, rules)
 	show_system()
@@ -240,6 +273,9 @@ func show_system() -> void:
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
 		_button("Select Ship", _exit)
+		return
+	if use_star_map:
+		_show_star_map()
 		return
 	var cards = _grid(3)
 	for index in range(state.encounters.size()):
@@ -258,6 +294,33 @@ func show_system() -> void:
 
 	if not state.service.is_empty():
 		_button("Trading Outpost · Service station · No travel FTL · Free to return", visit.bind(state.SERVICE_INDEX))
+
+# Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
+func _show_star_map() -> void:
+	if map_system != state.system_number:
+		map_system = state.system_number
+		map_destination = -1
+	var entries: Array = []
+	for index in range(state.encounters.size()):
+		var encounter: Dictionary = state.encounters[index]
+		var key: String = "battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
+		var detail: String = "+%d FTL" % state.encounter_charge(index)
+		if encounter.kind == "battle":
+			key = ["battle", "elite", "boss"][state.enemy_profile(encounter).enemy_rank]
+			if encounter.get("mandatory_boss", false): detail = "Mandatory Boss · " + detail
+		var tooltip: String = detail
+		if encounter.kind == "battle": tooltip += "\n" + State.Modifiers.NAMES[encounter.modifier]
+		entries.append({"index":index, "text":("✓ " if encounter.completed else _icon(key) + " ") + encounter.title + "\n" + ("Completed" if encounter.completed else detail), "tooltip":tooltip, "color":Presentation.COLORS[Presentation.classification(encounter)], "completed":encounter.completed})
+	if not state.service.is_empty():
+		entries.append({"index":state.SERVICE_INDEX, "text":_icon("trading_outpost") + " Trading Outpost\nFree return · 0 FTL", "tooltip":"Independent service station", "color":Color("8fcab7"), "completed":false})
+	star_map = preload("res://scripts/ui/star_map.gd").new()
+	star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	view.add_child(star_map)
+	star_map.configure(entries, map_destination, star_map_travel_duration)
+	star_map.arrived.connect(func(index: int):
+		map_destination = index
+		visit(index))
 
 func visit(index: int) -> void:
 	if not state.can_visit(index): return
@@ -352,18 +415,18 @@ func show_outpost() -> void:
 	# Station choices do not need the travel bar or a long pending-combat ledger.
 	jump_button.hide()
 	approach_note.text = "Service station · No travel FTL · Free to leave"
-	confirm_button.text = "Initiate"
+	confirm_button.text = "Confirm"
 	var options = _grid(2)
 	for slot in range(state.service.poi.approaches.size()):
 		var approach: Resource = state.service.poi.approaches[slot]
 		var details: String
 		if approach.success.hull > 0:
-			details = "1 Salvage / Hull · Select repair amount"
+			details = "%d Salvage / %s · Select quantity\nHull %d/%d · Plating %d/%d" % [state.station_hull_unit_cost(), "plating" if state.station_plating_mode() else "Hull", state.hull, state.ship().hull_capacity, maxi(0, state.hull - state.ship().hull_capacity), State.Repairs.STATION_PLATING_LIMIT]
 		else:
 			details = "%d Salvage · %s" % [state.service_cost(slot), compact_outcome(approach.success)]
 		var reason: String = state.service_locked_reason(slot)
 		if not reason.is_empty(): details += "\nLOCKED — " + reason
-		var button = _tile(options, approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty())
+		var button = _tile(options, state.station_hull_title() if state.service_is_repair(slot) else approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty())
 		button.set_rich_details(highlight_outcome(details))
 		approach_buttons.append(button)
 	# Wrapped labels can retain a tall temporary minimum after a choice screen.
@@ -372,7 +435,7 @@ func show_outpost() -> void:
 func _repair_selection_changed(_value: float) -> void:
 	if selected_encounter != state.SERVICE_INDEX or not state.service_is_repair(selected_approach) or view_kind != "poi": return
 	var amount: int = int(repair_selector.value)
-	approach_note.text = "+%d Hull → %d/%d · Cost %d Salvage" % [amount, state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
+	approach_note.text = "+%d %s → Hull %d/%d · Cost %d Salvage" % [amount, "plating" if state.station_plating_mode() else "Hull", state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
 	confirm_button.disabled = amount <= 0 or amount > state.station_repair_limit() or service_confirmation_revision != state.service_revision
 
 func _purchase_finished() -> void:
@@ -409,7 +472,7 @@ func _select_approach(slot: int) -> void:
 		else:
 			approach_note.text = "Cost %d Salvage · Balance after purchase: %d" % [state.service_cost(slot), state.salvage - state.service_cost(slot)]
 
-	var selected_title: String = "Navigation survey" if slot == -2 else state.encounter_at(selected_encounter).poi.approaches[slot].title
+	var selected_title: String = "Navigation survey" if slot == -2 else (state.station_hull_title() if selected_encounter == state.SERVICE_INDEX and state.service_is_repair(slot) else state.encounter_at(selected_encounter).poi.approaches[slot].title)
 	confirmation.present(selected_title)
 
 func _cancel_approach() -> void:
@@ -521,10 +584,14 @@ func _jump() -> void:
 	if state.generate_system():
 		show_system()
 
+# Set expedition/profile references and signal callbacks before add_child triggers Board initialization.
 func start_battle(index: int) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
 	var encounter: Dictionary = state.encounters[index]
+	state.field_repairs_open = false
+	resource_bar.set_heartbeat(false)
+	resource_bar.overlay.dismiss()
 	ui.hide()
 	view_kind = "battle"
 	battle = BOARD.instantiate()
@@ -536,6 +603,7 @@ func start_battle(index: int) -> void:
 	battle.expedition_exit.connect(_exit)
 	add_child(battle)
 
+# Continue returns here after result recording; sync post-battle repairs before removing the board.
 func _battle_finished() -> void:
 	state.sync_battle(battle)
 	state.active_battle = -1
@@ -558,3 +626,69 @@ func _exit() -> void:
 	get_parent().add_child(setup)
 	get_tree().current_scene = setup
 	queue_free()
+
+func _build_field_repairs() -> void:
+	var extra: VBoxContainer = resource_bar.overlay.extra
+	var row = HBoxContainer.new()
+	extra.add_child(row)
+	field_minus = Button.new()
+	field_minus.text = "−"
+	field_minus.custom_minimum_size = Vector2(56, 48)
+	Presentation.action(field_minus)
+	row.add_child(field_minus)
+	field_selector = HSlider.new()
+	field_selector.step = 1
+	field_selector.custom_minimum_size = Vector2(180, 48)
+	field_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(field_selector)
+	field_plus = Button.new()
+	field_plus.text = "+"
+	field_plus.custom_minimum_size = Vector2(56, 48)
+	Presentation.action(field_plus)
+	row.add_child(field_plus)
+	field_confirm = Button.new()
+	field_confirm.custom_minimum_size.y = 48
+	Presentation.action(field_confirm)
+	extra.add_child(field_confirm)
+	field_minus.pressed.connect(func(): field_selector.value -= 1)
+	field_plus.pressed.connect(func(): field_selector.value += 1)
+	field_selector.value_changed.connect(_update_field_repair)
+	field_confirm.pressed.connect(_confirm_field_repair)
+
+func _show_hull_info() -> void:
+	var overlay: CanvasLayer = resource_bar.overlay
+	overlay.show_text(resource_bar.entries.hull.get_meta("description"))
+	if view_kind != "system" or not state.field_repairs_open: return
+	field_confirmation_revision = state.service_revision
+	field_selector.max_value = state.field_repair_limit()
+	field_selector.set_value_no_signal(state.field_repair_limit())
+	overlay.desired_height = 480
+	overlay.extra.show()
+	_update_field_repair(0)
+	overlay._fit()
+
+func _update_field_repair(_value: float) -> void:
+	var limit: int = state.field_repair_limit()
+	field_selector.max_value = limit
+	var amount: int = mini(int(field_selector.value), limit)
+	var cost: int = State.Repairs.quantity_cost(amount, State.Repairs.FIELD_SALVAGE_PER_HULL)
+	var text: String = resource_bar.heading("hull", "Hull") + "\n\n[b]Hull %d/%d · Salvage %d[/b]\nPermanent Hull carries between battles. Excess is temporary plating.\nField repair: 2 Salvage / Hull · Maximum affordable: %d\n\n[b]Repair +%d Hull → %d/%d · Cost %d Salvage[/b]" % [state.hull, state.ship().hull_capacity, state.salvage, limit, amount, state.hull + amount, state.ship().hull_capacity, cost]
+	if state.hull >= state.ship().hull_capacity:
+		text += "\nHull full · Field repairs cannot create Ablative Plating."
+	elif limit == 0:
+		text += "\nRequires at least 2 Salvage to repair 1 Hull."
+	resource_bar.overlay.body.text = text
+	field_selector.editable = limit > 0
+	field_minus.disabled = amount <= 0
+	field_plus.disabled = amount >= limit
+	field_confirm.text = "Confirm +%d Hull · %d Salvage" % [amount, cost]
+	field_confirm.disabled = amount <= 0 or view_kind != "system" or field_confirmation_revision != state.service_revision
+
+func _confirm_field_repair() -> void:
+	if view_kind != "system" or not resource_bar.overlay.shade.visible or not resource_bar.overlay.extra.visible or field_confirm.disabled: return
+	if not state.field_repair(int(field_selector.value), field_confirmation_revision): return
+	resource_bar.exploration(state)
+	field_confirmation_revision = state.service_revision
+	# Consumed selection: a repeated signal cannot buy the same repair twice.
+	field_selector.set_value_no_signal(0)
+	_update_field_repair(0)

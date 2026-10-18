@@ -17,3 +17,67 @@ Hull text is light gray normally (amber for excess) and shield text is blue, bot
 The player engine light at Battlefield/PlayerShip/Body/OmniLight3D uses its scene-authored energy as the baseline. Board3D Inspector engine_offline_factor defaults to 0.3, engine_ready_factor to 1.4. Pulse depth/speed are also exported. Removing the optional light simply skips its animation.
 
 ModifierDisplay Inspector ftl_offline_seconds (1.45) and ftl_online_seconds (0.65) control dedicated red/blue transition flashes. Online announces resumed charging unless already charged, when it reads FTL ONLINE. These do not change charging or disable timing.
+
+## Field repairs and Outpost plating
+
+On the **star-system screen**, tap the existing Hull status button. Its existing
+information overlay now includes quantity controls (minus/slider/plus), affordable
+maximum, resulting Hull and total cost. **Confirm** spends **2 Salvage/Hull** and
+repairs permanent Hull only, never past the selected ship's normal capacity. Merely
+changing a quantity does not spend. Full Hull and insufficient Salvage retain the
+information with disabled controls and an explanation. Repairs are unavailable in
+PoI/service/preview screens, pending choices or combat, and persist immediately in
+`ExpeditionState`. The original grid and star-map presentations use the same entry point.
+
+The Trading Outpost keeps its existing four service slots. Its Hull slot now changes
+in place, using the same confirmation and quantity selector:
+
+| Combined Hull | Hull service | Rate / limit |
+|---|---|---|
+| Below capacity | Repair Hull | 1 Salvage/Hull, up to capacity |
+| At/above capacity but below capacity +10 | Install Ablative Plating | 2 Salvage/point, up to +10 |
+| Capacity +10 or higher | Ablative Plating Full | Disabled; no further purchase |
+
+`RepairRules` contains rates and shared quantity/cost calculations. State validates
+amount, funds and confirmation revision before spending; successful transactions
+consume that revision. Field UI clears its selected amount after confirmation, so
+repeated signals cannot repeat the same purchase. Station availability, escalating
+production prices and other services are unchanged. Post-battle repairs remain **1:1**.
+
+### Plating handoff and the agreed PoI rule
+
+There is still **one Hull integer**, with no separate armor stat. `begin_battle()`
+copies its full value to the board, including purchased plating. `sync_battle()` still
+caps carried Hull, both when the result is recorded and on return after optional
+repairs. Destruction victory, resource victory and successful Emergency Jump therefore
+all discard leftover plating. Returning to ship selection starts no new expedition
+until confirmation; it does not carry the old expedition's plating into a fresh run.
+Combat damage, card repairs and FTL disruption calculations are unchanged.
+
+Neutral noncombat outcomes no longer clamp combined Hull down to capacity; they retain
+plating until battle. Positive PoI Hull repairs cannot add plating or erase existing
+plating. **Clarified design choice:** negative PoI Hull outcomes reduce the combined
+Hull value and can consume plating. For example, 35/30 −3 becomes 32/30 (30 permanent
+Hull +2 plating). Preserving 27 permanent Hull alongside 5 plating cannot be encoded
+by the existing `min/max` formula, and no extra layer/bookkeeping was introduced.
+
+### Hull warning Inspector controls
+
+On the root **Expedition** node in `scenes/expedition.tscn`, the **Hull warning** group
+exposes:
+
+- `hull_pulse_period`: **1.45 seconds** per soft double beat and rest.
+- `hull_pulse_scale`: **1.03** maximum visual scale (no container resizing).
+- `hull_pulse_intensity`: **0.22** maximum red tint blend.
+
+Only a damaged, surviving ship's Hull button pulses on the system screen, even with
+zero Salvage. Full Hull stops and resets the effect immediately; plating uses amber
+without a pulse. Encounter/combat HUD behavior is unchanged. The lightweight update
+uses one phase accumulator and no per-frame Tween allocation.
+
+Focused checks: `field_repairs_test.gd` covers all three ships, rates, limits, duplicate
+transactions, noncombat retention and the three surviving battle result paths.
+`field_repairs_ui_test.gd` covers the existing popup, pointer/emulated touch, pulse
+reset, immediate HUD refresh, same-slot station transitions and the original grid.
+Its rendered mode captures 1280×720, 1680×720, 960×540 and 686×384. Emulated input and
+desktop rendering do not establish physical Android behavior/performance.

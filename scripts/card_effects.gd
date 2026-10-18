@@ -12,6 +12,8 @@ static func _new_rng() -> RandomNumberGenerator:
 	generator.randomize()
 	return generator
 
+# Mutate the supplied state dictionaries; Board writes them back, while EnemyAI passes copies.
+# EXTEND: New keys also need CardData descriptions, CombatModifier previews/scaling, AI scoring and tests.
 static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator: RandomNumberGenerator = null, simulate: bool = false, damage_report: Dictionary = {}) -> bool:
 	damage_report.clear()
 	damage_report.merge({"actor":0,"target":0})
@@ -63,6 +65,8 @@ static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator
 		enemy.shields = 0
 	# Shield breaking happens before regular damage (Breach Charge).
 	enemy.shields = maxi(0, enemy.shields - int(effects.get("break_shields", 0)))
+	# Pierce bypasses Shields; the remaining damage is absorbed before Hull loss is reported.
+	# Board uses this report to disrupt escape charging only for permanent Hull damage.
 	var damage: int = int(effects.get("damage", 0))
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
 	var blocked: int = mini(enemy.shields, damage - direct)

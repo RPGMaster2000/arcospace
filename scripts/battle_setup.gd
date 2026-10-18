@@ -1,4 +1,5 @@
 extends Control
+# DOES NOT: Start combat directly; confirmation creates an Expedition controller.
 # RESPONSIBILITY: Read setup controls and configure a new board before its _ready runs.
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Ships = preload("res://scripts/ship_library.gd")
@@ -73,6 +74,7 @@ func _select(index: int) -> void:
 func read_settings() -> Dictionary:
 	return {"player_ship": selected_ship, "modifier": 0}
 
+# Create the expedition only after ship confirmation; pass the library index before its _ready callback.
 func _start() -> void:
 	$Start.disabled = true
 	var board = load("res://scenes/expedition.tscn").instantiate()
@@ -148,4 +150,3 @@ func _fit_card(panel: Control) -> void:
 
 func _icon(key: String) -> String:
 	return Presentation.icon(key, Presentation.UI_FONT)
-

@@ -155,6 +155,7 @@ func _apply_ship(side: String, data: Resource) -> void:
 	for key in MatchRules.RESOURCES + MatchRules.PRODUCTION:
 		set(side + "_" + key, data.get(key))
 
+# Initialize ship stats and expedition overrides before dealing hands and starting turn income.
 func _ready() -> void:
 	$MatchResult/Panel/Details.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	$MatchResult/Panel/Rewards.add_theme_font_override("font", ResultPresentation.UI_FONT)
@@ -234,6 +235,7 @@ func _discard_card(slot: int) -> void:
 	_act("player", slot, true)
 
 
+# Apply round events and player escape charging, then income; wait for presentation before AI input.
 func _begin_turn(side: String) -> void:
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
@@ -291,6 +293,8 @@ func _begin_turn(side: String) -> void:
 		enemy_timer.start()
 
 
+# Guard legality and lock input while CardMotion invokes _resolve_card at its animation cue.
+# After all presentation finishes, either retain the extra action or advance the actor/round.
 func _act(side: String, slot: int, discard: bool) -> bool:
 	if resolving_card or current_actor != side or not winner.is_empty():
 		return false
@@ -341,6 +345,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	return true
 
 
+# Commit dictionary results, replace the used slot, then present deltas and evaluate victory.
+# CombatModifier.play delegates cost/effects to CardEffects; discard uses its own refund path.
 func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> void:
 	var before: Dictionary = _both_states()
 	var active_hand = hand if side == "player" else enemy_hand
@@ -382,6 +388,7 @@ func _both_states() -> Dictionary:
 	return {"player": _read_state("player"), "enemy": _read_state("enemy")}
 
 
+# EnemyAI returns a slot/discard decision; _act still enforces the same real action rules.
 func _on_enemy_timeout() -> void:
 	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
@@ -396,6 +403,7 @@ func _on_enemy_timeout() -> void:
 	_act("enemy", move.slot, move.discard)
 
 
+# Latch the first terminal result and stop AI timing; reward recording happens in refresh_display.
 func _check_winner() -> bool:
 	if not winner.is_empty():
 		return true
@@ -434,6 +442,7 @@ func _return_to_setup() -> void:
 	get_tree().current_scene = setup
 	queue_free()
 
+# Resolve combat escape as a player win, without generating a new star system here.
 func _warp_out() -> void:
 	if current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty():
 		return
@@ -447,6 +456,8 @@ func _warp_out() -> void:
 	refresh_display()
 	$MatchResult/Panel/Title.text = "JUMP SUCCESS"
 
+# Refresh controls from authoritative state; _record_result also commits a finished battle once.
+# Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
 func refresh_display() -> void:
 	$ModeLabel.text = enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship"
 	$ModeLabel/Subtitle.text = enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel"
