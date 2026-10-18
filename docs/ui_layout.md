@@ -91,3 +91,7 @@ existing encounter router. Completed destinations are disabled; returning preser
 ship position, while a new system/expedition resets it. FTL/Boss rules remain in
 ExpeditionState. Travel is a short, non-skippable animation; repeated taps are ignored.
 No assets, combat layout or balancing values change.
+
+Battlefield lighting, procedural backgrounds and the optional normal Planetary Orbit
+scene are documented in [battlefield_environments.md](battlefield_environments.md).
+Their lights/materials are scene-local; the board only adjusts background framing.
