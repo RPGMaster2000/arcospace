@@ -119,8 +119,8 @@ func economy_checks(ship_index: int) -> void:
 	check(run.purchase_service(0, revision, 12) and run.hull == run.ship().hull_capacity - 6 and run.salvage == 38, "Selected twelve Hull costs exactly twelve")
 	check(not run.purchase_service(0, revision, 1) and run.salvage == 38, "Duplicate repair confirmation rejected")
 	check(run.purchase_service(0, run.service_revision, 5) and run.purchase_service(0, run.service_revision, 1), "Repeat repairs at same station")
-	check(run.hull == run.ship().hull_capacity and run.salvage == 32 and run.station_repair_limit() == 0, "Capacity reached with no plating")
-	check(not run.purchase_service(0, run.service_revision, 1), "No repair beyond capacity")
+	check(run.hull == run.ship().hull_capacity and run.salvage == 32 and run.station_repair_limit() == 10, "Capacity reached; next purchase can install plating")
+	check(run.station_hull_unit_cost() == 2 and run.station_hull_title() == "Install Ablative Plating", "At capacity the existing repair slot becomes plating")
 	run.hull -= 5
 	run.salvage = 2
 	check(run.station_repair_limit() == 2 and not run.purchase_service(0, run.service_revision, 3), "Cannot repair beyond available Salvage")

@@ -14,6 +14,17 @@ var card_inspector: CanvasLayer
 @export var use_star_map: bool = true
 # TUNE: Seconds before a selected map destination opens; no travel cost or rules change.
 @export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
+@export_group("Hull warning")
+## TUNE: Seconds per soft double heartbeat, maximum draw scale, and red tint strength.
+@export_range(1.0, 3.0, 0.05) var hull_pulse_period: float = 1.45
+@export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
+@export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
+@export_group("")
+var field_selector: HSlider
+var field_confirm: Button
+var field_minus: Button
+var field_plus: Button
+var field_confirmation_revision: int = -1
 var star_map: Control
 var map_system: int = -1
 var map_destination: int = -1
@@ -66,6 +77,7 @@ func _ready() -> void:
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
 	add_child(outcome_flash)
+	_build_field_repairs()
 	start_expedition()
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
@@ -101,7 +113,11 @@ func _build_ui() -> void:
 	Presentation.action(legend)
 	heading_row.add_child(legend)
 	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
+	resource_bar.pulse_period = hull_pulse_period
+	resource_bar.pulse_scale = hull_pulse_scale
+	resource_bar.pulse_intensity = hull_pulse_intensity
 	column.add_child(resource_bar)
+	resource_bar.hull_requested.connect(_show_hull_info)
 	legend.pressed.connect(func(): resource_bar.overlay.show_legend())
 	header = Header.instantiate()
 	column.add_child(header)
@@ -209,6 +225,8 @@ func _clear(kind: String) -> void:
 	resource_bar.overlay.dismiss()
 	confirmation.dismiss()
 	view_kind = kind
+	state.field_repairs_open = kind == "system" and state.hull > 0
+	resource_bar.field_repairs_enabled = state.field_repairs_open
 	selected_approach = -1
 	service_confirmation_revision = -1
 	repair_selector.hide()
@@ -397,18 +415,18 @@ func show_outpost() -> void:
 	# Station choices do not need the travel bar or a long pending-combat ledger.
 	jump_button.hide()
 	approach_note.text = "Service station · No travel FTL · Free to leave"
-	confirm_button.text = "Initiate"
+	confirm_button.text = "Confirm"
 	var options = _grid(2)
 	for slot in range(state.service.poi.approaches.size()):
 		var approach: Resource = state.service.poi.approaches[slot]
 		var details: String
 		if approach.success.hull > 0:
-			details = "1 Salvage / Hull · Select repair amount"
+			details = "%d Salvage / %s · Select quantity\nHull %d/%d · Plating %d/%d" % [state.station_hull_unit_cost(), "plating" if state.station_plating_mode() else "Hull", state.hull, state.ship().hull_capacity, maxi(0, state.hull - state.ship().hull_capacity), State.Repairs.STATION_PLATING_LIMIT]
 		else:
 			details = "%d Salvage · %s" % [state.service_cost(slot), compact_outcome(approach.success)]
 		var reason: String = state.service_locked_reason(slot)
 		if not reason.is_empty(): details += "\nLOCKED — " + reason
-		var button = _tile(options, approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty())
+		var button = _tile(options, state.station_hull_title() if state.service_is_repair(slot) else approach.title, details, Presentation.COLORS.special, _select_approach.bind(slot), not reason.is_empty())
 		button.set_rich_details(highlight_outcome(details))
 		approach_buttons.append(button)
 	# Wrapped labels can retain a tall temporary minimum after a choice screen.
@@ -417,7 +435,7 @@ func show_outpost() -> void:
 func _repair_selection_changed(_value: float) -> void:
 	if selected_encounter != state.SERVICE_INDEX or not state.service_is_repair(selected_approach) or view_kind != "poi": return
 	var amount: int = int(repair_selector.value)
-	approach_note.text = "+%d Hull → %d/%d · Cost %d Salvage" % [amount, state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
+	approach_note.text = "+%d %s → Hull %d/%d · Cost %d Salvage" % [amount, "plating" if state.station_plating_mode() else "Hull", state.hull + amount, state.ship().hull_capacity, state.service_cost(selected_approach, amount)]
 	confirm_button.disabled = amount <= 0 or amount > state.station_repair_limit() or service_confirmation_revision != state.service_revision
 
 func _purchase_finished() -> void:
@@ -454,7 +472,7 @@ func _select_approach(slot: int) -> void:
 		else:
 			approach_note.text = "Cost %d Salvage · Balance after purchase: %d" % [state.service_cost(slot), state.salvage - state.service_cost(slot)]
 
-	var selected_title: String = "Navigation survey" if slot == -2 else state.encounter_at(selected_encounter).poi.approaches[slot].title
+	var selected_title: String = "Navigation survey" if slot == -2 else (state.station_hull_title() if selected_encounter == state.SERVICE_INDEX and state.service_is_repair(slot) else state.encounter_at(selected_encounter).poi.approaches[slot].title)
 	confirmation.present(selected_title)
 
 func _cancel_approach() -> void:
@@ -571,6 +589,9 @@ func start_battle(index: int) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
 	var encounter: Dictionary = state.encounters[index]
+	state.field_repairs_open = false
+	resource_bar.set_heartbeat(false)
+	resource_bar.overlay.dismiss()
 	ui.hide()
 	view_kind = "battle"
 	battle = BOARD.instantiate()
@@ -605,3 +626,69 @@ func _exit() -> void:
 	get_parent().add_child(setup)
 	get_tree().current_scene = setup
 	queue_free()
+
+func _build_field_repairs() -> void:
+	var extra: VBoxContainer = resource_bar.overlay.extra
+	var row = HBoxContainer.new()
+	extra.add_child(row)
+	field_minus = Button.new()
+	field_minus.text = "−"
+	field_minus.custom_minimum_size = Vector2(56, 48)
+	Presentation.action(field_minus)
+	row.add_child(field_minus)
+	field_selector = HSlider.new()
+	field_selector.step = 1
+	field_selector.custom_minimum_size = Vector2(180, 48)
+	field_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(field_selector)
+	field_plus = Button.new()
+	field_plus.text = "+"
+	field_plus.custom_minimum_size = Vector2(56, 48)
+	Presentation.action(field_plus)
+	row.add_child(field_plus)
+	field_confirm = Button.new()
+	field_confirm.custom_minimum_size.y = 48
+	Presentation.action(field_confirm)
+	extra.add_child(field_confirm)
+	field_minus.pressed.connect(func(): field_selector.value -= 1)
+	field_plus.pressed.connect(func(): field_selector.value += 1)
+	field_selector.value_changed.connect(_update_field_repair)
+	field_confirm.pressed.connect(_confirm_field_repair)
+
+func _show_hull_info() -> void:
+	var overlay: CanvasLayer = resource_bar.overlay
+	overlay.show_text(resource_bar.entries.hull.get_meta("description"))
+	if view_kind != "system" or not state.field_repairs_open: return
+	field_confirmation_revision = state.service_revision
+	field_selector.max_value = state.field_repair_limit()
+	field_selector.set_value_no_signal(state.field_repair_limit())
+	overlay.desired_height = 480
+	overlay.extra.show()
+	_update_field_repair(0)
+	overlay._fit()
+
+func _update_field_repair(_value: float) -> void:
+	var limit: int = state.field_repair_limit()
+	field_selector.max_value = limit
+	var amount: int = mini(int(field_selector.value), limit)
+	var cost: int = State.Repairs.quantity_cost(amount, State.Repairs.FIELD_SALVAGE_PER_HULL)
+	var text: String = resource_bar.heading("hull", "Hull") + "\n\n[b]Hull %d/%d · Salvage %d[/b]\nPermanent Hull carries between battles. Excess is temporary plating.\nField repair: 2 Salvage / Hull · Maximum affordable: %d\n\n[b]Repair +%d Hull → %d/%d · Cost %d Salvage[/b]" % [state.hull, state.ship().hull_capacity, state.salvage, limit, amount, state.hull + amount, state.ship().hull_capacity, cost]
+	if state.hull >= state.ship().hull_capacity:
+		text += "\nHull full · Field repairs cannot create Ablative Plating."
+	elif limit == 0:
+		text += "\nRequires at least 2 Salvage to repair 1 Hull."
+	resource_bar.overlay.body.text = text
+	field_selector.editable = limit > 0
+	field_minus.disabled = amount <= 0
+	field_plus.disabled = amount >= limit
+	field_confirm.text = "Confirm +%d Hull · %d Salvage" % [amount, cost]
+	field_confirm.disabled = amount <= 0 or view_kind != "system" or field_confirmation_revision != state.service_revision
+
+func _confirm_field_repair() -> void:
+	if view_kind != "system" or not resource_bar.overlay.shade.visible or not resource_bar.overlay.extra.visible or field_confirm.disabled: return
+	if not state.field_repair(int(field_selector.value), field_confirmation_revision): return
+	resource_bar.exploration(state)
+	field_confirmation_revision = state.service_revision
+	# Consumed selection: a repeated signal cannot buy the same repair twice.
+	field_selector.set_value_no_signal(0)
+	_update_field_repair(0)

@@ -95,3 +95,7 @@ No assets, combat layout or balancing values change.
 Battlefield lighting, procedural backgrounds and the optional normal Planetary Orbit
 scene are documented in [battlefield_environments.md](battlefield_environments.md).
 Their lights/materials are scene-local; the board only adjusts background framing.
+
+The system Hull status reuses its existing info overlay for field repairs. Heartbeat
+exports and the conditional Outpost repair/plating controls are described in
+[hull-capacity.md](hull-capacity.md#field-repairs-and-outpost-plating).

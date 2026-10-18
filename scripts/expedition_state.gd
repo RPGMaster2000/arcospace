@@ -43,6 +43,7 @@ var card_offers: Array[Resource] = []
 var last_outcome: String = ""
 # -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
 var last_poi_success: int = -1
+var field_repairs_open: bool = false # Set only by the exploration controller while the system view is open.
 var active_battle: int = -1
 var rng := RandomNumberGenerator.new()
 var seed_used: int = 0
@@ -72,6 +73,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	pending_choice = ""
 	card_offers.clear()
 	active_battle = -1
+	field_repairs_open = false
 	var chosen_seed: int = seed_override if seed_override != 0 else rules.debug_seed
 	if chosen_seed == 0:
 		rng.randomize()
@@ -299,7 +301,12 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
 func _apply_outcome(outcome: Resource) -> void:
 	salvage += outcome.salvage
-	hull = clampi(hull + outcome.hull, 0, ship().hull_capacity)
+	# Combined Hull model: neutral outcomes preserve purchased plating. Positive PoI repairs
+	# cannot add plating; damaging PoIs reduce the combined total (agreed single-value rule).
+	if outcome.hull < 0:
+		hull = maxi(0, hull + outcome.hull)
+	elif outcome.hull > 0 and hull < ship().hull_capacity:
+		hull = mini(ship().hull_capacity, hull + outcome.hull)
 	add_modifiers(outcome.next_battle)
 	if outcome.card_reward:
 		pending_choice = "card"
@@ -320,9 +327,34 @@ func _apply_outcome(outcome: Resource) -> void:
 		pending_choice = "production"
 		choice_amount = outcome.production_choice
 
-## Maximum repair selection uses the same numerical rule as post-battle repairs.
+func field_repair_limit() -> int:
+	if not field_repairs_open or active_battle >= 0 or not pending_choice.is_empty() or hull <= 0: return 0
+	return Repairs.max_quantity(hull, ship().hull_capacity, salvage, Repairs.FIELD_SALVAGE_PER_HULL)
+
+# A confirmation is consumed once. A second purchase requires a fresh revision/selection.
+func field_repair(amount: int, revision: int) -> bool:
+	if revision != service_revision or amount <= 0 or amount > field_repair_limit(): return false
+	salvage -= Repairs.quantity_cost(amount, Repairs.FIELD_SALVAGE_PER_HULL)
+	hull += amount
+	service_revision += 1
+	return true
+
+func station_plating_mode() -> bool:
+	return hull >= ship().hull_capacity
+
+func station_hull_ceiling() -> int:
+	return ship().hull_capacity + (Repairs.STATION_PLATING_LIMIT if station_plating_mode() else 0)
+
+func station_hull_unit_cost() -> int:
+	return Repairs.PLATING_SALVAGE_PER_POINT if station_plating_mode() else 1
+
+func station_hull_title() -> String:
+	if not station_plating_mode(): return "Repair Hull"
+	return "Ablative Plating Full" if hull >= station_hull_ceiling() else "Install Ablative Plating"
+
+## Shared quantity bounds; damaged Hull uses 1:1 repairs, full Hull uses 2:1 plating.
 func station_repair_limit() -> int:
-	return Repairs.max_spend(hull, ship().hull_capacity, salvage) * Repairs.HULL_PER_SALVAGE
+	return Repairs.max_quantity(hull, station_hull_ceiling(), salvage, station_hull_unit_cost())
 
 func service_is_repair(slot: int) -> bool:
 	return not service.is_empty() and slot >= 0 and slot < service.poi.approaches.size() and service.poi.approaches[slot].success.hull > 0
@@ -330,7 +362,7 @@ func service_is_repair(slot: int) -> bool:
 func service_cost(slot: int, repair_amount: int = 1) -> int:
 	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size(): return 0
 	var approach: Resource = service.poi.approaches[slot]
-	if approach.success.hull > 0: return maxi(0, repair_amount) / Repairs.HULL_PER_SALVAGE
+	if approach.success.hull > 0: return Repairs.quantity_cost(repair_amount, station_hull_unit_cost())
 	if approach.success.production_choice > 0:
 		var bought: int = station_production_purchases
 		return approach.salvage_cost + rules.production_price_increment * bought + rules.production_price_acceleration * bought * (bought - 1) / 2
@@ -342,7 +374,7 @@ func service_locked_reason(slot: int) -> String:
 	var approach: Resource = service.poi.approaches[slot]
 	if approach.success.card_reward and available_reward_cards(approach.success.minimum_card_tier).is_empty():
 		return "No unowned cards meet this reward's minimum tier"
-	if approach.success.hull > 0 and hull >= ship().hull_capacity: return "Hull already full"
+	if approach.success.hull > 0 and hull >= station_hull_ceiling(): return "Ablative Plating Full"
 	var cost: int = service_cost(slot)
 	if salvage < cost: return "Requires %d Salvage (you have %d)" % [cost, salvage]
 	return ""
@@ -360,8 +392,9 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 	service_revision += 1
 	last_outcome = "Spent %d Salvage. " % cost
 	if outcome.hull > 0:
-		hull = mini(ship().hull_capacity, hull + repair_amount)
-		last_outcome += "Repaired %d permanent Hull." % repair_amount
+		var plating: bool = station_plating_mode()
+		hull += repair_amount
+		last_outcome += ("Installed %d Ablative Plating." if plating else "Repaired %d permanent Hull.") % repair_amount
 	else:
 		if outcome.production_choice > 0: station_production_purchases += 1
 		last_outcome += describe_outcome(outcome)
@@ -494,6 +527,7 @@ func begin_battle(board: Node, index: int = -1) -> void:
 	board.set_meta("expedition_initialized", get_instance_id())
 	last_poi_success = -1
 	active_battle = index
+	field_repairs_open = false
 	board.player_hull = hull
 	board.salvage = salvage
 	board.battles_won = battles_won

@@ -1,9 +1,10 @@
 extends CanvasLayer
-# Shared modal for touch descriptions and the icon legend. No gameplay callbacks.
+# Shared modal for descriptions/legend; an optional footer hosts controller-owned actions.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
 var panel: PanelContainer
 var body: RichTextLabel
+var extra: VBoxContainer
 var close: Button
 var previous_focus: Control
 var desired_height: float = 320
@@ -43,6 +44,9 @@ func _ready() -> void:
 	body.add_theme_font_size_override("normal_font_size", 22)
 	body.add_theme_font_size_override("bold_font_size", 22)
 	scroll.add_child(body)
+	extra = VBoxContainer.new()
+	column.add_child(extra)
+	extra.hide()
 	shade.resized.connect(_fit)
 	_fit()
 	shade.hide()
@@ -53,6 +57,7 @@ func _fit() -> void:
 	panel.size = Vector2(minf(760, shade.size.x - 48), height)
 
 func show_text(value: String) -> void:
+	extra.hide()
 	desired_height = 320
 	previous_focus = get_viewport().gui_get_focus_owner()
 	body.text = value
@@ -72,6 +77,7 @@ func show_legend() -> void:
 	_fit()
 
 func dismiss() -> void:
+	extra.hide()
 	shade.hide()
 	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
 

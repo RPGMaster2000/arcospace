@@ -28,7 +28,7 @@ Production names in code and resource dictionary keys map to the existing game:
 - `synthesizer` = Synthesizer, `reactor` = Reactor, `quarters` = Quarters.
 - Next Battle accepts `materials`, `energy`, `crew`, `shields`, `emergency_jump_charge`, and `emergency_jump_offline`.
 - Use positive amounts for bonuses, negative for penalties. `emergency_jump_offline` is a positive number of initial player turns without charging/warp.
-- Immediate `hull` is signed and capped between zero and ship capacity. Fatal PoI damage ends the expedition. Outpost repair never creates Ablative Plating.
+- Immediate `hull` repairs stop at capacity. Neutral outcomes retain purchased plating. As agreed for the single-Hull model, negative PoI Hull values reduce combined Hull and may consume plating; fatal damage still ends the expedition. The Outpost Hull service switches to plating purchases only at full Hull.
 - Each outcome should have a positive reward. Card/upgrade/resource-choice/production-choice are mutually exclusive choice types per outcome; immediate Salvage/Hull and temporary modifiers can accompany any one.
 - Probabilities are 0–1. Both outcomes must be authored even for guaranteed approaches (the supplied resources do this).
 
@@ -48,12 +48,12 @@ A present station remains available until leaving its system. Buy any affordable
 
 | Service | Cost | Result |
 |---|---|---|
-| Hull repairs | 1 Salvage per selected Hull | Select 0 through the lesser of affordable and missing permanent Hull; zero cannot confirm; no plating |
+| Hull service | 1 Salvage/Hull below capacity; 2 Salvage/plating at full Hull | One tile/selector: Repair Hull → Install Ablative Plating → disabled at +10. Quantity and cost are validated before confirmation. |
 | Purchase supplies | 7 Salvage | Choose +5 Materials, Energy or Crew next battle; repeated purchases add |
 | Acquire card | 15 Salvage | Up to three distinct unowned offers; choose one for the player pool |
 | Shipyard improvements | 25, 40, 60, 85, 115, 150, 190, … | Choose +1 permanent expedition production |
 
-Hull repairs share `RepairRules.HULL_PER_SALVAGE` and `max_spend` with the unchanged post-battle repair flow. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
+Hull services and field repairs use shared `RepairRules.max_quantity` bounds; the unchanged post-battle flow uses `max_spend` at 1 Salvage/Hull. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
 
 Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
 
