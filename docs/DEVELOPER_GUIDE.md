@@ -4,6 +4,7 @@ This guide describes the current implementation, not a proposed architecture.
 Start with the ownership table, then follow the walkthrough for the kind of change you want.
 
 - [Quick orientation](#quick-orientation)
+- [Reading and navigating scripts](#reading-and-navigating-scripts)
 - [Architecture and execution flow](#architecture-and-execution-flow)
 - [I want to change X — where do I start?](#i-want-to-change-x--where-do-i-start)
 - [Practical walkthroughs](#practical-walkthroughs)
@@ -14,16 +15,23 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 
 | Directory | Responsibility |
 |---|---|
-| `scripts/` | Gameplay controllers, Resource classes, combat helpers and presentation scripts. Start with `board.gd` for combat and `expedition_state.gd` for persistent expedition rules. |
+| `scripts/` | Main screen/combat controllers and shared combat presentation. Start with `battle_setup.gd`, `board.gd`, `expedition.gd` and `expedition_state.gd`. |
+| `scripts/cards/` | Card definitions, registry, ordered effect resolution, hand eligibility/draws, preferences and allocation settings. |
+| `scripts/ships/` | Ship definitions/registry and shared procedural model animation scripts. |
+| `scripts/expedition/` | Inspector Resource classes for PoIs, approaches, outcomes, expedition rules and progression. The main state/controller stay at `scripts/`. |
+| `scripts/presentation/` | Scene-authored asteroid decoration motion; separate from encounter modifier rules. |
 | `scripts/ui/` | Runtime UI components: card galleries, modals, encounter tiles, resource indicators and the star-map prototype. These display data and send choices to controllers. |
 | `scenes/` | Saved node hierarchies for selection, exploration, battles, cards, ships and battlefields. A scene may inherit another scene and use runtime-created children. |
 | `cards/` | Individual `CardData` Resources, registered explicitly in `card_library.gd`. |
-| `ships/` | `ShipData` Resources for player/enemy starting values, pools, preferences and optional models. |
+| `ships/player/`, `ships/enemy/` | Saved `ShipData` profiles; these are data, while their class/registry live under `scripts/ships/`. |
+| `scenes/ships/` | Independent Rustjack, AXIOM-7 and Hollow Choir procedural model scenes. |
 | `encounters/` | PoI Resources with nested approach/outcome Resources, plus the expedition registry/settings. |
 | `shaders/` | Shader code for ship damage, repair, Shields and resource effects; presentation only. |
 | `tests/` | Standalone GDScript `SceneTree` runners for rules, integration and layout. Some also save screenshots with a rendering driver. |
 | `docs/` | System notes, balance references, UI guidance and build instructions. Older verification reports describe their own historical revisions. |
-| `resources/` | Shared tuning Resources for card motion, Power Allocation and expedition progression. |
+| `resources/` | Shared tuning Resources for card motion/presentation, Power Allocation and expedition progression. |
+| `assets/` | Existing fonts, artwork, audio and their import settings. |
+| `.github/workflows/` | Regression/rendered test jobs and Android/Web export jobs. |
 | `tools/` | Development helpers, including balance-document generation; not the gameplay entry point. |
 
 Godot file types:
@@ -36,6 +44,57 @@ Godot file types:
 In C++ terms, a Resource is closer to a shared data object than a fresh value copy.
 `preload()` holds a reference; editing that object during a run can affect every user.
 The upgrade and enemy-scaling paths deliberately create copies where values change.
+
+## Reading and navigating scripts
+
+The organization follows ownership, with only three new support folders. Root controllers
+remain recognizable beside their scenes; `scripts/ui/` still owns reusable controls.
+Do not confuse `cards/` (saved card data) with `scripts/cards/` (the code that interprets it),
+or `ships/` with `scripts/ships/`. Battle presentation helpers stay beside Board because
+splitting them again would add navigation without changing their ownership.
+
+Every runtime script starts with **RESPONSIBILITY**. Existing **DOES NOT**, **TUNE** and
+**EXTEND** comments identify boundaries, adjustable consequences and integration points.
+Open the attached script from a scene node to find its actual owner; a control may instead
+be constructed at runtime in `_build_ui()` or repositioned by `_fit_*()`.
+
+Large controllers use non-nested `#region Name` / `#endregion` sections. Fold a region using
+the script editor's gutter, then expand the area you need. Use the script editor's method
+list/filter to jump directly to a function, and Find in Files to locate callers and signal
+connections. Function definitions are grouped by responsibility rather than alphabetically.
+Member/constant initialization order and Inspector export order are retained. CardData's
+existing property declarations are now together before its functions. Definition position
+does not determine when a function executes: `_ready()`, signals and explicit calls do.
+
+| Script | Folding sections |
+| --- | --- |
+| `scripts/board.gd` | Initialization; Battle state; Turns and cards; Match control; Display and allocation; Results and repairs |
+| `scripts/expedition.gd` | Screen initialization; System navigation; Approaches and outposts; Rewards and decks; Battle handoff; Field repairs |
+| `scripts/expedition_state.gd` | Run setup; Systems and navigation; Approaches and modifiers; Repairs and services; Owned cards and rewards; Upgrade events; Battle handoff |
+| `scripts/cards/card_hand.gd` | Allocation and opening; Weighted draws; Owned card updates |
+| `scripts/cards/card_effects.gd` | Effect resolution; Predicates and random source |
+| `scripts/battle_effects.gd` | Delta dispatch; Resource feedback; Ship feedback; Tween lifecycle |
+| `scripts/enemy_ai.gd` | Move selection; Scoring and tie breaks |
+
+Short scripts remain unsectioned. A long function is formatted into visible stages before
+considering extraction. The pass follows the [Godot GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html): tabs, consistent operator/comma spacing, separate statements,
+two blank lines between functions and wrapped expressions near 100 columns. Long authored
+strings are retained intact to preserve descriptions, labels and generated documentation.
+No formatter is needed to run the game. Optional local formatting uses `gdformat -l 100 scripts tools/generate_balance_docs.gd` (the pass used gdtoolkit 4.5.0).
+
+Select a `.tres` in FileSystem for Inspector values; select a scene node for its exported
+settings. `@export` declares an editable value, while the saved `.tres`/`.tscn` may override
+the default. Keep resource identities/UID files when moving scripts. Searching only a
+class name misses literal path dependencies; search both before editing:
+
+```bash
+rg 'res://scripts/cards/card_effects.gd' scripts scenes cards ships encounters tests tools
+rg 'CardEffects|Effects.play|_apply_effects' scripts tests
+```
+
+For an extension, start with the feature-location table below, follow its listed consumers,
+then use the corresponding focused tests. Keep descriptions, modifier previews and AI
+simulation in mind when changing effect keys; they share data rather than duplicating rules.
 
 ## Architecture and execution flow
 
@@ -53,6 +112,22 @@ The upgrade and enemy-scaling paths deliberately create copies where values chan
 | [enemy_ai.gd](../scripts/enemy_ai.gd) | `CardEffects` simulation, [match_rules.gd](../scripts/match_rules.gd), enemy tactical weights | Returns a slot/discard decision; Board executes it. |
 | [board_3d.gd](../scripts/board_3d.gd) | Inherits `board.gd`; selects battlefield/model scenes | Connects 3D presentation and responsive placement to existing rules. |
 | [battle_effects.gd](../scripts/battle_effects.gd) | State snapshots, [ship_3d.gd](../scripts/ships/ship_3d.gd), shaders, HUD nodes | Animates committed changes; never reapplies them. |
+
+### Direct dependents to check before editing
+
+These are current direct runtime references, not a complete transitive dependency graph.
+The `tests/` fixtures and balance-document generator also preload many of these files.
+
+| Script | Direct runtime caller / attachment |
+| --- | --- |
+| `scripts/board.gd` | `scenes/board.tscn`; inherited by `scripts/board_3d.gd` |
+| `scripts/expedition.gd` | `scenes/expedition.tscn` |
+| `scripts/expedition_state.gd` | `scripts/expedition.gd` creates the shared run state |
+| `scripts/cards/card_effects.gd` | Board, CombatModifier and EnemyAI preload the same resolver |
+| `scripts/cards/card_hand.gd` | Both CardHand and EnemyHand in `scenes/board.tscn` |
+| `scripts/battle_effects.gd`, `scripts/enemy_ai.gd` | Attached to their corresponding children in `scenes/board.tscn`; Board calls them |
+| `scripts/ships/ship_data.gd` | Saved profiles under `ships/player/` and `ships/enemy/` |
+| `scripts/expedition/expedition_rules.gd` | `encounters/expedition_rules.tres`; Expedition and State consume the instance |
 
 ### Ship selected → battle ready
 
@@ -190,7 +265,8 @@ These are instructions for future additions; no example feature is added by this
    at zero. Upgrade copies retain cost, rarity and `identity_key()`; base descriptions are
    authored text, while upgraded descriptions derive from effects.
 4. Add a `preload()` entry to `CardLibrary.CARDS`. This explicit registry makes the card
-   available to enemy drawing and unowned reward selection. Add it to selected ShipData
+   available to full-library enemy drawing and unowned reward selection. Explicit enemy
+   starting pools require their own deliberate membership update. Add it to selected ShipData
    **Starting Cards** only if it should be owned initially; otherwise acquisition finds it.
 5. For a focused battle, instantiate `board_3d.tscn` in a test fixture and assign
    the `CardHand` node’s `card_pool` / `starting_hand` before adding it to the tree. Player opening
@@ -274,7 +350,11 @@ Current statistics, pool counts, gate changes and diagnostic results: [six-ship 
 4. There is no global VFX registry: the delta dispatcher and ship API are the integration
    points. Keep the 2D fallback branches working, respect `enabled`, and register new
    independent tweens through `_job()` so `busy`/`finished` and cancellation stay correct.
-5. Run `battle_effects_test`, `card_motion_test` and `board_3d_test`. Play
+5. Put a new shader in `shaders/` and assign it through the existing scene material or
+   the relevant presentation owner. Shader uniforms change appearance; rule amounts
+   stay in CardEffects/Resources. Duplicate per-instance materials when animating
+   parameters so one ship does not affect another. Preserve the shader UID on moves.
+6. Run `battle_effects_test`, `card_motion_test` and `board_3d_test`. Play
    `board_3d.tscn` with a rendering driver and trigger the relevant effect for visual review;
    headless success alone does not prove shader appearance or animation framing.
 
@@ -344,8 +424,9 @@ Comment convention in critical scripts: **RESPONSIBILITY** identifies the owner;
 
 ## Architectural observations
 
-- Selection is currently built around three player slots, and the map has six predefined
-  encounter positions. Raising registry/encounter counts is not automatically a UI change.
+- Selection uses three panels per page and duplicates a panel template for more profiles;
+  the six players occupy two pages. The map has six predefined encounter positions.
+  Raising encounter counts is not automatically a UI change.
 - Effects are dictionary keys, with consumers in descriptions, modifier scaling/previews,
   AI scoring, filtering and presentation. A new key is a coordinated change, not merely
   a new Resource field. AI simulations use CardEffects directly, not the full modifier
@@ -355,6 +436,11 @@ Comment convention in critical scripts: **RESPONSIBILITY** identifies the owner;
   again, after the result was recorded.
 - Many controls are runtime-built or repositioned. Scene-only editing will not always
   persist on play/resize; future Inspector-friendly work should account for these owners.
+- Future refactoring candidates, deliberately not implemented here: separate presentation
+  construction from `Expedition._build_ui()` only when a specific UI change needs it;
+  consider an explicit completion boundary around `Board.refresh_display()` and its
+  result-recording side effect; consider named generation stages within
+  `ExpeditionState.generate_system()` only with seed-by-seed regression coverage.
 - No root README currently exists; this guide is the developer entry point. For deeper
   context see [expeditions](expeditions.md), [card library](card-library.md),
   [ship variants](ship-variants.md), [balance tables](balance/cards.md) and [UI layout](ui_layout.md).
@@ -398,3 +484,43 @@ Start with [card presentation settings](../resources/card_presentation.tres) and
 Tune all nine properties in the shared Resource; card instances can override their `Presentation Settings` reference if needed. `inspection_base` metadata on upgrade/temporary preview copies retains the original definition for display; it does not affect card identity, cost, effects or draws. Existing acquisition and upgrade confirmations remain in CardInspector; detailed green comparisons now sit below the two cards. Test `card_inspection_test`, `card_upgrade_ui_test`, `ui_overhaul_test`, `card_motion_test` and deck/acquisition/replacement regressions when changing these paths.
 
 Enemy-specific optional `ShipData.starting_cards` applies to both standalone and expedition battles. Empty retains the existing full library. See [ship profiles](ship-variants.md#additional-regular-enemies) for the six-enemy registry, exact added decks, weights, model contract and diagnostic.
+
+## Readability pass scope and validation
+
+Moved scripts retain their basenames and companion `.gd.uid` contents. Previous folder for
+all entries below was `scripts/`; no card/ship data Resources or scenes moved.
+
+| New folder | Moved basenames (`.gd` and `.gd.uid`) |
+| --- | --- |
+| `scripts/cards/` | `card_data`, `card_effects`, `card_hand`, `card_library`, `card_preferences`, `power_allocation_settings` |
+| `scripts/ships/` | `ship_data`, `ship_library`, `ship_3d`, `enemy_ship_model` |
+| `scripts/expedition/` | `encounter_approach`, `encounter_outcome`, `poi_data`, `expedition_progression`, `expedition_rules` |
+
+Path updates include script preloads/extends, scene attachments, Resource class references,
+fixtures, tools and documentation. `project.godot`, startup configuration, node paths,
+artwork, shader code, gameplay data and Inspector values are preserved. Scenes/Resources
+change only where a script attachment path moved. Tests retain their fixtures and behavior;
+their literal script references are updated. Existing UI and presentation folders are kept.
+
+Verification compares all 111 original GDScript parse trees after normalizing only path
+relocation, formatting parentheses and top-level function definition order. Declarations
+remain ordered, and function statements remain identical and ordered. Scene/Resource/shader/
+configuration text is also compared with the original after normalizing moved script paths.
+The 360-match seeded diagnostic must remain identical to the original output. These checks
+complement imports and tests; they do not claim mathematical proof of all possible behavior.
+
+The renderer-only `enemy_models_visual_test.gd` waits for `frame_post_draw` and must run
+with a rendering driver rather than headless. Other regression scripts support headless
+execution; selected UI tests additionally run under Compatibility/software OpenGL. Android
+resource paths are checked with the rest of the resource graph; physical Android input,
+performance and an APK export require a device/export environment separately.
+
+Validation results for this pass: eight focused integration tests passed in an isolated
+checkout of the original revision; all 51 headless-compatible regression scripts passed
+on the reorganized project, and all 111 scripts passed Godot `--check-only`. Six rendered
+runners passed: six-ship profiles, card inspection, star map, 3D board, deck replacement
+and enemy models. A hull-flash timing assertion failed once under load, then the unchanged
+baseline and cleaned revision both passed in isolation; no test/timing adjustment was made.
+Existing MP3 shutdown warnings remain. Godot import and formatting checks pass; the 105
+relative documentation file links resolve. Local Android APK export/device testing was not
+performed. No runtime or export dependencies were added.
