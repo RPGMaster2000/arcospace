@@ -184,3 +184,5 @@ All **81** relative developer-guide links resolve. No physical Android testing w
 - `tests/victory_rewards_test.gd`
 - `tools/generate_balance_docs.gd`
 
+
+Later card expansion: Energy Cell is now Emergency Power Cell at the same Resource path. The original 25-identity memberships remain intact; current effects and the 30-identity acquisition/replacement limit are documented in [Cards](cards.md).

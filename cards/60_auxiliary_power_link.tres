@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Auxiliary Power Link"
+family = "energy"
+cost = 13
+tier = 2
+allocation_category = "systems"
+description = "+1 Reactor; +4 Materials; +3 Crew; -4 Shields"
+effects = {"reactor": 1, "materials": 4, "crew": 3, "shields": -4}
+upgrade_effects = [{"reactor": 1, "materials": 5, "crew": 4, "shields": -4}, {"reactor": 1, "materials": 6, "crew": 5, "shields": -4}]
+play_again = false

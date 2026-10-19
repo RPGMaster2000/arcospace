@@ -43,6 +43,8 @@ var card_offers: Array[Resource] = []
 var last_outcome: String = ""
 # -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
 var last_poi_success: int = -1
+var removed_starting_cards: Dictionary = {}
+var pending_card: Resource
 var upgrades_remaining: int = 0
 var upgraded_this_event: Dictionary = {}
 # In-memory travel interruption; no separate combat or persistence system.
@@ -75,6 +77,8 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	pending_bonuses.clear()
 	pending_penalties.clear()
 	acquired_cards.clear()
+	removed_starting_cards.clear()
+	pending_card = null
 	upgraded_cards.clear()
 	active_player_hand = null
 	last_poi_success = -1
@@ -453,7 +457,10 @@ func player_pool() -> Array[Resource]:
 	var result: Array[Resource] = []
 	var starting: Array = ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
 	var seen: Dictionary = {}
-	for card in starting + acquired_cards:
+	var retained: Array = []
+	for card in starting:
+		if not removed_starting_cards.has(card.identity_key()): retained.append(card)
+	for card in retained + acquired_cards:
 		var key: String = card.identity_key()
 		if seen.has(key): continue
 		seen[key] = true
@@ -495,14 +502,58 @@ func choose_card(index: int) -> bool:
 	var chosen: Resource = card_offers[index]
 	for card in player_pool():
 		if card.identity_key() == chosen.identity_key(): return false
+	if player_pool().size() >= deck_limit():
+		pending_card = chosen
+		pending_choice = "replace"
+		card_offers.clear()
+		return true
+	_acquire_card(chosen)
+	return true
+
+func deck_limit() -> int:
+	# Never invalidate the existing starting pool if a custom configuration is too small.
+	return maxi(ship().starting_cards.size(), maxi(1, rules.max_deck_identities))
+
+func _acquire_card(chosen: Resource) -> void:
 	acquired_cards.append(chosen)
-	if is_instance_valid(active_player_hand):
-		active_player_hand.card_pool = player_pool()
-		active_player_hand.identity_weights = acquired_draw_weights()
 	last_outcome += "\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)." % [chosen.card_name, rules.acquired_card_draw_weight]
+	pending_choice = ""
+	pending_card = null
+	card_offers.clear()
+	_refresh_owned_hand()
+
+func replace_card(key: String) -> bool:
+	if pending_choice != "replace" or pending_card == null: return false
+	var owned: Dictionary = {}
+	for card in player_pool(): owned[card.identity_key()] = card
+	if not owned.has(key) or owned.has(pending_card.identity_key()): return false
+	# No mutation until the explicit confirmation reaches this validated method.
+	removed_starting_cards[key] = true
+	for index in range(acquired_cards.size() - 1, -1, -1):
+		if acquired_cards[index].identity_key() == key: acquired_cards.remove_at(index)
+	upgraded_cards.erase(key)
+	last_outcome += "\nRemoved %s." % owned[key].card_name
+	_acquire_card(pending_card)
+	return true
+
+func decline_card() -> bool:
+	if pending_choice != "replace" or pending_card == null: return false
+	last_outcome += "\nKept current deck; new card declined."
+	pending_card = null
 	pending_choice = ""
 	card_offers.clear()
 	return true
+
+func _refresh_owned_hand() -> void:
+	if not is_instance_valid(active_player_hand): return
+	var pool: Array = player_pool()
+	var owned: Dictionary = {}
+	for card in pool: owned[card.identity_key()] = true
+	active_player_hand.card_pool = pool
+	active_player_hand.identity_weights = acquired_draw_weights()
+	for index in range(active_player_hand.cards.size()):
+		var card: Resource = active_player_hand.cards[index]
+		if card != null and not owned.has(card.identity_key()): active_player_hand.replace_card(index)
 
 func upgrade_candidates() -> Array[Resource]:
 	var result: Array[Resource] = []

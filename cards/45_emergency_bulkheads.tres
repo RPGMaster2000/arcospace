@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Emergency Bulkheads"
+family = "materials"
+cost = 8
+tier = 1
+allocation_category = "defense"
+description = "+9 Shields; If Own Hull ≤20: +5 Shields"
+effects = {"shields": 9, "conditional": {"target": "self", "attribute": "hull", "comparison": "at_most", "threshold": 20, "then": {"shields": 5}}}
+upgrade_effects = [{"shields": 11, "conditional": {"target": "self", "attribute": "hull", "comparison": "at_most", "threshold": 20, "then": {"shields": 6}}}, {"shields": 13, "conditional": {"target": "self", "attribute": "hull", "comparison": "at_most", "threshold": 20, "then": {"shields": 7}}}]
+play_again = false

@@ -27,8 +27,8 @@ func run() -> void:
 	var cell = load("res://cards/08_energy_cell.tres")
 	var actor = {"hull":30,"shields":10,"materials":0,"energy":0,"crew":0,"synthesizer":2,"reactor":2,"quarters":2}
 	var target = actor.duplicate()
-	check(Effects.play(cell,actor,target), "Energy Cell works without resources")
-	check(actor.materials == 1 and actor.energy == 1 and actor.crew == 1 and target.energy == 0, "Free cell grants one of each resource")
+	check(Effects.play(cell,actor,target), "Emergency Power Cell works without resources")
+	check(actor.materials == 3 and actor.energy == 3 and actor.crew == 3 and target.energy == 0, "Emergency Power Cell cross-resources and low-Energy condition")
 	var board = load("res://scenes/board_3d.tscn").instantiate()
 	board.setup_settings = {"modifier":5}
 	root.add_child(board)

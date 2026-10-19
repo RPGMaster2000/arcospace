@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Damage Control Teams"
+family = "crew"
+cost = 9
+tier = 1
+allocation_category = "defense"
+description = "+5 Hull; +5 Shields; +3 Materials"
+effects = {"hull": 5, "shields": 5, "materials": 3}
+upgrade_effects = [{"hull": 6, "shields": 7, "materials": 3}, {"hull": 7, "shields": 9, "materials": 4}]
+play_again = false

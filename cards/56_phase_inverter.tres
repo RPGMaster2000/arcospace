@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Phase Inverter"
+family = "energy"
+cost = 17
+tier = 2
+allocation_category = "offense"
+description = "Enemy Reactor -1 (min 1); +5 Crew; Enemy -5 Shields"
+effects = {"enemy_production": {"reactor": -1}, "crew": 5, "break_shields": 5}
+upgrade_effects = [{"enemy_production": {"reactor": -1}, "crew": 6, "break_shields": 7}, {"enemy_production": {"reactor": -1}, "crew": 7, "break_shields": 9}]
+play_again = false

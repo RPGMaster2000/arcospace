@@ -31,8 +31,22 @@ static func describe_effects(values: Dictionary) -> String:
 	for key in values:
 		var value = values[key]
 		match key:
-			"damage": parts.append("%d damage" % value)
-			"pierce": parts.append("%d%% bypasses Shields" % roundi(float(value) * 100))
+			"conditional":
+				var subject: String = "Own" if value.get("target", "self") == "self" else "Enemy"
+				var symbols: Dictionary = {"below":"<", "at_most":"≤", "equal":"=", "at_least":"≥", "above":">"}
+				var threshold: String = str(value.get("threshold", 0))
+				if value.has("compare_attribute"):
+					threshold = ("own " if value.get("compare_target", "self") == "self" else "enemy ") + str(value.compare_attribute).capitalize()
+				elif value.has("fraction_of"): threshold = "%d%% max" % roundi(float(value.threshold) * 100)
+				var text: String = "If %s %s %s%s: %s" % [subject, str(value.get("attribute", "hull")).capitalize(), symbols.get(value.get("comparison", "at_most"), "?"), threshold, describe_effects(value.get("then", {}))]
+				if not value.get("else", {}).is_empty(): text += "; else " + describe_effects(value["else"])
+				parts.append(text)
+			"swap_resource": parts.append("Swap %s reserves" % str(value).capitalize())
+			"enemy_production":
+				for attribute in value: parts.append("Enemy %s %+d (min 1)" % [str(attribute).capitalize(), int(value[attribute])])
+			"damage": parts.append(("%d Hull damage" if values.get("pierce", 0.0) == 1.0 else "%d damage") % value)
+			"pierce":
+				if float(value) != 1.0: parts.append("%d%% bypasses Shields" % roundi(float(value) * 100))
 			"break_shields": parts.append("Enemy -%d Shields" % value)
 			"swap_shields": parts.append("Swap Shields with enemy")
 			"sabotage": parts.append("Enemy all prod -%d (min 1)" % int(value))
@@ -80,7 +94,9 @@ func identity_key() -> String:
 	set(value):
 		description = value
 		emit_changed()
-## TUNE: Gameplay amounts, e.g. damage: 6 or shields: 4. Use keys supported by card_effects.gd.
+## TUNE: Gameplay amounts. conditional = {target, attribute, comparison, threshold, then, else}.
+## Compare live stats with compare_target/compare_attribute, or use fraction_of: hull_capacity.
+## swap_resource exchanges a non-cost reserve; enemy_production applies signed changes, minimum 1.
 @export var effects: Dictionary = {}:
 	set(value):
 		effects = value

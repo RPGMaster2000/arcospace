@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Structural Reclamation"
+family = "materials"
+cost = 10
+tier = 1
+allocation_category = "defense"
+description = "+5 Hull; +4 Energy; +3 Crew; -3 Shields"
+effects = {"hull": 5, "energy": 4, "crew": 3, "shields": -3}
+upgrade_effects = [{"hull": 6, "energy": 5, "crew": 3, "shields": -3}, {"hull": 7, "energy": 5, "crew": 4, "shields": -3}]
+play_again = false

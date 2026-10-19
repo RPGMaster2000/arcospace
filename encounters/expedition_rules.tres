@@ -35,6 +35,7 @@ minimum_battles = 1
 maximum_battles = 2
 destruction_salvage = 10
 resource_victory_salvage = 6
+max_deck_identities = 30
 unavailable_upgrade_salvage = 4
 debug_seed = 0
 enemy_ships = Array[ExtResource("Ship")]([ExtResource("E0"), ExtResource("E1"), ExtResource("E2"), ExtResource("E3"), ExtResource("E4")])

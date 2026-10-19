@@ -57,12 +57,16 @@ func _ready() -> void:
 	rebuild()
 
 static func matches(card: Resource, value: String) -> bool:
-	var effects: Dictionary = card.effects
+	return matches_effects(card.effects, value) or (value == "Utility" and card.play_again)
+
+static func matches_effects(effects: Dictionary, value: String) -> bool:
+	var conditional: Dictionary = effects.get("conditional", {})
+	if not conditional.is_empty() and (matches_effects(conditional.get("then", {}), value) or matches_effects(conditional.get("else", {}), value)): return true
 	match value:
 		"Attack": return effects.has("damage") or effects.has("break_shields") or effects.has("shield_collapse") or effects.has("shield_collapse_below")
 		"Defense": return effects.has("hull") or effects.has("shields") or effects.has("swap_shields")
-		"Production": return effects.has("production_other") or effects.has("synthesizer") or effects.has("reactor") or effects.has("quarters")
-		"Utility": return effects.has("drain") or effects.has("steal") or effects.has("sabotage") or effects.has("random_gain") or effects.has("random_gain_other") or effects.has("random_gain_range_other") or effects.has("materials") or effects.has("energy") or effects.has("crew") or card.play_again
+		"Production": return effects.has("production_other") or effects.has("synthesizer") or effects.has("reactor") or effects.has("quarters") or effects.has("enemy_production")
+		"Utility": return effects.has("drain") or effects.has("steal") or effects.has("sabotage") or effects.has("random_gain") or effects.has("random_gain_other") or effects.has("random_gain_range_other") or effects.has("materials") or effects.has("energy") or effects.has("crew") or effects.has("swap_resource") or effects.has("enemy_production")
 	return true
 
 func set_cards(values: Array) -> void:

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Reactor Synchronization"
+family = "energy"
+cost = 15
+tier = 2
+allocation_category = "systems"
+description = "If Enemy Reactor >own Reactor: +1 Reactor; else +7 Materials"
+effects = {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1}, "else": {"materials": 7}, "compare_target": "self", "compare_attribute": "reactor"}}
+upgrade_effects = [{"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1, "shields": 2}, "else": {"materials": 9}, "compare_target": "self", "compare_attribute": "reactor"}}, {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1, "shields": 4}, "else": {"materials": 11}, "compare_target": "self", "compare_attribute": "reactor"}}]
+play_again = false

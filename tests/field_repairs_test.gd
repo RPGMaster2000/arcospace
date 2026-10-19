@@ -85,7 +85,7 @@ func run() -> void:
 			target.shields = 0
 			var hit = preload("res://cards/12_laser_burst.tres")
 			Effects.play(hit,actor,target)
-			check(target.hull == cap, "Existing card damage consumes plating first")
+			check(target.hull == cap-3, "Laser Burst consumes six plating then its three-damage follow-up reaches Hull")
 			# Leave some plating to verify that the result, not combat damage, discards it.
 			board.player_hull = cap+4
 			if result == "destruction": board.enemy_hull = 0

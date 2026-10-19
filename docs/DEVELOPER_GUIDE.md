@@ -184,7 +184,7 @@ These are instructions for future additions; no example feature is added by this
    under `cards/` with a new filename. Open it in the Inspector as `CardData`.
 2. Edit **Card Name**, **Family** (cost resource), **Cost**, **Tier**, **Allocation Category**,
    **Description**, **Effects** and **Play Again**. Use only keys supported by `CardEffects.play()`;
-   `damage` and `energy` in this Resource show a simple attack plus resource-return pattern.
+   `damage` uses Shield-first damage; `pierce: 1.0` makes it direct Hull damage. See the [effect schema](balance/cards.md#generic-conditionals-exchanges-and-production) for generic conditional, exchange and production keys.
 3. Set both **Upgrade Effects** dictionaries and **Max Upgrades**. Each dictionary is the
    complete replacement effect set for that level, not a delta. Keep saved **Upgrade Level**
    at zero. Upgrade copies retain cost, rarity and `identity_key()`; base descriptions are
@@ -197,12 +197,12 @@ These are instructions for future additions; no example feature is added by this
    dealing enforces two cards per resource family where eligible; Tier 2 is locked through
    round 2. Set the round in a CardHand fixture to test later rarity draws directly.
 6. Run `card_progression_test`, `card_tier_test`, `opening_balance_test`, `battle_effects_test`
-   and card UI tests. Update tests that intentionally assert the existing 44-card registry
+   and card UI tests. Update tests that intentionally assert the current 68-card registry
    and explicit upgrade coverage. Check both upgrades, cost, duplicate identities, rewards
    and previews. Update [card balance docs](balance/cards.md) for a future gameplay addition.
 
 Current draw order is rarity roll **then** eligible identity weighting. Player pool =
-starting identities + acquisitions, with player-only upgrade replacements. Enemy pool
+retained starting identities + acquisitions, with player-only upgrade replacements. Removed starting keys are excluded by `removed_starting_cards`; reacquisition is a new base-level acquired identity. Enemy pool
 is the unmodified full library. Gallery filters (`CardGallery.matches`) can overlap and
 are not the single Power Allocation category. Do not edit shared Resources to upgrade a card.
 
@@ -364,3 +364,27 @@ Comment convention in critical scripts: **RESPONSIBILITY** identifies the owner;
 See [implementation, tuning and validation](chasedown_rewards.md). `ExpeditionRules` owns the 5% chance, per-system limit, four response dictionaries and 1/2/3/3 upgrade counts. `ExpeditionState.try_chasedown` validates real PoI-to-PoI travel and uses an independent seeded RNG. The existing `begin_battle` and `record_battle` pipeline handles scaled ordinary enemies, modifier consumption, exactly-once +1 FTL and non-escape upgrades. No separate battle scene or reward system is used.
 
 `upgraded_this_event` tracks identity keys: one selection per identity per event, even if level 2 is still available. `upgrades_remaining` drives the existing gallery; Finish clears the event, and a later event can select the identity again. Existing card costs, effects, acquisition weights and max levels are untouched. No combat-exhaustion Salvage is added. State is in memory; there is no disk save/load to migrate or validate.
+
+## Conditional cards and capped decks
+
+The current library contains 68 identities, with the [catalogue and all three effect levels](balance/cards.md). The 24 new identities are acquisition/draw candidates; the six starting pools remain their original 25. Emergency Power Cell retains `cards/08_energy_cell.tres` and consumes a turn.
+
+Use the existing CardData Inspector **Effects** / **Upgrade Effects** Dictionaries. For example, Reactor Synchronization uses this condition (a full branch resolves without paying a second cost):
+
+```gdscript
+{"conditional": {
+    "target": "enemy", "attribute": "reactor", "comparison": "above",
+    "compare_target": "self", "compare_attribute": "reactor",
+    "then": {"reactor": 1}, "else": {"materials": 7}
+}}
+```
+
+`CardEffects._apply_effects` applies ordinary effects, then evaluates the condition against current state. Put the whole action in `then`/`else` for a check before healing/attacking, or put `conditional` alongside the main effect for a follow-up check afterward. Predicate keys and Ion scaling rules are documented in [Cards](balance/cards.md#generic-conditionals-exchanges-and-production). `Board._read_state` supplies both ships' original Hull capacities for percentage checks. Shared conservative effect simulation already supplies tactical AI valuation, including resource exchanges and production reductions. No second AI system exists.
+
+Tune **Max Deck Identities** on `encounters/expedition_rules.tres` (script `ExpeditionRules`, default 30; shipping Inspector range 25–100). The effective capacity never excludes a larger custom starting pool. Existing acquired draw weight and reward-tier odds remain in the same Card rewards group. Change capacities before starting a run; no automatic trimming is performed.
+
+`choose_card()` acquires normally below capacity; at capacity it stores `pending_card`, consumes the original offers and sets `pending_choice = "replace"`. `_show_replacement()` reuses the existing outcome view, portrait, gallery, colors and scrolling. The incoming Resource stays fixed across rebuilding. A gallery selection changes only the UI; `replace_card(identity_key)` validates current ownership and incoming uniqueness, removes that identity/upgrade, then acquires the new card. `decline_card()` closes without modifying the deck or refunding Salvage. Both paths consume the event once. The existing Outpost return path is retained. `player_pool()` and `acquired_draw_weights()` rebuild the authoritative draw pool; active held copies of a removed identity are replaced without changing hand size.
+
+`upgraded_this_event` continues to enforce one selection per identity in a combat reward event. Removed upgrade state cannot transfer to another identity or survive reacquisition. The current Deck Viewer caption shows owned identities / capacity. All deck state is in memory only: there is still no disk save/load format or migration. Starting a new expedition clears removal, acquisition, upgrade and pending-replacement ledgers.
+
+Focused validation: `card_expansion_test.gd`, `deck_replacement_ui_test.gd`; existing modifier, card progression/tier/UI, Power Allocation, PoI, station, combat and expedition tests remain relevant. Regenerate only the card reference with `godot --headless --path . --script tools/generate_balance_docs.gd -- --cards-only`, leaving the independently maintained progression references intact.

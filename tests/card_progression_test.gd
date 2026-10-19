@@ -17,7 +17,7 @@ func _initialize() -> void:
 func snapshot() -> Dictionary:
 	return {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func run() -> void:
-	check(Cards.CARDS.size() == 44, "Original library has 44 identities")
+	check(Cards.CARDS.size() == 68, "Expanded library has 68 identities")
 	for card in Cards.CARDS:
 		var original: Dictionary = card.effects.duplicate(true)
 		check(card.upgrade_effects.size() == 2 and card.upgrade_level == 0, "Two upgrade definitions: " + card.card_name)
@@ -90,7 +90,7 @@ func run() -> void:
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
 			board.enemy_timer.stop()
-			check(board.hand.card_pool.size() == 26 and board.enemy_hand.card_pool.size() == 44, "Real battle uses separate pools")
+			check(board.hand.card_pool.size() == 26 and board.enemy_hand.card_pool.size() == 68, "Real battle uses separate pools")
 			for pooled in board.hand.card_pool:
 				if pooled.identity_key() == acquired.identity_key(): check(pooled.upgrade_level == 2, "Upgrades persist into successive battles")
 			for pooled in board.enemy_hand.card_pool: check(pooled.upgrade_level == 0, "Real enemy pool remains base")
@@ -146,7 +146,7 @@ func test_enemies() -> void:
 			check(card.upgrade_level == 0 and card in Cards.CARDS, "Enemy draws base library")
 			if card.effects.has("damage"): attack += 1
 			if card.effects.has("hull") or card.effects.has("shields"): defense += 1
-		check(seen.size() == 44, "Soft weights retain full library: " + profile.ship_name)
+		check(seen.size() == 68, "Soft weights retain full library: " + profile.ship_name)
 		print("%s seeded draw sample: attacks %.1f%%; repairs/shields %.1f%%" % [profile.ship_name, attack / 200.0, defense / 200.0])
 		var ai = AI.new()
 		ai.rng.seed = 100

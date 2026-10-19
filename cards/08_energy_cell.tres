@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 allocation_category = "systems"
-card_name = "Energy Cell"
+card_name = "Emergency Power Cell"
 family = "energy"
 cost = 0
-description = "+1 Materials, +1 Energy, +1 Crew"
-effects = {"materials": 1, "energy": 1, "crew": 1}
+description = "+3 Materials; +3 Crew; If Own Energy ≤5: +3 Energy"
+effects = {"materials": 3, "crew": 3, "conditional": {"target": "self", "attribute": "energy", "comparison": "at_most", "threshold": 5, "then": {"energy": 3}}}
 play_again = false
-upgrade_effects = [{"materials":2,"energy":2,"crew":2},{"materials":3,"energy":3,"crew":3}]
+upgrade_effects = [{"materials": 4, "crew": 3, "conditional": {"target": "self", "attribute": "energy", "comparison": "at_most", "threshold": 5, "then": {"energy": 4}}}, {"materials": 4, "crew": 4, "conditional": {"target": "self", "attribute": "energy", "comparison": "at_most", "threshold": 5, "then": {"energy": 5}}}]

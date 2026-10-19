@@ -8,7 +8,7 @@ allocation_category = "offense"
 card_name = "Laser Burst"
 family = "energy"
 cost = 6
-description = "Deal 6 damage"
-effects = {"damage": 6}
+description = "6 damage; If Enemy Shields =0: 3 damage"
+effects = {"damage": 6, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 3}}}
 play_again = false
-upgrade_effects = [{"damage":9,"energy":2},{"damage":12,"energy":3}]
+upgrade_effects = [{"damage": 8, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 4}}}, {"damage": 10, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 5}}}]

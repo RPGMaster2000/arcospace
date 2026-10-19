@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Scientific Breakthrough"
+family = "crew"
+cost = 12
+tier = 2
+allocation_category = "systems"
+description = "If Enemy Reactor >own Reactor: +1 Reactor; else +5 Energy"
+effects = {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1}, "else": {"energy": 5}, "compare_target": "self", "compare_attribute": "reactor"}}
+upgrade_effects = [{"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1, "materials": 2}, "else": {"energy": 7}, "compare_target": "self", "compare_attribute": "reactor"}}, {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "above", "threshold": 0, "then": {"reactor": 1, "materials": 4}, "else": {"energy": 9}, "compare_target": "self", "compare_attribute": "reactor"}}]
+play_again = false

@@ -14,8 +14,8 @@ func _initialize() -> void:
 func run() -> void:
 	var generator = RandomNumberGenerator.new()
 	generator.seed = 3456
-	var new_cards: Array = Library.CARDS.slice(35)
-	check(new_cards.size() == 9, "Exactly nine new cards registered")
+	var new_cards: Array = Library.CARDS.slice(35,44)
+	check(new_cards.size() == 9, "Original nine tactical cards remain registered unchanged")
 	for card in new_cards:
 		var a = state()
 		var b = state()

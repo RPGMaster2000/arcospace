@@ -22,7 +22,7 @@ Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cann
 
 ## Card preferences
 
-Player pools contain 25 of 36 Tier 1 identities (69.4%); excluded identities remain expedition rewards. All enemies draw the full base library. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
+Player starting pools retain 25 original Tier 1 identities each; the library now contains 49 Tier 1 and 19 Tier 2 identities. Other identities remain expedition rewards. All enemies draw the full base library. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
 
 | Ship | Starting identities | Family weights | Effect preferences | Tactical weights | Decision variation | Resource |
 |---|---|---|---|---|---|---|
@@ -56,37 +56,37 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 ### Endeavour starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Hull Overhaul, Breach Charge, Salvage Strike, Overloaded Warhead.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
 - **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion.
 
 ### Thunderbolt starting identities
 
 - **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion.
 
 ### Titania starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Overloaded Warhead.
-- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge.
 - **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
 
 ### Ganymede starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Reactor Salvage, Overloaded Warhead.
-- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Pulse Repeater.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Pulse Repeater.
 - **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Energy Siphon, Cargo Raid, Supply Diversion.
 
 ### Callisto starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion.
 
 ### Orion starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Salvage Strike, Reactor Salvage.
-- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
 - **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, System Disruption, Torpedo Salvo, Energy Siphon, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
 
 

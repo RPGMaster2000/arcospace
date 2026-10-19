@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Emergency Medical Team"
+family = "crew"
+cost = 10
+tier = 1
+allocation_category = "defense"
+description = "If Own Hull <50% max: +12 Hull; else +6 Hull"
+effects = {"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "then": {"hull": 12}, "else": {"hull": 6}, "fraction_of": "hull_capacity"}}
+upgrade_effects = [{"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "then": {"hull": 15}, "else": {"hull": 8}, "fraction_of": "hull_capacity"}}, {"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "then": {"hull": 18}, "else": {"hull": 10}, "fraction_of": "hull_capacity"}}]
+play_again = false

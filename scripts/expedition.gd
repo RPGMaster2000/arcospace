@@ -8,6 +8,10 @@ const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
 const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+var replacement_key: String = ""
+var replacement_selection: Label
+var replace_button: Button
+var incoming_portrait: Button
 var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
 # TUNE: Disable to restore the original grid; both presentations use the same encounter state.
@@ -534,6 +538,9 @@ func _approach(index: int, slot: int) -> void:
 		if not is_queued_for_deletion() and state == resolved_state: show_outcome()
 
 func show_outcome() -> void:
+	if state.pending_choice == "replace":
+		_show_replacement()
+		return
 	_clear("outcome")
 	if state.last_poi_success >= 0:
 		mission_header = _label("Mission Successful" if state.last_poi_success == 1 else "Mission Compromised", 32)
@@ -592,7 +599,7 @@ func _show_current_deck() -> void:
 	if presenting_outcome: return
 	card_inspector.dismiss()
 	resource_bar.overlay.dismiss()
-	current_deck_viewer.show_cards(state.player_pool(), state.ship().ship_name + " · Current deck · Read only")
+	current_deck_viewer.show_cards(state.player_pool(), state.ship().ship_name + " · Deck: %d / %d · Read only" % [state.player_pool().size(), state.deck_limit()])
 
 func _confirm_card(card: Resource) -> void:
 	# The existing state methods validate eligibility and consume each choice once.
@@ -751,3 +758,44 @@ func _chasedown_response(index: int) -> void:
 func _finish_upgrades() -> void:
 	state.finish_upgrades()
 	show_outcome()
+
+# Same outcome view/gallery: the incoming reward is fixed in ExpeditionState until confirmed/declined.
+func _show_replacement() -> void:
+	_clear("replacement")
+	jump_button.hide()
+	title.text = "Deck Full — %d/%d Cards" % [state.player_pool().size(), state.deck_limit()]
+	replacement_key = ""
+	var incoming = HBoxContainer.new()
+	incoming.add_theme_constant_override("separation", 20)
+	view.add_child(incoming)
+	incoming_portrait = preload("res://scripts/ui/card_portrait.gd").new()
+	incoming_portrait.card_data = state.pending_card
+	incoming_portrait.card_scale = 0.6
+	incoming.add_child(incoming_portrait)
+	incoming_portrait.pressed.connect(func(): card_inspector.present(state.pending_card, null, true))
+	var explanation = _label("Your deck is full. Replace an existing card to acquire your new card, or keep your current deck.\n\nNew card: " + state.pending_card.card_name + "\nChoose a card to remove below.", 22)
+	explanation.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	incoming.add_child(explanation)
+	_show_card_gallery(state.player_pool())
+	card_gallery.card_selected.disconnect(_preview_card)
+	card_gallery.card_selected.connect(_select_replacement)
+	replacement_selection = _label("Selected: None", 20)
+	view.add_child(replacement_selection)
+	replace_button = _button("Replace Card", _replace_card)
+	replace_button.disabled = true
+	_button("Keep Current Deck", _decline_card)
+
+func _select_replacement(card: Resource) -> void:
+	if state.pending_choice != "replace": return
+	for owned in state.player_pool():
+		if owned.identity_key() == card.identity_key():
+			replacement_key = card.identity_key()
+			replacement_selection.text = "Selected: %s · %s · Tier %d · Upgrade %d" % [card.card_name, card.family.capitalize(), card.tier, card.upgrade_level]
+			replace_button.disabled = false
+			return
+
+func _replace_card() -> void:
+	if state.replace_card(replacement_key): _purchase_finished()
+
+func _decline_card() -> void:
+	if state.decline_card(): _purchase_finished()

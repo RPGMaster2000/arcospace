@@ -226,7 +226,7 @@ func _ready() -> void:
 
 func _read_state(side: String) -> Dictionary:
 	var state: Dictionary = {}
-	for key in ["hull", "shields", "materials", "energy", "crew", "synthesizer", "reactor", "quarters"]:
+	for key in ["hull", "hull_capacity", "shields", "materials", "energy", "crew", "synthesizer", "reactor", "quarters"]:
 		state[key] = get(side + "_" + key)
 	return state
 

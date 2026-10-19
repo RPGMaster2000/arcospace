@@ -98,10 +98,11 @@ func meter_value(round_number: int) -> float:
 	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
 
 static func is_combat(effects: Dictionary) -> bool:
-	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below", "shield_collapse"]:
+	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below", "shield_collapse", "swap_resource", "enemy_production"]:
 		if effects.get(key, false):
 			return true
-	return false
+	var condition: Dictionary = effects.get("conditional", {})
+	return is_combat(condition.get("then", {})) or is_combat(condition.get("else", {})) if not condition.is_empty() else false
 
 func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 	var result: Dictionary = effects.duplicate(true)
@@ -169,28 +170,6 @@ func preview(card: Resource) -> Resource:
 		return card
 	var shown = card.duplicate(true)
 	shown.effects = _scaled(card.effects, ion_factor)
-	var lines: Array[String] = ["ION ×2" if ion_factor == 2.0 else "ION ×½"]
-	for key in shown.effects:
-		var value = shown.effects[key]
-		match key:
-			"damage": lines.append("Deal %d damage" % value)
-			"break_shields": lines.append("Enemy Shields −%d" % value)
-			"pierce": lines.append("%d%% bypasses Shields" % roundi(value * 100))
-			"drain", "steal":
-				for resource in value:
-					lines.append(("Steal %d %s" if key == "steal" else "Enemy −%d %s") % [value[resource], resource.capitalize()])
-			"sabotage": lines.append("Enemy production −%d each (min 1)" % int(value))
-			"swap_shields": lines.append("Swap Shields")
-			"random_gain": lines.append("Gain %d random resource" % value)
-			"random_gain_other": lines.append("Gain %d random other resource" % value)
-			"random_gain_range_other": lines.append("Gain %d–%d random other resource" % [value.min, value.max])
-			"production_other": lines.append("+%d %s, +%d corresponding resource" % [value.production, str(value.type).capitalize(), value.resource])
-			"self_damage_regular": lines.append("Take %d regular dmg" % value)
-			"shield_collapse": lines.append("Remove enemy Shld; ≥%d: %d%% risk of %d self dmg" % [value.threshold, roundi(value.chance*100), value.self_damage])
-			"self_damage": lines.append("Take %d direct Hull damage" % value)
-			"shield_collapse_below": lines.append("Remove enemy Shields if below %d" % value)
-			_: lines.append("%+d %s" % [value, str(key).capitalize()])
-	if card.play_again:
-		lines.append("Play again")
-	shown.description = " · ".join(lines)
+	shown.description = ("ION ×2 · " if ion_factor == 2.0 else "ION ×½ · ") + card.describe_effects(shown.effects)
+	if card.play_again: shown.description += "; play again"
 	return shown

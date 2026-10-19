@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Feedback Loop"
+family = "energy"
+cost = 12
+tier = 1
+allocation_category = "offense"
+description = "If Enemy Shields ≥12: Enemy -14 Shields; else +5 Materials; +4 Shields"
+effects = {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_least", "threshold": 12, "then": {"break_shields": 14}, "else": {"materials": 5, "shields": 4}}}
+upgrade_effects = [{"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_least", "threshold": 12, "then": {"break_shields": 17}, "else": {"materials": 6, "shields": 5}}}, {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_least", "threshold": 12, "then": {"break_shields": 20}, "else": {"materials": 7, "shields": 6}}}]
+play_again = false

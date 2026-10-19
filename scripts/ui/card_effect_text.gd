@@ -13,11 +13,33 @@ static func segment(text: String, value: Variant, before: Variant, lower: bool =
 	return "[color=" + GREEN + "]" + text + "[/color]" if improved(value, before, lower) else text
 
 static func comparison(card: Resource, base: Resource) -> String:
+	var text: String = compare_effects(card.effects, base.effects)
+	return text + ("\nPlay again" if card.play_again else "")
+
+static func compare_effects(values: Dictionary, previous: Dictionary) -> String:
 	var lines: PackedStringArray = []
-	for key in card.effects:
-		var value = card.effects[key]
-		var before = base.effects.get(key)
+	for key in values:
+		var value = values[key]
+		var before = previous.get(key)
 		match key:
+			"damage":
+				lines.append(segment(("%d Hull damage" if values.get("pierce", 0.0) == 1.0 else "%d damage") % value, value, before))
+			"pierce":
+				if float(value) != 1.0: lines.append(segment(Data.describe_effects({key:value}), value, before))
+			"conditional":
+				var old: Dictionary = before if before is Dictionary else {}
+				var predicate: Dictionary = value.duplicate(true)
+				predicate["then"] = {}
+				predicate.erase("else")
+				lines.append(Data.describe_effects({"conditional":predicate}).trim_suffix(": "))
+				lines.append(compare_effects(value.get("then", {}), old.get("then", {})))
+				if not value.get("else", {}).is_empty():
+					lines.append("Otherwise:")
+					lines.append(compare_effects(value["else"], old.get("else", {})))
+			"enemy_production":
+				var old: Dictionary = before if before is Dictionary else {}
+				for attribute in value:
+					lines.append(segment(Data.describe_effects({"enemy_production":{attribute:value[attribute]}}), value[attribute], old.get(attribute), true))
 			"production_other":
 				var old: Dictionary = before if before is Dictionary else {}
 				lines.append(segment("+%d %s" % [value.production, str(value.type).capitalize()], value.production, old.get("production")))
@@ -37,5 +59,4 @@ static func comparison(card: Resource, base: Resource) -> String:
 				lines.append("+" + segment(str(value.min), value.min, old.get("min")) + "–" + segment(str(value.max), value.max, old.get("max")) + " random other resource")
 			_:
 				lines.append(segment(Data.describe_effects({key:value}), value, before, key in ["self_damage", "self_damage_regular"]))
-	if card.play_again: lines.append("Play again")
 	return "\n".join(lines)
