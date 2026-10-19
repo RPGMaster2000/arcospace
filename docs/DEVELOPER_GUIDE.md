@@ -140,6 +140,8 @@ to prevent stale/double purchases; free return never awards FTL.
 
 ### Two different FTL counters
 
+The resource-draining card is **Drain Beam** (`cards/25_emp_pulse.tres`; legacy path retained for stable card identity). **EMP Pulse** refers to the combat escape system.
+
 - [ftl_drive.gd](../scripts/ftl_drive.gd): battle-only **EMP Pulse**, charged on
   player turns. Ship `ftl_turns`/`ftl_resistance` configure it; `_warp_out()` resolves
   escape without generating another system. The current code/UI still uses this name.

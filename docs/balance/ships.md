@@ -62,7 +62,7 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 ### Thunderbolt starting identities
 
 - **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion.
 
 ### Titania starting identities
@@ -80,7 +80,7 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 ### Callisto starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion.
 
 ### Orion starting identities

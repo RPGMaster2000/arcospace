@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 allocation_category = "offense"
-card_name = "EMP Pulse"
+card_name = "Drain Beam"
 family = "energy"
 cost = 8
 description = "Enemy resources −7 each"

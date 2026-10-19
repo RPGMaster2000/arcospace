@@ -25,7 +25,7 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 ### Thunderbolt starting identities
 
 - **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion.
 
 ### Titania starting identities
@@ -43,7 +43,7 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 ### Callisto starting identities
 
 - **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage.
-- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
 - **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion.
 
 ### Orion starting identities
@@ -78,7 +78,7 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 | Energy Siphon | crew / 5 | Tier 1 | Offense | `{"steal":{"energy":5}}` | `{"shields":3,"steal":{"energy":7}}` | `{"shields":6,"steal":{"energy":9}}` | false | false | true | false | true | true | true | `cards/22_energy_siphon.tres` |
 | Cargo Raid | crew / 6 | Tier 1 | Offense | `{"damage":4,"steal":{"materials":4}}` | `{"damage":6,"steal":{"materials":6}}` | `{"damage":9,"steal":{"materials":8}}` | false | true | true | true | true | true | true | `cards/23_cargo_raid.tres` |
 | Crew Capture | materials / 6 | Tier 1 | Offense | `{"steal":{"crew":4}}` | `{"hull":2,"steal":{"crew":6}}` | `{"hull":4,"steal":{"crew":8}}` | false | false | false | true | true | false | false | `cards/24_crew_capture.tres` |
-| EMP Pulse | energy / 8 | Tier 1 | Offense | `{"drain":{"crew":7,"energy":7,"materials":7}}` | `{"drain":{"crew":9,"energy":9,"materials":9},"shields":3}` | `{"drain":{"crew":11,"energy":11,"materials":11},"shields":6}` | false | false | true | false | false | true | false | `cards/25_emp_pulse.tres` |
+| Drain Beam | energy / 8 | Tier 1 | Offense | `{"drain":{"crew":7,"energy":7,"materials":7}}` | `{"drain":{"crew":9,"energy":9,"materials":9},"shields":3}` | `{"drain":{"crew":11,"energy":11,"materials":11},"shields":6}` | false | false | true | false | false | true | false | `cards/25_emp_pulse.tres` |
 | Shield Exchange | energy / 8 | Tier 1 | Offense | `{"swap_shields":true}` | `{"damage":3,"swap_shields":true}` | `{"damage":6,"energy":2,"swap_shields":true}` | false | false | true | false | false | true | false | `cards/26_shield_exchange.tres` |
 | Missile Barrage | crew / 13 | Tier 1 | Offense | `{"damage":16}` | `{"damage":21}` | `{"break_shields":4,"damage":26}` | false | true | false | true | false | false | true | `cards/27_missile_barrage.tres` |
 | Breach Charge | materials / 8 | Tier 1 | Offense | `{"break_shields":8,"damage":4}` | `{"break_shields":11,"damage":6}` | `{"break_shields":14,"damage":9}` | false | true | false | true | true | false | false | `cards/28_breach_charge.tres` |
