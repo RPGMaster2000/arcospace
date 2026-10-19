@@ -49,4 +49,3 @@ Temporal Rift is a whole-battle modifier with no periodic event. It doubles Tier
 TUNE: `card_hand.gd` exposes tier chances and max copies. Each new `.tres` exposes tier, cost and numerical effects. `card_view.gd` exposes commented jagged depth, spacing and pulse intensity; the Tier 2 outline pulses softly and remains visible on the played-card presentation.
 
 Tier 2 cards are blocked for both ships during full rounds 1-2, including opening/fixed hands and Temporal Rift. Draws unlock at round 3. TUNE `card_hand.gd` → `tier_two_locked_turns` to change this delay. Energy Cell costs 0 and grants +1 Materials, +1 Energy and +1 Crew at base level. Card descriptions use 16 px text in `scenes/card.tscn`.
-

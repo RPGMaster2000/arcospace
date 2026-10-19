@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://dv57axcyc0cg6"]
+
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_n0hhp"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="2_aatw3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="3_tctpy"]
+[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="4_lgigk"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="5_hww14"]
+[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="6_ybiyd"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="7_ble08"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="8_ye2ms"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="9_0j2cm"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="10_kdhgj"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="11_u8lf3"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="12_x5nny"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="13_gtyr8"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="14_i55sv"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="15_bc7p7"]
+[ext_resource type="Resource" path="res://cards/21_phase_lance.tres" id="16_xldkf"]
+[ext_resource type="Resource" path="res://cards/22_energy_siphon.tres" id="17_ggqfk"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="18_g7ymb"]
+[ext_resource type="Resource" path="res://cards/25_emp_pulse.tres" id="19_4vqgn"]
+[ext_resource type="Resource" path="res://cards/26_shield_exchange.tres" id="20_py7wb"]
+[ext_resource type="Resource" uid="uid://cl4dsr38cjwy7" path="res://cards/29_polaron_burst.tres" id="21_38811"]
+[ext_resource type="Resource" path="res://cards/37_pulse_repeater.tres" id="22_0ig5j"]
+[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="23_or6qd"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="24_ui3nu"]
+[ext_resource type="Resource" path="res://cards/41_shield_collapse.tres" id="25_x36o5"]
+[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="26_nl1rv"]
+
+[resource]
+script = ExtResource("1_n0hhp")
+ship_name = "Thunderbolt"
+subtitle = "Fast and Tactical"
+role = "Recon / FTL"
+summary = "Low hull, High starting resource, low production. Fast and resistant EMP pulse."
+hull_capacity = 28
+shields = 15
+materials = 8
+energy = 14
+synthesizer = 1
+reactor = 3
+ftl_turns = 11
+ftl_resistance = 0.25
+hull_color = Color(0.25, 0.85, 0.88, 1)
+starting_cards = Array[Resource]([ExtResource("2_aatw3"), ExtResource("3_tctpy"), ExtResource("4_lgigk"), ExtResource("5_hww14"), ExtResource("6_ybiyd"), ExtResource("7_ble08"), ExtResource("8_ye2ms"), ExtResource("9_0j2cm"), ExtResource("10_kdhgj"), ExtResource("11_u8lf3"), ExtResource("12_x5nny"), ExtResource("13_gtyr8"), ExtResource("14_i55sv"), ExtResource("15_bc7p7"), ExtResource("16_xldkf"), ExtResource("17_ggqfk"), ExtResource("18_g7ymb"), ExtResource("19_4vqgn"), ExtResource("20_py7wb"), ExtResource("21_38811"), ExtResource("22_0ig5j"), ExtResource("23_or6qd"), ExtResource("24_ui3nu"), ExtResource("25_x36o5"), ExtResource("26_nl1rv")])
