@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="ShipData" format=3]
+[gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://br7ojnjye5rp6"]
 
 [ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_s4cye"]
-
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
 [ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]
@@ -30,19 +29,14 @@
 
 [resource]
 script = ExtResource("1_s4cye")
-role = "Crew / Boarding"
-subtitle = "Boarding Cruiser"
-ftl_resistance = 0.0
-ftl_turns = 14
-quarters = 3
-reactor = 2
-synthesizer = 1
-crew = 10
-energy = 12
-materials = 10
-shields = 12
-hull_capacity = 35
 ship_name = "Orion"
+subtitle = "Boarding Cruiser"
+role = "Crew / Boarding"
 summary = "Crew specialist; extra Energy reserves support boarding, theft and disruption."
+shields = 12
+materials = 8
+energy = 12
+synthesizer = 1
+quarters = 3
 hull_color = Color(0.52, 0.67, 0.78, 1)
 starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card19"), ExtResource("Card20"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card27"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card44")])

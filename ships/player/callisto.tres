@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="ShipData" format=3]
+[gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://bwnql14561x3a"]
 
 [ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_s4cye"]
-
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
 [ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]
@@ -21,7 +20,7 @@
 [ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="Card23"]
 [ext_resource type="Resource" path="res://cards/25_emp_pulse.tres" id="Card25"]
 [ext_resource type="Resource" path="res://cards/26_shield_exchange.tres" id="Card26"]
-[ext_resource type="Resource" path="res://cards/29_polaron_burst.tres" id="Card29"]
+[ext_resource type="Resource" uid="uid://cl4dsr38cjwy7" path="res://cards/29_polaron_burst.tres" id="Card29"]
 [ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="Card36"]
 [ext_resource type="Resource" path="res://cards/37_pulse_repeater.tres" id="Card37"]
 [ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="Card39"]
@@ -30,19 +29,14 @@
 
 [resource]
 script = ExtResource("1_s4cye")
-role = "Energy / Shields"
-subtitle = "Shield Cruiser"
-ftl_resistance = 0.0
-ftl_turns = 14
-quarters = 1
-reactor = 3
-synthesizer = 2
-crew = 10
-energy = 10
-materials = 12
-shields = 12
-hull_capacity = 35
 ship_name = "Callisto"
+subtitle = "Shield Cruiser"
+role = "Energy / Shields"
 summary = "Energy specialist; extra Materials reserves support Shields and Reactor development."
+shields = 12
+energy = 8
+crew = 12
+reactor = 3
+quarters = 1
 hull_color = Color(0.52, 0.67, 0.78, 1)
 starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card8"), ExtResource("Card9"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card18"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card25"), ExtResource("Card26"), ExtResource("Card29"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card41")])

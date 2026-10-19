@@ -1,7 +1,6 @@
 [gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://bn64pn4sw3tli"]
 
 [ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_8bt07"]
-
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
 [ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]
@@ -34,13 +33,12 @@ ship_name = "Titania"
 subtitle = "Mobile Stronghold"
 role = "Industrial / Crew"
 summary = "Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse."
-hull_capacity = 38
+hull_capacity = 40
 shields = 6
-materials = 20
-energy = 20
-crew = 20
+materials = 16
+energy = 17
+crew = 16
 synthesizer = 3
-reactor = 2
 quarters = 3
 ftl_turns = 17
 ftl_resistance = -0.1
