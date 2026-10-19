@@ -53,7 +53,7 @@ func run() -> void:
 	root.add_child(host)
 	current_scene = host
 	# Every authored approach, all player attributes, all reward lines.
-	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		host.selected_ship = ship_index
 		host.start_expedition()
 		host.state.salvage = 30
@@ -164,7 +164,7 @@ func run() -> void:
 	for window_size in [Vector2i(1280,720),Vector2i(1280,480),Vector2i(686,384)]:
 		root.size = window_size
 		await settle()
-		for index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+		for index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 			setup._select(index)
 			await settle()
 			var panel = setup.get_node("Ships/Ship%d" % index)

@@ -2,8 +2,8 @@ extends SceneTree
 # Controlled fixtures deliberately bypass six-encounter generation only for stress cases.
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const Ships = preload("res://scripts/ship_library.gd")
-const Hand = preload("res://scripts/card_hand.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
 const Board = preload("res://scenes/board_3d.tscn")
 const OUTCOME_KEYS = ["salvage", "hull", "next_battle", "card_reward", "minimum_card_tier", "upgrade_card", "resource_choice", "production_choice", "extra_ftl_charge"]
 var failures: int = 0

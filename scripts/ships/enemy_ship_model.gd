@@ -1,4 +1,4 @@
-extends "res://scripts/ship_3d.gd"
+extends "res://scripts/ships/ship_3d.gd"
 
 # RESPONSIBILITY: Build the interceptor wedge and retain accent colors with shared ship effect passes.
 # Preserve authored accent colors while sharing the existing damage/repair shader chain.

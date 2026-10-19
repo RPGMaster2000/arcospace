@@ -43,16 +43,16 @@ The upgrade and enemy-scaling paths deliberately create copies where values chan
 
 | Owner | Calls / consumes | Boundary |
 |---|---|---|
-| [battle_setup.gd](../scripts/battle_setup.gd) | [ship_library.gd](../scripts/ship_library.gd), ship previews, `expedition.tscn` | Selection and confirmation; does not run combat. |
+| [battle_setup.gd](../scripts/battle_setup.gd) | [ship_library.gd](../scripts/ships/ship_library.gd), ship previews, `expedition.tscn` | Selection and confirmation; does not run combat. |
 | [expedition.gd](../scripts/expedition.gd) | `ExpeditionState`, star map/grid, PoI/reward UI, `board_3d.tscn` | Screen routing and callbacks; does not calculate rewards. |
 | [expedition_state.gd](../scripts/expedition_state.gd) | expedition rules/progression, ship/card libraries, outcomes, repair rules | Persistent Hull, Salvage, owned cards, upgrades, generation, completion and pending bonuses. |
 | [board.gd](../scripts/board.gd) | `CardHand`, `EnemyAI`, `CombatModifier`, `MatchRules`, `FTLDrive`, motion/effects | Authoritative battle properties, input locks, turns, result recording. |
 | [combat_modifier.gd](../scripts/combat_modifier.gd) | `CardEffects` | Round events and modified card copies; its `preview()` also drives Ion card presentation. |
-| [card_effects.gd](../scripts/card_effects.gd) | Two ship-state dictionaries | Cost, damage, resources and other effects; no UI or turn advancement. |
-| [card_hand.gd](../scripts/card_hand.gd) | Card library/pools, [card_preferences.gd](../scripts/card_preferences.gd), allocation settings | Eligibility, rarity selection, weighted identity choice and replacement. |
+| [card_effects.gd](../scripts/cards/card_effects.gd) | Two ship-state dictionaries | Cost, damage, resources and other effects; no UI or turn advancement. |
+| [card_hand.gd](../scripts/cards/card_hand.gd) | Card library/pools, [card_preferences.gd](../scripts/cards/card_preferences.gd), allocation settings | Eligibility, rarity selection, weighted identity choice and replacement. |
 | [enemy_ai.gd](../scripts/enemy_ai.gd) | `CardEffects` simulation, [match_rules.gd](../scripts/match_rules.gd), enemy tactical weights | Returns a slot/discard decision; Board executes it. |
 | [board_3d.gd](../scripts/board_3d.gd) | Inherits `board.gd`; selects battlefield/model scenes | Connects 3D presentation and responsive placement to existing rules. |
-| [battle_effects.gd](../scripts/battle_effects.gd) | State snapshots, [ship_3d.gd](../scripts/ship_3d.gd), shaders, HUD nodes | Animates committed changes; never reapplies them. |
+| [battle_effects.gd](../scripts/battle_effects.gd) | State snapshots, [ship_3d.gd](../scripts/ships/ship_3d.gd), shaders, HUD nodes | Animates committed changes; never reapplies them. |
 
 ### Ship selected → battle ready
 
@@ -149,7 +149,7 @@ The resource-draining card is **Drain Beam** (`cards/25_emp_pulse.tres`; legacy 
   player turns. Ship `ftl_turns`/`ftl_resistance` configure it; `_warp_out()` resolves
   escape without generating another system. The current code/UI still uses this name.
 - `ExpeditionState.ftl_charge`: **interstellar** progression. `generate_system()` uses
-  [expedition_progression.gd](../scripts/expedition_progression.gd) for carryover (shipping cap **0**),
+  [expedition_progression.gd](../scripts/expedition/expedition_progression.gd) for carryover (shipping cap **0**),
   system-based enemy scaling and mandatory Boss milestones. `can_jump()` blocks an
   unresolved mandatory Boss even with enough charge. Defeat or successful escape
   resolves that encounter, but their rewards differ.
@@ -158,20 +158,20 @@ The resource-draining card is **Drain Beam** (`cards/25_emp_pulse.tres`; legacy 
 
 | Area / I want to… | Start here | Other affected systems / checks |
 |---|---|---|
-| **Cards and deck building** — add a card | [CardData](../scripts/card_data.gd), [Laser Burst Resource](../cards/12_laser_burst.tres), [CardLibrary](../scripts/card_library.gd) | Ship starting pools, reward candidates, upgrades, descriptions and registry/count tests. |
-| Add a new effect key | [CardEffects.play](../scripts/card_effects.gd) | `CardData.describe_effects`, `CombatModifier._scaled`/`preview`, AI simulation/scoring, card views, gallery filters, preferences and tests. Do not implement damage in UI. |
-| Change drawing/allocation | [CardHand](../scripts/card_hand.gd), [Power Allocation Resource](../resources/power_allocation.tres) | Preserve rarity locks/caps, identity duplicates, acquired weights and enemy independence. |
-| Add a card category | [CardData.allocation_category](../scripts/card_data.gd) | Allocation mode validation in CardHand, [allocation popup](../scripts/ui/power_allocation_popup.gd) and settings; gallery categories are separately derived from effects. |
-| Change acquisition/upgrades | [ExpeditionState](../scripts/expedition_state.gd), [ExpeditionRules](../scripts/expedition_rules.gd) | `random_card_offers`, `choose_card`, `start_upgrade_event`, `choose_upgrade`, `finish_upgrades`, active-hand updates, gallery/inspector previews; shared library must stay unchanged. |
-| **Ships and combat statistics** — add a ship | [ShipData](../scripts/ship_data.gd), [ShipLibrary](../scripts/ship_library.gd), [Endeavour](../ships/player/endeavour.tres) | Selection shows three panels per page; enemy registry is separately in expedition rules. Custom models need the existing ship animation API. |
-| Change damage/income/wins | [CardEffects](../scripts/card_effects.gd), [MatchRules](../scripts/match_rules.gd), [Board](../scripts/board.gd) | Hull/plating tests, AI simulation, victory/escape and balance docs. |
-| **Star systems and PoIs** — add a PoI | [PoiData](../scripts/poi_data.gd), [Mining Operation](../encounters/mining_operation.tres), [expedition_rules.tres](../encounters/expedition_rules.tres) | Approach/outcome Resources, generation bounds, display classification/icon and reward tests. No registration in the map. |
+| **Cards and deck building** — add a card | [CardData](../scripts/cards/card_data.gd), [Laser Burst Resource](../cards/12_laser_burst.tres), [CardLibrary](../scripts/cards/card_library.gd) | Ship starting pools, reward candidates, upgrades, descriptions and registry/count tests. |
+| Add a new effect key | [CardEffects.play](../scripts/cards/card_effects.gd) | `CardData.describe_effects`, `CombatModifier._scaled`/`preview`, AI simulation/scoring, card views, gallery filters, preferences and tests. Do not implement damage in UI. |
+| Change drawing/allocation | [CardHand](../scripts/cards/card_hand.gd), [Power Allocation Resource](../resources/power_allocation.tres) | Preserve rarity locks/caps, identity duplicates, acquired weights and enemy independence. |
+| Add a card category | [CardData.allocation_category](../scripts/cards/card_data.gd) | Allocation mode validation in CardHand, [allocation popup](../scripts/ui/power_allocation_popup.gd) and settings; gallery categories are separately derived from effects. |
+| Change acquisition/upgrades | [ExpeditionState](../scripts/expedition_state.gd), [ExpeditionRules](../scripts/expedition/expedition_rules.gd) | `random_card_offers`, `choose_card`, `start_upgrade_event`, `choose_upgrade`, `finish_upgrades`, active-hand updates, gallery/inspector previews; shared library must stay unchanged. |
+| **Ships and combat statistics** — add a ship | [ShipData](../scripts/ships/ship_data.gd), [ShipLibrary](../scripts/ships/ship_library.gd), [Endeavour](../ships/player/endeavour.tres) | Selection shows three panels per page; enemy registry is separately in expedition rules. Custom models need the existing ship animation API. |
+| Change damage/income/wins | [CardEffects](../scripts/cards/card_effects.gd), [MatchRules](../scripts/match_rules.gd), [Board](../scripts/board.gd) | Hull/plating tests, AI simulation, victory/escape and balance docs. |
+| **Star systems and PoIs** — add a PoI | [PoiData](../scripts/expedition/poi_data.gd), [Mining Operation](../encounters/mining_operation.tres), [expedition_rules.tres](../encounters/expedition_rules.tres) | Approach/outcome Resources, generation bounds, display classification/icon and reward tests. No registration in the map. |
 | Change progression | [ExpeditionProgression Resource](../resources/expedition_progression.tres), [ExpeditionState.generate_system](../scripts/expedition_state.gd) | Carryover, Boss gating, six encounter slots, Outpost independence; milestone tests. |
-| **Economy and rewards** — change PoI rewards/services | [EncounterOutcome](../scripts/encounter_outcome.gd), [EncounterApproach](../scripts/encounter_approach.gd), [Outpost](../encounters/trading_outpost.tres) | State `_apply_outcome`/`purchase_service`, outcome descriptions, choice UI; [repair_rules.gd](../scripts/repair_rules.gd) is shared by repairs. |
+| **Economy and rewards** — change PoI rewards/services | [EncounterOutcome](../scripts/expedition/encounter_outcome.gd), [EncounterApproach](../scripts/expedition/encounter_approach.gd), [Outpost](../encounters/trading_outpost.tres) | State `_apply_outcome`/`purchase_service`, outcome descriptions, choice UI; [repair_rules.gd](../scripts/repair_rules.gd) is shared by repairs. |
 | **UI and layout** — move controls | [UI layout guide](ui_layout.md), relevant `.tscn` and attached `.gd` | Runtime `_fit_*`, `_layout_*`, `_build_ui` and container sizing can override Inspector positions. Simple layout edits should not change CardEffects, EnemyAI or ExpeditionState. |
 | Change card rendering | [card.tscn](../scenes/card.tscn), [card_view.gd](../scripts/card_view.gd) | [card_portrait.gd](../scripts/ui/card_portrait.gd), gallery, inspector and deck viewer share the rendering; check all contexts. |
-| **Visual effects** — add a presentation cue | [BattleEffects](../scripts/battle_effects.gd), [Ship3D](../scripts/ship_3d.gd), [ship scene](../scenes/ship_3d.tscn), [shaders](../shaders/) | Register tweens with `_job()` so turn locks and cancellation track them. Do not mutate combat state from animation callbacks. |
-| **AI and gameplay rules** — change enemy tactics | [EnemyAI](../scripts/enemy_ai.gd), [CardPreferences](../scripts/card_preferences.gd), enemy ShipData | Draw preferences and tactical scores are separate. Verify costs, self-damage safety, RNG simulation and enemy hand tests. |
+| **Visual effects** — add a presentation cue | [BattleEffects](../scripts/battle_effects.gd), [Ship3D](../scripts/ships/ship_3d.gd), [ship scene](../scenes/ship_3d.tscn), [shaders](../shaders/) | Register tweens with `_job()` so turn locks and cancellation track them. Do not mutate combat state from animation callbacks. |
+| **AI and gameplay rules** — change enemy tactics | [EnemyAI](../scripts/enemy_ai.gd), [CardPreferences](../scripts/cards/card_preferences.gd), enemy ShipData | Draw preferences and tactical scores are separate. Verify costs, self-damage safety, RNG simulation and enemy hand tests. |
 | Change encounter modifiers / escape | [CombatModifier](../scripts/combat_modifier.gd), [FTLDrive](../scripts/ftl_drive.gd) | Board turn/damage integration, modifier display and matching battlefield scene; escape reward and Boss tests. |
 
 ## Practical walkthroughs
@@ -259,7 +259,7 @@ Current statistics, pool counts, gate changes and diagnostic results: [six-ship 
 ### 4. Add a simple visual cue through existing presentation
 
 1. Open [battle_effects.gd](../scripts/battle_effects.gd),
-   [ship_3d.gd](../scripts/ship_3d.gd) and [ship_3d.tscn](../scenes/ship_3d.tscn).
+   [ship_3d.gd](../scripts/ships/ship_3d.gd) and [ship_3d.tscn](../scenes/ship_3d.tscn).
    Existing Hull repair is a useful model: `play_changes()` detects `hull_delta > 0`,
    `_repair(ship)` dispatches to `ship.animate_repair()`, and a registered tween drives
    the repair material. No card-specific animation registration is needed for that effect.

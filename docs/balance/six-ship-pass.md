@@ -1,6 +1,6 @@
 # Six-ship balance pass
 
-The six selectable profiles live in `ships/player/`, registered in `scripts/ship_library.gd`.
+The six selectable profiles live in `ships/player/`, registered in `scripts/ships/ship_library.gd`.
 The three original resource UIDs are preserved. New profiles use Endeavour's default model
 fallback and Hull color; each resource's Model Scene remains independently assignable.
 The existing selection scene shows three readable ship panels per page, with two pages.
@@ -163,8 +163,8 @@ All **81** relative developer-guide links resolve. No physical Android testing w
 - `encounters/spatial_anomaly.tres`
 - `encounters/unstable_wormhole.tres`
 - `scripts/battle_setup.gd`
-- `scripts/expedition_progression.gd`
-- `scripts/ship_library.gd`
+- `scripts/expedition/expedition_progression.gd`
+- `scripts/ships/ship_library.gd`
 - `ships/player/endeavour.tres`
 - `ships/player/thunderbolt.tres`
 - `ships/player/titania.tres`

@@ -1,8 +1,8 @@
 extends SceneTree
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 const Config = preload("res://encounters/expedition_rules.tres")
 const State = preload("res://scripts/expedition_state.gd")
-const Cards = preload("res://scripts/card_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 var checks: int = 0
 func check(ok: bool, message: String) -> void:

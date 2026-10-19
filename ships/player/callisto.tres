@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://bwnql14561x3a"]
 
-[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_s4cye"]
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ships/ship_data.gd" id="1_s4cye"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
 [ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]

@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="PoiData" format=3 uid="uid://c00wr8a7ysrby"]
 
-[ext_resource type="Script" uid="uid://jy07blmtpbty" path="res://scripts/encounter_approach.gd" id="Approach"]
-[ext_resource type="Script" uid="uid://c7nkepq0ocquq" path="res://scripts/encounter_outcome.gd" id="Outcome"]
-[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Script" uid="uid://jy07blmtpbty" path="res://scripts/expedition/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" uid="uid://c7nkepq0ocquq" path="res://scripts/expedition/encounter_outcome.gd" id="Outcome"]
+[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/expedition/poi_data.gd" id="Poi"]
 
 [sub_resource type="Resource" id="Failure0"]
 script = ExtResource("Outcome")

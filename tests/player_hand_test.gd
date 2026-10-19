@@ -1,7 +1,7 @@
 extends SceneTree
 
 # Run: godot --headless --path . --script res://tests/player_hand_test.gd
-const Library = preload("res://scripts/card_library.gd")
+const Library = preload("res://scripts/cards/card_library.gd")
 const BoardScene = preload("res://scenes/board.tscn")
 var failures: int = 0
 

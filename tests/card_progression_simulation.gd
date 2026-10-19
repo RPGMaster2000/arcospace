@@ -1,12 +1,12 @@
 extends SceneTree
 # Deterministic balance diagnostic, not a full match: no modifiers or EMP Pulse.
 # Baseline reproduces the previous full pools, round-six unlock and unweighted enemy AI.
-const Cards = preload("res://scripts/card_library.gd")
-const Ships = preload("res://scripts/ship_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 const Config = preload("res://encounters/expedition_rules.tres")
-const Hand = preload("res://scripts/card_hand.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
 const AI = preload("res://scripts/enemy_ai.gd")
-const Effects = preload("res://scripts/card_effects.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
 const Rules = preload("res://scripts/match_rules.gd")
 func _initialize() -> void:
 	call_deferred("run")

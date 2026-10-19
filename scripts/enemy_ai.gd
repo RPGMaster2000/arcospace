@@ -3,7 +3,7 @@ extends Node
 # RESPONSIBILITY: Choose a legal move, using Starship Duel's priorities.
 # DOES NOT: Spend resources, apply real effects or advance turns.
 # EXTEND: Score simulated copies here; never sample live combat RNG or mutate a hand.
-const Effects = preload("res://scripts/card_effects.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
 const Rules = preload("res://scripts/match_rules.gd")
 @export var attack_below_hull: int = 15
 @export var build_from_hull: int = 40

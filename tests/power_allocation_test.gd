@@ -1,9 +1,9 @@
 extends SceneTree
-const Hand = preload("res://scripts/card_hand.gd")
-const Cards = preload("res://scripts/card_library.gd")
-const Preferences = preload("res://scripts/card_preferences.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
+const Preferences = preload("res://scripts/cards/card_preferences.gd")
 const MODES = ["balanced", "offense", "defense", "systems"]
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 var failures: int = 0
 var checks: int = 0
 
@@ -189,7 +189,7 @@ func run() -> void:
 	check(is_equal_approx(enemy._draw_weight(Cards.CARDS[11]), 3.0), "Enemy preferences unchanged")
 	enemy.free()
 	# Real UI events and live board integration at the same responsive anchors.
-	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		root.size = Vector2i(1280,720)
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.setup_settings = {"player_ship":ship_index,"enemy_ship":ship_index}

@@ -2,7 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Schedule one encounter modifier and resolve its card adjustments.
 # DOES NOT: Advance turns, change hands, or present animations.
-const Effects = preload("res://scripts/card_effects.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
 const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift"]
 ## TUNE: Full rounds between events, counted after an event ends.
 const TEMPORAL_DROP_MULTIPLIER: float = 2.0  # TUNE: Tier 2 draw multiplier for the whole battle.

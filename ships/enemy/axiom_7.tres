@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ShipData" format=3]
 
-[ext_resource type="Script" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="Script" path="res://scripts/ships/ship_data.gd" id="Ship"]
 [ext_resource type="PackedScene" path="res://scenes/ships/axiom_7.tscn" id="Model"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C0"]
 [ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C1"]

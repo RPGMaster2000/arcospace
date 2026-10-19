@@ -1,6 +1,6 @@
 extends SceneTree
 const Mod = preload("res://scripts/combat_modifier.gd")
-const Data = preload("res://scripts/card_data.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 var failures: int = 0
 func check(ok: bool, message: String) -> void:
 	if not ok:
@@ -169,7 +169,7 @@ func run() -> void:
 	returned.get_node("Start").pressed.emit()
 	await process_frame
 	var restarted = current_scene
-	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")
+	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ships/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")
 	restarted.queue_free()
 	setup.queue_free()
 	await process_frame

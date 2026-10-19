@@ -153,8 +153,8 @@ Balance concerns: direct Hull attacks can be strong against shield-heavy enemies
 Changed-file ownership:
 
 - `cards/45_*.tres` through `68_*.tres`: 24 new definitions. Eight original card Resources revised: `01`, `03`, `08`, `09`, `12`, `16`, `17`, `20`; all other original card Resources remain byte-identical.
-- `scripts/card_data.gd`, `card_effects.gd`, `card_library.gd`, `card_preferences.gd`, `combat_modifier.gd`, `board.gd`: schema/descriptions, ordered resolution, registry, preferences, modifier integration and capacity snapshots. Existing tactical AI consumes the same simulated state deltas.
-- `scripts/expedition_rules.gd`, `encounters/expedition_rules.tres`, `scripts/expedition_state.gd`, `scripts/expedition.gd`: capacity configuration, ownership/replacement validation, current deck count and existing outcome/gallery routing.
+- `scripts/cards/card_data.gd`, `card_effects.gd`, `card_library.gd`, `card_preferences.gd`, `combat_modifier.gd`, `board.gd`: schema/descriptions, ordered resolution, registry, preferences, modifier integration and capacity snapshots. Existing tactical AI consumes the same simulated state deltas.
+- `scripts/expedition/expedition_rules.gd`, `encounters/expedition_rules.tres`, `scripts/expedition_state.gd`, `scripts/expedition.gd`: capacity configuration, ownership/replacement validation, current deck count and existing outcome/gallery routing.
 - `scripts/ui/card_gallery.gd`, `card_effect_text.gd`: conditional filter support and accurate upgrade comparisons.
 - New `tests/card_expansion_test.gd`, `deck_replacement_ui_test.gd` and UID sidecars; existing card progression/tier, opening, tactical, plating and station regression fixtures updated. `.github/workflows/tests.yml` includes rendered replacement validation.
 - Documentation: developer guide, card/ship balance references, battle setup, this expedition guide, historical six-ship follow-up note and `tools/generate_balance_docs.gd` (`--cards-only` option).

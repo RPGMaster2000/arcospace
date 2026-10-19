@@ -2,7 +2,7 @@ extends CanvasLayer
 
 # RESPONSIBILITY: Present one read-only enlarged original card and its full effect/upgrade panel.
 # One lazily created, read-only overlay per SceneTree. Uses the original card scene, never a second renderer.
-const Data = preload("res://scripts/card_data.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
 var info: PanelContainer

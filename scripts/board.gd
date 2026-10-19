@@ -15,13 +15,13 @@ var expedition_encounter: int = -1
 var allocation_button: Button
 var allocation_popup: CanvasLayer
 
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 var player_ship_data: Resource
 var enemy_ship_data: Resource
 
 const MatchRules = preload("res://scripts/match_rules.gd")
-const CardEffects = preload("res://scripts/card_effects.gd")
+const CardEffects = preload("res://scripts/cards/card_effects.gd")
 # Assign the six editable scene card buttons in the Inspector.
 @export var card_slots: Array[NodePath] = [
 	NodePath("ShieldPlatingCard"),

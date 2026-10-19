@@ -98,7 +98,7 @@ Sublight Chasedown: 5% per valid PoI-to-PoI movement, limit 1 per system. Initia
 
 ## Expedition difficulty and milestones
 
-Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition_progression.gd`).
+Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition/expedition_progression.gd`).
 
 | Property | Initial value |
 |---|---|

@@ -1,6 +1,6 @@
 # Cards
 
-Generated from `scripts/card_library.gd` and loaded CardData Resources. Edit each listed `.tres`; descriptions are presentation only, `effects` controls gameplay. Costs spend the listed family. Effects below are exact unmodified values.
+Generated from `scripts/cards/card_library.gd` and loaded CardData Resources. Edit each listed `.tres`; descriptions are presentation only, `effects` controls gameplay. Costs spend the listed family. Effects below are exact unmodified values.
 
 
 ## Six starting pools
@@ -162,7 +162,7 @@ Costs and all three effect sets are in the catalogue below. Each new identity ha
 
 ## Draws and upgrades
 
-Six-card hands; maximum 2 copies per identity and at most one card of each tier above Common. Tier 2 draw chance 15.0%, locked through round 2; Tier 3 chance 0.0%. Temporal Rift multiplies Tier 2 chance by 2.0. Missing eligible higher-tier bucket falls back to Common. Tune CardHand/EnemyHand in `scenes/board.tscn` or defaults in `scripts/card_hand.gd`.
+Six-card hands; maximum 2 copies per identity and at most one card of each tier above Common. Tier 2 draw chance 15.0%, locked through round 2; Tier 3 chance 0.0%. Temporal Rift multiplies Tier 2 chance by 2.0. Missing eligible higher-tier bucket falls back to Common. Tune CardHand/EnemyHand in `scenes/board.tscn` or defaults in `scripts/cards/card_hand.gd`.
 
 Acquisitions offer up to 3 distinct unowned identities, choose 1; 60% Tier 2 / 40% Tier 1 per slot when both buckets have candidates (configurable). A missing bucket falls back to remaining eligible identities without violating the minimum tier. Fewer than three eligible identities show fewer choices; exhaustion resolves immediately with an explanation and no currency change. Acquired identities use ×3.0 draw weight within rarity, player only; rarity odds and hand caps remain unchanged. Starting identities each weigh 1. Inspector: `encounters/expedition_rules.tres` → Reward Tier Two Chance / Acquired Card Draw Weight.
 
@@ -174,7 +174,7 @@ Every card has two full replacement effect dictionaries on its CardData Resource
 Non-escape victories offer up to 1 / 2 / 3 / 3 upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.
 
 Sublight Chasedown: 5% per valid PoI-to-PoI movement, limit 1 per system. Initial entry, menus, invalid/same destinations, battle return and FTL travel never roll. Uses ordinary enemies, existing scaling and battle scene, gives exactly +1 FTL once on victory or escape, then resumes the preserved destination. See [implementation and tuning](../chasedown_rewards.md).
-## Effect keys (`scripts/card_effects.gd`)
+## Effect keys (`scripts/cards/card_effects.gd`)
 
 | Key | Resolution |
 |---|---|

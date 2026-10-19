@@ -1,7 +1,7 @@
 extends SceneTree
-const Ships = preload("res://scripts/ship_library.gd")
-const Cards = preload("res://scripts/card_library.gd")
-const Hand = preload("res://scripts/card_hand.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const FIELDS = ["hull_capacity","shields","materials","energy","crew","synthesizer","reactor","quarters","ftl_turns","ftl_resistance"]

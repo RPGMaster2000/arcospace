@@ -9,7 +9,7 @@ Synthesizer, Reactor and Quarters.
 
 - Select a `.tres` in `cards/` to edit its name, cost, description, effects and
   Play Again flag. Update description text yourself when changing effects.
-- Duplicate a `.tres` and add its preload to `scripts/card_library.gd` to add a card.
+- Duplicate a `.tres` and add its preload to `scripts/cards/card_library.gd` to add a card.
 - The six existing board buttons remain editable instances of `scenes/card.tscn`.
   Their Card Data property controls the editor preview; runtime hands override it.
   Shared appearance belongs in `card.tscn`, not in the data resources.

@@ -2,7 +2,7 @@ extends RefCounted
 
 # RESPONSIBILITY: Derive compact card summaries from effect data without changing gameplay values.
 # Presentation only: short summaries derive from the same dictionaries as full descriptions.
-const Data = preload("res://scripts/card_data.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 
 
 static func describe(values: Dictionary) -> String:

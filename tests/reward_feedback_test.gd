@@ -1,7 +1,7 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const Cards = preload("res://scripts/card_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 var checks: int = 0
 class Result extends Node:
@@ -116,15 +116,15 @@ func run() -> void:
 	check(host.state.rng.state == rng_before and host.state.acquired_cards.size() == 1, "Current deck is read only")
 	viewer.dismiss()
 	for good in [true,false]:
-		var poi = preload("res://scripts/poi_data.gd").new()
+		var poi = preload("res://scripts/expedition/poi_data.gd").new()
 		poi.title = "Controlled mission"
-		var approach = preload("res://scripts/encounter_approach.gd").new()
+		var approach = preload("res://scripts/expedition/encounter_approach.gd").new()
 		approach.title = "Run mission"
 		approach.success_chance = 1.0 if good else 0.0
-		approach.success = preload("res://scripts/encounter_outcome.gd").new()
+		approach.success = preload("res://scripts/expedition/encounter_outcome.gd").new()
 		approach.success.salvage = 7
 		approach.success.card_reward = true
-		approach.failure = preload("res://scripts/encounter_outcome.gd").new()
+		approach.failure = preload("res://scripts/expedition/encounter_outcome.gd").new()
 		approach.failure.salvage = 2
 		approach.failure.card_reward = true
 		poi.approaches.append(approach)

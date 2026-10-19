@@ -1,5 +1,5 @@
 extends SceneTree
-const Cards = preload("res://scripts/card_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 func _initialize() -> void:
 	call_deferred("run")

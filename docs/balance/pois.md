@@ -149,7 +149,7 @@ All escaped enemies complete normally and award their full profile charge. Repea
 
 ## Expedition difficulty and milestones
 
-Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition_progression.gd`).
+Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition/expedition_progression.gd`).
 
 | Property | Initial value |
 |---|---|

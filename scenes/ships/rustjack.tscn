@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/enemy_ship_model.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ships/enemy_ship_model.gd" id="1"]
 [ext_resource type="Shader" path="res://shaders/shield_3d.gdshader" id="ShieldShader"]
 
 [sub_resource type="StandardMaterial3D" id="HullMaterial"]

@@ -3,7 +3,7 @@ extends CanvasLayer
 # RESPONSIBILITY: Present owned card identities, capacity and inspection without modifying the deck.
 const Gallery = preload("res://scripts/ui/card_gallery.gd")
 const Inspector = preload("res://scripts/ui/card_inspector.gd")
-const Library = preload("res://scripts/card_library.gd")
+const Library = preload("res://scripts/cards/card_library.gd")
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
 var gallery: VBoxContainer

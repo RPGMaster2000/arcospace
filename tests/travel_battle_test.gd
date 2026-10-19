@@ -9,7 +9,7 @@ func check(ok: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
-	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		for enemy in Rules.enemy_ships:
 			var host = load("res://scenes/expedition.tscn").instantiate()
 			host.selected_ship = ship_index

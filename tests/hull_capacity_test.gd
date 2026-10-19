@@ -1,6 +1,6 @@
 extends SceneTree
-const Effects = preload("res://scripts/card_effects.gd")
-const Data = preload("res://scripts/card_data.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 var failures: int = 0
 func check(ok: bool, message: String) -> void:
 	if not ok:

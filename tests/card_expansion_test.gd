@@ -1,6 +1,6 @@
 extends SceneTree
-const Library = preload("res://scripts/card_library.gd")
-const Effects = preload("res://scripts/card_effects.gd")
+const Library = preload("res://scripts/cards/card_library.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
 const Modifier = preload("res://scripts/combat_modifier.gd")
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
@@ -15,7 +15,7 @@ func _initialize() -> void: call_deferred("run")
 func state() -> Dictionary:
 	return {"hull":40,"hull_capacity":80,"shields":20,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func custom(values: Dictionary, family: String = "energy", cost: int = 0) -> Resource:
-	var card = preload("res://scripts/card_data.gd").new()
+	var card = preload("res://scripts/cards/card_data.gd").new()
 	card.family = family
 	card.cost = cost
 	card.effects = values
@@ -268,7 +268,7 @@ func test_decks() -> void:
 		run.pending_choice = "card"; run.card_offers = run.random_card_offers(); run.choose_card(0)
 		check(run.decline_card() and not run.decline_card() and run.player_pool() == pool_before, "Decline single use, no mutation")
 		check(run.shared_pool().size()==68, "Enemy pool unaffected by capacity")
-		var hand = preload("res://scripts/card_hand.gd").new()
+		var hand = preload("res://scripts/cards/card_hand.gd").new()
 		run.active_player_hand=hand
 		hand.card_pool=run.player_pool()
 		var evicted: Resource = run.player_pool()[0]

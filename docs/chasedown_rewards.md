@@ -14,7 +14,7 @@ There is **no disk save/load** in the prototype. State survives encounter/UI tra
 
 ## Responses and tuning
 
-Tune the exported `Sublight Chasedown` and `Combat card upgrades` groups on `encounters/expedition_rules.tres` (defaults in `scripts/expedition_rules.gd`). `TUNE` comments identify the settings.
+Tune the exported `Sublight Chasedown` and `Combat card upgrades` groups on `encounters/expedition_rules.tres` (defaults in `scripts/expedition/expedition_rules.gd`). `TUNE` comments identify the settings.
 
 | Response | Battle-start effect |
 |---|---|
@@ -67,7 +67,7 @@ Upgrade supply is likely generous: a starting pool has 25 identities × 2 levels
 
 ## Files
 
-- Gameplay: `scripts/expedition_rules.gd`, `expedition_progression.gd`, `expedition_state.gd`, `expedition.gd`, `board.gd`, `ui/star_map.gd`.
+- Gameplay: `scripts/expedition/expedition_rules.gd`, `expedition_progression.gd`, `expedition_state.gd`, `expedition.gd`, `board.gd`, `ui/star_map.gd`.
 - Data: `resources/expedition_progression.tres`, `encounters/unstable_wormhole.tres`.
 - New tests: `tests/chasedown_rewards_test.gd`, `tests/chasedown_ui_test.gd` and their Godot UID sidecars.
 - Updated regressions: expedition/milestones, FTL progression, star map, six-ship snapshot, victory rewards and the PoI reward fixture; rendered CI test list.

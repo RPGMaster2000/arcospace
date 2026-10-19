@@ -2,7 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Deal an opening hand and replace used cards.
 # DOES NOT: Pay costs, apply effects or manage turns.
-const CardLibrary = preload("res://scripts/card_library.gd")
+const CardLibrary = preload("res://scripts/cards/card_library.gd")
 # An empty pool uses card_library.gd. Drag in .tres files for a custom pool.
 @export var card_pool: Array[Resource] = []
 # An empty starting hand draws randomly. Assign cards for a fixed test hand.
@@ -17,7 +17,7 @@ const CardLibrary = preload("res://scripts/card_library.gd")
 var identity_weights: Dictionary = {}
 var family_weights: Dictionary = {}
 var effect_weights: Dictionary = {}
-const Preferences = preload("res://scripts/card_preferences.gd")
+const Preferences = preload("res://scripts/cards/card_preferences.gd")
 var current_round: int = 1
 var drop_multiplier: float = 1.0
 var cards: Array[Resource] = []

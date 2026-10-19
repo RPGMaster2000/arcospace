@@ -2,7 +2,7 @@ extends Control
 # DOES NOT: Start combat directly; confirmation creates an Expedition controller.
 # RESPONSIBILITY: Read setup controls and configure a new board before its _ready runs.
 const BOARD = preload("res://scenes/board_3d.tscn")
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 @export var preview_model: PackedScene = preload("res://scenes/ship_3d.tscn")
 var initial_settings: Dictionary = {}

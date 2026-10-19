@@ -1,7 +1,7 @@
 extends SceneTree
-const Cards = preload("res://scripts/card_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
 const Settings = preload("res://resources/card_presentation.tres")
-const Data = preload("res://scripts/card_data.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 var checks: int = 0
 var failures: int = 0
 var taps: int = 0

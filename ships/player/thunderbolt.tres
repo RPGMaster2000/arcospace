@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://dv57axcyc0cg6"]
 
-[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_n0hhp"]
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ships/ship_data.gd" id="1_n0hhp"]
 [ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="2_aatw3"]
 [ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="3_tctpy"]
 [ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="4_lgigk"]

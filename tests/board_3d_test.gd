@@ -1,7 +1,7 @@
 extends SceneTree
 # Integration smoke test: real card resolution with the optional 3D presentation.
 const Scene = preload("res://scenes/board_3d.tscn")
-const Library = preload("res://scripts/card_library.gd")
+const Library = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 func check(ok: bool, message: String) -> void:
 	if not ok:

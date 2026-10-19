@@ -1,11 +1,11 @@
 extends SceneTree
-const Cards = preload("res://scripts/card_library.gd")
-const Ships = preload("res://scripts/ship_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const Hand = preload("res://scripts/card_hand.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
 const AI = preload("res://scripts/enemy_ai.gd")
-const Effects = preload("res://scripts/card_effects.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
 const Match = preload("res://scripts/match_rules.gd")
 var failures: int = 0
 func check(ok: bool, message: String) -> void:
@@ -35,7 +35,7 @@ func run() -> void:
 			check(actor.hull >= 0 and enemy.hull >= 0, "Valid Hull")
 		check(card.effects == original and card.upgrade_level == 0, "Library never mutated")
 	var reward_t2: int = 0
-	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		var state = State.new()
 		state.start(ship_index, Rules, 65537)
 		check(state.player_pool().size() == 25, "25 starting identities: " + state.ship().ship_name)
@@ -100,7 +100,7 @@ func run() -> void:
 		# Exhaust the eligible reward pool without introducing duplicate offers.
 		state.acquired_cards.assign(Cards.CARDS)
 		check(state.random_card_offers().is_empty(), "Exhausted rewards empty internally")
-		var outcome = preload("res://scripts/encounter_outcome.gd").new()
+		var outcome = preload("res://scripts/expedition/encounter_outcome.gd").new()
 		outcome.card_reward = true
 		state._apply_outcome(outcome)
 		check(state.pending_choice.is_empty(), "Exhausted rewards never strand the UI")

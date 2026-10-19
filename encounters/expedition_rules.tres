@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ExpeditionRules" format=3]
 
-[ext_resource type="Script" uid="uid://nsukeapgv0g5" path="res://scripts/expedition_rules.gd" id="Rules"]
-[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/poi_data.gd" id="Poi"]
+[ext_resource type="Script" uid="uid://nsukeapgv0g5" path="res://scripts/expedition/expedition_rules.gd" id="Rules"]
+[ext_resource type="Script" uid="uid://micrk5gbrjhc" path="res://scripts/expedition/poi_data.gd" id="Poi"]
 [ext_resource type="Resource" uid="uid://bmr08w1nuaqdo" path="res://encounters/mining_operation.tres" id="0"]
 [ext_resource type="Resource" uid="uid://b4bt4al43tyb2" path="res://encounters/gas_giant.tres" id="1"]
 [ext_resource type="Resource" uid="uid://bk0a7y2ecipl8" path="res://encounters/derelict_starship.tres" id="2"]
@@ -13,7 +13,7 @@
 [ext_resource type="Resource" uid="uid://bpehchv2ykywv" path="res://encounters/pirate_debris_field.tres" id="H2"]
 [ext_resource type="Resource" uid="uid://cfodfhs40u3kq" path="res://encounters/unstable_wormhole.tres" id="H3"]
 [ext_resource type="Resource" uid="uid://s5b8p46e2tm1" path="res://encounters/quarantined_colony.tres" id="H4"]
-[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ships/ship_data.gd" id="Ship"]
 [ext_resource type="Resource" path="res://ships/enemy/marauder.tres" id="E0"]
 [ext_resource type="Resource" path="res://ships/enemy/sentinel.tres" id="E1"]
 [ext_resource type="Resource" path="res://ships/enemy/reclaimer.tres" id="E2"]

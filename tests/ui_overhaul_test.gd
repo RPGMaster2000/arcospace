@@ -1,6 +1,6 @@
 extends SceneTree
-const Ships = preload("res://scripts/ship_library.gd")
-const Cards = preload("res://scripts/card_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
+const Cards = preload("res://scripts/cards/card_library.gd")
 const Text = preload("res://scripts/ui/card_effect_text.gd")
 const Gallery = preload("res://scripts/ui/card_gallery.gd")
 var failures: int = 0

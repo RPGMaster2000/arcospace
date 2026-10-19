@@ -1,5 +1,5 @@
 extends SceneTree
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:

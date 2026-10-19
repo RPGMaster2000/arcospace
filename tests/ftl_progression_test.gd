@@ -49,7 +49,7 @@ func run_tests() -> void:
 		config.minimum_hazardous = 0
 		config.maximum_hazardous = 2 if seed_value % 2 == 0 else 5
 		var run = State.new()
-		run.start(seed_value % preload("res://scripts/ship_library.gd").PLAYERS.size(), config, seed_value)
+		run.start(seed_value % preload("res://scripts/ships/ship_library.gd").PLAYERS.size(), config, seed_value)
 		var poi_count: int = 0
 		var hazards: int = 0
 		var total: int = 0

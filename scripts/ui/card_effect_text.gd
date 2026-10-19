@@ -2,7 +2,7 @@ extends RefCounted
 
 # RESPONSIBILITY: Compare actual effect dictionaries for upgrade presentation; never apply them.
 # Presentation-only effect comparison. Values always come from CardData dictionaries.
-const Data = preload("res://scripts/card_data.gd")
+const Data = preload("res://scripts/cards/card_data.gd")
 const GREEN = "91e6ad"
 
 

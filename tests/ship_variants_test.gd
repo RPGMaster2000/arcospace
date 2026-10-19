@@ -1,5 +1,5 @@
 extends SceneTree
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 var failures: int = 0
 func check(ok: bool, message: String) -> void:
 	if not ok:

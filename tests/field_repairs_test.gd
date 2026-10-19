@@ -1,8 +1,8 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const Effects = preload("res://scripts/card_effects.gd")
-const Outcome = preload("res://scripts/encounter_outcome.gd")
+const Effects = preload("res://scripts/cards/card_effects.gd")
+const Outcome = preload("res://scripts/expedition/encounter_outcome.gd")
 var failures: int = 0
 var checks: int = 0
 func _initialize() -> void: call_deferred("run")
@@ -17,7 +17,7 @@ func fresh(ship_index: int) -> Resource:
 	state.service = {"kind":"service","poi":Rules.trading_outpost,"completed":false,"title":"Trading Outpost"}
 	return state
 func run() -> void:
-	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		var state = fresh(ship_index)
 		var cap: int = state.ship().hull_capacity
 		state.hull = cap - 9

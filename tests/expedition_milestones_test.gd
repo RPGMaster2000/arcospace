@@ -2,7 +2,7 @@ extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const Progression = preload("res://resources/expedition_progression.tres")
-const Ships = preload("res://scripts/ship_library.gd")
+const Ships = preload("res://scripts/ships/ship_library.gd")
 var checks: int = 0
 var failures: int = 0
 

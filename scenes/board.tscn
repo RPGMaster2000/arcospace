@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dlvtg8frjn3ex" path="res://scripts/board.gd" id="1_board"]
 [ext_resource type="PackedScene" path="res://scenes/card.tscn" id="2_card"]
-[ext_resource type="Script" uid="uid://4240bm1qqmlk" path="res://scripts/card_hand.gd" id="3_hand"]
+[ext_resource type="Script" uid="uid://4240bm1qqmlk" path="res://scripts/cards/card_hand.gd" id="3_hand"]
 [ext_resource type="Script" uid="uid://cl8jthfpmpoj3" path="res://scripts/enemy_ai.gd" id="4_ai"]
 [ext_resource type="PackedScene" path="res://scenes/card_motion.tscn" id="5_motion"]
 [ext_resource type="Script" uid="uid://eq1hb45cgs7y" path="res://scripts/battle_effects.gd" id="6_effects"]

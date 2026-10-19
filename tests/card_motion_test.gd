@@ -1,6 +1,6 @@
 extends SceneTree
 const BoardScene = preload("res://scenes/board.tscn")
-const Library = preload("res://scripts/card_library.gd")
+const Library = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 
 func check(condition: bool, message: String) -> void:

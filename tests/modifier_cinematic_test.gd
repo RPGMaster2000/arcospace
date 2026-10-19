@@ -40,7 +40,7 @@ func run() -> void:
 	check(root.canvas_transform == original, "Shake restores exact viewport transform")
 	board.modifier.configure(2)
 	board.modifier.active = true
-	var blue = load("res://scripts/card_data.gd").new()
+	var blue = load("res://scripts/cards/card_data.gd").new()
 	blue.family = "energy"
 	blue.cost = 0
 	blue.effects = {"energy":4}
