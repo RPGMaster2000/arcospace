@@ -9,7 +9,7 @@ func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
 	var seen: Dictionary = {}
-	for index in range(3):
+	for index in range(Ships.PLAYERS.size()):
 		var data = Ships.PLAYERS[index]
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.setup_settings = {"player_ship":index,"modifier":0}
@@ -72,7 +72,7 @@ func run() -> void:
 	menu._select(1)
 	check(menu.read_settings().player_ship == 1, "Selected ship controls battle settings")
 	check(not menu.has_node("Panel/player_materials"), "Old starting options removed")
-	for index in range(3):
+	for index in range(Ships.PLAYERS.size()):
 		check(menu.get_node("Ships/Ship%d/Preview/Viewport" % index).get_child_count() == 3, "Real model previews")
 	menu.queue_free()
 	await process_frame

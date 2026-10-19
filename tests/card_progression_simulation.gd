@@ -59,7 +59,9 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 			for index in upgrades:
 				replacements[Cards.CARDS[index].identity_key()] = Cards.CARDS[index].with_upgrade(upgrades[index])
 			hands[0].apply_upgrades(replacements)
-	for hand in hands: hand.deal(6)
+	if updated: hands[0].deal_player_opening()
+	else: hands[0].deal(6)
+	hands[1].deal(6)
 	var finished: bool = false
 	var rounds: int = 0
 	for round_number in range(1, 41):

@@ -79,6 +79,7 @@ card_reward = true
 script = ExtResource("Approach")
 title = "Deep-core mining"
 requirement = "synthesizer"
+minimum_production = 4
 success_chance = 0.55
 success = SubResource("Success3")
 failure = SubResource("Failure3")

@@ -60,14 +60,14 @@ func run() -> void:
 	tuned.start(0, Rules.duplicate(), 9002)
 	tuned.rules.elite_resource_bonus = 0
 	tuned.rules.elite_salvage_multiplier = 3
-	tuned.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/marauder_vanguard.tres"),"completed":false}
+	tuned.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/enemy/marauder_vanguard.tres"),"completed":false}
 	tuned.active_battle = 0
 	var result = Result.new()
 	check(tuned.victory_salvage(result) == 60, "Inspector multiplier independent of resource bonus")
 	result.free()
 	var next_battle = State.new()
 	next_battle.start(0, Rules, 9003)
-	next_battle.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/marauder_vanguard.tres"),"completed":false}
+	next_battle.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/enemy/marauder_vanguard.tres"),"completed":false}
 	next_battle.active_battle = 0
 	result = Result.new()
 	next_battle.record_battle(result)

@@ -10,6 +10,10 @@ var selected_ship: int = 0
 var deck_viewer: CanvasLayer
 var deck_button: Button
 var music_button: Button
+const SHIPS_PER_PAGE: int = 3
+var ship_page: int = 0
+var previous_page: Button
+var next_page: Button
 var legend_button: Button
 
 func _ready() -> void:
@@ -36,9 +40,10 @@ func _ready() -> void:
 	Presentation.action(deck_button)
 	add_child(deck_button)
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
-	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, 2)
+	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, Ships.PLAYERS.size() - 1)
+	_build_ship_pages()
 	$Start.pressed.connect(_start)
-	for index in range(3):
+	for index in range(Ships.PLAYERS.size()):
 		var data = Ships.PLAYERS[index]
 		var panel = get_node("Ships/Ship%d" % index)
 		panel.get_node("Name").text = data.ship_name.to_upper()
@@ -65,11 +70,12 @@ func _preview(viewport: SubViewport, data: Resource) -> void:
 	model.set_shield_strength(data.shields)
 
 func _select(index: int) -> void:
-	selected_ship = index
+	selected_ship = clampi(index, 0, Ships.PLAYERS.size() - 1)
+	_show_ship_page(int(selected_ship / SHIPS_PER_PAGE))
 	deck_button.text = "View Deck"
-	deck_button.tooltip_text = Ships.PLAYERS[index].ship_name + " · Starting card pool"
-	if deck_viewer.shade.visible: deck_viewer.show_ship(Ships.PLAYERS[index])
-	for slot in range(3):
+	deck_button.tooltip_text = Ships.PLAYERS[selected_ship].ship_name + " · Starting card pool"
+	if deck_viewer.shade.visible: deck_viewer.show_ship(Ships.PLAYERS[selected_ship])
+	for slot in range(Ships.PLAYERS.size()):
 		var button: Button = get_node("Ships/Ship%d/Select" % slot)
 		button.text = "SELECTED" if slot == selected_ship else "Select ship"
 		button.modulate = Color(0.5, 0.9, 1) if slot == selected_ship else Color.WHITE
@@ -115,8 +121,14 @@ func _layout_cards() -> void:
 	music_button.offset_right = -16
 	music_button.offset_top = 8
 	music_button.offset_bottom = 56
+	for button in [previous_page, next_page]:
+		button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT if button == previous_page else Control.PRESET_BOTTOM_RIGHT)
+		button.offset_left = 16 if button == previous_page else -112
+		button.offset_right = 112 if button == previous_page else -16
+		button.offset_top = $Start.offset_top
+		button.offset_bottom = $Start.offset_bottom
 	preload("res://scripts/ui/encounter_presentation.gd").action($Start, true)
-	for index in range(3):
+	for index in range(Ships.PLAYERS.size()):
 		var panel = get_node("Ships/Ship%d" % index)
 		panel.custom_minimum_size = Vector2.ZERO
 		if not panel.resized.is_connected(_fit_card.bind(panel)):
@@ -159,3 +171,37 @@ func _fit_card(panel: Control) -> void:
 
 func _icon(key: String) -> String:
 	return Presentation.icon(key, Presentation.UI_FONT)
+
+# Keep three full-sized previews per page instead of squeezing six mobile cards.
+func _build_ship_pages() -> void:
+	for index in range($Ships.get_child_count(), Ships.PLAYERS.size()):
+		# Avoid copying a stretched viewport size while the container owns its sizing.
+		$Ships/Ship0/Preview.stretch = false
+		var panel = $Ships/Ship0.duplicate()
+		$Ships/Ship0/Preview.stretch = true
+		panel.get_node("Preview").stretch = true
+		panel.name = "Ship%d" % index
+		$Ships.add_child(panel)
+	for panel in $Ships.get_children():
+		panel.get_node("Preview/Viewport").render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
+	previous_page = Button.new()
+	next_page = Button.new()
+	for button in [previous_page, next_page]:
+		button.custom_minimum_size = Vector2(96, 48)
+		button.add_theme_font_size_override("font_size", 18)
+		Presentation.action(button)
+		add_child(button)
+	previous_page.pressed.connect(func(): _show_ship_page(ship_page - 1))
+	next_page.pressed.connect(func(): _show_ship_page(ship_page + 1))
+
+func _show_ship_page(page: int) -> void:
+	var pages: int = ceili(float(Ships.PLAYERS.size()) / SHIPS_PER_PAGE)
+	ship_page = clampi(page, 0, pages - 1)
+	for index in range(Ships.PLAYERS.size()):
+		get_node("Ships/Ship%d" % index).visible = int(index / SHIPS_PER_PAGE) == ship_page
+	previous_page.text = "‹ %d/%d" % [ship_page + 1, pages]
+	next_page.text = "%d/%d ›" % [ship_page + 1, pages]
+	previous_page.tooltip_text = "Previous ships — selected: " + Ships.PLAYERS[selected_ship].ship_name
+	next_page.tooltip_text = "Next ships — selected: " + Ships.PLAYERS[selected_ship].ship_name
+	previous_page.disabled = ship_page == 0
+	next_page.disabled = ship_page == pages - 1

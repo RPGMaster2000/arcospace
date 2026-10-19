@@ -1,47 +1,48 @@
 [gd_resource type="Resource" script_class="ShipData" format=3 uid="uid://bn64pn4sw3tli"]
 
 [ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_8bt07"]
-[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="2_8ai2h"]
-[ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="3_jydek"]
-[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="4_n8g7w"]
-[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="5_6u73g"]
-[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="6_fnroq"]
-[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="7_2x48h"]
-[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="8_bqtf2"]
-[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="9_vmvkc"]
-[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="10_h3fcw"]
-[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="11_4n0od"]
-[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="12_dnuwg"]
-[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="13_gam8f"]
-[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="14_yubsc"]
-[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="15_75e0t"]
-[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="16_ig3fu"]
-[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="17_j85d6"]
-[ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="18_8bmoo"]
-[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="19_yhrmp"]
-[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="20_f7h1h"]
-[ext_resource type="Resource" uid="uid://cl4dsr38cjwy7" path="res://cards/29_polaron_burst.tres" id="21_ksiry"]
-[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="22_13jdj"]
-[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="23_3pvlt"]
-[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="24_j3krf"]
-[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="25_nhyve"]
-[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="26_6owe6"]
+
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
+[ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="Card4"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="Card5"]
+[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="Card6"]
+[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="Card7"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="Card8"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="Card10"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="Card11"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="Card12"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="Card14"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="Card15"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="Card16"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="Card17"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="Card18"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="Card20"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="Card23"]
+[ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="Card24"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="Card27"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="Card28"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="Card36"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="Card40"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="Card42"]
+[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="Card44"]
 
 [resource]
 script = ExtResource("1_8bt07")
-ship_name = "Titiania"
+ship_name = "Titania"
 subtitle = "Mobile Stronghold"
-role = "Armored / Industrial"
-summary = "Strong Hull, Low starting resource, High production. vulnerable EMP Pulse."
-hull_capacity = 42
+role = "Industrial / Crew"
+summary = "Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse."
+hull_capacity = 38
 shields = 6
 materials = 20
 energy = 20
 crew = 20
 synthesizer = 3
-reactor = 3
+reactor = 2
 quarters = 3
 ftl_turns = 17
 ftl_resistance = -0.1
 hull_color = Color(0.7, 0.48, 0.25, 1)
-starting_cards = Array[Resource]([ExtResource("2_8ai2h"), ExtResource("3_jydek"), ExtResource("4_n8g7w"), ExtResource("5_6u73g"), ExtResource("6_fnroq"), ExtResource("7_2x48h"), ExtResource("8_bqtf2"), ExtResource("9_vmvkc"), ExtResource("10_h3fcw"), ExtResource("11_4n0od"), ExtResource("12_dnuwg"), ExtResource("13_gam8f"), ExtResource("14_yubsc"), ExtResource("15_75e0t"), ExtResource("16_ig3fu"), ExtResource("17_j85d6"), ExtResource("18_8bmoo"), ExtResource("19_yhrmp"), ExtResource("20_f7h1h"), ExtResource("21_ksiry"), ExtResource("22_13jdj"), ExtResource("23_3pvlt"), ExtResource("24_j3krf"), ExtResource("25_nhyve"), ExtResource("26_6owe6")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card27"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("Card44")])

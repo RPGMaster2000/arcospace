@@ -35,7 +35,7 @@ func run() -> void:
 			check(actor.hull >= 0 and enemy.hull >= 0, "Valid Hull")
 		check(card.effects == original and card.upgrade_level == 0, "Library never mutated")
 	var reward_t2: int = 0
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		var state = State.new()
 		state.start(ship_index, Rules, 65537)
 		check(state.player_pool().size() == 25, "25 starting identities: " + state.ship().ship_name)

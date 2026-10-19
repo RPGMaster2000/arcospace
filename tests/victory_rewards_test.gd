@@ -57,7 +57,7 @@ func run() -> void:
 	board.get_node("BattleEffects").enabled = false
 	var expedition = preload("res://scripts/expedition_state.gd").new()
 	expedition.start(0, preload("res://encounters/expedition_rules.tres"), 4201)
-	expedition.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/marauder_vanguard.tres"),"completed":false}
+	expedition.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/enemy/marauder_vanguard.tres"),"completed":false}
 	expedition.active_battle = 0
 	board.expedition = expedition
 	board.winner = "player"

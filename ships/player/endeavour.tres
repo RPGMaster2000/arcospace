@@ -29,7 +29,19 @@
 
 [resource]
 script = ExtResource("1_s4cye")
-ship_name = "Endeavour "
-summary = "Balanced economy; average escape speed."
+role = "Balanced"
+subtitle = "Balanced Cruiser"
+ftl_resistance = 0.0
+ftl_turns = 14
+quarters = 2
+reactor = 2
+synthesizer = 2
+crew = 10
+energy = 10
+materials = 10
+shields = 12
+hull_capacity = 35
+ship_name = "Endeavour"
+summary = "Balanced reserves and production; average EMP Pulse charging."
 hull_color = Color(0.52, 0.67, 0.78, 1)
 starting_cards = Array[Resource]([ExtResource("2_yl715"), ExtResource("3_y4laj"), ExtResource("4_w1360"), ExtResource("5_8878s"), ExtResource("6_txc25"), ExtResource("7_37uxw"), ExtResource("8_y6ers"), ExtResource("9_f6jp0"), ExtResource("10_qhkbw"), ExtResource("11_1kxrh"), ExtResource("12_fx4ch"), ExtResource("13_yul68"), ExtResource("14_17l0k"), ExtResource("15_u4cbb"), ExtResource("16_xpis4"), ExtResource("17_idu6q"), ExtResource("18_y5y22"), ExtResource("19_c7h0u"), ExtResource("20_ud640"), ExtResource("21_0g1po"), ExtResource("22_fnksp"), ExtResource("23_x4v8c"), ExtResource("24_8r51o"), ExtResource("25_xwr6a"), ExtResource("26_akyf6")])

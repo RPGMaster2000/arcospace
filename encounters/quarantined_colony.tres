@@ -95,6 +95,7 @@ minimum_card_tier = 2
 script = ExtResource("Approach")
 title = "Evacuate scientists"
 requirement = "quarters"
+minimum_production = 4
 success_chance = 0.85
 success = SubResource("Success3")
 failure = SubResource("Failure3")

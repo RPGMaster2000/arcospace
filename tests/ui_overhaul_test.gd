@@ -102,7 +102,9 @@ func run() -> void:
 		root.size = dimensions
 		await settle()
 		check(not setup.get_node("Instructions").visible, "No general game description")
-		for index in range(3):
+		for index in range(Ships.PLAYERS.size()):
+			setup._select(index)
+			await settle()
 			var panel: Control = setup.get_node("Ships/Ship%d" % index)
 			var preview: Control = panel.get_node("Preview")
 			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship panel inside viewport " + str(dimensions))
@@ -112,7 +114,7 @@ func run() -> void:
 			check(panel.get_node("Summary").get_global_rect().end.y <= panel.get_node("Select").get_global_rect().position.y + 1, "EMP Pulse values visible above Select")
 		setup.deck_button.pressed.emit()
 		await settle()
-		for index in range(3):
+		for index in range(Ships.PLAYERS.size()):
 			setup._select(index)
 			await settle()
 			check(setup.deck_viewer.gallery.cards == Ships.PLAYERS[index].starting_cards, "Deck follows selected ship")

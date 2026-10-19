@@ -40,12 +40,23 @@ func _initialize() -> void:
 	for ship in profiles:
 		text += row([ship.ship_name, ship.starting_cards.size(), JSON.stringify(ship.card_family_weights), JSON.stringify(ship.card_effect_weights), JSON.stringify(ship.tactical_weights), ship.tactical_variation, source(ship)])
 	text += "\nTactical scoring preserves affordable immediate wins and fatal-self-damage avoidance. It values public-state deltas and expected random gains; it cannot inspect player cards or sample future combat outcomes. Elites/bosses use lower score variation. Rank does not bypass costs or turn rules.\n"
+	text += pool_reference()
 	text += progression_reference()
 	write_doc("ships", text)
 	text = "# Cards\n\nGenerated from `scripts/card_library.gd` and loaded CardData Resources. Edit each listed `.tres`; descriptions are presentation only, `effects` controls gameplay. Costs spend the listed family. Effects below are exact unmodified values.\n\n"
-	text += "| Card | Family / unchanged cost | Rarity | Allocation | Base effects | Upgrade I | Upgrade II | Extra action (all levels) | Endeavour | Thunderbolt | Titania | Resource |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n"
+	text += pool_reference()
+	var columns: Array = ["Card", "Family / unchanged cost", "Rarity", "Allocation", "Base effects", "Upgrade I", "Upgrade II", "Extra action (all levels)"]
+	for ship in Ships.PLAYERS: columns.append(ship.ship_name)
+	columns.append("Resource")
+	text += row(columns)
+	var separators: Array = []
+	for column in columns: separators.append("---")
+	text += row(separators)
 	for card in Cards.CARDS:
-		text += row([card.card_name, "%s / %d" % [card.family, card.cost], "Tier %d" % card.tier, card.allocation_category.capitalize(), "`" + JSON.stringify(card.effects) + "`", "`" + JSON.stringify(card.upgrade_effects[0]) + "`", "`" + JSON.stringify(card.upgrade_effects[1]) + "`", card.play_again, card in Ships.PLAYERS[0].starting_cards, card in Ships.PLAYERS[1].starting_cards, card in Ships.PLAYERS[2].starting_cards, source(card)])
+		var cells: Array = [card.card_name, "%s / %d" % [card.family, card.cost], "Tier %d" % card.tier, card.allocation_category.capitalize(), "`" + JSON.stringify(card.effects) + "`", "`" + JSON.stringify(card.upgrade_effects[0]) + "`", "`" + JSON.stringify(card.upgrade_effects[1]) + "`", card.play_again]
+		for ship in Ships.PLAYERS: cells.append(card in ship.starting_cards)
+		cells.append(source(card))
+		text += row(cells)
 	var hand = Hand.new()
 	text += "\n## Draws and upgrades\n\nSix-card hands; maximum %d copies per identity and at most one card of each tier above Common. Tier 2 draw chance %s%%, locked through round %d; Tier 3 chance %s%%. Temporal Rift multiplies Tier 2 chance by %s. Missing eligible higher-tier bucket falls back to Common. Tune CardHand/EnemyHand in `scenes/board.tscn` or defaults in `scripts/card_hand.gd`.\n\n" % [hand.max_copies, hand.tier_two_chance * 100, hand.tier_two_locked_turns, hand.tier_three_chance * 100, Mod.TEMPORAL_DROP_MULTIPLIER]
 	hand.free()
@@ -109,3 +120,19 @@ func _initialize() -> void:
 func progression_reference() -> String:
 	var p: Resource = Rules.progression
 	return "\n## Expedition progression\n\nInspector: encounters/expedition_rules.tres -> Progression -> resources/expedition_progression.tres.\n\nCarryover = min(cap, max(0, FTL - requirement)), cap %d, hard maximum 2; new expeditions start at zero. Requirement and rewards are unchanged.\n\nLevel = 1 + floor((system - 1) / %d); steps = level - 1. Per extra level: +%d Hull, +%d Shields, +%d each starting resource; each production adds floor(steps * %s). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.\n\nElite selection retains original baseline odds in level 1, then uses min(%s, available Elite weight / total available weight + steps * %s). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.\n\nEvery %d systems, starting at system %d, one enemy slot becomes a mandatory existing Boss (six slots retained). Resolve by combat victory or existing EMP Pulse before normal FTL travel. Both grant profile FTL once; destruction/resource/escape Salvage remains distinct. Escape never transitions systems. Missing mandatory metadata blocks travel.\n" % [p.ftl_carryover_cap, p.systems_per_difficulty, p.hull_bonus_per_level, p.shields_bonus_per_level, p.resource_bonus_per_level, str(p.production_bonus_per_level), str(p.maximum_elite_probability), str(p.elite_probability_increase), p.boss_interval, p.boss_interval]
+
+func pool_reference() -> String:
+	var text: String = "\n## Six starting pools\n\nEach pool has 25 distinct Tier 1 identities. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.\n\n"
+	text += "| Ship | Materials | Energy | Crew | Total |\n|---|---|---|---|---|\n"
+	for ship in Ships.PLAYERS:
+		var counts: Dictionary = {"materials":0, "energy":0, "crew":0}
+		for card in ship.starting_cards: counts[card.family] += 1
+		text += row([ship.ship_name, counts.materials, counts.energy, counts.crew, ship.starting_cards.size()])
+	for ship in Ships.PLAYERS:
+		text += "\n### " + ship.ship_name + " starting identities\n\n"
+		for family in ["materials", "energy", "crew"]:
+			var names: Array[String] = []
+			for card in ship.starting_cards:
+				if card.family == family: names.append(card.card_name)
+			text += "- **" + family.capitalize() + ":** " + ", ".join(names) + ".\n"
+	return text + "\n"

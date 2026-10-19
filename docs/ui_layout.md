@@ -66,7 +66,7 @@ The reusable `scripts/ui/power_allocation_popup.gd` overlays a darkened battlefi
 
 Configuration and the per-card primary category table are in `docs/balance/cards.md`. The Inspector weight is copied at battle start and cannot be changed through the popup. No new artwork or mobile-specific layout branch was added.
 
-Validation: `tests/power_allocation_test.gd` includes 48,000 sampled draws, exact legacy Balanced sequence comparisons, rarity/cap regressions, 600 seeded ship openings, snapshot checks for hands/resources/FTL/RNG, and real mouse/ScreenTouch input on all three ships at 1280×720, 1680×720, 960×540 and 800×450. OpenGL screenshots were inspected at desktop, ultrawide and Android landscape sizes. Synthetic touch is verified; physical Android device/GPU behavior and APK export remain unverified.
+Validation: `tests/power_allocation_test.gd` includes 48,000 sampled draws, exact legacy Balanced sequence comparisons, rarity/cap regressions, 1,200 seeded ship openings, snapshot checks for hands/resources/FTL/RNG, and real mouse/ScreenTouch input on all six ships at 1280×720, 1680×720, 960×540 and 800×450. OpenGL screenshots were inspected at desktop, ultrawide and Android landscape sizes. Synthetic touch is verified; physical Android device/GPU behavior and APK export remain unverified.
 
 Final validation: all 37 automated Godot 4.7.2 test scripts pass after the 2/2/2 opening addition; the allocation test passes 16,948 checks. Editor import reports no script parse/compile errors. All 44 card Resource files match the starting commit exactly after excluding the added category metadata; enemy ships/AI, encounter definitions, upgrades, effects, FTL and project configuration remain unchanged.
 

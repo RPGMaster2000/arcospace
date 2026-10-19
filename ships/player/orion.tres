@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" uid="uid://b36leqx5vbv1c" path="res://scripts/ship_data.gd" id="1_s4cye"]
+
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="Card1"]
+[ext_resource type="Resource" path="res://cards/02_shield_array.tres" id="Card2"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="Card3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="Card4"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="Card8"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="Card10"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="Card11"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="Card12"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="Card13"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="Card14"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="Card15"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="Card16"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="Card17"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="Card18"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="Card19"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="Card20"]
+[ext_resource type="Resource" path="res://cards/21_phase_lance.tres" id="Card21"]
+[ext_resource type="Resource" path="res://cards/22_energy_siphon.tres" id="Card22"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="Card23"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="Card27"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="Card36"]
+[ext_resource type="Resource" path="res://cards/37_pulse_repeater.tres" id="Card37"]
+[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="Card39"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="Card40"]
+[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="Card44"]
+
+[resource]
+script = ExtResource("1_s4cye")
+role = "Crew / Boarding"
+subtitle = "Boarding Cruiser"
+ftl_resistance = 0.0
+ftl_turns = 14
+quarters = 3
+reactor = 2
+synthesizer = 1
+crew = 10
+energy = 12
+materials = 10
+shields = 12
+hull_capacity = 35
+ship_name = "Orion"
+summary = "Crew specialist; extra Energy reserves support boarding, theft and disruption."
+hull_color = Color(0.52, 0.67, 0.78, 1)
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card19"), ExtResource("Card20"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card27"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card44")])

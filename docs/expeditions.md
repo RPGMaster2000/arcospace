@@ -21,7 +21,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 | Approach resource | Title, required production, minimum production (default 3), Salvage cost, success chance, Success and Failure |
 | Success / Failure resource | Blurb, Salvage, permanent Hull, Next Battle dictionary, card reward/minimum tier, upgrade reward, resource choice, production choice, extra interstellar FTL charge |
 | `cards/*.tres` | Base cost/effects/description/rarity, two Upgrade Effects dictionaries, Max Upgrades (2); costs unchanged |
-| `ships/wayfarer.tres`, `specter.tres`, `bastion.tres` | Starting stats and production; no ship names are used in approach eligibility |
+| `ships/player/*.tres` (six registered profiles) | Starting stats and production; no ship names are used in approach eligibility |
 | `scenes/expedition.tscn` root | Rules resource used by the run |
 
 Production names in code and resource dictionary keys map to the existing game:

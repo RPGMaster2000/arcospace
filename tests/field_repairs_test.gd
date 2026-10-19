@@ -17,7 +17,7 @@ func fresh(ship_index: int) -> Resource:
 	state.service = {"kind":"service","poi":Rules.trading_outpost,"completed":false,"title":"Trading Outpost"}
 	return state
 func run() -> void:
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		var state = fresh(ship_index)
 		var cap: int = state.ship().hull_capacity
 		state.hull = cap - 9

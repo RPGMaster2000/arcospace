@@ -200,7 +200,7 @@ func _initialize() -> void:
 
 func run_tests() -> void:
 	schedule_checks()
-	for ship_index in range(3): economy_checks(ship_index)
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()): economy_checks(ship_index)
 	check(Rules.trading_outpost.approaches[3].salvage_cost == 25 and Rules.production_price_increment == 15 and Rules.production_price_acceleration == 5, "Purchases and test tuning never mutate shared authored prices")
 	print("Trading Outpost: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

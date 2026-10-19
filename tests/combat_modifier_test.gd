@@ -133,7 +133,7 @@ func run() -> void:
 	board.get_node("CardMotion").settings.enabled = false
 	board.get_node("ModifierDisplay").cinematic_enabled = false
 	root.add_child(board)
-	check(board.player_materials == 17 and board.enemy_energy == board.enemy_ship_data.energy and board.ftl.charge_target == 17, "Setup resources and production applied before first income")
+	check(board.player_materials == board.player_ship_data.materials + board.player_ship_data.synthesizer and board.enemy_energy == board.enemy_ship_data.energy and board.ftl.charge_target == 17, "Setup resources and production applied before first income")
 	check(board.modifier.kind == 3 and board.turn_number == 1, "Setup modifier and first round")
 	board.modifier.next_round = 2
 	board._discard_card(0)

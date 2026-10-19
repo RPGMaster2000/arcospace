@@ -1,5 +1,5 @@
 extends RefCounted
 # RESPONSIBILITY: Register selectable player ships and the standard enemy fallback pool.
-# EXTEND: Player selection currently assumes three entries in battle_setup.gd and battle_setup.tscn.
-const PLAYERS = [preload("res://ships/endeavour.tres"), preload("res://ships/thunderbolt.tres"), preload("res://ships/titania.tres")]
-const ENEMIES = [preload("res://ships/marauder.tres"), preload("res://ships/sentinel.tres"), preload("res://ships/reclaimer.tres")]
+# EXTEND: Register profiles here; selection duplicates the existing panel template and pages three at a time.
+const PLAYERS = [preload("res://ships/player/endeavour.tres"), preload("res://ships/player/thunderbolt.tres"), preload("res://ships/player/titania.tres"), preload("res://ships/player/ganymede.tres"), preload("res://ships/player/callisto.tres"), preload("res://ships/player/orion.tres")]
+const ENEMIES = [preload("res://ships/enemy/marauder.tres"), preload("res://ships/enemy/sentinel.tres"), preload("res://ships/enemy/reclaimer.tres")]

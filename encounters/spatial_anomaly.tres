@@ -87,6 +87,7 @@ next_battle = {
 script = ExtResource("Approach")
 title = "Reinforce EMP Pulse systems"
 requirement = "quarters"
+minimum_production = 4
 success_chance = 0.75
 success = SubResource("Success3")
 failure = SubResource("Failure3")

@@ -29,12 +29,14 @@
 
 [resource]
 script = ExtResource("1_n0hhp")
+quarters = 2
+crew = 10
 ship_name = "Thunderbolt"
 subtitle = "Fast and Tactical"
-role = "Recon / FTL"
-summary = "Low hull, High starting resource, low production. Fast and resistant EMP pulse."
+role = "Energy / Disruption"
+summary = "Fast, resistant EMP Pulse; strong Shields and Energy production, weaker Hull."
 hull_capacity = 28
-shields = 15
+shields = 17
 materials = 8
 energy = 14
 synthesizer = 1

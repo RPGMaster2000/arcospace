@@ -9,7 +9,7 @@ func check(ok: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		for enemy in Rules.enemy_ships:
 			var host = load("res://scenes/expedition.tscn").instantiate()
 			host.selected_ship = ship_index
@@ -36,6 +36,6 @@ func run() -> void:
 			check(host.view_kind == "system" and host.state.encounters[0].completed and not host.state.can_visit(0), "Escape completes encounter through result screen")
 			host.free()
 			await process_frame
-	print("Travel battle integration: 15 ship/enemy combinations, %d failures" % failures)
+	print("Travel battle integration: 30 ship/enemy combinations, %d failures" % failures)
 	quit(1 if failures else 0)
 

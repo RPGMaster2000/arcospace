@@ -4,14 +4,17 @@ Generated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the in
 
 | Ship | Type / special attribute | Hull / Shields | M/E/C | S/R/Q | EMP Pulse turns / resistance | Rank | FTL reward (defeat **or escape**) | Destruction Salvage | Generation weight | Edit |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Endeavour  | Balanced Cruiser; Balanced economy; average escape speed. | 35 / 10 | 10/10/10 | 2/2/2 | 14 / 0.0% | Player | — | — | — | `ships/endeavour.tres` |
-| Thunderbolt | Balanced Cruiser; Fast, resistant EMP Pulse; fragile Hull and low Materials production. | 28 / 15 | 8/14/10 | 1/3/2 | 11 / 25.0% | Player | — | — | — | `ships/thunderbolt.tres` |
-| Titiania | Balanced Cruiser; Strong Hull and industry; slow, vulnerable EMP Pulse. | 42 / 6 | 14/8/10 | 3/1/2 | 17 / -10.0% | Player | — | — | — | `ships/titania.tres` |
-| Marauder | Energy Raider; Energy-rich attacker. | 27 / 5 | 8/15/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/marauder.tres` |
-| Sentinel | Shielded Defender; Heavy shields and strong Reactor. | 32 / 18 | 8/12/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/sentinel.tres` |
-| Reclaimer | Armored Harvester; Strong Hull and Materials production. | 40 / 8 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/reclaimer.tres` |
-| Marauder Vanguard | Elite Raider | 38 / 12 | 12/18/12 | 2/4/2 | Inactive (enemy has no jump mechanic) | Elite | 2 | 40 | 0.4 | `ships/marauder_vanguard.tres` |
-| Sentinel Dreadnought | Armored Dreadnought | 55 / 22 | 15/15/15 | 3/3/3 | Inactive (enemy has no jump mechanic) | Boss | 3 | 30 | 0.15 | `ships/sentinel_dreadnought.tres` |
+| Endeavour | Balanced Cruiser; Balanced reserves and production; average EMP Pulse charging. | 35 / 12 | 10/10/10 | 2/2/2 | 14 / 0.0% | Player | — | — | — | `ships/player/endeavour.tres` |
+| Thunderbolt | Fast and Tactical; Fast, resistant EMP Pulse; strong Shields and Energy production, weaker Hull. | 28 / 17 | 8/14/10 | 1/3/2 | 11 / 25.0% | Player | — | — | — | `ships/player/thunderbolt.tres` |
+| Titania | Mobile Stronghold; Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse. | 38 / 6 | 20/20/20 | 3/2/3 | 17 / -10.0% | Player | — | — | — | `ships/player/titania.tres` |
+| Ganymede | Industrial Cruiser; Materials specialist; extra Crew reserves support construction and industrial offense. | 35 / 12 | 10/10/12 | 3/1/2 | 14 / 0.0% | Player | — | — | — | `ships/player/ganymede.tres` |
+| Callisto | Shield Cruiser; Energy specialist; extra Materials reserves support Shields and Reactor development. | 35 / 12 | 12/10/10 | 2/3/1 | 14 / 0.0% | Player | — | — | — | `ships/player/callisto.tres` |
+| Orion | Boarding Cruiser; Crew specialist; extra Energy reserves support boarding, theft and disruption. | 35 / 12 | 10/12/10 | 1/2/3 | 14 / 0.0% | Player | — | — | — | `ships/player/orion.tres` |
+| Marauder | Energy Raider; Energy-rich attacker. | 27 / 5 | 8/15/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/marauder.tres` |
+| Sentinel | Shielded Defender; Heavy shields and strong Reactor. | 32 / 18 | 8/12/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/sentinel.tres` |
+| Reclaimer | Armored Harvester; Strong Hull and Materials production. | 40 / 8 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/reclaimer.tres` |
+| Marauder Vanguard | Elite Raider | 38 / 12 | 12/18/12 | 2/4/2 | Inactive (enemy has no jump mechanic) | Elite | 2 | 40 | 0.4 | `ships/enemy/marauder_vanguard.tres` |
+| Sentinel Dreadnought | Armored Dreadnought | 55 / 22 | 15/15/15 | 3/3/3 | Inactive (enemy has no jump mechanic) | Boss | 3 | 30 | 0.15 | `ships/enemy/sentinel_dreadnought.tres` |
 
 Enemy profiles also serialize EMP Pulse defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.
 
@@ -23,18 +26,69 @@ Player pools contain 25 of 36 Tier 1 identities (69.4%); excluded identities rem
 
 | Ship | Starting identities | Family weights | Effect preferences | Tactical weights | Decision variation | Resource |
 |---|---|---|---|---|---|---|
-| Endeavour  | 25 | {} | {} | {} | 0.25 | `ships/endeavour.tres` |
-| Thunderbolt | 25 | {} | {} | {} | 0.25 | `ships/thunderbolt.tres` |
-| Titiania | 25 | {} | {} | {} | 0.25 | `ships/titania.tres` |
-| Marauder | 0 | {"crew":1.15,"energy":1.7} | {"damage":1.8,"steal":1.7} | {"damage":1.8,"disruption":0.5,"hull":0.65,"play_again":1.5,"production":2.8,"resources":0.25,"shields":0.2} | 0.25 | `ships/marauder.tres` |
-| Sentinel | 0 | {"energy":1.15} | {"disruption":1.6,"hull":1.8,"production":1.3,"shields":2} | {"damage":0.9,"disruption":0.8,"hull":1.5,"play_again":1,"production":4,"resources":0.3,"shields":0.95} | 0.25 | `ships/sentinel.tres` |
-| Reclaimer | 0 | {"materials":1.8} | {"damage":1.2,"economy":1.8,"hull":1.6,"production":2} | {"damage":1.1,"disruption":0.4,"hull":1.05,"play_again":1,"production":10,"resources":0.8,"shields":0.4} | 0.25 | `ships/reclaimer.tres` |
-| Marauder Vanguard | 0 | {"crew":1.15,"energy":1.7} | {"damage":1.8,"steal":1.7} | {"damage":1.8,"disruption":0.5,"hull":0.65,"play_again":1.5,"production":2.8,"resources":0.25,"shields":0.2} | 0.08 | `ships/marauder_vanguard.tres` |
-| Sentinel Dreadnought | 0 | {"energy":1.15} | {"disruption":1.6,"hull":1.8,"production":1.3,"shields":2} | {"damage":0.9,"disruption":0.8,"hull":1.5,"play_again":1,"production":4,"resources":0.3,"shields":0.95} | 0.08 | `ships/sentinel_dreadnought.tres` |
+| Endeavour | 25 | {} | {} | {} | 0.25 | `ships/player/endeavour.tres` |
+| Thunderbolt | 25 | {} | {} | {} | 0.25 | `ships/player/thunderbolt.tres` |
+| Titania | 25 | {} | {} | {} | 0.25 | `ships/player/titania.tres` |
+| Ganymede | 25 | {} | {} | {} | 0.25 | `ships/player/ganymede.tres` |
+| Callisto | 25 | {} | {} | {} | 0.25 | `ships/player/callisto.tres` |
+| Orion | 25 | {} | {} | {} | 0.25 | `ships/player/orion.tres` |
+| Marauder | 0 | {"crew":1.15,"energy":1.7} | {"damage":1.8,"steal":1.7} | {"damage":1.8,"disruption":0.5,"hull":0.65,"play_again":1.5,"production":2.8,"resources":0.25,"shields":0.2} | 0.25 | `ships/enemy/marauder.tres` |
+| Sentinel | 0 | {"energy":1.15} | {"disruption":1.6,"hull":1.8,"production":1.3,"shields":2} | {"damage":0.9,"disruption":0.8,"hull":1.5,"play_again":1,"production":4,"resources":0.3,"shields":0.95} | 0.25 | `ships/enemy/sentinel.tres` |
+| Reclaimer | 0 | {"materials":1.8} | {"damage":1.2,"economy":1.8,"hull":1.6,"production":2} | {"damage":1.1,"disruption":0.4,"hull":1.05,"play_again":1,"production":10,"resources":0.8,"shields":0.4} | 0.25 | `ships/enemy/reclaimer.tres` |
+| Marauder Vanguard | 0 | {"crew":1.15,"energy":1.7} | {"damage":1.8,"steal":1.7} | {"damage":1.8,"disruption":0.5,"hull":0.65,"play_again":1.5,"production":2.8,"resources":0.25,"shields":0.2} | 0.08 | `ships/enemy/marauder_vanguard.tres` |
+| Sentinel Dreadnought | 0 | {"energy":1.15} | {"disruption":1.6,"hull":1.8,"production":1.3,"shields":2} | {"damage":0.9,"disruption":0.8,"hull":1.5,"play_again":1,"production":4,"resources":0.3,"shields":0.95} | 0.08 | `ships/enemy/sentinel_dreadnought.tres` |
 
 Tactical scoring preserves affordable immediate wins and fatal-self-damage avoidance. It values public-state deltas and expected random gains; it cannot inspect player cards or sample future combat outcomes. Elites/bosses use lower score variation. Rank does not bypass costs or turn rules.
 
-The ship table above lists baseline values for systems 1–3. Later effective enemy starts follow the progression below; player starting stats are unchanged.
+## Six starting pools
+
+Each pool has 25 distinct Tier 1 identities. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.
+
+| Ship | Materials | Energy | Crew | Total |
+|---|---|---|---|---|
+| Endeavour | 9 | 9 | 7 | 25 |
+| Thunderbolt | 4 | 13 | 8 | 25 |
+| Titania | 11 | 5 | 9 | 25 |
+| Ganymede | 12 | 6 | 7 | 25 |
+| Callisto | 7 | 13 | 5 | 25 |
+| Orion | 6 | 8 | 11 | 25 |
+
+### Endeavour starting identities
+
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Hull Overhaul, Breach Charge, Salvage Strike, Overloaded Warhead.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion.
+
+### Thunderbolt starting identities
+
+- **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion.
+
+### Titania starting identities
+
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Overloaded Warhead.
+- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge.
+- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
+
+### Ganymede starting identities
+
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Reactor Salvage, Overloaded Warhead.
+- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Pulse Repeater.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Energy Siphon, Cargo Raid, Supply Diversion.
+
+### Callisto starting identities
+
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage.
+- **Energy:** Energy Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, EMP Pulse, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
+- **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion.
+
+### Orion starting identities
+
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Salvage Strike, Reactor Salvage.
+- **Energy:** Energy Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
+- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, System Disruption, Torpedo Salvo, Energy Siphon, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
+
 
 ## Expedition difficulty and milestones
 

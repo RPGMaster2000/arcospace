@@ -53,7 +53,7 @@ func run() -> void:
 	root.add_child(host)
 	current_scene = host
 	# Every authored approach, all player attributes, all reward lines.
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		host.selected_ship = ship_index
 		host.start_expedition()
 		host.state.salvage = 30
@@ -73,6 +73,8 @@ func run() -> void:
 				host._cancel_approach()
 				button.pressed.emit()
 				check(not host.state.encounters[0].completed and host.state.salvage == 30 and host.state.hull == 20, "Selecting never executes")
+			# Popup centering resolves after deferred minimum-size/layout updates.
+			await settle()
 			verify_geometry()
 			host.return_button.pressed.emit()
 			check(host.view_kind == "system" and not host.state.encounters[0].completed, "Return preserves encounter")
@@ -162,7 +164,9 @@ func run() -> void:
 	for window_size in [Vector2i(1280,720),Vector2i(1280,480),Vector2i(686,384)]:
 		root.size = window_size
 		await settle()
-		for index in range(3):
+		for index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
+			setup._select(index)
+			await settle()
 			var panel = setup.get_node("Ships/Ship%d" % index)
 			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship card fits viewport")
 			check(panel.get_node("Stats").get_global_rect().end.y <= panel.get_node("Summary").get_global_rect().position.y, "Ship stats do not overlap summary")

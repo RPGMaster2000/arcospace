@@ -33,7 +33,7 @@ godot --headless --path . --script tests/expedition_ui_test.gd
 godot --headless --path . --script tests/ftl_progression_test.gd
 ```
 
-`android_layout_test.gd` checks all 44 authored approaches against actual outcomes and all three ships, selection without execution, single execution on Initiate, Return, completed tiles, locked options, text containment, fixed controls, seven-option overflow, mouse wheel scrolling, Godot emulated-touch dragging, screen-touch release rejection, banner assignment/cropping and icon fallback.
+`android_layout_test.gd` checks all 44 authored approaches against actual outcomes and all six ships, selection without execution, single execution on Initiate, Return, completed tiles, locked options, text containment, fixed controls, seven-option overflow, mouse wheel scrolling, Godot emulated-touch dragging, screen-touch release rejection, banner assignment/cropping and icon fallback.
 
 Rendered tests cover 1280×720, 1560×720, 960×540, 1280×480 and 686×384 using the existing canvas scaling. To capture images under `.godot/testlogs/`, run the layout test with `--rendering-method gl_compatibility` instead of `--headless`.
 

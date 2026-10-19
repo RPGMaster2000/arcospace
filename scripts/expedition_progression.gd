@@ -10,7 +10,7 @@ extends Resource
 @export_range(0.0, 0.25, 0.005) var elite_probability_increase: float = 0.025
 @export_range(0.0, 1.0, 0.01) var maximum_elite_probability: float = 0.35
 @export_range(1, 100, 1) var boss_interval: int = 6
-const DEFAULT_BOSS = preload("res://ships/sentinel_dreadnought.tres")
+const DEFAULT_BOSS = preload("res://ships/enemy/sentinel_dreadnought.tres")
 @export var boss_ship: Resource = DEFAULT_BOSS
 
 func carryover(charge: int, requirement: int) -> int:

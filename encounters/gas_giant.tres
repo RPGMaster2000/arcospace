@@ -90,6 +90,7 @@ next_battle = {
 script = ExtResource("Approach")
 title = "Deep atmospheric dive"
 requirement = "quarters"
+minimum_production = 4
 success_chance = 0.6
 success = SubResource("Success3")
 failure = SubResource("Failure3")

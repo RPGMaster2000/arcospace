@@ -34,7 +34,7 @@ func run_tests() -> void:
 	host.rules.debug_seed = 789
 	host.rules.log_rolls = false
 	root.add_child(host)
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		host.selected_ship = ship_index
 		host.start_expedition()
 		while host.state.service.is_empty():

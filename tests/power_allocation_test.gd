@@ -189,7 +189,7 @@ func run() -> void:
 	check(is_equal_approx(enemy._draw_weight(Cards.CARDS[11]), 3.0), "Enemy preferences unchanged")
 	enemy.free()
 	# Real UI events and live board integration at the same responsive anchors.
-	for ship_index in range(3):
+	for ship_index in range(preload("res://scripts/ship_library.gd").PLAYERS.size()):
 		root.size = Vector2i(1280,720)
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.setup_settings = {"player_ship":ship_index,"enemy_ship":ship_index}
@@ -198,7 +198,7 @@ func run() -> void:
 		root.add_child(board)
 		await settle()
 		check(board.hand.allocation_mode == "balanced", "Every new battle starts Balanced")
-		check(legal(board.hand,1), "All three ships have valid opening hands")
+		check(legal(board.hand,1), "All six ships have valid opening hands")
 		var opening_families: Dictionary = {"materials":0,"energy":0,"crew":0}
 		for card in board.hand.cards: opening_families[card.family] += 1
 		check(opening_families == {"materials":2,"energy":2,"crew":2}, "Actual battle starts 2/2/2")

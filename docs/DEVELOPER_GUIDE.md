@@ -57,7 +57,7 @@ The upgrade and enemy-scaling paths deliberately create copies where values chan
 ### Ship selected → battle ready
 
 [project.godot](../project.godot) starts [battle_setup.tscn](../scenes/battle_setup.tscn).
-`BattleSetup._ready()` reads `Ships.PLAYERS`, fills three selection panels and creates
+`BattleSetup._ready()` reads `Ships.PLAYERS`, fills paged selection panels and creates
 model previews. `_select()` updates selection; `_start()` creates
 [expedition.tscn](../scenes/expedition.tscn) with the selected index **before** adding it to the tree.
 
@@ -158,7 +158,7 @@ to prevent stale/double purchases; free return never awards FTL.
 | Change drawing/allocation | [CardHand](../scripts/card_hand.gd), [Power Allocation Resource](../resources/power_allocation.tres) | Preserve rarity locks/caps, identity duplicates, acquired weights and enemy independence. |
 | Add a card category | [CardData.allocation_category](../scripts/card_data.gd) | Allocation mode validation in CardHand, [allocation popup](../scripts/ui/power_allocation_popup.gd) and settings; gallery categories are separately derived from effects. |
 | Change acquisition/upgrades | [ExpeditionState](../scripts/expedition_state.gd), [ExpeditionRules](../scripts/expedition_rules.gd) | `random_card_offers`, `choose_card`, `choose_upgrade`, active-hand updates, gallery/inspector previews; shared library must stay unchanged. |
-| **Ships and combat statistics** — add a ship | [ShipData](../scripts/ship_data.gd), [ShipLibrary](../scripts/ship_library.gd), [Endeavour](../ships/endeavour.tres) | Selection currently has three fixed panels; enemy registry is separately in expedition rules. Custom models need the existing ship animation API. |
+| **Ships and combat statistics** — add a ship | [ShipData](../scripts/ship_data.gd), [ShipLibrary](../scripts/ship_library.gd), [Endeavour](../ships/player/endeavour.tres) | Selection shows three panels per page; enemy registry is separately in expedition rules. Custom models need the existing ship animation API. |
 | Change damage/income/wins | [CardEffects](../scripts/card_effects.gd), [MatchRules](../scripts/match_rules.gd), [Board](../scripts/board.gd) | Hull/plating tests, AI simulation, victory/escape and balance docs. |
 | **Star systems and PoIs** — add a PoI | [PoiData](../scripts/poi_data.gd), [Mining Operation](../encounters/mining_operation.tres), [expedition_rules.tres](../encounters/expedition_rules.tres) | Approach/outcome Resources, generation bounds, display classification/icon and reward tests. No registration in the map. |
 | Change progression | [ExpeditionProgression Resource](../resources/expedition_progression.tres), [ExpeditionState.generate_system](../scripts/expedition_state.gd) | Carryover, Boss gating, six encounter slots, Outpost independence; milestone tests. |
@@ -203,17 +203,19 @@ are not the single Power Allocation category. Do not edit shared Resources to up
 
 ### 2. Create a ship using existing models
 
-1. Duplicate [endeavour.tres](../ships/endeavour.tres). Edit **Ship Name**, **Subtitle**,
+Current statistics, pool counts, gate changes and diagnostic results: [six-ship balance pass](balance/six-ship-pass.md).
+
+1. Duplicate [endeavour.tres](../ships/player/endeavour.tres). Edit **Ship Name**, **Subtitle**,
    **Role**, **Summary**, Hull/Shields, three starting resources, three production values,
    **FTL Turns**, **FTL Resistance**, **Hull Color** and **Starting Cards**.
 2. Leave **Model Scene** empty to use the battlefield's existing ship, or point it to a
    compatible existing model such as [ship_3d.tscn](../scenes/ship_3d.tscn). Selection previews
    use `BattleSetup.preview_model` when no override exists. `Body/Hull`, `Shield`, the
    material setup and `set_*`/`animate_*` API in Ship3D matter to presentation consumers.
-3. Register a player in `ShipLibrary.PLAYERS`. **A fourth player is not data-only:**
-   `battle_setup.tscn` has three `Ships/Ship0..2` panels and `battle_setup.gd` uses fixed
-   ranges/clamps/layout assumptions. Supporting an extra slot requires future scene/script
-   work and layout tests. Replacing one registered slot is a smaller experiment.
+3. Register a player in `ShipLibrary.PLAYERS`. Selection duplicates the existing panel
+   template for additional entries and displays three ships per page. The six bundled
+   ships use two pages; selecting a ship also opens its page and updates the deck.
+   Validate both page navigation and narrow landscape layouts after adding profiles.
 4. For an enemy, set **Enemy Rank**, encounter weight/rewards, family/effect draw weights,
    tactical weights and variation. Add it to **Enemy Ships** in `expedition_rules.tres`;
    `ShipLibrary.ENEMIES` is also the standard fallback/standalone board registry.

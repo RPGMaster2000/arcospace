@@ -65,6 +65,7 @@ extra_ftl_charge = 2
 script = ExtResource("Approach")
 title = "Stabilize corridor"
 requirement = "reactor"
+minimum_production = 4
 success_chance = 0.8
 success = SubResource("Success2")
 failure = SubResource("Failure2")

@@ -93,6 +93,7 @@ next_battle = {
 script = ExtResource("Approach")
 title = "Shielded expedition"
 requirement = "reactor"
+minimum_production = 4
 success_chance = 0.85
 success = SubResource("Success3")
 failure = SubResource("Failure3")

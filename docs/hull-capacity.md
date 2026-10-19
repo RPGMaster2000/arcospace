@@ -75,7 +75,7 @@ zero Salvage. Full Hull stops and resets the effect immediately; plating uses am
 without a pulse. Encounter/combat HUD behavior is unchanged. The lightweight update
 uses one phase accumulator and no per-frame Tween allocation.
 
-Focused checks: `field_repairs_test.gd` covers all three ships, rates, limits, duplicate
+Focused checks: `field_repairs_test.gd` covers all six ships, rates, limits, duplicate
 transactions, noncombat retention and the three surviving battle result paths.
 `field_repairs_ui_test.gd` covers the existing popup, pointer/emulated touch, pulse
 reset, immediate HUD refresh, same-slot station transitions and the original grid.

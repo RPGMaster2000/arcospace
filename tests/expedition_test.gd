@@ -230,7 +230,7 @@ func run_tests() -> void:
 	check(host.view_kind == "system" and host.battle == null, "No mandatory opening battle")
 	for index in range(host.state.encounters.size()):
 		if host.state.encounters[index].kind == "battle":
-			host.state.encounters[index].enemy_data = load("res://ships/marauder.tres")
+			host.state.encounters[index].enemy_data = load("res://ships/enemy/marauder.tres")
 			host.visit(index)
 			check(host.view_kind == "preview" and host.battle == null, "Enemy preview precedes battle")
 			host.view.get_child(3).pressed.emit()
