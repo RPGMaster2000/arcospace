@@ -10,7 +10,7 @@ const Summary = preload("res://scripts/ui/card_summary.gd")
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 var inspection_enabled: bool = true
 var hold_input: Node
-var discard_target_height: float = 48.0
+var discard_target_height: float = 44.0
 
 @export var card_data: Resource:
 	set(value):
@@ -69,7 +69,8 @@ func refresh_card() -> void:
 		return
 	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
 	# Keep full names prominent; only an unusually long title needs a small font fallback.
-	for font_size in [20, 19, 18]:
+	for reduction in range(3):
+		var font_size: int = presentation_settings.card_title_font_size - reduction
 		$TitleLabel.add_theme_font_size_override("font_size", font_size)
 		if $TitleLabel.get_line_count() <= 2:
 			break
@@ -81,15 +82,21 @@ func refresh_card() -> void:
 		+ "+".repeat(card_data.upgrade_level)
 	)
 	$CostLabel.text = str(card_data.cost)
-	$DescriptionLabel.text = Summary.card_text(card_data)
+	$DescriptionLabel.text = Summary.card_text(
+		card_data, presentation_settings.description_shorthand_threshold
+	)
 	$DescriptionLabel.add_theme_font_size_override(
 		"font_size", presentation_settings.compact_description_font_size
 	)
 	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
+	$DiscardButton.add_theme_font_size_override(
+		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
+	)
+	$TitleLabel.offset_bottom = 99.0
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 188.0
+	$DescriptionLabel.offset_top = 180.0
 	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
 	$DescriptionLabel.clip_text = true
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -97,10 +104,13 @@ func refresh_card() -> void:
 		presentation_settings.compact_description_font_size
 	)
 	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 188.0) / line_height)
+		1, floori(($DescriptionLabel.offset_bottom - 180.0) / line_height)
 	)
-	$ArtPlaceholder.offset_top = 109.0
-	$ArtPlaceholder.offset_bottom = 183.0
+	# Exception to the length threshold: abbreviate short text only when it cannot fit.
+	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
+		$DescriptionLabel.text = Summary.card_text(card_data, -1)
+	$ArtPlaceholder.offset_top = 101.0
+	$ArtPlaceholder.offset_bottom = 175.0
 	$ArtPlaceholder.visible = true
 	fit_placeholder_art()
 	var colors = {

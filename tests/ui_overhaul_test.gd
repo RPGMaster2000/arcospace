@@ -48,7 +48,7 @@ func run() -> void:
 			root.add_child(portrait)
 			await process_frame
 			await process_frame
-			check(portrait.rendering.get_node("ArtPlaceholder").get_rect()==Rect2(12,109,174,74), "Comparison portrait keeps fixed artwork: " + portrait.card_data.card_name)
+			check(portrait.rendering.get_node("ArtPlaceholder").get_rect()==Rect2(12,101,174,74), "Comparison portrait keeps fixed artwork: " + portrait.card_data.card_name)
 			check(portrait.rendering.get_node("DescriptionLabel").get_rect().end.y <= portrait.badge.position.y, "Compact comparison portrait clears upgrade badge")
 			check(portrait.rendering.get_node("CostLabel").text == str(base.cost), "Comparison preserves actual cost")
 			portrait.free()
@@ -223,7 +223,7 @@ func run() -> void:
 			var held: Control = board.get_node(path)
 			check(root.get_visible_rect().encloses(held.get_global_rect()), "Hand inside screen " + str(dimensions))
 			check(absf(held.get_global_rect().end.y - (root.get_visible_rect().end.y - 12)) < 2, "Combat card bottom anchored")
-			check(held.get_node("DiscardButton").get_global_rect().size.y >= 47.9, "Discard touch target remains 48 pixels")
+			check(held.get_node("DiscardButton").get_global_rect().size.y >= 43.9, "Discard touch target remains 44 pixels")
 		check(is_equal_approx(board.get_node("FTLPanel/Progress").size.x,154), "FTL bar 33% narrower")
 		board.ftl.charge = board.ftl.charge_target
 		board.refresh_display()

@@ -108,7 +108,7 @@ The compact Chasedown narrative reuses the expedition view and 2×2 response til
 
 ## Compact cards and universal inspection
 
-Based on main `272ec74`. Normal cards retain the original 198×294 design, family colors, icons, cost size, tier borders and discard hit target. Descriptions use **14 px** and `CardSummary` derives short text from actual effect dictionaries, factoring common conditional branches when possible. There are no per-card manual summaries or balance changes. Text stays below the fixed artwork rectangle `(12,109,174,74)`, with a line limit and ellipsis for overflow. Full values remain in tooltips and read-only inspection. Tier/upgrade markers sit beside the cost so the full name usually retains 20 px; unusually long names use 19/18 px only when needed to fit two lines. Cost remains 35 px.
+Based on main `272ec74`. Normal cards retain the original 198×294 design, family colors, icons, cost size, tier borders and discard hit target. Descriptions use **14 px**. Authored descriptions up to **50 characters** are kept in full; longer descriptions use `CardSummary` text derived from actual effect dictionaries, factoring common conditional branches when possible. There are no per-card manual summaries or balance changes. Text stays below the fixed artwork rectangle `(12,101,174,74)`, with a line limit and ellipsis for overflow. Full values remain in tooltips and read-only inspection. Tier/upgrade markers sit beside the cost so the full name usually uses 18 px; unusually long names use 17/16 px only when needed to fit two lines. Cost remains 35 px. The artwork moves up 8 px while retaining its 174×74 area. The discard button is 44 px high in combat (previously 48), with 16 px text (previously 18); scaling compensation preserves these screen sizes.
 
 `card_portrait.gd` always renders the unchanged card scene, including current upgrade/tier styling. Upgrade confirmation keeps the existing two-card workflow and green comparison, with the detailed comparison in its own scroll area below the cards instead of inside their artwork. Holding either card can open full inspection too; normal acquisition/upgrade Confirm/Cancel validation is unchanged.
 
@@ -127,6 +127,10 @@ Select `resources/card_presentation.tres` in Godot. The original card scene refe
 | Property | Default |
 |---|---:|
 | Compact Description Font Size | 14 |
+| Description Shorthand Threshold | 50 characters |
+| Card Title Font Size | 18 |
+| Discard Button Height | 44 px |
+| Discard Button Font Size | 16 |
 | Hold Duration | 0.4 s |
 | Hold Movement Cancellation | 12 px |
 | Inspection Tween Duration | 0.2 s |

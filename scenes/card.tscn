@@ -119,9 +119,9 @@ layout_mode = 0
 offset_left = 12.0
 offset_top = 47.0
 offset_right = 187.0
-offset_bottom = 107.0
+offset_bottom = 99.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "SHIELD\nPLATING"
 autowrap_mode = 2
 
@@ -129,9 +129,9 @@ autowrap_mode = 2
 [node name="ArtPlaceholder" type="Control" parent="."]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 109.0
+offset_top = 101.0
 offset_right = 186.0
-offset_bottom = 183.0
+offset_bottom = 175.0
 mouse_filter = 2
 
 
@@ -188,9 +188,9 @@ antialiased = true
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 188.0
+offset_top = 180.0
 offset_right = 186.0
-offset_bottom = 253.0
+offset_bottom = 244.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 text = "+4 Shields"
@@ -201,11 +201,11 @@ vertical_alignment = 1
 [node name="DiscardButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 7.0
-offset_top = 258.0
+offset_top = 250.0
 offset_right = 191.0
-offset_bottom = 288.0
+offset_bottom = 294.0
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Footer")
 theme_override_styles/hover = SubResource("Hover")
 theme_override_styles/pressed = SubResource("Hover")

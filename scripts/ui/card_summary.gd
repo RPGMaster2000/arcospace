@@ -80,5 +80,10 @@ static func compact(text: String) -> String:
 	return shield_damage.sub(text, "$1 Shield dmg", true)
 
 
-static func card_text(card: Resource) -> String:
+static func card_text(card: Resource, shorthand_threshold: int = 50) -> String:
+	var full_text: String = card.description
+	if full_text.is_empty():
+		full_text = Data.describe_effects(card.effects) + ("; play again" if card.play_again else "")
+	if full_text.length() <= shorthand_threshold:
+		return full_text
 	return describe(card.effects) + ("; play again" if card.play_again else "")

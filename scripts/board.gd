@@ -805,9 +805,9 @@ func _fit_combat_controls() -> void:
 			(size.x - hand_width) / 2 + index * (198 * card_scale + gap),
 			size.y - 12 - 294 * card_scale
 		)
-		card.discard_target_height = 48.0 / card_scale
+		card.discard_target_height = card.presentation_settings.discard_button_height / card_scale
 		card.get_node("DiscardButton").add_theme_font_size_override(
-			"font_size", roundi(18 / card_scale)
+			"font_size", roundi(card.presentation_settings.discard_button_font_size / card_scale)
 		)
 		if card.card_data != null:
 			card.refresh_card()

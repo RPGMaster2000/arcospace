@@ -6,6 +6,11 @@ class_name CardPresentationSettings
 # TUNE: One shared presentation/input configuration. No gameplay values live here.
 @export_group("Compact cards")
 @export_range(10, 24, 1) var compact_description_font_size: int = 14
+## TUNE: Keep authored descriptions at or below this length; shorten longer text.
+@export_range(0, 200, 1) var description_shorthand_threshold: int = 50
+@export_range(14, 24, 1) var card_title_font_size: int = 18
+@export_range(40, 56, 1) var discard_button_height: float = 44.0
+@export_range(12, 22, 1) var discard_button_font_size: int = 16
 @export_group("Inspection input")
 @export_range(0.1, 2.0, 0.05) var hold_duration: float = 0.4
 @export_range(2, 64, 1) var hold_movement_cancellation: float = 12.0
