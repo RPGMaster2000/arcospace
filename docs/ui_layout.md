@@ -15,7 +15,7 @@ UI update based on main `c07bd0f`. No new artwork, cards, effects or balance val
 
 Acquisition opens a preview before invoking the existing `choose_card` method. Upgrades show only `upgrade_candidates()` and preview `with_upgrade(current_level + 1)`, then invoke the existing `choose_upgrade`. Cancel spends/grants nothing. A stale or repeated confirmation cannot apply twice. Gallery input is suspended while its inspector is open. Deck Viewer has no state-changing callbacks or visible Confirm action.
 
-Descriptions and comparison values remain data-driven. The existing primitive placeholder drawing scales within its available space instead of overlapping long descriptions. Browsing uses the same renderer as combat; it does not create a second card library.
+Descriptions and comparison values remain data-driven. The compact-card pass below now fixes artwork at 174×74 design pixels; descriptions never resize that rectangle. Browsing and inspection use the same renderer as combat; there is no second card library.
 
 ## Layout and navigation
 
@@ -105,3 +105,39 @@ exports and the conditional Outpost repair/plating controls are described in
 The compact Chasedown narrative reuses the expedition view and 2×2 response tiles. The existing gallery shows remaining upgrades and a Finish upgrades button. Selecting an identity removes it from that event's choices, including after a preview is reopened; it can be selected again in a later event. Victory summaries include the upgrade count. Interstellar FTL tooltips state that the next system starts at zero. Both map and grid resume the preserved destination after rewards.
 
 `tests/chasedown_ui_test.gd` covers victory/escape in both navigation modes, replay guards, destination restoration and multi-card upgrade selection at 1280×720, 1680×720, 960×540, 800×450 and 686×384. Godot 4.7.2 Compatibility rendering was checked with software OpenGL; physical Android remains unverified.
+
+## Compact cards and universal inspection
+
+Based on main `272ec74`. Normal cards retain the original 198×294 design, family colors, icons, cost size, tier borders and discard hit target. Descriptions use **14 px** and `CardSummary` derives short text from actual effect dictionaries, factoring common conditional branches when possible. There are no per-card manual summaries or balance changes. Text stays below the fixed artwork rectangle `(12,109,174,74)`, with a line limit and ellipsis for overflow. Full values remain in tooltips and read-only inspection. Tier/upgrade markers sit beside the cost so the full name usually retains 20 px; unusually long names use 19/18 px only when needed to fit two lines. Cost remains 35 px.
+
+`card_portrait.gd` always renders the unchanged card scene, including current upgrade/tier styling. Upgrade confirmation keeps the existing two-card workflow and green comparison, with the detailed comparison in its own scroll area below the cards instead of inside their artwork. Holding either card can open full inspection too; normal acquisition/upgrade Confirm/Cancel validation is unchanged.
+
+Hold a card for **0.4 seconds**, or middle-click, to open the shared read-only overlay from combat, deck browsing, acquisition/upgrade galleries or replacement. It stays open after release. A short tap keeps the original action; combat right-click still discards. Dragging at least the movement threshold, or starting a gallery scroll, cancels the pending hold and release activation. Disabled/unaffordable cards remain inspectable. Inspection consumes no turn and does not pause existing battle timers; already scheduled enemy actions retain their normal timing. Empty slots and transient invisible card-motion copies do not inspect.
+
+The overlay creates an instance of `scenes/card.tscn`, retaining the selected Resource, current temporary preview, title/summary, artwork geometry, badges, tints and tier/ion styling. It hides only combat actions and disables input on the copy. Position and uniform scale tween from the original slot; the original never moves. The right-hand panel fades in with a dimmed backdrop. The combined card/panel rectangle is centered with 16 px safe margins. Resizing clamps the card scale and panel width; detailed text stays at the configured size and scrolls vertically. The fixed Close button remains outside that scroll area. Source tooltips are temporarily suppressed to avoid covering inspection.
+
+The panel reads base and both complete upgrade dictionaries through `CardData.describe_effects`, highlighting the selected current level. `with_upgrade()` and Ion previews retain an `inspection_base` Resource reference solely for presentation; temporary combat values appear in an additional current-preview section. No independent gameplay values are authored in the overlay.
+
+Close, outside tap, Escape or the controller cancel action dismiss inspection smoothly. Keyboard/controller accept also activates Close; arrows/Page Up/Page Down scroll the information panel. Background shortcuts and focus navigation are blocked. Deck Viewer/CardInspector defer cancel input while this top overlay is open, so Escape preserves the parent screen. Gallery selection, replacement incoming/selected cards and scroll position remain unchanged. Scroll gesture adapters are suspended and restored; source button press attempts are cancelled before showing the overlay so releasing a hold cannot play, discard, acquire, upgrade or replace. Source changes/removal/hiding cancel pending holds and active inspection, and resize/close cancels obsolete tweens.
+
+### Shared Inspector settings
+
+Select `resources/card_presentation.tres` in Godot. The original card scene references this Resource; gallery portraits and inspection reuse it. No project autoload/configuration change is needed: `CardInspection` is one lazily created root CanvasLayer per SceneTree.
+
+| Property | Default |
+|---|---:|
+| Compact Description Font Size | 14 |
+| Hold Duration | 0.4 s |
+| Hold Movement Cancellation | 12 px |
+| Inspection Tween Duration | 0.2 s |
+| Enlarged Card Scale | 1.5 |
+| Information Panel Width | 360 px |
+| Background Dim Opacity | 0.8 |
+| Information Panel Text Size | 18 px |
+| Panel Card Spacing | 20 px |
+
+Ownership: `card_presentation_settings.gd` / the shared Resource own tuning; `card_summary.gd` formats short text; `card_hold.gd` owns input/timer cancellation; `card_inspection.gd` owns the read-only modal/copy/scroll/focus/tweens. The original `card_view.gd`, `card_portrait.gd`, `card_inspector.gd` and `deck_viewer.gd` retain their rendering/confirmation/viewer roles. Gameplay effect resolution, costs, hand size, acquisition probabilities, deck limits and turn sequencing are unchanged.
+
+Validation: Godot 4.7.2 editor import and all **50 automated test scripts** pass. New `card_inspection_test.gd` checks all 68 identities at levels 0/1/2, fixed artwork, complete titles, compact text/footer geometry, genuine touch holds, unaffordable combat inspection, middle-click, tap/right-click behavior, gallery drag cancellation, source changes/removal, current-level data, Escape/outside/Close, preserved deck/replacement state, and no combat/ownership changes. Rendered Compatibility/software OpenGL checks cover inspection and confirmation workflows at 1280×720, 1680×720, 960×540, 800×450 and 686×384; captures were inspected. Existing short-tap fixtures now use distinct immediate press/release events, rather than waiting long enough to constitute a hold. CI includes the new rendered regression.
+
+Physical Android timing, gesture feel and on-device text readability still need manual verification. No artwork was generated. Very long summaries deliberately end in an ellipsis; full effects and both upgrades remain available without reducing the detailed text size.

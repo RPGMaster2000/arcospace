@@ -14,6 +14,8 @@ var confirm_button: Button
 var current_card: Resource
 var next_card: Resource
 var portraits: Array[Button] = []
+var comparison_scroll: ScrollContainer
+var comparison_text: RichTextLabel
 var previous_focus: Control
 var tween: Tween
 var consumed: bool = true
@@ -36,6 +38,17 @@ func _ready() -> void:
 	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	cards_row.add_theme_constant_override("separation", 24)
 	panel.add_child(cards_row)
+	comparison_scroll = ScrollContainer.new()
+	comparison_scroll.custom_minimum_size.y = 100
+	comparison_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(comparison_scroll)
+	comparison_text = RichTextLabel.new()
+	comparison_text.bbcode_enabled = true
+	comparison_text.fit_content = true
+	comparison_text.scroll_active = false
+	comparison_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	comparison_text.add_theme_font_size_override("normal_font_size",18)
+	comparison_scroll.add_child(comparison_text)
 	var actions = HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 16)
@@ -70,10 +83,12 @@ func present(card: Resource, upgraded: Resource = null, inspect_only: bool = fal
 		var portrait = Portrait.new()
 		portrait.card_data = value
 		portrait.comparison_base = card if value == upgraded else null
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait.mouse_filter = Control.MOUSE_FILTER_STOP
 		portrait.focus_mode = Control.FOCUS_NONE
 		cards_row.add_child(portrait)
 		portraits.append(portrait)
+	comparison_scroll.visible = upgraded != null
+	comparison_text.text = preload("res://scripts/ui/card_effect_text.gd").comparison(upgraded,card) if upgraded != null else ""
 	confirm_button.visible = not inspect_only
 	confirm_button.disabled = false
 	confirm_button.text = "Confirm upgrade" if upgraded != null else "Acquire card"
@@ -94,12 +109,12 @@ func present(card: Resource, upgraded: Resource = null, inspect_only: bool = fal
 
 func _fit() -> void:
 	if portraits.is_empty(): return
-	var scale_value: float = minf(1.55, minf((shade.size.y - 160) / 294.0, (shade.size.x - 80 - 24 * (portraits.size() - 1)) / (198.0 * portraits.size())))
+	var scale_value: float = minf(1.55, minf((shade.size.y - (280 if next_card != null else 160)) / 294.0, (shade.size.x - 80 - 24 * (portraits.size() - 1)) / (198.0 * portraits.size())))
 	for portrait in portraits: portrait.set_card_scale(maxf(0.5, scale_value))
 	panel.size = Vector2(minf(shade.size.x - 32, maxf(440, 198 * scale_value * portraits.size() + 24)), 0)
 	panel.position = (shade.size - panel.size) / 2
 	# Containers settle on the following frame; center again using the resulting size.
-	panel.set_deferred("position", Vector2((shade.size.x - panel.size.x) / 2, maxf(16, (shade.size.y - (294 * scale_value + 116)) / 2)))
+	panel.set_deferred("position", Vector2((shade.size.x - panel.size.x) / 2, maxf(16, (shade.size.y - (294 * scale_value + (236 if next_card != null else 116))) / 2)))
 
 func _confirm() -> void:
 	if consumed or read_only or not shade.visible: return
@@ -118,6 +133,8 @@ func dismiss() -> void:
 	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
 
 func _input(event: InputEvent) -> void:
+	var inspection: Node = get_node_or_null("/root/CardInspection")
+	if inspection != null and inspection.is_open(): return
 	if not shade.visible: return
 	if event.is_action_pressed("ui_cancel"):
 		dismiss()

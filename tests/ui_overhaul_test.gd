@@ -48,8 +48,8 @@ func run() -> void:
 			root.add_child(portrait)
 			await process_frame
 			await process_frame
-			check(portrait.effects.position.y >= portrait.rendering.get_node("TitleLabel").get_rect().end.y, "Comparison effects clear title: " + portrait.card_data.card_name)
-			check(portrait.effects.get_rect().end.y <= portrait.badge.position.y, "Comparison effects clear upgrade badge")
+			check(portrait.rendering.get_node("ArtPlaceholder").get_rect()==Rect2(12,109,174,74), "Comparison portrait keeps fixed artwork: " + portrait.card_data.card_name)
+			check(portrait.rendering.get_node("DescriptionLabel").get_rect().end.y <= portrait.badge.position.y, "Compact comparison portrait clears upgrade badge")
 			check(portrait.rendering.get_node("CostLabel").text == str(base.cost), "Comparison preserves actual cost")
 			portrait.free()
 	root.size = Vector2i(1280,720)
@@ -142,7 +142,8 @@ func run() -> void:
 			tap.position = viewer.gallery.grid.get_child(0).get_global_rect().get_center()
 			tap.pressed = true
 			Input.parse_input_event(tap)
-			await settle()
+			# A short tap has no frame delay; waiting here now intentionally means hold-to-inspect.
+			tap = tap.duplicate()
 			tap.pressed = false
 			Input.parse_input_event(tap)
 			await settle()

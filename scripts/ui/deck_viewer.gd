@@ -62,6 +62,8 @@ func dismiss() -> void:
 	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
 
 func _input(event: InputEvent) -> void:
+	var inspection: Node = get_node_or_null("/root/CardInspection")
+	if inspection != null and inspection.is_open(): return
 	if shade.visible and not inspector.shade.visible and event.is_action_pressed("ui_cancel"):
 		dismiss()
 		get_viewport().set_input_as_handled()

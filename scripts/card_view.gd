@@ -2,6 +2,11 @@
 extends Button
 
 signal discard_requested
+const Summary = preload("res://scripts/ui/card_summary.gd")
+## TUNE: Shared normal-card text and read-only inspection settings.
+@export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
+var inspection_enabled: bool = true
+var hold_input: Node
 var discard_target_height: float = 48.0
 
 # RESPONSIBILITY: Display a card resource in the editor and at runtime.
@@ -10,6 +15,7 @@ var discard_target_height: float = 48.0
 	set(value):
 		if card_data != null and card_data.changed.is_connected(refresh_card):
 			card_data.changed.disconnect(refresh_card)
+		if card_data != value and is_instance_valid(hold_input): hold_input.cancel()
 		card_data = value
 		if card_data != null:
 			card_data.changed.connect(refresh_card)
@@ -21,6 +27,10 @@ func _ready() -> void:
 	# The whole hand fades on turn changes; avoid an instant disabled-text jump.
 	$DiscardButton.add_theme_color_override("font_disabled_color", $DiscardButton.get_theme_color("font_color"))
 	refresh_card()
+	if not Engine.is_editor_hint() and inspection_enabled:
+		hold_input = preload("res://scripts/ui/card_hold.gd").new()
+		add_child(hold_input)
+		hold_input.bind_card(self, self, presentation_settings, $DiscardButton)
 
 
 func _on_discard_pressed() -> void:
@@ -41,31 +51,38 @@ func refresh_card() -> void:
 	set_process(card_data != null and card_data.tier > 1)
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
+		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
 		return
-	$TitleLabel.text = card_data.card_name.to_upper() + (" · T%d" % card_data.tier if card_data.tier > 1 else "")
+	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
+	# Keep full names prominent; only an unusually long title needs a small font fallback.
+	for font_size in [20,19,18]:
+		$TitleLabel.add_theme_font_size_override("font_size",font_size)
+		if $TitleLabel.get_line_count() <= 2: break
+	$TitleLabel.max_lines_visible = 2
+	$TitleLabel.clip_text = true
+	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	$TierLabel.text = ("T%d " % card_data.tier if card_data.tier > 1 else "") + "+".repeat(card_data.upgrade_level)
 	$CostLabel.text = str(card_data.cost)
-	$DescriptionLabel.text = card_data.description
-	# Enhanced effects may need a fourth line. Borrow only decorative art space;
-	# keep the existing readable font, card size and discard hit target.
+	$DescriptionLabel.text = Summary.card_text(card_data)
+	$DescriptionLabel.add_theme_font_size_override("font_size", presentation_settings.compact_description_font_size)
+	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
 	$DescriptionLabel.offset_top = 188.0
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
+	$DescriptionLabel.clip_text = true
+	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(presentation_settings.compact_description_font_size)
+	$DescriptionLabel.max_lines_visible = maxi(1, floori(($DescriptionLabel.offset_bottom - 188.0) / line_height))
 	$ArtPlaceholder.offset_top = 109.0
 	$ArtPlaceholder.offset_bottom = 183.0
 	$ArtPlaceholder.visible = true
-	var required: float = $DescriptionLabel.get_minimum_size().y
-	var extra: float = maxf(0, required - ($DescriptionLabel.offset_bottom - 188.0))
-	$DescriptionLabel.offset_top -= extra
-	$ArtPlaceholder.offset_bottom = $DescriptionLabel.offset_top - 5
-	$ArtPlaceholder.offset_top = maxf(109.0, $TitleLabel.position.y + $TitleLabel.get_minimum_size().y + 2.0)
-	$ArtPlaceholder.visible = $ArtPlaceholder.offset_top < $ArtPlaceholder.offset_bottom
 	fit_placeholder_art()
 	var colors = {"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)}
 	var color: Color = colors.get(card_data.family, Color.WHITE)
@@ -84,7 +101,7 @@ func refresh_card() -> void:
 	$DiscardButton.text = "Discard +%d" % int(floor(card_data.cost / 3.0))
 	$DiscardButton.tooltip_text = "Recover %d %s" % [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
 	tooltip_text = card_data.card_name + "\n" + card_data.description
-	tooltip_text += "\nRight-click: discard (+%d %s)" % [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
+	tooltip_text += "\nHold / middle-click to inspect\nRight-click: discard (+%d %s)" % [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
 
 
 func set_playable(playable: bool, affordable: int = -1) -> void:
@@ -94,7 +111,7 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 	# Keep the discard footer bright and clickable even when play is unaffordable.
 	var tint: Color = Color.WHITE if affordable != 0 else Color(0.48, 0.48, 0.48)
 	self_modulate = tint
-	for path in ["TitleLabel", "CostLabel", "DescriptionLabel", "ResourceIcon", "ArtPlaceholder", "CostRule"]:
+	for path in ["TitleLabel", "CostLabel", "TierLabel", "DescriptionLabel", "ResourceIcon", "ArtPlaceholder", "CostRule"]:
 		get_node(path).modulate = tint
 
 func fit_placeholder_art() -> void:

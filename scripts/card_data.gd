@@ -17,6 +17,7 @@ class_name CardData
 func with_upgrade(level: int) -> Resource:
 	var result: Resource = duplicate(false)
 	result.set_meta("card_identity", identity_key())
+	result.set_meta("inspection_base", get_meta("inspection_base", self))
 	result.upgrade_level = clampi(level, 0, mini(2, mini(max_upgrades, upgrade_effects.size())))
 	if result.upgrade_level > 0:
 		result.effects = upgrade_effects[result.upgrade_level - 1].duplicate(true)

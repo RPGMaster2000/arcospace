@@ -169,6 +169,7 @@ func preview(card: Resource) -> Resource:
 	if card == null or kind != 2 or not active or card.family != "energy":
 		return card
 	var shown = card.duplicate(true)
+	shown.set_meta("inspection_base", card.get_meta("inspection_base", card))
 	shown.effects = _scaled(card.effects, ion_factor)
 	shown.description = ("ION ×2 · " if ion_factor == 2.0 else "ION ×½ · ") + card.describe_effects(shown.effects)
 	if card.play_again: shown.description += "; play again"
