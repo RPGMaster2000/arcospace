@@ -41,6 +41,8 @@ var next_modifier: int = -1
 var salvage: int = 0
 var battles_won: int = 0
 var result_recorded: bool = false
+# Presentation-only latch: reward recording can precede the visible result.
+var result_music_started: bool = false
 var earned_tactical: bool = false
 var earned_strategic: bool = false
 var result_hull: int = 0
@@ -510,6 +512,10 @@ func refresh_display() -> void:
 	allocation_button.visible = winner.is_empty()
 	if not winner.is_empty(): allocation_popup.dismiss()
 	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
+	if $MatchResult.visible and not result_music_started:
+		result_music_started = true
+		# Start the intro at the reveal, after combat presentation; EMP escape is also a win.
+		get_node("/root/Music").play_result(winner == "player")
 	$MatchResult/Panel/Title.text = "EMP PULSE SUCCESS" if escaped_by_ftl else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
 	var method: String = "EMP Pulse" if escaped_by_ftl else ("Enemy ship destroyed" if enemy_hull <= 0 and winner == "player" else ("Resource victory" if winner == "player" else ("Both ships destroyed" if winner == "draw" else "Defeat")))
 	$MatchResult/Panel/Details.text = "%s · Turn %d\n❤️ %d → %d · Damage taken: %d" % [method, turn_number, starting_player_hull, result_hull if result_recorded else player_hull, player_hull_damage_taken]
@@ -702,7 +708,6 @@ func _resource_reward_text(amount: int) -> String:
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded:
 		return
-	get_node("/root/Music").play_result(winner == "player" and not escaped_by_ftl)
 	# Freeze combat rewards before post-battle salvage repair changes hull.
 	earned_tactical = tactical_victory()
 	earned_strategic = strategic_victory()

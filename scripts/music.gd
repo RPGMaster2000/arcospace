@@ -30,7 +30,7 @@ func play_battle() -> void:
 
 func play_result(won: bool) -> void:
 	if won:
-		play_track("victory", true)
+		play_track("victory")
 	else:
 		current_track = ""
 		player.stop()
@@ -52,7 +52,7 @@ func play_track(track: String, restart: bool = false) -> void:
 	if stream is AudioStreamMP3:
 		stream.loop = track != "victory"
 	player.stream = stream
-	player.play()
+	player.play(0.0)
 	_apply_mute()
 
 func set_enabled(value: bool) -> void:
