@@ -1,4 +1,6 @@
 extends Node
+
+# RESPONSIBILITY: Keep one music player across screens and coordinate track transitions and muting.
 # One player survives scene transitions. Missing placeholder files stay silent.
 signal enabled_changed(enabled: bool)
 const TRACKS = {
@@ -12,6 +14,7 @@ var enabled: bool = true
 var current_track: String = ""
 var player: AudioStreamPlayer
 
+
 func _ready() -> void:
 	player = AudioStreamPlayer.new()
 	player.volume_db = -12.0
@@ -22,11 +25,14 @@ func _ready() -> void:
 		enabled = bool(settings.get_value("music", "enabled", true))
 	_apply_mute()
 
+
 func play_starmap() -> void:
 	play_track("starmap")
 
+
 func play_battle() -> void:
 	play_track("battle1" if randi_range(0, 1) == 0 else "battle2", true)
+
 
 func play_result(won: bool) -> void:
 	if won:
@@ -34,6 +40,7 @@ func play_result(won: bool) -> void:
 	else:
 		current_track = ""
 		player.stop()
+
 
 func play_track(track: String, restart: bool = false) -> void:
 	if track == current_track and not restart:
@@ -55,6 +62,7 @@ func play_track(track: String, restart: bool = false) -> void:
 	player.play(0.0)
 	_apply_mute()
 
+
 func set_enabled(value: bool) -> void:
 	if enabled == value:
 		return
@@ -65,9 +73,11 @@ func set_enabled(value: bool) -> void:
 	settings.save(SETTINGS_PATH)
 	enabled_changed.emit(enabled)
 
+
 func _apply_mute() -> void:
 	if is_instance_valid(player):
 		player.stream_paused = not enabled
+
 
 func _finished() -> void:
 	if current_track != "victory" and player.stream != null:

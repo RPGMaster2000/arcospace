@@ -5,7 +5,7 @@ extends Node
 const Effects = preload("res://scripts/card_effects.gd")
 const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift"]
 ## TUNE: Full rounds between events, counted after an event ends.
-const TEMPORAL_DROP_MULTIPLIER: float = 2.0 # TUNE: Tier 2 draw multiplier for the whole battle.
+const TEMPORAL_DROP_MULTIPLIER: float = 2.0  # TUNE: Tier 2 draw multiplier for the whole battle.
 const MIN_INTERVAL: int = 3
 const MAX_INTERVAL: int = 6
 ## TUNE: Event duration in complete player/enemy rounds.
@@ -26,22 +26,48 @@ var ion_factor: float = 1.0
 var next_round: int = 0
 var ends_round: int = 0
 var miss_rate: int = NEBULA_START
-var last_hull_damage: Dictionary = {"actor":0,"target":0}
+var last_hull_damage: Dictionary = {"actor": 0, "target": 0}
 var rng := RandomNumberGenerator.new()
+
 
 ## Expedition distribution remains uniform, including None. Keep one RNG draw.
 static func roll_encounter(generator: RandomNumberGenerator) -> int:
 	return generator.randi_range(0, NAMES.size() - 1)
 
+
 static func description(selection: int) -> String:
-	var timing = "First event on round %d–%d, then %d–%d rounds after each event ends" % [1 + MIN_INTERVAL, 1 + MAX_INTERVAL, MIN_INTERVAL, MAX_INTERVAL]
+	var timing = (
+		"First event on round %d–%d, then %d–%d rounds after each event ends"
+		% [1 + MIN_INTERVAL, 1 + MAX_INTERVAL, MIN_INTERVAL, MAX_INTERVAL]
+	)
 	match selection:
-		1: return "%s: each ship independently has a %d%% chance of taking %d damage, Shields first." % [timing, roundi(ASTEROID_CHANCE * 100), ASTEROID_DAMAGE]
-		2: return "%s: Energy card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged." % [timing, ACTIVE_ROUNDS]
-		3: return "%s: both ships' Shields go offline for %d rounds. Stored Shields return afterward; restoration is suppressed during the flare." % [timing, ACTIVE_ROUNDS]
-		4: return "Both ships start at %d%% combat-card hit rate. Miss chance drifts by up to %d points each round (0–%d%%). Misses still cost resources and retain explicit self-damage." % [100 - NEBULA_START, NEBULA_STEP, NEBULA_MAX]
-		5: return "Tier 2 card draw chance ×%.0f for both hands throughout this battle. Early-round locks and hand caps still apply." % TEMPORAL_DROP_MULTIPLIER
+		1:
+			return (
+				"%s: each ship independently has a %d%% chance of taking %d damage, Shields first."
+				% [timing, roundi(ASTEROID_CHANCE * 100), ASTEROID_DAMAGE]
+			)
+		2:
+			return (
+				"%s: Energy card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged."
+				% [timing, ACTIVE_ROUNDS]
+			)
+		3:
+			return (
+				"%s: both ships' Shields go offline for %d rounds. Stored Shields return afterward; restoration is suppressed during the flare."
+				% [timing, ACTIVE_ROUNDS]
+			)
+		4:
+			return (
+				"Both ships start at %d%% combat-card hit rate. Miss chance drifts by up to %d points each round (0–%d%%). Misses still cost resources and retain explicit self-damage."
+				% [100 - NEBULA_START, NEBULA_STEP, NEBULA_MAX]
+			)
+		5:
+			return (
+				"Tier 2 card draw chance ×%.0f for both hands throughout this battle. Early-round locks and hand caps still apply."
+				% TEMPORAL_DROP_MULTIPLIER
+			)
 	return "No environmental battle modifier. Pending expedition effects still apply."
+
 
 func configure(selection: int) -> void:
 	kind = clampi(selection, 0, NAMES.size() - 1)
@@ -51,12 +77,15 @@ func configure(selection: int) -> void:
 	miss_rate = NEBULA_START
 	next_round = 1 + rng.randi_range(MIN_INTERVAL, MAX_INTERVAL)
 
+
 func begin_round(round_number: int) -> String:
 	if kind == 0 or kind == 5:
 		return ""
 	if kind == 4:
 		if round_number > 1:
-			miss_rate = clampi(miss_rate + rng.randi_range(-NEBULA_STEP, NEBULA_STEP), 0, NEBULA_MAX)
+			miss_rate = clampi(
+				miss_rate + rng.randi_range(-NEBULA_STEP, NEBULA_STEP), 0, NEBULA_MAX
+			)
 		return "NEBULA · SENSORS UNSTABLE" if round_number == 1 else ""
 	if active and round_number >= ends_round:
 		active = false
@@ -75,8 +104,10 @@ func begin_round(round_number: int) -> String:
 		return ["", "ASTEROIDS INCOMING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
 	return ""
 
+
 func shields_disabled() -> bool:
 	return kind == 3 and active
+
 
 func status_text(round_number: int) -> String:
 	if kind == 5:
@@ -86,23 +117,50 @@ func status_text(round_number: int) -> String:
 	if kind == 4:
 		return "Targeting Sensor Efficiency · Hit rate: %d%%" % (100 - miss_rate)
 	if active:
-		return NAMES[kind].to_upper() + " ACTIVE · " + ("Shields offline" if kind == 3 else ion_text()) + " · %d rounds left" % maxi(0, ends_round - round_number)
+		return (
+			NAMES[kind].to_upper()
+			+ " ACTIVE · "
+			+ ("Shields offline" if kind == 3 else ion_text())
+			+ " · %d rounds left" % maxi(0, ends_round - round_number)
+		)
 	var phrases: Array[String] = ["", "asteroids pass by", "next ion storm", "next solar flare"]
 	return "%d turns until %s" % [maxi(0, next_round - round_number), phrases[kind]]
+
 
 func meter_value(round_number: int) -> float:
 	if kind == 5:
 		return 100.0
 	if kind == 4:
 		return float(100 - miss_rate)
-	return 100.0 if active else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
+	return (
+		100.0
+		if active
+		else clampf(100.0 * (1.0 - float(next_round - round_number) / MAX_INTERVAL), 0, 100)
+	)
+
 
 static func is_combat(effects: Dictionary) -> bool:
-	for key in ["damage", "break_shields", "drain", "steal", "sabotage", "swap_shields", "shield_collapse_below", "shield_collapse", "swap_resource", "enemy_production"]:
+	for key in [
+		"damage",
+		"break_shields",
+		"drain",
+		"steal",
+		"sabotage",
+		"swap_shields",
+		"shield_collapse_below",
+		"shield_collapse",
+		"swap_resource",
+		"enemy_production"
+	]:
 		if effects.get(key, false):
 			return true
 	var condition: Dictionary = effects.get("conditional", {})
-	return is_combat(condition.get("then", {})) or is_combat(condition.get("else", {})) if not condition.is_empty() else false
+	return (
+		is_combat(condition.get("then", {})) or is_combat(condition.get("else", {}))
+		if not condition.is_empty()
+		else false
+	)
+
 
 func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 	var result: Dictionary = effects.duplicate(true)
@@ -112,10 +170,14 @@ func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 			result[key] = int(floor((1.0 if result[key] else 0.0) * factor))
 		elif result[key] is Dictionary:
 			result[key] = _scaled(result[key], factor)
-		elif key not in ["pierce", "shield_collapse_below", "threshold", "chance"] and (result[key] is int or result[key] is float):
+		elif (
+			key not in ["pierce", "shield_collapse_below", "threshold", "chance"]
+			and (result[key] is int or result[key] is float)
+		):
 			# TUNE: Half effects round down, including +1 production becoming zero.
 			result[key] = int(floor(float(result[key]) * factor))
 	return result
+
 
 # Resolve a temporary card copy through CardEffects, preserving shared definitions and reserved flare Shields.
 func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0) -> String:
@@ -126,7 +188,9 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 	var chance: float = rng.randf() if roll < 0.0 else roll
 	if kind == 4 and is_combat(card.effects) and chance < miss_rate / 100.0:
 		# A miss cancels target/bonus effects; explicit self-damage remains an unavoidable cost.
-		modified.effects = {"self_damage": card.effects.self_damage} if card.effects.has("self_damage") else {}
+		modified.effects = (
+			{"self_damage": card.effects.self_damage} if card.effects.has("self_damage") else {}
+		)
 		notice = "MISS · NEBULA INTERFERENCE"
 	elif kind == 2 and active and card.family == "energy":
 		# The already announced storm multiplier also drives the card previews.
@@ -148,6 +212,7 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 		target.shields = saved_target_shields
 	return notice
 
+
 func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -> String:
 	var outcomes: Array[String] = []
 	var ships: Array[Dictionary] = [player, enemy]
@@ -161,8 +226,10 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 		outcomes.append(("YOU" if index == 0 else "ENEMY") + (" HIT" if hit else " MISSED"))
 	return "ASTEROID SHOWER · " + " / ".join(outcomes)
 
+
 func ion_text() -> String:
 	return "ENERGY cards are powered up!" if ion_factor == 2.0 else "ENERGY cards are surpressed!"
+
 
 # Return presentation data for the active Ion multiplier; never apply a real combat action here.
 func preview(card: Resource) -> Resource:
@@ -171,6 +238,9 @@ func preview(card: Resource) -> Resource:
 	var shown = card.duplicate(true)
 	shown.set_meta("inspection_base", card.get_meta("inspection_base", card))
 	shown.effects = _scaled(card.effects, ion_factor)
-	shown.description = ("ION ×2 · " if ion_factor == 2.0 else "ION ×½ · ") + card.describe_effects(shown.effects)
-	if card.play_again: shown.description += "; play again"
+	shown.description = (
+		("ION ×2 · " if ion_factor == 2.0 else "ION ×½ · ") + card.describe_effects(shown.effects)
+	)
+	if card.play_again:
+		shown.description += "; play again"
 	return shown

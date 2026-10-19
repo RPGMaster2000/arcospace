@@ -19,8 +19,10 @@ var disabled_turns: int = 0
 var disabled_turn_started: bool = false
 var rng := RandomNumberGenerator.new()
 
+
 func _ready() -> void:
 	rng.randomize()
+
 
 func begin_player_turn() -> void:
 	# A disabled turn counts only after the player has actually had that turn.
@@ -30,8 +32,14 @@ func begin_player_turn() -> void:
 	if not disabled_turn_started:
 		charge = mini(charge_target, charge + 1)
 
+
 func failure_chance(amount: int) -> float:
-	return clampf(minf(maxf(0, amount * FAILURE_CHANCE_PER_DAMAGE), MAX_FAILURE_CHANCE) * failure_multiplier, 0.0, 1.0)
+	return clampf(
+		minf(maxf(0, amount * FAILURE_CHANCE_PER_DAMAGE), MAX_FAILURE_CHANCE) * failure_multiplier,
+		0.0,
+		1.0
+	)
+
 
 func take_hull_damage(amount: int, roll: float = -1.0) -> bool:
 	if amount <= 0 or disabled_turns > 0:
@@ -42,6 +50,7 @@ func take_hull_damage(amount: int, roll: float = -1.0) -> bool:
 	disabled_turns = DISABLED_TURNS
 	disabled_turn_started = false
 	return true
+
 
 func can_warp() -> bool:
 	return charge == charge_target and disabled_turns == 0

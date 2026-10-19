@@ -1,6 +1,8 @@
 extends Resource
 class_name EncounterOutcome
 
+# RESPONSIBILITY: Define resolved PoI rewards, pending battle changes and choice rewards.
+
 @export_multiline var blurb: String = ""
 @export var salvage: int = 0
 ## Positive repairs permanent Hull only; negative damage can end the expedition.

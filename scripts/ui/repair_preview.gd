@@ -6,6 +6,7 @@ var hull_text: Label
 var bar: Control
 var cost_text: Label
 
+
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_constant_override("separation", 3)
@@ -23,15 +24,29 @@ func _init() -> void:
 	add_child(bar)
 	add_child(cost_text)
 
-func show_repair(hull: int, capacity: int, salvage: int, amount: int, unit_cost: int, plating: bool = false) -> void:
+
+func show_repair(
+	hull: int, capacity: int, salvage: int, amount: int, unit_cost: int, plating: bool = false
+) -> void:
 	var gain: int = maxi(0, amount)
 	var cost: int = gain * unit_cost
 	var result: int = hull + gain
-	hull_text.text = "%s %d → %d/%d   (+%d %s)" % ["❤️", hull, result, capacity, gain, "plating" if plating else "Hull"]
-	hull_text.add_theme_color_override("font_color", bar.plating_color.lightened(.25) if plating else Color(.55, .95, .67))
+	hull_text.text = (
+		"%s %d → %d/%d   (+%d %s)"
+		% ["❤️", hull, result, capacity, gain, "plating" if plating else "Hull"]
+	)
+	hull_text.add_theme_color_override(
+		"font_color", bar.plating_color.lightened(.25) if plating else Color(.55, .95, .67)
+	)
 	bar.preview_hull = result
 	bar.update_hull(hull, capacity)
 	bar.tooltip_text = "Red: current Hull · Green: repair gain · Amber: plating"
-	cost_text.text = "🪨 Salvage %d → %d   (−%d) · %d / %s" % [salvage, salvage - cost, cost, unit_cost, "plating" if plating else "Hull"]
+	cost_text.text = (
+		"🪨 Salvage %d → %d   (−%d) · %d / %s"
+		% [salvage, salvage - cost, cost, unit_cost, "plating" if plating else "Hull"]
+	)
 	cost_text.add_theme_color_override("font_color", Color(.95, .78, .46))
-	tooltip_text = "%d Salvage restores 1 %s. Preview only; confirm to spend." % [unit_cost, "plating" if plating else "Hull"]
+	tooltip_text = (
+		"%d Salvage restores 1 %s. Preview only; confirm to spend."
+		% [unit_cost, "plating" if plating else "Hull"]
+	)

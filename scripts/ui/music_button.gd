@@ -1,7 +1,10 @@
 extends Button
+
+# RESPONSIBILITY: Show a consistent music toggle bound to the persistent Music player.
 # Shared compact control for ship selection and the system header.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var music: Node
+
 
 func _ready() -> void:
 	name = "MusicToggle"
@@ -13,10 +16,12 @@ func _ready() -> void:
 	pressed.connect(func(): music.set_enabled(not music.enabled))
 	_sync(music.enabled)
 
+
 func _sync(value: bool) -> void:
 	set_pressed_no_signal(value)
 	tooltip_text = "Music on — tap to mute" if value else "Music off — tap to enable"
 	queue_redraw()
+
 
 func _draw() -> void:
 	# Draw a musical note directly, so no platform emoji/font support is required.

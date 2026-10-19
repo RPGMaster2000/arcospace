@@ -1,4 +1,6 @@
 extends Button
+
+# RESPONSIBILITY: Render wrapping encounter buttons without expanding the gallery width.
 # Label children wrap without imposing a horizontal minimum on GridContainer.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var icon_label: Label
@@ -9,6 +11,7 @@ var accent: Color = Presentation.COLORS.special
 var selected: bool = false
 var minimum_height: float = 84.0
 
+
 func configure(title: String, body: String, color: Color, centered: bool = false) -> void:
 	accent = color
 	mouse_filter = Control.MOUSE_FILTER_PASS
@@ -18,8 +21,10 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 	custom_minimum_size = Vector2(0, 84)
 	content = MarginContainer.new()
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right"]: content.add_theme_constant_override("margin_" + edge, 16)
-	for edge in ["top", "bottom"]: content.add_theme_constant_override("margin_" + edge, 6)
+	for edge in ["left", "right"]:
+		content.add_theme_constant_override("margin_" + edge, 16)
+	for edge in ["top", "bottom"]:
+		content.add_theme_constant_override("margin_" + edge, 6)
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(content)
 	var column = VBoxContainer.new()
@@ -45,6 +50,7 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 	content.minimum_size_changed.connect(update_minimum_size)
 	refresh_style()
 
+
 func set_rich_details(value: String) -> void:
 	var column = details.get_parent()
 	column.remove_child(details)
@@ -68,10 +74,22 @@ func set_rich_details(value: String) -> void:
 	column.add_child(details)
 	refresh_style()
 
+
 func _process(_delta: float) -> void:
 	if is_instance_valid(content):
-		var icon_height: float = icon_label.get_combined_minimum_size().y + 4 if is_instance_valid(icon_label) else 0
-		custom_minimum_size.y = maxf(minimum_height, icon_height + heading.get_combined_minimum_size().y + details.get_combined_minimum_size().y + 16)
+		var icon_height: float = (
+			icon_label.get_combined_minimum_size().y + 4 if is_instance_valid(icon_label) else 0
+		)
+		custom_minimum_size.y = maxf(
+			minimum_height,
+			(
+				icon_height
+				+ heading.get_combined_minimum_size().y
+				+ details.get_combined_minimum_size().y
+				+ 16
+			)
+		)
+
 
 func _label(value: String, font_size: int) -> Label:
 	var label = Label.new()
@@ -81,13 +99,17 @@ func _label(value: String, font_size: int) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
 
+
 func refresh_style() -> void:
 	for key in ["normal", "hover", "pressed", "disabled"]:
-		add_theme_stylebox_override(key, Presentation.style(accent, selected or key == "pressed", disabled))
+		add_theme_stylebox_override(
+			key, Presentation.style(accent, selected or key == "pressed", disabled)
+		)
 	var focus = Presentation.style(Color("a8d9fc"), true)
 	focus.bg_color = Color.TRANSPARENT
 	add_theme_stylebox_override("focus", focus)
-	if is_instance_valid(icon_label): icon_label.modulate = Color("82909f") if disabled else Color.WHITE
+	if is_instance_valid(icon_label):
+		icon_label.modulate = Color("82909f") if disabled else Color.WHITE
 	if is_instance_valid(heading):
 		heading.modulate = Color("82909f") if disabled else Color("f3f6fa")
 		details.modulate = Color("82909f") if disabled else Color("c2d7e7")

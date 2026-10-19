@@ -4,10 +4,12 @@ extends Control
 @export var hold_seconds: float = 1.2
 var flash_tween: Tween
 
+
 func refresh(modifier: Node, round_number: int) -> void:
 	$Meter.visible = modifier.kind != 0
 	$Meter/Text.text = modifier.status_text(round_number)
 	$Meter/Progress.value = modifier.meter_value(round_number)
+
 
 func announce(message: String) -> void:
 	if message.is_empty():
@@ -20,6 +22,7 @@ func announce(message: String) -> void:
 	flash_tween.tween_property($Flash, "modulate:a", 1.0, 0.12)
 	flash_tween.tween_interval(hold_seconds)
 	flash_tween.tween_property($Flash, "modulate:a", 0.0, 0.35)
+
 
 ## TUNE: Disable cinematic pauses/flashes for instant presentation or automated checks.
 @export var cinematic_enabled: bool = true
@@ -35,6 +38,7 @@ var shake_tween: Tween
 var original_canvas: Transform2D
 var shaking: bool = false
 
+
 func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> void:
 	if not cinematic_enabled:
 		return
@@ -45,6 +49,7 @@ func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> 
 	}
 	announce(("ION SURGE\n" + effect_text) if card_effect else messages.get(kind, ""))
 	await get_tree().create_timer(warning_seconds).timeout
+
 
 func impact(kind: int, player_hit: bool = false) -> void:
 	if not cinematic_enabled:
@@ -68,34 +73,47 @@ func impact(kind: int, player_hit: bool = false) -> void:
 		shake_tween.tween_method(_shake, 1.0, 0.0, flash_seconds)
 		shake_tween.tween_callback(_restore_screen)
 
+
 func _shake(strength: float) -> void:
 	var offset = Vector2(sin(strength * 47.0), cos(strength * 61.0)) * shake_pixels * strength
 	var transform = original_canvas
 	transform.origin += offset
 	get_viewport().canvas_transform = transform
 
+
 func _restore_screen() -> void:
 	if shaking:
 		get_viewport().canvas_transform = original_canvas
 		shaking = false
 
+
 func hold_result() -> void:
 	if cinematic_enabled:
 		await get_tree().create_timer(result_seconds).timeout
 
+
 func _exit_tree() -> void:
 	_restore_screen()
+
 
 ## TUNE: FTL transitions hold longer than modifier flashes; offline adds one second.
 @export var ftl_offline_seconds: float = 1.45
 @export var ftl_online_seconds: float = 0.65
 var ftl_tween: Tween
 
+
 func ftl_offline() -> void:
 	_ftl_event("EMP PULSE OFFLINE", Color(1, 0.12, 0.04), ftl_offline_seconds, 0.32)
 
+
 func ftl_online(fully_charged: bool) -> void:
-	_ftl_event("EMP PULSE ONLINE" if fully_charged else "EMP PULSE REPAIRED · RESUMING CHARGING", Color(0.25, 0.65, 1), ftl_online_seconds, 0.16)
+	_ftl_event(
+		"EMP PULSE ONLINE" if fully_charged else "EMP PULSE REPAIRED · RESUMING CHARGING",
+		Color(0.25, 0.65, 1),
+		ftl_online_seconds,
+		0.16
+	)
+
 
 func _ftl_event(message: String, color: Color, seconds: float, strength: float) -> void:
 	if not cinematic_enabled:

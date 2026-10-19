@@ -1,4 +1,6 @@
 extends CanvasLayer
+
+# RESPONSIBILITY: Present allocation modes and emit selection; CardHand owns draw behavior.
 # Presentation only. Selecting emits a mode; never deals, replaces or edits cards.
 signal mode_selected(mode: String)
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
@@ -12,15 +14,24 @@ var choices: Array[Button] = []
 var indicators: Array[Label] = []
 var previous_focus: Control
 
+
 func _ready() -> void:
 	layer = 130
 	shade = ColorRect.new()
 	shade.color = Color(0, 0, 0, 0.8)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
-	shade.gui_input.connect(func(event):
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed: dismiss()
-		elif event is InputEventScreenTouch and event.pressed: dismiss())
+	shade.gui_input.connect(
+		func(event):
+			if (
+				event is InputEventMouseButton
+				and event.button_index == MOUSE_BUTTON_LEFT
+				and event.pressed
+			):
+				dismiss()
+			elif event is InputEventScreenTouch and event.pressed:
+				dismiss()
+	)
 	var center = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -76,27 +87,38 @@ func _ready() -> void:
 	var focus_controls: Array[Button] = choices.duplicate()
 	focus_controls.append(close)
 	for index in range(focus_controls.size()):
-		focus_controls[index].focus_next = focus_controls[index].get_path_to(focus_controls[(index + 1) % focus_controls.size()])
-		focus_controls[index].focus_previous = focus_controls[index].get_path_to(focus_controls[(index + focus_controls.size() - 1) % focus_controls.size()])
+		focus_controls[index].focus_next = focus_controls[index].get_path_to(
+			focus_controls[(index + 1) % focus_controls.size()]
+		)
+		focus_controls[index].focus_previous = focus_controls[index].get_path_to(
+			focus_controls[(index + focus_controls.size() - 1) % focus_controls.size()]
+		)
 	shade.hide()
+
 
 func present(mode: String, multiplier: float) -> void:
 	previous_focus = get_viewport().gui_get_focus_owner()
 	for index in range(choices.size()):
 		var active: bool = mode == MODES[index]
 		choices[index].button_pressed = active
-		choices[index].add_theme_stylebox_override("normal", Style.style(Style.COLORS.special, active))
+		choices[index].add_theme_stylebox_override(
+			"normal", Style.style(Style.COLORS.special, active)
+		)
 		indicators[index].text = "" if index == 0 else "%s× draw weight" % str(multiplier)
 	shade.show()
 	choices[maxi(0, MODES.find(mode))].grab_focus()
+
 
 func _choose(index: int) -> void:
 	dismiss()
 	mode_selected.emit(MODES[index])
 
+
 func dismiss() -> void:
 	shade.hide()
-	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
+	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree():
+		previous_focus.grab_focus()
+
 
 func _input(event: InputEvent) -> void:
 	if shade.visible and event.is_action_pressed("ui_cancel"):

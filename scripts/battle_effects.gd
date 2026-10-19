@@ -2,6 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Animate actual stat changes without modifying game state.
 # DOES NOT: Apply card rules, draw cards or advance turns.
+# EXTEND: Dispatch committed deltas in play_changes; register all independent tweens with _job.
 signal finished
 const REPAIR_SHADER = preload("res://shaders/hull_repair.gdshader")
 const RIPPLE_SHADER = preload("res://shaders/shield_ripple.gdshader")
@@ -35,23 +36,39 @@ var tweens: Array[Tween] = []
 var restorations: Array[Callable] = []
 var temporary_nodes: Array[Node] = []
 
+#region Delta dispatch
+
+
 func set_number(label: Label, value: int) -> void:
 	if not counters.has(label):
 		label.text = str(value)
 
 
 # Compare committed snapshots to schedule visuals; these deltas must never be applied to gameplay again.
-func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "", paid_family: String = "", paid_cost: int = 0, impact: bool = false) -> void:
+func play_changes(
+	before: Dictionary,
+	after: Dictionary,
+	paid_side: String = "",
+	paid_family: String = "",
+	paid_cost: int = 0,
+	impact: bool = false
+) -> void:
 	if not enabled:
 		return
 	for side in ["player", "enemy"]:
 		var old: Dictionary = before[side]
 		var current: Dictionary = after[side]
 		var prefix: String = "Player" if side == "player" else "Enemy"
-		var ship: Node = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
+		var ship: Node = get_parent().get_node(
+			player_ship_path if side == "player" else enemy_ship_path
+		)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
-		if hull_delta < 0 and (current.shields == 0 or get_parent().modifier.shields_disabled()) and ship.has_method("animate_explosions"):
+		if (
+			hull_delta < 0
+			and (current.shields == 0 or get_parent().modifier.shields_disabled())
+			and ship.has_method("animate_explosions")
+		):
 			ship.animate_explosions(_job(), maxf(hit_seconds, 0.5))
 		if hull_delta < 0 or (shield_delta < 0 and impact):
 			_hit(ship, hull_delta < 0, shield_delta < 0, side)
@@ -68,7 +85,9 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 			var icon: Control = get_parent().get_node(prefix + "Resource%d" % (index + 1))
 			var delta: int = current[key] - old[key]
 			# Ordinary payment is not a hostile resource-drain effect.
-			var effect_delta: int = delta + (paid_cost if side == paid_side and key == paid_family else 0)
+			var effect_delta: int = (
+				delta + (paid_cost if side == paid_side and key == paid_family else 0)
+			)
 			if delta > 0 or (delta < 0 and effect_delta < 0):
 				_count(icon.get_node(key), old[key], current[key])
 			if delta > 0:
@@ -82,6 +101,11 @@ func play_changes(before: Dictionary, after: Dictionary, paid_side: String = "",
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
 
 
+#endregion
+
+#region Resource feedback
+
+
 # Draw behind the icon/badge; the effect owns no input or game state.
 func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
 	var burst := ColorRect.new()
@@ -89,7 +113,9 @@ func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
 	burst.show_behind_parent = true
 	var badge: Control = icon.get_node("ProductionBadge")
 	burst.size = Vector2(155, 24) if production else Vector2(110, 80)
-	burst.position = badge.position + badge.size * 0.5 - burst.size * 0.5 if production else Vector2(-22, 32)
+	burst.position = (
+		badge.position + badge.size * 0.5 - burst.size * 0.5 if production else Vector2(-22, 32)
+	)
 	icon.add_child(burst)
 	icon.move_child(burst, 0)
 	var material := ShaderMaterial.new()
@@ -98,21 +124,6 @@ func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
 	material.set_shader_parameter("beam", production)
 	burst.material = material
 	_run_material(burst, material, 0.32 if production else 0.4)
-
-# Register a presentation tween so Board can await finished only after every visual job completes.
-func _job() -> Tween:
-	busy = true
-	jobs += 1
-	var tween: Tween = create_tween()
-	tweens.append(tween)
-	tween.finished.connect(func():
-		jobs -= 1
-		tweens.erase(tween)
-		if jobs == 0:
-			busy = false
-			restorations.clear()
-			finished.emit(), CONNECT_ONE_SHOT)
-	return tween
 
 
 func _count(label: Label, start: int, target: int) -> void:
@@ -141,10 +152,20 @@ func _pulse_icon(icon: Control, tint: Color, increase: bool) -> void:
 	var tween := _job()
 	var peak: float = icon_peak_scale if increase else 2.0 - icon_peak_scale
 	tween.tween_property(icon, "scale", original_scale * peak, production_seconds * 0.45)
-	tween.parallel().tween_property(icon, "modulate", tint.lightened(0.35) if increase else tint.darkened(0.3), production_seconds * 0.45)
+	tween.parallel().tween_property(
+		icon,
+		"modulate",
+		tint.lightened(0.35) if increase else tint.darkened(0.3),
+		production_seconds * 0.45
+	)
 	tween.tween_property(icon, "scale", original_scale, production_seconds * 0.55)
 	tween.parallel().tween_property(icon, "modulate", original_color, production_seconds * 0.55)
 	tween.tween_callback(restore)
+
+
+#endregion
+
+#region Ship feedback
 
 
 func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
@@ -162,10 +183,18 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 			hull.color = hull_color
 	restorations.append(restore)
 	var tween := _job()
-	tween.tween_method(func(p: float):
-		ship.position = origin + Vector2(sin(p * TAU * 3), sin(p * TAU * 4) * 0.4) * shake_pixels * (1.0 - p)
-		if hull_hit:
-			hull.color = hull_color.lerp(Color(1, 0.12, 0.08), sin(p * PI)), 0.0, 1.0, hit_seconds)
+	tween.tween_method(
+		func(p: float):
+			ship.position = (
+				origin
+				+ Vector2(sin(p * TAU * 3), sin(p * TAU * 4) * 0.4) * shake_pixels * (1.0 - p)
+			)
+			if hull_hit:
+				hull.color = hull_color.lerp(Color(1, 0.12, 0.08), sin(p * PI)),
+		0.0,
+		1.0,
+		hit_seconds
+	)
 	tween.tween_callback(restore)
 	if shield_hit:
 		_pulse_shield(ship, false)
@@ -200,10 +229,15 @@ func _pulse_shield(ship: Node, increase: bool) -> void:
 			shield.modulate = tint_before
 	restorations.append(restore)
 	var tween := _job()
-	tween.tween_method(func(p: float):
-		var pulse: float = sin(p * PI * 6) * (1.0 - p)
-		shield.scale = size_before * (1.0 + pulse * 0.035)
-		shield.modulate = tint_before.lerp(Color(1.6, 1.8, 2.0), absf(pulse)), 0.0, 1.0, shield_seconds)
+	tween.tween_method(
+		func(p: float):
+			var pulse: float = sin(p * PI * 6) * (1.0 - p)
+			shield.scale = size_before * (1.0 + pulse * 0.035)
+			shield.modulate = tint_before.lerp(Color(1.6, 1.8, 2.0), absf(pulse)),
+		0.0,
+		1.0,
+		shield_seconds
+	)
 	tween.tween_callback(restore)
 	if increase:
 		var bounds: Rect2 = _bounds(shield.points)
@@ -233,6 +267,30 @@ func _repair(ship: Node) -> void:
 	_run_material(wash, material, repair_seconds)
 
 
+#endregion
+
+#region Tween lifecycle
+
+
+# Register a presentation tween so Board can await finished only after every visual job completes.
+func _job() -> Tween:
+	busy = true
+	jobs += 1
+	var tween: Tween = create_tween()
+	tweens.append(tween)
+	tween.finished.connect(
+		func():
+			jobs -= 1
+			tweens.erase(tween)
+			if jobs == 0:
+				busy = false
+				restorations.clear()
+				finished.emit(),
+		CONNECT_ONE_SHOT
+	)
+	return tween
+
+
 func _material_effect(node: CanvasItem, shader: Shader, duration: float) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = shader
@@ -243,7 +301,9 @@ func _material_effect(node: CanvasItem, shader: Shader, duration: float) -> void
 func _run_material(node: CanvasItem, material: ShaderMaterial, duration: float) -> void:
 	temporary_nodes.append(node)
 	var tween := _job()
-	tween.tween_method(func(p: float): material.set_shader_parameter("progress", p), 0.0, 1.0, duration)
+	tween.tween_method(
+		func(p: float): material.set_shader_parameter("progress", p), 0.0, 1.0, duration
+	)
 	tween.tween_callback(func(): _remove(node))
 
 
@@ -271,3 +331,5 @@ func _exit_tree() -> void:
 	counters.clear()
 	busy = false
 	finished.emit()
+
+#endregion

@@ -1,6 +1,8 @@
 @tool
 extends Resource
 class_name CardPresentationSettings
+
+# RESPONSIBILITY: Store shared compact-card and read-only inspection presentation settings.
 # TUNE: One shared presentation/input configuration. No gameplay values live here.
 @export_group("Compact cards")
 @export_range(10, 24, 1) var compact_description_font_size: int = 14

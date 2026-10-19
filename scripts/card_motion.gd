@@ -1,18 +1,22 @@
 extends Control
 
+# RESPONSIBILITY: Present a card, invoke resolution at its cue, then finish motion.
+# DOES NOT: Pay costs, apply abilities, draw cards or switch turns.
+
 signal step_finished
 var cancelling: bool = false
 
-# RESPONSIBILITY: Present a card, invoke resolution at its cue, then finish motion.
-# DOES NOT: Pay costs, apply abilities, draw cards or switch turns.
 @export var settings: Resource = preload("res://resources/card_motion.tres")
 @export var card_scene: PackedScene = preload("res://scenes/card.tscn")
 var active_tween: Tween
 var source_view: Control
 var original_modulate: Color = Color.WHITE
 
+
 # Invoke the supplied resolution callback once at the visual cue; Board owns the callback and turn lock.
-func animate_action(card: Resource, source: Control, side: String, discard: bool, resolve: Callable) -> void:
+func animate_action(
+	card: Resource, source: Control, side: String, discard: bool, resolve: Callable
+) -> void:
 	if not settings.enabled:
 		resolve.call()
 		return
@@ -48,12 +52,16 @@ func animate_action(card: Resource, source: Control, side: String, discard: bool
 		$Scanner.position = start - Vector2(5, 0)
 		$Scanner.show()
 		active_tween = _new_tween()
-		active_tween.tween_method(func(progress: float):
-			clipper.position.y = start.y + card_size.y * progress
-			clipper.size.y = card_size.y * (1.0 - progress)
-			visual.position.y = -card_size.y * progress
-			$Scanner.position.y = start.y + card_size.y * progress,
-			0.0, 1.0, settings.discard_seconds)
+		active_tween.tween_method(
+			func(progress: float):
+				clipper.position.y = start.y + card_size.y * progress
+				clipper.size.y = card_size.y * (1.0 - progress)
+				visual.position.y = -card_size.y * progress
+				$Scanner.position.y = start.y + card_size.y * progress,
+			0.0,
+			1.0,
+			settings.discard_seconds
+		)
 		await step_finished
 		if cancelling:
 			return
@@ -64,8 +72,15 @@ func animate_action(card: Resource, source: Control, side: String, discard: bool
 		if side == "enemy":
 			clipper.modulate.a = 0.0
 		active_tween = _new_tween().set_parallel(true)
-		active_tween.tween_property(clipper, "position", centre, settings.travel_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		active_tween.tween_property(clipper, "scale", Vector2.ONE * settings.stage_scale, settings.travel_seconds)
+		(
+			active_tween
+			. tween_property(clipper, "position", centre, settings.travel_seconds)
+			. set_trans(Tween.TRANS_CUBIC)
+			. set_ease(Tween.EASE_OUT)
+		)
+		active_tween.tween_property(
+			clipper, "scale", Vector2.ONE * settings.stage_scale, settings.travel_seconds
+		)
 		active_tween.tween_property(clipper, "modulate:a", 1.0, settings.travel_seconds)
 		await step_finished
 		if cancelling:
@@ -78,7 +93,14 @@ func animate_action(card: Resource, source: Control, side: String, discard: bool
 		if cancelling:
 			return
 		active_tween = _new_tween().set_parallel(true)
-		active_tween.tween_property(clipper, "position", $ExitAnchor.position - card_size * 0.5, settings.exit_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		(
+			active_tween
+			. tween_property(
+				clipper, "position", $ExitAnchor.position - card_size * 0.5, settings.exit_seconds
+			)
+			. set_trans(Tween.TRANS_CUBIC)
+			. set_ease(Tween.EASE_IN)
+		)
 		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.exit_seconds)
 		active_tween.tween_property(clipper, "scale", Vector2.ONE * 0.85, settings.exit_seconds)
 		await step_finished
@@ -88,7 +110,9 @@ func animate_action(card: Resource, source: Control, side: String, discard: bool
 	if is_instance_valid(source_view):
 		# The replacement is already dealt, but is revealed only after the old card leaves.
 		active_tween = _new_tween()
-		active_tween.tween_property(source_view, "modulate", original_modulate, settings.refill_seconds)
+		active_tween.tween_property(
+			source_view, "modulate", original_modulate, settings.refill_seconds
+		)
 		await step_finished
 		if cancelling:
 			return
@@ -118,9 +142,11 @@ func _exit_tree() -> void:
 	# Release any waiting action when the scene closes or restarts.
 	step_finished.emit()
 
+
 func _ready() -> void:
 	resized.connect(_fit_anchors)
 	_fit_anchors()
+
 
 func _fit_anchors() -> void:
 	$StageAnchor.position = Vector2(size.x * 0.5, 282.0 + (size.y - 720.0) * 0.5)

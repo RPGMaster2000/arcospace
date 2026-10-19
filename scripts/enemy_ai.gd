@@ -2,6 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Choose a legal move, using Starship Duel's priorities.
 # DOES NOT: Spend resources, apply real effects or advance turns.
+# EXTEND: Score simulated copies here; never sample live combat RNG or mutate a hand.
 const Effects = preload("res://scripts/card_effects.gd")
 const Rules = preload("res://scripts/match_rules.gd")
 @export var attack_below_hull: int = 15
@@ -10,6 +11,9 @@ var rng := RandomNumberGenerator.new()
 var tactical_weights: Dictionary = {}
 var tactical_variation: float = 0.25
 var hull_capacity: int = 35
+
+#region Move selection
+
 
 # Prefer safe immediate wins, then configured tactical scores or fallback priorities; discard if nothing is affordable.
 func choose(cards: Array, actor: Dictionary, enemy: Dictionary, resource_goal: int) -> Dictionary:
@@ -69,8 +73,10 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, resource_goal: i
 	return {"slot": _pick(affordable), "discard": false}
 
 
-func _pick(slots: Array[int]) -> int:
-	return slots[rng.randi_range(0, slots.size() - 1)]
+#endregion
+
+#region Scoring and tie breaks
+
 
 # Uses only public combat state and conservative effect simulation, never the player's hand.
 func _tactical_pick(slots: Array[int], cards: Array, actor: Dictionary, enemy: Dictionary) -> int:
@@ -83,21 +89,48 @@ func _tactical_pick(slots: Array[int], cards: Array, actor: Dictionary, enemy: D
 		var score: float = 0.0
 		score += (enemy.hull - next_enemy.hull) * float(tactical_weights.get("damage", 1.0))
 		var healed: int = mini(hull_capacity, next_actor.hull) - mini(hull_capacity, actor.hull)
-		score += healed * float(tactical_weights.get("hull", 1.0)) * (2.0 if actor.hull < hull_capacity / 2 else 1.0)
+		score += (
+			healed
+			* float(tactical_weights.get("hull", 1.0))
+			* (2.0 if actor.hull < hull_capacity / 2 else 1.0)
+		)
 		score += (next_actor.shields - actor.shields) * float(tactical_weights.get("shields", 0.4))
-		score += (enemy.shields - next_enemy.shields) * float(tactical_weights.get("disruption", 0.4))
+		score += (
+			(enemy.shields - next_enemy.shields) * float(tactical_weights.get("disruption", 0.4))
+		)
 		for index in range(Rules.RESOURCES.size()):
 			var resource: String = Rules.RESOURCES[index]
 			var production: String = Rules.PRODUCTION[index]
-			score += (next_actor[resource] - actor[resource]) * float(tactical_weights.get("resources", 0.3))
-			score += (enemy[resource] - next_enemy[resource]) * float(tactical_weights.get("disruption", 0.4))
-			score += (next_actor[production] - actor[production]) * float(tactical_weights.get("production", 4.0))
-			score += (enemy[production] - next_enemy[production]) * float(tactical_weights.get("disruption", 0.4)) * 2.0
+			score += (
+				(next_actor[resource] - actor[resource])
+				* float(tactical_weights.get("resources", 0.3))
+			)
+			score += (
+				(enemy[resource] - next_enemy[resource])
+				* float(tactical_weights.get("disruption", 0.4))
+			)
+			score += (
+				(next_actor[production] - actor[production])
+				* float(tactical_weights.get("production", 4.0))
+			)
+			score += (
+				(enemy[production] - next_enemy[production])
+				* float(tactical_weights.get("disruption", 0.4))
+				* 2.0
+			)
 		# Random resource gains are absent from conservative simulation; value their expectation.
 		var effects: Dictionary = cards[slot].effects
-		var random_value: float = float(effects.get("random_gain", 0)) + float(effects.get("random_gain_other", 0))
+		var random_value: float = (
+			float(effects.get("random_gain", 0)) + float(effects.get("random_gain_other", 0))
+		)
 		if effects.has("random_gain_range_other"):
-			random_value += (float(effects.random_gain_range_other.min) + float(effects.random_gain_range_other.max)) / 2.0
+			random_value += (
+				(
+					float(effects.random_gain_range_other.min)
+					+ float(effects.random_gain_range_other.max)
+				)
+				/ 2.0
+			)
 		score += random_value * float(tactical_weights.get("resources", 0.3))
 		score += float(tactical_weights.get("play_again", 1.0)) if cards[slot].play_again else 0.0
 		score += rng.randf_range(-tactical_variation, tactical_variation) * maxf(1.0, absf(score))
@@ -105,3 +138,9 @@ func _tactical_pick(slots: Array[int], cards: Array, actor: Dictionary, enemy: D
 			best_score = score
 			best = slot
 	return best
+
+
+func _pick(slots: Array[int]) -> int:
+	return slots[rng.randi_range(0, slots.size() - 1)]
+
+#endregion

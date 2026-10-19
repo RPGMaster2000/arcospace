@@ -1,6 +1,8 @@
 extends Resource
 class_name ExpeditionRules
 
+# RESPONSIBILITY: Store Inspector-editable encounter, service, reward and deck configuration.
+
 ## Optional repeatable services, independent of the six progression encounters.
 @export var trading_outpost: PoiData
 ## TUNE: First station system and subsequent gaps. Bounds are clamped to 2–3 at runtime.
@@ -57,10 +59,10 @@ class_name ExpeditionRules
 ## TUNE: Response titles, existing next-battle modifiers and immediate Hull adjustment.
 ## Evasive charge is additionally capped before the first-turn tick to avoid instant escape.
 @export var chasedown_responses: Array[Dictionary] = [
-	{"title":"Red Alert", "modifiers":{"shields":4, "energy":-3}, "hull":0},
-	{"title":"Evasive Maneuvers", "modifiers":{"emp_pulse_charge":3, "shields":-4}, "hull":0},
-	{"title":"Overcharge Weapons", "modifiers":{"energy":5}, "hull":-3},
-	{"title":"Hold Course", "modifiers":{}, "hull":0}
+	{"title": "Red Alert", "modifiers": {"shields": 4, "energy": -3}, "hull": 0},
+	{"title": "Evasive Maneuvers", "modifiers": {"emp_pulse_charge": 3, "shields": -4}, "hull": 0},
+	{"title": "Overcharge Weapons", "modifiers": {"energy": 5}, "hull": -3},
+	{"title": "Hold Course", "modifiers": {}, "hull": 0}
 ]
 
 @export_group("Combat card upgrades")

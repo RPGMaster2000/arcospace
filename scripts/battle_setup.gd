@@ -16,6 +16,7 @@ var previous_page: Button
 var next_page: Button
 var legend_button: Button
 
+
 func _ready() -> void:
 	get_node("/root/Music").play_starmap()
 	music_button = preload("res://scripts/ui/music_button.gd").new()
@@ -50,17 +51,46 @@ func _ready() -> void:
 		panel.get_node("Name").tooltip_text = data.role + " · " + data.summary
 		var stats: Label = panel.get_node("Stats")
 		stats.add_theme_font_override("font", Presentation.UI_FONT)
-		stats.text = "%s %d   %s %d\n%s %d   %s %d   %s %d\n%s %d   %s %d   %s %d" % [_icon("hull"), data.hull_capacity, _icon("shields"), data.shields, _icon("materials"), data.materials, _icon("energy"), data.energy, _icon("crew"), data.crew, _icon("synthesizer"), data.synthesizer, _icon("reactor"), data.reactor, _icon("quarters"), data.quarters]
-		stats.tooltip_text = "Hull / Shields\nMaterials / Energy / Crew\nSynthesizer / Reactor / Quarters\nEMP Pulse turns and resistance\n" + data.summary
+		stats.text = (
+			"%s %d   %s %d\n%s %d   %s %d   %s %d\n%s %d   %s %d   %s %d"
+			% [
+				_icon("hull"),
+				data.hull_capacity,
+				_icon("shields"),
+				data.shields,
+				_icon("materials"),
+				data.materials,
+				_icon("energy"),
+				data.energy,
+				_icon("crew"),
+				data.crew,
+				_icon("synthesizer"),
+				data.synthesizer,
+				_icon("reactor"),
+				data.reactor,
+				_icon("quarters"),
+				data.quarters
+			]
+		)
+		stats.tooltip_text = (
+			"Hull / Shields\nMaterials / Energy / Crew\nSynthesizer / Reactor / Quarters\nEMP Pulse turns and resistance\n"
+			+ data.summary
+		)
 		panel.get_node("Summary").add_theme_font_override("font", Presentation.UI_FONT)
-		panel.get_node("Summary").text = "%s %dt   %+.0f%% resistance" % [_icon("jump"), data.ftl_turns, data.ftl_resistance * 100]
-		panel.get_node("Summary").tooltip_text = data.role + " · " + data.summary + "\nEMP Pulse duration and failure resistance"
+		panel.get_node("Summary").text = (
+			"%s %dt   %+.0f%% resistance"
+			% [_icon("jump"), data.ftl_turns, data.ftl_resistance * 100]
+		)
+		panel.get_node("Summary").tooltip_text = (
+			data.role + " · " + data.summary + "\nEMP Pulse duration and failure resistance"
+		)
 		panel.tooltip_text = data.summary
 		panel.get_node("Select").pressed.connect(_select.bind(index))
 		_preview(panel.get_node("Preview/Viewport"), data)
 	_select(selected_ship)
 	resized.connect(_layout_cards)
 	_layout_cards()
+
 
 func _preview(viewport: SubViewport, data: Resource) -> void:
 	var model = (data.model_scene if data.model_scene != null else preview_model).instantiate()
@@ -69,20 +99,26 @@ func _preview(viewport: SubViewport, data: Resource) -> void:
 	model.set_hull_strength(data.hull_capacity)
 	model.set_shield_strength(data.shields)
 
+
 func _select(index: int) -> void:
 	selected_ship = clampi(index, 0, Ships.PLAYERS.size() - 1)
 	_show_ship_page(int(selected_ship / SHIPS_PER_PAGE))
 	deck_button.text = "View Deck"
 	deck_button.tooltip_text = Ships.PLAYERS[selected_ship].ship_name + " · Starting card pool"
-	if deck_viewer.shade.visible: deck_viewer.show_ship(Ships.PLAYERS[selected_ship])
+	if deck_viewer.shade.visible:
+		deck_viewer.show_ship(Ships.PLAYERS[selected_ship])
 	for slot in range(Ships.PLAYERS.size()):
 		var button: Button = get_node("Ships/Ship%d/Select" % slot)
 		button.text = "SELECTED" if slot == selected_ship else "Select ship"
 		button.modulate = Color(0.5, 0.9, 1) if slot == selected_ship else Color.WHITE
-		get_node("Ships/Ship%d" % slot).add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special, slot == selected_ship))
+		get_node("Ships/Ship%d" % slot).add_theme_stylebox_override(
+			"panel", Presentation.style(Presentation.COLORS.special, slot == selected_ship)
+		)
+
 
 func read_settings() -> Dictionary:
 	return {"player_ship": selected_ship, "modifier": 0}
+
 
 # Create the expedition only after ship confirmation; pass the library index before its _ready callback.
 func _start() -> void:
@@ -92,6 +128,7 @@ func _start() -> void:
 	get_parent().add_child(board)
 	get_tree().current_scene = board
 	queue_free()
+
 
 # Preserve the existing preview nodes and selection logic; only fit their controls.
 func _layout_cards() -> void:
@@ -122,7 +159,9 @@ func _layout_cards() -> void:
 	music_button.offset_top = 8
 	music_button.offset_bottom = 56
 	for button in [previous_page, next_page]:
-		button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT if button == previous_page else Control.PRESET_BOTTOM_RIGHT)
+		button.set_anchors_and_offsets_preset(
+			Control.PRESET_BOTTOM_LEFT if button == previous_page else Control.PRESET_BOTTOM_RIGHT
+		)
 		button.offset_left = 16 if button == previous_page else -112
 		button.offset_right = 112 if button == previous_page else -16
 		button.offset_top = $Start.offset_top
@@ -134,6 +173,7 @@ func _layout_cards() -> void:
 		if not panel.resized.is_connected(_fit_card.bind(panel)):
 			panel.resized.connect(_fit_card.bind(panel))
 		_fit_card(panel)
+
 
 func _fit_card(panel: Control) -> void:
 	for key in ["Name", "Preview", "Stats", "Summary", "Select"]:
@@ -169,8 +209,10 @@ func _fit_card(panel: Control) -> void:
 	select.offset_bottom = panel.size.y - 8
 	preload("res://scripts/ui/encounter_presentation.gd").action(select)
 
+
 func _icon(key: String) -> String:
 	return Presentation.icon(key, Presentation.UI_FONT)
+
 
 # Keep three full-sized previews per page instead of squeezing six mobile cards.
 func _build_ship_pages() -> void:
@@ -183,7 +225,9 @@ func _build_ship_pages() -> void:
 		panel.name = "Ship%d" % index
 		$Ships.add_child(panel)
 	for panel in $Ships.get_children():
-		panel.get_node("Preview/Viewport").render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
+		panel.get_node("Preview/Viewport").render_target_update_mode = (
+			SubViewport.UPDATE_WHEN_VISIBLE
+		)
 	previous_page = Button.new()
 	next_page = Button.new()
 	for button in [previous_page, next_page]:
@@ -194,6 +238,7 @@ func _build_ship_pages() -> void:
 	previous_page.pressed.connect(func(): _show_ship_page(ship_page - 1))
 	next_page.pressed.connect(func(): _show_ship_page(ship_page + 1))
 
+
 func _show_ship_page(page: int) -> void:
 	var pages: int = ceili(float(Ships.PLAYERS.size()) / SHIPS_PER_PAGE)
 	ship_page = clampi(page, 0, pages - 1)
@@ -201,7 +246,9 @@ func _show_ship_page(page: int) -> void:
 		get_node("Ships/Ship%d" % index).visible = int(index / SHIPS_PER_PAGE) == ship_page
 	previous_page.text = "‹ %d/%d" % [ship_page + 1, pages]
 	next_page.text = "%d/%d ›" % [ship_page + 1, pages]
-	previous_page.tooltip_text = "Previous ships — selected: " + Ships.PLAYERS[selected_ship].ship_name
+	previous_page.tooltip_text = (
+		"Previous ships — selected: " + Ships.PLAYERS[selected_ship].ship_name
+	)
 	next_page.tooltip_text = "Next ships — selected: " + Ships.PLAYERS[selected_ship].ship_name
 	previous_page.disabled = ship_page == 0
 	next_page.disabled = ship_page == pages - 1

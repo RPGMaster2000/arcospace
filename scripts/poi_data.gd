@@ -1,6 +1,8 @@
 extends Resource
 class_name PoiData
 
+# RESPONSIBILITY: Define a PoI and its approaches; ExpeditionState owns generation and resolution.
+
 @export var title: String = ""
 @export_multiline var description: String = ""
 @export var approaches: Array[EncounterApproach] = []

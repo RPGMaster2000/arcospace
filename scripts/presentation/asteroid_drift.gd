@@ -5,7 +5,8 @@ extends Node3D
 @export_range(0, 8, 1) var asteroid_count: int = 6:
 	set(value):
 		asteroid_count = value
-		if is_node_ready(): _visibility()
+		if is_node_ready():
+			_visibility()
 ## TUNE: Local units/second in the background plane, deliberately far behind combat ships.
 @export var drift_velocity: Vector3 = Vector3(0.035, 0.008, 0.0)
 ## TUNE: Radians/second. Child transforms remain the editable starting poses.
@@ -14,14 +15,23 @@ extends Node3D
 @export_range(4.0, 30.0, 1.0) var wrap_height: float = 9.0
 var elapsed: float = 0.0
 var poses: Array[Transform3D] = []
+
+
 func _ready() -> void:
-	for child in get_children(): poses.append(child.transform)
+	for child in get_children():
+		poses.append(child.transform)
 	_visibility()
+
+
 func _visibility() -> void:
-	for i in range(get_child_count()): get_child(i).visible = i < asteroid_count
+	for i in range(get_child_count()):
+		get_child(i).visible = i < asteroid_count
+
+
 func _process(delta: float) -> void:
 	# Keep editor-authored positions stable when inspecting/saving the scene.
-	if Engine.is_editor_hint(): return
+	if Engine.is_editor_hint():
+		return
 	elapsed += delta
 	for i in range(mini(poses.size(), get_child_count())):
 		var child: Node3D = get_child(i)

@@ -7,24 +7,39 @@ const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 
 # Independent combat RNG; simulation mode never samples this generator.
 static var combat_rng: RandomNumberGenerator = _new_rng()
-static func _new_rng() -> RandomNumberGenerator:
-	var generator = RandomNumberGenerator.new()
-	generator.randomize()
-	return generator
+
+#region Effect resolution
+
 
 # Mutate the supplied state dictionaries; Board writes them back, while EnemyAI passes copies.
 # EXTEND: New keys also need CardData descriptions, CombatModifier previews/scaling, AI scoring and tests.
-static func play(card: Resource, actor: Dictionary, enemy: Dictionary, generator: RandomNumberGenerator = null, simulate: bool = false, damage_report: Dictionary = {}) -> bool:
+static func play(
+	card: Resource,
+	actor: Dictionary,
+	enemy: Dictionary,
+	generator: RandomNumberGenerator = null,
+	simulate: bool = false,
+	damage_report: Dictionary = {}
+) -> bool:
 	damage_report.clear()
-	damage_report.merge({"actor":0,"target":0})
+	damage_report.merge({"actor": 0, "target": 0})
 	if actor[card.family] < card.cost:
 		return false
 	actor[card.family] -= card.cost
 	_apply_effects(card.effects, card.family, actor, enemy, generator, simulate, damage_report)
 	return true
 
+
 # Ordered resolution: ordinary keys first, then the selected conditional branch. No nested payment.
-static func _apply_effects(effects: Dictionary, family: String, actor: Dictionary, enemy: Dictionary, generator: RandomNumberGenerator, simulate: bool, damage_report: Dictionary) -> void:
+static func _apply_effects(
+	effects: Dictionary,
+	family: String,
+	actor: Dictionary,
+	enemy: Dictionary,
+	generator: RandomNumberGenerator,
+	simulate: bool,
+	damage_report: Dictionary
+) -> void:
 	for key in ["hull", "shields"] + RESOURCES + PRODUCTION:
 		actor[key] += int(effects.get(key, 0))
 	# TUNE in each .tres: production_other.type maps production to its matching resource.
@@ -38,7 +53,8 @@ static func _apply_effects(effects: Dictionary, family: String, actor: Dictionar
 		actor[key] = maxi(1, actor[key])
 		var adjustment: Dictionary = effects.get("enemy_production", {})
 		enemy[key] = maxi(1, enemy[key] + int(adjustment.get(key, 0)))
-	for key in RESOURCES + ["shields"]: actor[key] = maxi(0, actor[key])
+	for key in RESOURCES + ["shields"]:
+		actor[key] = maxi(0, actor[key])
 	# Exchanges use both reserves from the same snapshot, after payment; never the cost family.
 	var swapped: String = str(effects.get("swap_resource", ""))
 	if swapped in RESOURCES and swapped != family:
@@ -58,7 +74,9 @@ static func _apply_effects(effects: Dictionary, family: String, actor: Dictionar
 			var amount: int = 0
 			if key == "random_gain_range_other":
 				var bounds: Dictionary = effects[key]
-				amount = random_source.randi_range(int(bounds.get("min", 0)), int(bounds.get("max", 0)))
+				amount = random_source.randi_range(
+					int(bounds.get("min", 0)), int(bounds.get("max", 0))
+				)
 			else:
 				amount = int(effects[key])
 			actor[resource] += amount
@@ -86,7 +104,8 @@ static func _apply_effects(effects: Dictionary, family: String, actor: Dictionar
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
-	if not damage_report.has("target_before"): damage_report.target_before = enemy.hull
+	if not damage_report.has("target_before"):
+		damage_report.target_before = enemy.hull
 	damage_report.target += mini(enemy.hull, maxi(0, damage - blocked))
 	enemy.hull = maxi(0, enemy.hull - damage + blocked)
 	for key in RESOURCES:
@@ -100,7 +119,8 @@ static func _apply_effects(effects: Dictionary, family: String, actor: Dictionar
 		for key in PRODUCTION:
 			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
 	# Self damage is direct hull loss for either acting ship; shields cannot absorb it.
-	if not damage_report.has("actor_before"): damage_report.actor_before = actor.hull
+	if not damage_report.has("actor_before"):
+		damage_report.actor_before = actor.hull
 	var regular_self: int = maxi(0, int(effects.get("self_damage_regular", 0))) + backlash
 	var self_blocked: int = mini(actor.shields, regular_self)
 	actor.shields -= self_blocked
@@ -109,8 +129,16 @@ static func _apply_effects(effects: Dictionary, family: String, actor: Dictionar
 	actor.hull = maxi(0, actor.hull - hull_loss)
 	var condition: Dictionary = effects.get("conditional", {})
 	if not condition.is_empty():
-		var branch: Dictionary = condition.get("then" if condition_matches(condition, actor, enemy) else "else", {})
+		var branch: Dictionary = condition.get(
+			"then" if condition_matches(condition, actor, enemy) else "else", {}
+		)
 		_apply_effects(branch, family, actor, enemy, generator, simulate, damage_report)
+
+
+#endregion
+
+#region Predicates and random source
+
 
 # TUNE in CardData.effects/upgrade_effects: target, attribute, comparison and threshold.
 # Optional compare_target/compare_attribute compare two live stats; fraction_of uses capacity.
@@ -119,14 +147,29 @@ static func condition_matches(condition: Dictionary, actor: Dictionary, enemy: D
 	var value: float = float(subject.get(str(condition.get("attribute", "hull")), 0))
 	var threshold: float = float(condition.get("threshold", 0))
 	if condition.has("compare_attribute"):
-		var other: Dictionary = actor if condition.get("compare_target", "self") == "self" else enemy
+		var other: Dictionary = (
+			actor if condition.get("compare_target", "self") == "self" else enemy
+		)
 		threshold = float(other.get(str(condition.compare_attribute), 0))
 	elif condition.has("fraction_of"):
 		threshold *= float(subject.get(str(condition.fraction_of), subject.get("hull", 0)))
 	match str(condition.get("comparison", "at_most")):
-		"below": return value < threshold
-		"at_most": return value <= threshold
-		"equal": return value == threshold
-		"at_least": return value >= threshold
-		"above": return value > threshold
+		"below":
+			return value < threshold
+		"at_most":
+			return value <= threshold
+		"equal":
+			return value == threshold
+		"at_least":
+			return value >= threshold
+		"above":
+			return value > threshold
 	return false
+
+
+static func _new_rng() -> RandomNumberGenerator:
+	var generator = RandomNumberGenerator.new()
+	generator.randomize()
+	return generator
+
+#endregion

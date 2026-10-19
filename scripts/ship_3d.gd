@@ -1,7 +1,8 @@
 extends Node3D
-# DOES NOT: Decide damage or repair amounts; Board supplies the resulting strengths.
 
+# DOES NOT: Decide damage or repair amounts; Board supplies the resulting strengths.
 # RESPONSIBILITY: Animate the prototype mesh; never change combat state.
+
 # BattleEffects owns these tweens, so existing turn timing stays intact.
 @onready var body: Node3D = $Body
 @onready var shield: MeshInstance3D = $Shield
@@ -15,6 +16,7 @@ var rest_position: Vector3
 var hover_time: float = 0.0
 var shield_was_offline: bool = false
 
+
 func _process(delta: float) -> void:
 	hover_time += delta
 	var phase: float = 1.7 if name == "EnemyShip" else 0.0
@@ -24,10 +26,14 @@ func _process(delta: float) -> void:
 	if hull_strength < 5 and hull_strength > 0:
 		position += Vector3(sin(hover_time * 43.0), sin(hover_time * 57.0), 0) * 0.012
 
+
 func set_hull_strength(value: int) -> void:
 	hull_strength = value
 	# TUNE: Markings start below 15 hull, intensify below 5; 0.45 controls the mild coverage.
-	damage_material.set_shader_parameter("damage", 0.0 if value >= 15 else (1.0 if value < 5 else 0.45))
+	damage_material.set_shader_parameter(
+		"damage", 0.0 if value >= 15 else (1.0 if value < 5 else 0.45)
+	)
+
 
 # Duplicate per-instance materials so a hit/repair shader cannot change another ship's appearance.
 func _ready() -> void:
@@ -49,38 +55,59 @@ func _ready() -> void:
 	shield_material.set_shader_parameter("formation", 1.0)
 	shield_material.set_shader_parameter("hit", 0.0)
 
+
 func animate_hit(tween: Tween, hull_hit: bool, seconds: float) -> void:
 	var origin: Vector3 = body.position
-	tween.tween_method(func(p: float):
-		body.position = origin + Vector3(0, sin(p * TAU * 3) * 0.08 * (1.0 - p), 0)
-		if hull_hit:
-			hull_material.albedo_color = base_color.lerp(Color(1, 0.08, 0.04), sin(p * PI)),
-		0.0, 1.0, seconds)
-	tween.tween_callback(func():
-		body.position = origin
-		hull_material.albedo_color = base_color)
+	tween.tween_method(
+		func(p: float):
+			body.position = origin + Vector3(0, sin(p * TAU * 3) * 0.08 * (1.0 - p), 0)
+			if hull_hit:
+				hull_material.albedo_color = base_color.lerp(Color(1, 0.08, 0.04), sin(p * PI)),
+		0.0,
+		1.0,
+		seconds
+	)
+	tween.tween_callback(
+		func():
+			body.position = origin
+			hull_material.albedo_color = base_color
+	)
+
 
 func set_shield_strength(value: int) -> void:
 	shield.visible = value > 0
 	# TUNE: 10.0 = shield strength required for full bubble opacity.
 	shield_material.set_shader_parameter("strength", clampf(value / 10.0, 0.0, 1.0))
 
+
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:
 	if increase:
 		shield_material.set_shader_parameter("keep_shell", not shield_was_offline)
 		shield_material.set_shader_parameter("formation", 0.0)
-		tween.tween_method(func(p: float): shield_material.set_shader_parameter("formation", p), 0.0, 1.0, seconds)
+		tween.tween_method(
+			func(p: float): shield_material.set_shader_parameter("formation", p), 0.0, 1.0, seconds
+		)
 	else:
-		tween.tween_method(func(p: float):
-			shield_material.set_shader_parameter("hit", p), 0.001, 1.0, minf(seconds, 0.28))
-	tween.tween_callback(func():
-		shield_material.set_shader_parameter("formation", 1.0)
-		shield_material.set_shader_parameter("hit", 0.0))
+		tween.tween_method(
+			func(p: float): shield_material.set_shader_parameter("hit", p),
+			0.001,
+			1.0,
+			minf(seconds, 0.28)
+		)
+	tween.tween_callback(
+		func():
+			shield_material.set_shader_parameter("formation", 1.0)
+			shield_material.set_shader_parameter("hit", 0.0)
+	)
+
 
 func animate_repair(tween: Tween, seconds: float) -> void:
 	repair_material.set_shader_parameter("center_y", global_position.y)
-	tween.tween_method(func(p: float): repair_material.set_shader_parameter("progress", p), 0.0, 1.0, seconds)
+	tween.tween_method(
+		func(p: float): repair_material.set_shader_parameter("progress", p), 0.0, 1.0, seconds
+	)
 	tween.tween_callback(func(): repair_material.set_shader_parameter("progress", -1.0))
+
 
 func animate_explosions(tween: Tween, seconds: float) -> void:
 	# Small temporary flashes on actual hull surfaces; no physics or gameplay changes.
@@ -117,17 +144,29 @@ func animate_explosions(tween: Tween, seconds: float) -> void:
 		material.albedo_color = Color(1, 0.5, 0.08)
 		flash.material_override = material
 		hull_mesh.add_child(flash)
-		flash.position = a * (1.0 - u) + b * u * (1.0 - v) + c * u * v + (c - a).cross(b - a).normalized() * 0.06
+		flash.position = (
+			a * (1.0 - u) + b * u * (1.0 - v) + c * u * v + (c - a).cross(b - a).normalized() * 0.06
+		)
 		flash.scale = Vector3.ONE * 0.001
 		flashes.append(flash)
-	tween.tween_method(func(p: float):
-		for i in range(flashes.size()):
-			var age: float = clampf((p - i * 0.1) / 0.6, 0.0, 1.0)
-			flashes[i].scale = Vector3.ONE * maxf(0.001, sin(age * PI) * 1.8)
-			flashes[i].material_override.albedo_color = Color(1, 0.55 * (1.0 - age), 0.05, 1.0 - age), 0.0, 1.0, seconds)
-	tween.tween_callback(func():
-		for flash in flashes:
-			flash.queue_free())
+	tween.tween_method(
+		func(p: float):
+			for i in range(flashes.size()):
+				var age: float = clampf((p - i * 0.1) / 0.6, 0.0, 1.0)
+				flashes[i].scale = Vector3.ONE * maxf(0.001, sin(age * PI) * 1.8)
+				flashes[i].material_override.albedo_color = Color(
+					1, 0.55 * (1.0 - age), 0.05, 1.0 - age
+				),
+		0.0,
+		1.0,
+		seconds
+	)
+	tween.tween_callback(
+		func():
+			for flash in flashes:
+				flash.queue_free()
+	)
+
 
 func set_hull_color(color: Color) -> void:
 	# Each instance already owns a duplicated Hull material; effect materials stay untouched.

@@ -1,4 +1,6 @@
 extends CanvasLayer
+
+# RESPONSIBILITY: Present approach details and confirmation; ExpeditionState validates and resolves.
 # Presentation-only confirmation. The expedition owns validation and rewards.
 signal cancelled
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -10,6 +12,7 @@ var cancel_button: Button
 var initiate: Button
 var tween: Tween
 var previous_focus: Control
+
 
 func _ready() -> void:
 	layer = 115
@@ -45,10 +48,13 @@ func _ready() -> void:
 	panel.minimum_size_changed.connect(func(): _fit.call_deferred())
 	shade.hide()
 
+
 func _fit() -> void:
-	if not is_instance_valid(panel): return
+	if not is_instance_valid(panel):
+		return
 	panel.size = Vector2(minf(920, shade.size.x - 48), 0)
 	panel.position = Vector2((shade.size.x - panel.size.x) / 2, shade.size.y - panel.size.y - 24)
+
 
 func present(value: String) -> void:
 	previous_focus = get_viewport().gui_get_focus_owner()
@@ -56,7 +62,8 @@ func present(value: String) -> void:
 	shade.modulate.a = 0
 	shade.show()
 	_fit()
-	if tween: tween.kill()
+	if tween:
+		tween.kill()
 	tween = create_tween()
 	tween.tween_property(shade, "modulate:a", 1.0, .18)
 	var controls = _focus_controls()
@@ -70,13 +77,18 @@ func present(value: String) -> void:
 		control.focus_neighbor_bottom = following
 	cancel_button.grab_focus()
 
+
 func dismiss() -> void:
-	if tween: tween.kill()
+	if tween:
+		tween.kill()
 	shade.hide()
-	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
+	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree():
+		previous_focus.grab_focus()
+
 
 func _input(event: InputEvent) -> void:
-	if not shade.visible: return
+	if not shade.visible:
+		return
 	if event.is_action_pressed("ui_cancel"):
 		cancelled.emit()
 		get_viewport().set_input_as_handled()
@@ -84,13 +96,23 @@ func _input(event: InputEvent) -> void:
 		# Keep keyboard focus in the modal, including the optional repair slider.
 		var controls = _focus_controls()
 		var current = controls.find(get_viewport().gui_get_focus_owner())
-		if not controls.is_empty(): controls[posmod(current + (-1 if event.shift_pressed else 1), controls.size())].grab_focus()
+		if not controls.is_empty():
+			(
+				controls[posmod(current + (-1 if event.shift_pressed else 1), controls.size())]
+				. grab_focus()
+			)
 		get_viewport().set_input_as_handled()
+
 
 func _focus_controls() -> Array[Control]:
 	var controls: Array[Control] = []
 	for child in column.get_children():
 		for control in child.get_children():
-			if control is Control and control.is_visible_in_tree() and control.focus_mode == Control.FOCUS_ALL:
-				if not control is BaseButton or not control.disabled: controls.append(control)
+			if (
+				control is Control
+				and control.is_visible_in_tree()
+				and control.focus_mode == Control.FOCUS_ALL
+			):
+				if not control is BaseButton or not control.disabled:
+					controls.append(control)
 	return controls

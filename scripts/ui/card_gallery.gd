@@ -1,4 +1,6 @@
 extends VBoxContainer
+
+# RESPONSIBILITY: Display a filterable, scrollable card gallery and emit the selected identity.
 signal card_selected(card: Resource)
 const Portrait = preload("res://scripts/ui/card_portrait.gd")
 const Scroll = preload("res://scripts/ui/encounter_scroll.gd")
@@ -13,6 +15,7 @@ var sorting: OptionButton
 var scroll: ScrollContainer
 var grid: GridContainer
 var count: Label
+
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 12)
@@ -33,8 +36,14 @@ func _ready() -> void:
 	sorting.custom_minimum_size = Vector2(140, 48)
 	sorting.tooltip_text = "Sort cards"
 	Style.action(sorting)
-	for value in ["Name", "Cost", "Rarity", "Family"]: sorting.add_item(value)
-	sorting.item_selected.connect(func(index): sort_mode = index; scroll.scroll_vertical = 0; rebuild())
+	for value in ["Name", "Cost", "Rarity", "Family"]:
+		sorting.add_item(value)
+	sorting.item_selected.connect(
+		func(index):
+			sort_mode = index
+			scroll.scroll_vertical = 0
+			rebuild()
+	)
 	filters.add_child(sorting)
 	count = Label.new()
 	count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -56,18 +65,55 @@ func _ready() -> void:
 	scroll.resized.connect(_fit)
 	rebuild()
 
+
 static func matches(card: Resource, value: String) -> bool:
 	return matches_effects(card.effects, value) or (value == "Utility" and card.play_again)
 
+
 static func matches_effects(effects: Dictionary, value: String) -> bool:
 	var conditional: Dictionary = effects.get("conditional", {})
-	if not conditional.is_empty() and (matches_effects(conditional.get("then", {}), value) or matches_effects(conditional.get("else", {}), value)): return true
+	if (
+		not conditional.is_empty()
+		and (
+			matches_effects(conditional.get("then", {}), value)
+			or matches_effects(conditional.get("else", {}), value)
+		)
+	):
+		return true
 	match value:
-		"Attack": return effects.has("damage") or effects.has("break_shields") or effects.has("shield_collapse") or effects.has("shield_collapse_below")
-		"Defense": return effects.has("hull") or effects.has("shields") or effects.has("swap_shields")
-		"Production": return effects.has("production_other") or effects.has("synthesizer") or effects.has("reactor") or effects.has("quarters") or effects.has("enemy_production")
-		"Utility": return effects.has("drain") or effects.has("steal") or effects.has("sabotage") or effects.has("random_gain") or effects.has("random_gain_other") or effects.has("random_gain_range_other") or effects.has("materials") or effects.has("energy") or effects.has("crew") or effects.has("swap_resource") or effects.has("enemy_production")
+		"Attack":
+			return (
+				effects.has("damage")
+				or effects.has("break_shields")
+				or effects.has("shield_collapse")
+				or effects.has("shield_collapse_below")
+			)
+		"Defense":
+			return effects.has("hull") or effects.has("shields") or effects.has("swap_shields")
+		"Production":
+			return (
+				effects.has("production_other")
+				or effects.has("synthesizer")
+				or effects.has("reactor")
+				or effects.has("quarters")
+				or effects.has("enemy_production")
+			)
+		"Utility":
+			return (
+				effects.has("drain")
+				or effects.has("steal")
+				or effects.has("sabotage")
+				or effects.has("random_gain")
+				or effects.has("random_gain_other")
+				or effects.has("random_gain_range_other")
+				or effects.has("materials")
+				or effects.has("energy")
+				or effects.has("crew")
+				or effects.has("swap_resource")
+				or effects.has("enemy_production")
+			)
 	return true
+
 
 func set_cards(values: Array) -> void:
 	cards.assign(values)
@@ -75,12 +121,15 @@ func set_cards(values: Array) -> void:
 		scroll.scroll_vertical = 0
 		rebuild()
 
+
 func set_category(value: String) -> void:
 	category = value
 	for child in filters.get_children():
-		if child is Button and not child is OptionButton: child.button_pressed = child.text == value
+		if child is Button and not child is OptionButton:
+			child.button_pressed = child.text == value
 	scroll.scroll_vertical = 0
 	rebuild()
+
 
 func rebuild() -> void:
 	for child in grid.get_children():
@@ -88,23 +137,32 @@ func rebuild() -> void:
 		child.queue_free()
 	visible_cards.clear()
 	for card in cards:
-		if matches(card, category): visible_cards.append(card)
-	visible_cards.sort_custom(func(a, b):
-		var first = [a.card_name, a.cost, a.tier, a.family][sort_mode]
-		var second = [b.card_name, b.cost, b.tier, b.family][sort_mode]
-		return a.card_name < b.card_name if first == second else first < second)
+		if matches(card, category):
+			visible_cards.append(card)
+	visible_cards.sort_custom(
+		func(a, b):
+			var first = [a.card_name, a.cost, a.tier, a.family][sort_mode]
+			var second = [b.card_name, b.cost, b.tier, b.family][sort_mode]
+			return a.card_name < b.card_name if first == second else first < second
+	)
 	for card in visible_cards:
 		var portrait = Portrait.new()
 		portrait.card_data = card
 		grid.add_child(portrait)
-		portrait.pressed.connect(func():
-			if scroll.allows_activation(): card_selected.emit(card))
+		portrait.pressed.connect(
+			func():
+				if scroll.allows_activation():
+					card_selected.emit(card)
+		)
 	count.text = "%d / %d cards" % [visible_cards.size(), cards.size()]
 	_fit.call_deferred()
 
+
 func _fit() -> void:
-	if not is_instance_valid(grid): return
+	if not is_instance_valid(grid):
+		return
 	grid.columns = maxi(1, floori((scroll.size.x - 16 + 18) / (198 + 18)))
+
 
 func set_interaction_enabled(enabled: bool) -> void:
 	scroll.set_process_input(enabled)

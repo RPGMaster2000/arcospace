@@ -1,6 +1,7 @@
 extends Resource
 # RESPONSIBILITY: Own expedition state, generation, rewards and battle handoff.
 # DOES NOT: Create UI nodes, animate travel or resolve individual combat actions.
+# EXTEND: Keep generation, ownership and completion here; expedition.gd only presents them.
 class_name ExpeditionState
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
@@ -9,9 +10,17 @@ const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/card_library.gd")
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const RESOURCES = ["materials", "energy", "crew"]
-const LABELS = {"synthesizer":"Synthesizer", "reactor":"Reactor", "quarters":"Quarters",
-	"materials":"Materials", "energy":"Energy", "crew":"Crew", "shields":"Shields",
-	"emp_pulse_charge":"EMP Pulse charge", "emp_pulse_offline":"EMP Pulse offline turns"}
+const LABELS = {
+	"synthesizer": "Synthesizer",
+	"reactor": "Reactor",
+	"quarters": "Quarters",
+	"materials": "Materials",
+	"energy": "Energy",
+	"crew": "Crew",
+	"shields": "Shields",
+	"emp_pulse_charge": "EMP Pulse charge",
+	"emp_pulse_offline": "EMP Pulse offline turns"
+}
 var rules: Resource
 var player_ship: int = 0
 var hull: int = 0
@@ -53,13 +62,17 @@ var pending_destination: int = -1
 var chasedown_index: int = -1
 var chasedowns_this_system: int = 0
 var chasedown_rng := RandomNumberGenerator.new()
-var field_repairs_open: bool = false # Set only by the exploration controller while the system view is open.
+var field_repairs_open: bool = false  # Set only by the exploration controller while the system view is open.
 var active_battle: int = -1
 var rng := RandomNumberGenerator.new()
 var seed_used: int = 0
 
+#region Run setup
+
+
 func encounter_at(index: int) -> Dictionary:
 	return service if index == SERVICE_INDEX else encounters[index]
+
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	rules = configuration
@@ -100,84 +113,139 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	next_outpost_system = _station_interval()
 	generate_system()
 
+
 func ship() -> Resource:
 	return Ships.PLAYERS[player_ship]
+
 
 func production(key: String) -> int:
 	return int(ship().get(key)) + int(production_upgrades.get(key, 0))
 
+
+#endregion
+
+#region Systems and navigation
+
+
 func can_jump() -> bool:
-	return hull > 0 and active_battle < 0 and pending_destination < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge and not mandatory_boss_pending()
+	return (
+		hull > 0
+		and active_battle < 0
+		and pending_destination < 0
+		and pending_choice.is_empty()
+		and ftl_charge >= required_ftl_charge
+		and not mandatory_boss_pending()
+	)
+
 
 func mandatory_boss_pending() -> bool:
 	var found: bool = false
 	for encounter in encounters:
 		if encounter.get("mandatory_boss", false):
 			found = true
-			if not encounter.completed: return true
+			if not encounter.completed:
+				return true
 	# Fail closed if a malformed/custom milestone loses its mandatory encounter.
 	return not found and rules.progression.is_boss_system(system_number)
+
 
 func difficulty_level() -> int:
 	return rules.progression.difficulty_level(system_number)
 
+
 func _enemy_index(items: Array) -> int:
-	if difficulty_level() == 1: return _weighted_index(items)
+	if difficulty_level() == 1:
+		return _weighted_index(items)
 	var elites: Array = []
 	var others: Array = []
 	for profile in items:
-		if profile.enemy_rank == 1: elites.append(profile)
-		else: others.append(profile)
-	if elites.is_empty() or others.is_empty(): return _weighted_index(items)
-	var bucket: Array = elites if rng.randf() < rules.progression.elite_probability(items, system_number) else others
+		if profile.enemy_rank == 1:
+			elites.append(profile)
+		else:
+			others.append(profile)
+	if elites.is_empty() or others.is_empty():
+		return _weighted_index(items)
+	var bucket: Array = (
+		elites
+		if rng.randf() < rules.progression.elite_probability(items, system_number)
+		else others
+	)
 	return items.find(bucket[_weighted_index(bucket)])
+
 
 func _weighted_index(items: Array) -> int:
 	var total: float = 0.0
-	for item in items: total += maxf(0.01, item.encounter_weight)
+	for item in items:
+		total += maxf(0.01, item.encounter_weight)
 	var roll: float = rng.randf() * total
 	for index in range(items.size()):
 		roll -= maxf(0.01, items[index].encounter_weight)
-		if roll <= 0: return index
+		if roll <= 0:
+			return index
 	return items.size() - 1
+
 
 func _station_interval() -> int:
 	var low: int = clampi(rules.minimum_station_interval, 2, 3)
 	var high: int = clampi(rules.maximum_station_interval, low, 3)
 	return station_rng.randi_range(low, high)
 
+
 # Generate encounters from one rules registry; both map and grid read this same array.
 # Carryover and mandatory Boss replacement happen here, independently of presentation.
 func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
-	if system_number > 0 and not can_jump(): return false
-	var carried_charge: int = rules.progression.carryover(ftl_charge, required_ftl_charge) if system_number > 0 else 0
+	if system_number > 0 and not can_jump():
+		return false
+	var carried_charge: int = (
+		rules.progression.carryover(ftl_charge, required_ftl_charge) if system_number > 0 else 0
+	)
 	var ordinary: Array = []
 	var hazardous: Array = []
 	for poi in rules.pois:
-		if poi.hazardous: hazardous.append(poi)
-		else: ordinary.append(poi)
+		if poi.hazardous:
+			hazardous.append(poi)
+		else:
+			ordinary.append(poi)
 	var enemies: Array = rules.enemy_ships.duplicate()
-	if enemies.is_empty(): enemies.assign(Ships.ENEMIES)
+	if enemies.is_empty():
+		enemies.assign(Ships.ENEMIES)
 	var count: int = maxi(2, rules.encounters_per_system)
 	var compositions: Array[Dictionary] = []
 	var total_weight: float = 0.0
 	for battles in range(1, count + 1):
 		for hazards in range(count - battles + 1):
 			var normal: int = count - battles - hazards
-			if battles < rules.minimum_battles or battles > rules.maximum_battles: continue
-			if normal < rules.minimum_ordinary or normal > rules.maximum_ordinary: continue
-			if hazards < rules.minimum_hazardous or hazards > rules.maximum_hazardous: continue
-			if (normal > 0 and ordinary.is_empty()) or (hazards > 0 and hazardous.is_empty()): continue
-			var weight: float = pow(maxf(.01, rules.battle_weight), battles) * pow(maxf(.01, rules.ordinary_weight), normal) * pow(maxf(.01, rules.hazardous_weight), hazards)
+			if battles < rules.minimum_battles or battles > rules.maximum_battles:
+				continue
+			if normal < rules.minimum_ordinary or normal > rules.maximum_ordinary:
+				continue
+			if hazards < rules.minimum_hazardous or hazards > rules.maximum_hazardous:
+				continue
+			if (normal > 0 and ordinary.is_empty()) or (hazards > 0 and hazardous.is_empty()):
+				continue
+			var weight: float = (
+				pow(maxf(.01, rules.battle_weight), battles)
+				* pow(maxf(.01, rules.ordinary_weight), normal)
+				* pow(maxf(.01, rules.hazardous_weight), hazards)
+			)
 			total_weight += weight
-			compositions.append({"battle":battles, "ordinary":normal, "hazardous":hazards, "weight":weight})
+			compositions.append(
+				{"battle": battles, "ordinary": normal, "hazardous": hazards, "weight": weight}
+			)
 	var composition: Dictionary
 	if compositions.is_empty():
-		push_warning("Encounter bounds cannot fill a system. Falling back to one enemy and available PoIs (or all enemies if no PoIs exist).")
-		composition = {"battle":1, "ordinary":count - 1 if not ordinary.is_empty() else 0, "hazardous":count - 1 if ordinary.is_empty() and not hazardous.is_empty() else 0}
-		if ordinary.is_empty() and hazardous.is_empty(): composition.battle = count
+		push_warning(
+			"Encounter bounds cannot fill a system. Falling back to one enemy and available PoIs (or all enemies if no PoIs exist)."
+		)
+		composition = {
+			"battle": 1,
+			"ordinary": count - 1 if not ordinary.is_empty() else 0,
+			"hazardous": count - 1 if ordinary.is_empty() and not hazardous.is_empty() else 0
+		}
+		if ordinary.is_empty() and hazardous.is_empty():
+			composition.battle = count
 	else:
 		var roll: float = rng.randf() * total_weight
 		composition = compositions.back()
@@ -197,7 +265,12 @@ func generate_system() -> bool:
 	service = {}
 	if system_number >= next_outpost_system:
 		if rules.trading_outpost != null:
-			service = {"kind":"service", "poi":rules.trading_outpost, "title":rules.trading_outpost.title, "completed":false}
+			service = {
+				"kind": "service",
+				"poi": rules.trading_outpost,
+				"title": rules.trading_outpost.title,
+				"completed": false
+			}
 			station_production_purchases = 0
 		next_outpost_system = system_number + _station_interval()
 	service_revision += 1
@@ -209,24 +282,51 @@ func generate_system() -> bool:
 	if boss_system:
 		var ordinary_enemies: Array = []
 		for profile in enemies:
-			if profile.enemy_rank != 2: ordinary_enemies.append(profile)
-		if not ordinary_enemies.is_empty(): enemies = ordinary_enemies
+			if profile.enemy_rank != 2:
+				ordinary_enemies.append(profile)
+		if not ordinary_enemies.is_empty():
+			enemies = ordinary_enemies
 	for category in ["ordinary", "hazardous", "battle"]:
-		var library: Array = enemies if category == "battle" else (ordinary if category == "ordinary" else hazardous)
+		var library: Array = (
+			enemies if category == "battle" else (ordinary if category == "ordinary" else hazardous)
+		)
 		var available: Array = library.duplicate()
 		for slot in range(int(composition[category])):
-			if available.is_empty(): available = library.duplicate()
+			if available.is_empty():
+				available = library.duplicate()
 			var mandatory: bool = category == "battle" and boss_system and not boss_added
 			var entry: Resource
 			if mandatory:
 				entry = rules.progression.mandatory_boss_profile()
 				boss_added = true
 			else:
-				entry = available.pop_at(_enemy_index(available) if category == "battle" else _weighted_index(available))
+				entry = available.pop_at(
+					_enemy_index(available) if category == "battle" else _weighted_index(available)
+				)
 			if category == "battle":
-				encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(entry)), "enemy_data":entry, "system_number":system_number, "mandatory_boss":mandatory, "modifier":Modifiers.roll_encounter(rng), "title":entry.ship_name, "completed":false, "charge_awarded":false})
+				encounters.append(
+					{
+						"kind": "battle",
+						"enemy": maxi(0, Ships.ENEMIES.find(entry)),
+						"enemy_data": entry,
+						"system_number": system_number,
+						"mandatory_boss": mandatory,
+						"modifier": Modifiers.roll_encounter(rng),
+						"title": entry.ship_name,
+						"completed": false,
+						"charge_awarded": false
+					}
+				)
 			else:
-				encounters.append({"kind":"poi", "poi":entry, "title":entry.title, "completed":false, "charge_awarded":false})
+				encounters.append(
+					{
+						"kind": "poi",
+						"poi": entry,
+						"title": entry.title,
+						"completed": false,
+						"charge_awarded": false
+					}
+				)
 	for index in range(encounters.size() - 1, 0, -1):
 		var other: int = rng.randi_range(0, index)
 		var swap: Dictionary = encounters[index]
@@ -234,23 +334,35 @@ func generate_system() -> bool:
 		encounters[other] = swap
 	return true
 
+
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
 	return rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)))
 
+
 func encounter_charge(index: int) -> int:
-	if index == SERVICE_INDEX: return 0
-	if encounters[index].get("chasedown", false): return 1
-	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
+	if index == SERVICE_INDEX:
+		return 0
+	if encounters[index].get("chasedown", false):
+		return 1
+	return (
+		1
+		if encounters[index].kind == "poi"
+		else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
+	)
+
 
 # Single completion gate: award travel charge once, shared by PoI resolution and battle results.
 func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
-	if index == SERVICE_INDEX: return false
-	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false): return false
+	if index == SERVICE_INDEX:
+		return false
+	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false):
+		return false
 	encounters[index].completed = true
 	encounters[index].charge_awarded = true
 	ftl_charge += encounter_charge(index) + maxi(0, extra_charge)
 	return true
+
 
 ## Conservative remaining charge: ignores optional wormhole bonuses.
 func remaining_ftl_charge() -> int:
@@ -260,39 +372,162 @@ func remaining_ftl_charge() -> int:
 			result += encounter_charge(index)
 	return result
 
+
 func can_survey(index: int) -> bool:
-	if not can_visit(index) or index == SERVICE_INDEX or encounters[index].kind != "poi": return false
+	if not can_visit(index) or index == SERVICE_INDEX or encounters[index].kind != "poi":
+		return false
 	for approach in encounters[index].poi.approaches:
-		if not locked_reason(approach).is_empty(): continue
+		if not locked_reason(approach).is_empty():
+			continue
 		var worst: int = approach.success.hull
-		if approach.success_chance < 1: worst = mini(worst, approach.failure.hull)
-		if hull + worst > 0: return false
+		if approach.success_chance < 1:
+			worst = mini(worst, approach.failure.hull)
+		if hull + worst > 0:
+			return false
 	return true
 
+
 func survey(index: int) -> bool:
-	if not can_survey(index): return false
+	if not can_survey(index):
+		return false
 	last_poi_success = -1
 	_complete_encounter(index)
 	add_modifiers(rules.survey_penalty)
-	last_outcome = "Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: " + describe_modifiers(rules.survey_penalty)
+	last_outcome = (
+		"Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: "
+		+ describe_modifiers(rules.survey_penalty)
+	)
 	return true
 
+
 func can_visit(index: int) -> bool:
-	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty(): return false
+	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
+		return false
 	if pending_destination >= 0 and index != chasedown_index:
-		if chasedown_unresolved() or index != pending_destination: return false
-	if index == chasedown_index and chasedown_unresolved() and encounters[index].response < 0: return false
-	if index == SERVICE_INDEX: return not service.is_empty()
+		if chasedown_unresolved() or index != pending_destination:
+			return false
+	if index == chasedown_index and chasedown_unresolved() and encounters[index].response < 0:
+		return false
+	if index == SERVICE_INDEX:
+		return not service.is_empty()
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
+
+# Roll once at actual movement initiation; arrival, menus and battle returns never call this.
+# Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
+func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
+	if not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi":
+		return false
+	if pending_destination >= 0 or navigation_origin < 0 or navigation_origin == destination:
+		return false
+	if navigation_origin >= encounters.size() or encounters[navigation_origin].kind != "poi":
+		return false
+	if chasedowns_this_system >= maxi(0, rules.chasedown_limit):
+		return false
+	var pool: Array = []
+	for profile in rules.enemy_ships:
+		if profile.enemy_rank == 0:
+			pool.append(profile)
+	if pool.is_empty():
+		for profile in Ships.ENEMIES:
+			if profile.enemy_rank == 0:
+				pool.append(profile)
+	if pool.is_empty():
+		return false
+	var chance: float = clampf(rules.chasedown_chance, 0.0, 1.0)
+	if chance <= 0:
+		return false
+	var roll: float = chasedown_rng.randf() if forced_roll < 0 else forced_roll
+	if roll >= chance:
+		return false
+	var total: float = 0.0
+	for profile in pool:
+		total += maxf(0.01, profile.encounter_weight)
+	var selection: float = chasedown_rng.randf() * total
+	var enemy: Resource = pool.back()
+	for profile in pool:
+		selection -= maxf(0.01, profile.encounter_weight)
+		if selection <= 0:
+			enemy = profile
+			break
+	pending_destination = destination
+	chasedowns_this_system += 1
+	chasedown_index = encounters.size()
+	# Existing encounter/result pipeline awards exactly one unit; this entry has no map marker.
+	encounters.append(
+		{
+			"kind": "battle",
+			"enemy": maxi(0, Ships.ENEMIES.find(enemy)),
+			"enemy_data": enemy,
+			"system_number": system_number,
+			"modifier": 0,
+			"mandatory_boss": false,
+			"chasedown": true,
+			"response": -1,
+			"title": "Sublight Chasedown",
+			"completed": false,
+			"charge_awarded": false
+		}
+	)
+	return true
+
+
+func chasedown_unresolved() -> bool:
+	return (
+		chasedown_index >= 0
+		and chasedown_index < encounters.size()
+		and not encounters[chasedown_index].completed
+	)
+
+
+func choose_chasedown_response(choice: int) -> bool:
+	if (
+		hull <= 0
+		or not chasedown_unresolved()
+		or active_battle >= 0
+		or not pending_choice.is_empty()
+	):
+		return false
+	var encounter: Dictionary = encounters[chasedown_index]
+	if encounter.response >= 0 or choice < 0 or choice >= rules.chasedown_responses.size():
+		return false
+	var response: Dictionary = rules.chasedown_responses[choice]
+	encounter.response = choice
+	add_modifiers(response.get("modifiers", {}))
+	hull = maxi(1, hull + int(response.get("hull", 0)))
+	return true
+
+
+func arrive_destination(index: int) -> void:
+	navigation_origin = index
+	if index == pending_destination and not chasedown_unresolved():
+		pending_destination = -1
+
+
+#endregion
+
+#region Approaches and modifiers
+
+
 func locked_reason(approach: Resource) -> String:
-	if not approach.requirement.is_empty() and production(approach.requirement) < approach.minimum_production:
-		return "Requires %s ≥%d (you have %d)" % [LABELS[approach.requirement], approach.minimum_production, production(approach.requirement)]
+	if (
+		not approach.requirement.is_empty()
+		and production(approach.requirement) < approach.minimum_production
+	):
+		return (
+			"Requires %s ≥%d (you have %d)"
+			% [
+				LABELS[approach.requirement],
+				approach.minimum_production,
+				production(approach.requirement)
+			]
+		)
 	if salvage < approach.salvage_cost:
 		return "Requires %d Salvage (you have %d)" % [approach.salvage_cost, salvage]
 	if approach.success.hull > 0 and hull >= ship().hull_capacity:
 		return "Hull already full"
 	return ""
+
 
 # Validate/pay the approach, roll its outcome and complete the PoI before applying rewards.
 # forced_roll is a deterministic test hook; normal play uses this expedition's RNG.
@@ -309,16 +544,24 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	var roll: float = rng.randf() if forced_roll < 0 else forced_roll
 	var success: bool = roll < approach.success_chance
 	var outcome: Resource = approach.success if success else approach.failure
-	if not _complete_encounter(index, outcome.extra_ftl_charge): return false
+	if not _complete_encounter(index, outcome.extra_ftl_charge):
+		return false
 	last_poi_success = 1 if success else 0
 	# The roll and seed are printed for reproducing balance reports.
-	if rules.log_rolls: print("Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s" % [seed_used, system_number, index, approach_index, roll, success])
+	if rules.log_rolls:
+		print(
+			(
+				"Expedition seed=%d system=%d encounter=%d approach=%d roll=%.4f success=%s"
+				% [seed_used, system_number, index, approach_index, roll, success]
+			)
+		)
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
 	last_outcome += "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	_apply_outcome(outcome)
 	return true
+
 
 # Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
@@ -340,7 +583,10 @@ func _apply_outcome(outcome: Resource) -> void:
 	elif outcome.upgrade_card:
 		if upgrade_candidates().is_empty():
 			salvage += rules.unavailable_upgrade_salvage
-			last_outcome += "\nAll cards fully upgraded: +%d Salvage instead." % rules.unavailable_upgrade_salvage
+			last_outcome += (
+				"\nAll cards fully upgraded: +%d Salvage instead."
+				% rules.unavailable_upgrade_salvage
+			)
 		else:
 			start_upgrade_event(1)
 	elif outcome.resource_choice > 0:
@@ -350,65 +596,181 @@ func _apply_outcome(outcome: Resource) -> void:
 		pending_choice = "production"
 		choice_amount = outcome.production_choice
 
+
+func add_modifiers(values: Dictionary) -> void:
+	for key in values:
+		var amount: int = int(values[key])
+		# Temporary production modifiers are unsupported; outpost upgrades use their own ledger.
+		if key in PRODUCTION:
+			continue
+		if key == "emp_pulse_offline":
+			pending_bonuses[key] = maxi(int(pending_bonuses.get(key, 0)), amount)
+		elif amount > 0:
+			pending_bonuses[key] = int(pending_bonuses.get(key, 0)) + amount
+		elif amount < 0:
+			pending_penalties[key] = int(pending_penalties.get(key, 0)) + amount
+
+
+func modifier_value(key: String) -> int:
+	return int(pending_bonuses.get(key, 0)) + int(pending_penalties.get(key, 0))
+
+
+## Resource penalties cap against unmodified ship starts, before normal turn income.
+func starting_value(profile: Resource, key: String) -> int:
+	var base: int = int(profile.get(key))
+	var penalty: int = absi(int(pending_penalties.get(key, 0)))
+	if key in RESOURCES:
+		penalty = mini(penalty, floori(base * 0.5))
+	return maxi(0, base + int(pending_bonuses.get(key, 0)) - penalty)
+
+
+func describe_modifiers(values: Dictionary) -> String:
+	var parts: Array[String] = []
+	for key in values:
+		parts.append("%+d %s" % [values[key], LABELS.get(key, key)])
+	return " · ".join(parts)
+
+
+func describe_outcome(outcome: Resource) -> String:
+	var parts: Array[String] = []
+	if outcome.extra_ftl_charge > 0:
+		parts.append("+%d extra FTL Drive charge" % outcome.extra_ftl_charge)
+	if outcome.salvage != 0:
+		parts.append("%+d Salvage" % outcome.salvage)
+	if outcome.hull != 0:
+		parts.append("%+d permanent Hull" % outcome.hull)
+	for key in outcome.next_battle:
+		parts.append("%+d %s next battle" % [outcome.next_battle[key], LABELS.get(key, key)])
+	if outcome.card_reward:
+		parts.append(
+			(
+				"Choose 1 of 3 %scards"
+				% ("uncommon-or-better " if outcome.minimum_card_tier > 1 else "")
+			)
+		)
+	if outcome.upgrade_card:
+		parts.append("Upgrade one player card")
+	if outcome.resource_choice > 0:
+		parts.append("+%d starting resource of choice next battle" % outcome.resource_choice)
+	if outcome.production_choice > 0:
+		parts.append("+%d production of choice for expedition" % outcome.production_choice)
+	return " · ".join(parts)
+
+
+func pending_description() -> String:
+	var parts: Array[String] = []
+	var keys: Array = pending_bonuses.keys()
+	for key in pending_penalties:
+		if not keys.has(key):
+			keys.append(key)
+	for key in keys:
+		var positive: int = int(pending_bonuses.get(key, 0))
+		var negative: int = int(pending_penalties.get(key, 0))
+		if positive > 0:
+			parts.append("+%d %s" % [positive, LABELS.get(key, key)])
+		if negative < 0:
+			parts.append("%d %s" % [negative, LABELS.get(key, key)])
+	return "None" if parts.is_empty() else " · ".join(parts)
+
+
+#endregion
+
+#region Repairs and services
+
+
 func field_repair_limit() -> int:
-	if not field_repairs_open or active_battle >= 0 or not pending_choice.is_empty() or hull <= 0: return 0
+	if not field_repairs_open or active_battle >= 0 or not pending_choice.is_empty() or hull <= 0:
+		return 0
 	return Repairs.max_quantity(hull, ship().hull_capacity, salvage, Repairs.FIELD_SALVAGE_PER_HULL)
+
 
 # A confirmation is consumed once. A second purchase requires a fresh revision/selection.
 func field_repair(amount: int, revision: int) -> bool:
-	if revision != service_revision or amount <= 0 or amount > field_repair_limit(): return false
+	if revision != service_revision or amount <= 0 or amount > field_repair_limit():
+		return false
 	salvage -= Repairs.quantity_cost(amount, Repairs.FIELD_SALVAGE_PER_HULL)
 	hull += amount
 	service_revision += 1
 	return true
 
+
 func station_plating_mode() -> bool:
 	return hull >= ship().hull_capacity
+
 
 func station_hull_ceiling() -> int:
 	return ship().hull_capacity + (Repairs.STATION_PLATING_LIMIT if station_plating_mode() else 0)
 
+
 func station_hull_unit_cost() -> int:
 	return Repairs.PLATING_SALVAGE_PER_POINT if station_plating_mode() else 1
 
+
 func station_hull_title() -> String:
-	if not station_plating_mode(): return "Repair Hull"
+	if not station_plating_mode():
+		return "Repair Hull"
 	return "Ablative Plating Full" if hull >= station_hull_ceiling() else "Install Ablative Plating"
+
 
 ## Shared quantity bounds; damaged Hull uses 1:1 repairs, full Hull uses 2:1 plating.
 func station_repair_limit() -> int:
 	return Repairs.max_quantity(hull, station_hull_ceiling(), salvage, station_hull_unit_cost())
 
+
 func service_is_repair(slot: int) -> bool:
-	return not service.is_empty() and slot >= 0 and slot < service.poi.approaches.size() and service.poi.approaches[slot].success.hull > 0
+	return (
+		not service.is_empty()
+		and slot >= 0
+		and slot < service.poi.approaches.size()
+		and service.poi.approaches[slot].success.hull > 0
+	)
+
 
 func service_cost(slot: int, repair_amount: int = 1) -> int:
-	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size(): return 0
+	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size():
+		return 0
 	var approach: Resource = service.poi.approaches[slot]
-	if approach.success.hull > 0: return Repairs.quantity_cost(repair_amount, station_hull_unit_cost())
+	if approach.success.hull > 0:
+		return Repairs.quantity_cost(repair_amount, station_hull_unit_cost())
 	if approach.success.production_choice > 0:
 		var bought: int = station_production_purchases
-		return approach.salvage_cost + rules.production_price_increment * bought + rules.production_price_acceleration * bought * (bought - 1) / 2
+		return (
+			approach.salvage_cost
+			+ rules.production_price_increment * bought
+			+ rules.production_price_acceleration * bought * (bought - 1) / 2
+		)
 	return approach.salvage_cost
 
+
 func service_locked_reason(slot: int) -> String:
-	if not can_visit(SERVICE_INDEX): return "Station unavailable or resolve pending choice first"
-	if slot < 0 or slot >= service.poi.approaches.size(): return "Unknown service"
+	if not can_visit(SERVICE_INDEX):
+		return "Station unavailable or resolve pending choice first"
+	if slot < 0 or slot >= service.poi.approaches.size():
+		return "Unknown service"
 	var approach: Resource = service.poi.approaches[slot]
-	if approach.success.card_reward and available_reward_cards(approach.success.minimum_card_tier).is_empty():
+	if (
+		approach.success.card_reward
+		and available_reward_cards(approach.success.minimum_card_tier).is_empty()
+	):
 		return "No unowned cards meet this reward's minimum tier"
-	if approach.success.hull > 0 and hull >= station_hull_ceiling(): return "Ablative Plating Full"
+	if approach.success.hull > 0 and hull >= station_hull_ceiling():
+		return "Ablative Plating Full"
 	var cost: int = service_cost(slot)
-	if salvage < cost: return "Requires %d Salvage (you have %d)" % [cost, salvage]
+	if salvage < cost:
+		return "Requires %d Salvage (you have %d)" % [cost, salvage]
 	return ""
+
 
 # Use a confirmation revision to reject stale purchases; services never complete a progression PoI.
 func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
-	if revision != service_revision or not service_locked_reason(slot).is_empty(): return false
+	if revision != service_revision or not service_locked_reason(slot).is_empty():
+		return false
 	var outcome: Resource = service.poi.approaches[slot].success
-	if outcome.hull > 0 and (repair_amount <= 0 or repair_amount > station_repair_limit()): return false
+	if outcome.hull > 0 and (repair_amount <= 0 or repair_amount > station_repair_limit()):
+		return false
 	var cost: int = service_cost(slot, repair_amount)
-	if cost < 0 or cost > salvage: return false
+	if cost < 0 or cost > salvage:
+		return false
 	# Validate everything before spending; consume confirmation before applying any reward.
 	last_poi_success = -1
 	salvage -= cost
@@ -417,34 +779,22 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 	if outcome.hull > 0:
 		var plating: bool = station_plating_mode()
 		hull += repair_amount
-		last_outcome += ("Installed %d Ablative Plating." if plating else "Repaired %d permanent Hull.") % repair_amount
+		last_outcome += (
+			("Installed %d Ablative Plating." if plating else "Repaired %d permanent Hull.")
+			% repair_amount
+		)
 	else:
-		if outcome.production_choice > 0: station_production_purchases += 1
+		if outcome.production_choice > 0:
+			station_production_purchases += 1
 		last_outcome += describe_outcome(outcome)
 		_apply_outcome(outcome)
 	return true
 
-func add_modifiers(values: Dictionary) -> void:
-	for key in values:
-		var amount: int = int(values[key])
-		# Temporary production modifiers are unsupported; outpost upgrades use their own ledger.
-		if key in PRODUCTION: continue
-		if key == "emp_pulse_offline":
-			pending_bonuses[key] = maxi(int(pending_bonuses.get(key, 0)), amount)
-		elif amount > 0:
-			pending_bonuses[key] = int(pending_bonuses.get(key, 0)) + amount
-		elif amount < 0:
-			pending_penalties[key] = int(pending_penalties.get(key, 0)) + amount
 
-func modifier_value(key: String) -> int:
-	return int(pending_bonuses.get(key, 0)) + int(pending_penalties.get(key, 0))
+#endregion
 
-## Resource penalties cap against unmodified ship starts, before normal turn income.
-func starting_value(profile: Resource, key: String) -> int:
-	var base: int = int(profile.get(key))
-	var penalty: int = absi(int(pending_penalties.get(key, 0)))
-	if key in RESOURCES: penalty = mini(penalty, floori(base * 0.5))
-	return maxi(0, base + int(pending_bonuses.get(key, 0)) - penalty)
+#region Owned cards and rewards
+
 
 ## Compatibility name: always the unmodified enemy library, never expedition acquisitions.
 func shared_pool() -> Array[Resource]:
@@ -452,20 +802,26 @@ func shared_pool() -> Array[Resource]:
 	pool.assign(Cards.CARDS)
 	return pool
 
+
 # Build owned identities with player-only upgrade copies; shared_pool remains the enemy base library.
 func player_pool() -> Array[Resource]:
 	var result: Array[Resource] = []
-	var starting: Array = ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
+	var starting: Array = (
+		ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
+	)
 	var seen: Dictionary = {}
 	var retained: Array = []
 	for card in starting:
-		if not removed_starting_cards.has(card.identity_key()): retained.append(card)
+		if not removed_starting_cards.has(card.identity_key()):
+			retained.append(card)
 	for card in retained + acquired_cards:
 		var key: String = card.identity_key()
-		if seen.has(key): continue
+		if seen.has(key):
+			continue
 		seen[key] = true
 		result.append(upgraded_cards.get(key, card))
 	return result
+
 
 func acquired_draw_weights() -> Dictionary:
 	var result: Dictionary = {}
@@ -473,14 +829,17 @@ func acquired_draw_weights() -> Dictionary:
 		result[card.identity_key()] = rules.acquired_card_draw_weight
 	return result
 
+
 func available_reward_cards(minimum_tier: int = 1) -> Array[Resource]:
 	var owned: Dictionary = {}
-	for card in player_pool(): owned[card.identity_key()] = true
+	for card in player_pool():
+		owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
 	for card in Cards.CARDS:
 		if card.tier >= minimum_tier and not owned.has(card.identity_key()):
 			candidates.append(card)
 	return candidates
+
 
 func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
 	var candidates: Array[Resource] = available_reward_cards(minimum_tier)
@@ -489,19 +848,23 @@ func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
 		var preferred_tier: int = 2 if rng.randf() < rules.reward_tier_two_chance else 1
 		var bucket: Array[Resource] = []
 		for card in candidates:
-			if card.tier == preferred_tier: bucket.append(card)
-		if bucket.is_empty(): bucket.assign(candidates)
+			if card.tier == preferred_tier:
+				bucket.append(card)
+		if bucket.is_empty():
+			bucket.assign(candidates)
 		var chosen: Resource = bucket[rng.randi_range(0, bucket.size() - 1)]
 		offers.append(chosen)
 		candidates.erase(chosen)
 	return offers
+
 
 func choose_card(index: int) -> bool:
 	if pending_choice != "card" or index < 0 or index >= card_offers.size():
 		return false
 	var chosen: Resource = card_offers[index]
 	for card in player_pool():
-		if card.identity_key() == chosen.identity_key(): return false
+		if card.identity_key() == chosen.identity_key():
+			return false
 	if player_pool().size() >= deck_limit():
 		pending_card = chosen
 		pending_choice = "replace"
@@ -510,79 +873,71 @@ func choose_card(index: int) -> bool:
 	_acquire_card(chosen)
 	return true
 
+
 func deck_limit() -> int:
 	# Never invalidate the existing starting pool if a custom configuration is too small.
 	return maxi(ship().starting_cards.size(), maxi(1, rules.max_deck_identities))
 
+
 func _acquire_card(chosen: Resource) -> void:
 	acquired_cards.append(chosen)
-	last_outcome += "\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)." % [chosen.card_name, rules.acquired_card_draw_weight]
+	last_outcome += (
+		"\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)."
+		% [chosen.card_name, rules.acquired_card_draw_weight]
+	)
 	pending_choice = ""
 	pending_card = null
 	card_offers.clear()
 	_refresh_owned_hand()
 
+
 func replace_card(key: String) -> bool:
-	if pending_choice != "replace" or pending_card == null: return false
+	if pending_choice != "replace" or pending_card == null:
+		return false
 	var owned: Dictionary = {}
-	for card in player_pool(): owned[card.identity_key()] = card
-	if not owned.has(key) or owned.has(pending_card.identity_key()): return false
+	for card in player_pool():
+		owned[card.identity_key()] = card
+	if not owned.has(key) or owned.has(pending_card.identity_key()):
+		return false
 	# No mutation until the explicit confirmation reaches this validated method.
 	removed_starting_cards[key] = true
 	for index in range(acquired_cards.size() - 1, -1, -1):
-		if acquired_cards[index].identity_key() == key: acquired_cards.remove_at(index)
+		if acquired_cards[index].identity_key() == key:
+			acquired_cards.remove_at(index)
 	upgraded_cards.erase(key)
 	last_outcome += "\nRemoved %s." % owned[key].card_name
 	_acquire_card(pending_card)
 	return true
 
+
 func decline_card() -> bool:
-	if pending_choice != "replace" or pending_card == null: return false
+	if pending_choice != "replace" or pending_card == null:
+		return false
 	last_outcome += "\nKept current deck; new card declined."
 	pending_card = null
 	pending_choice = ""
 	card_offers.clear()
 	return true
 
+
 func _refresh_owned_hand() -> void:
-	if not is_instance_valid(active_player_hand): return
+	if not is_instance_valid(active_player_hand):
+		return
 	var pool: Array = player_pool()
 	var owned: Dictionary = {}
-	for card in pool: owned[card.identity_key()] = true
+	for card in pool:
+		owned[card.identity_key()] = true
 	active_player_hand.card_pool = pool
 	active_player_hand.identity_weights = acquired_draw_weights()
 	for index in range(active_player_hand.cards.size()):
 		var card: Resource = active_player_hand.cards[index]
-		if card != null and not owned.has(card.identity_key()): active_player_hand.replace_card(index)
+		if card != null and not owned.has(card.identity_key()):
+			active_player_hand.replace_card(index)
 
-func upgrade_candidates() -> Array[Resource]:
-	var result: Array[Resource] = []
-	for card in player_pool():
-		if pending_choice == "upgrade" and upgraded_this_event.has(card.identity_key()): continue
-		if card.upgrade_level < mini(2, mini(card.max_upgrades, card.upgrade_effects.size())):
-			result.append(card)
-	return result
-
-# Replace an identity in the expedition ledger and all active hand copies, never shared card Resources.
-func choose_upgrade(key: String) -> bool:
-	if pending_choice != "upgrade":
-		return false
-	for card in upgrade_candidates():
-		if card.identity_key() != key: continue
-		var copy: Resource = card.with_upgrade(card.upgrade_level + 1)
-		upgraded_cards[key] = copy
-		if is_instance_valid(active_player_hand):
-			active_player_hand.apply_upgrades(upgraded_cards)
-		last_outcome += "\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
-		upgraded_this_event[key] = true
-		upgrades_remaining = maxi(0, upgrades_remaining - 1)
-		if upgrades_remaining == 0 or upgrade_candidates().is_empty(): finish_upgrades()
-		return true
-	return false
 
 func choose_attribute(key: String) -> bool:
 	if pending_choice == "resource" and key in RESOURCES:
-		add_modifiers({key:choice_amount})
+		add_modifiers({key: choice_amount})
 		last_outcome += "\nNext battle: +%d %s." % [choice_amount, LABELS[key]]
 	elif pending_choice == "production" and key in PRODUCTION:
 		production_upgrades[key] = int(production_upgrades.get(key, 0)) + choice_amount
@@ -592,11 +947,86 @@ func choose_attribute(key: String) -> bool:
 	pending_choice = ""
 	return true
 
+
+#endregion
+
+#region Upgrade events
+
+
+func upgrade_candidates() -> Array[Resource]:
+	var result: Array[Resource] = []
+	for card in player_pool():
+		if pending_choice == "upgrade" and upgraded_this_event.has(card.identity_key()):
+			continue
+		if card.upgrade_level < mini(2, mini(card.max_upgrades, card.upgrade_effects.size())):
+			result.append(card)
+	return result
+
+
+# Replace an identity in the expedition ledger and all active hand copies, never shared card Resources.
+func choose_upgrade(key: String) -> bool:
+	if pending_choice != "upgrade":
+		return false
+	for card in upgrade_candidates():
+		if card.identity_key() != key:
+			continue
+		var copy: Resource = card.with_upgrade(card.upgrade_level + 1)
+		upgraded_cards[key] = copy
+		if is_instance_valid(active_player_hand):
+			active_player_hand.apply_upgrades(upgraded_cards)
+		last_outcome += (
+			"\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
+		)
+		upgraded_this_event[key] = true
+		upgrades_remaining = maxi(0, upgrades_remaining - 1)
+		if upgrades_remaining == 0 or upgrade_candidates().is_empty():
+			finish_upgrades()
+		return true
+	return false
+
+
+func battle_upgrade_count(board: Node) -> int:
+	if board.winner != "player" or board.escaped_by_ftl:
+		return 0
+	if active_battle < 0 or active_battle >= encounters.size():
+		return 0
+	var encounter: Dictionary = encounters[active_battle]
+	if encounter.get("chasedown", false):
+		return maxi(0, rules.chasedown_upgrades)
+	var rank: int = enemy_profile(encounter).enemy_rank
+	return maxi(
+		0, [rules.standard_upgrades, rules.elite_upgrades, rules.boss_upgrades][clampi(rank, 0, 2)]
+	)
+
+
+# One event upgrades each identity at most once; a later event may upgrade it again.
+func start_upgrade_event(count: int) -> void:
+	upgraded_this_event.clear()
+	upgrades_remaining = mini(maxi(0, count), upgrade_candidates().size())
+	pending_choice = "upgrade" if upgrades_remaining > 0 else ""
+	if upgrades_remaining == 0:
+		last_outcome += "\nNo eligible card upgrades remain."
+
+
+func finish_upgrades() -> void:
+	if pending_choice != "upgrade":
+		return
+	pending_choice = ""
+	upgrades_remaining = 0
+	upgraded_this_event.clear()
+
+
+#endregion
+
+#region Battle handoff
+
+
 # Transfer persistent state and pending bonuses into a ready board, then consume temporary modifiers.
 # Called by Board._ready before dealing cards; production upgrades remain in the expedition ledger.
 func begin_battle(board: Node, index: int = -1) -> void:
 	# Re-entrant initialization of this board must not reset stats or consume twice.
-	if board.get_meta("expedition_initialized", 0) == get_instance_id(): return
+	if board.get_meta("expedition_initialized", 0) == get_instance_id():
+		return
 	board.set_meta("expedition_initialized", get_instance_id())
 	last_poi_success = -1
 	active_battle = index
@@ -610,163 +1040,96 @@ func begin_battle(board: Node, index: int = -1) -> void:
 		board.set("player_" + key, starting_value(ship(), key))
 	board.ftl.charge = clampi(modifier_value("emp_pulse_charge"), 0, board.ftl.charge_target)
 	board.ftl.disabled_turns = maxi(0, modifier_value("emp_pulse_offline"))
-	if index >= 0 and index < encounters.size() and encounters[index].get("chasedown", false) and encounters[index].get("response", -1) == 1:
+	if (
+		index >= 0
+		and index < encounters.size()
+		and encounters[index].get("chasedown", false)
+		and encounters[index].get("response", -1) == 1
+	):
 		board.ftl.charge = mini(board.ftl.charge, maxi(0, board.ftl.charge_target - 2))
 	active_player_hand = board.hand
 	board.hand.card_pool = player_pool()
 	board.hand.identity_weights = acquired_draw_weights()
-	board.enemy_hand.card_pool = board.enemy_ship_data.starting_cards.duplicate() if board.enemy_ship_data != null and not board.enemy_ship_data.starting_cards.is_empty() else shared_pool()
+	board.enemy_hand.card_pool = (
+		board.enemy_ship_data.starting_cards.duplicate()
+		if board.enemy_ship_data != null and not board.enemy_ship_data.starting_cards.is_empty()
+		else shared_pool()
+	)
 	pending_bonuses.clear()
 	pending_penalties.clear()
+
 
 func victory_salvage(board: Node) -> int:
 	if board.escaped_by_ftl:
 		return 0
 	var destruction: int = rules.destruction_salvage
-	if active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].kind == "battle":
+	if (
+		active_battle >= 0
+		and active_battle < encounters.size()
+		and encounters[active_battle].kind == "battle"
+	):
 		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
 	var reward: int = destruction if board.enemy_hull <= 0 else rules.resource_victory_salvage
 	return reward * rules.elite_salvage_multiplier if _elite_defeated(board) else reward
 
+
 func _elite_defeated(board: Node) -> bool:
-	return board.winner == "player" and not board.escaped_by_ftl and active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].kind == "battle" and enemy_profile(encounters[active_battle]).enemy_rank == 1
+	return (
+		board.winner == "player"
+		and not board.escaped_by_ftl
+		and active_battle >= 0
+		and active_battle < encounters.size()
+		and encounters[active_battle].kind == "battle"
+		and enemy_profile(encounters[active_battle]).enemy_rank == 1
+	)
+
 
 func elite_resource_reward(board: Node) -> int:
 	return rules.elite_resource_bonus if _elite_defeated(board) else 0
+
 
 # Persist a latched board result and complete the encounter once; escape resolves Boss navigation too.
 # Board._record_result calculates Salvage first; escape and destruction keep distinct reward rules.
 func record_battle(board: Node) -> void:
 	# Reject a stale/reopened result before copying its currency or queuing another reward.
-	if active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].get("charge_awarded", false): return
+	if (
+		active_battle >= 0
+		and active_battle < encounters.size()
+		and encounters[active_battle].get("charge_awarded", false)
+	):
+		return
 	sync_battle(board)
 	if active_battle >= 0 and active_battle < encounters.size():
 		if board.winner == "player":
 			# Escape and destruction both complete navigation; Salvage remains separate.
-			if not _complete_encounter(active_battle): return
+			if not _complete_encounter(active_battle):
+				return
 			encounters[active_battle].resolution = "escaped" if board.escaped_by_ftl else "defeated"
 		else:
 			return
 	if board.winner == "player":
 		var elite_bonus: int = elite_resource_reward(board)
 		if elite_bonus > 0:
-			add_modifiers({"materials":elite_bonus, "energy":elite_bonus, "crew":elite_bonus})
+			add_modifiers({"materials": elite_bonus, "energy": elite_bonus, "crew": elite_bonus})
 		if board.earned_tactical:
-			add_modifiers({"materials":board.TACTICAL_RESOURCES, "energy":board.TACTICAL_RESOURCES, "crew":board.TACTICAL_RESOURCES})
+			add_modifiers(
+				{
+					"materials": board.TACTICAL_RESOURCES,
+					"energy": board.TACTICAL_RESOURCES,
+					"crew": board.TACTICAL_RESOURCES
+				}
+			)
 		if board.earned_strategic:
-			add_modifiers({"shields":board.STRATEGIC_SHIELDS})
+			add_modifiers({"shields": board.STRATEGIC_SHIELDS})
 		var count: int = battle_upgrade_count(board)
 		if count > 0:
 			last_outcome = "Combat victory — upgrade up to %d different cards." % count
 			start_upgrade_event(count)
+
 
 func sync_battle(board: Node) -> void:
 	hull = clampi(board.player_hull, 0, ship().hull_capacity)
 	salvage = board.salvage
 	battles_won = board.battles_won
 
-func describe_modifiers(values: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key in values:
-		parts.append("%+d %s" % [values[key], LABELS.get(key, key)])
-	return " · ".join(parts)
-
-func describe_outcome(outcome: Resource) -> String:
-	var parts: Array[String] = []
-	if outcome.extra_ftl_charge > 0: parts.append("+%d extra FTL Drive charge" % outcome.extra_ftl_charge)
-	if outcome.salvage != 0: parts.append("%+d Salvage" % outcome.salvage)
-	if outcome.hull != 0: parts.append("%+d permanent Hull" % outcome.hull)
-	for key in outcome.next_battle:
-		parts.append("%+d %s next battle" % [outcome.next_battle[key], LABELS.get(key, key)])
-	if outcome.card_reward:
-		parts.append("Choose 1 of 3 %scards" % ("uncommon-or-better " if outcome.minimum_card_tier > 1 else ""))
-	if outcome.upgrade_card: parts.append("Upgrade one player card")
-	if outcome.resource_choice > 0: parts.append("+%d starting resource of choice next battle" % outcome.resource_choice)
-	if outcome.production_choice > 0: parts.append("+%d production of choice for expedition" % outcome.production_choice)
-	return " · ".join(parts)
-
-func pending_description() -> String:
-	var parts: Array[String] = []
-	var keys: Array = pending_bonuses.keys()
-	for key in pending_penalties:
-		if not keys.has(key): keys.append(key)
-	for key in keys:
-		var positive: int = int(pending_bonuses.get(key, 0))
-		var negative: int = int(pending_penalties.get(key, 0))
-		if positive > 0: parts.append("+%d %s" % [positive, LABELS.get(key, key)])
-		if negative < 0: parts.append("%d %s" % [negative, LABELS.get(key, key)])
-	return "None" if parts.is_empty() else " · ".join(parts)
-
-# Roll once at actual movement initiation; arrival, menus and battle returns never call this.
-# Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
-func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
-	if not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi": return false
-	if pending_destination >= 0 or navigation_origin < 0 or navigation_origin == destination: return false
-	if navigation_origin >= encounters.size() or encounters[navigation_origin].kind != "poi": return false
-	if chasedowns_this_system >= maxi(0, rules.chasedown_limit): return false
-	var pool: Array = []
-	for profile in rules.enemy_ships:
-		if profile.enemy_rank == 0: pool.append(profile)
-	if pool.is_empty():
-		for profile in Ships.ENEMIES:
-			if profile.enemy_rank == 0: pool.append(profile)
-	if pool.is_empty(): return false
-	var chance: float = clampf(rules.chasedown_chance, 0.0, 1.0)
-	if chance <= 0: return false
-	var roll: float = chasedown_rng.randf() if forced_roll < 0 else forced_roll
-	if roll >= chance: return false
-	var total: float = 0.0
-	for profile in pool: total += maxf(0.01, profile.encounter_weight)
-	var selection: float = chasedown_rng.randf() * total
-	var enemy: Resource = pool.back()
-	for profile in pool:
-		selection -= maxf(0.01, profile.encounter_weight)
-		if selection <= 0:
-			enemy = profile
-			break
-	pending_destination = destination
-	chasedowns_this_system += 1
-	chasedown_index = encounters.size()
-	# Existing encounter/result pipeline awards exactly one unit; this entry has no map marker.
-	encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(enemy)), "enemy_data":enemy,
-		"system_number":system_number, "modifier":0, "mandatory_boss":false, "chasedown":true,
-		"response":-1, "title":"Sublight Chasedown", "completed":false, "charge_awarded":false})
-	return true
-
-func chasedown_unresolved() -> bool:
-	return chasedown_index >= 0 and chasedown_index < encounters.size() and not encounters[chasedown_index].completed
-
-func choose_chasedown_response(choice: int) -> bool:
-	if hull <= 0 or not chasedown_unresolved() or active_battle >= 0 or not pending_choice.is_empty(): return false
-	var encounter: Dictionary = encounters[chasedown_index]
-	if encounter.response >= 0 or choice < 0 or choice >= rules.chasedown_responses.size(): return false
-	var response: Dictionary = rules.chasedown_responses[choice]
-	encounter.response = choice
-	add_modifiers(response.get("modifiers", {}))
-	hull = maxi(1, hull + int(response.get("hull", 0)))
-	return true
-
-func arrive_destination(index: int) -> void:
-	navigation_origin = index
-	if index == pending_destination and not chasedown_unresolved(): pending_destination = -1
-
-func battle_upgrade_count(board: Node) -> int:
-	if board.winner != "player" or board.escaped_by_ftl: return 0
-	if active_battle < 0 or active_battle >= encounters.size(): return 0
-	var encounter: Dictionary = encounters[active_battle]
-	if encounter.get("chasedown", false): return maxi(0, rules.chasedown_upgrades)
-	var rank: int = enemy_profile(encounter).enemy_rank
-	return maxi(0, [rules.standard_upgrades, rules.elite_upgrades, rules.boss_upgrades][clampi(rank, 0, 2)])
-
-# One event upgrades each identity at most once; a later event may upgrade it again.
-func start_upgrade_event(count: int) -> void:
-	upgraded_this_event.clear()
-	upgrades_remaining = mini(maxi(0, count), upgrade_candidates().size())
-	pending_choice = "upgrade" if upgrades_remaining > 0 else ""
-	if upgrades_remaining == 0: last_outcome += "\nNo eligible card upgrades remain."
-
-func finish_upgrades() -> void:
-	if pending_choice != "upgrade": return
-	pending_choice = ""
-	upgrades_remaining = 0
-	upgraded_this_event.clear()
+#endregion

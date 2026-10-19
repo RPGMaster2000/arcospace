@@ -1,4 +1,6 @@
 extends CanvasLayer
+
+# RESPONSIBILITY: Present shared descriptions and legends with optional controller-owned footer actions.
 # Shared modal for descriptions/legend; an optional footer hosts controller-owned actions.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
@@ -8,6 +10,7 @@ var extra: VBoxContainer
 var close: Button
 var previous_focus: Control
 var desired_height: float = 320
+
 
 func _ready() -> void:
 	layer = 120
@@ -51,10 +54,12 @@ func _ready() -> void:
 	_fit()
 	shade.hide()
 
+
 func _fit() -> void:
 	var height: float = minf(desired_height, shade.size.y - 48)
 	panel.position = Vector2(maxf(24, (shade.size.x - 760) / 2), (shade.size.y - height) / 2)
 	panel.size = Vector2(minf(760, shade.size.x - 48), height)
+
 
 func show_text(value: String) -> void:
 	extra.hide()
@@ -65,21 +70,28 @@ func show_text(value: String) -> void:
 	close.grab_focus()
 	_fit()
 
+
 func show_legend() -> void:
 	var lines: Array[String] = ["[font_size=28][b]Icon legend[/b][/font_size]"]
 	var keys: Array = Presentation.MEANINGS.keys()
 	for key in Presentation.ICONS:
-		if not keys.has(key): keys.append(key)
+		if not keys.has(key):
+			keys.append(key)
 	for key in keys:
-		lines.append(Presentation.icon(key, body.get_theme_default_font()) + "  " + Presentation.meaning(key))
+		lines.append(
+			Presentation.icon(key, body.get_theme_default_font()) + "  " + Presentation.meaning(key)
+		)
 	show_text("\n".join(lines))
 	desired_height = 560
 	_fit()
 
+
 func dismiss() -> void:
 	extra.hide()
 	shade.hide()
-	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree(): previous_focus.grab_focus()
+	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree():
+		previous_focus.grab_focus()
+
 
 func _input(event: InputEvent) -> void:
 	if shade.visible and event is InputEventKey and event.keycode == KEY_TAB:
