@@ -21,6 +21,10 @@
 [ext_resource type="Resource" path="res://ships/enemy/sentinel_dreadnought.tres" id="E4"]
 [ext_resource type="Resource" path="res://resources/expedition_progression.tres" id="Progression"]
 
+[ext_resource type="Resource" path="res://ships/enemy/rustjack.tres" id="N0"]
+[ext_resource type="Resource" path="res://ships/enemy/axiom_7.tres" id="N1"]
+[ext_resource type="Resource" path="res://ships/enemy/hollow_choir.tres" id="N2"]
+
 [resource]
 script = ExtResource("Rules")
 progression = ExtResource("Progression")
@@ -38,4 +42,4 @@ resource_victory_salvage = 6
 max_deck_identities = 30
 unavailable_upgrade_salvage = 4
 debug_seed = 0
-enemy_ships = Array[ExtResource("Ship")]([ExtResource("E0"), ExtResource("E1"), ExtResource("E2"), ExtResource("E3"), ExtResource("E4")])
+enemy_ships = Array[ExtResource("Ship")]([ExtResource("E0"), ExtResource("E1"), ExtResource("E2"), ExtResource("E3"), ExtResource("E4"), ExtResource("N0"), ExtResource("N1"), ExtResource("N2")])

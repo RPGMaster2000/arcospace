@@ -203,7 +203,7 @@ These are instructions for future additions; no example feature is added by this
 
 Current draw order is rarity roll **then** eligible identity weighting. Player pool =
 retained starting identities + acquisitions, with player-only upgrade replacements. Removed starting keys are excluded by `removed_starting_cards`; reacquisition is a new base-level acquired identity. Enemy pool
-is the unmodified full library. Gallery filters (`CardGallery.matches`) can overlap and
+is its explicit profile `starting_cards` when supplied, otherwise the unmodified full library. Gallery filters (`CardGallery.matches`) can overlap and
 are not the single Power Allocation category. Do not edit shared Resources to upgrade a card.
 
 ### 2. Create a ship using existing models
@@ -396,3 +396,5 @@ Start with [card presentation settings](../resources/card_presentation.tres) and
 [card_hold.gd](../scripts/ui/card_hold.gd) binds the same gesture adapter to combat Buttons and gallery portraits, including disabled cards and the discard footer. [card_inspection.gd](../scripts/ui/card_inspection.gd) owns a single read-only root overlay, with a noninteractive original-scene copy and adjacent scrollable information panel. The adapter cancels holds on scrolling, movement, hiding, removal or card changes. The overlay cancels pending release activation, suspends background gesture adapters and preserves focus/scroll/selection. Parent inspectors/viewers defer Escape while inspection is open. This presentation never calls gameplay or reward mutation methods.
 
 Tune all nine properties in the shared Resource; card instances can override their `Presentation Settings` reference if needed. `inspection_base` metadata on upgrade/temporary preview copies retains the original definition for display; it does not affect card identity, cost, effects or draws. Existing acquisition and upgrade confirmations remain in CardInspector; detailed green comparisons now sit below the two cards. Test `card_inspection_test`, `card_upgrade_ui_test`, `ui_overhaul_test`, `card_motion_test` and deck/acquisition/replacement regressions when changing these paths.
+
+Enemy-specific optional `ShipData.starting_cards` applies to both standalone and expedition battles. Empty retains the existing full library. See [ship profiles](ship-variants.md#additional-regular-enemies) for the six-enemy registry, exact added decks, weights, model contract and diagnostic.

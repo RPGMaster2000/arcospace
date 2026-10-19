@@ -46,7 +46,7 @@ func run() -> void:
 		check(board.player_hull == data.hull_capacity and board.player_ship_data == data and board.encounter_number == 1, "Restart resets same player selection")
 		board.queue_free()
 		await process_frame
-	for sample in range(30):
+	for sample in range(120):
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.setup_settings = {"player_ship":0}
 		board.get_node("BattleEffects").enabled = false
@@ -54,7 +54,7 @@ func run() -> void:
 		seen[board.enemy_ship_data.ship_name] = true
 		board.queue_free()
 		await process_frame
-	check(seen.size() == 3, "All three enemies appear across fresh matches")
+	check(seen.size() == 6, "All six enemies appear across fresh matches")
 	# Replacement model remains per-resource, independent of battlefield duplication.
 	var replacement_profile: Resource = Ships.PLAYERS[0]
 	replacement_profile.model_scene = load("res://scenes/ship_3d.tscn")

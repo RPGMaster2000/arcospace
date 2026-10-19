@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/hollow_choir.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C0"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C2"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="C5"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="C6"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="C7"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C8"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="C9"]
+[ext_resource type="Resource" path="res://cards/18_quarters_upgrade.tres" id="C10"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="C11"]
+[ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="C13"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="C14"]
+[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C15"]
+[ext_resource type="Resource" path="res://cards/46_structural_reclamation.tres" id="C16"]
+[ext_resource type="Resource" path="res://cards/61_tactical_assessment.tres" id="C17"]
+[ext_resource type="Resource" path="res://cards/66_damage_control_teams.tres" id="C18"]
+[ext_resource type="Resource" path="res://cards/68_coordinated_assault.tres" id="C19"]
+
+[resource]
+script = ExtResource("Ship")
+ship_name = "The Hollow Choir"
+subtitle = "Organic Vessel"
+role = "Organic Vessel"
+summary = "Living vessel: restoration, defensive buildup and steady crew attacks."
+hull_capacity = 42
+shields = 4
+materials = 12
+energy = 8
+crew = 12
+synthesizer = 2
+reactor = 1
+quarters = 3
+card_family_weights = {"materials": 1.25, "energy": 0.8, "crew": 1.4}
+card_effect_weights = {"hull": 1.3, "shields": 1.25, "damage": 0.9, "economy": 1.1}
+tactical_weights = {"damage": 0.95, "hull": 1.3, "shields": 0.85, "production": 3.5, "resources": 0.3, "disruption": 0.35, "play_again": 1}
+tactical_variation = 0.12
+hull_color = Color(0.08, 0.32, 0.29, 1)
+model_scene = ExtResource("Model")
+starting_cards = Array[Resource]([ExtResource("C0"), ExtResource("C1"), ExtResource("C2"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C6"), ExtResource("C7"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C15"), ExtResource("C16"), ExtResource("C17"), ExtResource("C18"), ExtResource("C19")])

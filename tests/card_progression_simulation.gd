@@ -11,7 +11,7 @@ const Rules = preload("res://scripts/match_rules.gd")
 func _initialize() -> void:
 	call_deferred("run")
 func state(profile: Resource) -> Dictionary:
-	var result: Dictionary = {"hull":profile.hull_capacity, "shields":profile.shields}
+	var result: Dictionary = {"hull":profile.hull_capacity, "shields":profile.shields, "hull_capacity":profile.hull_capacity}
 	for key in Rules.RESOURCES + Rules.PRODUCTION: result[key] = profile.get(key)
 	return result
 func run() -> void:
@@ -38,6 +38,7 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 		brains[side].hull_capacity = [player,enemy][side].hull_capacity
 	if updated:
 		hands[0].card_pool.assign(player.starting_cards)
+		if not enemy.starting_cards.is_empty(): hands[1].card_pool.assign(enemy.starting_cards)
 		hands[1].family_weights = enemy.card_family_weights
 		hands[1].effect_weights = enemy.card_effect_weights
 		brains[1].tactical_weights = enemy.tactical_weights

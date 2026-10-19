@@ -190,6 +190,8 @@ func _ready() -> void:
 	if player_ship_data != null and hand.card_pool.is_empty() and not player_ship_data.starting_cards.is_empty():
 		hand.card_pool.assign(player_ship_data.starting_cards)
 	if enemy_ship_data != null:
+		if not enemy_ship_data.starting_cards.is_empty():
+			enemy_hand.card_pool.assign(enemy_ship_data.starting_cards)
 		enemy_hand.family_weights = enemy_ship_data.card_family_weights
 		enemy_hand.effect_weights = enemy_ship_data.card_effect_weights
 		enemy_ai.tactical_weights = enemy_ship_data.tactical_weights

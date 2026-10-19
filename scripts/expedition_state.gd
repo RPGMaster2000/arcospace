@@ -615,7 +615,7 @@ func begin_battle(board: Node, index: int = -1) -> void:
 	active_player_hand = board.hand
 	board.hand.card_pool = player_pool()
 	board.hand.identity_weights = acquired_draw_weights()
-	board.enemy_hand.card_pool = shared_pool()
+	board.enemy_hand.card_pool = board.enemy_ship_data.starting_cards.duplicate() if board.enemy_ship_data != null and not board.enemy_ship_data.starting_cards.is_empty() else shared_pool()
 	pending_bonuses.clear()
 	pending_penalties.clear()
 

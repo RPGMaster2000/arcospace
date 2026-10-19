@@ -31,7 +31,7 @@ class_name ShipData
 @export_range(0.01, 100, 0.01) var encounter_weight: float = 1.0
 
 @export_group("Card pools and enemy preferences")
-## TUNE: Player starting identities. Empty uses the original library for custom/test ships.
+## TUNE: Starting identities for either side. Empty uses the original library for enemies/custom ships.
 @export var starting_cards: Array[Resource] = []
 ## TUNE: Positive soft multipliers; omitted families/effects retain weight 1.
 @export var card_family_weights: Dictionary = {}

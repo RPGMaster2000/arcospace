@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/axiom_7.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C0"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C2"]
+[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="C5"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="C6"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="C7"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="C8"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C9"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="C10"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="C11"]
+[ext_resource type="Resource" path="res://cards/21_phase_lance.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/22_energy_siphon.tres" id="C13"]
+[ext_resource type="Resource" path="res://cards/25_emp_pulse.tres" id="C14"]
+[ext_resource type="Resource" path="res://cards/26_shield_exchange.tres" id="C15"]
+[ext_resource type="Resource" path="res://cards/29_polaron_burst.tres" id="C16"]
+[ext_resource type="Resource" path="res://cards/37_pulse_repeater.tres" id="C17"]
+[ext_resource type="Resource" path="res://cards/53_capacitor_overload.tres" id="C18"]
+[ext_resource type="Resource" path="res://cards/54_power_grid_reroute.tres" id="C19"]
+
+[resource]
+script = ExtResource("Ship")
+ship_name = "AXIOM-7"
+subtitle = "Autonomous Interceptor"
+role = "Autonomous Interceptor"
+summary = "Precise energy interceptor: shield-breaking weapons and disruption."
+hull_capacity = 29
+shields = 16
+materials = 8
+energy = 14
+crew = 10
+synthesizer = 1
+reactor = 3
+quarters = 2
+card_family_weights = {"materials": 0.8, "energy": 1.6, "crew": 1}
+card_effect_weights = {"damage": 1.6, "disruption": 1.5, "shields": 1.2}
+tactical_weights = {"damage": 1.5, "hull": 0.8, "shields": 0.65, "production": 3.5, "resources": 0.3, "disruption": 1, "play_again": 1.1}
+tactical_variation = 0.04
+hull_color = Color(0.8, 0.85, 0.9, 1)
+model_scene = ExtResource("Model")
+starting_cards = Array[Resource]([ExtResource("C0"), ExtResource("C1"), ExtResource("C2"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C6"), ExtResource("C7"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C15"), ExtResource("C16"), ExtResource("C17"), ExtResource("C18"), ExtResource("C19")])

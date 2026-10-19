@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/rustjack.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C0"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C2"]
+[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C5"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="C6"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="C7"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C8"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="C9"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="C10"]
+[ext_resource type="Resource" path="res://cards/22_energy_siphon.tres" id="C11"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="C13"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="C14"]
+[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="C15"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="C16"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="C17"]
+[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C18"]
+[ext_resource type="Resource" path="res://cards/49_salvage_cannibalization.tres" id="C19"]
+
+[resource]
+script = ExtResource("Ship")
+ship_name = "Rustjack"
+subtitle = "Scrap Raider"
+role = "Scrap Raider"
+summary = "Opportunistic scrap raider: demolition, salvage and theft."
+hull_capacity = 32
+shields = 4
+materials = 14
+energy = 8
+crew = 10
+synthesizer = 3
+reactor = 1
+quarters = 2
+card_family_weights = {"materials": 1.5, "energy": 0.8, "crew": 1.1}
+card_effect_weights = {"damage": 1.5, "steal": 1.8, "disruption": 1.5, "hull": 1.2}
+tactical_weights = {"damage": 1.6, "hull": 1, "shields": 0.3, "production": 3, "resources": 0.45, "disruption": 1.1, "play_again": 1.2}
+tactical_variation = 0.22
+hull_color = Color(0.64, 0.25, 0.08, 1)
+model_scene = ExtResource("Model")
+starting_cards = Array[Resource]([ExtResource("C0"), ExtResource("C1"), ExtResource("C2"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C6"), ExtResource("C7"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C15"), ExtResource("C16"), ExtResource("C17"), ExtResource("C18"), ExtResource("C19")])

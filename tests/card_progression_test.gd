@@ -90,7 +90,7 @@ func run() -> void:
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
 			board.enemy_timer.stop()
-			check(board.hand.card_pool.size() == 26 and board.enemy_hand.card_pool.size() == 68, "Real battle uses separate pools")
+			check(board.hand.card_pool.size() == 26 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 68), "Real battle uses separate pools")
 			for pooled in board.hand.card_pool:
 				if pooled.identity_key() == acquired.identity_key(): check(pooled.upgrade_level == 2, "Upgrades persist into successive battles")
 			for pooled in board.enemy_hand.card_pool: check(pooled.upgrade_level == 0, "Real enemy pool remains base")
@@ -132,6 +132,7 @@ func run() -> void:
 
 func test_enemies() -> void:
 	for profile in Rules.enemy_ships:
+		if not profile.starting_cards.is_empty(): continue # Explicit new decks have separate roster coverage.
 		var hand = Hand.new()
 		hand.rng.seed = 1234
 		hand.current_round = 3
