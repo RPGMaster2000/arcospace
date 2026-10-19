@@ -68,7 +68,7 @@ func run() -> void:
 	board.earned_strategic = true
 	var description: String = board.victory_description()
 	check(description.contains("+40 Salvage") and description.contains("Elite:") and description.contains("Tactical:") and description.contains("Strategic:"), "Compact expedition summary keeps all earned rewards")
-	check(description.split("\n").size() == 5 and not description.contains("Not earned"), "Maximum reward summary fits five lines")
+	check(description.split("\n").size() == 4 and description.contains("Upgrade 3 cards") and not description.contains("Not earned"), "Maximum reward summary includes upgrades in four lines")
 	var bonuses_before: Dictionary = expedition.pending_bonuses.duplicate()
 	board.refresh_display()
 	check(expedition.pending_bonuses == bonuses_before, "Rendering summary does not grant rewards")

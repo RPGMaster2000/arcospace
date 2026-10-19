@@ -5,11 +5,11 @@ Generated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the in
 | Ship | Type / special attribute | Hull / Shields | M/E/C | S/R/Q | EMP Pulse turns / resistance | Rank | FTL reward (defeat **or escape**) | Destruction Salvage | Generation weight | Edit |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Endeavour | Balanced Cruiser; Balanced reserves and production; average EMP Pulse charging. | 35 / 12 | 10/10/10 | 2/2/2 | 14 / 0.0% | Player | — | — | — | `ships/player/endeavour.tres` |
-| Thunderbolt | Fast and Tactical; Fast, resistant EMP Pulse; strong Shields and Energy production, weaker Hull. | 28 / 17 | 8/14/10 | 1/3/2 | 11 / 25.0% | Player | — | — | — | `ships/player/thunderbolt.tres` |
-| Titania | Mobile Stronghold; Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse. | 38 / 6 | 20/20/20 | 3/2/3 | 17 / -10.0% | Player | — | — | — | `ships/player/titania.tres` |
-| Ganymede | Industrial Cruiser; Materials specialist; extra Crew reserves support construction and industrial offense. | 35 / 12 | 10/10/12 | 3/1/2 | 14 / 0.0% | Player | — | — | — | `ships/player/ganymede.tres` |
-| Callisto | Shield Cruiser; Energy specialist; extra Materials reserves support Shields and Reactor development. | 35 / 12 | 12/10/10 | 2/3/1 | 14 / 0.0% | Player | — | — | — | `ships/player/callisto.tres` |
-| Orion | Boarding Cruiser; Crew specialist; extra Energy reserves support boarding, theft and disruption. | 35 / 12 | 10/12/10 | 1/2/3 | 14 / 0.0% | Player | — | — | — | `ships/player/orion.tres` |
+| Thunderbolt | Fast and Tactical; Fast, resistant EMP Pulse; strong Shields and Energy production, weaker Hull. | 28 / 17 | 14/10/8 | 1/3/2 | 11 / 35.0% | Player | — | — | — | `ships/player/thunderbolt.tres` |
+| Titania | Mobile Stronghold; Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse. | 40 / 6 | 16/17/16 | 3/2/3 | 17 / -10.0% | Player | — | — | — | `ships/player/titania.tres` |
+| Ganymede | Industrial Cruiser; Materials specialist; extra Crew reserves support construction and industrial offense. | 35 / 12 | 8/12/10 | 3/1/2 | 14 / 0.0% | Player | — | — | — | `ships/player/ganymede.tres` |
+| Callisto | Shield Cruiser; Energy specialist; extra Materials reserves support Shields and Reactor development. | 35 / 12 | 10/8/12 | 2/3/1 | 14 / 0.0% | Player | — | — | — | `ships/player/callisto.tres` |
+| Orion | Boarding Cruiser; Crew specialist; extra Energy reserves support boarding, theft and disruption. | 35 / 12 | 8/12/10 | 1/2/3 | 14 / 0.0% | Player | — | — | — | `ships/player/orion.tres` |
 | Marauder | Energy Raider; Energy-rich attacker. | 27 / 5 | 8/15/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/marauder.tres` |
 | Sentinel | Shielded Defender; Heavy shields and strong Reactor. | 32 / 18 | 8/12/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/sentinel.tres` |
 | Reclaimer | Armored Harvester; Strong Hull and Materials production. | 40 / 8 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 1 | 10 | 1.0 | `ships/enemy/reclaimer.tres` |
@@ -90,13 +90,19 @@ Each pool has 25 distinct Tier 1 identities. Specialization comes only from memb
 - **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, System Disruption, Torpedo Salvo, Energy Siphon, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
 
 
+## Combat upgrade events and Chasedown
+
+Non-escape victories offer up to 1 / 2 / 3 / 3 upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.
+
+Sublight Chasedown: 5% per valid PoI-to-PoI movement, limit 1 per system. Initial entry, menus, invalid/same destinations, battle return and FTL travel never roll. Uses ordinary enemies, existing scaling and battle scene, gives exactly +1 FTL once on victory or escape, then resumes the preserved destination. See [implementation and tuning](../chasedown_rewards.md).
+
 ## Expedition difficulty and milestones
 
 Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition_progression.gd`).
 
 | Property | Initial value |
 |---|---|
-| FTL carryover cap | 2 (editable 0–2) |
+| FTL carryover cap | 0 (editable 0–2) |
 | Systems per difficulty increase | 3 |
 | Hull bonus per extra level | +2 |
 | Shields bonus per extra level | +1 |
@@ -119,8 +125,8 @@ Inspector: `encounters/expedition_rules.tres` → Progression → `resources/exp
 
 Systems 1–3 retain the original weighted enemy selector. Thereafter, for each enemy slot, `base = available Elite weight / total available weight` and `p = min(0.35, base + steps × 0.025)`. Choose Elite versus other profiles with p, then use the original weights within that bucket. Draws remain without replacement until a bucket registry is exhausted as before. The full shipping registry starts at 11.27%; its first-slot chance becomes 13.77% on system 4, 16.27% on system 7, 18.77% on system 10, capped at 35%. Conditional odds vary after profiles leave the available registry. An empty bucket falls back to valid profiles; an Inspector pool containing only Elites necessarily has probability 1.
 
-Normal-system carryover is `min(cap, max(0, current_ftl - required_ftl))`, cap default and hard maximum 2. Surpluses 0/1/2/4 therefore yield 0/1/2/2. The old requirement remains non-trading PoI count + 1; rewards and charge generation are unchanged. There is no additional counter or currency. New expeditions reset to 0. In the shipping six-slot compositions, the next requirement exceeds carried charge.
+Normal-system carryover still uses `min(cap, max(0, current_ftl - required_ftl))`, with the shipping Resource and script default cap both **0** (Inspector range 0–2). Every new system therefore begins at zero, regardless of surplus. The requirement remains non-trading PoI count + 1. Charge earned within a system is retained until departure; EMP Pulse is separate and unchanged.
 
 Systems 6, 12, 18, 24, … replace one enemy slot with a mandatory Sentinel Dreadnought (or the configured existing Boss). They keep six slots, all PoI slots, their normal requirement, and the independent station schedule. Only one encounter is marked mandatory. Missing milestone metadata fails closed. Sufficient FTL never bypasses an unresolved Boss; a blocked jump consumes no charge or RNG.
 
-Combat victory or successful existing EMP Pulse marks the encounter complete and grants the profile's 3 FTL once. Destruction retains 30 Salvage; resource victory retains 6; escape grants 0 Salvage. Resolution records `defeated` versus `escaped` for future defeat-only reward checks. Escape does not perform a system transition: return to the system screen and use the ordinary FTL transition, including carryover, once. Boss stats use the same level formula: system 6 has 57 Hull / 23 Shields / 16 of each resource / 3 of each production; system 12 has 61 / 25 / 18 / 3.
+Combat victory or successful existing EMP Pulse marks the encounter complete and grants the profile's 3 FTL once. Destruction retains 30 Salvage; resource victory retains 6; escape grants 0 Salvage. Resolution records `defeated` versus `escaped` for future defeat-only reward checks. Escape does not perform a system transition: return to the system screen and use the ordinary FTL transition, with zero carried charge, once. Boss stats use the same level formula: system 6 has 57 Hull / 23 Shields / 16 of each resource / 3 of each production; system 12 has 61 / 25 / 18 / 3.

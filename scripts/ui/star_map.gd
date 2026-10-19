@@ -9,6 +9,7 @@ const SERVICE = Vector2(.90,.46)
 var travel_duration: float = 1.4
 var ship_position: Vector2 = START
 var traveling: bool = false
+var before_travel: Callable
 var markers: Dictionary = {}
 var tween: Tween
 
@@ -45,6 +46,7 @@ func _layout() -> void:
 # Lock further destination input until arrival; leaving the tree kills travel instead of opening a stale encounter.
 func travel(index: int) -> void:
 	if traveling or not markers.has(index) or markers[index].disabled: return
+	if before_travel.is_valid() and not before_travel.call(index): return
 	traveling = true
 	for button in markers.values(): button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tween = create_tween()

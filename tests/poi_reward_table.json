@@ -49,9 +49,9 @@
   ],
   "unstable_wormhole": [
     [1, {"salvage": 3, "next_battle": {"emp_pulse_offline": 1}}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 1}}],
-    [0.65, {"salvage": 5, "extra_ftl_charge": 1}, {"salvage": 2, "next_battle": {"shields": -4}}],
-    [0.8, {"salvage": 7, "extra_ftl_charge": 2}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 2}}],
-    [0.75, {"salvage": 9, "extra_ftl_charge": 2}, {"salvage": 4, "next_battle": {"energy": -4}}]
+    [0.4, {"salvage": 5, "extra_ftl_charge": 1}, {"salvage": 2, "next_battle": {"shields": -8}}],
+    [0.5, {"salvage": 7, "extra_ftl_charge": 1}, {"salvage": 3, "next_battle": {"emp_pulse_offline": 3}}],
+    [0.45, {"salvage": 9, "extra_ftl_charge": 1}, {"salvage": 4, "next_battle": {"energy": -8}}]
   ],
   "quarantined_colony": [
     [1, {"salvage": 3, "next_battle": {"materials": -2}}, {"salvage": 3, "next_battle": {"materials": -2}}],

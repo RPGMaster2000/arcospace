@@ -532,7 +532,7 @@ func refresh_display() -> void:
 			next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 		$MatchResult/Panel/NextEncounter.text = "Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
 	if expedition != null:
-		$MatchResult/Panel/Continue.text = "Star System"
+		$MatchResult/Panel/Continue.text = "Upgrade Cards" if expedition.pending_choice == "upgrade" else "Star System"
 	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
 	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
 	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
@@ -691,6 +691,8 @@ func victory_description() -> String:
 	var bonuses: PackedStringArray = []
 	if expedition != null:
 		lines.append("🪨 +%d Salvage · 🚀 FTL %d/%d" % [expedition.victory_salvage(self), expedition.ftl_charge, expedition.required_ftl_charge])
+		var upgrades: int = expedition.battle_upgrade_count(self)
+		if upgrades > 0: lines[0] += " · Upgrade %d cards" % upgrades
 		var elite_bonus: int = expedition.elite_resource_reward(self)
 		if elite_bonus > 0: bonuses.append("Elite: " + _resource_reward_text(elite_bonus))
 	elif enemy_hull <= 0 and not escaped_by_ftl:
@@ -698,7 +700,8 @@ func victory_description() -> String:
 	if tactical_victory(): bonuses.append("Tactical: " + _resource_reward_text(TACTICAL_RESOURCES))
 	if strategic_victory(): bonuses.append("Strategic: 🛡️ +%d" % STRATEGIC_SHIELDS)
 	if not bonuses.is_empty():
-		lines.append("Next battle")
+		if expedition != null: bonuses[0] = "Next battle · " + bonuses[0]
+		else: lines.append("Next battle")
 		lines.append_array(bonuses)
 	return "\n".join(lines)
 

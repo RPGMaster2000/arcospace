@@ -261,7 +261,7 @@ func _clear(kind: String) -> void:
 		jump_button.text = "%s FTL Drive %d/%d · Resolve Boss first" % [_icon("travel"), state.ftl_charge, state.required_ftl_charge]
 		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:
-		jump_button.tooltip_text = "Surplus FTL carries forward, up to %d." % state.rules.progression.ftl_carryover_cap
+		jump_button.tooltip_text = "FTL resets to zero when entering the next system."
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 
@@ -273,6 +273,11 @@ func start_expedition() -> void:
 	show_system()
 
 func show_system() -> void:
+	if state.hull > 0 and state.chasedown_unresolved():
+		if state.active_battle < 0:
+			if state.encounters[state.chasedown_index].response < 0: _show_chasedown()
+			else: start_battle(state.chasedown_index)
+		return
 	get_node("/root/Music").play_starmap()
 	if not state.pending_choice.is_empty():
 		show_outcome()
@@ -299,10 +304,13 @@ func show_system() -> void:
 		var status: String = "Completed" if encounter.completed else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
 		if encounter.kind == "battle" and not encounter.completed:
 			status += "\n" + _icon(Presentation.modifier_key(encounter.modifier)) + " " + State.Modifiers.NAMES[encounter.modifier]
-		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], visit.bind(index), encounter.completed, true)
+		if encounter.get("chasedown", false): continue
+		_tile(cards, _icon(key) + "\n" + encounter.title, status, Presentation.COLORS[category], _grid_travel.bind(index), encounter.completed, true)
 
 	if not state.service.is_empty():
-		_button("Trading Outpost · Service station · No travel FTL · Free to return", visit.bind(state.SERVICE_INDEX))
+		_button("Trading Outpost · Service station · No travel FTL · Free to return", _grid_travel.bind(state.SERVICE_INDEX))
+
+	if state.pending_destination >= 0: _grid_travel.call_deferred(state.pending_destination)
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _show_star_map() -> void:
@@ -312,6 +320,7 @@ func _show_star_map() -> void:
 	var entries: Array = []
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
+		if encounter.get("chasedown", false): continue
 		var key: String = "battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
 		var detail: String = "+%d FTL" % state.encounter_charge(index)
 		if encounter.kind == "battle":
@@ -327,12 +336,15 @@ func _show_star_map() -> void:
 	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.add_child(star_map)
 	star_map.configure(entries, map_destination, star_map_travel_duration)
-	star_map.arrived.connect(func(index: int):
-		map_destination = index
-		visit(index))
+	star_map.before_travel = _request_travel
+	star_map.arrived.connect(visit)
+	if state.pending_destination >= 0:
+		star_map.travel.call_deferred(state.pending_destination)
 
 func visit(index: int) -> void:
 	if not state.can_visit(index): return
+	map_destination = index
+	state.arrive_destination(index)
 	if state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
 
@@ -533,7 +545,7 @@ func show_outcome() -> void:
 	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
 	var picking_card: bool = state.pending_choice in ["card", "upgrade"]
-	result.add_child(_label(("Acquire one card" if state.pending_choice == "card" else "Upgrade a card") if picking_card else compact_text(state.last_outcome), 26 if picking_card else 22))
+	result.add_child(_label(("Acquire one card" if state.pending_choice == "card" else "Upgrade different cards · %d remaining" % maxi(1, state.upgrades_remaining)) if picking_card else compact_text(state.last_outcome), 26 if picking_card else 22))
 	result.tooltip_text = state.last_outcome if picking_card else ""
 	view.add_child(result)
 	match state.pending_choice:
@@ -541,6 +553,7 @@ func show_outcome() -> void:
 			_show_card_gallery(state.card_offers)
 		"upgrade":
 			_show_card_gallery(state.upgrade_candidates())
+			_button("Finish upgrades", _finish_upgrades, false, 48)
 		"resource", "production":
 			var choices = _grid(3)
 			var keys: Array = state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION
@@ -707,3 +720,34 @@ func _confirm_field_repair() -> void:
 	# Consumed selection: a repeated signal cannot buy the same repair twice.
 	field_selector.set_value_no_signal(0)
 	_update_field_repair(0)
+
+func _request_travel(index: int) -> bool:
+	if not state.can_visit(index): return false
+	if state.try_chasedown(index):
+		_show_chasedown()
+		return false
+	return true
+
+func _grid_travel(index: int) -> void:
+	if _request_travel(index): visit(index)
+
+func _show_chasedown() -> void:
+	_clear("chasedown")
+	jump_button.hide()
+	title.text = "Sublight Chasedown"
+	view.add_child(_label("A hostile vessel emerges from sensor range and accelerates toward your ship. You have moments to respond before weapons come online.", 22))
+	view.add_child(_label("Destination preserved: " + state.encounters[state.pending_destination].title, 18))
+	var choices = _grid(2)
+	for index in range(state.rules.chasedown_responses.size()):
+		var response: Dictionary = state.rules.chasedown_responses[index]
+		var details: String = state.describe_modifiers(response.get("modifiers", {}))
+		if int(response.get("hull", 0)) != 0: details += " · %+d Hull (minimum 1)" % int(response.hull)
+		if details.is_empty(): details = "No starting modifiers"
+		_tile(choices, str(response.title), details, Presentation.COLORS.battle, _chasedown_response.bind(index))
+
+func _chasedown_response(index: int) -> void:
+	if state.choose_chasedown_response(index): start_battle(state.chasedown_index)
+
+func _finish_upgrades() -> void:
+	state.finish_upgrades()
+	show_outcome()

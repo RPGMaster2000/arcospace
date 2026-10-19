@@ -99,3 +99,9 @@ Their lights/materials are scene-local; the board only adjusts background framin
 The system Hull status reuses its existing info overlay for field repairs. Heartbeat
 exports and the conditional Outpost repair/plating controls are described in
 [hull-capacity.md](hull-capacity.md#field-repairs-and-outpost-plating).
+
+## Chasedown and sequential upgrades
+
+The compact Chasedown narrative reuses the expedition view and 2×2 response tiles. The existing gallery shows remaining upgrades and a Finish upgrades button. Selecting an identity removes it from that event's choices, including after a preview is reopened; it can be selected again in a later event. Victory summaries include the upgrade count. Interstellar FTL tooltips state that the next system starts at zero. Both map and grid resume the preserved destination after rewards.
+
+`tests/chasedown_ui_test.gd` covers victory/escape in both navigation modes, replay guards, destination restoration and multi-card upgrade selection at 1280×720, 1680×720, 960×540, 800×450 and 686×384. Godot 4.7.2 Compatibility rendering was checked with software OpenGL; physical Android remains unverified.

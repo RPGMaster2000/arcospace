@@ -243,6 +243,9 @@ func run_tests() -> void:
 	battle._check_winner()
 	battle.refresh_display()
 	battle._continue_encounter()
+	check(host.state.pending_choice == "upgrade", "Victory offers card upgrades before returning")
+	host.state.finish_upgrades()
+	host.show_system()
 	await process_frame
 	check(host.view_kind == "system" and host.state.hull == 20 and host.state.salvage == 10, "Victory Continue returns to list")
 	host.state.encounters[5] = {"kind":"poi", "poi":Rules.pois[0], "title":"Mining Operation", "completed":false}

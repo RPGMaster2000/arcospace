@@ -28,7 +28,9 @@ func check(ok: bool, message: String) -> void:
 func settle_choice(run: Resource) -> void:
 	match run.pending_choice:
 		"card": check(run.choose_card(0), "Card reward can be selected")
-		"upgrade": check(run.choose_upgrade(run.upgrade_candidates()[0].identity_key()), "Upgrade can be selected")
+		"upgrade":
+			while run.pending_choice == "upgrade":
+				check(run.choose_upgrade(run.upgrade_candidates()[0].identity_key()), "Distinct combat/PoI upgrade can be selected")
 		"resource": check(run.choose_attribute("energy"), "Resource choice resolves")
 		"production": check(run.choose_attribute("reactor"), "Production choice resolves")
 
@@ -47,7 +49,7 @@ func run_tests() -> void:
 		config.minimum_hazardous = 0
 		config.maximum_hazardous = 2 if seed_value % 2 == 0 else 5
 		var run = State.new()
-		run.start(seed_value % 3, config, seed_value)
+		run.start(seed_value % preload("res://scripts/ship_library.gd").PLAYERS.size(), config, seed_value)
 		var poi_count: int = 0
 		var hazards: int = 0
 		var total: int = 0
@@ -110,12 +112,13 @@ func run_tests() -> void:
 				var after: int = run.ftl_charge
 				check(after >= before + 1, "Every PoI grants base charge")
 				check(not run.resolve_approach(index, 0) and not run.survey(index) and run.ftl_charge == after, "PoI reward is single-use")
+			settle_choice(run)
 			check(run.hull > 0, "Low-Hull safe route survives")
 			check(run.ftl_charge + run.remaining_ftl_charge() >= run.required_ftl_charge, "Remaining capacity after every decision")
 			check(run.can_jump() == (run.ftl_charge >= run.required_ftl_charge), "Can leave immediately at threshold")
 		check(run.can_jump(), "Every completed system permits travel, including all escapes")
 		var expected_carry: int = run.rules.progression.carryover(run.ftl_charge, run.required_ftl_charge)
-		check(run.generate_system() and run.ftl_charge == expected_carry, "Jump carries only capped surplus charge")
+		check(run.generate_system() and run.ftl_charge == expected_carry, "Jump resets charge with shipping zero-carryover configuration")
 	check(ranks.size() == 3 and compositions.size() >= 15 and escapes > 10000 and surveys > 0, "Varied composition, strength, escapes and survey coverage")
 	# Wormhole successes can be penalty-free; other hazardous branches have drawbacks.
 	for poi in Rules.pois:

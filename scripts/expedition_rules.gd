@@ -46,3 +46,25 @@ class_name ExpeditionRules
 @export_group("Expedition progression")
 ## TUNE: Carryover, system difficulty and recurring mandatory Boss configuration.
 @export var progression: Resource = preload("res://resources/expedition_progression.tres")
+
+@export_group("Sublight Chasedown")
+## TUNE: Chance per valid PoI-to-PoI movement; 0 disables interceptions, 1 always intercepts.
+@export_range(0.0, 1.0, 0.01) var chasedown_chance: float = 0.05
+## TUNE: Maximum interceptions per system; resets only on entering a new system.
+@export_range(0, 5, 1) var chasedown_limit: int = 1
+## TUNE: Response titles, existing next-battle modifiers and immediate Hull adjustment.
+## Evasive charge is additionally capped before the first-turn tick to avoid instant escape.
+@export var chasedown_responses: Array[Dictionary] = [
+	{"title":"Red Alert", "modifiers":{"shields":4, "energy":-3}, "hull":0},
+	{"title":"Evasive Maneuvers", "modifiers":{"emp_pulse_charge":3, "shields":-4}, "hull":0},
+	{"title":"Overcharge Weapons", "modifiers":{"energy":5}, "hull":-3},
+	{"title":"Hold Course", "modifiers":{}, "hull":0}
+]
+
+@export_group("Combat card upgrades")
+## TUNE: Distinct card identities that may each gain one level per successful battle reward.
+## Escapes grant none; exhausted pools grant no additional Salvage.
+@export_range(0, 10, 1) var chasedown_upgrades: int = 1
+@export_range(0, 10, 1) var standard_upgrades: int = 2
+@export_range(0, 10, 1) var elite_upgrades: int = 3
+@export_range(0, 10, 1) var boss_upgrades: int = 3

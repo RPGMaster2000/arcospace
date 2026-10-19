@@ -2,7 +2,7 @@
 
 ## Playing the prototype
 
-Choose a ship and **Begin Expedition** to open the system grid. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a battle victory (including EMP Pulse), the existing result screen offers repairs and **Star System**, returning to the list. Battles and PoIs can be visited in any order. Completed entries are disabled.
+Choose a ship and **Begin Expedition** to open the system grid. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a non-escape battle victory, the existing result screen offers repairs and **Upgrade Cards**, followed by the system view. EMP Pulse escape returns directly to the system. Battles and PoIs can be visited in any order. Completed entries are disabled.
 
 Each system has six progression encounters, with a separate optional Trading Outpost in scheduled systems, targeting 3–4 ordinary PoIs, 0–2 hazardous PoIs and 1–2 enemies. The FTL Drive requires **PoI count + 1** charge. Completing a PoI grants +1; defeating **or escaping** an enemy grants its profile reward (standard 1, elite 2, boss 3). Wormhole outcomes may add extra charge. Rewards are single-use, and travel charge resets in each new system. Escape grants no combat Salvage.
 
@@ -16,7 +16,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 
 | Open in FileSystem | Inspector fields |
 |---|---|
-| `encounters/expedition_rules.tres` | PoI library, separate Trading Outpost Resource, minimum/maximum station interval, production price increment/acceleration, encounters per system, category counts/weights, enemy registry, resource-victory Salvage, survey penalty, exhausted-upgrade fallback, debug seed |
+| `encounters/expedition_rules.tres` | PoI library, separate Trading Outpost Resource, minimum/maximum station interval, production price increment/acceleration, encounters per system, category counts/weights, enemy registry, resource-victory Salvage, survey penalty, exhausted-research fallback, Chasedown chance/limit/responses, combat upgrade counts, debug seed |
 | Any ordinary/hazardous `encounters/*.tres` | Title/description; expand **Approaches**, then any of the four approach resources |
 | Approach resource | Title, required production, minimum production (default 3), Salvage cost, success chance, Success and Failure |
 | Success / Failure resource | Blurb, Salvage, permanent Hull, Next Battle dictionary, card reward/minimum tier, upgrade reward, resource choice, production choice, extra interstellar FTL charge |
@@ -62,6 +62,14 @@ Card rewards offer **three distinct unowned cards** when available and allow one
 Each player ship starts with its own 25 of 36 Tier 1 identities. Acquisitions add new identities to the **player-only expedition pool**, at configurable ×3 draw weight within rarity. Enemies retain the full, unmodified library. Six-card hands, maximum two identical cards and one-per-higher-tier restrictions remain. Tier 2 unlocks in round 3 for both sides.
 
 Each identity supports two effect upgrades (+ and ++), preserving its original cost, rarity and extra-action flag. A private upgraded Resource replaces every player copy in both pool and hand; upgrades persist for this expedition. Enemy Resources remain at base level. If no card can be upgraded, research grants 4 Salvage instead (editable). Exact effects and starting memberships: `docs/balance/cards.md`.
+
+## Chasedown and combat upgrades
+
+Valid travel between two PoIs has a 5% Chasedown chance, at most once per system. Initial arrival, menus, battle returns and FTL jumps do not roll. Four responses feed the existing battle-start modifiers; the ordinary enemy uses existing difficulty scaling. Victory or escape grants exactly +1 FTL, then resumes the untouched destination.
+
+Non-escape victories offer upgrades to **different identities**: Chasedown 1, standard 2, elite 3, boss 3. Choose sequentially in the existing gallery or Finish. A card selected in an event is excluded until that event ends; a later event may upgrade it again, up to the existing two-level maximum. Combat upgrade exhaustion grants no extra Salvage. Escape grants neither Salvage nor upgrades. Research keeps its existing exhausted-pool Salvage fallback.
+
+Shipping interstellar FTL carryover is now zero, in both script defaults and configuration. Requirements, current-system charge and combat EMP Pulse rules remain unchanged. Wormhole bonus successes are 40% / 50% / 45%, each giving only +1 extra charge; the guaranteed perimeter approach gives none. See [implementation, tuning and validation](chasedown_rewards.md) for exact modifiers, old/new Wormhole outcomes and state handling.
 
 ## Restoration balance
 

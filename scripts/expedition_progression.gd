@@ -1,6 +1,7 @@
 extends Resource
 # Expedition-only progression. Never mutates a shared ShipData or combat card Resource.
-@export_range(0, 2, 1) var ftl_carryover_cap: int = 2
+## TUNE: Interstellar surplus retained on system entry; shipping value 0 discards all surplus.
+@export_range(0, 2, 1) var ftl_carryover_cap: int = 0
 @export_range(1, 100, 1) var systems_per_difficulty: int = 3
 @export_range(0, 20, 1) var hull_bonus_per_level: int = 2
 @export_range(0, 20, 1) var shields_bonus_per_level: int = 1

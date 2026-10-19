@@ -43,6 +43,14 @@ var card_offers: Array[Resource] = []
 var last_outcome: String = ""
 # -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
 var last_poi_success: int = -1
+var upgrades_remaining: int = 0
+var upgraded_this_event: Dictionary = {}
+# In-memory travel interruption; no separate combat or persistence system.
+var navigation_origin: int = -1
+var pending_destination: int = -1
+var chasedown_index: int = -1
+var chasedowns_this_system: int = 0
+var chasedown_rng := RandomNumberGenerator.new()
 var field_repairs_open: bool = false # Set only by the exploration controller while the system view is open.
 var active_battle: int = -1
 var rng := RandomNumberGenerator.new()
@@ -71,6 +79,8 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	active_player_hand = null
 	last_poi_success = -1
 	pending_choice = ""
+	upgrades_remaining = 0
+	upgraded_this_event.clear()
 	card_offers.clear()
 	active_battle = -1
 	field_repairs_open = false
@@ -82,6 +92,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	seed_used = rng.seed
 	# Separate stream: station frequency cannot change six-encounter generation or loot rolls.
 	station_rng.seed = seed_used ^ 0x53544154494F4E
+	chasedown_rng.seed = seed_used ^ 0x4348415345
 	next_outpost_system = _station_interval()
 	generate_system()
 
@@ -92,7 +103,7 @@ func production(key: String) -> int:
 	return int(ship().get(key)) + int(production_upgrades.get(key, 0))
 
 func can_jump() -> bool:
-	return hull > 0 and active_battle < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge and not mandatory_boss_pending()
+	return hull > 0 and active_battle < 0 and pending_destination < 0 and pending_choice.is_empty() and ftl_charge >= required_ftl_charge and not mandatory_boss_pending()
 
 func mandatory_boss_pending() -> bool:
 	var found: bool = false
@@ -174,6 +185,10 @@ func generate_system() -> bool:
 	system_number += 1
 	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
+	navigation_origin = -1
+	pending_destination = -1
+	chasedown_index = -1
+	chasedowns_this_system = 0
 	encounters.clear()
 	service = {}
 	if system_number >= next_outpost_system:
@@ -221,6 +236,7 @@ func enemy_profile(encounter: Dictionary) -> Resource:
 
 func encounter_charge(index: int) -> int:
 	if index == SERVICE_INDEX: return 0
+	if encounters[index].get("chasedown", false): return 1
 	return 1 if encounters[index].kind == "poi" else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
 
 # Single completion gate: award travel charge once, shared by PoI resolution and battle results.
@@ -259,6 +275,9 @@ func survey(index: int) -> bool:
 
 func can_visit(index: int) -> bool:
 	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty(): return false
+	if pending_destination >= 0 and index != chasedown_index:
+		if chasedown_unresolved() or index != pending_destination: return false
+	if index == chasedown_index and chasedown_unresolved() and encounters[index].response < 0: return false
 	if index == SERVICE_INDEX: return not service.is_empty()
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
@@ -319,7 +338,7 @@ func _apply_outcome(outcome: Resource) -> void:
 			salvage += rules.unavailable_upgrade_salvage
 			last_outcome += "\nAll cards fully upgraded: +%d Salvage instead." % rules.unavailable_upgrade_salvage
 		else:
-			pending_choice = "upgrade"
+			start_upgrade_event(1)
 	elif outcome.resource_choice > 0:
 		pending_choice = "resource"
 		choice_amount = outcome.resource_choice
@@ -488,6 +507,7 @@ func choose_card(index: int) -> bool:
 func upgrade_candidates() -> Array[Resource]:
 	var result: Array[Resource] = []
 	for card in player_pool():
+		if pending_choice == "upgrade" and upgraded_this_event.has(card.identity_key()): continue
 		if card.upgrade_level < mini(2, mini(card.max_upgrades, card.upgrade_effects.size())):
 			result.append(card)
 	return result
@@ -503,7 +523,9 @@ func choose_upgrade(key: String) -> bool:
 		if is_instance_valid(active_player_hand):
 			active_player_hand.apply_upgrades(upgraded_cards)
 		last_outcome += "\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
-		pending_choice = ""
+		upgraded_this_event[key] = true
+		upgrades_remaining = maxi(0, upgrades_remaining - 1)
+		if upgrades_remaining == 0 or upgrade_candidates().is_empty(): finish_upgrades()
 		return true
 	return false
 
@@ -537,6 +559,8 @@ func begin_battle(board: Node, index: int = -1) -> void:
 		board.set("player_" + key, starting_value(ship(), key))
 	board.ftl.charge = clampi(modifier_value("emp_pulse_charge"), 0, board.ftl.charge_target)
 	board.ftl.disabled_turns = maxi(0, modifier_value("emp_pulse_offline"))
+	if index >= 0 and index < encounters.size() and encounters[index].get("chasedown", false) and encounters[index].get("response", -1) == 1:
+		board.ftl.charge = mini(board.ftl.charge, maxi(0, board.ftl.charge_target - 2))
 	active_player_hand = board.hand
 	board.hand.card_pool = player_pool()
 	board.hand.identity_weights = acquired_draw_weights()
@@ -562,6 +586,8 @@ func elite_resource_reward(board: Node) -> int:
 # Persist a latched board result and complete the encounter once; escape resolves Boss navigation too.
 # Board._record_result calculates Salvage first; escape and destruction keep distinct reward rules.
 func record_battle(board: Node) -> void:
+	# Reject a stale/reopened result before copying its currency or queuing another reward.
+	if active_battle >= 0 and active_battle < encounters.size() and encounters[active_battle].get("charge_awarded", false): return
 	sync_battle(board)
 	if active_battle >= 0 and active_battle < encounters.size():
 		if board.winner == "player":
@@ -578,6 +604,10 @@ func record_battle(board: Node) -> void:
 			add_modifiers({"materials":board.TACTICAL_RESOURCES, "energy":board.TACTICAL_RESOURCES, "crew":board.TACTICAL_RESOURCES})
 		if board.earned_strategic:
 			add_modifiers({"shields":board.STRATEGIC_SHIELDS})
+		var count: int = battle_upgrade_count(board)
+		if count > 0:
+			last_outcome = "Combat victory — upgrade up to %d different cards." % count
+			start_upgrade_event(count)
 
 func sync_battle(board: Node) -> void:
 	hull = clampi(board.player_hull, 0, ship().hull_capacity)
@@ -615,3 +645,77 @@ func pending_description() -> String:
 		if positive > 0: parts.append("+%d %s" % [positive, LABELS.get(key, key)])
 		if negative < 0: parts.append("%d %s" % [negative, LABELS.get(key, key)])
 	return "None" if parts.is_empty() else " · ".join(parts)
+
+# Roll once at actual movement initiation; arrival, menus and battle returns never call this.
+# Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
+func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
+	if not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi": return false
+	if pending_destination >= 0 or navigation_origin < 0 or navigation_origin == destination: return false
+	if navigation_origin >= encounters.size() or encounters[navigation_origin].kind != "poi": return false
+	if chasedowns_this_system >= maxi(0, rules.chasedown_limit): return false
+	var pool: Array = []
+	for profile in rules.enemy_ships:
+		if profile.enemy_rank == 0: pool.append(profile)
+	if pool.is_empty():
+		for profile in Ships.ENEMIES:
+			if profile.enemy_rank == 0: pool.append(profile)
+	if pool.is_empty(): return false
+	var chance: float = clampf(rules.chasedown_chance, 0.0, 1.0)
+	if chance <= 0: return false
+	var roll: float = chasedown_rng.randf() if forced_roll < 0 else forced_roll
+	if roll >= chance: return false
+	var total: float = 0.0
+	for profile in pool: total += maxf(0.01, profile.encounter_weight)
+	var selection: float = chasedown_rng.randf() * total
+	var enemy: Resource = pool.back()
+	for profile in pool:
+		selection -= maxf(0.01, profile.encounter_weight)
+		if selection <= 0:
+			enemy = profile
+			break
+	pending_destination = destination
+	chasedowns_this_system += 1
+	chasedown_index = encounters.size()
+	# Existing encounter/result pipeline awards exactly one unit; this entry has no map marker.
+	encounters.append({"kind":"battle", "enemy":maxi(0, Ships.ENEMIES.find(enemy)), "enemy_data":enemy,
+		"system_number":system_number, "modifier":0, "mandatory_boss":false, "chasedown":true,
+		"response":-1, "title":"Sublight Chasedown", "completed":false, "charge_awarded":false})
+	return true
+
+func chasedown_unresolved() -> bool:
+	return chasedown_index >= 0 and chasedown_index < encounters.size() and not encounters[chasedown_index].completed
+
+func choose_chasedown_response(choice: int) -> bool:
+	if hull <= 0 or not chasedown_unresolved() or active_battle >= 0 or not pending_choice.is_empty(): return false
+	var encounter: Dictionary = encounters[chasedown_index]
+	if encounter.response >= 0 or choice < 0 or choice >= rules.chasedown_responses.size(): return false
+	var response: Dictionary = rules.chasedown_responses[choice]
+	encounter.response = choice
+	add_modifiers(response.get("modifiers", {}))
+	hull = maxi(1, hull + int(response.get("hull", 0)))
+	return true
+
+func arrive_destination(index: int) -> void:
+	navigation_origin = index
+	if index == pending_destination and not chasedown_unresolved(): pending_destination = -1
+
+func battle_upgrade_count(board: Node) -> int:
+	if board.winner != "player" or board.escaped_by_ftl: return 0
+	if active_battle < 0 or active_battle >= encounters.size(): return 0
+	var encounter: Dictionary = encounters[active_battle]
+	if encounter.get("chasedown", false): return maxi(0, rules.chasedown_upgrades)
+	var rank: int = enemy_profile(encounter).enemy_rank
+	return maxi(0, [rules.standard_upgrades, rules.elite_upgrades, rules.boss_upgrades][clampi(rank, 0, 2)])
+
+# One event upgrades each identity at most once; a later event may upgrade it again.
+func start_upgrade_event(count: int) -> void:
+	upgraded_this_event.clear()
+	upgrades_remaining = mini(maxi(0, count), upgrade_candidates().size())
+	pending_choice = "upgrade" if upgrades_remaining > 0 else ""
+	if upgrades_remaining == 0: last_outcome += "\nNo eligible card upgrades remain."
+
+func finish_upgrades() -> void:
+	if pending_choice != "upgrade": return
+	pending_choice = ""
+	upgrades_remaining = 0
+	upgraded_this_event.clear()

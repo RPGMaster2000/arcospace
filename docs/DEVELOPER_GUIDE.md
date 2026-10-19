@@ -129,7 +129,10 @@ the selected `EncounterOutcome`. The UI flash/reward screen presents an already
 resolved result. `next_battle` bonuses/penalties are consumed in `begin_battle()`;
 production purchases and card ownership/upgrades last for the expedition.
 
-[star_map.gd](../scripts/ui/star_map.gd) only moves the ship and emits `arrived(index)`.
+[star_map.gd](../scripts/ui/star_map.gd) moves the ship and emits `arrived(index)`.
+Its `before_travel` callback delegates valid movement initiation to `Expedition._request_travel`;
+that is the sole Chasedown roll point, shared with grid travel. State retains the destination
+and one hidden ordinary battle entry until resolution; map/grid rendering excludes that entry.
 `Expedition._show_star_map()` connects that to `visit()`. Its `map_destination` survives
 screen rebuilds; a new system resets it. Set **Use Star Map** off on the Expedition
 node to restore the original grid. Both read the same `state.encounters` array.
@@ -146,7 +149,7 @@ The resource-draining card is **Drain Beam** (`cards/25_emp_pulse.tres`; legacy 
   player turns. Ship `ftl_turns`/`ftl_resistance` configure it; `_warp_out()` resolves
   escape without generating another system. The current code/UI still uses this name.
 - `ExpeditionState.ftl_charge`: **interstellar** progression. `generate_system()` uses
-  [expedition_progression.gd](../scripts/expedition_progression.gd) for surplus carryover,
+  [expedition_progression.gd](../scripts/expedition_progression.gd) for carryover (shipping cap **0**),
   system-based enemy scaling and mandatory Boss milestones. `can_jump()` blocks an
   unresolved mandatory Boss even with enough charge. Defeat or successful escape
   resolves that encounter, but their rewards differ.
@@ -159,7 +162,7 @@ The resource-draining card is **Drain Beam** (`cards/25_emp_pulse.tres`; legacy 
 | Add a new effect key | [CardEffects.play](../scripts/card_effects.gd) | `CardData.describe_effects`, `CombatModifier._scaled`/`preview`, AI simulation/scoring, card views, gallery filters, preferences and tests. Do not implement damage in UI. |
 | Change drawing/allocation | [CardHand](../scripts/card_hand.gd), [Power Allocation Resource](../resources/power_allocation.tres) | Preserve rarity locks/caps, identity duplicates, acquired weights and enemy independence. |
 | Add a card category | [CardData.allocation_category](../scripts/card_data.gd) | Allocation mode validation in CardHand, [allocation popup](../scripts/ui/power_allocation_popup.gd) and settings; gallery categories are separately derived from effects. |
-| Change acquisition/upgrades | [ExpeditionState](../scripts/expedition_state.gd), [ExpeditionRules](../scripts/expedition_rules.gd) | `random_card_offers`, `choose_card`, `choose_upgrade`, active-hand updates, gallery/inspector previews; shared library must stay unchanged. |
+| Change acquisition/upgrades | [ExpeditionState](../scripts/expedition_state.gd), [ExpeditionRules](../scripts/expedition_rules.gd) | `random_card_offers`, `choose_card`, `start_upgrade_event`, `choose_upgrade`, `finish_upgrades`, active-hand updates, gallery/inspector previews; shared library must stay unchanged. |
 | **Ships and combat statistics** — add a ship | [ShipData](../scripts/ship_data.gd), [ShipLibrary](../scripts/ship_library.gd), [Endeavour](../ships/player/endeavour.tres) | Selection shows three panels per page; enemy registry is separately in expedition rules. Custom models need the existing ship animation API. |
 | Change damage/income/wins | [CardEffects](../scripts/card_effects.gd), [MatchRules](../scripts/match_rules.gd), [Board](../scripts/board.gd) | Hull/plating tests, AI simulation, victory/escape and balance docs. |
 | **Star systems and PoIs** — add a PoI | [PoiData](../scripts/poi_data.gd), [Mining Operation](../encounters/mining_operation.tres), [expedition_rules.tres](../encounters/expedition_rules.tres) | Approach/outcome Resources, generation bounds, display classification/icon and reward tests. No registration in the map. |
@@ -355,3 +358,9 @@ Comment convention in critical scripts: **RESPONSIBILITY** identifies the owner;
 - No root README currently exists; this guide is the developer entry point. For deeper
   context see [expeditions](expeditions.md), [card library](card-library.md),
   [ship variants](ship-variants.md), [balance tables](balance/cards.md) and [UI layout](ui_layout.md).
+
+## Chasedown and combat upgrade events
+
+See [implementation, tuning and validation](chasedown_rewards.md). `ExpeditionRules` owns the 5% chance, per-system limit, four response dictionaries and 1/2/3/3 upgrade counts. `ExpeditionState.try_chasedown` validates real PoI-to-PoI travel and uses an independent seeded RNG. The existing `begin_battle` and `record_battle` pipeline handles scaled ordinary enemies, modifier consumption, exactly-once +1 FTL and non-escape upgrades. No separate battle scene or reward system is used.
+
+`upgraded_this_event` tracks identity keys: one selection per identity per event, even if level 2 is still available. `upgrades_remaining` drives the existing gallery; Finish clears the event, and a later event can select the identity again. Existing card costs, effects, acquisition weights and max levels are untouched. No combat-exhaustion Salvage is added. State is in memory; there is no disk save/load to migrate or validate.

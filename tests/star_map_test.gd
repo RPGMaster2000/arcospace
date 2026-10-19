@@ -67,7 +67,7 @@ func run() -> void:
 	host.state.ftl_charge = host.state.required_ftl_charge + 3
 	host._jump()
 	await create_timer(.08).timeout
-	check(host.state.ftl_charge == 2 and host.map_destination == -1 and host.view_kind == "system", "Transition cancels old travel, preserves carryover and resets map")
+	check(host.state.ftl_charge == 0 and host.map_destination == -1 and host.view_kind == "system", "Transition cancels old travel, discards carryover and resets map")
 	# Mandatory Boss gating is still owned by expedition state.
 	while host.state.system_number < 6:
 		host.state.ftl_charge = host.state.required_ftl_charge

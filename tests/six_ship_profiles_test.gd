@@ -6,9 +6,9 @@ const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const FIELDS = ["hull_capacity","shields","materials","energy","crew","synthesizer","reactor","quarters","ftl_turns","ftl_resistance"]
 const EXPECTED = [
-	[35,12,10,10,10,2,2,2,14,0.0], [28,17,8,14,10,1,3,2,11,0.25],
-	[38,6,20,20,20,3,2,3,17,-0.1], [35,12,10,10,12,3,1,2,14,0.0],
-	[35,12,12,10,10,2,3,1,14,0.0], [35,12,10,12,10,1,2,3,14,0.0]]
+	[35,12,10,10,10,2,2,2,14,0.0], [28,17,14,10,8,1,3,2,11,0.35],
+	[40,6,16,17,16,3,2,3,17,-0.1], [35,12,8,12,10,3,1,2,14,0.0],
+	[35,12,10,8,12,2,3,1,14,0.0], [35,12,8,12,10,1,2,3,14,0.0]]
 const COUNTS = [[9,9,7],[4,13,8],[11,5,9],[12,6,7],[7,13,5],[6,8,11]]
 const PREMIUM = ["Deploy boarding teams","Deep-core mining","Advanced fabrication","Reinforce EMP Pulse systems","Deep atmospheric dive","Board pirate flagship","Evacuate scientists","Shielded expedition","Stabilize corridor"]
 var failures: int = 0

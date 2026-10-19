@@ -67,7 +67,7 @@ func run_tests() -> void:
 	for surplus in [0,1,2,4,100]:
 		var run = fresh()
 		run.ftl_charge = run.required_ftl_charge + surplus
-		check(run.generate_system() and run.ftl_charge == mini(2,surplus), "Carryover formula at every surplus")
+		check(run.generate_system() and run.ftl_charge == 0, "Carryover formula at every surplus")
 		run.start(1, run.rules, 2041)
 		check(run.system_number == 1 and run.ftl_charge == 0, "New expeditions discard all old charge")
 	var cap = Progression.duplicate()
@@ -130,7 +130,7 @@ func run_tests() -> void:
 			check(count == 1 and run.encounters.size() == 6 and run.required_ftl_charge == pois+1, "Exactly one mandatory Boss replaces a battle, requirement unchanged")
 			var index: int = boss_index(run)
 			check(index >= 0 and run.enemy_profile(run.encounters[index]).enemy_rank == 2, "Mandatory encounter uses existing Boss")
-			check(run.ftl_charge == 2, "Carryover applied on milestone arrival")
+			check(run.ftl_charge == 0, "No carryover on milestone arrival")
 			run.ftl_charge = 100
 			var rng_before: int = run.rng.state
 			check(not run.can_jump() and not run.generate_system() and run.system_number == system and run.ftl_charge == 100 and run.rng.state == rng_before, "Boss gate blocks surplus jumps without consuming anything")
@@ -153,12 +153,15 @@ func run_tests() -> void:
 			run.record_battle(result)
 			check(run.system_number == system and run.ftl_charge == after, "Boss result awards once and never transitions systems")
 			run.active_battle = -1
+			if run.pending_choice == "upgrade":
+				check(not run.can_jump(), "Pending combat upgrades block departure until resolved or finished")
+				run.finish_upgrades()
 			if outcome == "loss":
 				check(run.mandatory_boss_pending() and not run.can_jump(), "Defeat never resolves mandatory Boss")
 			else:
 				check(run.encounters[index].resolution == ("escaped" if outcome == "escaped" else "defeated"), "Resolution explicitly distinguishes escape and defeat")
 				check(after == charge_before+3 and not run.mandatory_boss_pending() and run.can_jump(), "Both wins and EMP Pulse unlock normal progression and profile FTL")
-				check(run.generate_system() and run.system_number == system+1 and run.ftl_charge == 2, "Exactly one normal transition with capped carryover")
+				check(run.generate_system() and run.system_number == system+1 and run.ftl_charge == 0, "Exactly one normal transition with zero carryover")
 			result.free()
 	var malformed = milestone(18,6)
 	malformed.encounters.erase(malformed.encounters[boss_index(malformed)])
@@ -206,7 +209,7 @@ func run_tests() -> void:
 		host._battle_finished()
 		check(not host.jump_button.disabled, "Returning from escaped Boss unlocks system navigation")
 		host._jump()
-		check(host.state.system_number == 7 and host.state.ftl_charge == 2 and host.jump_button.text.contains("2/"), "Next system displays carried FTL")
+		check(host.state.system_number == 7 and host.state.ftl_charge == 0 and host.jump_button.text.contains("0/"), "Next system displays zero carried FTL")
 		host.free()
 		await process_frame
 	print("Expedition milestones: %d checks, %d failures" % [checks,failures])

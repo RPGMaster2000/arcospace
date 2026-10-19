@@ -31,7 +31,7 @@ script = ExtResource("Outcome")
 blurb = "The probe maps only the perimeter and strains shielding."
 salvage = 2
 next_battle = {
-"shields": -4
+"shields": -8
 }
 
 [sub_resource type="Resource" id="Success1"]
@@ -43,7 +43,7 @@ extra_ftl_charge = 1
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
 title = "Probe the shortcut"
-success_chance = 0.65
+success_chance = 0.4
 success = SubResource("Success1")
 failure = SubResource("Failure1")
 
@@ -52,21 +52,21 @@ script = ExtResource("Outcome")
 blurb = "The corridor closes after its first readings."
 salvage = 3
 next_battle = {
-"emp_pulse_offline": 2
+"emp_pulse_offline": 3
 }
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
-blurb = "A stable corridor supplies two extra travel charges."
+blurb = "A stable corridor supplies one extra travel charge."
 salvage = 7
-extra_ftl_charge = 2
+extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
 title = "Stabilize corridor"
 requirement = "reactor"
 minimum_production = 4
-success_chance = 0.8
+success_chance = 0.5
 success = SubResource("Success2")
 failure = SubResource("Failure2")
 
@@ -75,26 +75,26 @@ script = ExtResource("Outcome")
 blurb = "The probe drains energy reserves, but a few valuable readings survive."
 salvage = 4
 next_battle = {
-"energy": -4
+"energy": -8
 }
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
 blurb = "The reinforced probe charts a shortcut and recovers valuable readings."
 salvage = 9
-extra_ftl_charge = 2
+extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Reinforce transit probe"
 requirement = "synthesizer"
-success_chance = 0.75
+success_chance = 0.45
 success = SubResource("Success3")
 failure = SubResource("Failure3")
 
 [resource]
 script = ExtResource("Poi")
 title = "Unstable Wormhole"
-description = "Shortcuts accelerate travel but damage or disrupt the emergency drive."
+description = "Risk reserve penalties or EMP Pulse disruption for a chance at one extra travel charge."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])
 hazardous = true

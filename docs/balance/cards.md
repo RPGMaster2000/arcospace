@@ -107,6 +107,12 @@ Acquisitions offer up to 3 distinct unowned identities, choose 1; 60% Tier 2 / 4
 
 Every card has two full replacement effect dictionaries on its CardData Resource. Upgrade level is independent of rarity; cost and extra-action flag stay unchanged. All player copies, including held cards, resolve to the upgraded identity; enemies always retain base Resources. Production stays +1 per play; upgraded production cards gain immediate resources/defense. Play-again cards gain no new action grants or cost refunds. Hull gains can still create existing Ablative Plating; high-cost repairs scale conservatively. Fully upgraded research retains the existing 4 Salvage fallback.
 
+
+## Combat upgrade events and Chasedown
+
+Non-escape victories offer up to 1 / 2 / 3 / 3 upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.
+
+Sublight Chasedown: 5% per valid PoI-to-PoI movement, limit 1 per system. Initial entry, menus, invalid/same destinations, battle return and FTL travel never roll. Uses ordinary enemies, existing scaling and battle scene, gives exactly +1 FTL once on victory or escape, then resumes the preserved destination. See [implementation and tuning](../chasedown_rewards.md).
 ## Effect keys (`scripts/card_effects.gd`)
 
 | Key | Resolution |
