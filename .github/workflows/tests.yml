@@ -103,6 +103,23 @@ jobs:
             cat "test-results/startup-$mode.log"
             if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' "test-results/startup-$mode.log"; then exit 1; fi
           done
+      - name: Validate and capture independent ship models
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LIBGL_ALWAYS_SOFTWARE=1
+          GODOT=Godot_v4.7.2-stable_linux.x86_64
+          for mode in headless rendered; do
+            status=0
+            if [ "$mode" = headless ]; then
+              timeout 120 "$GODOT" --headless --path . --script tests/ship_models_test.gd > "test-results/models-$mode.log" 2>&1 || status=$?
+            else
+              timeout 120 xvfb-run -a -s "-screen 0 1920x1080x24" "$GODOT" --display-driver x11 --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/ship_models_test.gd > "test-results/models-$mode.log" 2>&1 || status=$?
+            fi
+            cat "test-results/models-$mode.log"
+            if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' "test-results/models-$mode.log"; then exit 1; fi
+          done
+          cp -r .godot/testlogs test-results/ship-model-screenshots
       - uses: actions/upload-artifact@v4
         if: always()
         with:

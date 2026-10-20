@@ -59,6 +59,7 @@ func run() -> void:
 		var original_color: Color = second.hull_material.albedo_color
 		first.set_hull_color(Color.MAGENTA)
 		check(second.hull_material.albedo_color == original_color, "Hull tint stays local")
+		second.set_hull_strength(30)
 		first.set_hull_strength(3)
 		check(second.damage_material.get_shader_parameter("damage") == 0.0, "Damage stays local")
 		first.set_shield_strength(0)
