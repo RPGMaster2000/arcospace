@@ -9,7 +9,7 @@ var initial_settings: Dictionary = {}
 var selected_ship: int = 0
 var deck_viewer: CanvasLayer
 var deck_button: Button
-var music_button: Button
+var settings_button: Button
 const SHIPS_PER_PAGE: int = 3
 var ship_page: int = 0
 var previous_page: Button
@@ -19,8 +19,9 @@ var legend_button: Button
 
 func _ready() -> void:
 	get_node("/root/Music").play_starmap()
-	music_button = preload("res://scripts/ui/music_button.gd").new()
-	add_child(music_button)
+	settings_button = preload("res://scripts/ui/settings_button.gd").new()
+	settings_button.is_main_menu = true
+	add_child(settings_button)
 	var overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(overlay)
 	var legend = Button.new()
@@ -153,11 +154,11 @@ func _layout_cards() -> void:
 	deck_button.offset_top = $Start.offset_top
 	deck_button.offset_bottom = $Start.offset_bottom
 	legend_button.position = Vector2(size.x - 190, 8)
-	music_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	music_button.offset_left = -64
-	music_button.offset_right = -16
-	music_button.offset_top = 8
-	music_button.offset_bottom = 56
+	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	settings_button.offset_left = -64
+	settings_button.offset_right = -16
+	settings_button.offset_top = 8
+	settings_button.offset_bottom = 56
 	for button in [previous_page, next_page]:
 		button.set_anchors_and_offsets_preset(
 			Control.PRESET_BOTTOM_LEFT if button == previous_page else Control.PRESET_BOTTOM_RIGHT

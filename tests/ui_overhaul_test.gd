@@ -237,7 +237,7 @@ func run() -> void:
 	defeated.winner = "enemy"
 	defeated.refresh_display()
 	check(not defeated.get_node("MatchResult/Panel/PlayAgain").visible, "No New Expedition on defeat")
-	check(defeated.get_node("MatchResult/Panel/Configure").text == "Select Ship", "Single defeat destination")
+	check(defeated.get_node("MatchResult/Panel/Configure").text == "Main Menu", "Single defeat destination")
 	defeated.get_node("MatchResult/Panel/Configure").pressed.emit()
 	await settle()
 	check(current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Defeat goes to ship selection")

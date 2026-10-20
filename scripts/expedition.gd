@@ -26,6 +26,7 @@ var card_inspector: CanvasLayer
 @export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
 @export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
 @export_group("")
+var settings_button: Button
 var field_repairs: VBoxContainer
 var station_preview: VBoxContainer
 var star_map: Control
@@ -125,7 +126,9 @@ func _build_ui() -> void:
 	legend.custom_minimum_size = Vector2(100, 48)
 	Presentation.action(legend)
 	heading_row.add_child(legend)
-	heading_row.add_child(preload("res://scripts/ui/music_button.gd").new())
+	settings_button = preload("res://scripts/ui/settings_button.gd").new()
+	heading_row.add_child(settings_button)
+	settings_button.main_menu_requested.connect(_exit)
 	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
 	resource_bar.pulse_period = hull_pulse_period
 	resource_bar.pulse_scale = hull_pulse_scale
@@ -356,7 +359,7 @@ func show_system() -> void:
 	_clear("system")
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
-		_button("Select Ship", _exit)
+		_button("Main Menu", _exit)
 		return
 	if use_star_map:
 		_show_star_map()

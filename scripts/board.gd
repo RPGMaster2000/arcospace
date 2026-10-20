@@ -12,6 +12,7 @@ var expedition: Resource
 var expedition_encounter: int = -1
 ## TUNE: Static Power Allocation weight; copied into the player hand at battle start.
 @export var allocation_settings: Resource = preload("res://resources/power_allocation.tres")
+var settings_button: Button
 var allocation_button: Button
 var allocation_popup: CanvasLayer
 
@@ -174,6 +175,18 @@ func _apply_ship(side: String, data: Resource) -> void:
 # Initialize ship stats and expedition overrides before dealing hands and starting turn income.
 func _ready() -> void:
 	get_node("/root/Music").play_battle()
+	settings_button = preload("res://scripts/ui/settings_button.gd").new()
+	settings_button.z_index = 110  # Keep settings accessible above the result screen's shade.
+	add_child(settings_button)
+	settings_button.main_menu_requested.connect(_return_to_setup)
+	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	settings_button.offset_left = -64
+	settings_button.offset_right = -16
+	settings_button.offset_top = 8
+	settings_button.offset_bottom = 56
+	# Reserve one gear-width beside the enemy heading; keep its text box width intact.
+	$ModeLabel.offset_left -= 64
+	$ModeLabel.offset_right -= 64
 	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
 	repair_preview.position = Vector2(30, 270)
 	repair_preview.size = Vector2(680, 70)
@@ -704,7 +717,8 @@ func refresh_display() -> void:
 	$MatchResult/Panel/Rewards.text = victory_description()
 	$MatchResult/Panel/Rewards.visible = not $MatchResult/Panel/Rewards.text.is_empty()
 	$MatchResult/Panel/PlayAgain.hide()
-	$MatchResult/Panel/Configure.text = "Select Ship"
+	$MatchResult/Panel/Configure.text = "Main Menu"
+	$MatchResult/Panel/Configure.visible = winner != "player"
 	var can_continue: bool = winner == "player" and player_hull > 0
 	$MatchResult/Panel/Continue.visible = can_continue
 	$MatchResult/Panel/NextEncounter.visible = can_continue and expedition == null

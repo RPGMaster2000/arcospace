@@ -105,7 +105,7 @@ func run() -> void:
 			check(panel.is_visible_in_tree() and root.get_visible_rect().encloses(panel.get_global_rect()), "Selected panel visible and inside screen")
 			check(panel.get_node("Name").text == Ships.PLAYERS[index].ship_name.to_upper(), "All six names displayed")
 			check(panel.get_node("Select").size.y >= 48, "Touch-friendly selection")
-			for control in [menu.previous_page, menu.next_page, menu.deck_button, menu.get_node("Start"),menu.music_button]:
+			for control in [menu.previous_page, menu.next_page, menu.deck_button, menu.get_node("Start"),menu.settings_button]:
 				check(root.get_visible_rect().encloses(control.get_global_rect()), "Navigation stays inside viewport")
 			check(not menu.previous_page.get_global_rect().intersects(menu.deck_button.get_global_rect()) and not menu.next_page.get_global_rect().intersects(menu.get_node("Start").get_global_rect()), "Paging does not overlap actions")
 			menu.deck_button.pressed.emit()
