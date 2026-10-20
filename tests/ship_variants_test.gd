@@ -57,6 +57,7 @@ func run() -> void:
 	check(seen.size() == 6, "All six enemies appear across fresh matches")
 	# Replacement model remains per-resource, independent of battlefield duplication.
 	var replacement_profile: Resource = Ships.PLAYERS[0]
+	var original_model: PackedScene = replacement_profile.model_scene
 	replacement_profile.model_scene = load("res://scenes/ship_3d.tscn")
 	var custom = load("res://scenes/board_3d.tscn").instantiate()
 	custom.setup_settings = {"player_ship":0}
@@ -65,7 +66,7 @@ func run() -> void:
 	check(custom.engine_light == null and custom.player_ship_data == Ships.PLAYERS[0], "Optional model replaces only the selected ship and supports missing engine light")
 	custom.queue_free()
 	await process_frame
-	replacement_profile.model_scene = null
+	replacement_profile.model_scene = original_model
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
 	check(menu.selected_ship == 0, "Endeavour default")

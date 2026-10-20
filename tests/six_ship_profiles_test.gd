@@ -46,7 +46,7 @@ func run() -> void:
 		signatures.append(signature)
 		check(profile.card_family_weights.is_empty() and profile.card_effect_weights.is_empty(), "No new color draw weights")
 		if index >= 3:
-			check(profile.hull_color == Ships.PLAYERS[0].hull_color and profile.model_scene == Ships.PLAYERS[0].model_scene, "Endeavour visual fallback preserved")
+			check(profile.model_scene != null and profile.model_scene != Ships.PLAYERS[0].model_scene, "Independent player visual assigned")
 		var hand = Hand.new()
 		hand.card_pool.assign(profile.starting_cards)
 		hand.configure_player_allocation(2.0)
