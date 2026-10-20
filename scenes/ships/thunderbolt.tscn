@@ -99,7 +99,7 @@ rotation = Vector3(-0.35, 0, 0.08)
 [node name="Details" type="Node3D" parent="Body"]
 
 [node name="Hull" type="MeshInstance3D" parent="Body"]
-transform = Transform3D(0, 0, -1, 1, 0, 0, 0, -1, 0, 0, 0, 0)
+rotation = Vector3(1.5707963, 0, -1.5707963)
 mesh = SubResource("Mesh0")
 material_override = SubResource("HullMaterial")
 
