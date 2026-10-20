@@ -5,6 +5,8 @@ const BOARD = preload("res://scenes/board_3d.tscn")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 @export var preview_model: PackedScene = preload("res://scenes/ship_3d.tscn")
+## Elevated orthographic view for the main-menu ship previews.
+@export var preview_camera_position: Vector3 = Vector3(7, 7, 7)
 var initial_settings: Dictionary = {}
 var selected_ship: int = 0
 var deck_viewer: CanvasLayer
@@ -94,6 +96,9 @@ func _ready() -> void:
 
 
 func _preview(viewport: SubViewport, data: Resource) -> void:
+	var camera: Camera3D = viewport.get_node("Camera")
+	camera.position = preview_camera_position
+	camera.look_at(Vector3.ZERO)
 	var model = (data.model_scene if data.model_scene != null else preview_model).instantiate()
 	viewport.add_child(model)
 	model.set_hull_color(data.hull_color)
