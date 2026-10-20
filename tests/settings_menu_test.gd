@@ -65,7 +65,6 @@ func run() -> void:
 		var settings = menu.settings_button.menu
 		check(settings.shade.visible and paused, "Settings opens and pauses gameplay")
 		check(settings.main_menu_button.disabled, "Main Menu is disabled in the menu itself")
-		check(settings.track_label.text.contains(music.current_title()), "Bundled track title displayed")
 		check(music.player.can_process(), "Music remains active while gameplay is paused")
 		check(is_instance_valid(settings.extra_settings), "Future settings have a dedicated container")
 		await settle()
@@ -75,8 +74,6 @@ func run() -> void:
 		var was_enabled: bool = music.enabled
 		await activate(settings.music_toggle, dimensions.x == 960)
 		check(music.enabled != was_enabled and settings.music_toggle.button_pressed == music.enabled, "Music toggles with mouse/touch while paused")
-		music.play_result(true)
-		check(settings.track_label.text.contains("Mission Accomplished"), "Track title updates while open")
 		await capture("menu-%d" % dimensions.x)
 		var escape := InputEventAction.new()
 		escape.action = "ui_cancel"
@@ -101,7 +98,7 @@ func run() -> void:
 	current_scene = host
 	await settle()
 	host.settings_button.pressed.emit()
-	check(paused and host.settings_button.menu.track_label.text.contains("Star Map"), "Exploration uses the shared settings window")
+	check(paused and host.settings_button.menu.music_toggle.button_pressed == music.enabled, "Exploration uses the shared settings window")
 	host.settings_button.menu.dismiss()
 	var index: int = -1
 	for slot in range(host.state.encounters.size()):

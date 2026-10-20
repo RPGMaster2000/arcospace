@@ -3,7 +3,6 @@ extends Node
 # RESPONSIBILITY: Keep one music player across screens and coordinate track transitions and muting.
 # One player survives scene transitions. Missing placeholder files stay silent.
 signal enabled_changed(enabled: bool)
-signal track_changed(track: String)
 const TRACKS = {
 	"starmap": "res://assets/sound/starmap.mp3",
 	"battle1": "res://assets/sound/battle1.mp3",
@@ -11,13 +10,6 @@ const TRACKS = {
 	"victory": "res://assets/sound/victory.mp3"
 }
 const SETTINGS_PATH = "user://music.cfg"
-# Titles from the bundled MP3 metadata.
-const TRACK_TITLES = {
-	"starmap": "Star Map || StarFox (2026) OST",
-	"battle1": "Meteo || StarFox (2026) OST",
-	"battle2": "Sector Y / Solar || Star Fox (2026) OST",
-	"victory": "Mission Accomplished || StarFox (2026) OST"
-}
 var enabled: bool = true
 var current_track: String = ""
 var player: AudioStreamPlayer
@@ -50,14 +42,12 @@ func play_result(won: bool) -> void:
 	else:
 		current_track = ""
 		player.stop()
-		track_changed.emit(current_track)
 
 
 func play_track(track: String, restart: bool = false) -> void:
 	if track == current_track and not restart:
 		return
 	current_track = track
-	track_changed.emit(current_track)
 	player.stop()
 	player.stream = null
 	var path: String = TRACKS.get(track, "")
@@ -73,10 +63,6 @@ func play_track(track: String, restart: bool = false) -> void:
 	player.stream = stream
 	player.play(0.0)
 	_apply_mute()
-
-
-func current_title() -> String:
-	return TRACK_TITLES.get(current_track, "No track playing")
 
 
 func set_enabled(value: bool) -> void:

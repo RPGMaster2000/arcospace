@@ -9,7 +9,6 @@ var shade: ColorRect
 var panel: PanelContainer
 var close_button: Button
 var music_toggle: CheckButton
-var track_label: Label
 var main_menu_button: Button
 var quit_button: Button
 # Future settings belong here; the body already scrolls on compact displays.
@@ -65,11 +64,6 @@ func _ready() -> void:
 	music_toggle.custom_minimum_size.y = 52
 	music_toggle.add_theme_font_size_override("font_size", 22)
 	body.add_child(music_toggle)
-	track_label = Label.new()
-	track_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	track_label.add_theme_font_size_override("font_size", 18)
-	track_label.add_theme_color_override("font_color", Color("a9bdce"))
-	body.add_child(track_label)
 	extra_settings = VBoxContainer.new()
 	extra_settings.add_theme_constant_override("separation", 14)
 	body.add_child(extra_settings)
@@ -89,9 +83,7 @@ func _ready() -> void:
 	quit_button.pressed.connect(func(): get_tree().quit())
 	music_toggle.toggled.connect(_music.set_enabled)
 	_music.enabled_changed.connect(_sync_music)
-	_music.track_changed.connect(_sync_track)
 	_sync_music(_music.enabled)
-	_sync_track(_music.current_track)
 	shade.resized.connect(_fit)
 	_fit()
 	shade.hide()
@@ -123,7 +115,6 @@ func present() -> void:
 	_owns_pause = true
 	get_tree().paused = true
 	_sync_music(_music.enabled)
-	_sync_track(_music.current_track)
 	shade.show()
 	_fit()
 	close_button.grab_focus()
@@ -148,10 +139,6 @@ func _exit_tree() -> void:
 
 func _sync_music(enabled: bool) -> void:
 	music_toggle.set_pressed_no_signal(enabled)
-
-
-func _sync_track(_track: String) -> void:
-	track_label.text = "Current track: " + _music.current_title()
 
 
 func _request_main_menu() -> void:
