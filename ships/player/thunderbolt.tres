@@ -27,6 +27,8 @@
 [ext_resource type="Resource" path="res://cards/41_shield_collapse.tres" id="25_x36o5"]
 [ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="26_nl1rv"]
 
+[ext_resource type="PackedScene" path="res://scenes/ships/thunderbolt.tscn" id="VisualModel"]
+
 [resource]
 script = ExtResource("1_n0hhp")
 ship_name = "Thunderbolt"
@@ -41,5 +43,6 @@ synthesizer = 1
 reactor = 3
 ftl_turns = 11
 ftl_resistance = 0.3500000000000001
-hull_color = Color(0.25, 0.85, 0.88, 1)
+hull_color = Color(0.18, 0.21, 0.26, 1)
 starting_cards = Array[Resource]([ExtResource("2_aatw3"), ExtResource("3_tctpy"), ExtResource("4_lgigk"), ExtResource("5_hww14"), ExtResource("6_ybiyd"), ExtResource("7_ble08"), ExtResource("8_ye2ms"), ExtResource("9_0j2cm"), ExtResource("10_kdhgj"), ExtResource("11_u8lf3"), ExtResource("12_x5nny"), ExtResource("13_gtyr8"), ExtResource("14_i55sv"), ExtResource("15_bc7p7"), ExtResource("16_xldkf"), ExtResource("17_ggqfk"), ExtResource("18_g7ymb"), ExtResource("19_4vqgn"), ExtResource("20_py7wb"), ExtResource("21_38811"), ExtResource("22_0ig5j"), ExtResource("23_or6qd"), ExtResource("24_ui3nu"), ExtResource("25_x36o5"), ExtResource("26_nl1rv")])
+model_scene = ExtResource("VisualModel")

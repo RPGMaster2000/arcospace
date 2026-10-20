@@ -1,0 +1,231 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/enemy_ship_model.gd" id="Controller"]
+[ext_resource type="Shader" path="res://shaders/shield_3d.gdshader" id="ShieldShader"]
+
+[sub_resource type="StandardMaterial3D" id="HullMaterial"]
+resource_local_to_scene = true
+albedo_color = Color(0.26, 0.23, 0.22, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Accent"]
+resource_local_to_scene = true
+albedo_color = Color(0.7, 0.23, 0.065, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Dark"]
+resource_local_to_scene = true
+albedo_color = Color(0.1, 0.14, 0.18, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Glow"]
+resource_local_to_scene = true
+albedo_color = Color(1, 0.22, 0.045, 1)
+metallic = 0.45
+roughness = 0.55
+emission_enabled = true
+emission = Color(1, 0.22, 0.045, 1)
+emission_energy_multiplier = 1.0
+
+[sub_resource type="BoxMesh" id="Mesh0"]
+resource_local_to_scene = true
+size = Vector3(2.7, 0.6, 0.95)
+
+[sub_resource type="BoxMesh" id="Mesh1"]
+resource_local_to_scene = true
+size = Vector3(1.45, 0.45, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh2"]
+resource_local_to_scene = true
+size = Vector3(1.45, 0.45, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh3"]
+resource_local_to_scene = true
+size = Vector3(1.4, 0.2, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh4"]
+resource_local_to_scene = true
+size = Vector3(1.4, 0.2, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh5"]
+resource_local_to_scene = true
+size = Vector3(1.6, 0.19, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh6"]
+resource_local_to_scene = true
+size = Vector3(1.6, 0.19, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh7"]
+resource_local_to_scene = true
+size = Vector3(0.14, 0.24, 0.24)
+
+[sub_resource type="BoxMesh" id="Mesh8"]
+resource_local_to_scene = true
+size = Vector3(0.14, 0.24, 0.24)
+
+[sub_resource type="BoxMesh" id="Mesh9"]
+resource_local_to_scene = true
+size = Vector3(0.85, 0.55, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh10"]
+resource_local_to_scene = true
+size = Vector3(0.85, 0.55, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh11"]
+resource_local_to_scene = true
+size = Vector3(0.12, 0.32, 0.32)
+
+[sub_resource type="BoxMesh" id="Mesh12"]
+resource_local_to_scene = true
+size = Vector3(0.12, 0.32, 0.32)
+
+[sub_resource type="BoxMesh" id="Mesh13"]
+resource_local_to_scene = true
+size = Vector3(0.12, 0.32, 0.32)
+
+[sub_resource type="BoxMesh" id="Mesh14"]
+resource_local_to_scene = true
+size = Vector3(0.7, 0.3, 0.45)
+
+[sub_resource type="BoxMesh" id="Mesh15"]
+resource_local_to_scene = true
+size = Vector3(0.08, 0.5, 0.08)
+
+[sub_resource type="BoxMesh" id="Mesh16"]
+resource_local_to_scene = true
+size = Vector3(0.65, 0.23, 0.46)
+
+[sub_resource type="ShaderMaterial" id="ShieldMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("ShieldShader")
+shader_parameter/tint = Color(0.2, 0.65, 1, 1)
+shader_parameter/strength = 1.0
+shader_parameter/formation = 1.0
+shader_parameter/hit = 0.0
+shader_parameter/keep_shell = false
+
+[sub_resource type="SphereMesh" id="ShieldMesh"]
+radius = 1.0
+height = 2.0
+radial_segments = 32
+rings = 16
+
+[node name="Ship" type="Node3D"]
+script = ExtResource("Controller")
+pointed_hull = false
+
+[node name="Body" type="Node3D" parent="."]
+rotation = Vector3(-0.35, 0, 0.08)
+
+[node name="Details" type="Node3D" parent="Body"]
+
+[node name="Hull" type="MeshInstance3D" parent="Body"]
+mesh = SubResource("Mesh0")
+material_override = SubResource("HullMaterial")
+position = Vector3(0, 0, 0)
+rotation = Vector3(0, 0, 0)
+
+[node name="ForwardJawPort" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh1")
+material_override = SubResource("HullMaterial")
+position = Vector3(0.78, 0.02, -0.67)
+rotation = Vector3(0, -0.28, 0)
+
+[node name="ForwardJawStarboard" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh2")
+material_override = SubResource("HullMaterial")
+position = Vector3(0.78, 0.02, 0.67)
+rotation = Vector3(0, 0.28, 0)
+
+[node name="RaiderWingPort" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh3")
+material_override = SubResource("Dark")
+position = Vector3(-0.65, -0.1, -0.92)
+rotation = Vector3(0, -0.4, 0)
+
+[node name="RaiderWingStarboard" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh4")
+material_override = SubResource("Dark")
+position = Vector3(-0.65, -0.1, 0.92)
+rotation = Vector3(0, 0.4, 0)
+
+[node name="CannonPort" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh5")
+material_override = SubResource("Dark")
+position = Vector3(0.55, 0.3, -1.02)
+rotation = Vector3(0, 0, 0)
+
+[node name="CannonStarboard" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh6")
+material_override = SubResource("Dark")
+position = Vector3(0.55, 0.3, 1.02)
+rotation = Vector3(0, 0, 0)
+
+[node name="CannonMuzzlePort" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh7")
+material_override = SubResource("Accent")
+position = Vector3(1.38, 0.3, -1.02)
+rotation = Vector3(0, 0, 0)
+
+[node name="CannonMuzzleStarboard" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh8")
+material_override = SubResource("Accent")
+position = Vector3(1.38, 0.3, 1.02)
+rotation = Vector3(0, 0, 0)
+
+[node name="EngineBlockPort" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh9")
+material_override = SubResource("HullMaterial")
+position = Vector3(-1.16, 0, -0.64)
+rotation = Vector3(0, 0, 0)
+
+[node name="EngineBlockStarboard" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh10")
+material_override = SubResource("HullMaterial")
+position = Vector3(-1.16, 0, 0.64)
+rotation = Vector3(0, 0, 0)
+
+[node name="Engine" type="MeshInstance3D" parent="Body"]
+mesh = SubResource("Mesh11")
+material_override = SubResource("Glow")
+position = Vector3(-1.63, 0, -0.64)
+rotation = Vector3(0, 0, 0)
+
+[node name="Engine1" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh12")
+material_override = SubResource("Glow")
+position = Vector3(-1.63, 0, 0)
+rotation = Vector3(0, 0, 0)
+
+[node name="Engine2" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh13")
+material_override = SubResource("Glow")
+position = Vector3(-1.63, 0, 0.64)
+rotation = Vector3(0, 0, 0)
+
+[node name="SalvagedArmor" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh14")
+material_override = SubResource("Accent")
+position = Vector3(-0.2, 0.4, 0.56)
+rotation = Vector3(0.1, 0.25, 0.15)
+
+[node name="Antenna" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh15")
+material_override = SubResource("Dark")
+position = Vector3(-0.65, 0.53, -0.44)
+rotation = Vector3(0, 0, 0)
+
+[node name="Bridge" type="MeshInstance3D" parent="Body/Details"]
+mesh = SubResource("Mesh16")
+material_override = SubResource("HullMaterial")
+position = Vector3(0.07, 0.42, -0.1)
+rotation = Vector3(0, 0, 0)
+
+[node name="Shield" type="MeshInstance3D" parent="."]
+scale = Vector3(2.25, 1.05, 1.65)
+material_override = SubResource("ShieldMaterial")
+mesh = SubResource("ShieldMesh")
+cast_shadow = 0
