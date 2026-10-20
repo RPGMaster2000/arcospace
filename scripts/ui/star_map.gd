@@ -3,6 +3,13 @@ extends Control
 # DOES NOT: Generate encounters, spend resources or grant rewards.
 # Presentation only. The expedition controller supplies markers and handles arrival.
 signal arrived(index: int)
+signal interrupted
+# TUNE: Seconds of sublight movement before an interception opens.
+const INTERCEPTION_DELAY: float = 0.5
+# TUNE: Total stopped-ship impact duration, shake in pixels, and red flash opacity.
+const IMPACT_DURATION: float = 1.0
+const SHAKE_PIXELS: float = 8.0
+const FLASH_OPACITY: float = 0.35
 const POINTS = [
 	Vector2(.21, .23),
 	Vector2(.5, .15),
@@ -17,8 +24,15 @@ var travel_duration: float = 1.4
 var ship_position: Vector2 = START
 var traveling: bool = false
 var before_travel: Callable
+var intercept_travel: Callable
 var markers: Dictionary = {}
 var tween: Tween
+var interruption_tween: Tween
+var impact_tween: Tween
+var impact_layer: CanvasLayer
+var impact_flash: ColorRect
+var impact_active: bool = false
+var canvas_origin: Transform2D
 
 
 func configure(entries: Array, last_destination: int, duration: float) -> void:
@@ -60,17 +74,70 @@ func travel(index: int) -> void:
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
+	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	traveling = true
 	for button in markers.values():
 		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tween = create_tween()
 	(
 		tween
-		. tween_method(_move_ship, ship_position, destination(index), travel_duration)
+		. tween_method(
+			_move_ship, ship_position, destination(index),
+			maxf(travel_duration, INTERCEPTION_DELAY + 0.1) if intercepted else travel_duration
+		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
 	)
-	tween.tween_callback(func(): arrived.emit(index))
+	if intercepted:
+		# A separate node-bound timer stops movement without emitting arrival.
+		interruption_tween = create_tween()
+		interruption_tween.tween_interval(INTERCEPTION_DELAY)
+		interruption_tween.tween_callback(_interrupt_travel)
+	else:
+		tween.tween_callback(func(): arrived.emit(index))
+
+
+func _interrupt_travel() -> void:
+	tween.kill()
+	impact_active = true
+	canvas_origin = get_viewport().canvas_transform
+	impact_layer = CanvasLayer.new()
+	impact_layer.layer = 100
+	add_child(impact_layer)
+	impact_flash = ColorRect.new()
+	impact_flash.color = Color(1.0, 0.0, 0.0, 0.0)
+	impact_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Block screen controls until the one-second impact finishes.
+	impact_flash.mouse_filter = Control.MOUSE_FILTER_STOP
+	impact_layer.add_child(impact_flash)
+	impact_tween = create_tween()
+	impact_tween.tween_method(_update_impact, 0.0, 1.0, IMPACT_DURATION)
+	impact_tween.tween_callback(_finish_impact)
+
+
+func _update_impact(progress: float) -> void:
+	# Deterministic shake does not consume gameplay RNG; it settles to zero.
+	var strength: float = SHAKE_PIXELS * (1.0 - progress)
+	var offset := Vector2(sin(progress * 93.0), sin(progress * 127.0)) * strength
+	get_viewport().canvas_transform = canvas_origin.translated(offset)
+	# Two quick pulses at the start, then the shake continues for the remaining time.
+	var first: float = maxf(0.0, 1.0 - absf(progress - 0.06) / 0.06)
+	var second: float = maxf(0.0, 1.0 - absf(progress - 0.24) / 0.06)
+	impact_flash.color.a = FLASH_OPACITY * maxf(first, second)
+
+
+func _finish_impact() -> void:
+	_clear_impact()
+	interrupted.emit()
+
+
+func _clear_impact() -> void:
+	if impact_active:
+		get_viewport().canvas_transform = canvas_origin
+		impact_active = false
+	if is_instance_valid(impact_layer):
+		impact_layer.visible = false
+		impact_layer.queue_free()
 
 
 func _move_ship(point: Vector2) -> void:
@@ -79,6 +146,11 @@ func _move_ship(point: Vector2) -> void:
 
 
 func _exit_tree() -> void:
+	if impact_tween:
+		impact_tween.kill()
+	_clear_impact()
+	if interruption_tween:
+		interruption_tween.kill()
 	if tween:
 		tween.kill()
 

@@ -42,6 +42,27 @@ func run() -> void:
 			await settle()
 			if grid: host._grid_travel(1)
 			else: host.star_map.travel(1)
+			if not grid:
+				var map: Control = host.star_map
+				var origin: Vector2 = map.ship_position
+				check(map.traveling and host.view_kind == "system", "Interception permits movement before prompt")
+				map.travel(2)
+				await create_timer(0.2).timeout
+				check(host.view_kind == "system" and map.ship_position != origin, "Ship moves before interception delay")
+				check(host.map_destination == 0 and host.state.navigation_origin == 0 and host.state.pending_destination == 1, "Delayed interception locks destination and prevents early arrival")
+				await create_timer(0.4).timeout
+				check(map.impact_active and host.view_kind == "system", "Impact starts after movement stops, before prompt")
+				map._update_impact(0.06)
+				check(map.impact_flash.color.a > 0.3, "First red flash peaks")
+				map._update_impact(0.15)
+				check(is_zero_approx(map.impact_flash.color.a), "Red fades between flashes")
+				map._update_impact(0.24)
+				check(map.impact_flash.color.a > 0.3, "Second red flash peaks")
+				var stopped: Vector2 = map.ship_position
+				await create_timer(0.25).timeout
+				check(map.ship_position == stopped and host.map_destination == 0, "Impact keeps ship stopped and prevents arrival")
+				await create_timer(0.8).timeout
+				check(root.canvas_transform == Transform2D.IDENTITY, "Impact restores screen position")
 			check(host.view_kind == "chasedown" and host.state.pending_destination == 1 and host.map_destination == 0, "Actual movement interrupted before consuming destination")
 			var index: int = host.state.chasedown_index
 			for size in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(960,540),Vector2i(800,450),Vector2i(686,384)]:
@@ -88,6 +109,27 @@ func run() -> void:
 				check(is_instance_valid(host.star_map) and host.star_map.markers.size() == 6 + int(not host.state.service.is_empty()), "No extra map marker for interception")
 			host.free()
 			await process_frame
+	# Removing a map during its delay must cancel the old callback.
+	make_host()
+	host.state.navigation_origin = 0
+	host.star_map.travel(1)
+	host.start_expedition()
+	await create_timer(0.65).timeout
+	check(host.view_kind == "system" and host.state.chasedown_index == -1, "New expedition cancels stale interception prompt")
+	host.free()
+	await process_frame
+	# Removing the map during the shake restores the screen and cancels the prompt.
+	make_host()
+	host.state.navigation_origin = 0
+	host.star_map.travel(1)
+	await create_timer(0.65).timeout
+	check(host.star_map.impact_active, "Impact active before cancellation")
+	host.start_expedition()
+	check(root.canvas_transform == Transform2D.IDENTITY, "Cancelling impact restores screen immediately")
+	await create_timer(1.1).timeout
+	check(host.view_kind == "system", "Cancelled impact cannot open a stale prompt")
+	host.free()
+	await process_frame
 	# A lost interception must show the normal expedition-ended screen, never reopen it.
 	make_host()
 	host.state.navigation_origin = 0

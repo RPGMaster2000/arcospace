@@ -470,7 +470,9 @@ func _show_star_map() -> void:
 	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.add_child(star_map)
 	star_map.configure(entries, map_destination, star_map_travel_duration)
-	star_map.before_travel = _request_travel
+	star_map.before_travel = state.can_visit
+	star_map.intercept_travel = state.try_chasedown
+	star_map.interrupted.connect(_show_chasedown)
 	star_map.arrived.connect(visit)
 	if state.pending_destination >= 0:
 		star_map.travel.call_deferred(state.pending_destination)
