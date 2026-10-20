@@ -3,6 +3,9 @@ extends Control
 # DOES NOT: Generate encounters, spend resources or grant rewards.
 # Presentation only. The expedition controller supplies markers and handles arrival.
 signal arrived(index: int)
+signal interrupted
+# TUNE: Seconds of sublight movement before an interception opens.
+const INTERCEPTION_DELAY: float = 0.5
 const POINTS = [
 	Vector2(.21, .23),
 	Vector2(.5, .15),
@@ -17,8 +20,10 @@ var travel_duration: float = 1.4
 var ship_position: Vector2 = START
 var traveling: bool = false
 var before_travel: Callable
+var intercept_travel: Callable
 var markers: Dictionary = {}
 var tween: Tween
+var interruption_tween: Tween
 
 
 func configure(entries: Array, last_destination: int, duration: float) -> void:
@@ -60,17 +65,32 @@ func travel(index: int) -> void:
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
+	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	traveling = true
 	for button in markers.values():
 		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tween = create_tween()
 	(
 		tween
-		. tween_method(_move_ship, ship_position, destination(index), travel_duration)
+		. tween_method(
+			_move_ship, ship_position, destination(index),
+			maxf(travel_duration, INTERCEPTION_DELAY + 0.1) if intercepted else travel_duration
+		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
 	)
-	tween.tween_callback(func(): arrived.emit(index))
+	if intercepted:
+		# A separate node-bound timer stops movement without emitting arrival.
+		interruption_tween = create_tween()
+		interruption_tween.tween_interval(INTERCEPTION_DELAY)
+		interruption_tween.tween_callback(_interrupt_travel)
+	else:
+		tween.tween_callback(func(): arrived.emit(index))
+
+
+func _interrupt_travel() -> void:
+	tween.kill()
+	interrupted.emit()
 
 
 func _move_ship(point: Vector2) -> void:
@@ -79,6 +99,8 @@ func _move_ship(point: Vector2) -> void:
 
 
 func _exit_tree() -> void:
+	if interruption_tween:
+		interruption_tween.kill()
 	if tween:
 		tween.kill()
 
