@@ -30,9 +30,9 @@ emission_enabled = true
 emission = Color(1, 0.28, 0.06, 1)
 emission_energy_multiplier = 1.0
 
-[sub_resource type="BoxMesh" id="Mesh0"]
+[sub_resource type="PrismMesh" id="Mesh0"]
 resource_local_to_scene = true
-size = Vector3(3.2, 0.36, 0.7)
+size = Vector3(2.3, 3.25, 0.38)
 
 [sub_resource type="BoxMesh" id="Mesh1"]
 resource_local_to_scene = true
@@ -91,7 +91,7 @@ rings = 16
 
 [node name="Ship" type="Node3D"]
 script = ExtResource("Controller")
-pointed_hull = true
+pointed_hull = false
 
 [node name="Body" type="Node3D" parent="."]
 rotation = Vector3(-0.35, 0, 0.08)
@@ -99,10 +99,9 @@ rotation = Vector3(-0.35, 0, 0.08)
 [node name="Details" type="Node3D" parent="Body"]
 
 [node name="Hull" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(0, 0, -1, 1, 0, 0, 0, -1, 0, 0, 0, 0)
 mesh = SubResource("Mesh0")
 material_override = SubResource("HullMaterial")
-position = Vector3(0, 0, 0)
-rotation = Vector3(0, 0, 0)
 
 [node name="SweptWingPort" type="MeshInstance3D" parent="Body/Details"]
 mesh = SubResource("Mesh1")

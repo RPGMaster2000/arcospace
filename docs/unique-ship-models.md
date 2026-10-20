@@ -20,8 +20,9 @@ The eight scenes in scenes/ships match their profile filenames: endeavour,
 thunderbolt, titania, ganymede, callisto, orion, marauder_vanguard,
 sentinel_dreadnought. Open each scene directly in Godot to edit its geometry and
 materials. Each contains its own embedded meshes/materials; editable mesh and
-material resources are local to scene instances. Thunderbolt enables the existing
-pointed_hull wedge builder, which creates a new ArrayMesh per instance.
+material resources are local to scene instances. Thunderbolt uses its own rotated
+PrismMesh for the wedge, so its geometry is fully editable in the scene without
+changing the existing enemy interceptor builder.
 
 All eight reuse enemy_ship_model.gd, the existing accent-aware extension of
 ship_3d.gd. Its name is historical; it contains no enemy AI. Preserve Body/Hull,

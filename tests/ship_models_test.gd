@@ -52,8 +52,8 @@ func run() -> void:
 		var mesh_b: MeshInstance3D = second.get_node("Body/Hull")
 		check(mesh_a.mesh != mesh_b.mesh, "Geometry isolated between instances")
 		var original_size: Vector3 = mesh_b.mesh.get_aabb().size
-		# Box hulls are editable resources; the interceptor builds a fresh ArrayMesh per instance.
-		if mesh_a.mesh is BoxMesh:
+		# Primitive hull resources remain independently editable, including the interceptor wedge.
+		if mesh_a.mesh is BoxMesh or mesh_a.mesh is PrismMesh:
 			mesh_a.mesh.size *= 0.5
 			check(mesh_b.mesh.get_aabb().size == original_size, "Geometry edit stays local")
 		var original_color: Color = second.hull_material.albedo_color
