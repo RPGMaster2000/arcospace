@@ -469,7 +469,10 @@ func _show_star_map() -> void:
 	star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.add_child(star_map)
-	star_map.configure(entries, map_destination, star_map_travel_duration)
+	star_map.configure(
+		entries, map_destination, star_map_travel_duration,
+		hash("%d:%d:sky" % [state.seed_used, state.system_number])
+	)
 	star_map.before_travel = state.can_visit
 	star_map.intercept_travel = state.try_chasedown
 	star_map.interrupted.connect(_show_chasedown)
