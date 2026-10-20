@@ -55,36 +55,36 @@ func run() -> void:
 		var overlay = host.resource_bar.overlay
 		check(overlay.shade.visible and overlay.extra.visible, "Mouse/touch opens existing Hull overlay with controls")
 		check(overlay.body.text.contains("2 Salvage / Hull") and overlay.body.text.contains("Maximum affordable: 6"), "Accurate price and affordable quantity")
-		host.field_selector.value = 4
-		check(host.state.salvage == 12 and host.field_confirm.text.contains("8 Salvage"), "Selection previews exact cost without spending")
-		check(host.field_preview.bar.preview_hull == cap-5 and host.field_preview.cost_text.text.contains("12 → 4") and host.field_preview.hull_text.text.contains("+4 Hull"), "Bar and balance connect selected gain to Salvage spending")
+		host.field_repairs.selector.value = 4
+		check(host.state.salvage == 12 and host.field_repairs.confirm.text.contains("8 Salvage"), "Selection previews exact cost without spending")
+		check(host.field_repairs.preview.bar.preview_hull == cap-5 and host.field_repairs.preview.cost_text.text.contains("12 → 4") and host.field_repairs.preview.hull_text.text.contains("+4 Hull"), "Bar and balance connect selected gain to Salvage spending")
 		await settle()
 		check(root.get_visible_rect().encloses(overlay.panel.get_global_rect()), "Modal fits landscape")
-		check(overlay.panel.get_global_rect().encloses(host.field_confirm.get_global_rect()) and host.field_confirm.size.y >= 48, "Confirm remains visible and touch sized")
+		check(overlay.panel.get_global_rect().encloses(host.field_repairs.confirm.get_global_rect()) and host.field_repairs.confirm.size.y >= 48, "Confirm remains visible and touch sized")
 		await capture(str(dimensions.x))
-		await activate(host.field_confirm)
+		await activate(host.field_repairs.confirm)
 		check(host.state.hull == cap-5 and host.state.salvage == 4, "Confirm updates state immediately")
 		check(host.resource_bar.entries.hull.text.contains(str(cap-5)) and host.resource_bar.entries.salvage.text.contains("4"), "HUD values refresh immediately")
-		host.field_confirm.pressed.emit()
-		check(host.state.salvage == 4 and host.field_confirm.disabled, "Repeated confirm cannot spend twice")
+		host.field_repairs.confirm.pressed.emit()
+		check(host.state.salvage == 4 and host.field_repairs.confirm.disabled, "Repeated confirm cannot spend twice")
 		overlay.dismiss()
 		host.state.salvage = 100
 		await activate(hull)
-		await activate(host.field_confirm)
+		await activate(host.field_repairs.confirm)
 		check(host.state.hull == cap and not host.resource_bar.heartbeat_active and hull.scale == Vector2.ONE and hull.modulate == Color.WHITE, "Full Hull stops heartbeat immediately")
-		check(host.field_confirm.disabled and overlay.body.text.contains("Hull full"), "Full Hull info remains; repairs disabled")
+		check(host.field_repairs.confirm.disabled and overlay.body.text.contains("Hull full"), "Full Hull info remains; repairs disabled")
 		overlay.dismiss()
 		host.state.hull -= 1
 		host.state.salvage = 0
 		host.show_system()
 		await settle()
 		await activate(hull)
-		check(host.resource_bar.heartbeat_active and host.field_confirm.disabled and overlay.body.text.contains("Requires at least 2"), "No Salvage keeps warning with clear unavailable reason")
+		check(host.resource_bar.heartbeat_active and host.field_repairs.confirm.disabled and overlay.body.text.contains("Requires at least 2"), "No Salvage keeps warning with clear unavailable reason")
 		# Navigating into an encounter dismisses the same popup and blocks old callbacks.
 		host.state.salvage = 100
 		host.show_poi(0) if host.state.encounters[0].kind == "poi" else host.show_battle_preview(0)
 		check(not overlay.shade.visible and not host.state.field_repairs_open and not host.resource_bar.heartbeat_active, "Encounter disables field repair and warning")
-		host._confirm_field_repair()
+		host.field_repairs.confirm.pressed.emit()
 		check(host.state.salvage == 100, "Old modal callback cannot spend inside encounter")
 		# Same Outpost tile/selector changes to plating immediately when repairs complete.
 		host.state.service = {"kind":"service","poi":host.rules.trading_outpost,"title":"Trading Outpost","completed":false}
@@ -112,12 +112,31 @@ func run() -> void:
 		host.resource_bar.overlay.show_legend()
 		check(not overlay.extra.visible, "Legend never retains repair controls")
 		overlay.dismiss()
+	# The extracted component must reject stale revisions and bind the newly restarted run.
+	var previous_state: Resource = host.state
+	var previous_hull: int = previous_state.hull
+	var previous_salvage: int = previous_state.salvage
+	host._restart()
+	host.state.hull -= 2
+	host.state.salvage = 4
+	host.show_system()
+	host._show_hull_info()
+	check(host.field_repairs.preview.bar.preview_hull == host.state.ship().hull_capacity, "Restart binds repair preview to the new expedition")
+	host.state.service_revision += 1
+	host.field_repairs.confirm.pressed.emit()
+	check(host.state.salvage == 4 and host.state.hull == host.state.ship().hull_capacity - 2, "Stale component confirmation cannot spend")
+	host.field_repairs.selector.value = 1
+	check(host.field_repairs.confirm.disabled, "Changing a stale selection disables confirmation")
+	host._show_hull_info()
+	host.field_repairs.confirm.pressed.emit()
+	check(host.state.salvage == 0 and host.state.hull == host.state.ship().hull_capacity, "Reopened component confirms against the new revision")
+	check(previous_state.hull == previous_hull and previous_state.salvage == previous_salvage, "Restarted repair controls never mutate the previous expedition")
 	host.use_star_map = false
 	host.state.hull = host.state.ship().hull_capacity - 2
 	host.state.salvage = 4
 	host.show_system()
 	host._show_hull_info()
-	host._confirm_field_repair()
+	host.field_repairs.confirm.pressed.emit()
 	check(is_instance_valid(host.grid) and host.state.salvage == 0 and host.state.hull == host.state.ship().hull_capacity, "Original grid supports the same field repair entry point")
 	host.queue_free()
 	await process_frame

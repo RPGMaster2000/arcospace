@@ -9,6 +9,7 @@ const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
 const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+const FieldRepairControls = preload("res://scripts/ui/field_repair_controls.gd")
 var replacement_key: String = ""
 var replacement_selection: Label
 var replace_button: Button
@@ -25,13 +26,8 @@ var card_inspector: CanvasLayer
 @export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
 @export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
 @export_group("")
-var field_preview: VBoxContainer
+var field_repairs: VBoxContainer
 var station_preview: VBoxContainer
-var field_selector: HSlider
-var field_confirm: Button
-var field_minus: Button
-var field_plus: Button
-var field_confirmation_revision: int = -1
 var star_map: Control
 var map_system: int = -1
 var map_destination: int = -1
@@ -93,7 +89,7 @@ func _ready() -> void:
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
 	add_child(outcome_flash)
-	_build_field_repairs()
+	_setup_field_repairs()
 	start_expedition()
 
 
@@ -275,6 +271,7 @@ func _clear(kind: String) -> void:
 	card_gallery = null
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
+	field_repairs.clear()
 	confirmation.dismiss()
 	view_kind = kind
 	state.field_repairs_open = kind == "system" and state.hull > 0
@@ -1164,35 +1161,14 @@ func _exit() -> void:
 #region Field repairs
 
 
-func _build_field_repairs() -> void:
-	var extra: VBoxContainer = resource_bar.overlay.extra
-	field_preview = preload("res://scripts/ui/repair_preview.gd").new()
-	extra.add_child(field_preview)
-	var row = HBoxContainer.new()
-	extra.add_child(row)
-	field_minus = Button.new()
-	field_minus.text = "−"
-	field_minus.custom_minimum_size = Vector2(56, 48)
-	Presentation.action(field_minus)
-	row.add_child(field_minus)
-	field_selector = HSlider.new()
-	field_selector.step = 1
-	field_selector.custom_minimum_size = Vector2(180, 48)
-	field_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(field_selector)
-	field_plus = Button.new()
-	field_plus.text = "+"
-	field_plus.custom_minimum_size = Vector2(56, 48)
-	Presentation.action(field_plus)
-	row.add_child(field_plus)
-	field_confirm = Button.new()
-	field_confirm.custom_minimum_size.y = 48
-	Presentation.action(field_confirm)
-	extra.add_child(field_confirm)
-	field_minus.pressed.connect(func(): field_selector.value -= 1)
-	field_plus.pressed.connect(func(): field_selector.value += 1)
-	field_selector.value_changed.connect(_update_field_repair)
-	field_confirm.pressed.connect(_confirm_field_repair)
+# Install the UI component; state validation and spending stay in this controller.
+func _setup_field_repairs() -> void:
+	field_repairs = FieldRepairControls.new()
+	resource_bar.overlay.extra.add_child(field_repairs)
+	field_repairs.description_changed.connect(
+		func(text: String): resource_bar.overlay.body.text = text
+	)
+	field_repairs.repair_requested.connect(_confirm_field_repair)
 
 
 func _show_hull_info() -> void:
@@ -1200,64 +1176,23 @@ func _show_hull_info() -> void:
 	overlay.show_text(resource_bar.entries.hull.get_meta("description"))
 	if view_kind != "system" or not state.field_repairs_open:
 		return
-	field_confirmation_revision = state.service_revision
-	field_selector.max_value = state.field_repair_limit()
-	field_selector.set_value_no_signal(state.field_repair_limit())
 	overlay.desired_height = 480
 	overlay.extra.show()
-	_update_field_repair(0)
+	field_repairs.present(state, resource_bar.heading("hull", "Hull"))
 	overlay._fit()
 
 
-func _update_field_repair(_value: float) -> void:
-	var limit: int = state.field_repair_limit()
-	field_selector.max_value = limit
-	var amount: int = mini(int(field_selector.value), limit)
-	var cost: int = State.Repairs.quantity_cost(amount, State.Repairs.FIELD_SALVAGE_PER_HULL)
-	var text: String = (
-		resource_bar.heading("hull", "Hull")
-		+ (
-			"\nField repair: 2 Salvage / Hull · Maximum affordable: %d\nPermanent Hull carries between battles. Excess is temporary plating."
-			% limit
-		)
-	)
-	field_preview.show_repair(
-		state.hull,
-		state.ship().hull_capacity,
-		state.salvage,
-		amount,
-		State.Repairs.FIELD_SALVAGE_PER_HULL
-	)
-	if state.hull >= state.ship().hull_capacity:
-		text += "\nHull full · Field repairs cannot create Ablative Plating."
-	elif limit == 0:
-		text += "\nRequires at least 2 Salvage to repair 1 Hull."
-	resource_bar.overlay.body.text = text
-	field_selector.editable = limit > 0
-	field_minus.disabled = amount <= 0
-	field_plus.disabled = amount >= limit
-	field_confirm.text = "Confirm +%d Hull · %d Salvage" % [amount, cost]
-	field_confirm.disabled = (
-		amount <= 0
-		or view_kind != "system"
-		or field_confirmation_revision != state.service_revision
-	)
-
-
-func _confirm_field_repair() -> void:
+func _confirm_field_repair(amount: int, revision: int) -> void:
 	if (
 		view_kind != "system"
 		or not resource_bar.overlay.shade.visible
 		or not resource_bar.overlay.extra.visible
-		or field_confirm.disabled
+		or field_repairs.confirm.disabled
 	):
 		return
-	if not state.field_repair(int(field_selector.value), field_confirmation_revision):
+	if not state.field_repair(amount, revision):
 		return
 	resource_bar.exploration(state)
-	field_confirmation_revision = state.service_revision
-	# Consumed selection: a repeated signal cannot buy the same repair twice.
-	field_selector.set_value_no_signal(0)
-	_update_field_repair(0)
+	field_repairs.refresh_after_repair()
 
 #endregion
