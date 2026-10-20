@@ -20,6 +20,12 @@ const POINTS = [
 ]
 const START = Vector2(.5, .53)
 const SERVICE = Vector2(.90, .46)
+# TUNE: Sun size multiplier stays within +/-25% of the original radii.
+const SUN_SCALE_MIN: float = 0.75
+const SUN_SCALE_MAX: float = 1.25
+var sun_scale: float = 1.0
+var sun_hue: float = 0.1
+var star_points := PackedVector2Array()
 var travel_duration: float = 1.4
 var ship_position: Vector2 = START
 var traveling: bool = false
@@ -35,7 +41,8 @@ var impact_active: bool = false
 var canvas_origin: Transform2D
 
 
-func configure(entries: Array, last_destination: int, duration: float) -> void:
+func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
+	_configure_sky(visual_seed)
 	travel_duration = duration
 	ship_position = destination(last_destination) if last_destination != -1 else START
 	for entry in entries:
@@ -53,6 +60,22 @@ func configure(entries: Array, last_destination: int, duration: float) -> void:
 		markers[entry.index] = button
 	resized.connect(_layout)
 	_layout()
+
+
+func _configure_sky(visual_seed: int) -> void:
+	# Local visual RNG keeps encounter, reward and chasedown rolls unchanged.
+	var sky_rng := RandomNumberGenerator.new()
+	sky_rng.seed = visual_seed
+	sun_scale = sky_rng.randf_range(SUN_SCALE_MIN, SUN_SCALE_MAX)
+	sun_hue = sky_rng.randf()
+	star_points.clear()
+	# Jittered cells spread stars across the entire map without diagonal bands.
+	for row in range(8):
+		for column in range(12):
+			star_points.append(Vector2(
+				(column + sky_rng.randf_range(0.1, 0.9)) / 12.0,
+				(row + sky_rng.randf_range(0.1, 0.9)) / 8.0
+			))
 
 
 func destination(index: int) -> Vector2:
@@ -157,13 +180,12 @@ func _exit_tree() -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("0a1422"))
-	for i in range(45):
-		var point = Vector2(fposmod(i * .618 + .04, 1), fposmod(i * .381 + .08, 1)) * size
-		draw_circle(point, 1.2, Color("708399"))
+	for point in star_points:
+		draw_circle(point * size, 1.2, Color("708399"))
 	var center = size * Vector2(.5, .46)
-	draw_circle(center, 37, Color("493b28"))
-	draw_circle(center, 26, Color("d89c46"))
-	draw_circle(center, 20, Color("ffe0a0"))
+	draw_circle(center, 37 * sun_scale, Color.from_hsv(sun_hue, 0.45, 0.29))
+	draw_circle(center, 26 * sun_scale, Color.from_hsv(sun_hue, 0.68, 0.85))
+	draw_circle(center, 20 * sun_scale, Color.from_hsv(sun_hue, 0.37, 1.0))
 	for index in markers:
 		var button: Button = markers[index]
 		var point: Vector2 = button.position + Vector2(-15, button.size.y / 2)

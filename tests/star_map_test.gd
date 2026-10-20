@@ -34,6 +34,20 @@ func run() -> void:
 			await RenderingServer.frame_post_draw
 			DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
 			root.get_texture().get_image().save_png("res://.godot/testlogs/star-map-%s.png" % dimensions.x)
+	var sky: Control = host.star_map
+	var saved_points: PackedVector2Array = sky.star_points.duplicate()
+	var saved_scale: float = sky.sun_scale
+	var saved_hue: float = sky.sun_hue
+	check(saved_scale >= 0.75 and saved_scale <= 1.25, "Sun within 25 percent size limits")
+	check(saved_hue >= 0.0 and saved_hue <= 1.0, "Sun hue uses full color range")
+	check(saved_points.size() == 96, "Starfield fills all cells")
+	for row in range(8):
+		for column in range(12):
+			var point: Vector2 = saved_points[row * 12 + column]
+			check(int(point.x * 12) == column and int(point.y * 8) == row, "Star in every map cell")
+	host.show_system()
+	await settle()
+	check(host.star_map.star_points == saved_points and host.star_map.sun_scale == saved_scale and host.star_map.sun_hue == saved_hue, "Returning to same system preserves sky")
 	var map: Control = host.star_map
 	var initial: Vector2 = map.ship_position
 	for pressed in [true, false]:
@@ -68,6 +82,7 @@ func run() -> void:
 	host._jump()
 	await create_timer(.08).timeout
 	check(host.state.ftl_charge == 0 and host.map_destination == -1 and host.view_kind == "system", "Transition cancels old travel, discards carryover and resets map")
+	check(host.star_map.sun_hue != saved_hue and host.star_map.star_points != saved_points, "Next system gets a different sky")
 	# Mandatory Boss gating is still owned by expedition state.
 	while host.state.system_number < 6:
 		host.state.ftl_charge = host.state.required_ftl_charge
