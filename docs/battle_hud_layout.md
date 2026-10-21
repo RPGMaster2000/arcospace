@@ -73,3 +73,19 @@ Screenshots at all three requested aspect ratios were inspected. Actual Android
 hardware, system-bar behavior and device cutouts remain unverified. The optional
 2D fallback action log moves above the viewscreen strip to avoid sharing its space;
 the 3D action log remains hidden as before.
+
+## Follow-up visual adjustments
+
+The modifier background is now 50% opaque, without a hard outline. Native vertex
+colors fade its ends over 24 logical pixels, starting eight pixels beyond the text.
+Text stays fully opaque. The text and slim 28-pixel background move up ten pixels,
+while the original 48-pixel touch area stays clear of Hull/Shield controls. Opacity,
+fade width, text padding, bar height and vertical offset are Inspector properties.
+
+The left column now uses the content-edge margins (menu 16, resources 23 logical
+pixels), without adding the display's horizontal safe-area inset a second time.
+Vertical safe-area handling and right-column placement are unchanged. Allocation
+is reduced to 52×48 with a 22-point icon and smaller internal padding; its existing
+selection behavior is unchanged. Real Android cutout placement still needs a device
+check. The 187-check headless layout suite passed after these changes; rendered
+captures cover 16:9, 19.5:9 and 21:9.

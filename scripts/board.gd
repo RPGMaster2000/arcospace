@@ -803,10 +803,17 @@ func _setup_allocation() -> void:
 	add_child(allocation_popup)
 	allocation_button = Button.new()
 	allocation_button.name = "PowerAllocation"
-	allocation_button.custom_minimum_size = Vector2(64, 48)
+	allocation_button.custom_minimum_size = Vector2(52, 48)
 	allocation_button.add_theme_font_override("font", ResultPresentation.UI_FONT)
-	allocation_button.add_theme_font_size_override("font_size", 26)
+	allocation_button.add_theme_font_size_override("font_size", 22)
 	ResultPresentation.action(allocation_button)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var box: StyleBoxFlat = allocation_button.get_theme_stylebox(state).duplicate()
+		box.content_margin_left = 8
+		box.content_margin_right = 8
+		box.content_margin_top = 6
+		box.content_margin_bottom = 6
+		allocation_button.add_theme_stylebox_override(state, box)
 	add_child(allocation_button)
 	allocation_popup.mode_selected.connect(_select_allocation)
 	allocation_button.pressed.connect(
