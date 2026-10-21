@@ -6,14 +6,25 @@ const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
-const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
-const Header = preload("res://scenes/poi_header.tscn")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+const ExpeditionScreen = preload("res://scripts/ui/expedition_screen.gd")
+const ExpeditionText = preload("res://scripts/ui/expedition_text.gd")
+const DeckReplacement = preload("res://scripts/ui/deck_replacement.gd")
 const FieldRepairControls = preload("res://scripts/ui/field_repair_controls.gd")
-var replacement_key: String = ""
-var replacement_selection: Label
-var replace_button: Button
-var incoming_portrait: Button
+var replacement_panel: DeckReplacement
+# Read-only aliases preserve the controller interface; the panel owns selection.
+var replacement_key: String:
+	get:
+		return replacement_panel.selected_key if is_instance_valid(replacement_panel) else ""
+var replacement_selection: Label:
+	get:
+		return replacement_panel.selection if is_instance_valid(replacement_panel) else null
+var replace_button: Button:
+	get:
+		return replacement_panel.replace_button if is_instance_valid(replacement_panel) else null
+var incoming_portrait: Button:
+	get:
+		return replacement_panel.incoming_portrait if is_instance_valid(replacement_panel) else null
 var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
 # TUNE: Disable to restore the original grid; both presentations use the same encounter state.
@@ -96,90 +107,38 @@ func _ready() -> void:
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
-	var backdrop = ColorRect.new()
-	backdrop.color = Color("0e1a28")
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
-	ui = MarginContainer.new()
-	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top", "bottom"]:
-		ui.add_theme_constant_override("margin_" + edge, 24)
-	add_child(ui)
-	var column = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 4)
-	ui.add_child(column)
-	title = _label("", 30)
-	heading_row = HBoxContainer.new()
-	heading_row.add_theme_constant_override("separation", 8)
-	column.add_child(heading_row)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heading_row.add_child(title)
-	deck_button = Button.new()
-	deck_button.text = "Deck"
-	deck_button.custom_minimum_size = Vector2(90, 48)
-	Presentation.action(deck_button)
-	deck_button.pressed.connect(_show_current_deck)
-	heading_row.add_child(deck_button)
-	legend = Button.new()
-	legend.text = "Legend"
-	legend.custom_minimum_size = Vector2(100, 48)
-	Presentation.action(legend)
-	heading_row.add_child(legend)
-	settings_button = preload("res://scripts/ui/settings_button.gd").new()
-	heading_row.add_child(settings_button)
-	settings_button.main_menu_requested.connect(_exit)
-	resource_bar = preload("res://scripts/ui/resource_bar.gd").new()
-	resource_bar.pulse_period = hull_pulse_period
-	resource_bar.pulse_scale = hull_pulse_scale
-	resource_bar.pulse_intensity = hull_pulse_intensity
-	column.add_child(resource_bar)
-	resource_bar.hull_requested.connect(_show_hull_info)
-	legend.pressed.connect(func(): resource_bar.overlay.show_legend())
-	header = Header.instantiate()
-	column.add_child(header)
-	header.return_requested.connect(show_system)
-	return_button = header.return_button
-	scroll = TouchScroll.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
-	view = VBoxContainer.new()
-	view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	view.add_theme_constant_override("separation", 10)
-	scroll.add_child(view)
-	more_hint = _label("More options below — swipe or scroll", 16)
-	more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(more_hint)
-	footer = HBoxContainer.new()
-	footer.add_theme_constant_override("separation", 16)
-	confirmation = preload("res://scripts/ui/approach_confirmation.gd").new()
-	add_child(confirmation)
-	confirmation.cancelled.connect(_cancel_approach)
-	confirmation.column.add_child(footer)
-	confirmation.column.move_child(footer, 1)
-	station_preview = preload("res://scripts/ui/repair_preview.gd").new()
-	confirmation.column.add_child(station_preview)
-	confirmation.column.move_child(station_preview, 1)
-	station_preview.hide()
-	var shared = _label("", 20)
-	approach_note = shared
-	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(shared)
-	repair_selector = HSlider.new()
-	repair_selector.custom_minimum_size = Vector2(180, 60)
-	repair_selector.step = 1
-	repair_selector.value_changed.connect(_repair_selection_changed)
-	footer.add_child(repair_selector)
-	confirm_button = confirmation.initiate
-	confirm_button.pressed.connect(_confirm_approach)
-	jump_button = Button.new()
-	jump_button.custom_minimum_size.y = 48
-	jump_button.add_theme_font_size_override("font_size", 21)
-	jump_button.add_theme_font_override("font", Presentation.UI_FONT)
-	Presentation.action(jump_button)
-	jump_button.pressed.connect(_jump)
-	column.add_child(jump_button)
+	var screen = ExpeditionScreen.new()
+	screen.hull_pulse_period = hull_pulse_period
+	screen.hull_pulse_scale = hull_pulse_scale
+	screen.hull_pulse_intensity = hull_pulse_intensity
+	add_child(screen)
+	ui = screen.ui
+	title = screen.title
+	heading_row = screen.heading_row
+	deck_button = screen.deck_button
+	legend = screen.legend
+	settings_button = screen.settings_button
+	resource_bar = screen.resource_bar
+	header = screen.header
+	return_button = screen.return_button
+	scroll = screen.scroll
+	view = screen.view
+	more_hint = screen.more_hint
+	footer = screen.footer
+	confirmation = screen.confirmation
+	station_preview = screen.station_preview
+	approach_note = screen.approach_note
+	repair_selector = screen.repair_selector
+	confirm_button = screen.confirm_button
+	jump_button = screen.jump_button
+	screen.deck_requested.connect(_show_current_deck)
+	screen.main_menu_requested.connect(_exit)
+	screen.hull_requested.connect(_show_hull_info)
+	screen.return_requested.connect(show_system)
+	screen.cancel_requested.connect(_cancel_approach)
+	screen.repair_changed.connect(_repair_selection_changed)
+	screen.confirm_requested.connect(_confirm_approach)
+	screen.jump_requested.connect(_jump)
 
 
 func _process(_delta: float) -> void:
@@ -290,6 +249,7 @@ func _clear(kind: String) -> void:
 		view.remove_child(child)
 		child.queue_free()
 	star_map = null
+	replacement_panel = null
 	scroll.vertical_scroll_mode = (
 		ScrollContainer.SCROLL_MODE_DISABLED
 		if kind == "system" and use_star_map
@@ -582,88 +542,19 @@ func show_battle_preview(index: int) -> void:
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.
 func compact_text(value: String) -> String:
-	return (
-		value
-		. replace(" next battle", "")
-		. replace("Next battle: ", "")
-		. replace("permanent Hull", "Hull")
-		. replace("starting resource of choice", "resource of choice")
-		. replace("for expedition", "(expedition)")
-	)
+	return ExpeditionText.compact_text(value)
 
 
 func compact_outcome(outcome: Resource) -> String:
-	return compact_text(state.describe_outcome(outcome))
+	return ExpeditionText.compact_outcome(state, outcome)
 
 
 func highlight_outcome(value: String) -> String:
-	var expression = RegEx.new()
-	expression.compile(r"[+-]\d+[^·\n]*|\d+(?:\.\d+)?%")
-	var result = ""
-	var offset = 0
-	for matched in expression.search_all(value):
-		result += value.substr(offset, matched.get_start() - offset)
-		var part: String = matched.get_string()
-		if part.ends_with("%"):
-			result += "[b]" + part + "[/b]"
-		else:
-			# Offline turns are a penalty despite their positive counter.
-			var color = (
-				"f49b97"
-				if part.begins_with("-") or part.to_lower().contains("offline")
-				else "9ce3b2"
-			)
-			result += "[b][color=" + color + "]" + part + "[/color][/b]"
-		offset = matched.get_end()
-	return result + value.substr(offset)
+	return ExpeditionText.highlight_outcome(value)
 
 
 func approach_text(approach: Resource) -> String:
-	var lines: Array[String] = []
-	if not approach.requirement.is_empty():
-		lines.append(
-			(
-				"%s ≥%d (ship: %d)"
-				% [
-					state.LABELS[approach.requirement],
-					approach.minimum_production,
-					state.production(approach.requirement)
-				]
-			)
-		)
-	if approach.salvage_cost > 0:
-		lines.append("Cost: %d Salvage" % approach.salvage_cost)
-	lines.append(
-		(
-			"%s%% — %s"
-			% [
-				String.num(approach.success_chance * 100, 2).trim_suffix(".0"),
-				compact_outcome(approach.success)
-			]
-		)
-	)
-	if approach.success_chance < 1:
-		lines.append(
-			(
-				"%s%% — %s"
-				% [
-					String.num((1.0 - approach.success_chance) * 100, 2).trim_suffix(".0"),
-					compact_outcome(approach.failure)
-				]
-			)
-		)
-	var reason: String = state.locked_reason(approach)
-	if not reason.is_empty():
-		lines.append(
-			(
-				"LOCKED"
-				if reason.begins_with(
-					"Requires " + state.LABELS.get(approach.requirement, "missing")
-				)
-				else "LOCKED — " + reason
-			)
-		)
-	return "\n".join(lines)
+	return ExpeditionText.approach_text(state, approach)
 
 
 func show_poi(index: int) -> void:
@@ -1046,49 +937,20 @@ func _show_replacement() -> void:
 	_clear("replacement")
 	jump_button.hide()
 	title.text = "Deck Full — %d/%d Cards" % [state.player_pool().size(), state.deck_limit()]
-	replacement_key = ""
-	var incoming = HBoxContainer.new()
-	incoming.add_theme_constant_override("separation", 20)
-	view.add_child(incoming)
-	incoming_portrait = preload("res://scripts/ui/card_portrait.gd").new()
-	incoming_portrait.card_data = state.pending_card
-	incoming_portrait.card_scale = 0.6
-	incoming.add_child(incoming_portrait)
-	incoming_portrait.pressed.connect(
+	replacement_panel = DeckReplacement.new()
+	view.add_child(replacement_panel)
+	replacement_panel.configure(state.pending_card, state.player_pool(), scroll.allows_activation)
+	card_gallery = replacement_panel.gallery
+	replacement_panel.inspect_incoming.connect(
 		func(): card_inspector.present(state.pending_card, null, true)
 	)
-	var explanation = _label(
-		(
-			"Your deck is full. Replace an existing card to acquire your new card, or keep your current deck.\n\nNew card: "
-			+ state.pending_card.card_name
-			+ "\nChoose a card to remove below."
-		),
-		22
-	)
-	explanation.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	incoming.add_child(explanation)
-	_show_card_gallery(state.player_pool())
-	card_gallery.card_selected.disconnect(_preview_card)
-	card_gallery.card_selected.connect(_select_replacement)
-	replacement_selection = _label("Selected: None", 20)
-	view.add_child(replacement_selection)
-	replace_button = _button("Replace Card", _replace_card)
-	replace_button.disabled = true
-	_button("Keep Current Deck", _decline_card)
+	replacement_panel.replace_requested.connect(_replace_card)
+	replacement_panel.decline_requested.connect(_decline_card)
 
 
 func _select_replacement(card: Resource) -> void:
-	if state.pending_choice != "replace":
-		return
-	for owned in state.player_pool():
-		if owned.identity_key() == card.identity_key():
-			replacement_key = card.identity_key()
-			replacement_selection.text = (
-				"Selected: %s · %s · Tier %d · Upgrade %d"
-				% [card.card_name, card.family.capitalize(), card.tier, card.upgrade_level]
-			)
-			replace_button.disabled = false
-			return
+	if state.pending_choice == "replace" and is_instance_valid(replacement_panel):
+		replacement_panel.select_card(card)
 
 
 func _replace_card() -> void:

@@ -96,6 +96,24 @@ For an extension, start with the feature-location table below, follow its listed
 then use the corresponding focused tests. Keep descriptions, modifier previews and AI
 simulation in mind when changing effect keys; they share data rather than duplicating rules.
 
+### Expedition UI component boundaries
+
+`expedition.gd` keeps screen routing, travel, battle handoff and calls that mutate
+`ExpeditionState`. Its runtime UI is split along three presentation responsibilities:
+
+| File | Functions and responsibility |
+| --- | --- |
+| `scripts/ui/expedition_screen.gd` | `_build_ui()` and its label factory construct the exploration shell: heading, resource bar, scroll area, POI header, approach confirmation, repair selector and jump control. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
+| `scripts/ui/expedition_text.gd` | Static `compact_text()`, `compact_outcome()`, `highlight_outcome()` and `approach_text()` format descriptions. State is an explicit read-only argument where needed. |
+| `scripts/ui/deck_replacement.gd` | `configure()` builds the incoming-card explanation, owned-card gallery and replacement actions. `select_card()` owns the selected identity and button state. Signals request inspection, replacement or decline; this component never spends rewards or changes ownership. |
+
+The controller retains small forwarding methods and control references for existing
+callers. `_show_replacement()` mounts the panel; `_replace_card()` and `_decline_card()`
+still call the authoritative state methods. `_clear()` removes screen content and
+resets the panel reference. Card inspection, drag suppression and state validation
+remain in their existing components. Field repairs remain in
+`scripts/ui/field_repair_controls.gd` from the earlier extraction.
+
 ## Architecture and execution flow
 
 ### Ownership and dependencies
