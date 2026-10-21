@@ -5,6 +5,8 @@
 Costs and effect order match that source. Production uses the project names
 Synthesizer, Reactor and Quarters.
 
+The current shared library contains **74 identities**. Each player starts with 28; default expedition capacity is 36. See [targeted sabotage](targeted-sabotage.md) for the six new cards, upgrades and exact ship distribution, and [the generated catalogue](balance/cards.md) for current effects.
+
 ## In the editor
 
 - Select a `.tres` in `cards/` to edit its name, cost, description, effects and

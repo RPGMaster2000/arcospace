@@ -336,7 +336,7 @@ These are instructions for future additions; no example feature is added by this
    dealing enforces two cards per resource family where eligible; Tier 2 is locked through
    round 2. Set the round in a CardHand fixture to test later rarity draws directly.
 6. Run `card_progression_test`, `card_tier_test`, `opening_balance_test`, `battle_effects_test`
-   and card UI tests. Update tests that intentionally assert the current 68-card registry
+   and card UI tests. Update tests that intentionally assert the current 74-card registry
    and explicit upgrade coverage. Check both upgrades, cost, duplicate identities, rewards
    and previews. Update [card balance docs](balance/cards.md) for a future gameplay addition.
 
@@ -516,7 +516,7 @@ See [implementation, tuning and validation](chasedown_rewards.md). `ExpeditionRu
 
 ## Conditional cards and capped decks
 
-The current library contains 68 identities, with the [catalogue and all three effect levels](balance/cards.md). The 24 new identities are acquisition/draw candidates; the six starting pools remain their original 25. Emergency Power Cell retains `cards/08_energy_cell.tres` and consumes a turn.
+The current library contains 74 identities, with the [catalogue and all three effect levels](balance/cards.md). Each player pool retains its original 25 identities and appends three [targeted sabotage cards](targeted-sabotage.md), for 28 total. All unowned identities remain acquisition candidates. Emergency Power Cell retains `cards/08_energy_cell.tres` and consumes a turn.
 
 Use the existing CardData Inspector **Effects** / **Upgrade Effects** Dictionaries. For example, Reactor Synchronization uses this condition (a full branch resolves without paying a second cost):
 
@@ -530,7 +530,7 @@ Use the existing CardData Inspector **Effects** / **Upgrade Effects** Dictionari
 
 `CardEffects._apply_effects` applies ordinary effects, then evaluates the condition against current state. Put the whole action in `then`/`else` for a check before healing/attacking, or put `conditional` alongside the main effect for a follow-up check afterward. Predicate keys and Ion scaling rules are documented in [Cards](balance/cards.md#generic-conditionals-exchanges-and-production). `Board._read_state` supplies both ships' original Hull capacities for percentage checks. Shared conservative effect simulation already supplies tactical AI valuation, including resource exchanges and production reductions. No second AI system exists.
 
-Tune **Max Deck Identities** on `encounters/expedition_rules.tres` (script `ExpeditionRules`, default 30; shipping Inspector range 25–100). The effective capacity never excludes a larger custom starting pool. Existing acquired draw weight and reward-tier odds remain in the same Card rewards group. Change capacities before starting a run; no automatic trimming is performed.
+Tune **Max Deck Identities** on `encounters/expedition_rules.tres` (script `ExpeditionRules`, default 36; shipping Inspector range 25–100). The effective capacity never excludes a larger custom starting pool. Existing acquired draw weight and reward-tier odds remain in the same Card rewards group. Change capacities before starting a run; no automatic trimming is performed.
 
 `choose_card()` acquires normally below capacity; at capacity it stores `pending_card`, consumes the original offers and sets `pending_choice = "replace"`. `_show_replacement()` reuses the existing outcome view, portrait, gallery, colors and scrolling. The incoming Resource stays fixed across rebuilding. A gallery selection changes only the UI; `replace_card(identity_key)` validates current ownership and incoming uniqueness, removes that identity/upgrade, then acquires the new card. `decline_card()` closes without modifying the deck or refunding Salvage. Both paths consume the event once. The existing Outpost return path is retained. `player_pool()` and `acquired_draw_weights()` rebuild the authoritative draw pool; active held copies of a removed identity are replaced without changing hand size.
 

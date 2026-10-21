@@ -5,59 +5,59 @@ Generated from `scripts/cards/card_library.gd` and loaded CardData Resources. Ed
 
 ## Six starting pools
 
-Each pool has 25 distinct Tier 1 identities. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.
+Each pool has 28 distinct identities: its original 25 Tier 1 cards plus one targeted sabotage card per resource family. Added Tier 2 cards remain locked until round 3. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.
 
 | Ship | Materials | Energy | Crew | Total |
 |---|---|---|---|---|
-| Endeavour | 9 | 9 | 7 | 25 |
-| Thunderbolt | 4 | 13 | 8 | 25 |
-| Titania | 11 | 5 | 9 | 25 |
-| Ganymede | 12 | 6 | 7 | 25 |
-| Callisto | 7 | 13 | 5 | 25 |
-| Orion | 6 | 8 | 11 | 25 |
+| Endeavour | 10 | 10 | 8 | 28 |
+| Thunderbolt | 5 | 14 | 9 | 28 |
+| Titania | 12 | 6 | 10 | 28 |
+| Ganymede | 13 | 7 | 8 | 28 |
+| Callisto | 8 | 14 | 6 | 28 |
+| Orion | 7 | 9 | 12 | 28 |
 
 ### Endeavour starting identities
 
-- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Hull Overhaul, Breach Charge, Salvage Strike, Overloaded Warhead.
-- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
-- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion.
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Hull Overhaul, Breach Charge, Salvage Strike, Overloaded Warhead, Industrial Interference.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater, Reactor Interference.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion, Personnel Disruption.
 
 ### Thunderbolt starting identities
 
-- **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage.
-- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
-- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion.
+- **Materials:** Shield Plating, Synthesizer Upgrade, Shield Disruptor, Reactor Salvage, Industrial Interference.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse, Core Destabilization.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, System Disruption, Energy Siphon, Cargo Raid, Supply Diversion, Desperate Conversion, Command Infiltration.
 
 ### Titania starting identities
 
-- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Overloaded Warhead.
-- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge.
-- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Overloaded Warhead, Fabrication Strike.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Reactor Interference.
+- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, Torpedo Salvo, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion, Personnel Disruption.
 
 ### Ganymede starting identities
 
-- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Reactor Salvage, Overloaded Warhead.
-- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Pulse Repeater.
-- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Energy Siphon, Cargo Raid, Supply Diversion.
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Shield Disruptor, Hull Overhaul, Crew Capture, Breach Charge, Salvage Strike, Reactor Salvage, Overloaded Warhead, Fabrication Strike.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Energy Surge, Pulse Repeater, Core Destabilization.
+- **Crew:** Boarding Party, Missile Team, Quarters Upgrade, Torpedo Salvo, Energy Siphon, Cargo Raid, Supply Diversion, Personnel Disruption.
 
 ### Callisto starting identities
 
-- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage.
-- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse.
-- **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion.
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Structural Reinforcement, Salvage Strike, Reactor Salvage, Industrial Interference.
+- **Energy:** Emergency Power Cell, Hull Nanobots, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Drain Beam, Shield Exchange, Polaron Burst, Pulse Repeater, Shield Collapse, Core Destabilization.
+- **Crew:** Boarding Party, Quarters Upgrade, Energy Siphon, Cargo Raid, Supply Diversion, Command Infiltration.
 
 ### Orion starting identities
 
-- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Salvage Strike, Reactor Salvage.
-- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater.
-- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, System Disruption, Torpedo Salvo, Energy Siphon, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion.
+- **Materials:** Shield Plating, Shield Array, Hull Patch, Synthesizer Upgrade, Salvage Strike, Reactor Salvage, Fabrication Strike.
+- **Energy:** Emergency Power Cell, Shield Recharge, Reactor Upgrade, Laser Burst, Plasma Strike, Energy Surge, Phase Lance, Pulse Repeater, Reactor Interference.
+- **Crew:** Boarding Party, Missile Team, Shield Breachers, Quarters Upgrade, System Disruption, Torpedo Salvo, Energy Siphon, Cargo Raid, Missile Barrage, Supply Diversion, Desperate Conversion, Command Infiltration.
 
 
 ## Expanded library and deck capacity
 
-The library contains 68 identities: 49 Tier 1 and 19 Tier 2. Cards 45–68 add eight per family (13 Tier 1 / 11 Tier 2). None is automatically added to the six original 25-identity starting pools. Tier 2 still unlocks in round 3 with at most one in a hand. Existing acquisition tier probabilities and acquired weight ×3.0 remain unchanged; enemies draw the full base library.
+The library contains 74 identities: 52 Tier 1 and 22 Tier 2. Cards 45–68 add eight per family (13 Tier 1 / 11 Tier 2). Cards 69–74 add targeted sabotage: one Tier 1 and one Tier 2 per family. Each player pool retains its original 25 identities and adds exactly three targeted sabotage identities, for 28 total. Tier 2 still unlocks in round 3 with at most one in a hand. Existing acquisition tier probabilities and acquired weight ×3.0 remain unchanged; enemies draw the full base library.
 
-`ExpeditionRules.max_deck_identities` defaults to **30**, Inspector label **Max Deck Identities** (range 25–100). Starting and acquired identities count once; upgrades/copies do not. Capacity cannot invalidate a custom starting pool larger than its configured limit. Ordinary acquisitions grow the pool until full. Selecting a reward at capacity fixes that incoming card and opens the existing gallery as **Deck Full**. Select an owned identity, explicitly Replace Card, or Keep Current Deck. No removal happens before confirmation; declining gives no refund. Removed identities lose their private upgrade and acquired weight; retained identities keep theirs. A removed starting identity may be acquired again at base level with normal acquired weight.
+`ExpeditionRules.max_deck_identities` defaults to **36**, Inspector label **Max Deck Identities** (range 25–100). Starting and acquired identities count once; upgrades/copies do not. Capacity cannot invalidate a custom starting pool larger than its configured limit. Ordinary acquisitions grow the pool until full. Selecting a reward at capacity fixes that incoming card and opens the existing gallery as **Deck Full**. Select an owned identity, explicitly Replace Card, or Keep Current Deck. No removal happens before confirmation; declining gives no refund. Removed identities lose their private upgrade and acquired weight; retained identities keep theirs. A removed starting identity may be acquired again at base level with normal acquired weight.
 
 Replacement state is `pending_card`, `pending_choice = replace`, `removed_starting_cards`, `acquired_cards` and `upgraded_cards`. It survives screen rebuilds and normal in-memory expedition transitions. There is no disk save/load in this prototype, so application exit still ends the run. Deck Viewer shows actual owned count / capacity. Costs, six-card hands, rarity caps, Power Allocation and the weighted replacement-draw model remain unchanged.
 
@@ -67,7 +67,7 @@ Card costs are paid first. Ordinary effect keys resolve in the existing order, t
 
 Example: `conditional = {target: enemy, attribute: reactor, comparison: above, compare_target: self, compare_attribute: reactor, then: {reactor: 1}, else: {energy: 5}}`. In the Inspector these are ordinary nested Dictionaries in **Effects** or either **Upgrade Effects** entry; all amounts and predicates remain editable.
 
-`swap_resource: materials` exchanges the two Materials reserves from one snapshot. Only materials/energy/crew are accepted, and the card's cost family is rejected. This never swaps production. `enemy_production: {reactor: -1}` adjusts only the named enemy production, floored at 1; existing own production keys add their signed amount, also floored at 1. New production adjustments remain ±1 at all three authored levels.
+`swap_resource: materials` exchanges the two Materials reserves from one snapshot. Only materials/energy/crew are accepted, and the card's cost family is rejected. This never swaps production. `enemy_production: {reactor: -1}` adjusts only the named enemy production, floored at 0; existing own production keys add their signed amount, also floored at 0. Targeted sabotage reductions are fixed across upgrade levels: −1 for cards 69/71/73 and −2 for cards 70/72/74. Reaching zero activates the existing Systems Failure rules.
 
 Existing `break_shields` means Shield-only damage, with no Hull spillover. New Hull attacks use existing `damage` plus `pierce: 1.0`, so Shields stay intact and existing Ablative Plating absorbs Hull damage first. Regular damage retains Shield-first spillover. No new damage system is introduced.
 
@@ -85,9 +85,9 @@ Costs and all three effect sets are in the catalogue below. Each new identity ha
 
 | Family | Tier 1 | Tier 2 |
 |---|---|---|
-| Materials | Emergency Bulkheads, Structural Reclamation, Siege Charges, Salvage Cannibalization, Demolition Crew | Industrial Sabotage, Reinforced Foundations, Resource Seizure |
-| Energy | Capacitor Overload, Power Grid Reroute, Emergency Discharge, Feedback Loop | Reactor Synchronization, Phase Inverter, Energy Equalizer, Auxiliary Power Link |
-| Crew | Tactical Assessment, Emergency Medical Team, Damage Control Teams, Coordinated Assault | Boarding Specialists, Personnel Exchange, Scientific Breakthrough, Sabotage Operation |
+| Materials | Emergency Bulkheads, Structural Reclamation, Siege Charges, Salvage Cannibalization, Demolition Crew, Industrial Interference | Industrial Sabotage, Reinforced Foundations, Resource Seizure, Fabrication Strike |
+| Energy | Capacitor Overload, Power Grid Reroute, Emergency Discharge, Feedback Loop, Reactor Interference | Reactor Synchronization, Phase Inverter, Energy Equalizer, Auxiliary Power Link, Core Destabilization |
+| Crew | Tactical Assessment, Emergency Medical Team, Damage Control Teams, Coordinated Assault, Personnel Disruption | Boarding Specialists, Personnel Exchange, Scientific Breakthrough, Sabotage Operation, Command Infiltration |
 
 | Card | Family / unchanged cost | Rarity | Allocation | Base effects | Upgrade I | Upgrade II | Extra action (all levels) | Endeavour | Thunderbolt | Titania | Ganymede | Callisto | Orion | Resource |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -159,6 +159,12 @@ Costs and all three effect sets are in the catalogue below. Each new identity ha
 | Damage Control Teams | crew / 9 | Tier 1 | Defense | `{"hull":5,"materials":3,"shields":5}` | `{"hull":6,"materials":3,"shields":7}` | `{"hull":7,"materials":4,"shields":9}` | false | false | false | false | false | false | false | `cards/66_damage_control_teams.tres` |
 | Sabotage Operation | crew / 13 | Tier 2 | Offense | `{"conditional":{"attribute":"energy","comparison":"at_least","target":"enemy","then":{"drain":{"energy":7},"materials":4},"threshold":15},"enemy_production":{"reactor":-1}}` | `{"conditional":{"attribute":"energy","comparison":"at_least","target":"enemy","then":{"drain":{"energy":9},"materials":5},"threshold":15},"enemy_production":{"reactor":-1}}` | `{"conditional":{"attribute":"energy","comparison":"at_least","target":"enemy","then":{"drain":{"energy":11},"materials":6},"threshold":15},"enemy_production":{"reactor":-1}}` | false | false | false | false | false | false | false | `cards/67_sabotage_operation.tres` |
 | Coordinated Assault | crew / 12 | Tier 1 | Offense | `{"break_shields":6,"damage":6,"energy":4,"pierce":1.0}` | `{"break_shields":8,"damage":8,"energy":5,"pierce":1.0}` | `{"break_shields":10,"damage":10,"energy":6,"pierce":1.0}` | false | false | false | false | false | false | false | `cards/68_coordinated_assault.tres` |
+| Industrial Interference | materials / 9 | Tier 1 | Offense | `{"enemy_production":{"synthesizer":-1}}` | `{"enemy_production":{"synthesizer":-1},"materials":3}` | `{"enemy_production":{"synthesizer":-1},"materials":6}` | false | true | true | false | false | true | false | `cards/69_industrial_interference.tres` |
+| Fabrication Strike | materials / 17 | Tier 2 | Offense | `{"damage":3,"enemy_production":{"synthesizer":-2}}` | `{"damage":5,"enemy_production":{"synthesizer":-2}}` | `{"damage":7,"enemy_production":{"synthesizer":-2},"shields":3}` | false | false | false | true | true | false | true | `cards/70_fabrication_strike.tres` |
+| Reactor Interference | energy / 9 | Tier 1 | Offense | `{"enemy_production":{"reactor":-1}}` | `{"enemy_production":{"reactor":-1},"energy":3}` | `{"enemy_production":{"reactor":-1},"energy":6}` | false | true | false | true | false | false | true | `cards/71_reactor_interference.tres` |
+| Core Destabilization | energy / 17 | Tier 2 | Offense | `{"drain":{"energy":4},"enemy_production":{"reactor":-2}}` | `{"drain":{"energy":6},"enemy_production":{"reactor":-2}}` | `{"drain":{"energy":8},"enemy_production":{"reactor":-2},"shields":3}` | false | false | true | false | true | true | false | `cards/72_core_destabilization.tres` |
+| Personnel Disruption | crew / 9 | Tier 1 | Offense | `{"enemy_production":{"quarters":-1}}` | `{"crew":3,"enemy_production":{"quarters":-1}}` | `{"crew":6,"enemy_production":{"quarters":-1}}` | false | true | false | true | true | false | false | `cards/73_personnel_disruption.tres` |
+| Command Infiltration | crew / 17 | Tier 2 | Offense | `{"enemy_production":{"quarters":-2},"steal":{"crew":4}}` | `{"enemy_production":{"quarters":-2},"steal":{"crew":6}}` | `{"enemy_production":{"quarters":-2},"shields":3,"steal":{"crew":8}}` | false | false | true | false | false | true | true | `cards/74_command_infiltration.tres` |
 
 ## Draws and upgrades
 

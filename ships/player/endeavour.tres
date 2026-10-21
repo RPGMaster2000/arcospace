@@ -29,6 +29,10 @@
 
 [ext_resource type="PackedScene" path="res://scenes/ships/endeavour.tscn" id="VisualModel"]
 
+[ext_resource type="Resource" path="res://cards/69_industrial_interference.tres" id="SabotageMaterials"]
+[ext_resource type="Resource" path="res://cards/71_reactor_interference.tres" id="SabotageEnergy"]
+[ext_resource type="Resource" path="res://cards/73_personnel_disruption.tres" id="SabotageCrew"]
+
 [resource]
 script = ExtResource("1_s4cye")
 role = "Balanced"
@@ -46,5 +50,5 @@ hull_capacity = 35
 ship_name = "Endeavour"
 summary = "Balanced reserves and production; average EMP Pulse charging."
 hull_color = Color(0.83, 0.88, 0.92, 1)
-starting_cards = Array[Resource]([ExtResource("2_yl715"), ExtResource("3_y4laj"), ExtResource("4_w1360"), ExtResource("5_8878s"), ExtResource("6_txc25"), ExtResource("7_37uxw"), ExtResource("8_y6ers"), ExtResource("9_f6jp0"), ExtResource("10_qhkbw"), ExtResource("11_1kxrh"), ExtResource("12_fx4ch"), ExtResource("13_yul68"), ExtResource("14_17l0k"), ExtResource("15_u4cbb"), ExtResource("16_xpis4"), ExtResource("17_idu6q"), ExtResource("18_y5y22"), ExtResource("19_c7h0u"), ExtResource("20_ud640"), ExtResource("21_0g1po"), ExtResource("22_fnksp"), ExtResource("23_x4v8c"), ExtResource("24_8r51o"), ExtResource("25_xwr6a"), ExtResource("26_akyf6")])
+starting_cards = Array[Resource]([ExtResource("2_yl715"), ExtResource("3_y4laj"), ExtResource("4_w1360"), ExtResource("5_8878s"), ExtResource("6_txc25"), ExtResource("7_37uxw"), ExtResource("8_y6ers"), ExtResource("9_f6jp0"), ExtResource("10_qhkbw"), ExtResource("11_1kxrh"), ExtResource("12_fx4ch"), ExtResource("13_yul68"), ExtResource("14_17l0k"), ExtResource("15_u4cbb"), ExtResource("16_xpis4"), ExtResource("17_idu6q"), ExtResource("18_y5y22"), ExtResource("19_c7h0u"), ExtResource("20_ud640"), ExtResource("21_0g1po"), ExtResource("22_fnksp"), ExtResource("23_x4v8c"), ExtResource("24_8r51o"), ExtResource("25_xwr6a"), ExtResource("26_akyf6"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
 model_scene = ExtResource("VisualModel")

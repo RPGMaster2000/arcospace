@@ -39,8 +39,8 @@ class_name ExpeditionRules
 @export var log_rolls: bool = true
 
 @export_group("Card rewards")
-## TUNE: Maximum distinct owned identities; six shipping starting pools contain 25 each.
-@export_range(25, 100, 1) var max_deck_identities: int = 30
+## TUNE: Maximum distinct owned identities; six shipping starting pools contain 28 each.
+@export_range(25, 100, 1) var max_deck_identities: int = 36
 ## TUNE: Tier selection per reward slot when both tiers have unowned candidates.
 @export_range(0.0, 1.0, 0.01) var reward_tier_two_chance: float = 0.60
 ## TUNE: Acquired identity draw weight relative to starting identities (within its rarity).

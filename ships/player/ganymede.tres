@@ -29,6 +29,10 @@
 
 [ext_resource type="PackedScene" path="res://scenes/ships/ganymede.tscn" id="VisualModel"]
 
+[ext_resource type="Resource" path="res://cards/70_fabrication_strike.tres" id="SabotageMaterials"]
+[ext_resource type="Resource" path="res://cards/72_core_destabilization.tres" id="SabotageEnergy"]
+[ext_resource type="Resource" path="res://cards/73_personnel_disruption.tres" id="SabotageCrew"]
+
 [resource]
 script = ExtResource("1_s4cye")
 ship_name = "Ganymede"
@@ -41,5 +45,5 @@ energy = 12
 synthesizer = 3
 reactor = 1
 hull_color = Color(0.38, 0.41, 0.42, 1)
-starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card42")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
 model_scene = ExtResource("VisualModel")

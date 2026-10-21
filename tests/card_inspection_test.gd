@@ -203,7 +203,7 @@ func test_gallery() -> void:
 	check(overlay().is_open() and host.state.upgrades_remaining==2 and host.state.upgraded_cards.is_empty(),"Upgrade gallery inspection spends no upgrade")
 	overlay().dismiss(true)
 	host.state.finish_upgrades()
-	for n in range(5):
+	while host.state.player_pool().size() < host.state.deck_limit():
 		host.state.pending_choice="card"; host.state.card_offers=host.state.random_card_offers(); host.state.choose_card(0)
 	host.state.pending_choice="card"; host.state.card_offers=host.state.random_card_offers(); host.state.choose_card(0)
 	host.show_outcome()
@@ -216,7 +216,7 @@ func test_gallery() -> void:
 	touch(point,true)
 	await create_timer(.48).timeout
 	touch(point,false)
-	check(overlay().is_open() and host.replacement_key==selected_key and host.state.pending_card==incoming and host.state.player_pool().size()==30,"Replacement hold preserves selection, fixed incoming and ownership")
+	check(overlay().is_open() and host.replacement_key==selected_key and host.state.pending_card==incoming and host.state.player_pool().size()==36,"Replacement hold preserves selection, fixed incoming and ownership")
 	click(Vector2(5,5),MOUSE_BUTTON_LEFT,true)
 	click(Vector2(5,5),MOUSE_BUTTON_LEFT,false)
 	await create_timer(.25).timeout

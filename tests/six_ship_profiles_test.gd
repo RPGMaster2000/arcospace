@@ -9,7 +9,7 @@ const EXPECTED = [
 	[35,12,10,10,10,2,2,2,14,0.0], [28,17,14,10,8,1,3,2,11,0.35],
 	[40,6,16,17,16,3,2,3,17,-0.1], [35,12,8,12,10,3,1,2,14,0.0],
 	[35,12,10,8,12,2,3,1,14,0.0], [35,12,8,12,10,1,2,3,14,0.0]]
-const COUNTS = [[9,9,7],[4,13,8],[11,5,9],[12,6,7],[7,13,5],[6,8,11]]
+const COUNTS = [[10,10,8],[5,14,9],[12,6,10],[13,7,8],[8,14,6],[7,9,12]]
 const PREMIUM = ["Deploy boarding teams","Deep-core mining","Advanced fabrication","Reinforce EMP Pulse systems","Deep atmospheric dive","Board pirate flagship","Evacuate scientists","Shielded expedition","Stabilize corridor"]
 var failures: int = 0
 var checks: int = 0
@@ -33,12 +33,12 @@ func run() -> void:
 		var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 		var affordable: Dictionary = counts.duplicate()
 		for card in profile.starting_cards:
-			check(card in Cards.CARDS and card.tier == 1 and ResourceLoader.exists(card.resource_path), "Valid existing Tier 1 resource")
+			check(card in Cards.CARDS and (card.tier == 1 or Cards.CARDS.find(card) >= 68) and ResourceLoader.exists(card.resource_path), "Valid original or added sabotage resource")
 			check(not identities.has(card.identity_key()), "Distinct pool identities")
 			identities[card.identity_key()] = true
 			counts[card.family] += 1
 			if card.cost <= profile.get(card.family): affordable[card.family] += 1
-		check(identities.size() == 25 and counts.values() == COUNTS[index], "Exact 25-card family distribution")
+		check(identities.size() == 28 and counts.values() == COUNTS[index], "Exact 28-card family distribution")
 		for count in affordable.values(): check(count >= 2, "At least two immediately affordable cards per family")
 		var signature: Array = identities.keys()
 		signature.sort()

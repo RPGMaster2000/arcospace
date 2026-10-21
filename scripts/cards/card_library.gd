@@ -71,4 +71,10 @@ const CARDS = [
 	preload("res://cards/66_damage_control_teams.tres"),
 	preload("res://cards/67_sabotage_operation.tres"),
 	preload("res://cards/68_coordinated_assault.tres"),
+	preload("res://cards/69_industrial_interference.tres"),
+	preload("res://cards/70_fabrication_strike.tres"),
+	preload("res://cards/71_reactor_interference.tres"),
+	preload("res://cards/72_core_destabilization.tres"),
+	preload("res://cards/73_personnel_disruption.tres"),
+	preload("res://cards/74_command_infiltration.tres"),
 ]

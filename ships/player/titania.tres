@@ -29,6 +29,10 @@
 
 [ext_resource type="PackedScene" path="res://scenes/ships/titania.tscn" id="VisualModel"]
 
+[ext_resource type="Resource" path="res://cards/70_fabrication_strike.tres" id="SabotageMaterials"]
+[ext_resource type="Resource" path="res://cards/71_reactor_interference.tres" id="SabotageEnergy"]
+[ext_resource type="Resource" path="res://cards/73_personnel_disruption.tres" id="SabotageCrew"]
+
 [resource]
 script = ExtResource("1_8bt07")
 ship_name = "Titania"
@@ -45,5 +49,5 @@ quarters = 3
 ftl_turns = 17
 ftl_resistance = -0.1
 hull_color = Color(0.28, 0.31, 0.34, 1)
-starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card27"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("Card44")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card27"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("Card44"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
 model_scene = ExtResource("VisualModel")

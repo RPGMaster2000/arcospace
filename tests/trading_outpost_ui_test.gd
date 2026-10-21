@@ -80,7 +80,7 @@ func run_tests() -> void:
 					if slot == 2:
 						host.card_inspector.confirm_button.pressed.emit()
 						if host.state.pending_choice == "replace":
-							check(host.view_kind == "replacement" and host.state.player_pool().size()==30, "Paid full-deck reward opens replacement")
+							check(host.view_kind == "replacement" and host.state.player_pool().size()==host.state.deck_limit(), "Paid full-deck reward opens replacement")
 							host._select_replacement(host.state.player_pool()[0])
 							host.replace_button.pressed.emit()
 					stale_choice.pressed.emit()

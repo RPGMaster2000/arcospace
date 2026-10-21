@@ -22,16 +22,16 @@ Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cann
 
 ## Card preferences
 
-Player starting pools retain 25 original Tier 1 identities each; the library now contains 49 Tier 1 and 19 Tier 2 identities. Other identities remain expedition rewards. All enemies draw the full base library. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
+Player starting pools retain 25 original Tier 1 identities plus three targeted sabotage identities each (28 total); the library contains 52 Tier 1 and 22 Tier 2 identities. Unowned identities remain expedition rewards. All enemies draw the full base library. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
 
 | Ship | Starting identities | Family weights | Effect preferences | Tactical weights | Decision variation | Resource |
 |---|---|---|---|---|---|---|
-| Endeavour | 25 | {} | {} | {} | 0.25 | `ships/player/endeavour.tres` |
-| Thunderbolt | 25 | {} | {} | {} | 0.25 | `ships/player/thunderbolt.tres` |
-| Titania | 25 | {} | {} | {} | 0.25 | `ships/player/titania.tres` |
-| Ganymede | 25 | {} | {} | {} | 0.25 | `ships/player/ganymede.tres` |
-| Callisto | 25 | {} | {} | {} | 0.25 | `ships/player/callisto.tres` |
-| Orion | 25 | {} | {} | {} | 0.25 | `ships/player/orion.tres` |
+| Endeavour | 28 | {} | {} | {} | 0.25 | `ships/player/endeavour.tres` |
+| Thunderbolt | 28 | {} | {} | {} | 0.25 | `ships/player/thunderbolt.tres` |
+| Titania | 28 | {} | {} | {} | 0.25 | `ships/player/titania.tres` |
+| Ganymede | 28 | {} | {} | {} | 0.25 | `ships/player/ganymede.tres` |
+| Callisto | 28 | {} | {} | {} | 0.25 | `ships/player/callisto.tres` |
+| Orion | 28 | {} | {} | {} | 0.25 | `ships/player/orion.tres` |
 | Marauder | 0 | {"crew":1.15,"energy":1.7} | {"damage":1.8,"steal":1.7} | {"damage":1.8,"disruption":0.5,"hull":0.65,"play_again":1.5,"production":2.8,"resources":0.25,"shields":0.2} | 0.25 | `ships/enemy/marauder.tres` |
 | Sentinel | 0 | {"energy":1.15} | {"disruption":1.6,"hull":1.8,"production":1.3,"shields":2} | {"damage":0.9,"disruption":0.8,"hull":1.5,"play_again":1,"production":4,"resources":0.3,"shields":0.95} | 0.25 | `ships/enemy/sentinel.tres` |
 | Reclaimer | 0 | {"materials":1.8} | {"damage":1.2,"economy":1.8,"hull":1.6,"production":2} | {"damage":1.1,"disruption":0.4,"hull":1.05,"play_again":1,"production":10,"resources":0.8,"shields":0.4} | 0.25 | `ships/enemy/reclaimer.tres` |
@@ -42,16 +42,16 @@ Tactical scoring preserves affordable immediate wins and fatal-self-damage avoid
 
 ## Six starting pools
 
-Each pool has 25 distinct Tier 1 identities. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.
+Each pool has 28 distinct identities: its original 25 Tier 1 cards plus one targeted sabotage card per resource family. Added Tier 2 cards remain locked until round 3. Specialization comes only from membership; no extra player family/effect draw weights. The opening remains 2 Materials / 2 Energy / 2 Crew. New profiles inherit Endeavour's Hull tint and default model fallback; Model Scene remains independently editable.
 
 | Ship | Materials | Energy | Crew | Total |
 |---|---|---|---|---|
-| Endeavour | 9 | 9 | 7 | 25 |
-| Thunderbolt | 4 | 13 | 8 | 25 |
-| Titania | 11 | 5 | 9 | 25 |
-| Ganymede | 12 | 6 | 7 | 25 |
-| Callisto | 7 | 13 | 5 | 25 |
-| Orion | 6 | 8 | 11 | 25 |
+| Endeavour | 10 | 10 | 8 | 28 |
+| Thunderbolt | 5 | 14 | 9 | 28 |
+| Titania | 12 | 6 | 10 | 28 |
+| Ganymede | 13 | 7 | 8 | 28 |
+| Callisto | 8 | 14 | 6 | 28 |
+| Orion | 7 | 9 | 12 | 28 |
 
 ### Endeavour starting identities
 

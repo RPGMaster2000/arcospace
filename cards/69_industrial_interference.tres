@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Industrial Interference"
+family = "materials"
+cost = 9
+tier = 1
+allocation_category = "offense"
+description = "Reduce enemy Synthesizer by 1."
+effects = {"enemy_production": {"synthesizer": -1}}
+upgrade_effects = [{"enemy_production": {"synthesizer": -1}, "materials": 3}, {"enemy_production": {"synthesizer": -1}, "materials": 6}]
+play_again = false
