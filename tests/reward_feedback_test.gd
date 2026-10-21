@@ -30,7 +30,7 @@ func screenshot(label: String) -> void:
 	root.get_texture().get_image().save_png("res://.godot/testlogs/reward-" + label + ".png")
 func run() -> void:
 	for profile in Rules.enemy_ships:
-		for mode in ["destruction","resource","escape","loss"]:
+		for mode in ["destruction","systems","escape","loss"]:
 			for tactical in [false,true]:
 				var state = State.new()
 				state.start(0, Rules, 9001)
@@ -41,8 +41,8 @@ func run() -> void:
 				result.enemy_hull = 0 if mode == "destruction" else 15
 				result.winner = "enemy" if mode == "loss" else "player"
 				result.earned_tactical = tactical
-				var defeated_elite: bool = profile.enemy_rank == 1 and mode in ["destruction","resource"]
-				var expected: int = profile.destruction_salvage_reward if mode == "destruction" else Rules.resource_victory_salvage
+				var defeated_elite: bool = profile.enemy_rank == 1 and mode in ["destruction","systems"]
+				var expected: int = profile.destruction_salvage_reward
 				if defeated_elite: expected *= 2
 				if mode in ["escape","loss"]: expected = 0
 				if mode != "loss": result.salvage = state.victory_salvage(result)

@@ -67,7 +67,7 @@ func run() -> void:
 		state._apply_outcome(damage)
 		check(state.hull == cap+7, "Agreed rule: PoI damage reduces combined Hull")
 		# Actual Board initialization and all surviving result paths retain the original cap-on-sync.
-		for result in ["destruction","resources","escape"]:
+		for result in ["destruction","systems","escape"]:
 			state = fresh(ship_index)
 			state.hull = cap+6
 			state.salvage = 20
@@ -89,10 +89,10 @@ func run() -> void:
 			# Leave some plating to verify that the result, not combat damage, discards it.
 			board.player_hull = cap+4
 			if result == "destruction": board.enemy_hull = 0
-			elif result == "resources":
-				board.player_materials = board.resource_goal
-				board.player_energy = board.resource_goal
-				board.player_crew = board.resource_goal
+			elif result == "systems":
+				board.enemy_reactor = 0
+				board._sync_systems_failure()
+				board.systems_failure.remaining.enemy = 0
 			else:
 				board.ftl.charge = board.ftl.charge_target
 				board._warp_out()

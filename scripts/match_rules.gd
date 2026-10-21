@@ -6,13 +6,22 @@ const RESOURCES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 
 
-static func wins(actor: Dictionary, enemy: Dictionary, resource_goal: int) -> bool:
-	if enemy.hull <= 0:
-		return true
-	for key in RESOURCES:
-		if actor[key] < resource_goal:
-			return false
-	return true
+static func wins(_actor: Dictionary, enemy: Dictionary) -> bool:
+	return (
+		enemy.hull <= 0
+		or (
+			int(enemy.get("systems_failure_remaining", -1)) == 0
+			and not offline_systems(enemy).is_empty()
+		)
+	)
+
+
+static func offline_systems(ship: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	for key in PRODUCTION:
+		if int(ship[key]) <= 0:
+			result.append(key)
+	return result
 
 
 static func income(actor: Dictionary) -> void:

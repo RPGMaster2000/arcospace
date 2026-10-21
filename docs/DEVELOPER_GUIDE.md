@@ -239,8 +239,10 @@ The damage report lets Board distinguish permanent Hull damage from Ablative Pla
 when checking escape-drive disruption. Asteroid damage is separately implemented in
 `CombatModifier.asteroid_strike()`.
 
-`_check_winner()` latches a result using `MatchRules.wins()` (including simultaneous
-Hull destruction). `refresh_display()` calls guarded `_record_result()` to freeze
+`_check_winner()` latches Hull outcomes first, then `MatchRules.wins()` for expired
+Systems Failure. `combat/systems_failure.gd` owns the independent per-ship clocks;
+Board `_finish_turn()` is the sole full-turn tick point. Extra actions never tick.
+See [Systems Failure](systems_failure.md) for timing, Inspector settings and AI ownership. `refresh_display()` calls guarded `_record_result()` to freeze
 rewards and call `ExpeditionState.record_battle()` once. The action still waits for
 visual jobs before accepting another action or changing turns.
 

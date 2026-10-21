@@ -69,7 +69,7 @@ func run() -> void:
 	check(board.enemy_timer.is_stopped(), "Victory must stop AI scheduling")
 	check(board.get_node(board.card_slots[0]).get_node("DiscardButton").disabled, "Victory must disable discard")
 	board.free()
-	# Resource win remains; repairing to 50 hull no longer wins.
+	# Neither resource accumulation nor repairing to 50 Hull wins.
 	for mode in ["resource", "hull"]:
 		board = BoardScene.instantiate()
 		board.get_node("BattleEffects").enabled = false
@@ -86,7 +86,7 @@ func run() -> void:
 			board.hand.cards[0] = Library.CARDS[2]
 			board._on_card_pressed(0)
 		if mode == "resource":
-			check(board.winner == "player" and board.enemy_timer.is_stopped(), "Immediate resource win")
+			check(board.winner.is_empty() and board.current_actor == "enemy", "100/100/100 resources do not win")
 		else:
 			check(board.player_hull == 50 and board.winner.is_empty(), "Hull repair to 50 does not win")
 		board.free()

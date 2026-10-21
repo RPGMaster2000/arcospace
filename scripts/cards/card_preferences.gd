@@ -19,6 +19,7 @@ static func effect_categories(effects: Dictionary) -> Array[String]:
 		or effects.has("shield_collapse")
 		or effects.has("drain")
 		or effects.has("sabotage")
+		or effects.has("random_sabotage")
 		or effects.has("enemy_production")
 		or effects.has("swap_resource")
 	):

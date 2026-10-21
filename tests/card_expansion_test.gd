@@ -69,7 +69,7 @@ func run() -> void:
 			check(Effects.play(card,a,b), "All card levels resolve " + card.card_name)
 			check(card.effects == original and card.identity_key() == base.identity_key(), "No mutation or identity drift")
 			check(a[card.family] >= 0 and a.shields >= 0 and b.shields >= 0, "Valid reserves")
-			for key in Effects.PRODUCTION: check(a[key] >= 1 and b[key] >= 1, "Production floors")
+			for key in Effects.PRODUCTION: check(a[key] >= 0 and b[key] >= 0, "Production floors")
 			if index >= 44:
 				var n: int = index - 44
 				expect(a if n in actor_cases else b, cases[n][level], card.card_name)
@@ -129,7 +129,7 @@ func run() -> void:
 			a = state(); b = state()
 			for key in Effects.PRODUCTION: b[key] = 1
 			Effects.play(Library.CARDS[card_index].with_upgrade(level),a,b)
-			for key in Effects.PRODUCTION: check(b[key] == 1, "Targeted production minimum")
+			for key in Effects.PRODUCTION: check(b[key] == (0 if Library.CARDS[card_index].effects.get("enemy_production", {}).has(key) else 1), "Targeted production minimum is zero")
 	# New combat branches cannot bypass Nebula; Ion scales branch rewards, never predicates or swaps.
 	for pair in [[51,"energy"],[62,"materials"]]:
 		var actor: Dictionary=state()
@@ -226,7 +226,7 @@ func run() -> void:
 	ai.tactical_variation=0
 	a=state(); b=state(); a.materials=0; b.materials=90
 	var before_ai: Dictionary = a.duplicate(true)
-	check(ai.choose([Library.CARDS[57], Library.CARDS[11]],a,b,100).slot==0 and a==before_ai, "Existing tactical AI values advantageous snapshot exchange without mutation")
+	check(ai.choose([Library.CARDS[57], Library.CARDS[11]],a,b).slot==0 and a==before_ai, "Existing tactical AI values advantageous snapshot exchange without mutation")
 	ai.free()
 	await test_decks()
 	print("Card expansion: %d checks, %d failures" % [checks,failures])

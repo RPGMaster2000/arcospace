@@ -16,7 +16,7 @@ Run state is held in memory for this prototype, not saved to disk. New Expeditio
 
 | Open in FileSystem | Inspector fields |
 |---|---|
-| `encounters/expedition_rules.tres` | PoI library, separate Trading Outpost Resource, minimum/maximum station interval, production price increment/acceleration, encounters per system, category counts/weights, enemy registry, resource-victory Salvage, survey penalty, exhausted-research fallback, Chasedown chance/limit/responses, combat upgrade counts, debug seed |
+| `encounters/expedition_rules.tres` | PoI library, separate Trading Outpost Resource, minimum/maximum station interval, production price increment/acceleration, encounters per system, category counts/weights, enemy registry, destruction/Systems Failure Salvage, survey penalty, exhausted-research fallback, Chasedown chance/limit/responses, combat upgrade counts, debug seed |
 | Any ordinary/hazardous `encounters/*.tres` | Title/description; expand **Approaches**, then any of the four approach resources |
 | Approach resource | Title, required production, minimum production (default 3), Salvage cost, success chance, Success and Failure |
 | Success / Failure resource | Blurb, Salvage, permanent Hull, Next Battle dictionary, card reward/minimum tier, upgrade reward, resource choice, production choice, extra interstellar FTL charge |
@@ -40,7 +40,7 @@ EMP Pulse charge is capped at the selected ship's requirement. It is granted bef
 
 ## Salvage and card progression
 
-Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, resource victory **6**, EMP Pulse **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same additive pending modifiers. The victory-screen repair service costs two Salvage per Hull, with its adjustable quantity control and Hull/Salvage preview.
+Default combat Salvage: standard destruction **10**, elite **20**, boss **30**, Systems Failure **same as destruction**, EMP Pulse **0**. Enemy profiles edit destruction Salvage and FTL independently. Existing tactical (+5 starting Materials/Energy/Crew) and strategic (+10 Shields) bonuses remain, joining the same additive pending modifiers. The victory-screen repair service costs two Salvage per Hull, with its adjustable quantity control and Hull/Salvage preview.
 
 The first Trading Outpost appears in system 2 or 3, chosen randomly. Later stations are 2 or 3 system numbers apart. `next_outpost_system` stores the next scheduled system; an independent RNG derived from the debug seed makes this deterministic without changing six-encounter or loot rolls. `ExpeditionRules.minimum_station_interval` / `maximum_station_interval` default to 2/3 and are hard-clamped to that range.
 
@@ -148,7 +148,7 @@ Rendered Compatibility/software OpenGL checks cover replacement, all card-upgrad
 
 There is no disk save/load implementation to test or migrate. The authoritative owned pool, removed identities, retained upgrades, acquired weights and fixed incoming replacement persist through in-memory screen rebuilds and system transitions. Closing the application still ends the expedition. No persistence format or second progression system was introduced.
 
-Balance concerns: direct Hull attacks can be strong against shield-heavy enemies; reserve exchanges can cause large economy swings and support resource victories. Tier 2 gates the production manipulation and exchanges. Acquired ×3 weighting and the existing 1/2/3/3 combat upgrades amplify newly chosen identities, while the 30-identity cap limits breadth rather than total upgrade strength. These prototype interactions need human playtesting; no additional balance changes were made.
+Balance concerns: direct Hull attacks can be strong against shield-heavy enemies; reserve exchanges can cause large economy swings and affect recovery during Systems Failure. Tier 2 gates the production manipulation and exchanges. Acquired ×3 weighting and the existing 1/2/3/3 combat upgrades amplify newly chosen identities, while the 30-identity cap limits breadth rather than total upgrade strength. These prototype interactions need human playtesting; no additional balance changes were made.
 
 Changed-file ownership:
 

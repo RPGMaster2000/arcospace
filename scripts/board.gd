@@ -37,8 +37,11 @@ const CardEffects = preload("res://scripts/cards/card_effects.gd")
 	NodePath("QuartersUpgradeCard"),
 	NodePath("TorpedoSalvoCard")
 ]
-## TUNE: Amount required in EACH of the three resources for resource victory.
-@export_range(1, 1000, 1) var resource_goal: int = 100
+## TUNE: Full affected-ship turns available to recover production after activation.
+@export_range(1, 20, 1) var systems_failure_turns: int = 3
+const SystemsFailure = preload("res://scripts/combat/systems_failure.gd")
+var systems_failure = SystemsFailure.new()
+var result_cause: String = ""
 ## TUNE in Board3D Inspector: permanent capacity for each ship; excess is temporary plating.
 @export_range(1, 1000, 1) var player_hull_capacity: int = 30
 @export_range(1, 1000, 1) var enemy_hull_capacity: int = 30
@@ -244,6 +247,9 @@ func _ready() -> void:
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
 	damage_timeline = PendingHullDamage.new()
 	add_child(damage_timeline)
+	var failure_display = preload("res://scripts/ui/systems_failure_display.gd").new()
+	failure_display.name = "SystemsFailureDisplay"
+	add_child(failure_display)
 	hud = BattleHUD.new(self)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
@@ -454,11 +460,40 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		if side == "enemy":
 			enemy_timer.start()
 	else:
-		if side == "enemy":
-			turn_number += 1
-		await _begin_turn("enemy" if side == "player" else "player")
+		await _finish_turn(side)
 	action_finished.emit(side, discard)
 	return true
+
+
+func _sync_systems_failure() -> void:
+	var notices: PackedStringArray = systems_failure.sync(
+		_both_states(), current_actor, systems_failure_turns
+	)
+	var display = get_node_or_null("ModifierDisplay")
+	if (
+		not notices.is_empty()
+		and is_instance_valid(display)
+		and display.is_inside_tree()
+		and not is_queued_for_deletion()
+	):
+		display.announce(" · ".join(notices))
+
+
+func _ai_state(side: String) -> Dictionary:
+	var state: Dictionary = _read_state(side)
+	state.systems_failure_remaining = systems_failure.remaining[side]
+	return state
+
+
+func _finish_turn(side: String) -> void:
+	_sync_systems_failure()
+	systems_failure.end_turn(side)
+	if _check_winner():
+		refresh_display()
+		return
+	if side == "enemy":
+		turn_number += 1
+	await _begin_turn("enemy" if side == "player" else "player")
 
 
 # Determine once, stage shield-break Hull loss, replace the slot, then present deltas.
@@ -485,6 +520,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
 	_write_state(side, actor)
 	_write_state(other, target)
+	_sync_systems_failure()
 	if pending.is_empty():
 		_apply_hull_report(report, side, true)
 	active_hand.replace_card(slot)
@@ -526,13 +562,12 @@ func _on_enemy_timeout() -> void:
 	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
 	var move: Dictionary = enemy_ai.choose(
-		enemy_hand.cards, _read_state("enemy"), _read_state("player"), resource_goal
+		enemy_hand.cards, _ai_state("enemy"), _ai_state("player")
 	)
 	if move.is_empty():
 		# A deliberately undersized custom pool may leave the AI with no cards.
 		$LastActionLabel.text = "Enemy has no cards — passes"
-		turn_number += 1
-		_begin_turn("player")
+		_finish_turn("enemy")
 		return
 	_act("enemy", move.slot, move.discard)
 
@@ -613,18 +648,32 @@ func _apply_pending_hull(
 
 # Latch the first terminal result and stop AI timing; reward recording happens in refresh_display.
 func _check_winner() -> bool:
-	if is_instance_valid(damage_timeline) and not damage_timeline.pending.is_empty():
-		return false
 	if not winner.is_empty():
 		return true
-	var player: Dictionary = _read_state("player")
-	var enemy: Dictionary = _read_state("enemy")
+	_sync_systems_failure()
+	if is_instance_valid(damage_timeline) and not damage_timeline.pending.is_empty():
+		return false
+	var player: Dictionary = _ai_state("player")
+	var enemy: Dictionary = _ai_state("enemy")
+	# Preserve Hull precedence, including simultaneous lethal hits, before production outcomes.
 	if player.hull <= 0 and enemy.hull <= 0:
 		winner = "draw"
-	elif MatchRules.wins(player, enemy, resource_goal):
+		result_cause = "hull"
+	elif enemy.hull <= 0:
 		winner = "player"
-	elif MatchRules.wins(enemy, player, resource_goal):
+		result_cause = "hull"
+	elif player.hull <= 0:
 		winner = "enemy"
+		result_cause = "hull"
+	elif MatchRules.wins(player, enemy) and MatchRules.wins(enemy, player):
+		winner = "draw"
+		result_cause = "systems_failure"
+	elif MatchRules.wins(player, enemy):
+		winner = "player"
+		result_cause = "systems_failure"
+	elif MatchRules.wins(enemy, player):
+		winner = "enemy"
+		result_cause = "systems_failure"
 	if not winner.is_empty():
 		enemy_timer.stop()
 	return not winner.is_empty()
@@ -765,6 +814,8 @@ func _display_snapshot() -> Dictionary:
 		"next_modifier_name": modifier.NAMES[next_modifier] if next_modifier >= 0 else "",
 		"salvage": salvage,
 		"winner": winner,
+		"result_cause": result_cause,
+		"systems_failure": systems_failure.snapshot(_both_states()),
 		"battles_won": battles_won,
 		"repair_spend": repair_spend,
 		"resolving_card": resolving_card or not damage_timeline.pending.is_empty(),
@@ -882,7 +933,7 @@ func victory_description() -> String:
 		var elite_bonus: int = expedition.elite_resource_reward(self)
 		if elite_bonus > 0:
 			bonuses.append("Elite: " + _resource_reward_text(elite_bonus))
-	elif enemy_hull <= 0 and not escaped_by_ftl:
+	elif not escaped_by_ftl:
 		lines.append("🪨 +%d Salvage" % DESTRUCTION_SALVAGE)
 	if tactical_victory():
 		bonuses.append("Tactical: " + _resource_reward_text(TACTICAL_RESOURCES))
@@ -913,7 +964,7 @@ func _record_result() -> void:
 		battles_won += 1
 		if expedition != null:
 			salvage += expedition.victory_salvage(self)
-		elif enemy_hull <= 0 and not escaped_by_ftl:
+		elif not escaped_by_ftl:
 			salvage += DESTRUCTION_SALVAGE
 	if expedition != null:
 		expedition.record_battle(self)

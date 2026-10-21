@@ -35,7 +35,7 @@ class_name CardData
 		emit_changed()
 ## TUNE: Gameplay amounts. conditional = {target, attribute, comparison, threshold, then, else}.
 ## Compare live stats with compare_target/compare_attribute, or use fraction_of: hull_capacity.
-## swap_resource exchanges a non-cost reserve; enemy_production applies signed changes, minimum 1.
+## swap_resource exchanges a non-cost reserve; enemy_production applies signed changes, minimum 0.
 @export var effects: Dictionary = {}:
 	set(value):
 		effects = value
@@ -102,7 +102,7 @@ static func describe_effects(values: Dictionary) -> String:
 				for attribute in value:
 					parts.append(
 						(
-							"Enemy %s %+d (min 1)"
+							"Enemy %s %+d (min 0)"
 							% [str(attribute).capitalize(), int(value[attribute])]
 						)
 					)
@@ -117,8 +117,10 @@ static func describe_effects(values: Dictionary) -> String:
 				parts.append("Enemy -%d Shields" % value)
 			"swap_shields":
 				parts.append("Swap Shields with enemy")
+			"random_sabotage":
+				parts.append("Reduce one random enemy production system by %d" % int(value))
 			"sabotage":
-				parts.append("Enemy all prod -%d (min 1)" % int(value))
+				parts.append("Enemy all prod -%d (min 0)" % int(value))
 			"steal", "drain":
 				if (
 					key == "drain"

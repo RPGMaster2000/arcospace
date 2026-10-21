@@ -103,6 +103,7 @@ static func matches_effects(effects: Dictionary, value: String) -> bool:
 				effects.has("drain")
 				or effects.has("steal")
 				or effects.has("sabotage")
+				or effects.has("random_sabotage")
 				or effects.has("random_gain")
 				or effects.has("random_gain_other")
 				or effects.has("random_gain_range_other")

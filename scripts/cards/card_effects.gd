@@ -19,14 +19,24 @@ static func play(
 	enemy: Dictionary,
 	generator: RandomNumberGenerator = null,
 	simulate: bool = false,
-	damage_report: Dictionary = {}
+	damage_report: Dictionary = {},
+	simulation_production_target: int = -1
 ) -> bool:
 	damage_report.clear()
 	damage_report.merge({"actor": 0, "target": 0})
 	if actor[card.family] < card.cost:
 		return false
 	actor[card.family] -= card.cost
-	_apply_effects(card.effects, card.family, actor, enemy, generator, simulate, damage_report)
+	_apply_effects(
+		card.effects,
+		card.family,
+		actor,
+		enemy,
+		generator,
+		simulate,
+		damage_report,
+		simulation_production_target
+	)
 	return true
 
 
@@ -38,7 +48,8 @@ static func _apply_effects(
 	enemy: Dictionary,
 	generator: RandomNumberGenerator,
 	simulate: bool,
-	damage_report: Dictionary
+	damage_report: Dictionary,
+	simulation_production_target: int
 ) -> void:
 	for key in ["hull", "shields"] + RESOURCES + PRODUCTION:
 		actor[key] += int(effects.get(key, 0))
@@ -50,9 +61,9 @@ static func _apply_effects(
 		actor[production] += int(upgrade.get("production", 0))
 		actor[RESOURCES[index]] += int(upgrade.get("resource", 0))
 	for key in PRODUCTION:
-		actor[key] = maxi(1, actor[key])
+		actor[key] = maxi(0, actor[key])
 		var adjustment: Dictionary = effects.get("enemy_production", {})
-		enemy[key] = maxi(1, enemy[key] + int(adjustment.get(key, 0)))
+		enemy[key] = maxi(0, enemy[key] + int(adjustment.get(key, 0)))
 	for key in RESOURCES + ["shields"]:
 		actor[key] = maxi(0, actor[key])
 	# Exchanges use both reserves from the same snapshot, after payment; never the cost family.
@@ -117,7 +128,16 @@ static func _apply_effects(
 		actor[key] += taken
 	if effects.get("sabotage", false):
 		for key in PRODUCTION:
-			enemy[key] = maxi(1, enemy[key] - int(effects.sabotage))
+			enemy[key] = maxi(0, enemy[key] - int(effects.sabotage))
+	if effects.get("random_sabotage", 0) > 0:
+		# Simulation defaults to no lucky hit. AI may enumerate all three hypothetical targets.
+		var target: int = simulation_production_target
+		if not simulate:
+			var source = combat_rng if generator == null else generator
+			target = source.randi_range(0, PRODUCTION.size() - 1)
+		if target >= 0 and target < PRODUCTION.size():
+			var key: String = PRODUCTION[target]
+			enemy[key] = maxi(0, enemy[key] - int(effects.random_sabotage))
 	# Self damage is direct hull loss for either acting ship; shields cannot absorb it.
 	if not damage_report.has("actor_before"):
 		damage_report.actor_before = actor.hull
@@ -132,7 +152,16 @@ static func _apply_effects(
 		var branch: Dictionary = condition.get(
 			"then" if condition_matches(condition, actor, enemy) else "else", {}
 		)
-		_apply_effects(branch, family, actor, enemy, generator, simulate, damage_report)
+		_apply_effects(
+			branch,
+			family,
+			actor,
+			enemy,
+			generator,
+			simulate,
+			damage_report,
+			simulation_production_target
+		)
 
 
 #endregion

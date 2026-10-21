@@ -12,6 +12,9 @@ func run() -> void:
 	root.add_child(board)
 	board.player_hull = 27
 	board.salvage = 20
+	# Start after result accounting: this fixture tests spending an existing balance.
+	board.result_recorded = true
+	board.result_hull = board.player_hull
 	board.winner = "player"
 	board.refresh_display()
 	check(board.repair_spend == 3, "Default fills missing hull with capacity thirty")

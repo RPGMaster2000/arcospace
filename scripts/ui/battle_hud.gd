@@ -43,7 +43,8 @@ func _init(board_view: Control) -> void:
 		"PlayerHullBar",
 		"PlayerShip/ShieldPlaceholder",
 		"SalvageLabel",
-		"TurnLabel"
+		"TurnLabel",
+		"SystemsFailureDisplay"
 	]:
 		nodes[path] = board_view.get_node(path)
 	for field in [
@@ -75,6 +76,7 @@ func _init(board_view: Control) -> void:
 
 
 func refresh(data: Dictionary) -> void:
+	nodes["SystemsFailureDisplay"].refresh(data.systems_failure)
 	refresh_results(data)
 	refresh_emp(data)
 	refresh_ships_and_cards(data)
@@ -166,8 +168,8 @@ func refresh_results(data: Dictionary) -> void:
 			"Enemy ship destroyed"
 			if data.enemy.hull <= 0 and data.winner == "player"
 			else (
-				"Resource victory"
-				if data.winner == "player"
+				"Systems Failure"
+				if data.result_cause == "systems_failure"
 				else ("Both ships destroyed" if data.winner == "draw" else "Defeat")
 			)
 		)

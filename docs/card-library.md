@@ -45,9 +45,10 @@ therefore opens with 18; the enemy starts at 16 until its first turn begins.
 Play Again retains the current turn without another income payment, for both sides.
 Player play/discard controls are disabled during the enemy turn and after victory.
 
-Win by reducing the opposing Hull to zero, reaching Hull 50, or holding at least
-100 of all three resources. Hull Goal and Resource Goal are editable on the board
-root. Wins are checked after effects/refunds and income, before another AI action.
+Win by reducing the opposing Hull to zero, causing Systems Failure, or successfully
+using EMP Pulse. Zero production starts a three-own-turn recovery countdown; every
+production system must be restored above zero to cancel it. Its duration is editable
+on the Board root. Hull and resource accumulation alone do not win.
 The turn label announces the winner. Restart the scene to play a new match.
 
 The enemy uses a separate six-card hand with the same draw and copy rules. It

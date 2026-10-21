@@ -68,10 +68,8 @@ func _initialize() -> void:
 		)
 	text += "\nEnemy profiles also serialize EMP Pulse defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.\n\n"
 	text += (
-		"Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cannot be farmed. Resource victory: %d Salvage (Elite: %d) and full profile FTL reward. Elite victories additionally grant +%d Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: %d Salvage per Hull, capped at capacity. Standalone combat destruction fallback: %d Salvage. Enemy registry and resource-victory Salvage: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.\n"
+		"Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cannot be farmed. Systems Failure uses the same Salvage and FTL rewards as destruction. Elite victories additionally grant +%d Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: %d Salvage per Hull, capped at capacity. Standalone combat destruction fallback: %d Salvage. Enemy registry and reward settings: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.\n"
 		% [
-			Rules.resource_victory_salvage,
-			Rules.resource_victory_salvage * Rules.elite_salvage_multiplier,
 			Rules.elite_resource_bonus,
 			Board.RESULT_SALVAGE_PER_HULL,
 			Board.DESTRUCTION_SALVAGE
@@ -389,7 +387,7 @@ func _initialize() -> void:
 			"combat_modifier.gd: TEMPORAL_DROP_MULTIPLIER; CardHand"
 		]
 	)
-	text += "\nResource victory requires each resource ≥100 by default (`Board.resource_goal`). Turn income equals current production. Expedition state is in memory only; restart/ship selection/app exit ends the run. **Planned, not implemented:** persistent save/load. No other expedition currency, travel spending, undocumented rank multipliers, or persistent card-effect upgrades after an expedition ends.\n"
+	text += "\nSystems Failure begins when any production system reaches zero. A ship has three of its own full turn endings after activation to restore every system above zero, or loses. Duration: `Board.systems_failure_turns`. Hull destruction takes precedence; EMP Pulse remains available. Turn income equals current production. Expedition state is in memory only; restart/ship selection/app exit ends the run. **Planned, not implemented:** persistent save/load. No other expedition currency, travel spending, undocumented rank multipliers, or persistent card-effect upgrades after an expedition ends.\n"
 	write_doc("battle_modifiers", text)
 	print(
 		(

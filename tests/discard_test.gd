@@ -16,7 +16,6 @@ func run() -> void:
 	var board = BoardScene.instantiate()
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings.enabled = false
-	board.resource_goal = 100000 # Refund loop must not trigger a resource victory.
 	root.add_child(board)
 	var hand = board.get_node("CardHand")
 	for card in Library.CARDS:

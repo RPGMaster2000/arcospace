@@ -146,6 +146,7 @@ static func is_combat(effects: Dictionary) -> bool:
 		"drain",
 		"steal",
 		"sabotage",
+		"random_sabotage",
 		"swap_shields",
 		"shield_collapse_below",
 		"shield_collapse",

@@ -147,10 +147,12 @@ func run_tests() -> void:
 	board.free()
 	run = fresh()
 	board = make_board(run)
-	for key in State.RESOURCES: board.set("player_" + key, board.resource_goal)
+	board.enemy_reactor = 0
+	board._sync_systems_failure()
+	board.systems_failure.remaining.enemy = 0
 	board._check_winner()
 	board.refresh_display()
-	check(run.salvage == Rules.resource_victory_salvage, "Resource victory awards Salvage")
+	check(run.salvage == Rules.destruction_salvage, "Systems Failure uses destruction Salvage")
 	board.free()
 	# Pool weights and upgraded identities still enforce two identical cards per hand.
 	run = fresh()

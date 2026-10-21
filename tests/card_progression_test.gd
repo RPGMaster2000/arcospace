@@ -157,15 +157,15 @@ func test_enemies() -> void:
 		var actor: Dictionary = snapshot()
 		actor.hull = 12
 		var enemy: Dictionary = snapshot()
-		var move: Dictionary = ai.choose([Cards.CARDS[11], Cards.CARDS[6], Cards.CARDS[3]], actor, enemy, 100)
+		var move: Dictionary = ai.choose([Cards.CARDS[11], Cards.CARDS[6], Cards.CARDS[3]], actor, enemy)
 		check(not move.discard, "Archetype chooses affordable legal action")
 		print("%s tactical fixture chooses %s" % [profile.ship_name, [Cards.CARDS[11], Cards.CARDS[6], Cards.CARDS[3]][move.slot].card_name])
 		actor.hull = profile.hull_capacity
-		move = ai.choose([Cards.CARDS[11], Cards.CARDS[1], Cards.CARDS[3]], actor, enemy, 100)
+		move = ai.choose([Cards.CARDS[11], Cards.CARDS[1], Cards.CARDS[3]], actor, enemy)
 		var expected: int = 0 if profile.ship_name.begins_with("Marauder") else (1 if profile.ship_name.begins_with("Sentinel") else 2)
 		check(move.slot == expected, "Observable archetype tactical preference: " + profile.ship_name)
 		for key in Match.RESOURCES: actor[key] = 0
-		move = ai.choose([Cards.CARDS[11]], actor, enemy, 100)
+		move = ai.choose([Cards.CARDS[11]], actor, enemy)
 		check(move.discard and move.slot == 0, "Unaffordable enemy hand discards")
 		ai.free()
 		hand.free()

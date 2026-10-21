@@ -7,6 +7,8 @@ const Config = preload("res://encounters/expedition_rules.tres")
 const Hand = preload("res://scripts/cards/card_hand.gd")
 const AI = preload("res://scripts/enemy_ai.gd")
 const Effects = preload("res://scripts/cards/card_effects.gd")
+const Failure = preload("res://scripts/combat/systems_failure.gd")
+var failure_turns: int
 const Rules = preload("res://scripts/match_rules.gd")
 func _initialize() -> void:
 	call_deferred("run")
@@ -15,6 +17,9 @@ func state(profile: Resource) -> Dictionary:
 	for key in Rules.RESOURCES + Rules.PRODUCTION: result[key] = profile.get(key)
 	return result
 func run() -> void:
+	var match_settings = preload("res://scripts/board.gd").new()
+	failure_turns = match_settings.systems_failure_turns
+	match_settings.free()
 	print("mode,player,enemy,wins,losses,unresolved,average_rounds,tier2_drawn,tier2_played,early_enemy_tier2_plays,max_early_enemy_tier2_damage")
 	for mode in ["baseline", "updated", "progressed"]:
 		for player in Ships.PLAYERS:
@@ -28,6 +33,8 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 	var updated: bool = mode != "baseline"
 	var hands: Array = [Hand.new(), Hand.new()]
 	var brains: Array = [AI.new(), AI.new()]
+	var failure = Failure.new()
+	var names: Array[String] = ["player", "enemy"]
 	var states: Array = [state(player), state(enemy)]
 	var combat = RandomNumberGenerator.new()
 	combat.seed = seed_value * 117
@@ -72,7 +79,8 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 			Rules.income(states[side])
 			# Safety bound only for this diagnostic; production turn logic is unchanged.
 			for action in range(30):
-				var move: Dictionary = brains[side].choose(hands[side].cards,states[side],states[1-side],100)
+				for index in range(2): states[index].systems_failure_remaining = failure.remaining[names[index]]
+				var move: Dictionary = brains[side].choose(hands[side].cards,states[side],states[1-side])
 				if move.is_empty(): break
 				var card: Resource = hands[side].cards[move.slot]
 				if move.discard:
@@ -87,13 +95,19 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 				hands[side].replace_card(move.slot)
 				var replacement: Resource = hands[side].cards[move.slot]
 				if replacement != null and replacement.tier == 2: totals.drawn += 1
+				failure.sync({"player":states[0], "enemy":states[1]}, names[side], failure_turns)
 				# Match's simultaneous-loss rule is represented as a player loss here.
-				if states[0].hull <= 0 or states[1].hull <= 0 or Rules.wins(states[side],states[1-side],100):
+				if states[0].hull <= 0 or states[1].hull <= 0 or Rules.wins(states[side],states[1-side]):
 					var winner: int = 1 if states[0].hull <= 0 else (0 if states[1].hull <= 0 else side)
 					totals["wins" if winner == 0 else "losses"] += 1
 					finished = true
 					break
 				if move.discard or not card.play_again: break
+			if not finished:
+				failure.end_turn(names[side])
+				if failure.remaining[names[side]] == 0:
+					totals["losses" if side == 0 else "wins"] += 1
+					finished = true
 			if finished: break
 		if finished: break
 	if not finished: totals.unresolved += 1

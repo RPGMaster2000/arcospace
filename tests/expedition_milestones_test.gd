@@ -134,7 +134,7 @@ func run_tests() -> void:
 			run.ftl_charge = 100
 			var rng_before: int = run.rng.state
 			check(not run.can_jump() and not run.generate_system() and run.system_number == system and run.ftl_charge == 100 and run.rng.state == rng_before, "Boss gate blocks surplus jumps without consuming anything")
-		for outcome in ["defeated","resource","escaped","loss"]:
+		for outcome in ["defeated","systems","escaped","loss"]:
 			var run = milestone(3000,system)
 			var index: int = boss_index(run)
 			run.ftl_charge = run.required_ftl_charge
@@ -145,7 +145,7 @@ func run_tests() -> void:
 			result.player_hull = 0 if outcome == "loss" else run.hull
 			run.active_battle = index
 			var reward: int = run.victory_salvage(result) if result.winner == "player" else 0
-			check(reward == (30 if outcome == "defeated" else (6 if outcome == "resource" else 0)), "Boss defeat/resource/escape rewards remain distinct")
+			check(reward == (30 if outcome in ["defeated", "systems"] else 0), "Boss Systems Failure shares destruction rewards; escape remains distinct")
 			result.salvage = reward
 			var charge_before: int = run.ftl_charge
 			run.record_battle(result)

@@ -23,16 +23,16 @@ func run() -> void:
 	music = root.get_node("Music")
 	var was_enabled: bool = music.enabled
 	music.set_enabled(true)
-	for method in ["destruction","resources"]:
+	for method in ["destruction","systems"]:
 		var board = make_board()
 		check(music.current_track in ["battle1","battle2"], "Battle music starts normally")
 		board.resolving_card = true
 		board.battle_effects.busy = true
 		if method == "destruction": board.enemy_hull = 0
 		else:
-			board.player_materials = board.resource_goal
-			board.player_energy = board.resource_goal
-			board.player_crew = board.resource_goal
+			board.enemy_reactor = 0
+			board._sync_systems_failure()
+			board.systems_failure.remaining.enemy = 0
 		check(board._check_winner(), "Real win detected")
 		board.refresh_display()
 		check(board.result_recorded and not board.get_node("MatchResult").visible, "Rewards record while final animation is running")

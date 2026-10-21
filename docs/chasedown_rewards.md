@@ -38,7 +38,7 @@ The compact victory summary includes upgrade count alongside Salvage/FTL, retain
 
 `start_upgrade_event` limits the count to eligible distinct identities. Finish skips remaining opportunities; no candidates ends the event immediately. Exhausted combat upgrades add **no Salvage**; existing research-PoI exhausted-upgrade Salvage remains unchanged. A latched encounter result rejects repeated reward grants before copying stale board currency. Existing repair and tactical/strategic reward behavior remains.
 
-Design assumption: both destruction and existing resource victories qualify for the rank's upgrades. EMP escape grants neither upgrades nor Salvage, while retaining existing escape completion and eligible tactical/strategic bonuses.
+Design assumption: both destruction and Systems Failure victories qualify for the rank's upgrades. EMP escape grants neither upgrades nor Salvage, while retaining existing escape completion and eligible tactical/strategic bonuses.
 
 ## Interstellar FTL and Wormhole
 

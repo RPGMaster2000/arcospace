@@ -1069,7 +1069,7 @@ func victory_salvage(board: Node) -> int:
 		and encounters[active_battle].kind == "battle"
 	):
 		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
-	var reward: int = destruction if board.enemy_hull <= 0 else rules.resource_victory_salvage
+	var reward: int = destruction
 	return reward * rules.elite_salvage_multiplier if _elite_defeated(board) else reward
 
 

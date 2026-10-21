@@ -67,6 +67,7 @@ static func compact(text: String) -> String:
 		"Synthesizer": "Synth",
 		"Quarters": "Qtrs",
 		" (min 1)": "",
+		" (min 0)": "",
 		" max": "",
 		" damage": " dmg",
 		"regular dmg": "Shield-first dmg",

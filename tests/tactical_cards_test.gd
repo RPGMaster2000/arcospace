@@ -52,12 +52,12 @@ func run() -> void:
 	var old_a = a.duplicate(true)
 	var old_b = b.duplicate(true)
 	var random_state: int = Effects.combat_rng.state
-	ai.choose(new_cards,a,b,100)
+	ai.choose(new_cards,a,b)
 	check(a == old_a and b == old_b and Effects.combat_rng.state == random_state, "AI cannot consume combat RNG or mutate live states")
 	a.hull = 5
 	a.shields = 0
-	var move = ai.choose([Library.CARDS[43]],a,b,100)
-	check(move.discard, "AI discards fatal conversion rather than falsely claiming resource victory")
+	var move = ai.choose([Library.CARDS[43]],a,b)
+	check(move.discard, "AI discards fatal conversion rather than claiming a win")
 	ai.free()
 	var mod = Mod.new()
 	mod.configure(2)

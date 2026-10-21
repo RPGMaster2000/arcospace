@@ -51,6 +51,9 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	if action_log.visible:
 		action_log.position = Vector2(140 + inset.x, 76 + inset.y)
 		action_log.size.x = view.size.x - 280 - inset.x - inset.z
+	view.get_node("SystemsFailureDisplay").fit(
+		view.size, resources.position.y + resources.size.y + 6
+	)
 	var modifier: Control = view.get_node("ModifierDisplay")
 	modifier.fit_panel(
 		view.size, maxf(inset.x, inset.z), view.get_node(view.card_slots[0]).position.y
