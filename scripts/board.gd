@@ -1,9 +1,9 @@
 extends Control
 
 # RESPONSIBILITY: Coordinate both hands, turns, effects and board display.
-# DOES NOT: Choose AI moves, implement card effects or animate cards.
+# DOES NOT: Choose AI moves, implement card effects or render HUD controls.
 
-# EXTEND: _resolve_card commits state; BattleEffects owns visuals, MatchRules owns wins.
+# EXTEND: _resolve_card commits state; BattleEffects owns VFX, BattleHUD owns UI, MatchRules owns wins.
 signal action_finished(side: String, discarded: bool)
 signal expedition_continue
 signal expedition_restart
@@ -15,6 +15,9 @@ var expedition_encounter: int = -1
 var settings_button: Button
 var allocation_button: Button
 var allocation_popup: CanvasLayer
+
+const BattleHUD = preload("res://scripts/ui/battle_hud.gd")
+var hud: BattleHUD
 
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -242,6 +245,7 @@ func _ready() -> void:
 		)
 	_setup_allocation()
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
+	hud = BattleHUD.new(self)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
 	resized.connect(_fit_board_lines)
@@ -613,222 +617,79 @@ func _continue_encounter() -> void:
 # Refresh controls from authoritative state; _record_result also commits a finished battle once.
 # Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
 func refresh_display() -> void:
-	$ModeLabel.text = enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship"
-	$ModeLabel/Subtitle.text = (
-		enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel"
-	)
-	$ModeLabel.add_theme_font_size_override(
-		"font_size", $TurnLabel.get_theme_font_size("font_size")
-	)
-	$ModeLabel/Subtitle.add_theme_font_size_override(
-		"font_size", $SalvageLabel.get_theme_font_size("font_size")
-	)
+	# Commit results and normalize the selection before producing presentation data.
 	_record_result()
-	$SalvageLabel.text = "Salvage %d" % salvage
-	$MatchResult/Panel/BattlesWon.visible = winner in ["enemy", "draw"]
-	$MatchResult/Panel/BattlesWon.text = "%d BATTLES WON" % battles_won
-	$MatchResult/Panel/Rewards.visible = winner == "player"
-	var repair_limit: int = _repair_spend_limit()
 	if winner == "player":
+		var repair_limit: int = _repair_spend_limit()
 		repair_spend = repair_limit if repair_spend < 0 else clampi(repair_spend, 0, repair_limit)
-	for path in ["Repair", "RepairMinus", "RepairPlus", "RepairAmount"]:
-		get_node("MatchResult/Panel/" + path).visible = winner == "player"
-	$MatchResult/Panel/Repair.disabled = repair_spend <= 0 or resolving_card or battle_effects.busy
-	$MatchResult/Panel/RepairMinus.disabled = (
-		repair_spend <= 0 or resolving_card or battle_effects.busy
-	)
-	$MatchResult/Panel/RepairPlus.disabled = (
-		repair_spend >= repair_limit or resolving_card or battle_effects.busy
-	)
-	var repair_amount: int = maxi(0, repair_spend)
-	repair_preview.visible = winner == "player"
-	repair_preview.show_repair(
-		player_hull, player_hull_capacity, salvage, repair_amount, RESULT_SALVAGE_PER_HULL
-	)
-	$MatchResult/Panel/RepairAmount.text = "+%d Hull" % repair_amount
-	$MatchResult/Panel/Repair.text = (
-		"Confirm · %d Salvage" % Repairs.quantity_cost(repair_amount, RESULT_SALVAGE_PER_HULL)
-	)
-	if repair_limit == 0:
-		$MatchResult/Panel/Repair.text = (
-			"Hull full" if player_hull >= player_hull_capacity else "Need 2 Salvage"
-		)
+	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
+		# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
+		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 	$ModifierDisplay.refresh(modifier, turn_number)
-	var ftl_status: String = "EMP Pulse %d / %d" % [ftl.charge, ftl.charge_target]
-	if ftl.disabled_turns > 0:
-		ftl_status += " · Offline (%d turns)" % ftl.disabled_turns
-	elif ftl.can_warp():
-		ftl_status += " · Ready"
-	$FTLPanel/Charge.text = ftl_status
-	$FTLPanel/Charge.tooltip_text = ftl_status
-	$FTLPanel/Charge.text = ftl_status.replace("EMP Pulse ", "EMP ").replace(
-		" · Offline (", " · Off ("
-	)
-	$FTLPanel/Progress.max_value = ftl.charge_target
-	$FTLPanel/Progress.value = ftl.charge
-	var charged: bool = ftl.charge >= ftl.charge_target and winner.is_empty()
-	$FTLPanel/Charge.visible = not charged
-	$FTLPanel/Progress.visible = not charged
-	$FTLPanel/WarpButton.visible = charged
-	_update_jump_style()
-	$FTLPanel/WarpButton.disabled = (
-		not ftl.can_warp()
-		or current_actor != "player"
-		or resolving_card
-		or battle_effects.busy
-		or not winner.is_empty()
-	)
-	allocation_button.visible = winner.is_empty()
-	if not winner.is_empty():
-		allocation_popup.dismiss()
-	$MatchResult.visible = not winner.is_empty() and not resolving_card and not battle_effects.busy
+	hud.refresh(_display_snapshot())
 	if $MatchResult.visible and not result_music_started:
 		result_music_started = true
-		# Start the intro at the reveal, after combat presentation; EMP escape is also a win.
+		# Start music only when the result is revealed, after combat presentation.
 		get_node("/root/Music").play_result(winner == "player")
-	$MatchResult/Panel/Title.text = (
-		"EMP PULSE SUCCESS"
-		if escaped_by_ftl
-		else ("DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "YOU LOSE"))
-	)
-	var method: String = (
-		"EMP Pulse"
-		if escaped_by_ftl
-		else (
-			"Enemy ship destroyed"
-			if enemy_hull <= 0 and winner == "player"
-			else (
-				"Resource victory"
-				if winner == "player"
-				else ("Both ships destroyed" if winner == "draw" else "Defeat")
-			)
-		)
-	)
-	$MatchResult/Panel/Details.text = (
-		"%s · Turn %d\n❤️ %d → %d · Damage taken: %d"
-		% [
-			method,
-			turn_number,
-			starting_player_hull,
-			result_hull if result_recorded else player_hull,
-			player_hull_damage_taken
-		]
-	)
-	$MatchResult/Panel/Rewards.text = victory_description()
-	$MatchResult/Panel/Rewards.visible = not $MatchResult/Panel/Rewards.text.is_empty()
-	$MatchResult/Panel/PlayAgain.hide()
-	$MatchResult/Panel/Configure.text = "Main Menu"
-	$MatchResult/Panel/Configure.visible = winner != "player"
-	var can_continue: bool = winner == "player" and player_hull > 0
-	$MatchResult/Panel/Continue.visible = can_continue
-	$MatchResult/Panel/NextEncounter.visible = can_continue and expedition == null
-	if can_continue and expedition == null:
-		if next_modifier < 0:
-			# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
-			next_modifier = randi_range(1, modifier.NAMES.size() - 1)
-		$MatchResult/Panel/NextEncounter.text = (
-			"Encounter %d · %s" % [encounter_number + 1, modifier.NAMES[next_modifier]]
-		)
-	if expedition != null:
-		$MatchResult/Panel/Continue.text = (
-			"Upgrade Cards" if expedition.pending_choice == "upgrade" else "Star System"
-		)
-	$EnemyTurnBanner.show_enemy_turn(current_actor == "enemy" and winner.is_empty(), card_slots)
-	$PlayerShip/ShieldPlaceholder.visible = player_shields > 0 and not modifier.shields_disabled()
-	$EnemyShip/ShieldPlaceholder.visible = enemy_shields > 0 and not modifier.shields_disabled()
-	var player_can_act: bool = (
-		winner.is_empty() and current_actor == "player" and not resolving_card
-	)
-	if winner.is_empty():
-		$TurnLabel.text = (
-			"Turn %d · %s" % [turn_number, "You" if current_actor == "player" else "Enemy"]
-		)
-	else:
-		$TurnLabel.text = (
-			"DRAW" if winner == "draw" else ("YOU WIN" if winner == "player" else "ENEMY WINS")
-		)
-	player_hull_label.text = "Hull %d/%d" % [player_hull, player_hull_capacity]
-	player_hull_label.add_theme_color_override(
-		"font_color",
-		(
-			$PlayerHullBar.plating_color
-			if player_hull > player_hull_capacity
-			else Color(0.82, 0.84, 0.87)
-		)
-	)
-	$PlayerHullBar.update_hull(player_hull, player_hull_capacity)
-	player_shields_label.text = (
-		"Shields OFF" if modifier.shields_disabled() else "Shields %d" % player_shields
-	)
-	enemy_hull_label.text = "Hull %d/%d" % [enemy_hull, enemy_hull_capacity]
-	enemy_hull_label.add_theme_color_override(
-		"font_color",
-		$EnemyHullBar.plating_color if enemy_hull > enemy_hull_capacity else Color(0.82, 0.84, 0.87)
-	)
-	$EnemyHullBar.update_hull(enemy_hull, enemy_hull_capacity)
-	enemy_shields_label.text = (
-		"Shields OFF" if modifier.shields_disabled() else "Shields %d" % enemy_shields
-	)
-	battle_effects.set_number(player_materials_label, player_materials)
-	player_synthesizer_label.text = str(player_synthesizer)
 
-	battle_effects.set_number(player_energy_label, player_energy)
-	player_reactor_label.text = str(player_reactor)
-	battle_effects.set_number(player_crew_label, player_crew)
-	player_quarters_label.text = str(player_quarters)
-	battle_effects.set_number(enemy_materials_label, enemy_materials)
-	enemy_synthesizer_label.text = str(enemy_synthesizer)
-	battle_effects.set_number(enemy_energy_label, enemy_energy)
-	enemy_reactor_label.text = str(enemy_reactor)
-	battle_effects.set_number(enemy_crew_label, enemy_crew)
-	enemy_quarters_label.text = str(enemy_quarters)
-	for slot in range(card_slots.size()):
-		var button = get_node(card_slots[slot])
-		var card: Resource = hand.cards[slot]
-		button.card_data = modifier.preview(card)
-		button.set_ion_glow(
-			card != null and card.family == "energy" and modifier.kind == 2 and modifier.active
+
+func _display_snapshot() -> Dictionary:
+	var shown_cards: Array[Dictionary] = []
+	for card in hand.cards:
+		shown_cards.append(
+			{
+				"preview": modifier.preview(card),
+				"present": card != null,
+				"affordable": card != null and get("player_" + card.family) >= card.cost,
+				"ion_glow":
+				card != null and card.family == "energy" and modifier.kind == 2 and modifier.active
+			}
 		)
-		var playable: bool = card != null and player_can_act
-		if playable:
-			playable = get("player_" + card.family) >= card.cost
-		button.set_playable(
-			playable, int(card != null and get("player_" + card.family) >= card.cost)
-		)
-		button.set_discardable(card != null and player_can_act)
+	return {
+		"player": _read_state("player"),
+		"enemy": _read_state("enemy"),
+		"enemy_name": enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship",
+		"enemy_subtitle": enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel",
+		"emp":
+		{
+			"charge": ftl.charge,
+			"charge_target": ftl.charge_target,
+			"disabled_turns": ftl.disabled_turns,
+			"can_warp": ftl.can_warp()
+		},
+		"cards": shown_cards,
+		"effects_busy": battle_effects.busy,
+		"shields_disabled": modifier.shields_disabled(),
+		"repair_limit": _repair_spend_limit(),
+		"repair_unit_cost": RESULT_SALVAGE_PER_HULL,
+		"rewards_text": victory_description(),
+		"in_expedition": expedition != null,
+		"pending_choice": expedition.pending_choice if expedition != null else "",
+		"next_modifier_name": modifier.NAMES[next_modifier] if next_modifier >= 0 else "",
+		"salvage": salvage,
+		"winner": winner,
+		"battles_won": battles_won,
+		"repair_spend": repair_spend,
+		"resolving_card": resolving_card,
+		"current_actor": current_actor,
+		"turn_number": turn_number,
+		"escaped_by_ftl": escaped_by_ftl,
+		"starting_player_hull": starting_player_hull,
+		"result_hull": result_hull,
+		"result_recorded": result_recorded,
+		"player_hull_damage_taken": player_hull_damage_taken,
+		"encounter_number": encounter_number,
+	}
 
 
 # Control nodes use editor-visible anchors; these decorative lines are Node2Ds.
 func _fit_board_lines() -> void:
-	$ModeRule.position = mode_rule_origin + Vector2(size.x - 1280.0, 0)
-	$HandRule.position = hand_rule_origin + Vector2(0, size.y - 720.0)
-	var points: PackedVector2Array = $HandRule.points
-	points[points.size() - 1].x = size.x - 24.0
-	$HandRule.points = points
+	hud.fit_board_lines(size, mode_rule_origin, hand_rule_origin)
 	_fit_combat_controls()
 
 
 func _fit_combat_controls() -> void:
-	var gap: float = 10.0
-	var card_scale: float = minf(1.0, (size.x - 32 - gap * 5) / (198 * 6))
-	var hand_width: float = 198 * card_scale * 6 + gap * 5
-	for index in range(card_slots.size()):
-		var card: Control = get_node(card_slots[index])
-		card.scale = Vector2.ONE * card_scale
-		card.position = Vector2(
-			(size.x - hand_width) / 2 + index * (198 * card_scale + gap),
-			size.y - 12 - 294 * card_scale
-		)
-		card.discard_target_height = card.presentation_settings.discard_button_height / card_scale
-		card.get_node("DiscardButton").add_theme_font_size_override(
-			"font_size", roundi(card.presentation_settings.discard_button_font_size / card_scale)
-		)
-		if card.card_data != null:
-			card.refresh_card()
-	var hand_top: float = size.y - 12 - 294 * card_scale
-	$HandRule.position.y = hand_top - 8 - 359
-	$LastActionLabel.position = Vector2(16, hand_top - 32)
-	$LastActionLabel.size.x = size.x - 160
+	hud.fit_combat_controls(size)
 	_fit_allocation_button()
 	_fit_jump_button()
 
@@ -869,29 +730,12 @@ func _select_allocation(mode: String) -> void:
 
 
 func _fit_jump_button() -> void:
-	var button: Button = $FTLPanel/WarpButton
-	button.size = Vector2($FTLPanel/Progress.size.x, 48)
-	button.position = Vector2(0, -10)
+	# Board3D positions this control before the base Board has initialized its HUD.
+	BattleHUD.fit_jump_button($FTLPanel/WarpButton, $FTLPanel/Progress.size.x)
 
 
 func _update_jump_style() -> void:
-	var button: Button = $FTLPanel/WarpButton
-	var offline: bool = ftl.disabled_turns > 0
-	button.text = "EMP offline" if offline else "EMP Pulse"
-	button.tooltip_text = (
-		"Offline: %d turns remaining." % ftl.disabled_turns if offline else "Escape by EMP Pulse."
-	)
-	if button.has_meta("offline_style") and button.get_meta("offline_style") == offline:
-		return
-	button.set_meta("offline_style", offline)
-	ResultPresentation.action(button)
-	if offline:
-		for key in ["normal", "hover", "pressed", "disabled"]:
-			var box: StyleBoxFlat = button.get_theme_stylebox(key).duplicate()
-			box.bg_color = Color("702b35")
-			box.border_color = Color("ef7e88")
-			button.add_theme_stylebox_override(key, box)
-		button.add_theme_color_override("font_disabled_color", Color("ffd3d7"))
+	hud.update_jump_style(ftl.disabled_turns)
 
 
 #endregion

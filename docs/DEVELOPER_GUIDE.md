@@ -114,6 +114,30 @@ resets the panel reference. Card inspection, drag suppression and state validati
 remain in their existing components. Field repairs remain in
 `scripts/ui/field_repair_controls.gd` from the earlier extraction.
 
+### Combat HUD boundary and extension rules
+
+`board.gd` owns combat decisions and state transitions. `refresh_display()` commits
+results once, normalizes the repair selection and chooses any standalone next
+modifier before building `_display_snapshot()`. It also retains the result-music
+latch. `scripts/ui/battle_hud.gd` binds existing controls once and renders that
+snapshot through `refresh_results()`, `refresh_emp()` and
+`refresh_ships_and_cards()`. It does not retain the Board controller or read live
+combat state. Card preview Resources remain presentation references; do not mutate
+their definitions in a renderer.
+
+Generic hand/line/EMP layout lives in the HUD. Board keeps forwarding methods so
+`board_3d.gd` can retain its projection overrides. EMP button fitting is stateless
+because the 3D scene calls it before the base Board initializes the HUD.
+
+For future features, extend the component that owns the responsibility. Add display
+facts to the snapshot and render them in the relevant HUD method; keep user-action
+validation and state changes in Board or the existing rules component. Use signals
+for new interactive components. Keep mutable state under one owner, preserve shared
+Resource isolation, and avoid passing an entire controller into update methods.
+Extract a new component when it has a coherent responsibility, rather than splitting
+functions solely to meet a line count. Apply the same boundaries to Expedition's
+existing screen, formatting, deck replacement and repair components.
+
 ## Architecture and execution flow
 
 ### Ownership and dependencies
