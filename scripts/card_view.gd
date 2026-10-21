@@ -8,6 +8,10 @@ signal discard_requested
 const Summary = preload("res://scripts/ui/card_summary.gd")
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
+var interaction_tween: Tween
+var interaction_hovered: bool = false
+var interaction_selected: bool = false
 var inspection_enabled: bool = true
 var hold_input: Node
 var discard_target_height: float = 44.0
@@ -32,10 +36,44 @@ func _ready() -> void:
 		"font_disabled_color", $DiscardButton.get_theme_color("font_color")
 	)
 	refresh_card()
+	if not Engine.is_editor_hint():
+		mouse_entered.connect(func(): set_interaction_emphasis(true, false))
+		mouse_exited.connect(func(): set_interaction_emphasis(false, false))
+		focus_entered.connect(func(): set_interaction_emphasis(true, false))
+		focus_exited.connect(func(): set_interaction_emphasis(false, false))
+		button_down.connect(func(): set_interaction_emphasis(true, true))
+		button_up.connect(func(): set_interaction_emphasis(is_hovered(), false))
 	if not Engine.is_editor_hint() and inspection_enabled:
 		hold_input = preload("res://scripts/ui/card_hold.gd").new()
 		add_child(hold_input)
 		hold_input.bind_card(self, self, presentation_settings, $DiscardButton)
+
+
+func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
+	if Engine.is_editor_hint() or not is_node_ready():
+		return
+	interaction_hovered = hovered and card_data != null
+	interaction_selected = selected and card_data != null
+	if interaction_tween != null and interaction_tween.is_valid():
+		interaction_tween.kill()
+	var art: Control = $ArtPlaceholder
+	art.pivot_offset = art.size * 0.5
+	var zoom: float = (
+		visual_settings.card_selected_scale
+		if interaction_selected
+		else (visual_settings.card_hover_scale if interaction_hovered else 1.0)
+	)
+	var elevation: float = visual_settings.card_hover_elevation if interaction_hovered else 0.0
+	interaction_tween = create_tween().set_parallel(true)
+	interaction_tween.set_trans(visual_settings.interaction_transition).set_ease(
+		visual_settings.interaction_ease
+	)
+	var duration: float = (
+		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration
+	)
+	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
+	interaction_tween.tween_property(art, "position:y", 101.0 - elevation, duration)
+	queue_redraw()
 
 
 func _on_discard_pressed() -> void:
@@ -189,6 +227,20 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if interaction_hovered or interaction_selected:
+		var tint: Color = visual_settings.card_selection_color
+		draw_rect(
+			Rect2(Vector2(3, 3), size - Vector2(6, 6)),
+			Color(tint, visual_settings.card_glow_intensity),
+			false,
+			6.0
+		)
+		draw_rect(
+			Rect2(Vector2(2, 2), size - Vector2(4, 4)),
+			tint,
+			false,
+			2.0 if interaction_selected else 1.0
+		)
 	if card_data == null or card_data.tier < 2:
 		return
 	# TUNE: Jagged edge depth (pixels), tooth spacing and subtle pulse strength.

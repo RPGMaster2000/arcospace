@@ -131,7 +131,6 @@ func run() -> void:
 		host.state.encounters[0] = {"kind":"poi","poi":poi,"title":poi.title,"completed":false}
 		host.show_poi(0)
 		var salvage_before: int = host.state.salvage
-		var started: int = Time.get_ticks_msec()
 		host._approach(0,0)
 		check(host.presenting_outcome and host.view_kind == "poi", "Flash precedes reward screen")
 		check(host.outcome_flash.active and host.outcome_flash.success == good, "Flash matches resolved branch")
@@ -141,7 +140,7 @@ func run() -> void:
 		host._approach(0,0)
 		check(host.state.rng.state == state_after_roll and host.state.salvage == salvage_before + (7 if good else 2), "No duplicate roll/reward during flash")
 		while host.presenting_outcome: await process_frame
-		check(Time.get_ticks_msec() - started >= 950, "Flash lasts one second")
+		check(host.outcome_flash.tween.get_total_elapsed_time() + 0.001 >= host.visual_settings.poi_reveal_duration, "Flash respects configured duration")
 		check(host.view_kind == "outcome" and host.mission_header.text == ("Mission Successful" if good else "Mission Compromised"), "Matching mission reward header")
 		check(not host.card_gallery.filters.visible, "PoI reward toolbar hidden")
 		await settle()

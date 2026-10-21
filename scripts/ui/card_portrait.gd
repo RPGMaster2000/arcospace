@@ -49,10 +49,13 @@ func _ready() -> void:
 		+ "\n"
 		+ card_data.description
 	)
-	focus_entered.connect(func(): rendering.modulate = Color(1.12, 1.12, 1.12))
-	focus_exited.connect(func(): rendering.modulate = Color.WHITE)
-	mouse_entered.connect(func(): rendering.modulate = Color(1.12, 1.12, 1.12))
-	mouse_exited.connect(func(): rendering.modulate = Color.WHITE)
+	focus_entered.connect(func(): rendering.set_interaction_emphasis(true, false))
+	focus_exited.connect(func(): rendering.set_interaction_emphasis(false, false))
+	mouse_entered.connect(func(): rendering.set_interaction_emphasis(true, false))
+	mouse_exited.connect(func(): rendering.set_interaction_emphasis(false, false))
+
+	button_down.connect(func(): rendering.set_interaction_emphasis(true, true))
+	button_up.connect(func(): rendering.set_interaction_emphasis(is_hovered(), false))
 
 
 func set_card_scale(value: float) -> void:

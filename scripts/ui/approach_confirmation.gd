@@ -2,6 +2,7 @@ extends CanvasLayer
 
 # RESPONSIBILITY: Present approach details and confirmation; ExpeditionState validates and resolves.
 # Presentation-only confirmation. The expedition owns validation and rewards.
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 signal cancelled
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
@@ -65,7 +66,7 @@ func present(value: String) -> void:
 	if tween:
 		tween.kill()
 	tween = create_tween()
-	tween.tween_property(shade, "modulate:a", 1.0, .18)
+	tween.tween_property(shade, "modulate:a", 1.0, visual_settings.ui_transition_duration)
 	var controls = _focus_controls()
 	for index in range(controls.size()):
 		var control: Control = controls[index]

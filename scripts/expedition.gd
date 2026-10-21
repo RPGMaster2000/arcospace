@@ -7,6 +7,8 @@ const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+const VisualEffects = preload("res://scripts/visual/visual_effects.gd")
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 const OutpostScreen = preload("res://scripts/ui/outpost_screen.gd")
 const ExpeditionScreen = preload("res://scripts/ui/expedition_screen.gd")
 const ExpeditionText = preload("res://scripts/ui/expedition_text.gd")
@@ -105,6 +107,7 @@ func _ready() -> void:
 	current_deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
+	outcome_flash.visual_settings = visual_settings
 	add_child(outcome_flash)
 	_setup_field_repairs()
 	start_expedition()
@@ -766,9 +769,15 @@ func show_outcome() -> void:
 		)
 		mission_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		mission_header.add_theme_color_override(
-			"font_color", Color("91e6ad") if state.last_poi_success == 1 else Color("ee928b")
+			"font_color",
+			(
+				Color(visual_settings.poi_success_color, 1.0)
+				if state.last_poi_success == 1
+				else Color(visual_settings.poi_failure_color, 1.0)
+			)
 		)
 		view.add_child(mission_header)
+		VisualEffects.reveal(mission_header, visual_settings)
 	var result = PanelContainer.new()
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
@@ -792,6 +801,12 @@ func show_outcome() -> void:
 	)
 	result.tooltip_text = state.last_outcome if picking_card else ""
 	view.add_child(result)
+	var reward_text: Label = result.get_child(0)
+	reward_text.add_theme_color_override(
+		"font_color",
+		Color.WHITE.lerp(visual_settings.card_selection_color, visual_settings.reward_text_emphasis)
+	)
+	VisualEffects.reveal(reward_text, visual_settings)
 	match state.pending_choice:
 		"card":
 			_show_card_gallery(state.card_offers)

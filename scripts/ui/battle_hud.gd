@@ -4,6 +4,9 @@ extends RefCounted
 # EXTEND: Add display facts to Board._display_snapshot(), then update the relevant refresh method.
 const Repairs = preload("res://scripts/repair_rules.gd")
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
+const Effects = preload("res://scripts/visual/visual_effects.gd")
+var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
+var result_visible: bool = false
 var nodes: Dictionary = {}
 var cards: Array[Control] = []
 var card_slots: Array[NodePath] = []
@@ -21,6 +24,7 @@ func _init(board_view: Control) -> void:
 		"HandRule",
 		"LastActionLabel",
 		"MatchResult",
+		"MatchResult/Panel",
 		"MatchResult/Panel/BattlesWon",
 		"MatchResult/Panel/Configure",
 		"MatchResult/Panel/Continue",
@@ -133,6 +137,28 @@ func refresh_results(data: Dictionary) -> void:
 			else ("YOU WIN" if data.winner == "player" else "YOU LOSE")
 		)
 	)
+	var visible_now: bool = nodes["MatchResult"].visible
+	var heading: Label = nodes["MatchResult/Panel/Title"]
+	heading.add_theme_color_override(
+		"font_color",
+		(
+			visual_settings.victory_accent_color
+			if data.winner == "player"
+			else visual_settings.defeat_accent_color
+		)
+	)
+	if visible_now and not result_visible:
+		Effects.reveal(
+			heading,
+			visual_settings,
+			visual_settings.result_heading_duration,
+			visual_settings.result_heading_start_scale
+		)
+		Effects.reveal(nodes["MatchResult/Panel"], visual_settings)
+	elif not visible_now and result_visible:
+		Effects.reset(heading)
+		Effects.reset(nodes["MatchResult/Panel"])
+	result_visible = visible_now
 	var method: String = (
 		"EMP Pulse"
 		if data.escaped_by_ftl

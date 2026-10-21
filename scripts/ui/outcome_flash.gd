@@ -2,7 +2,12 @@ extends CanvasLayer
 
 # RESPONSIBILITY: Present the resolved PoI success/failure pulse before showing its reward.
 # One result roll, one restrained color pulse; reveal the reward only after it finishes.
-@export_range(0.1, 3.0, 0.1) var duration: float = 1.0
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
+var duration: float:
+	get:
+		return visual_settings.poi_reveal_duration
+signal visual_finished
+var closing: bool = false
 var shade: ColorRect
 var tween: Tween
 var active: bool = false
@@ -23,13 +28,18 @@ func play(good_outcome: bool) -> void:
 		return
 	active = true
 	success = good_outcome
-	shade.color = Color(0.15, 0.85, 0.35, 0.32) if success else Color(0.95, 0.18, 0.15, 0.32)
+	shade.color = (
+		visual_settings.poi_success_color if success else visual_settings.poi_failure_color
+	)
 	shade.modulate.a = 1
 	shade.show()
 	tween = create_tween()
 	tween.tween_interval(duration * 0.7)
 	tween.tween_property(shade, "modulate:a", 0.0, duration * 0.3)
-	await tween.finished
+	tween.finished.connect(func(): visual_finished.emit(), CONNECT_ONE_SHOT)
+	await visual_finished
+	if closing:
+		return
 	shade.hide()
 	active = false
 
@@ -37,3 +47,11 @@ func play(good_outcome: bool) -> void:
 func _input(_event: InputEvent) -> void:
 	if active:
 		get_viewport().set_input_as_handled()
+
+
+func _exit_tree() -> void:
+	closing = true
+	active = false
+	if tween != null and tween.is_valid():
+		tween.kill()
+	visual_finished.emit()

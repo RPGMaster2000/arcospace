@@ -15,6 +15,8 @@ func _ready() -> void:
 			part.material_override = part.material_override.duplicate()
 			part.material_override.next_pass = damage_material
 
+	_configure_engines()
+
 
 # A closed triangular wedge, +X forward, made with Godot geometry only.
 func _interceptor_hull() -> ArrayMesh:

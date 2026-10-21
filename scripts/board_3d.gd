@@ -5,6 +5,7 @@ extends "res://scripts/board.gd"
 # DOES NOT: Redefine card rules, input or turn handling; these are inherited from board.gd.
 func refresh_display() -> void:
 	super.refresh_display()
+	$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(
 		mini(player_hull, player_hull_capacity)
 	)

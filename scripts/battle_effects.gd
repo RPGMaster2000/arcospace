@@ -4,6 +4,7 @@ extends Node
 # DOES NOT: Apply card rules, draw cards or advance turns.
 # EXTEND: Dispatch committed deltas in play_changes; register all independent tweens with _job.
 signal finished
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 const REPAIR_SHADER = preload("res://shaders/hull_repair.gdshader")
 const RIPPLE_SHADER = preload("res://shaders/shield_ripple.gdshader")
 const RESOURCES = ["materials", "energy", "crew"]
@@ -15,19 +16,33 @@ const COLORS = [Color(1, 0.35, 0.2), Color(0.25, 0.8, 1), Color(0.5, 1, 0.3)]
 @export var player_ship_path: NodePath = NodePath("PlayerShip")
 @export var enemy_ship_path: NodePath = NodePath("EnemyShip")
 ## TUNE: Seconds between each integer when resources count up; smaller = faster.
-@export_range(0.02, 0.15, 0.005) var count_step_seconds: float = 0.065
+var count_step_seconds: float:
+	get:
+		return visual_settings.count_step_seconds
 ## TUNE: Seconds for ship hit/recoil feedback.
-@export_range(0.1, 2.0, 0.05) var hit_seconds: float = 0.6
+var hit_seconds: float:
+	get:
+		return visual_settings.hit_seconds
 ## TUNE: Seconds for the production icon pulse.
-@export_range(0.1, 2.0, 0.05) var production_seconds: float = 0.48
+var production_seconds: float:
+	get:
+		return visual_settings.production_seconds
 ## TUNE: Seconds for the hull repair sweep.
-@export_range(0.2, 3.0, 0.05) var repair_seconds: float = 0.75
+var repair_seconds: float:
+	get:
+		return visual_settings.repair_seconds
 ## TUNE: Seconds for shield activation/upgrade; 3D hit ripples are capped at 0.28 seconds.
-@export_range(0.2, 3.0, 0.05) var shield_seconds: float = 0.55
+var shield_seconds: float:
+	get:
+		return visual_settings.shield_seconds
 ## TUNE: 2D ship shake distance in pixels; this does not change 3D recoil.
-@export_range(0.0, 12.0, 0.5) var shake_pixels: float = 4.0
+var shake_pixels: float:
+	get:
+		return visual_settings.shake_pixels
 ## TUNE: Icon pulse size; 1.07 = 7% larger.
-@export_range(1.0, 1.2, 0.01) var icon_peak_scale: float = 1.07
+var icon_peak_scale: float:
+	get:
+		return visual_settings.icon_peak_scale
 var busy: bool = false
 var cancelling: bool = false
 var jobs: int = 0
@@ -187,10 +202,20 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 		func(p: float):
 			ship.position = (
 				origin
-				+ Vector2(sin(p * TAU * 3), sin(p * TAU * 4) * 0.4) * shake_pixels * (1.0 - p)
+				+ (
+					Vector2(sin(p * TAU * 3), sin(p * TAU * 4) * 0.4)
+					* (shake_pixels if hull_hit else 0.0)
+					* (1.0 - p)
+				)
 			)
 			if hull_hit:
-				hull.color = hull_color.lerp(Color(1, 0.12, 0.08), sin(p * PI)),
+				hull.color = hull_color.lerp(
+					visual_settings.hull_flash_color,
+					(
+						sin(minf(1.0, p * hit_seconds / visual_settings.hull_flash_duration) * PI)
+						* visual_settings.hull_flash_opacity
+					)
+				),
 		0.0,
 		1.0,
 		hit_seconds
@@ -202,7 +227,9 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 		var bounds: Rect2 = _bounds(shield.points)
 		var arc := Line2D.new()
 		arc.width = 7
-		arc.default_color = Color(0.65, 0.93, 1)
+		arc.default_color = Color(
+			visual_settings.shield_impact_color, visual_settings.shield_flash_opacity
+		)
 		arc.antialiased = true
 		var angle: float = 0.0 if side == "player" else PI
 		for i in range(17):
@@ -211,8 +238,12 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 		ship.add_child(arc)
 		temporary_nodes.append(arc)
 		var flash := _job()
-		flash.tween_property(arc, "modulate:a", 0.0, hit_seconds)
-		flash.parallel().tween_property(arc, "width", 1.0, hit_seconds)
+		flash.tween_property(
+			arc, "modulate:a", 0.0, minf(hit_seconds, visual_settings.shield_flash_duration)
+		)
+		flash.parallel().tween_property(
+			arc, "width", 1.0, minf(hit_seconds, visual_settings.shield_flash_duration)
+		)
 		flash.tween_callback(func(): _remove(arc))
 
 

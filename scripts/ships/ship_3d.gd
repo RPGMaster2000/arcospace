@@ -6,6 +6,11 @@ extends Node3D
 # BattleEffects owns these tweens, so existing turn timing stays intact.
 @onready var body: Node3D = $Body
 @onready var shield: MeshInstance3D = $Shield
+@export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
+var engine_materials: Array[StandardMaterial3D] = []
+var engine_colors: Array[Color] = []
+var engine_boost: bool = false
+var engine_multiplier: float = 1.0
 var hull_material: StandardMaterial3D
 var shield_material: ShaderMaterial
 var repair_material: ShaderMaterial
@@ -19,6 +24,34 @@ var shield_was_offline: bool = false
 
 func _process(delta: float) -> void:
 	hover_time += delta
+	var target: float = visual_settings.engine_ftl_multiplier if engine_boost else 1.0
+	engine_multiplier = move_toward(
+		engine_multiplier,
+		target,
+		(
+			delta
+			* (visual_settings.engine_ftl_multiplier - 1.0)
+			/ visual_settings.engine_ftl_transition_duration
+		)
+	)
+	for index in range(engine_materials.size()):
+		var material = engine_materials[index]
+		material.emission = (
+			visual_settings.engine_glow_color
+			if visual_settings.override_engine_color
+			else engine_colors[index]
+		)
+		material.emission_energy_multiplier = (
+			visual_settings.engine_glow_intensity
+			* engine_multiplier
+			* (
+				1.0
+				+ (
+					sin(hover_time * TAU * visual_settings.engine_pulse_speed)
+					* visual_settings.engine_pulse_amplitude
+				)
+			)
+		)
 	var phase: float = 1.7 if name == "EnemyShip" else 0.0
 	# TUNE: 7.0 = seconds per hover loop; 0.07 = vertical travel in 3D units.
 	position = rest_position + Vector3(0, sin(hover_time * TAU / 7.0 + phase) * 0.07, 0)
@@ -54,15 +87,46 @@ func _ready() -> void:
 	shield.material_override = shield_material
 	shield_material.set_shader_parameter("formation", 1.0)
 	shield_material.set_shader_parameter("hit", 0.0)
+	_configure_engines()
+
+
+func _configure_engines() -> void:
+	engine_materials.clear()
+	engine_colors.clear()
+	for part in body.find_children("Engine*", "MeshInstance3D", true, false):
+		if part.material_override is StandardMaterial3D:
+			part.material_override = part.material_override.duplicate()
+			part.material_override.emission_enabled = true
+			engine_materials.append(part.material_override)
+			engine_colors.append(part.material_override.emission)
 
 
 func animate_hit(tween: Tween, hull_hit: bool, seconds: float) -> void:
 	var origin: Vector3 = body.position
 	tween.tween_method(
 		func(p: float):
-			body.position = origin + Vector3(0, sin(p * TAU * 3) * 0.08 * (1.0 - p), 0)
+			var elapsed: float = p * seconds
+			var shake: float = minf(1.0, elapsed / visual_settings.hull_shake_duration)
+			body.position = (
+				origin
+				+ Vector3(
+					0,
+					(
+						sin(shake * TAU * 3) * visual_settings.hull_shake_strength * (1.0 - shake)
+						if hull_hit
+						else 0.0
+					),
+					0
+				)
+			)
 			if hull_hit:
-				hull_material.albedo_color = base_color.lerp(Color(1, 0.08, 0.04), sin(p * PI)),
+				hull_material.albedo_color = base_color.lerp(
+					visual_settings.hull_flash_color,
+					(
+						sin(minf(1.0, elapsed / visual_settings.hull_flash_duration) * PI)
+						* visual_settings.hull_flash_opacity
+					)
+				),
 		0.0,
 		1.0,
 		seconds
@@ -81,6 +145,7 @@ func set_shield_strength(value: int) -> void:
 
 
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:
+	var resting_tint = shield_material.get_shader_parameter("tint")
 	if increase:
 		shield_material.set_shader_parameter("keep_shell", not shield_was_offline)
 		shield_material.set_shader_parameter("formation", 0.0)
@@ -88,16 +153,23 @@ func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> voi
 			func(p: float): shield_material.set_shader_parameter("formation", p), 0.0, 1.0, seconds
 		)
 	else:
+		shield_material.set_shader_parameter("tint", visual_settings.shield_impact_color)
+		shield_material.set_shader_parameter(
+			"ripple_strength", visual_settings.shield_ripple_strength
+		)
+		shield_material.set_shader_parameter("ripple_speed", visual_settings.shield_ripple_speed)
+		shield_material.set_shader_parameter("impact_opacity", visual_settings.shield_flash_opacity)
 		tween.tween_method(
 			func(p: float): shield_material.set_shader_parameter("hit", p),
 			0.001,
 			1.0,
-			minf(seconds, 0.28)
+			minf(seconds, visual_settings.shield_flash_duration)
 		)
 	tween.tween_callback(
 		func():
 			shield_material.set_shader_parameter("formation", 1.0)
 			shield_material.set_shader_parameter("hit", 0.0)
+			shield_material.set_shader_parameter("tint", resting_tint)
 	)
 
 
