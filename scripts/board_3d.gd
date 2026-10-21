@@ -103,9 +103,6 @@ func _fit_backdrop() -> void:
 	_fit_ftl()
 
 
-## TUNE: Fine placement offset from the mirrored FTL position, in UI pixels.
-@export var ftl_position_offset: Vector2 = Vector2(-40, 5)
-
 ## TUNE: Engine light factors relative to its scene-authored brightness.
 @export var engine_offline_factor: float = 0.3
 @export var engine_ready_factor: float = 1.4
@@ -127,28 +124,6 @@ func _process(delta: float) -> void:
 
 
 func _fit_ftl() -> void:
-	if not battle_camera:
-		return
-	var container: Control = $BattleView
-	var viewport: SubViewport = $BattleView/Viewport
-	var ship: Node3D = $BattleView/Viewport/Battlefield/PlayerShip
-	var ship_center: Vector2 = (
-		container.position
-		+ (
-			battle_camera.unproject_position(ship.global_position)
-			* container.size
-			/ Vector2(viewport.size)
-		)
-	)
-	var hull_center: float = $PlayerHullLabel.position.y + $PlayerHullLabel.size.y * 0.5
-	# Mirror Hull status vertically about the ship, and center FTL horizontally on it.
-	$FTLPanel.position = (
-		Vector2(
-			ship_center.x - $FTLPanel.size.x * 0.5,
-			ship_center.y * 2.0 - hull_center - $FTLPanel.size.y * 0.5
-		)
-		+ ftl_position_offset
-	)
-	$FTLPanel.position.x = clampf($FTLPanel.position.x, 16, size.x - $FTLPanel.size.x - 16)
-	_fit_jump_button()
+	# Shared HUD placement follows the Hull bar, independently of camera/idle motion.
 	_fit_allocation_button()
+	_fit_jump_button()

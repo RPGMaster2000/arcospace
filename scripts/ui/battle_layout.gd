@@ -26,7 +26,7 @@ static func scaled_insets(safe: Rect2i, window: Vector2i, logical: Vector2) -> V
 static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	var inset := safe_insets(view)
 	# Keep the left column at the content edge; a display-wide inset creates a second gutter.
-	menu.position = Vector2(16, 16 + inset.y)
+	menu.position = Vector2(23, 16 + inset.y)
 	menu.size = Vector2(48, 48)
 	for path in ["TurnLabel", "SalvageLabel"]:
 		view.get_node(path).position.x = menu.position.x + menu.size.x + 12
@@ -35,6 +35,13 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 		view.get_node("PlayerResource%d" % index).position.x = 23
 		view.get_node("PlayerResource%d" % index).position.y = 92 + (index - 1) * 82 + inset.y
 		view.get_node("EnemyResource%d" % index).position.x = view.size.x - 94 - inset.z
+	var hull: Control = view.get_node("PlayerHullBar")
+	var emp: Control = view.get_node("FTLPanel")
+	emp.position = Vector2(hull.position.x, hull.position.y + hull.size.y + 6)
+	var charge: Label = emp.get_node("Charge")
+	charge.size.x = emp.get_node("Progress").size.x
+	charge.clip_text = true
+	charge.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	allocation.size = BUTTON_SIZE
 	var resources: Control = view.get_node("PlayerResource3")
 	allocation.position = Vector2(resources.position.x, resources.position.y + resources.size.y + 8)

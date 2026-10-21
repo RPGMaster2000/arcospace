@@ -89,3 +89,9 @@ is reduced to 52×48 with a 22-point icon and smaller internal padding; its exis
 selection behavior is unchanged. Real Android cutout placement still needs a device
 check. The 187-check headless layout suite passed after these changes; rendered
 captures cover 16:9, 19.5:9 and 21:9.
+
+EMP now sits six pixels below the player Hull bar, sharing its left edge at every
+aspect ratio. Its charged action starts at the same position and stays above the
+hand. Long offline labels clip with an ellipsis and retain their complete tooltip.
+The menu button shares the resource icons' left margin (23 logical pixels).
+Camera-relative EMP placement is removed; no EMP timing or escape rules changed.

@@ -338,7 +338,7 @@ func fit_combat_controls(board_size: Vector2) -> void:
 
 static func fit_jump_button(button: Button, progress_width: float) -> void:
 	button.size = Vector2(progress_width, 48)
-	button.position = Vector2(0, -10)
+	button.position = Vector2.ZERO
 
 
 func update_jump_style(disabled_turns: int) -> void:

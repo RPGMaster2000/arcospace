@@ -27,7 +27,7 @@ func run() -> void:
 	board.refresh_display()
 	var jump: Button = board.get_node("FTLPanel/WarpButton")
 	check(jump.visible and not jump.disabled and not board.get_node("FTLPanel/Progress").visible and not board.get_node("FTLPanel/Charge").visible, "Full charge replaces bar with Jump")
-	check(jump.position == Vector2(0,-10) and jump.size.y >= 48, "Jump occupies FTL area with touch target")
+	check(jump.position == Vector2.ZERO and jump.size.y >= 48, "Jump occupies FTL area with touch target")
 	board.ftl.disabled_turns = 2
 	board.refresh_display()
 	var offline_box: StyleBoxFlat = jump.get_theme_stylebox("disabled")
@@ -53,13 +53,10 @@ func run() -> void:
 	board._begin_turn("player")
 	check(board.get_node("ModifierDisplay/FTLFlash").text == "EMP PULSE ONLINE", "Fully charged repaired FTL announces online")
 	board._fit_ftl() # Refit after screenshot frames have advanced the ship's idle motion.
-	var container = board.get_node("BattleView")
-	var viewport = board.get_node("BattleView/Viewport")
-	var ship = viewport.get_node("Battlefield/PlayerShip")
-	var center = container.position + board.battle_camera.unproject_position(ship.global_position) * container.size / Vector2(viewport.size)
-	var hull_y: float = board.player_hull_label.position.y + board.player_hull_label.size.y*0.5
-	var panel = board.get_node("FTLPanel")
-	check(absf((center.y - panel.position.y-panel.size.y*0.5 + board.ftl_position_offset.y) - (hull_y-center.y)) < 1, "FTL and Hull mirrored vertically")
+	var hull_bar: Control = board.get_node("PlayerHullBar")
+	var panel: Control = board.get_node("FTLPanel")
+	check(is_equal_approx(panel.position.x, hull_bar.position.x) and is_equal_approx(panel.position.y, hull_bar.position.y + hull_bar.size.y + 6), "EMP aligns directly below player Hull")
+	check(jump.get_global_rect().end.y < board.get_node(board.card_slots[0]).position.y, "Charged EMP button clears card hand")
 	check(board.player_shields_label.get_theme_font_size("font_size") == board.player_hull_label.get_theme_font_size("font_size"), "Matching status font sizes")
 	board.queue_free()
 	await process_frame
