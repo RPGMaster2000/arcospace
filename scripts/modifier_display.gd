@@ -5,10 +5,12 @@ extends Control
 var flash_tween: Tween
 
 
+func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414) -> void:
+	$Meter.fit_panel(board_size, safe_inset, hand_top)
+
+
 func refresh(modifier: Node, round_number: int) -> void:
-	$Meter.visible = modifier.kind != 0
-	$Meter/Text.text = modifier.status_text(round_number)
-	$Meter/Progress.value = modifier.meter_value(round_number)
+	$Meter.refresh(modifier, round_number)
 
 
 func announce(message: String) -> void:

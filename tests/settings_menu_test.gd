@@ -119,11 +119,12 @@ func run() -> void:
 		check(not gear.intersects(board.get_node("ModifierDisplay/Meter").get_global_rect()), "Gear clears hazard countdown")
 		await capture("battle-%d" % dimensions.x)
 		await activate(board.settings_button, dimensions.x == 960)
+		await activate(board.settings_button.settings_option, dimensions.x == 960)
 		check(paused and board.settings_button.menu.shade.visible, "Battle gear is clickable")
 		await capture("battle-open-%d" % dimensions.x)
 		board.settings_button.menu.dismiss()
 	board.enemy_timer.start(1.0)
-	board.settings_button.pressed.emit()
+	board.settings_button.menu.present()
 	var remaining: float = board.enemy_timer.time_left
 	var turn: int = board.turn_number
 	await create_timer(0.15).timeout
@@ -136,6 +137,7 @@ func run() -> void:
 	await settle()
 	check(not board.get_node("MatchResult/Panel/Configure").visible, "Victory removes ship-selection button")
 	await activate(board.settings_button)
+	await activate(board.settings_button.settings_option)
 	check(paused and board.settings_button.menu.shade.visible, "Settings remains reachable over the victory shade")
 	await activate(board.settings_button.menu.main_menu_button)
 	check(not paused and current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Battle Main Menu returns to ship selection and unpauses")

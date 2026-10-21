@@ -180,16 +180,11 @@ func _apply_ship(side: String, data: Resource) -> void:
 # Initialize ship stats and expedition overrides before dealing hands and starting turn income.
 func _ready() -> void:
 	get_node("/root/Music").play_battle()
-	settings_button = preload("res://scripts/ui/settings_button.gd").new()
+	settings_button = preload("res://scripts/ui/battle_menu.gd").new()
 	settings_button.z_index = 110  # Keep settings accessible above the result screen's shade.
 	add_child(settings_button)
 	settings_button.main_menu_requested.connect(_return_to_setup)
-	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	settings_button.offset_left = -64
-	settings_button.offset_right = -16
-	settings_button.offset_top = 8
-	settings_button.offset_bottom = 56
-	# Reserve one gear-width beside the enemy heading; keep its text box width intact.
+	# Preserve the existing enemy heading placement after moving Settings access.
 	$ModeLabel.offset_left -= 64
 	$ModeLabel.offset_right -= 64
 	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
@@ -799,10 +794,7 @@ func _fit_combat_controls() -> void:
 func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
-	# 2D fallback uses the ship presentation center; 3D boards override this projection.
-	allocation_button.position = (
-		$PlayerShip.position + Vector2(-150, 0) - allocation_button.size * 0.5
-	)
+	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button)
 
 
 func _setup_allocation() -> void:

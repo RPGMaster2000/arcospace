@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://c18qsjcgmq467" path="res://scripts/modifier_display.gd" id="1"]
 
+[ext_resource type="Script" path="res://scripts/ui/battle_modifier_panel.gd" id="PanelScript"]
+
 [node name="ModifierDisplay" type="Control" unique_id=1869701269]
 layout_mode = 3
 anchors_preset = 15
@@ -12,7 +14,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1")
 
-[node name="Meter" type="Control" parent="." unique_id=19566026]
+[node name="Meter" type="Button" parent="." unique_id=19566026]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -24,12 +26,15 @@ offset_bottom = 60.0
 grow_horizontal = 2
 mouse_filter = 2
 
+script = ExtResource("PanelScript")
+
 [node name="Text" type="Label" parent="Meter" unique_id=506999003]
 layout_mode = 0
 offset_right = 680.0
 offset_bottom = 29.0
 theme_override_font_sizes/font_size = 19
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Progress" type="ProgressBar" parent="Meter" unique_id=1661344888]
 visible = false

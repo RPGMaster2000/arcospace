@@ -34,6 +34,7 @@ func _ready() -> void:
 	)
 	var center = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.offset_bottom = -320
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.add_child(center)
 	panel = PanelContainer.new()
@@ -49,7 +50,7 @@ func _ready() -> void:
 	title.add_theme_font_size_override("font_size", 26)
 	column.add_child(title)
 	var grid = GridContainer.new()
-	grid.columns = 2
+	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	column.add_child(grid)

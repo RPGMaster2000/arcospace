@@ -40,6 +40,13 @@ func run() -> void:
 			root.size = dimensions
 			await process_frame
 			board._fit_board_lines()
+			if scene == "board":
+				check(
+					not board.get_node("LastActionLabel").get_global_rect().intersects(
+						board.get_node("ModifierDisplay/Meter").get_global_rect()
+					),
+					"2D fallback action log clears modifier strip"
+				)
 			var first: Control = board.get_node(board.card_slots[0])
 			var last: Control = board.get_node(board.card_slots[-1])
 			check(
