@@ -124,6 +124,15 @@ for compatibility; ordinary POIs use the exploration shell's separate confirmati
 To add a service, author its rules/data in the existing state/resource layer and extend
 the outpost presentation as needed; no purchase mutation belongs in the UI component.
 
+### Shield-collapse damage timing
+
+See [shield_shatter.md](shield_shatter.md) for the revised staged-damage contract.
+Board determines results once through the existing rules, applies Shields at impact,
+and releases held Hull damage at the fragment-burst cue through
+`scripts/combat/pending_hull_damage.gd`. The reusable effect under `scripts/effects/`
+only renders; cosmetic Tweens never commit damage. Keep these ownership boundaries
+when adding new damage sources or visual effects.
+
 ### Combat HUD boundary and extension rules
 
 `board.gd` owns combat decisions and state transitions. `refresh_display()` commits

@@ -56,3 +56,6 @@ class_name VisualEffectSettings
 @export_range(0.2, 3.0, 0.05) var shield_seconds: float = 0.55
 @export_range(0.0, 12.0, 0.5) var shake_pixels: float = 4.0
 @export_range(1.0, 1.2, 0.01) var icon_peak_scale: float = 1.07
+
+@export_group("Shield collapse")
+@export var shield_shatter: Resource = preload("res://resources/visual/shield_shatter_settings.tres")

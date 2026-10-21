@@ -43,6 +43,7 @@ var shake_pixels: float:
 var icon_peak_scale: float:
 	get:
 		return visual_settings.icon_peak_scale
+var shatter_updates: Array[Callable] = []
 var busy: bool = false
 var cancelling: bool = false
 var jobs: int = 0
@@ -66,8 +67,10 @@ func play_changes(
 	paid_side: String = "",
 	paid_family: String = "",
 	paid_cost: int = 0,
-	impact: bool = false
+	impact: bool = false,
+	external_timeline: bool = false
 ) -> void:
+	shatter_updates = []
 	if not enabled:
 		return
 	for side in ["player", "enemy"]:
@@ -85,7 +88,24 @@ func play_changes(
 			and ship.has_method("animate_explosions")
 		):
 			ship.animate_explosions(_job(), maxf(hit_seconds, 0.5))
-		if hull_delta < 0 or (shield_delta < 0 and impact):
+		var collapse: bool = (
+			old.shields > 0
+			and current.shields == 0
+			and visual_settings.shield_shatter.shatter_enabled
+			and not get_parent().modifier.shields_disabled()
+		)
+		if collapse:
+			if ship.has_method("begin_shield_shatter"):
+				shatter_updates.append(ship.begin_shield_shatter(visual_settings.shield_shatter))
+			var feedback = get_parent().get_node_or_null("ModifierDisplay")
+			if feedback != null:
+				feedback.shake_screen(
+					visual_settings.shield_shatter.shatter_shake_strength * 25.0,
+					visual_settings.shield_shatter.shatter_shake_duration
+				)
+			if hull_delta < 0:
+				_hit(ship, true, false, side)
+		elif hull_delta < 0 or (shield_delta < 0 and impact):
 			_hit(ship, hull_delta < 0, shield_delta < 0, side)
 		elif shield_delta < 0:
 			_pulse_shield(ship, false)
@@ -114,6 +134,26 @@ func play_changes(
 				_resource_burst(icon, COLORS[index], true)
 			if production_delta != 0:
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
+
+	if not shatter_updates.is_empty():
+		var updates: Array[Callable] = shatter_updates.duplicate()
+		var duration: float = maxf(
+			visual_settings.shield_shatter.shatter_burst_start + 0.01,
+			visual_settings.shield_shatter.shatter_total_duration
+		)
+		var timeline = _job()
+		if external_timeline:
+			timeline.tween_interval(duration)
+		else:
+			timeline.tween_method(
+				func(time: float):
+					for update in updates:
+						if update.is_valid():
+							update.call(time),
+				0.0,
+				duration,
+				duration
+			)
 
 
 #endregion

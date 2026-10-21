@@ -40,6 +40,10 @@ func play(good_outcome: bool) -> void:
 	await visual_finished
 	if closing:
 		return
+	# Let the signal emission unwind before a caller can free this screen.
+	await get_tree().process_frame
+	if closing:
+		return
 	shade.hide()
 	active = false
 

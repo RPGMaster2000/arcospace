@@ -4,6 +4,7 @@ extends Node3D
 # RESPONSIBILITY: Animate the prototype mesh; never change combat state.
 
 # BattleEffects owns these tweens, so existing turn timing stays intact.
+signal hull_impact_started
 @onready var body: Node3D = $Body
 @onready var shield: MeshInstance3D = $Shield
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -19,6 +20,10 @@ var damage_material: ShaderMaterial
 var hull_strength: int = 30
 var rest_position: Vector3
 var hover_time: float = 0.0
+var shield_strength: int = 10
+var shatter_effect: Node3D
+var shield_effect_revision: int = 0
+var shield_rest_tint: Color = Color(0.2, 0.65, 1.0)
 var shield_was_offline: bool = false
 
 
@@ -85,6 +90,9 @@ func _ready() -> void:
 	damage_material.next_pass = repair_material
 	shield_material = shield.material_override.duplicate()
 	shield.material_override = shield_material
+	var authored_tint = shield_material.get_shader_parameter("tint")
+	if authored_tint is Color:
+		shield_rest_tint = authored_tint
 	shield_material.set_shader_parameter("formation", 1.0)
 	shield_material.set_shader_parameter("hit", 0.0)
 	_configure_engines()
@@ -102,6 +110,8 @@ func _configure_engines() -> void:
 
 
 func animate_hit(tween: Tween, hull_hit: bool, seconds: float) -> void:
+	if hull_hit:
+		hull_impact_started.emit()
 	var origin: Vector3 = body.position
 	tween.tween_method(
 		func(p: float):
@@ -138,19 +148,45 @@ func animate_hit(tween: Tween, hull_hit: bool, seconds: float) -> void:
 	)
 
 
+func begin_shield_shatter(settings: Resource) -> Callable:
+	shield_effect_revision += 1
+	shield_material.set_shader_parameter("formation", 1.0)
+	if is_instance_valid(shatter_effect):
+		shatter_effect.cancel()
+	shatter_effect = preload("res://scenes/effects/shield_shatter_effect.tscn").instantiate()
+	add_child(shatter_effect)
+	shatter_effect.configure(shield, settings, shield_rest_tint)
+	# The logical strength is zero; keep the collapsing bubble bright until its visual release.
+	shield_material.set_shader_parameter("strength", 1.0)
+	return shatter_effect.seek
+
+
 func set_shield_strength(value: int) -> void:
-	shield.visible = value > 0
+	shield_strength = value
+	if value > 0 and is_instance_valid(shatter_effect) and shatter_effect.active:
+		shatter_effect.cancel()
+	var collapsing: bool = is_instance_valid(shatter_effect) and shatter_effect.active
+	shield.visible = value > 0 or (collapsing and shatter_effect.intact_visible)
 	# TUNE: 10.0 = shield strength required for full bubble opacity.
-	shield_material.set_shader_parameter("strength", clampf(value / 10.0, 0.0, 1.0))
+	shield_material.set_shader_parameter(
+		"strength", 1.0 if collapsing else clampf(value / 10.0, 0.0, 1.0)
+	)
 
 
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:
-	var resting_tint = shield_material.get_shader_parameter("tint")
+	shield_effect_revision += 1
+	var revision: int = shield_effect_revision
+	var resting_tint: Color = shield_rest_tint
 	if increase:
 		shield_material.set_shader_parameter("keep_shell", not shield_was_offline)
 		shield_material.set_shader_parameter("formation", 0.0)
 		tween.tween_method(
-			func(p: float): shield_material.set_shader_parameter("formation", p), 0.0, 1.0, seconds
+			func(p: float):
+				if revision == shield_effect_revision:
+					shield_material.set_shader_parameter("formation", p),
+			0.0,
+			1.0,
+			seconds
 		)
 	else:
 		shield_material.set_shader_parameter("tint", visual_settings.shield_impact_color)
@@ -160,13 +196,17 @@ func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> voi
 		shield_material.set_shader_parameter("ripple_speed", visual_settings.shield_ripple_speed)
 		shield_material.set_shader_parameter("impact_opacity", visual_settings.shield_flash_opacity)
 		tween.tween_method(
-			func(p: float): shield_material.set_shader_parameter("hit", p),
+			func(p: float):
+				if revision == shield_effect_revision:
+					shield_material.set_shader_parameter("hit", p),
 			0.001,
 			1.0,
 			minf(seconds, visual_settings.shield_flash_duration)
 		)
 	tween.tween_callback(
 		func():
+			if revision != shield_effect_revision:
+				return
 			shield_material.set_shader_parameter("formation", 1.0)
 			shield_material.set_shader_parameter("hit", 0.0)
 			shield_material.set_shader_parameter("tint", resting_tint)

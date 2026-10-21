@@ -16,6 +16,8 @@ var settings_button: Button
 var allocation_button: Button
 var allocation_popup: CanvasLayer
 
+const PendingHullDamage = preload("res://scripts/combat/pending_hull_damage.gd")
+var damage_timeline: PendingHullDamage
 const BattleHUD = preload("res://scripts/ui/battle_hud.gd")
 var hud: BattleHUD
 
@@ -245,6 +247,8 @@ func _ready() -> void:
 		)
 	_setup_allocation()
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
+	damage_timeline = PendingHullDamage.new()
+	add_child(damage_timeline)
 	hud = BattleHUD.new(self)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
@@ -326,6 +330,7 @@ func _begin_turn(side: String) -> void:
 		return
 	var before: Dictionary = _both_states()
 	var asteroid_event: bool = false
+	var asteroid_hit_player: bool = false
 	if side == "player":
 		var event_due: bool = (
 			modifier.kind in [1, 2, 3]
@@ -343,22 +348,34 @@ func _begin_turn(side: String) -> void:
 			var player: Dictionary = _read_state("player")
 			var enemy: Dictionary = _read_state("enemy")
 			announcement = modifier.asteroid_strike(player, enemy)
+			var report: Dictionary = {
+				"actor": maxi(0, before.player.hull - player.hull),
+				"target": maxi(0, before.enemy.hull - enemy.hull),
+				"actor_before": before.player.hull
+			}
+			asteroid_hit_player = (
+				player.hull < before.player.hull or player.shields < before.player.shields
+			)
+			var pending: Array[Dictionary] = _stage_overflow(
+				before, {"player": player, "enemy": enemy}, report, "player"
+			)
 			_write_state("player", player)
 			_write_state("enemy", enemy)
-			player_hull_damage_taken += maxi(0, int(before.player.hull) - player_hull)
-			_damage_ftl(
-				permanent_damage(int(before.player.hull), player_hull, player_hull_capacity)
-			)
+			if pending.is_empty():
+				_apply_hull_report(report, "player", true)
+			else:
+				battle_effects.play_changes(before, _both_states(), "", "", 0, true, true)
+				_arm_pending_damage(pending, report, "player")
+				refresh_display()
+				await damage_timeline.damage_applied
+				if damage_timeline.closing or is_queued_for_deletion():
+					return
+				# The staged impacts were already scheduled; subsequent income has its own delta.
+				before = _both_states()
 			asteroid_event = true
 		$ModifierDisplay.announce(announcement)
 		if event_due:
-			var player_hit: bool = (
-				asteroid_event
-				and (
-					player_hull < int(before.player.hull)
-					or player_shields < int(before.player.shields)
-				)
-			)
+			var player_hit: bool = asteroid_event and asteroid_hit_player
 			$ModifierDisplay.impact(modifier.kind, player_hit)
 		if not _check_winner():
 			var was_offline: bool = ftl.disabled_turns > 0
@@ -375,6 +392,8 @@ func _begin_turn(side: String) -> void:
 	refresh_display()
 	if asteroid_event or (side == "player" and modifier.active):
 		await $ModifierDisplay.hold_result()
+	if not damage_timeline.pending.is_empty():
+		await damage_timeline.damage_applied
 	if battle_effects.busy:
 		await battle_effects.finished
 	if battle_effects.cancelling or is_queued_for_deletion():
@@ -388,7 +407,12 @@ func _begin_turn(side: String) -> void:
 # Guard legality and lock input while CardMotion invokes _resolve_card at its animation cue.
 # After all presentation finishes, either retain the extra action or advance the actor/round.
 func _act(side: String, slot: int, discard: bool) -> bool:
-	if resolving_card or current_actor != side or not winner.is_empty():
+	if (
+		resolving_card
+		or not damage_timeline.pending.is_empty()
+		or current_actor != side
+		or not winner.is_empty()
+	):
 		return false
 	if _check_winner():
 		refresh_display()
@@ -420,6 +444,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		await $ModifierDisplay.hold_result()
 	if motion.cancelling or not is_inside_tree() or is_queued_for_deletion():
 		return false
+	if not damage_timeline.pending.is_empty():
+		await damage_timeline.damage_applied
 	if battle_effects.busy:
 		await battle_effects.finished
 	if battle_effects.cancelling or is_queued_for_deletion():
@@ -440,9 +466,12 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	return true
 
 
-# Commit dictionary results, replace the used slot, then present deltas and evaluate victory.
+# Determine once, stage shield-break Hull loss, replace the slot, then present deltas.
 # CombatModifier.play delegates cost/effects to CardEffects; discard uses its own refund path.
 func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> void:
+	damage_timeline.finish_now()
+	if not winner.is_empty():
+		return
 	var before: Dictionary = _both_states()
 	var active_hand = hand if side == "player" else enemy_hand
 	var other: String = "enemy" if side == "player" else "player"
@@ -454,25 +483,15 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		$ModifierDisplay.announce(modifier.play(card, actor, target))
 		if modifier.kind == 2 and modifier.active and card.family == "energy":
 			$ModifierDisplay.impact(2)
+	var report: Dictionary = (
+		modifier.last_hull_damage.duplicate(true) if not discard else {"actor": 0, "target": 0}
+	)
+	var determined: Dictionary = {side: actor, other: target}
+	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
 	_write_state(side, actor)
 	_write_state(other, target)
-	if not discard:
-		player_hull_damage_taken += int(
-			(
-				modifier.last_hull_damage.actor
-				if side == "player"
-				else modifier.last_hull_damage.target
-			)
-		)
-	if not discard:
-		var key: String = "actor" if side == "player" else "target"
-		var report: Dictionary = modifier.last_hull_damage
-		var attack_before: int = int(report.get(key + "_before", player_hull))
-		_damage_ftl(
-			permanent_damage(
-				attack_before, attack_before - int(report.get(key, 0)), player_hull_capacity
-			)
-		)
+	if pending.is_empty():
+		_apply_hull_report(report, side, true)
 	active_hand.replace_card(slot)
 	extra_action_requested = not discard and card.play_again
 	var who: String = "You" if side == "player" else "Enemy"
@@ -498,8 +517,11 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 				or card.effects.has("shield_collapse_below")
 				or card.effects.has("shield_collapse")
 			)
-		)
+		),
+		not pending.is_empty()
 	)
+	if not pending.is_empty():
+		_arm_pending_damage(pending, report, side)
 	_check_winner()
 	refresh_display()
 
@@ -520,6 +542,75 @@ func _on_enemy_timeout() -> void:
 	_act("enemy", move.slot, move.discard)
 
 
+func _stage_overflow(
+	before: Dictionary, determined: Dictionary, report: Dictionary, actor_side: String
+) -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	if (
+		not battle_effects.enabled
+		or not battle_effects.visual_settings.shield_shatter.shatter_enabled
+		or modifier.shields_disabled()
+	):
+		return events
+	for side in ["player", "enemy"]:
+		var previous: Dictionary = before[side]
+		var result: Dictionary = determined[side]
+		var key: String = "actor" if side == actor_side else "target"
+		if previous.shields > 0 and result.shields == 0:
+			# Use the existing capped damage report, including mixed pierce/self-damage.
+			var amount: int = maxi(0, int(report.get(key, 0)))
+			if amount > 0:
+				result.hull += amount
+				events.append({"side": side, "amount": amount})
+	return events
+
+
+func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: String) -> void:
+	var settings: Resource = battle_effects.visual_settings.shield_shatter
+	damage_timeline.arm(
+		events,
+		settings.shatter_burst_start,
+		settings.shatter_total_duration,
+		_apply_pending_hull.bind(report, side),
+		battle_effects.shatter_updates,
+		func():
+			return (
+				not battle_effects.enabled
+				or battle_effects.cancelling
+				or not settings.shatter_enabled
+			)
+	)
+
+
+func _apply_hull_report(report: Dictionary, side: String, visuals: bool) -> void:
+	var key: String = "actor" if side == "player" else "target"
+	var amount: int = int(report.get(key, 0))
+	player_hull_damage_taken += amount
+	var before: int = int(report.get(key + "_before", player_hull))
+	var permanent: int = permanent_damage(before, before - amount, player_hull_capacity)
+	if visuals:
+		_damage_ftl(permanent)
+	else:
+		ftl.take_hull_damage(permanent)
+
+
+func _apply_pending_hull(
+	events: Array[Dictionary], visuals: bool, report: Dictionary, side: String
+) -> void:
+	visuals = visuals and is_instance_valid(battle_effects) and not battle_effects.cancelling
+	var before: Dictionary = _both_states()
+	for event in events:
+		set(event.side + "_hull", maxi(0, int(get(event.side + "_hull")) - event.amount))
+	_apply_hull_report(report, side, visuals)
+	if visuals and battle_effects.enabled and not battle_effects.cancelling:
+		battle_effects.play_changes(before, _both_states())
+	_check_winner()
+	if visuals and not is_queued_for_deletion():
+		refresh_display()
+	elif not winner.is_empty():
+		_record_result()
+
+
 #endregion
 
 #region Match control
@@ -527,6 +618,8 @@ func _on_enemy_timeout() -> void:
 
 # Latch the first terminal result and stop AI timing; reward recording happens in refresh_display.
 func _check_winner() -> bool:
+	if is_instance_valid(damage_timeline) and not damage_timeline.pending.is_empty():
+		return false
 	if not winner.is_empty():
 		return true
 	var player: Dictionary = _read_state("player")
@@ -543,6 +636,7 @@ func _check_winner() -> bool:
 
 
 func _restart_match() -> void:
+	damage_timeline.finish_now(false)
 	if expedition != null:
 		expedition_restart.emit()
 		return
@@ -556,6 +650,7 @@ func _restart_match() -> void:
 
 
 func _return_to_setup() -> void:
+	damage_timeline.finish_now(false)
 	if expedition != null:
 		expedition_exit.emit()
 		return
@@ -568,7 +663,13 @@ func _return_to_setup() -> void:
 
 # Resolve combat escape as a player win, without generating a new star system here.
 func _warp_out() -> void:
-	if current_actor != "player" or resolving_card or battle_effects.busy or not winner.is_empty():
+	if (
+		current_actor != "player"
+		or resolving_card
+		or not damage_timeline.pending.is_empty()
+		or battle_effects.busy
+		or not winner.is_empty()
+	):
 		return
 	if _check_winner() or not ftl.can_warp():
 		refresh_display()
@@ -587,6 +688,7 @@ func _damage_ftl(amount: int) -> void:
 
 
 func _continue_encounter() -> void:
+	damage_timeline.finish_now(false)
 	if winner != "player" or player_hull <= 0 or resolving_card or battle_effects.busy:
 		return
 	$MatchResult/Panel/Continue.disabled = true
@@ -670,7 +772,7 @@ func _display_snapshot() -> Dictionary:
 		"winner": winner,
 		"battles_won": battles_won,
 		"repair_spend": repair_spend,
-		"resolving_card": resolving_card,
+		"resolving_card": resolving_card or not damage_timeline.pending.is_empty(),
 		"current_actor": current_actor,
 		"turn_number": turn_number,
 		"escaped_by_ftl": escaped_by_ftl,
@@ -722,6 +824,8 @@ func _setup_allocation() -> void:
 
 
 func _select_allocation(mode: String) -> void:
+	if is_instance_valid(damage_timeline) and not damage_timeline.pending.is_empty():
+		return
 	if not hand.select_allocation(mode):
 		return
 	var index: int = allocation_popup.MODES.find(mode)

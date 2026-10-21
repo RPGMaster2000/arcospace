@@ -7,6 +7,9 @@ uniform float hit = 0.0;
 uniform float ripple_strength = 1.0;
 uniform float ripple_speed = 32.0;
 uniform float impact_opacity = 0.9;
+uniform float fracture = 0.0;
+uniform float collapse = 0.0;
+uniform float shatter_flash = 0.0;
 uniform bool keep_shell = false;
 varying vec3 shell_point;
 void vertex() { shell_point = VERTEX; }
@@ -21,10 +24,19 @@ void fragment() {
 	float ripple = pow(max(0.0, cos(distance_from_front * 26.0 - hit * ripple_speed)), 8.0);
 	ripple *= (1.0 - smoothstep(0.7, 1.6, distance_from_front));
 	ripple *= sin(hit * 3.14159) * (1.0 - hit) * ripple_strength;
-	ALBEDO = mix(tint.rgb, vec3(0.85, 0.95, 1.0), clamp(wave + ripple, 0.0, 1.0));
+	float fractures = 0.0;
+	if (fracture > 0.0) {
+		vec3 grid = abs(fract(normalize(shell_point) * 5.0 + 0.5) - 0.5);
+		float crack = 1.0 - smoothstep(0.015, 0.055, min(grid.x, min(grid.y, grid.z)));
+		crack = max(crack, 1.0 - smoothstep(0.015, 0.045, abs(fract(dot(normalize(shell_point), vec3(4.0)) + 0.5) - 0.5)));
+		fractures = crack * fracture;
+	}
+	ALBEDO = mix(tint.rgb, vec3(0.85, 0.95, 1.0), clamp(wave + ripple + fractures + shatter_flash, 0.0, 1.0));
 	ALPHA = strength * clamp(
 	    (0.01 + rim * 0.85 + ripple * impact_opacity) * reveal
 	    + wave * 0.65,
 	    0.0, 0.95
 		);
+	ALPHA = clamp(ALPHA * (1.0 - collapse) + (fractures * 0.7 + shatter_flash * 0.75) * (1.0 - collapse), 0.0, 0.98);
+	EMISSION = tint.rgb * (fractures * 2.0 + shatter_flash);
 	}
