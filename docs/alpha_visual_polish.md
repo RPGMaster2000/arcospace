@@ -15,13 +15,13 @@ Custom ship settings Resources can be assigned to a model's Visual Settings fiel
   existing timing values now read the alpha Resource; their defaults are unchanged.
 - Existing hull damage patches, repair sweeps, shield formation and impact shader
   remain. The shield shader gains three tuning uniforms; its geometry and ripple
-  calculation are otherwise preserved. Shield-only damage has no hull recoil.
+  calculation are otherwise preserved. Shield-only damage has no hull recoil; it produces a brief two-pixel screen shake using the existing modifier feedback controller. Stronger active hazard shakes take priority.
 - Ships retain their idle hover, geometry and authored engine colors. Existing engine
   meshes receive isolated emissive materials and a small idle pulse. No dynamic
   lights or post-processing were added. Escape boosts emission while the ship remains
   on the result screen; it does not add an FTL travel sequence.
 - POI success/failure uses the existing flash controller, shortened from one second
-  to the configured 0.3 seconds. Headings and reward text reveal without disabling
+  to the configured 0.6 seconds. Headings and reward text reveal without disabling
   actions or changing rewards. Battle-result headings/panels reveal once per display,
   rather than restarting on each HUD refresh.
 
@@ -65,9 +65,11 @@ and recoil can finish sooner without changing that turn-resolution wait.
 | Hull impact | `hull_shake_duration` | `0.22` |
 | Shield impact | `shield_impact_color` | `Color(0.2, 0.65, 1)` |
 | Shield impact | `shield_flash_opacity` | `0.9` |
-| Shield impact | `shield_flash_duration` | `0.20` |
-| Shield impact | `shield_ripple_strength` | `1.0` |
-| Shield impact | `shield_ripple_speed` | `32.0` |
+| Shield impact | `shield_flash_duration` | `0.35` |
+| Shield impact | `shield_ripple_strength` | `1.8` |
+| Shield impact | `shield_ripple_speed` | `24.0` |
+| Shield impact | `shield_screen_shake_pixels` | `2.0` |
+| Shield impact | `shield_screen_shake_duration` | `0.18` |
 | Engines | `engine_glow_intensity` | `0.7` |
 | Engines | `engine_pulse_amplitude` | `0.08` |
 | Engines | `engine_pulse_speed` | `0.35` |
@@ -77,7 +79,7 @@ and recoil can finish sooner without changing that turn-resolution wait.
 | Engines | `engine_ftl_transition_duration` | `0.2` |
 | POI and UI | `poi_success_color` | `Color(0.15, 0.85, 0.35, 0.24)` |
 | POI and UI | `poi_failure_color` | `Color(0.95, 0.18, 0.15, 0.24)` |
-| POI and UI | `poi_reveal_duration` | `0.30` |
+| POI and UI | `poi_reveal_duration` | `0.60` |
 | POI and UI | `ui_transition_duration` | `0.20` |
 | POI and UI | `reward_text_emphasis` | `0.20` |
 | Battle results | `result_heading_duration` | `0.20` |
@@ -129,7 +131,7 @@ at the existing mobile viewport sizes cannot establish device frame rates.
 Godot 4.7.2 editor import and 20 focused regression scripts passed. Five suites were
 also run with an actual X11/OpenGL Compatibility renderer (software Mesa): alpha
 visuals, card inspection, POI reward feedback, six-ship profiles and settings.
-The new visual suite passes 46 checks. Existing suites cover play/discard, turn/input
+The new visual suite passes 48 checks. Existing suites cover play/discard, turn/input
 flow, Hull/shield effects, rewards, result music, continuation, repair selection,
 all ship models, outpost controls and Android-size layouts. Captures include pressed
 card feedback, Hull/combined impacts, victory/defeat, POI success/failure and both

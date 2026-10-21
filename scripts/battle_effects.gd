@@ -184,6 +184,13 @@ func _pulse_icon(icon: Control, tint: Color, increase: bool) -> void:
 
 
 func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
+	if shield_hit:
+		var feedback = get_parent().get_node_or_null("ModifierDisplay")
+		if feedback != null:
+			feedback.shake_screen(
+				visual_settings.shield_screen_shake_pixels,
+				visual_settings.shield_screen_shake_duration
+			)
 	if ship.has_method("animate_hit"):
 		ship.animate_hit(_job(), hull_hit, hit_seconds)
 		if shield_hit:

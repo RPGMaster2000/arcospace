@@ -37,6 +37,7 @@ var screen_tween: Tween
 var shake_tween: Tween
 var original_canvas: Transform2D
 var shaking: bool = false
+var active_shake_pixels: float = 0.0
 
 
 func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> void:
@@ -64,18 +65,28 @@ func impact(kind: int, player_hit: bool = false) -> void:
 	screen_tween = create_tween()
 	screen_tween.tween_property($ScreenFlash, "modulate:a", 0.0, flash_seconds)
 	if player_hit:
-		if shake_tween:
-			shake_tween.kill()
-		if not shaking:
-			original_canvas = get_viewport().canvas_transform
-		shaking = true
-		shake_tween = create_tween()
-		shake_tween.tween_method(_shake, 1.0, 0.0, flash_seconds)
-		shake_tween.tween_callback(_restore_screen)
+		shake_screen(shake_pixels, flash_seconds)
+
+
+# Shared by modifier impacts and shield feedback; keep a single canvas-shake owner.
+func shake_screen(pixels: float, seconds: float) -> void:
+	if not cinematic_enabled or pixels <= 0 or (shaking and pixels < active_shake_pixels):
+		return
+	if shake_tween:
+		shake_tween.kill()
+	if not shaking:
+		original_canvas = get_viewport().canvas_transform
+	shaking = true
+	active_shake_pixels = pixels
+	shake_tween = create_tween()
+	shake_tween.tween_method(_shake, 1.0, 0.0, seconds)
+	shake_tween.tween_callback(_restore_screen)
 
 
 func _shake(strength: float) -> void:
-	var offset = Vector2(sin(strength * 47.0), cos(strength * 61.0)) * shake_pixels * strength
+	var offset = (
+		Vector2(sin(strength * 47.0), cos(strength * 61.0)) * active_shake_pixels * strength
+	)
 	var transform = original_canvas
 	transform.origin += offset
 	get_viewport().canvas_transform = transform

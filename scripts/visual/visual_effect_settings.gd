@@ -21,9 +21,11 @@ class_name VisualEffectSettings
 @export_group("Shield impact")
 @export_color_no_alpha var shield_impact_color: Color = Color(0.2, 0.65, 1)
 @export_range(0.0, 1.0, 0.05) var shield_flash_opacity: float = 0.9
-@export_range(0.05, 1.0, 0.01) var shield_flash_duration: float = 0.20
-@export_range(0.0, 2.0, 0.05) var shield_ripple_strength: float = 1.0
-@export_range(1.0, 64.0, 1.0) var shield_ripple_speed: float = 32.0
+@export_range(0.05, 1.0, 0.01) var shield_flash_duration: float = 0.35
+@export_range(0.0, 2.0, 0.05) var shield_ripple_strength: float = 1.8
+@export_range(1.0, 64.0, 1.0) var shield_ripple_speed: float = 24.0
+@export_range(0.0, 5.0, 0.25) var shield_screen_shake_pixels: float = 2.0
+@export_range(0.05, 0.5, 0.01) var shield_screen_shake_duration: float = 0.18
 @export_group("Engines")
 @export_range(0.0, 3.0, 0.05) var engine_glow_intensity: float = 0.7
 @export_range(0.0, 0.25, 0.01) var engine_pulse_amplitude: float = 0.08
@@ -36,7 +38,7 @@ class_name VisualEffectSettings
 @export_group("POI and UI")
 @export var poi_success_color: Color = Color(0.15, 0.85, 0.35, 0.24)
 @export var poi_failure_color: Color = Color(0.95, 0.18, 0.15, 0.24)
-@export_range(0.1, 1.0, 0.01) var poi_reveal_duration: float = 0.30
+@export_range(0.1, 1.0, 0.01) var poi_reveal_duration: float = 0.60
 @export_range(0.01, 0.6, 0.01) var ui_transition_duration: float = 0.20
 @export_range(0.0, 1.0, 0.05) var reward_text_emphasis: float = 0.20
 @export_group("Battle results")

@@ -62,6 +62,17 @@ func run() -> void:
 		"Interrupted selection resets smoothly"
 	)
 	var ship = board.get_node("BattleView/Viewport/Battlefield/PlayerShip")
+	var canvas_before: Transform2D = root.canvas_transform
+	var before: Dictionary = board._both_states()
+	var after: Dictionary = before.duplicate(true)
+	after.player.shields -= 2
+	board.battle_effects.enabled = true
+	board.battle_effects.play_changes(before, after, "", "", 0, true)
+	await create_timer(0.05).timeout
+	check(root.canvas_transform != canvas_before, "Shield damage produces a small screen shake")
+	await board.battle_effects.finished
+	check(root.canvas_transform == canvas_before, "Shield screen shake restores the viewport")
+	board.battle_effects.enabled = false
 	var origin: Vector3 = ship.body.position
 	var tween = ship.create_tween()
 	ship.animate_hit(tween, false, 0.25)
@@ -80,6 +91,7 @@ func run() -> void:
 		)
 		await capture("combined-hit" if shield_hit else "hull-hit")
 		await tween.finished
+		await process_frame
 		check(
 			(
 				ship.body.position.is_equal_approx(origin)
