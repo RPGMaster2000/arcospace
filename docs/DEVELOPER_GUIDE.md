@@ -99,11 +99,12 @@ simulation in mind when changing effect keys; they share data rather than duplic
 ### Expedition UI component boundaries
 
 `expedition.gd` keeps screen routing, travel, battle handoff and calls that mutate
-`ExpeditionState`. Its runtime UI is split along three presentation responsibilities:
+`ExpeditionState`. Its runtime UI is split into focused presentation components:
 
 | File | Functions and responsibility |
 | --- | --- |
-| `scripts/ui/expedition_screen.gd` | `_build_ui()` and its label factory construct the exploration shell: heading, resource bar, scroll area, POI header, approach confirmation, repair selector and jump control. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
+| `scripts/ui/expedition_screen.gd` | `_build_ui()` and its label factory construct the exploration shell: heading, resource bar, scroll area, POI header, ordinary approach confirmation and jump control. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
+| `scripts/ui/outpost_screen.gd` | Owns outpost service tiles and its confirmation window, repair/plating selector, selection highlighting and price previews. Reads state queries and emits `purchase_requested(slot, amount, revision)`; never applies purchases. |
 | `scripts/ui/expedition_text.gd` | Static `compact_text()`, `compact_outcome()`, `highlight_outcome()` and `approach_text()` format descriptions. State is an explicit read-only argument where needed. |
 | `scripts/ui/deck_replacement.gd` | `configure()` builds the incoming-card explanation, owned-card gallery and replacement actions. `select_card()` owns the selected identity and button state. Signals request inspection, replacement or decline; this component never spends rewards or changes ownership. |
 
@@ -113,6 +114,15 @@ still call the authoritative state methods. `_clear()` removes screen content an
 resets the panel reference. Card inspection, drag suppression and state validation
 remain in their existing components. Field repairs remain in
 `scripts/ui/field_repair_controls.gd` from the earlier extraction.
+
+Outpost lifecycle: `show_outpost()` mounts a new component and connects its request
+to `_purchase_outpost_service()`. The controller rejects requests from any replaced
+screen before calling `ExpeditionState.purchase_service()`, which retains all price,
+availability and revision validation. `_clear()` disables and releases the component's
+state reference before detaching it. Existing controller control references remain
+for compatibility; ordinary POIs use the exploration shell's separate confirmation.
+To add a service, author its rules/data in the existing state/resource layer and extend
+the outpost presentation as needed; no purchase mutation belongs in the UI component.
 
 ### Combat HUD boundary and extension rules
 

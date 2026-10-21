@@ -7,10 +7,13 @@ const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const CardGallery = preload("res://scripts/ui/card_gallery.gd")
+const OutpostScreen = preload("res://scripts/ui/outpost_screen.gd")
 const ExpeditionScreen = preload("res://scripts/ui/expedition_screen.gd")
 const ExpeditionText = preload("res://scripts/ui/expedition_text.gd")
 const DeckReplacement = preload("res://scripts/ui/deck_replacement.gd")
 const FieldRepairControls = preload("res://scripts/ui/field_repair_controls.gd")
+var outpost_screen: OutpostScreen
+var screen: ExpeditionScreen
 var replacement_panel: DeckReplacement
 # Read-only aliases preserve the controller interface; the panel owns selection.
 var replacement_key: String:
@@ -49,7 +52,9 @@ var map_destination: int = -1
 @export var text_icons_on_android: bool = false
 var approach_note: Label
 var repair_selector: HSlider
-var service_confirmation_revision: int = -1
+var service_confirmation_revision: int:
+	get:
+		return outpost_screen.revision if is_instance_valid(outpost_screen) else -1
 var return_to_outpost: bool = false
 var selected_ship: int = 0
 var state: Resource
@@ -107,7 +112,7 @@ func _ready() -> void:
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
-	var screen = ExpeditionScreen.new()
+	screen = ExpeditionScreen.new()
 	screen.hull_pulse_period = hull_pulse_period
 	screen.hull_pulse_scale = hull_pulse_scale
 	screen.hull_pulse_intensity = hull_pulse_intensity
@@ -126,9 +131,7 @@ func _build_ui() -> void:
 	more_hint = screen.more_hint
 	footer = screen.footer
 	confirmation = screen.confirmation
-	station_preview = screen.station_preview
 	approach_note = screen.approach_note
-	repair_selector = screen.repair_selector
 	confirm_button = screen.confirm_button
 	jump_button = screen.jump_button
 	screen.deck_requested.connect(_show_current_deck)
@@ -136,7 +139,6 @@ func _build_ui() -> void:
 	screen.hull_requested.connect(_show_hull_info)
 	screen.return_requested.connect(show_system)
 	screen.cancel_requested.connect(_cancel_approach)
-	screen.repair_changed.connect(_repair_selection_changed)
 	screen.confirm_requested.connect(_confirm_approach)
 	screen.jump_requested.connect(_jump)
 
@@ -235,15 +237,20 @@ func _clear(kind: String) -> void:
 	resource_bar.overlay.dismiss()
 	field_repairs.clear()
 	confirmation.dismiss()
+	if is_instance_valid(outpost_screen):
+		outpost_screen.clear()
+	outpost_screen = null
+	confirmation = screen.confirmation
+	confirm_button = screen.confirm_button
+	footer = screen.footer
+	approach_note = screen.approach_note
+	station_preview = null
+	repair_selector = null
 	view_kind = kind
 	state.field_repairs_open = kind == "system" and state.hull > 0
 	resource_bar.field_repairs_enabled = state.field_repairs_open
 	selected_approach = -1
-	service_confirmation_revision = -1
-	station_preview.hide()
-	repair_selector.hide()
-	repair_selector.set_value_no_signal(0)
-	approach_buttons.clear()
+	approach_buttons = []
 	grid = null
 	for child in view.get_children():
 		view.remove_child(child)
@@ -602,80 +609,28 @@ func show_outpost() -> void:
 	return_to_outpost = false
 	selected_encounter = state.SERVICE_INDEX
 	_clear("poi")
-	service_confirmation_revision = state.service_revision
 	header.configure(state.service.poi)
-	# Station choices do not need the travel bar or a long pending-combat ledger.
 	jump_button.hide()
-	approach_note.text = "Service station · No travel FTL · Free to leave"
-	confirm_button.text = "Confirm"
-	var options = _grid(2)
-	for slot in range(state.service.poi.approaches.size()):
-		var approach: Resource = state.service.poi.approaches[slot]
-		var details: String
-		if approach.success.hull > 0:
-			details = (
-				"%d Salvage / %s · Select quantity\nHull %d/%d · Plating %d/%d"
-				% [
-					state.station_hull_unit_cost(),
-					"plating" if state.station_plating_mode() else "Hull",
-					state.hull,
-					state.ship().hull_capacity,
-					maxi(0, state.hull - state.ship().hull_capacity),
-					State.Repairs.STATION_PLATING_LIMIT
-				]
-			)
-		else:
-			details = (
-				"%d Salvage · %s" % [state.service_cost(slot), compact_outcome(approach.success)]
-			)
-		var reason: String = state.service_locked_reason(slot)
-		if not reason.is_empty():
-			details += "\nLOCKED — " + reason
-		var button = _tile(
-			options,
-			state.station_hull_title() if state.service_is_repair(slot) else approach.title,
-			details,
-			Presentation.COLORS.special,
-			_select_approach.bind(slot),
-			not reason.is_empty()
-		)
-		button.set_rich_details(highlight_outcome(details))
-		approach_buttons.append(button)
-	# Wrapped labels can retain a tall temporary minimum after a choice screen.
+	outpost_screen = OutpostScreen.new()
+	view.add_child(outpost_screen)
+	outpost_screen.configure(state, scroll.allows_activation)
+	outpost_screen.purchase_requested.connect(_purchase_outpost_service.bind(outpost_screen))
+	outpost_screen.selection_changed.connect(_outpost_selection_changed.bind(outpost_screen))
+	# Preserve existing control accessors while the component owns their lifecycle.
+	grid = outpost_screen.options
+	approach_buttons = outpost_screen.buttons
+	confirmation = outpost_screen.confirmation
+	confirm_button = outpost_screen.confirm_button
+	footer = outpost_screen.footer
+	approach_note = outpost_screen.note
+	station_preview = outpost_screen.preview
+	repair_selector = outpost_screen.selector
 	ui.set_deferred("size", size)
 
 
-func _repair_selection_changed(_value: float) -> void:
-	if (
-		selected_encounter != state.SERVICE_INDEX
-		or not state.service_is_repair(selected_approach)
-		or view_kind != "poi"
-	):
-		return
-	var amount: int = int(repair_selector.value)
-	approach_note.text = (
-		"+%d %s → Hull %d/%d · Cost %d Salvage"
-		% [
-			amount,
-			"plating" if state.station_plating_mode() else "Hull",
-			state.hull + amount,
-			state.ship().hull_capacity,
-			state.service_cost(selected_approach, amount)
-		]
-	)
-	station_preview.show_repair(
-		state.hull,
-		state.ship().hull_capacity,
-		state.salvage,
-		amount,
-		state.station_hull_unit_cost(),
-		state.station_plating_mode()
-	)
-	confirm_button.disabled = (
-		amount <= 0
-		or amount > state.station_repair_limit()
-		or service_confirmation_revision != state.service_revision
-	)
+func _repair_selection_changed(value: float) -> void:
+	if is_instance_valid(outpost_screen):
+		outpost_screen.update_quantity(value)
 
 
 func _purchase_finished() -> void:
@@ -683,7 +638,7 @@ func _purchase_finished() -> void:
 		show_outcome()
 	elif return_to_outpost:
 		show_outpost()
-		approach_note.text = "Purchase complete · No travel FTL · Free to leave"
+		outpost_screen.show_purchase_complete()
 	else:
 		show_outcome()
 
@@ -692,9 +647,10 @@ func _select_approach(slot: int) -> void:
 	if view_kind != "poi" or not state.can_visit(selected_encounter):
 		return
 	if selected_encounter == state.SERVICE_INDEX:
-		if not state.service_locked_reason(slot).is_empty():
-			return
-	elif slot == -2:
+		if is_instance_valid(outpost_screen):
+			outpost_screen.select_service(slot)
+		return
+	if slot == -2:
 		if not state.can_survey(selected_encounter):
 			return
 	else:
@@ -706,52 +662,36 @@ func _select_approach(slot: int) -> void:
 		):
 			return
 	selected_approach = slot
-	footer.visible = selected_encounter == state.SERVICE_INDEX
-	station_preview.visible = (
-		selected_encounter == state.SERVICE_INDEX and state.service_is_repair(slot)
-	)
-	approach_note.visible = not station_preview.visible
+	footer.hide()
 	for index in range(approach_buttons.size()):
 		var button = approach_buttons[index]
 		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
 		button.refresh_style()
 	confirm_button.disabled = false
-	if selected_encounter == state.SERVICE_INDEX:
-		repair_selector.visible = state.service_is_repair(slot)
-		if state.service_is_repair(slot):
-			repair_selector.max_value = state.station_repair_limit()
-			repair_selector.set_value_no_signal(0)
-			_repair_selection_changed(0)
-		else:
-			approach_note.text = (
-				"Cost %d Salvage · Balance after purchase: %d"
-				% [state.service_cost(slot), state.salvage - state.service_cost(slot)]
-			)
-
 	var selected_title: String = (
 		"Navigation survey"
 		if slot == -2
-		else (
-			state.station_hull_title()
-			if selected_encounter == state.SERVICE_INDEX and state.service_is_repair(slot)
-			else state.encounter_at(selected_encounter).poi.approaches[slot].title
-		)
+		else state.encounter_at(selected_encounter).poi.approaches[slot].title
 	)
 	confirmation.present(selected_title)
 
 
 func _cancel_approach() -> void:
+	if is_instance_valid(outpost_screen):
+		outpost_screen.cancel_selection()
+		return
 	confirmation.dismiss()
 	selected_approach = -1
 	confirm_button.disabled = true
-	repair_selector.hide()
-	repair_selector.set_value_no_signal(0)
 	for button in approach_buttons:
 		button.selected = false
 		button.refresh_style()
 
 
 func _confirm_approach() -> void:
+	if is_instance_valid(outpost_screen):
+		outpost_screen.confirm_purchase()
+		return
 	if (
 		presenting_outcome
 		or view_kind != "poi"
@@ -767,6 +707,26 @@ func _confirm_approach() -> void:
 		_approach(selected_encounter, selected_approach)
 
 
+func _outpost_selection_changed(slot: int, source: OutpostScreen) -> void:
+	if source == outpost_screen:
+		selected_approach = slot
+
+
+func _purchase_outpost_service(
+	slot: int, amount: int, revision: int, source: OutpostScreen
+) -> void:
+	if (
+		presenting_outcome
+		or view_kind != "poi"
+		or not is_instance_valid(source)
+		or source != outpost_screen
+	):
+		return
+	if state.purchase_service(slot, revision, amount):
+		return_to_outpost = true
+		_purchase_finished()
+
+
 func _survey(index: int) -> void:
 	if state.survey(index):
 		show_outcome()
@@ -776,9 +736,10 @@ func _approach(index: int, slot: int) -> void:
 	if presenting_outcome:
 		return
 	if index == state.SERVICE_INDEX:
-		if state.purchase_service(slot, service_confirmation_revision, int(repair_selector.value)):
-			return_to_outpost = true
-			_purchase_finished()
+		if is_instance_valid(outpost_screen):
+			_purchase_outpost_service(
+				slot, int(repair_selector.value), service_confirmation_revision, outpost_screen
+			)
 		return
 	if state.resolve_approach(index, slot):
 		presenting_outcome = true

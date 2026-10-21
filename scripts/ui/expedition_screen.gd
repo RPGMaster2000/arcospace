@@ -9,7 +9,6 @@ signal main_menu_requested
 signal hull_requested
 signal return_requested
 signal cancel_requested
-signal repair_changed(value: float)
 signal confirm_requested
 signal jump_requested
 
@@ -30,9 +29,7 @@ var view: VBoxContainer
 var more_hint: Label
 var footer: HBoxContainer
 var confirmation: CanvasLayer
-var station_preview: VBoxContainer
 var approach_note: Label
-var repair_selector: HSlider
 var confirm_button: Button
 var jump_button: Button
 
@@ -106,19 +103,10 @@ func _build_ui() -> void:
 	confirmation.cancelled.connect(cancel_requested.emit)
 	confirmation.column.add_child(footer)
 	confirmation.column.move_child(footer, 1)
-	station_preview = preload("res://scripts/ui/repair_preview.gd").new()
-	confirmation.column.add_child(station_preview)
-	confirmation.column.move_child(station_preview, 1)
-	station_preview.hide()
 	var shared = _label("", 20)
 	approach_note = shared
 	shared.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(shared)
-	repair_selector = HSlider.new()
-	repair_selector.custom_minimum_size = Vector2(180, 60)
-	repair_selector.step = 1
-	repair_selector.value_changed.connect(repair_changed.emit)
-	footer.add_child(repair_selector)
 	confirm_button = confirmation.initiate
 	confirm_button.pressed.connect(confirm_requested.emit)
 	jump_button = Button.new()
@@ -128,7 +116,6 @@ func _build_ui() -> void:
 	Presentation.action(jump_button)
 	jump_button.pressed.connect(jump_requested.emit)
 	column.add_child(jump_button)
-
 
 
 func _label(text: String, font_size: int = 20) -> Label:
