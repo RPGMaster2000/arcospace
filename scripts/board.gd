@@ -187,9 +187,6 @@ func _ready() -> void:
 	settings_button.z_index = 110  # Keep settings accessible above the result screen's shade.
 	add_child(settings_button)
 	settings_button.main_menu_requested.connect(_return_to_setup)
-	# Preserve the existing enemy heading placement after moving Settings access.
-	$ModeLabel.offset_left -= 64
-	$ModeLabel.offset_right -= 64
 	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
 	repair_preview.position = Vector2(30, 270)
 	repair_preview.size = Vector2(680, 70)
@@ -854,7 +851,7 @@ func _setup_allocation() -> void:
 	add_child(allocation_popup)
 	allocation_button = Button.new()
 	allocation_button.name = "PowerAllocation"
-	allocation_button.custom_minimum_size = Vector2(52, 48)
+	allocation_button.custom_minimum_size = preload("res://scripts/ui/battle_layout.gd").BUTTON_SIZE
 	allocation_button.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	allocation_button.add_theme_font_size_override("font_size", 22)
 	ResultPresentation.action(allocation_button)

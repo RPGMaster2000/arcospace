@@ -95,3 +95,11 @@ aspect ratio. Its charged action starts at the same position and stays above the
 hand. Long offline labels clip with an ellipsis and retain their complete tooltip.
 The menu button shares the resource icons' left margin (23 logical pixels).
 Camera-relative EMP placement is removed; no EMP timing or escape rules changed.
+
+## Header and resource spacing refinement
+
+Power Allocation now uses a 64×38 button, matching the Crew icon width while
+retaining the shorter height. Resource rows start at y=90 with 78 px spacing on
+both sides. Salvage starts at y=44, 29 px below Turn; the right-aligned enemy
+header mirrors those rows at the 23 px right margin (plus mobile safe inset).
+The old 64 px enemy-header displacement is removed. Ship/model settings are unchanged.

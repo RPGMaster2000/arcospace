@@ -1,6 +1,6 @@
 extends RefCounted
 # RESPONSIBILITY: Fit battle utility controls; never move ships, cards or combat status bars.
-const BUTTON_SIZE = Vector2(52, 38)
+const BUTTON_SIZE = Vector2(64, 38)
 
 
 static func safe_insets(view: Control) -> Vector4:
@@ -30,11 +30,20 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	menu.size = Vector2(48, 48)
 	for path in ["TurnLabel", "SalvageLabel"]:
 		view.get_node(path).position.x = menu.position.x + menu.size.x + 12
-		view.get_node(path).position.y = (15 if path == "TurnLabel" else 50) + inset.y
+		view.get_node(path).position.y = (15 if path == "TurnLabel" else 44) + inset.y
 	for index in range(1, 4):
 		view.get_node("PlayerResource%d" % index).position.x = 23
-		view.get_node("PlayerResource%d" % index).position.y = 92 + (index - 1) * 82 + inset.y
+		view.get_node("PlayerResource%d" % index).position.y = 90 + (index - 1) * 78 + inset.y
 		view.get_node("EnemyResource%d" % index).position.x = view.size.x - 94 - inset.z
+		view.get_node("EnemyResource%d" % index).position.y = 90 + (index - 1) * 78 + inset.y
+	# Mirror the player header rows at the right screen margin.
+	var heading: Label = view.get_node("ModeLabel")
+	heading.position = Vector2(view.size.x - 23 - inset.z - heading.size.x, 15 + inset.y)
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var subtitle: Label = heading.get_node("Subtitle")
+	subtitle.position = Vector2(0, 29)
+	subtitle.offset_right = 0
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var hull: Control = view.get_node("PlayerHullBar")
 	var emp: Control = view.get_node("FTLPanel")
 	emp.position = Vector2(hull.position.x, hull.position.y + hull.size.y + 6)

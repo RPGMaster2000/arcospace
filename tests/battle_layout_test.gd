@@ -73,7 +73,15 @@ func run() -> void:
 			board.allocation_button.position.y >= crew.position.y + crew.size.y,
 			"Allocation sits below Crew"
 		)
-		check(board.allocation_button.size.y >= 48 and menu.size.y >= 48, "Touch-friendly access")
+		check(board.allocation_button.size.y >= 38 and menu.size.y >= 48, "Touch-friendly access")
+		check(board.allocation_button.size.x == 64, "Allocation matches 64 px resource icon")
+		var heading: Label = board.get_node("ModeLabel")
+		var subtitle: Label = heading.get_node("Subtitle")
+		check(is_equal_approx(board.size.x - heading.get_rect().end.x, 23), "Enemy header at right margin")
+		check(heading.position.y == board.get_node("TurnLabel").position.y, "Header first rows align")
+		check(subtitle.global_position.y == board.get_node("SalvageLabel").global_position.y, "Header second rows align")
+		for resource_index in range(1, 4):
+			check(board.get_node("PlayerResource%d" % resource_index).position.y == board.get_node("EnemyResource%d" % resource_index).position.y, "Resource rows mirror")
 		check(panel.get_global_rect().end.y < hand.position.y, "Modifier clears card hand")
 		for path in [
 			"PlayerHullBar",
