@@ -1,15 +1,6 @@
-[gd_resource type="Resource" script_class="CardPresentationSettings" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="CardPresentationSettings" format=3 uid="uid://b3fr00h8a5ppo"]
 
-[ext_resource type="Script" path="res://scripts/ui/card_presentation_settings.gd" id="1"]
+[ext_resource type="Script" uid="uid://88fcsuhkvlhe" path="res://scripts/ui/card_presentation_settings.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
-compact_description_font_size = 14
-hold_duration = 0.4
-hold_movement_cancellation = 12.0
-inspection_tween_duration = 0.2
-enlarged_card_scale = 1.5
-information_panel_width = 360.0
-background_dim_opacity = 0.8
-information_panel_text_size = 18
-panel_card_spacing = 20.0

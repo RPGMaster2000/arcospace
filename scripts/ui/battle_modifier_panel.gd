@@ -3,7 +3,7 @@ extends Button
 ## TUNE: Compact two-line strip above the hand, with the existing HUD font scale.
 @export var panel_max_width: float = 1000.0
 @export var panel_height: float = 48.0
-@export var panel_font_size: int = 18
+@export var panel_font_size: int = 14
 @export var panel_side_padding: float = 140.0
 @export_range(0.0, 1.0) var background_opacity: float = 0.5
 @export var edge_fade_width: float = 24.0

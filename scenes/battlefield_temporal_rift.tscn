@@ -1,7 +1,7 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bhxa3ibfkqlma"]
 
-[ext_resource type="Shader" path="res://shaders/space_background.gdshader" id="BackdropShader"]
-[ext_resource type="PackedScene" path="res://scenes/ship_3d.tscn" id="Ship"]
+[ext_resource type="Shader" uid="uid://ba80a0yua6ijd" path="res://shaders/space_background.gdshader" id="BackdropShader"]
+[ext_resource type="PackedScene" uid="uid://nt8kerrhtnf2" path="res://scenes/ship_3d.tscn" id="Ship"]
 
 [sub_resource type="Environment" id="Environment"]
 resource_local_to_scene = true
@@ -9,7 +9,7 @@ background_mode = 1
 background_color = Color(0.003, 0.022, 0.025, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.32, 0.53, 0.55, 1)
-ambient_light_energy = 0.60
+ambient_light_energy = 0.6
 
 [sub_resource type="StandardMaterial3D" id="EnemyMaterial"]
 albedo_color = Color(0.53, 0.24, 0.22, 1)
@@ -30,19 +30,22 @@ emission_enabled = true
 emission = Color(1, 0.3, 0.12, 1)
 
 [sub_resource type="ShaderMaterial" id="BackdropMaterial"]
-resource_name = "Procedural Space Backdrop"
 resource_local_to_scene = true
+resource_name = "Procedural Space Backdrop"
+render_priority = 0
 shader = ExtResource("BackdropShader")
 shader_parameter/space_color = Color(0.003, 0.022, 0.025, 1)
-shader_parameter/cloud_color = Color(0.04, 0.16, 0.18, 1)
-shader_parameter/accent_color = Color(0.18, 0.64, 0.49, 1)
-shader_parameter/cloud_intensity = 0.3
-shader_parameter/animation_speed = 0.012
-shader_parameter/variation_seed = 23.0
-shader_parameter/streak_intensity = 0.0
-shader_parameter/rift_intensity = 0.72
+shader_parameter/cloud_color = Color(0.13360894, 0.15288305, 0.05564625, 1)
+shader_parameter/accent_color = Color(0.30676514, 0.62510204, 0.46614617, 1)
+shader_parameter/cloud_intensity = 0.662000031445
+shader_parameter/cloud_scale = 5.7770002269075
+shader_parameter/animation_speed = 0.10000000149012
 shader_parameter/star_density = 0.09
 shader_parameter/star_brightness = 0.32
+shader_parameter/streak_intensity = 0.0
+shader_parameter/rift_intensity = 0.170000008075
+shader_parameter/feature_center = Vector2(0.66, 0.5)
+shader_parameter/variation_seed = 29.9
 
 [sub_resource type="QuadMesh" id="QuadMesh_y84xi"]
 size = Vector2(45, 23)
@@ -63,15 +66,11 @@ size = 12.8
 transform = Transform3D(0.8207813, 0.56658334, -0.07281119, -0.39885932, 0.6596662, 0.6369862, 0.40893686, -0.49378502, 0.76742923, 0, 0, 0)
 light_color = Color(0.66, 0.95, 0.87, 1)
 light_energy = 1.45
-shadow_enabled = false
 
 [node name="PlayerShip" parent="." unique_id=2061140808 instance=ExtResource("Ship")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.83, -0.24, 0)
 
-[node name="Body" parent="PlayerShip" index="0"]
-transform = Transform3D(0.99680173, 0.07991469, 0, -0.07506968, 0.93636835, -0.3428978, -0.02740257, 0.34180114, 0.9393727, 0, 0, 0)
-
-[node name="OmniLight3D" type="OmniLight3D" parent="PlayerShip/Body" index="0" unique_id=634081639]
+[node name="OmniLight3D" type="OmniLight3D" parent="PlayerShip/Body" parent_id_path=PackedInt32Array(2061140808, 1987582970) index="0" unique_id=634081639]
 transform = Transform3D(0.8368925, 0.5287812, -0.14142606, -0.1681116, 0.49419263, 0.85294306, 0.520912, -0.69004637, 0.50248045, -1.562109, -0.05129224, -0.026351418)
 light_color = Color(0, 0.8034366, 0.8093504, 1)
 light_energy = 0.3
@@ -80,22 +79,19 @@ light_specular = 6.282
 omni_range = 1.0
 omni_attenuation = 2.019
 
-[node name="Wings" parent="PlayerShip/Body" index="2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
-
-[node name="Engine" parent="PlayerShip/Body" index="3"]
+[node name="Engine" parent="PlayerShip/Body" parent_id_path=PackedInt32Array(2061140808, 1987582970) index="3" unique_id=2070001763]
 transform = Transform3D(6.798655e-08, -0.99999994, 1.8626451e-09, 0.99999994, 6.798655e-08, 2.9802322e-08, -2.9802322e-08, -1.8626451e-09, 0.99999994, -1.6994147, 0.0040554404, -7.450581e-09)
 
-[node name="Shield" parent="PlayerShip" index="1"]
+[node name="Shield" parent="PlayerShip" index="1" unique_id=2020425715]
 transform = Transform3D(2.346569, 0.053582806, 0, -0.12693506, 0.99055177, 0, 0, 0, 1.671, 0, -0.12374891, 0)
 
 [node name="EnemyShip" parent="." unique_id=2100820454 instance=ExtResource("Ship")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.8274782, -0.24, 0)
 
-[node name="Body" parent="EnemyShip" index="0"]
+[node name="Body" parent="EnemyShip" index="0" unique_id=1987582970]
 transform = Transform3D(0.9968017, 0.079914734, 3.3954919e-09, -0.076155856, 0.9499159, 0.30308396, 0.024220878, -0.30211458, 0.9529637, 0, 0, 0)
 
-[node name="Hull" parent="EnemyShip/Body" index="0"]
+[node name="Hull" parent="EnemyShip/Body" index="0" unique_id=148778120]
 material_override = SubResource("EnemyMaterial")
 
 [node name="OmniLight3D2" type="OmniLight3D" parent="EnemyShip/Body" index="1" unique_id=1784126935]
@@ -106,32 +102,28 @@ light_specular = 0.0
 omni_range = 1.229
 omni_attenuation = 1.589
 
-[node name="Wings" parent="EnemyShip/Body" index="2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, -0.08, 0)
-
 [node name="Wings2" type="MeshInstance3D" parent="EnemyShip/Body" index="3" unique_id=615567739]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -0.65, -0.08, 0)
 material_override = SubResource("HullMaterial")
 mesh = SubResource("WingMesh")
 
-[node name="Engine" parent="EnemyShip/Body" index="4"]
+[node name="Engine" parent="EnemyShip/Body" index="4" unique_id=2070001763]
 transform = Transform3D(6.61239e-08, -1.0000001, -1.8626451e-09, 1.0000001, 7.7765435e-08, -2.9802322e-08, 2.9802322e-08, 1.8626451e-09, 1.0000001, -1.6606023, 0.007167101, 7.450581e-09)
 material_override = SubResource("EnemyEngine")
 
-[node name="Shield" parent="EnemyShip" index="1"]
+[node name="Shield" parent="EnemyShip" index="1" unique_id=2020425715]
 transform = Transform3D(2.3447225, 0.0664435, -3.2805758e-10, -0.15740144, 0.98977226, -9.784574e-09, -4.613554e-10, 5.8086753e-09, 1.671, 0, -0.075492814, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=425268941]
 transform = Transform3D(0.72473, 0, -0.689033, 0, 1, 0, 0.689033, 0, 0.72473, 17.62943, -0.367728, -19.02908)
-cast_shadow = 0
 material_override = SubResource("BackdropMaterial")
+cast_shadow = 0
 mesh = SubResource("QuadMesh_y84xi")
 
-[node name="RimLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-25, -130, 0)
+[node name="RimLight" type="DirectionalLight3D" parent="." unique_id=1521674683]
+transform = Transform3D(-0.64278764, 0.3237444, -0.69427204, 0, 0.90630776, 0.42261827, 0.76604444, 0.2716538, -0.5825634, 0, 0, 0)
 light_color = Color(0.24, 0.62, 0.72, 1)
 light_energy = 0.35
-shadow_enabled = false
 
 [editable path="PlayerShip"]
 [editable path="EnemyShip"]

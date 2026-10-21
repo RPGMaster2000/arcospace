@@ -1,6 +1,6 @@
 extends RefCounted
 # RESPONSIBILITY: Fit battle utility controls; never move ships, cards or combat status bars.
-const BUTTON_SIZE = Vector2(52, 48)
+const BUTTON_SIZE = Vector2(52, 38)
 
 
 static func safe_insets(view: Control) -> Vector4:
