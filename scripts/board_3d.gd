@@ -62,7 +62,10 @@ func _enter_tree() -> void:
 			old.free()
 			var model = data.model_scene.instantiate()
 			model.name = pair[0]
-			model.transform = location
+			# Arena instances supply pose; the model supplies its authored size.
+			# Strip fallback scaling so it is not multiplied into a custom model.
+			location.basis = location.basis.orthonormalized()
+			model.transform = location * model.transform
 			battlefield.add_child(model)
 	viewport.add_child(battlefield)
 

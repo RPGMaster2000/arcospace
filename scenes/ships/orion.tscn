@@ -144,10 +144,11 @@ radial_segments = 32
 rings = 16
 
 [node name="Ship" type="Node3D" unique_id=1675767874]
+transform = Transform3D(0.968283892, 0, 0, 0, 0.968283892, 0, 0, 0, 0.968283892, 0, 0, 0)
 script = ExtResource("Controller")
 
 [node name="Body" type="Node3D" parent="." unique_id=637243446]
-transform = Transform3D(0.99680173, -0.07991469, 0, 0.07506968, 0.93636835, 0.3428978, -0.02740257, -0.34180114, 0.9393727, 0, 0, 0)
+transform = Transform3D(0.900304198, -0.0721783787, 0, 0.0678023994, 0.845721245, 0.309702843, -0.0247498062, -0.308712363, 0.848434746, 0, 0.0206788629, -0.00720297545)
 
 [node name="Details" type="Node3D" parent="Body" unique_id=1688338557]
 

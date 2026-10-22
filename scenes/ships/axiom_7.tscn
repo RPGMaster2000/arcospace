@@ -71,11 +71,12 @@ radial_segments = 32
 rings = 16
 
 [node name="Ship" type="Node3D" unique_id=1954994508]
+transform = Transform3D(0.97568953, 0, 0, 0, 0.97568953, 0, 0, 0, 0.97568953, 0, 0, 0)
 script = ExtResource("1")
 pointed_hull = true
 
 [node name="Body" type="Node3D" parent="." unique_id=954770767]
-transform = Transform3D(0.99680173, -0.07991469, 0, 0.07506968, 0.93636835, 0.3428978, -0.02740257, -0.34180114, 0.9393727, 0, 0, 0)
+transform = Transform3D(0.768495381, -0.0616111159, 0, 0.0578758046, 0.721903563, 0.264360875, -0.0211263169, -0.263515383, 0.724219859, -0.0445586592, 0, 0)
 
 [node name="Details" type="Node3D" parent="Body" unique_id=408845663]
 
