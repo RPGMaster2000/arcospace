@@ -948,7 +948,6 @@ func _decline_card() -> void:
 func start_battle(index: int) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
-	var encounter: Dictionary = state.encounters[index]
 	state.field_repairs_open = false
 	resource_bar.set_heartbeat(false)
 	resource_bar.overlay.dismiss()
@@ -956,13 +955,7 @@ func start_battle(index: int) -> void:
 	view_kind = "battle"
 	battle = BOARD.instantiate()
 	battle.expedition = state
-	battle.expedition_encounter = index
-	battle.setup_settings = {
-		"player_ship": state.player_ship,
-		"enemy_ship": encounter.enemy,
-		"enemy_data": state.enemy_profile(encounter),
-		"modifier": encounter.modifier
-	}
+	preload("res://scripts/combat/battle_adapter.gd").configure(battle, state.prepare_battle(index))
 	battle.expedition_continue.connect(_battle_finished)
 	battle.expedition_restart.connect(_restart)
 	battle.expedition_exit.connect(_exit)
@@ -971,7 +964,7 @@ func start_battle(index: int) -> void:
 
 # Continue returns here after result recording; sync post-battle repairs before removing the board.
 func _battle_finished() -> void:
-	state.sync_battle(battle)
+	state.sync_battle(battle.battle_result())
 	state.active_battle = -1
 	_remove_battle()
 	show_system()

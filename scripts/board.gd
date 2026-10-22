@@ -8,6 +8,10 @@ signal action_finished(side: String, discarded: bool)
 signal expedition_continue
 signal expedition_restart
 signal expedition_exit
+const BattleResult = preload("res://scripts/combat/battle_result.gd")
+const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
+const BattleAdapter = preload("res://scripts/combat/battle_adapter.gd")
+var battle_setup: BattleSetup
 var expedition: Resource
 var expedition_encounter: int = -1
 ## TUNE: Static Power Allocation weight; copied into the player hand at battle start.
@@ -89,8 +93,8 @@ var player_hull_damage_taken: int = 0
 var pending_resource_bonus: int = 0
 var pending_shield_bonus: int = 0
 ## TUNE: Next-battle rewards for tactical and strategic victories.
-const TACTICAL_RESOURCES: int = 5
-const STRATEGIC_SHIELDS: int = 10
+const TACTICAL_RESOURCES: int = preload("res://scripts/combat/battle_result.gd").TACTICAL_RESOURCES
+const STRATEGIC_SHIELDS: int = preload("res://scripts/combat/battle_result.gd").STRATEGIC_SHIELDS
 # Settings are assigned before adding the board to the scene tree.
 var setup_settings: Dictionary = {}
 @onready var modifier = $CombatModifier
@@ -206,6 +210,8 @@ func _enter_tree() -> void:
 		player_ship_data = Ships.PLAYERS[clampi(
 			int(setup_settings.player_ship), 0, Ships.PLAYERS.size() - 1
 		)]
+		if setup_settings.has("player_data"):
+			player_ship_data = setup_settings.player_data
 		var generator = RandomNumberGenerator.new()
 		generator.randomize()
 		enemy_ship_data = Ships.ENEMIES[generator.randi_range(0, Ships.ENEMIES.size() - 1)]
@@ -220,11 +226,7 @@ func _enter_tree() -> void:
 func _apply_ship(side: String, data: Resource) -> void:
 	if data == null:
 		return
-	set(side + "_hull_capacity", data.hull_capacity)
-	set(side + "_hull", data.hull_capacity)
-	set(side + "_shields", data.shields)
-	for key in MatchRules.RESOURCES + MatchRules.PRODUCTION:
-		set(side + "_" + key, data.get(key))
+	(_player_state if side == "player" else _enemy_state).configure_profile(data)
 
 
 # Initialize ship stats and expedition overrides before dealing hands and starting turn income.
@@ -280,7 +282,10 @@ func _ready() -> void:
 		enemy_ai.tactical_variation = enemy_ship_data.tactical_variation
 		enemy_ai.hull_capacity = enemy_ship_data.hull_capacity
 	if expedition != null:
-		expedition.begin_battle(self, expedition_encounter)
+		if battle_setup == null:
+			battle_setup = expedition.prepare_battle(expedition_encounter, enemy_ship_data)
+		BattleAdapter.apply_setup(self, battle_setup)
+		expedition.deck_changed.connect(_sync_expedition_hand)
 		starting_player_hull = player_hull
 	modifier.configure(int(setup_settings.get("modifier", 0)))
 	for active_hand in [hand, enemy_hand]:
@@ -925,20 +930,21 @@ func victory_description() -> String:
 	var lines: PackedStringArray = []
 	var bonuses: PackedStringArray = []
 	if expedition != null:
+		var result: BattleResult = battle_result()
 		lines.append(
 			(
 				"🪨 +%d Salvage · 🚀 FTL %d/%d"
 				% [
-					expedition.victory_salvage(self),
+					expedition.victory_salvage(result),
 					expedition.ftl_charge,
 					expedition.required_ftl_charge
 				]
 			)
 		)
-		var upgrades: int = expedition.battle_upgrade_count(self)
+		var upgrades: int = expedition.battle_upgrade_count(result)
 		if upgrades > 0:
 			lines[0] += " · Upgrade %d cards" % upgrades
-		var elite_bonus: int = expedition.elite_resource_reward(self)
+		var elite_bonus: int = expedition.elite_resource_reward(result)
 		if elite_bonus > 0:
 			bonuses.append("Elite: " + _resource_reward_text(elite_bonus))
 	elif not escaped_by_ftl:
@@ -971,13 +977,21 @@ func _record_result() -> void:
 	if winner == "player":
 		battles_won += 1
 		if expedition != null:
-			salvage += expedition.victory_salvage(self)
+			salvage += expedition.victory_salvage(battle_result())
 		elif not escaped_by_ftl:
 			salvage += DESTRUCTION_SALVAGE
 	if expedition != null:
-		expedition.record_battle(self)
+		expedition.record_battle(battle_result())
 	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
 		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
+
+
+func battle_result() -> BattleResult:
+	return BattleAdapter.result(self)
+
+
+func _sync_expedition_hand() -> void:
+	BattleAdapter.sync_hand(hand, expedition.player_pool(), expedition.acquired_draw_weights(), expedition.upgraded_cards)
 
 
 func _repair_spend_limit() -> int:
@@ -999,7 +1013,7 @@ func _repair_with_salvage() -> void:
 	player_hull += spent
 	salvage -= Repairs.quantity_cost(spent, RESULT_SALVAGE_PER_HULL)
 	if expedition != null:
-		expedition.sync_battle(self)
+		expedition.sync_battle(battle_result())
 	repair_spend = _repair_spend_limit()
 	refresh_display()
 

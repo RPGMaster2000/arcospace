@@ -129,7 +129,7 @@ func run_tests() -> void:
 	board.refresh_display()
 	var after_reward: int = board.salvage
 	board.refresh_display()
-	check(board.salvage == 11 + run.victory_salvage(board) and after_reward == board.salvage, "Combat Salvage once")
+	check(board.salvage == 11 + run.victory_salvage(board.battle_result()) and after_reward == board.salvage, "Combat Salvage once")
 	check(run.hull == run.ship().hull_capacity and run.salvage == board.salvage, "Plating stripped at result; Salvage synced")
 	board.player_hull = 20
 	board.repair_spend = 5

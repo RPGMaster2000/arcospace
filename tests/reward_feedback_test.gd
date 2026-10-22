@@ -4,17 +4,19 @@ const Rules = preload("res://encounters/expedition_rules.tres")
 const Cards = preload("res://scripts/cards/card_library.gd")
 var failures: int = 0
 var checks: int = 0
-class Result extends Node:
-	var player_hull: int = 30
-	var salvage: int = 0
-	var battles_won: int = 1
-	var winner: String = "player"
-	var escaped_by_ftl: bool = false
-	var enemy_hull: int = 0
-	var earned_tactical: bool = false
-	var earned_strategic: bool = false
-	const TACTICAL_RESOURCES = 5
-	const STRATEGIC_SHIELDS = 10
+const Result = preload("res://scripts/combat/battle_result.gd")
+
+func make_result() -> Result:
+	var value = Result.new()
+	value.player_hull = 30
+	value.salvage = 0
+	value.battles_won = 1
+	value.winner = "player"
+	value.escaped_by_ftl = false
+	value.earned_tactical = false
+	value.earned_strategic = false
+	return value
+
 func check(ok: bool, message: String) -> void:
 	checks += 1
 	if not ok:
@@ -36,9 +38,8 @@ func run() -> void:
 				state.start(0, Rules, 9001)
 				state.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":profile,"completed":false}
 				state.active_battle = 0
-				var result = Result.new()
+				var result = make_result()
 				result.escaped_by_ftl = mode == "escape"
-				result.enemy_hull = 0 if mode == "destruction" else 15
 				result.winner = "enemy" if mode == "loss" else "player"
 				result.earned_tactical = tactical
 				var defeated_elite: bool = profile.enemy_rank == 1 and mode in ["destruction","systems"]
@@ -48,30 +49,33 @@ func run() -> void:
 				if mode != "loss": result.salvage = state.victory_salvage(result)
 				check(result.salvage == expected, "Correct Salvage: " + profile.ship_name + " / " + mode)
 				check(state.elite_resource_reward(result) == (3 if defeated_elite else 0), "Only defeated Elites offer resource reward")
+				result.encounter_index = state.active_battle
+				result.system_number = state.system_number
 				state.record_battle(result)
 				var bonuses: Dictionary = state.pending_bonuses.duplicate()
+				result.encounter_index = state.active_battle
+				result.system_number = state.system_number
 				state.record_battle(result)
 				check(state.pending_bonuses == bonuses, "No repeated bonus")
 				var resource_bonus: int = (3 if defeated_elite else 0) + (5 if tactical and mode != "loss" else 0)
 				for key in State.RESOURCES: check(state.modifier_value(key) == resource_bonus, "Elite stacks with tactical bonus for " + key)
 				check(state.ftl_charge == (0 if mode == "loss" else profile.interstellar_ftl_reward), "FTL reward unchanged")
-				result.free()
 	var tuned = State.new()
 	tuned.start(0, Rules.duplicate(), 9002)
 	tuned.rules.elite_resource_bonus = 0
 	tuned.rules.elite_salvage_multiplier = 3
 	tuned.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/enemy/marauder_vanguard.tres"),"completed":false}
 	tuned.active_battle = 0
-	var result = Result.new()
+	var result = make_result()
 	check(tuned.victory_salvage(result) == 60, "Inspector multiplier independent of resource bonus")
-	result.free()
 	var next_battle = State.new()
 	next_battle.start(0, Rules, 9003)
 	next_battle.encounters[0] = {"kind":"battle","enemy":0,"enemy_data":load("res://ships/enemy/marauder_vanguard.tres"),"completed":false}
 	next_battle.active_battle = 0
-	result = Result.new()
+	result = make_result()
+	result.encounter_index = next_battle.active_battle
+	result.system_number = next_battle.system_number
 	next_battle.record_battle(result)
-	result.free()
 	for battle_index in range(2):
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.expedition = next_battle

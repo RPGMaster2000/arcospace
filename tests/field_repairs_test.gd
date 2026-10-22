@@ -100,7 +100,7 @@ func run() -> void:
 			board._check_winner()
 			board.refresh_display()
 			check(board.winner == "player" and state.hull == cap, "Result discards plating: " + result)
-			state.sync_battle(board)
+			state.sync_battle(board.battle_result())
 			check(state.hull == cap, "Returning after repairs also caps carried Hull")
 			board.queue_free()
 			await process_frame

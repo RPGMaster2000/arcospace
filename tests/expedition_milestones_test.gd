@@ -6,17 +6,18 @@ const Ships = preload("res://scripts/ships/ship_library.gd")
 var checks: int = 0
 var failures: int = 0
 
-class Result extends Node:
-	var player_hull: int = 30
-	var salvage: int = 0
-	var battles_won: int = 1
-	var winner: String = "player"
-	var escaped_by_ftl: bool = false
-	var enemy_hull: int = 0
-	var earned_tactical: bool = false
-	var earned_strategic: bool = false
-	const TACTICAL_RESOURCES = 5
-	const STRATEGIC_SHIELDS = 10
+const Result = preload("res://scripts/combat/battle_result.gd")
+
+func make_result() -> Result:
+	var value = Result.new()
+	value.player_hull = 30
+	value.salvage = 0
+	value.battles_won = 1
+	value.winner = "player"
+	value.escaped_by_ftl = false
+	value.earned_tactical = false
+	value.earned_strategic = false
+	return value
 
 func check(ok: bool, message: String) -> void:
 	checks += 1
@@ -138,9 +139,8 @@ func run_tests() -> void:
 			var run = milestone(3000,system)
 			var index: int = boss_index(run)
 			run.ftl_charge = run.required_ftl_charge
-			var result = Result.new()
+			var result = make_result()
 			result.escaped_by_ftl = outcome == "escaped"
-			result.enemy_hull = 0 if outcome == "defeated" else 20
 			result.winner = "enemy" if outcome == "loss" else "player"
 			result.player_hull = 0 if outcome == "loss" else run.hull
 			run.active_battle = index
@@ -148,8 +148,12 @@ func run_tests() -> void:
 			check(reward == (30 if outcome in ["defeated", "systems"] else 0), "Boss Systems Failure shares destruction rewards; escape remains distinct")
 			result.salvage = reward
 			var charge_before: int = run.ftl_charge
+			result.encounter_index = run.active_battle
+			result.system_number = run.system_number
 			run.record_battle(result)
 			var after: int = run.ftl_charge
+			result.encounter_index = run.active_battle
+			result.system_number = run.system_number
 			run.record_battle(result)
 			check(run.system_number == system and run.ftl_charge == after, "Boss result awards once and never transitions systems")
 			run.active_battle = -1
@@ -162,7 +166,6 @@ func run_tests() -> void:
 				check(run.encounters[index].resolution == ("escaped" if outcome == "escaped" else "defeated"), "Resolution explicitly distinguishes escape and defeat")
 				check(after == charge_before+3 and not run.mandatory_boss_pending() and run.can_jump(), "Both wins and EMP Pulse unlock normal progression and profile FTL")
 				check(run.generate_system() and run.system_number == system+1 and run.ftl_charge == 0, "Exactly one normal transition with zero carryover")
-			result.free()
 	var malformed = milestone(18,6)
 	malformed.encounters.erase(malformed.encounters[boss_index(malformed)])
 	malformed.ftl_charge = 100

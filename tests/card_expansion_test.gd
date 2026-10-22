@@ -269,12 +269,12 @@ func test_decks() -> void:
 		check(run.decline_card() and not run.decline_card() and run.player_pool() == pool_before, "Decline single use, no mutation")
 		check(run.shared_pool().size()==74, "Enemy pool unaffected by capacity")
 		var hand = preload("res://scripts/cards/card_hand.gd").new()
-		run.active_player_hand=hand
 		hand.card_pool=run.player_pool()
 		var evicted: Resource = run.player_pool()[0]
 		hand.cards.assign([evicted,evicted,run.player_pool()[2],run.player_pool()[3],run.player_pool()[4],run.player_pool()[5]])
 		run.pending_choice="card"; run.card_offers=run.random_card_offers(); run.choose_card(0)
 		check(run.replace_card(evicted.identity_key()) and hand.cards.size()==6, "Replacement updates active hand without changing hand size")
+		preload("res://scripts/combat/battle_adapter.gd").sync_hand(hand, run.player_pool(), run.acquired_draw_weights(), run.upgraded_cards)
 		for held in hand.cards: check(held.identity_key()!=evicted.identity_key(), "No removed identity remains held")
 		check(hand.card_pool==run.player_pool() and hand.identity_weights==run.acquired_draw_weights(), "Active draw pool and weights synchronized")
 		hand.free()

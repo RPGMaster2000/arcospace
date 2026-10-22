@@ -7,17 +7,16 @@ var escapes: int = 0
 var surveys: int = 0
 var ranks: Dictionary = {}
 var compositions: Dictionary = {}
-class BattleResult extends Node:
-	var player_hull: int
-	var salvage: int
-	var battles_won: int = 1
-	var winner: String = "player"
-	var escaped_by_ftl: bool = false
-	var enemy_hull: int = 0
-	var earned_tactical: bool = false
-	var earned_strategic: bool = false
-	const TACTICAL_RESOURCES = 5
-	const STRATEGIC_SHIELDS = 10
+const BattleResult = preload("res://scripts/combat/battle_result.gd")
+
+func make_result() -> BattleResult:
+	var value = BattleResult.new()
+	value.battles_won = 1
+	value.winner = "player"
+	value.escaped_by_ftl = false
+	value.earned_tactical = false
+	value.earned_strategic = false
+	return value
 
 func check(ok: bool, message: String) -> void:
 	checks += 1
@@ -75,25 +74,27 @@ func run_tests() -> void:
 			var before: int = run.ftl_charge
 			var encounter: Dictionary = run.encounters[index]
 			if encounter.kind == "battle":
-				var result = BattleResult.new()
+				var result = make_result()
 				result.player_hull = run.hull
 				result.salvage = run.salvage
 				result.escaped_by_ftl = seed_value % 4 != 0
-				result.enemy_hull = 20 if result.escaped_by_ftl else 0
 				run.active_battle = index
 				var loot: int = run.victory_salvage(result)
 				var profile: Resource = run.enemy_profile(encounter)
 				var multiplier: int = Rules.elite_salvage_multiplier if profile.enemy_rank == 1 else 1
 				check(loot == (0 if result.escaped_by_ftl else profile.destruction_salvage_reward * multiplier), "Escape/destruction Salvage independent of FTL; Elite multiplier applies")
 				result.salvage += loot
+				result.encounter_index = run.active_battle
+				result.system_number = run.system_number
 				run.record_battle(result)
 				check(run.ftl_charge == before + run.encounter_charge(index), "Escape and destruction earn profile charge")
 				var after: int = run.ftl_charge
+				result.encounter_index = run.active_battle
+				result.system_number = run.system_number
 				run.record_battle(result)
 				check(run.ftl_charge == after, "Repeated battle result cannot award charge again")
 				if result.escaped_by_ftl: escapes += 1
 				run.active_battle = -1
-				result.free()
 			else:
 				var choices: Array[int] = []
 				for slot in range(encounter.poi.approaches.size()):

@@ -451,7 +451,7 @@ func run() -> void:
 			view.winner == "player" and view.enemy_hull > 0 and expedition.encounters[0].completed,
 			"Systems Failure completes standard/Elite/Boss without destroying Hull"
 		)
-		var reward: int = expedition.victory_salvage(view)
+		var reward: int = expedition.victory_salvage(view.battle_result())
 		check(
 			(
 				expedition.salvage == reward
@@ -461,7 +461,7 @@ func run() -> void:
 			"Existing rank rewards and upgrades apply to Systems Failure"
 		)
 		view.refresh_display()
-		expedition.record_battle(view)
+		expedition.record_battle(view.battle_result())
 		check(
 			(
 				expedition.salvage == reward

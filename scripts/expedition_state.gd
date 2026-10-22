@@ -3,6 +3,11 @@ extends Resource
 # DOES NOT: Create UI nodes, animate travel or resolve individual combat actions.
 # EXTEND: Keep generation, ownership and completion here; expedition.gd only presents them.
 class_name ExpeditionState
+signal deck_changed
+const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
+const BattleResult = preload("res://scripts/combat/battle_result.gd")
+const ShipState = preload("res://scripts/combat/ship_combat_state.gd")
+var _recorded_results: Dictionary = {}
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
@@ -45,7 +50,6 @@ var pending_bonuses: Dictionary = {}
 var pending_penalties: Dictionary = {}
 var acquired_cards: Array[Resource] = []
 var upgraded_cards: Dictionary = {}
-var active_player_hand: Node
 var pending_choice: String = ""
 var choice_amount: int = 0
 var card_offers: Array[Resource] = []
@@ -93,7 +97,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	removed_starting_cards.clear()
 	pending_card = null
 	upgraded_cards.clear()
-	active_player_hand = null
+	_recorded_results.clear()
 	last_poi_success = -1
 	pending_choice = ""
 	upgrades_remaining = 0
@@ -254,6 +258,7 @@ func generate_system() -> bool:
 			if roll <= 0:
 				composition = candidate
 				break
+	_recorded_results.clear()
 	system_number += 1
 	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
@@ -888,7 +893,7 @@ func _acquire_card(chosen: Resource) -> void:
 	pending_choice = ""
 	pending_card = null
 	card_offers.clear()
-	_refresh_owned_hand()
+	deck_changed.emit()
 
 
 func replace_card(key: String) -> bool:
@@ -920,21 +925,6 @@ func decline_card() -> bool:
 	return true
 
 
-func _refresh_owned_hand() -> void:
-	if not is_instance_valid(active_player_hand):
-		return
-	var pool: Array = player_pool()
-	var owned: Dictionary = {}
-	for card in pool:
-		owned[card.identity_key()] = true
-	active_player_hand.card_pool = pool
-	active_player_hand.identity_weights = acquired_draw_weights()
-	for index in range(active_player_hand.cards.size()):
-		var card: Resource = active_player_hand.cards[index]
-		if card != null and not owned.has(card.identity_key()):
-			active_player_hand.replace_card(index)
-
-
 func choose_attribute(key: String) -> bool:
 	if pending_choice == "resource" and key in RESOURCES:
 		add_modifiers({key: choice_amount})
@@ -963,7 +953,7 @@ func upgrade_candidates() -> Array[Resource]:
 	return result
 
 
-# Replace an identity in the expedition ledger and all active hand copies, never shared card Resources.
+# Replace an owned identity; live consumers synchronize through deck_changed.
 func choose_upgrade(key: String) -> bool:
 	if pending_choice != "upgrade":
 		return false
@@ -972,8 +962,7 @@ func choose_upgrade(key: String) -> bool:
 			continue
 		var copy: Resource = card.with_upgrade(card.upgrade_level + 1)
 		upgraded_cards[key] = copy
-		if is_instance_valid(active_player_hand):
-			active_player_hand.apply_upgrades(upgraded_cards)
+		deck_changed.emit()
 		last_outcome += (
 			"\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
 		)
@@ -985,8 +974,8 @@ func choose_upgrade(key: String) -> bool:
 	return false
 
 
-func battle_upgrade_count(board: Node) -> int:
-	if board.winner != "player" or board.escaped_by_ftl:
+func battle_upgrade_count(result: BattleResult) -> int:
+	if result.winner != "player" or result.escaped_by_ftl:
 		return 0
 	if active_battle < 0 or active_battle >= encounters.size():
 		return 0
@@ -1021,46 +1010,53 @@ func finish_upgrades() -> void:
 #region Battle handoff
 
 
-# Transfer persistent state and pending bonuses into a ready board, then consume temporary modifiers.
-# Called by Board._ready before dealing cards; production upgrades remain in the expedition ledger.
-func begin_battle(board: Node, index: int = -1) -> void:
-	# Re-entrant initialization of this board must not reset stats or consume twice.
-	if board.get_meta("expedition_initialized", 0) == get_instance_id():
-		return
-	board.set_meta("expedition_initialized", get_instance_id())
+# Produce one encounter's data, consuming temporary bonuses once at entry.
+func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup:
 	last_poi_success = -1
 	active_battle = index
 	field_repairs_open = false
-	board.player_hull = hull
-	board.salvage = salvage
-	board.battles_won = battles_won
+	var setup = BattleSetup.new()
+	setup.encounter_index = index
+	setup.system_number = system_number
+	setup.player_ship = player_ship
+	setup.player_profile = ship()
+	setup.enemy_profile = enemy_data
+	if index >= 0 and index < encounters.size():
+		var encounter: Dictionary = encounters[index]
+		if encounter.kind == "battle":
+			setup.enemy_ship = int(encounter.get("enemy", 0))
+			if enemy_data == null:
+				setup.enemy_profile = enemy_profile(encounter)
+		setup.modifier = encounter.get("modifier", 0)
+		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
+	setup.player_state = ShipState.new()
+	setup.player_state.configure_profile(ship())
+	setup.player_state.hull = hull
 	for key in PRODUCTION:
-		board.set("player_" + key, maxi(0, production(key)))
+		setup.player_state.set(key, maxi(0, production(key)))
 	for key in RESOURCES + ["shields"]:
-		board.set("player_" + key, starting_value(ship(), key))
-	board.ftl.charge = clampi(modifier_value("emp_pulse_charge"), 0, board.ftl.charge_target)
-	board.ftl.disabled_turns = maxi(0, modifier_value("emp_pulse_offline"))
-	if (
-		index >= 0
-		and index < encounters.size()
-		and encounters[index].get("chasedown", false)
-		and encounters[index].get("response", -1) == 1
-	):
-		board.ftl.charge = mini(board.ftl.charge, maxi(0, board.ftl.charge_target - 2))
-	active_player_hand = board.hand
-	board.hand.card_pool = player_pool()
-	board.hand.identity_weights = acquired_draw_weights()
-	board.enemy_hand.card_pool = (
-		board.enemy_ship_data.starting_cards.duplicate()
-		if board.enemy_ship_data != null and not board.enemy_ship_data.starting_cards.is_empty()
+		setup.player_state.set(key, starting_value(ship(), key))
+	if setup.enemy_profile != null:
+		setup.enemy_state = ShipState.new()
+		setup.enemy_state.configure_profile(setup.enemy_profile)
+	setup.salvage = salvage
+	setup.battles_won = battles_won
+	setup.emp_charge = modifier_value("emp_pulse_charge")
+	setup.emp_offline = maxi(0, modifier_value("emp_pulse_offline"))
+	setup.player_cards = player_pool()
+	setup.identity_weights = acquired_draw_weights()
+	setup.enemy_cards = (
+		setup.enemy_profile.starting_cards.duplicate()
+		if setup.enemy_profile != null and not setup.enemy_profile.starting_cards.is_empty()
 		else shared_pool()
 	)
 	pending_bonuses.clear()
 	pending_penalties.clear()
+	return setup
 
 
-func victory_salvage(board: Node) -> int:
-	if board.escaped_by_ftl:
+func victory_salvage(result: BattleResult) -> int:
+	if result.escaped_by_ftl:
 		return 0
 	var destruction: int = rules.destruction_salvage
 	if (
@@ -1070,13 +1066,13 @@ func victory_salvage(board: Node) -> int:
 	):
 		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
 	var reward: int = destruction
-	return reward * rules.elite_salvage_multiplier if _elite_defeated(board) else reward
+	return reward * rules.elite_salvage_multiplier if _elite_defeated(result) else reward
 
 
-func _elite_defeated(board: Node) -> bool:
+func _elite_defeated(result: BattleResult) -> bool:
 	return (
-		board.winner == "player"
-		and not board.escaped_by_ftl
+		result.winner == "player"
+		and not result.escaped_by_ftl
 		and active_battle >= 0
 		and active_battle < encounters.size()
 		and encounters[active_battle].kind == "battle"
@@ -1084,13 +1080,17 @@ func _elite_defeated(board: Node) -> bool:
 	)
 
 
-func elite_resource_reward(board: Node) -> int:
-	return rules.elite_resource_bonus if _elite_defeated(board) else 0
+func elite_resource_reward(result: BattleResult) -> int:
+	return rules.elite_resource_bonus if _elite_defeated(result) else 0
 
 
-# Persist a latched board result and complete the encounter once; escape resolves Boss navigation too.
+# Persist a result and complete the encounter once; escape resolves Boss navigation too.
 # Board._record_result calculates Salvage first; escape and destruction keep distinct reward rules.
-func record_battle(board: Node) -> void:
+func record_battle(result: BattleResult) -> void:
+	if _recorded_results.has(result.result_id):
+		return
+	if result.system_number != system_number or result.encounter_index != active_battle:
+		return
 	# Reject a stale/reopened result before copying its currency or queuing another reward.
 	if (
 		active_battle >= 0
@@ -1098,38 +1098,39 @@ func record_battle(board: Node) -> void:
 		and encounters[active_battle].get("charge_awarded", false)
 	):
 		return
-	sync_battle(board)
+	_recorded_results[result.result_id] = true
+	sync_battle(result)
 	if active_battle >= 0 and active_battle < encounters.size():
-		if board.winner == "player":
+		if result.winner == "player":
 			# Escape and destruction both complete navigation; Salvage remains separate.
 			if not _complete_encounter(active_battle):
 				return
-			encounters[active_battle].resolution = "escaped" if board.escaped_by_ftl else "defeated"
+			encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
 		else:
 			return
-	if board.winner == "player":
-		var elite_bonus: int = elite_resource_reward(board)
+	if result.winner == "player":
+		var elite_bonus: int = elite_resource_reward(result)
 		if elite_bonus > 0:
 			add_modifiers({"materials": elite_bonus, "energy": elite_bonus, "crew": elite_bonus})
-		if board.earned_tactical:
+		if result.earned_tactical:
 			add_modifiers(
 				{
-					"materials": board.TACTICAL_RESOURCES,
-					"energy": board.TACTICAL_RESOURCES,
-					"crew": board.TACTICAL_RESOURCES
+					"materials": result.tactical_resources,
+					"energy": result.tactical_resources,
+					"crew": result.tactical_resources
 				}
 			)
-		if board.earned_strategic:
-			add_modifiers({"shields": board.STRATEGIC_SHIELDS})
-		var count: int = battle_upgrade_count(board)
+		if result.earned_strategic:
+			add_modifiers({"shields": result.strategic_shields})
+		var count: int = battle_upgrade_count(result)
 		if count > 0:
 			last_outcome = "Combat victory — upgrade up to %d different cards." % count
 			start_upgrade_event(count)
 
 
-func sync_battle(board: Node) -> void:
-	hull = clampi(board.player_hull, 0, ship().hull_capacity)
-	salvage = board.salvage
-	battles_won = board.battles_won
+func sync_battle(result: BattleResult) -> void:
+	hull = clampi(result.player_hull, 0, ship().hull_capacity)
+	salvage = result.salvage
+	battles_won = result.battles_won
 
 #endregion

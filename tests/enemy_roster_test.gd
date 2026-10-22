@@ -72,7 +72,7 @@ func run() -> void:
 			board.enemy_hull = 0
 			check(board._check_winner() and board.winner == "player", "Battle completion")
 			board._record_result()
-			expedition.record_battle(board)
+			expedition.record_battle(board.battle_result())
 			check(expedition.encounters[0].completed and expedition.ftl_charge == 1 and expedition.salvage >= 10, "Standard progression and rewards")
 			board.queue_free()
 			await process_frame

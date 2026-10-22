@@ -45,3 +45,15 @@ func copy() -> RefCounted:
 	var result = get_script().new()
 	result.apply_snapshot(snapshot())
 	return result
+
+
+func configure_profile(profile: Resource) -> void:
+	hull = profile.hull_capacity
+	hull_capacity = profile.hull_capacity
+	shields = profile.shields
+	materials = profile.materials
+	energy = profile.energy
+	crew = profile.crew
+	synthesizer = profile.synthesizer
+	reactor = profile.reactor
+	quarters = profile.quarters

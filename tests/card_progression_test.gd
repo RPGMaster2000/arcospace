@@ -68,12 +68,12 @@ func run() -> void:
 		check(state.player_pool().size() == 29 and state.shared_pool() == enemy_before, "Separate pools")
 		var acquired: Resource = state.acquired_cards[0]
 		var hand = Hand.new()
-		state.active_player_hand = hand
 		hand.card_pool = state.player_pool()
 		hand.cards.assign([acquired, acquired])
 		for level in [1, 2]:
 			state.pending_choice = "upgrade"
 			check(state.choose_upgrade(acquired.identity_key()), "Acquired card upgrades twice")
+			preload("res://scripts/combat/battle_adapter.gd").sync_hand(hand, state.player_pool(), state.acquired_draw_weights(), state.upgraded_cards)
 			for held in hand.cards:
 				check(held.upgrade_level == level and held.effects == acquired.upgrade_effects[level - 1], "Every held copy updated")
 			for pooled in state.player_pool():

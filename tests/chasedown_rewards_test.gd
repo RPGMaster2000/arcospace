@@ -73,7 +73,7 @@ func run() -> void:
 	var salvage: int = state.salvage
 	var remaining: int = state.upgrades_remaining
 	board.salvage += 999
-	state.record_battle(board)
+	state.record_battle(board.battle_result())
 	board.salvage = salvage
 	board.refresh_display()
 	check(charge == 1 and state.ftl_charge == charge and state.salvage == salvage and state.upgrades_remaining == remaining and remaining == 1, "Exactly one charge and one upgrade reward, duplicate result rejected")
@@ -84,7 +84,7 @@ func run() -> void:
 	check(state.pending_destination == -1 and not state.try_chasedown(0,0), "Resumed arrival clears destination; once-per-system cap")
 	board.queue_free()
 	await process_frame
-	# Every response uses the ordinary begin_battle path; modifiers consume only once.
+	# Every response uses the ordinary battle-setup path; modifiers consume only once.
 	for response in range(4):
 		state = fresh()
 		state.arrive_destination(0)
@@ -104,7 +104,7 @@ func run() -> void:
 		board.ftl.charge = board.ftl.charge_target
 		board._warp_out()
 		check(state.ftl_charge == 1 and state.upgrades_remaining == 0 and state.pending_choice.is_empty() and state.salvage == 0, "Escape resolves once without upgrades or Salvage")
-		state.record_battle(board)
+		state.record_battle(board.battle_result())
 		check(state.ftl_charge == 1, "Escape duplicate guard")
 		board.queue_free()
 		await process_frame
