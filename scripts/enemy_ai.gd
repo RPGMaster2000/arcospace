@@ -48,7 +48,7 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary) -> Dictionary:
 	if safe.is_empty():
 		return {"slot": _pick(affordable), "discard": true}
 	affordable = safe
-	if not Rules.offline_systems(actor).is_empty():
+	if Rules.systems_failure_triggered(actor):
 		return FailureTactics.choose(affordable, held, cards, actor, enemy, _tactical_pick, _pick)
 	var production_pressure: bool = not Rules.offline_systems(enemy).is_empty()
 	for slot in affordable:
@@ -170,8 +170,13 @@ func _position_score(
 	var newly_offline: int = (
 		Rules.offline_systems(next_enemy).size() - Rules.offline_systems(enemy).size()
 	)
-	score += newly_offline * 40.0
-	if not Rules.offline_systems(enemy).is_empty():
+	# Crossing the threshold is the objective; extra shutdowns during failure
+	# retain ordinary production-denial value without another activation bonus.
+	if not Rules.systems_failure_triggered(enemy):
+		score += newly_offline * 12.0
+		if Rules.systems_failure_triggered(next_enemy):
+			score += 68.0
+	if Rules.systems_failure_triggered(enemy):
 		var urgency: float = 1.0 / maxi(1, int(enemy.get("systems_failure_remaining", 1)))
 		for key in Rules.RESOURCES:
 			score += (enemy[key] - next_enemy[key]) * (0.5 + urgency)

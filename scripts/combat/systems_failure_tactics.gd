@@ -24,7 +24,7 @@ static func recovery_costs(cards: Array, actor: Dictionary, enemy: Dictionary) -
 static func discard(
 	held: Array[int], cards: Array, actor: Dictionary, enemy: Dictionary, pick: Callable
 ) -> int:
-	if Rules.offline_systems(actor).is_empty():
+	if not Rules.systems_failure_triggered(actor):
 		return pick.call(held)
 	var costs: Dictionary = recovery_costs(cards, actor, enemy)
 	var best: int = held[0]
@@ -70,7 +70,7 @@ static func choose(
 		)
 		if repaired > 0:
 			var remaining: int = maxi(1, int(actor.get("systems_failure_remaining", 1)))
-			var completes: bool = Rules.offline_systems(next_actor).is_empty()
+			var completes: bool = not Rules.systems_failure_triggered(next_actor)
 			if not completes and cards[slot].play_again:
 				# Only a known held follow-up counts; never assume a lucky replacement draw.
 				for followup in affordable:
@@ -84,7 +84,7 @@ static func choose(
 					Effects.play(cards[followup], restored, target, null, true)
 					completes = (
 						completes
-						or (restored.hull > 0 and Rules.offline_systems(restored).is_empty())
+						or (restored.hull > 0 and not Rules.systems_failure_triggered(restored))
 					)
 			var value: float = (
 				repaired * 1000.0

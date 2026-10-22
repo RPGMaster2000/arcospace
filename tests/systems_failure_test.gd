@@ -68,50 +68,57 @@ func action(view: Control, side: String, effects: Dictionary, again: bool = fals
 
 
 func run() -> void:
-	# Pure rules: symmetry, activation grace, partial recovery and independent clocks.
+	# Every disabled-system combination, both ships, timing, recovery and reactivation.
 	for side in ["player", "enemy"]:
-		for key in Rules.PRODUCTION:
+		var other: String = "enemy" if side == "player" else "player"
+		for mask in range(8):
 			var states: Dictionary = {"player": state(), "enemy": state()}
 			var clock = Failure.new()
-			states[side][key] = 0
-			var other: String = "enemy" if side == "player" else "player"
+			var count: int = 0
+			for index in range(3):
+				if mask & (1 << index):
+					states[side][Rules.PRODUCTION[index]] = 0
+					count += 1
 			clock.sync(states, other, 3)
-			check(clock.remaining[side] == 3, "Each offline system activates either ship")
+			check(clock.remaining[side] == (3 if count >= 2 else -1), "All combinations activate symmetrically at two disabled systems")
+			states[side].systems_failure_remaining = 0
+			check(Rules.wins(state(), states[side]) == (count >= 2), "Expiry requires two disabled systems")
+			if count < 2:
+				clock.end_turn(side)
+				check(clock.remaining[side] == -1, "Single shutdown has no countdown")
+				continue
 			clock.end_turn(other)
-			check(clock.remaining[side] == 3, "Opponent turn never consumes recovery time")
+			check(clock.remaining[side] == 3, "Opponent turns never decrement")
 			for remaining in [2, 1, 0]:
 				clock.end_turn(side)
-				check(
-					clock.remaining[side] == remaining, "Exactly three affected-ship turn endings"
-				)
-			check(states[side][key] == 0, "Expiry never restores production")
+				check(clock.remaining[side] == remaining, "Three affected-ship turns")
+			check(Rules.offline_systems(states[side]).size() == count, "Expiry never repairs")
+			for key in Rules.PRODUCTION:
+				states[side][key] = 1
+			states[side].reactor = 0
+			clock.sync(states, other, 3)
+			check(clock.remaining[side] == -1, "One remaining disabled system cancels")
+			states[side].quarters = 0
+			clock.sync(states, side, 3)
+			clock.end_turn(side)
+			check(clock.remaining[side] == 3, "Reactivation is fresh and activation turn exempt")
 	var states: Dictionary = {"player": state(), "enemy": state()}
 	var clock = Failure.new()
-	states.player.reactor = 0
-	states.player.quarters = 0
-	clock.sync(states, "player", 3)
-	clock.end_turn("player")
-	check(clock.remaining.player == 3, "Own-turn activation is not immediately consumed")
+	for side in ["player", "enemy"]:
+		for key in Rules.PRODUCTION:
+			states[side][key] = 0
+	clock.sync(states, "", 3)
 	clock.end_turn("player")
 	states.player.reactor = 1
 	clock.sync(states, "enemy", 3)
-	check(clock.remaining.player == 2, "Partial recovery does not cancel or reset countdown")
-	states.enemy.synthesizer = 0
-	clock.sync(states, "player", 3)
+	check(clock.remaining.player == 2 and clock.remaining.enemy == 3, "Three to two offline keeps independent countdowns")
 	clock.end_turn("player")
-	clock.end_turn("enemy")
-	check(
-		clock.remaining.player == 1 and clock.remaining.enemy == 2,
-		"Both countdowns run independently"
-	)
 	states.player.quarters = 1
 	clock.sync(states, "player", 3)
-	check(clock.remaining.player == -1, "Last-turn recovery cancels immediately")
-	states.player.synthesizer = 0
+	check(clock.remaining.player == -1 and clock.remaining.enemy == 3, "Final-turn sufficient recovery cancels only affected clock")
+	states.player.quarters = 0
 	clock.sync(states, "enemy", 5)
-	check(
-		clock.remaining.player == 5, "Reactivation uses configured duration, not old remaining time"
-	)
+	check(clock.remaining.player == 5, "Reactivation uses configured duration")
 	# Production application, including conditional and cross-family effects, never goes negative.
 	for effects in [
 		{"reactor": -9}, {"production_other": {"type": "reactor", "production": -9, "resource": 0}}
@@ -211,9 +218,10 @@ func run() -> void:
 	var a: Dictionary = state()
 	var b: Dictionary = state()
 	a.reactor = 0
+	a.synthesizer = 0
 	a.systems_failure_remaining = 1
 	var restore := card({"reactor": 1}, "energy", 5)
-	var irrelevant := card({"synthesizer": 1}, "materials", 0)
+	var irrelevant := card({"quarters": 1}, "materials", 0)
 	var attack := card({"damage": 10}, "energy", 5)
 	check(
 		ai.choose([irrelevant, attack, restore], a, b).slot == 2,
@@ -247,6 +255,7 @@ func run() -> void:
 	a = state()
 	a.reactor = 0
 	a.quarters = 0
+	a.synthesizer = 0
 	a.systems_failure_remaining = 1
 	check(
 		(
@@ -259,8 +268,28 @@ func run() -> void:
 			)
 			== 1
 		),
-		"AI uses a known play-again recovery chain on its last turn"
+		"AI can cancel failure with a single relevant repair"
 	)
+	# Crossing the second-system threshold is worth more than first or third shutdown.
+	var sabotage := card({"enemy_production": {"reactor": -1}})
+	var first: Dictionary = state()
+	var second: Dictionary = state()
+	second.quarters = 0
+	var third: Dictionary = second.duplicate(true)
+	third.synthesizer = 0
+	third.systems_failure_remaining = 2
+	var scores: Array[float] = []
+	for target in [first, second, third]:
+		var after: Dictionary = target.duplicate(true)
+		var actor: Dictionary = state()
+		Effects.play(sabotage, actor, after, null, true)
+		scores.append(ai._position_score(sabotage, state(), target, actor, after))
+	check(scores[1] > scores[0] and scores[1] > scores[2], "AI values second shutdown without repeated failure bonus")
+	a = state()
+	a.reactor = 0
+	a.quarters = 0
+	a.systems_failure_remaining = 1
+	check(ai.choose([card({"synthesizer": 3}), card({"quarters": 1})], a, state()).slot == 1, "One relevant repair cancels failure despite another offline system")
 	ai.free()
 	var integration_view = board()
 	for key in Rules.PRODUCTION:
@@ -271,10 +300,10 @@ func run() -> void:
 	integration_view.enemy_timer.stop()
 	check(
 		(
-			integration_view.systems_failure.remaining.enemy == 3
+			integration_view.systems_failure.remaining.enemy == -1
 			and Rules.offline_systems(integration_view._read_state("enemy")).size() == 1
 		),
-		"Real Disruption resolution activates enemy failure without consuming an enemy turn"
+		"A single real Disruption shutdown does not activate failure"
 	)
 	integration_view.free()
 	integration_view = board()
@@ -295,6 +324,7 @@ func run() -> void:
 	# Live Board: actual full turns, extra actions, recovery and logical result/reward latching.
 	var view = board()
 	view.current_actor = "enemy"
+	view.player_synthesizer = 0
 	view.player_reactor = 0
 	view._check_winner()
 	view._begin_turn("player")
@@ -327,7 +357,7 @@ func run() -> void:
 	)
 	view.free()
 	view = board()
-	await action(view, "player", {"reactor": -99})
+	await action(view, "player", {"reactor": -99, "quarters": -99})
 	check(
 		view.systems_failure.remaining.player == 3,
 		"Own-card activation turn is exempt in real Board flow"
@@ -336,6 +366,7 @@ func run() -> void:
 	for side in ["player", "enemy"]:
 		view = board()
 		view.current_actor = "enemy" if side == "player" else "player"
+		view.set(side + "_reactor", 0)
 		view.set(side + "_quarters", 0)
 		view._check_winner()
 		for index in range(3):
@@ -367,6 +398,7 @@ func run() -> void:
 		)
 		view.free()
 	view = board()
+	view.player_synthesizer = 0
 	view.player_reactor = 0
 	view.systems_failure.remaining.player = 0
 	view.enemy_hull = 0
@@ -379,6 +411,7 @@ func run() -> void:
 	view = board()
 	view.systems_failure_turns = 1
 	view.current_actor = "enemy"
+	view.player_synthesizer = 0
 	view.player_reactor = 0
 	view._check_winner()
 	view._finish_turn("player")
@@ -386,6 +419,7 @@ func run() -> void:
 	check(view.winner == "enemy", "Board uses its Inspector countdown duration")
 	view.free()
 	view = board()
+	view.enemy_reactor = 0
 	view.enemy_quarters = 0
 	view._check_winner()
 	view.enemy_hand.cards.clear()
@@ -407,6 +441,7 @@ func run() -> void:
 			"mandatory_boss": profile.enemy_rank == 2
 		}
 		view = board(expedition, profile)
+		view.enemy_synthesizer = 0
 		view.enemy_reactor = 0
 		view._check_winner()
 		for index in range(3):
@@ -435,6 +470,19 @@ func run() -> void:
 			"Expedition rewards cannot repeat"
 		)
 		view.free()
+	# Live warning activation/cancellation for every combination, including 2 -> 1 recovery.
+	view = board()
+	for side in ["player", "enemy"]:
+		for mask in [0, 1, 2, 4, 3, 1, 5, 4, 6, 2, 7, 3, 1]:
+			var count: int = 0
+			for index in range(3):
+				var disabled: bool = bool(mask & (1 << index))
+				view.set(side + "_" + Rules.PRODUCTION[index], 0 if disabled else 1)
+				count += int(disabled)
+			view._sync_systems_failure()
+			view.refresh_display()
+			check(view.get_node("SystemsFailureDisplay").columns[side].visible == (count >= 2), "Live warning follows threshold and sufficient recovery immediately")
+	view.free()
 	# Compact, independently readable warnings fit the reserved side gutters.
 	view = board()
 	view.current_actor = "enemy"

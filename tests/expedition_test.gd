@@ -147,6 +147,7 @@ func run_tests() -> void:
 	board.free()
 	run = fresh()
 	board = make_board(run)
+	board.enemy_quarters = 0
 	board.enemy_reactor = 0
 	board._sync_systems_failure()
 	board.systems_failure.remaining.enemy = 0

@@ -90,6 +90,7 @@ func run() -> void:
 			board.player_hull = cap+4
 			if result == "destruction": board.enemy_hull = 0
 			elif result == "systems":
+				board.enemy_quarters = 0
 				board.enemy_reactor = 0
 				board._sync_systems_failure()
 				board.systems_failure.remaining.enemy = 0

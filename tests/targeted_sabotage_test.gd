@@ -123,8 +123,8 @@ func run() -> void:
 					var failure = Failure.new()
 					failure.sync({"player": actor, "enemy": enemy}, "player", 3)
 					check(
-						failure.remaining.enemy == (3 if production <= tier else -1),
-						"Existing Systems Failure activates at zero"
+						failure.remaining.enemy == -1,
+						"One targeted shutdown alone does not activate Systems Failure"
 					)
 			var hand = Hand.new()
 			hand.configure_player_allocation(2.0)
@@ -155,6 +155,7 @@ func run() -> void:
 			var actor: Dictionary = snapshot()
 			var enemy: Dictionary = snapshot()
 			enemy[SYSTEMS[index]] = tier
+			enemy["reactor" if SYSTEMS[index] != "reactor" else "quarters"] = 0
 			var before: Dictionary = enemy.duplicate(true)
 			check(
 				ai.choose([Library.CARDS[0], card], actor, enemy).slot == 1,

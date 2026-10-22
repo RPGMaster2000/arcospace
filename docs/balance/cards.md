@@ -67,7 +67,7 @@ Card costs are paid first. Ordinary effect keys resolve in the existing order, t
 
 Example: `conditional = {target: enemy, attribute: reactor, comparison: above, compare_target: self, compare_attribute: reactor, then: {reactor: 1}, else: {energy: 5}}`. In the Inspector these are ordinary nested Dictionaries in **Effects** or either **Upgrade Effects** entry; all amounts and predicates remain editable.
 
-`swap_resource: materials` exchanges the two Materials reserves from one snapshot. Only materials/energy/crew are accepted, and the card's cost family is rejected. This never swaps production. `enemy_production: {reactor: -1}` adjusts only the named enemy production, floored at 0; existing own production keys add their signed amount, also floored at 0. Targeted sabotage reductions are fixed across upgrade levels: −1 for cards 69/71/73 and −2 for cards 70/72/74. Reaching zero activates the existing Systems Failure rules.
+`swap_resource: materials` exchanges the two Materials reserves from one snapshot. Only materials/energy/crew are accepted, and the card's cost family is rejected. This never swaps production. `enemy_production: {reactor: -1}` adjusts only the named enemy production, floored at 0; existing own production keys add their signed amount, also floored at 0. Targeted sabotage reductions are fixed across upgrade levels: −1 for cards 69/71/73 and −2 for cards 70/72/74. At least two systems at zero activate Systems Failure.
 
 Existing `break_shields` means Shield-only damage, with no Hull spillover. New Hull attacks use existing `damage` plus `pierce: 1.0`, so Shields stay intact and existing Ablative Plating absorbs Hull damage first. Regular damage retains Shield-first spillover. No new damage system is introduced.
 

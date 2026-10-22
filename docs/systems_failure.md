@@ -7,14 +7,14 @@ remain. Hull destruction and manual EMP Pulse escape remain valid.
 ## Rules and timing
 
 - Synthesizer, Reactor and Quarters can reach zero, but never become negative.
-- Any zero production activates one countdown for that ship, default **3 own turns**.
+- At least two production systems at zero activate one countdown for that ship, default **3 own turns**.
 - Activation never consumes a turn immediately. If caused during that ship's own
   turn, that activation turn's ending is exempt; the following three full own-turn
   endings are its recovery opportunities.
 - Opponent turns and extra `play_again` actions do not tick the countdown.
 - More offline systems do not create another countdown or reset the existing one.
-- Restoring every system to at least one cancels immediately, including recovery
-  on the last available turn. Partial recovery keeps the same deadline.
+- Restoring enough systems so fewer than two remain at zero cancels immediately,
+  including on the last available turn. Three-to-two recovery keeps the deadline.
 - At the third unresolved own-turn ending, the ship loses. Production is never
   automatically restored. Player and enemy use identical, independent clocks.
 - Hull destruction retains precedence, including simultaneous lethal Hull damage.
@@ -24,6 +24,8 @@ remain. Hull destruction and manual EMP Pulse escape remain valid.
 Edit **Systems Failure Turns** on the Board/Board3D root in Godot's Inspector
 (`scripts/board.gd`). This is the single authoritative duration value; the same
 value is passed to both ships' coordinator. Fresh encounters get fresh clocks.
+The activation/recovery threshold is `MatchRules.SYSTEMS_FAILURE_THRESHOLD` (2),
+shared by countdown coordination, win checks and AI recovery evaluation.
 
 ## System Disruption
 
@@ -61,7 +63,11 @@ The AI prioritizes useful affordable restoration over upgrades to an unrelated
 operational system. It considers the remaining deadline and known held play-again
 recovery chains; it never assumes a guaranteed replacement draw. When restoration
 is unaffordable, it preserves relevant reserves and prefers funding discards while
-keeping useful repair cards. Immediate safe Hull wins still come first.
+keeping useful repair cards. Restoring from two disabled systems to one counts
+as complete recovery; restoring from three to two remains an emergency. Crossing
+the second-system threshold earns an offensive bonus; additional shutdowns during
+an active failure retain ordinary production-denial value without another
+activation bonus. Immediate safe Hull wins still come first.
 
 Random sabotage is valued by averaging three deterministic effect simulations on
 copies. Conservative immediate-win checks assume no lucky random hit. Neither
@@ -102,3 +108,15 @@ real-device readability/performance were not tested here.
 A stale cinematic-test assertion was updated to match the existing EMP-below-Hull
 layout. The repair-selection fixture now starts after result accounting, so its
 fixed starting balance tests repair spending independently of victory rewards.
+
+## Two-system threshold validation
+
+Godot 4.7.2 headless: all 15 relevant suites passed: systems_failure (834 checks),
+targeted_sabotage (6,034), ai_turn, power_allocation (18,352), battle_hud,
+battle_layout (208, covering 16:9, 19.5:9 and 21:9), victory_rewards, victory_music,
+field_repairs, expedition, expedition_milestones, encounter_continue, ftl,
+ftl_progression and shield_shatter. Tests cover all eight disabled-system
+combinations for each ship, sufficient/insufficient recovery, reactivation,
+independent clocks, final-turn recovery, warnings, AI and existing outcomes.
+The older 4.6 engine reproduced 27 UI interaction failures on unchanged main;
+the same suite passes on 4.7.2. No rendered or physical Android check was run.

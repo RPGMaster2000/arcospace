@@ -3,6 +3,7 @@ extends RefCounted
 # RESPONSIBILITY: Check win conditions and grant production income.
 # DOES NOT: Select cards, change hands or update the scene.
 const RESOURCES = ["materials", "energy", "crew"]
+const SYSTEMS_FAILURE_THRESHOLD = 2
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 
 
@@ -11,7 +12,7 @@ static func wins(_actor: Dictionary, enemy: Dictionary) -> bool:
 		enemy.hull <= 0
 		or (
 			int(enemy.get("systems_failure_remaining", -1)) == 0
-			and not offline_systems(enemy).is_empty()
+			and systems_failure_triggered(enemy)
 		)
 	)
 
@@ -22,6 +23,10 @@ static func offline_systems(ship: Dictionary) -> Array[String]:
 		if int(ship[key]) <= 0:
 			result.append(key)
 	return result
+
+
+static func systems_failure_triggered(ship: Dictionary) -> bool:
+	return offline_systems(ship).size() >= SYSTEMS_FAILURE_THRESHOLD
 
 
 static func income(actor: Dictionary) -> void:

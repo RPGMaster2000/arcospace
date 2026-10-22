@@ -30,6 +30,7 @@ func run() -> void:
 		board.battle_effects.busy = true
 		if method == "destruction": board.enemy_hull = 0
 		else:
+			board.enemy_quarters = 0
 			board.enemy_reactor = 0
 			board._sync_systems_failure()
 			board.systems_failure.remaining.enemy = 0

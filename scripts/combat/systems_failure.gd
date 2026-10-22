@@ -9,8 +9,7 @@ var skip_activation_end: Dictionary = {"player": false, "enemy": false}
 func sync(states: Dictionary, acting_side: String, duration: int) -> PackedStringArray:
 	var notices: PackedStringArray = []
 	for side in ["player", "enemy"]:
-		var offline: Array[String] = Rules.offline_systems(states[side])
-		if offline.is_empty():
+		if not Rules.systems_failure_triggered(states[side]):
 			if remaining[side] >= 0:
 				notices.append(("YOUR" if side == "player" else "ENEMY") + " SYSTEMS RECOVERED")
 			remaining[side] = -1
