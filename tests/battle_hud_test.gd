@@ -35,6 +35,7 @@ func run() -> void:
 		)
 		check(board._both_states() == before, scene + ": HUD does not mutate combat state")
 		check(shown.player.hull == 7, scene + ": HUD does not rewrite its snapshot")
+		board._record_result()
 		board.refresh_display()
 		for dimensions in [Vector2i(1280, 720), Vector2i(960, 540)]:
 			root.size = dimensions
@@ -59,6 +60,7 @@ func run() -> void:
 		board.winner = "player"
 		board.enemy_hull = 0
 		board.resolving_card = true
+		board._record_result()
 		board.refresh_display()
 		check(not board.get_node("MatchResult").visible, scene + ": result waits for presentation")
 		var salvage: int = board.salvage
@@ -76,6 +78,7 @@ func run() -> void:
 		)
 		board.resolving_card = false
 		board.battle_effects.busy = false
+		board._record_result()
 		board.refresh_display()
 		check(board.get_node("MatchResult").visible, scene + ": resolved result is revealed")
 		check(

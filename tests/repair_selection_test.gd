@@ -16,6 +16,7 @@ func run() -> void:
 	board.result_recorded = true
 	board.result_hull = board.player_hull
 	board.winner = "player"
+	board._record_result()
 	board.refresh_display()
 	check(board.repair_spend == 3, "Default fills missing hull with capacity thirty")
 	board._adjust_repair_spend(10)
@@ -30,20 +31,25 @@ func run() -> void:
 	board.player_hull_capacity = 35
 	board.player_hull = 27
 	board.repair_spend = -1
+	board._record_result()
 	board.refresh_display()
 	check(board.repair_spend == 7, "Fourteen remaining Salvage affords seven Hull")
 	board.salvage = 1
+	board._record_result()
 	board.refresh_display()
 	check(board.repair_spend == 0 and board.get_node("MatchResult/Panel/Repair").disabled, "Odd insufficient Salvage cannot repair")
 	board.salvage = 2
 	board.repair_spend = -1
+	board._record_result()
 	board.refresh_display()
 	check(board.repair_spend == 1, "Selection bounded by floor(Salvage / 2)")
 	board.player_hull = 43
+	board._record_result()
 	board.refresh_display()
 	check(board.player_hull_label.text == "Hull 43/35" and board.player_hull_label.get_theme_color("font_color") == board.get_node("PlayerHullBar").plating_color, "Excess shows total Hull in amber")
 	check(not board.get_node("PlayerHullBar").has_node("Plating"), "Redundant plating text removed")
 	board.player_hull = 35
+	board._record_result()
 	board.refresh_display()
 	check(board.player_hull_label.get_theme_color("font_color") == Color(0.82,0.84,0.87), "Color resets at capacity")
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(960,540),Vector2i(686,384)]:
@@ -51,6 +57,7 @@ func run() -> void:
 		board.player_hull = 21
 		board.salvage = 12
 		board.repair_spend = 4
+		board._record_result()
 		board.refresh_display()
 		for frame in range(10): await process_frame
 		check(board.repair_preview.bar.preview_hull == 25 and board.repair_preview.cost_text.text.contains("12 → 4"), "Result preview shows exact Hull/cost at landscape sizes")

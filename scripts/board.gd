@@ -31,7 +31,7 @@ var _player_state = ShipCombatState.new()
 var _enemy_state = ShipCombatState.new()
 
 const MatchRules = preload("res://scripts/match_rules.gd")
-const CardEffects = preload("res://scripts/cards/card_effects.gd")
+const Execution = preload("res://scripts/combat/combat_execution.gd")
 # Assign the six editable scene card buttons in the Inspector.
 @export var card_slots: Array[NodePath] = [
 	NodePath("ShieldPlatingCard"),
@@ -75,7 +75,14 @@ const Repairs = preload("res://scripts/repair_rules.gd")
 const RESULT_SALVAGE_PER_HULL: int = Repairs.RESULT_SALVAGE_PER_HULL
 var repair_preview: VBoxContainer
 # Legacy name; the selector now counts Hull points, not Salvage units.
-var repair_spend: int = -1
+var _repair_selection: int = -1
+var repair_spend: int:
+	get:
+		if winner == "player":
+			var limit: int = _repair_spend_limit()
+			return limit if _repair_selection < 0 else clampi(_repair_selection, 0, limit)
+		return _repair_selection
+	set(value): _repair_selection = value
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
 # Pending rewards belong only to this encounter, never permanent setup values.
@@ -408,7 +415,7 @@ func _begin_turn(side: String) -> void:
 				$ModifierDisplay.ftl_online(ftl.can_warp())
 	var state: Dictionary = ship_snapshot(side)
 	if winner.is_empty():
-		MatchRules.income(state)
+		Execution.begin_turn(state)
 		apply_ship_snapshot(side, state)
 	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event)
 	resolving_card = battle_effects.busy or resolving_card
@@ -447,7 +454,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	var card: Resource = active_hand.cards[slot]
 	if card == null:
 		return false
-	if not discard and get(side + "_" + card.family) < card.cost:
+	if not Execution.can_play(card, discard, ship_snapshot(side)):
 		return false
 	resolving_card = true
 	enemy_timer.stop()
@@ -492,6 +499,10 @@ func _sync_systems_failure() -> void:
 	var notices: PackedStringArray = systems_failure.sync(
 		_both_states(), current_actor, systems_failure_turns
 	)
+	_announce_failure(notices)
+
+
+func _announce_failure(notices: PackedStringArray) -> void:
 	var display = get_node_or_null("ModifierDisplay")
 	if (
 		not notices.is_empty()
@@ -509,14 +520,13 @@ func _ai_state(side: String) -> Dictionary:
 
 
 func _finish_turn(side: String) -> void:
-	_sync_systems_failure()
-	systems_failure.end_turn(side)
+	_announce_failure(Execution.end_turn(_both_states(), systems_failure, side, systems_failure_turns))
 	if _check_winner():
 		refresh_display()
 		return
-	if side == "enemy":
-		turn_number += 1
-	await _begin_turn("enemy" if side == "player" else "player")
+	var next: Dictionary = Execution.next_turn(side, turn_number)
+	turn_number = next.round
+	await _begin_turn(next.side)
 
 
 # Determine once, stage shield-break Hull loss, replace the slot, then present deltas.
@@ -530,15 +540,13 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	var other: String = "enemy" if side == "player" else "player"
 	var actor: Dictionary = ship_snapshot(side)
 	var target: Dictionary = ship_snapshot(other)
-	if discard:
-		actor[card.family] += int(floor(card.cost / 3.0))
-	else:
-		$ModifierDisplay.announce(modifier.play(card, actor, target))
-		if modifier.kind == 2 and modifier.active and card.family == "energy":
-			$ModifierDisplay.impact(2)
-	var report: Dictionary = (
-		modifier.last_hull_damage.duplicate(true) if not discard else {"actor": 0, "target": 0}
-	)
+	var resolution = Execution.resolve(card, discard, actor, target, modifier)
+	if resolution == null:
+		return
+	$ModifierDisplay.announce(resolution.announcement)
+	if not discard and modifier.kind == 2 and modifier.active and card.family == "energy":
+		$ModifierDisplay.impact(2)
+	var report: Dictionary = resolution.hull_damage
 	var determined: Dictionary = {side: actor, other: target}
 	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
 	apply_ship_snapshot(side, actor)
@@ -547,7 +555,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	if pending.is_empty():
 		_apply_hull_report(report, side, true)
 	active_hand.replace_card(slot)
-	extra_action_requested = not discard and card.play_again
+	extra_action_requested = resolution.extra_action
 	var who: String = "You" if side == "player" else "Enemy"
 	var action: String = "discarded" if discard else "played"
 	$LastActionLabel.text = "%s %s %s" % [who, action, card.card_name]
@@ -669,36 +677,20 @@ func _apply_pending_hull(
 #region Match control
 
 
-# Latch the first terminal result and stop AI timing; reward recording happens in refresh_display.
+# Latch the terminal transition and rewards once, after all required impact cues.
 func _check_winner() -> bool:
 	if not winner.is_empty():
 		return true
 	_sync_systems_failure()
 	if is_instance_valid(damage_timeline) and not damage_timeline.pending.is_empty():
 		return false
-	var player: Dictionary = _ai_state("player")
-	var enemy: Dictionary = _ai_state("enemy")
-	# Preserve Hull precedence, including simultaneous lethal hits, before production outcomes.
-	if player.hull <= 0 and enemy.hull <= 0:
-		winner = "draw"
-		result_cause = "hull"
-	elif enemy.hull <= 0:
-		winner = "player"
-		result_cause = "hull"
-	elif player.hull <= 0:
-		winner = "enemy"
-		result_cause = "hull"
-	elif MatchRules.wins(player, enemy) and MatchRules.wins(enemy, player):
-		winner = "draw"
-		result_cause = "systems_failure"
-	elif MatchRules.wins(player, enemy):
-		winner = "player"
-		result_cause = "systems_failure"
-	elif MatchRules.wins(enemy, player):
-		winner = "enemy"
-		result_cause = "systems_failure"
+	var result: String = Execution.outcome(_both_states(), systems_failure)
+	if not result.is_empty():
+		winner = "player" if result.begins_with("win") else ("enemy" if result.begins_with("loss") else "draw")
+		result_cause = "hull" if result.ends_with("hull") else "systems_failure"
 	if not winner.is_empty():
 		enemy_timer.stop()
+		_record_result()
 	return not winner.is_empty()
 
 
@@ -743,6 +735,7 @@ func _warp_out() -> void:
 		return
 	winner = "player"
 	escaped_by_ftl = true
+	_record_result()
 	enemy_timer.stop()
 	$LastActionLabel.text = "EMP Pulse complete — escaped!"
 	refresh_display()
@@ -783,17 +776,9 @@ func _continue_encounter() -> void:
 #region Display and allocation
 
 
-# Refresh controls from authoritative state; _record_result also commits a finished battle once.
+# Render detached state; combat transitions and rewards are committed by their owners.
 # Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
 func refresh_display() -> void:
-	# Commit results and normalize the selection before producing presentation data.
-	_record_result()
-	if winner == "player":
-		var repair_limit: int = _repair_spend_limit()
-		repair_spend = repair_limit if repair_spend < 0 else clampi(repair_spend, 0, repair_limit)
-	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
-		# TUNE: Draw equally from active modifiers, including Temporal Rift; excludes None.
-		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 	$ModifierDisplay.refresh(modifier, turn_number)
 	hud.refresh(_display_snapshot())
 	if $MatchResult.visible and not result_music_started:
@@ -991,6 +976,8 @@ func _record_result() -> void:
 			salvage += DESTRUCTION_SALVAGE
 	if expedition != null:
 		expedition.record_battle(self)
+	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
+		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 
 
 func _repair_spend_limit() -> int:
@@ -1013,7 +1000,7 @@ func _repair_with_salvage() -> void:
 	salvage -= Repairs.quantity_cost(spent, RESULT_SALVAGE_PER_HULL)
 	if expedition != null:
 		expedition.sync_battle(self)
-	repair_spend = -1
+	repair_spend = _repair_spend_limit()
 	refresh_display()
 
 #endregion

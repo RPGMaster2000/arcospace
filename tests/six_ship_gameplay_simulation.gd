@@ -7,7 +7,11 @@ const Board = preload("res://scripts/board.gd")
 const SEEDS = 20
 const ROUND_LIMIT = 100
 const ACTION_LIMIT = 100
-const SOURCE_REVISION = "8864ed8ee1b9ea594ddc4cca5ce257fd9a866721"
+func source_revision() -> String:
+	var output: Array = []
+	if OS.execute("git", ["-C", ProjectSettings.globalize_path("res://"), "rev-parse", "HEAD"], output) == 0:
+		return str(output[0]).strip_edges()
+	return "unknown"
 var records: Array = []
 
 func run() -> void:
@@ -24,26 +28,12 @@ func run() -> void:
 		print("Completed %s: %d battles" % [player.ship_name, records.size()])
 	var suffix := str(selected) if selected >= 0 else "all"
 	var output := FileAccess.open("res://.godot/six-ship-simulation-" + suffix + ".json", FileAccess.WRITE)
-	output.store_string(JSON.stringify({"source_revision": SOURCE_REVISION, "seeds": SEEDS, "round_limit": ROUND_LIMIT, "matches": records}))
+	output.store_string(JSON.stringify({"source_revision": source_revision(), "seeds": SEEDS, "round_limit": ROUND_LIMIT, "matches": records}))
 	output.close()
 	quit()
 
 func outcome(states: Array, clock: RefCounted) -> String:
-	if states[0].hull <= 0 and states[1].hull <= 0:
-		return "draw_hull"
-	if states[1].hull <= 0:
-		return "win_hull"
-	if states[0].hull <= 0:
-		return "loss_hull"
-	var player_failed: bool = clock.remaining.player == 0 and Rules.systems_failure_triggered(states[0])
-	var enemy_failed: bool = clock.remaining.enemy == 0 and Rules.systems_failure_triggered(states[1])
-	if player_failed and enemy_failed:
-		return "draw_systems"
-	if enemy_failed:
-		return "win_systems"
-	if player_failed:
-		return "loss_systems"
-	return ""
+	return Execution.outcome({"player": states[0], "enemy": states[1]}, clock)
 
 func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int) -> Dictionary:
 	var hands: Array = [Hand.new(), Hand.new()]
@@ -78,78 +68,78 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int) -
 	var actions := 0
 	var disruptions := 0
 	var activations := [0, 0]
-	for round_number in range(1, ROUND_LIMIT + 1):
+	var cursor: Dictionary = {"side": "player", "round": 1}
+	while cursor.round <= ROUND_LIMIT:
+		var round_number: int = cursor.round
+		var side: int = 0 if cursor.side == "player" else 1
 		rounds = round_number
 		for hand in hands:
 			hand.current_round = round_number
-		for side in range(2):
-			if side == 0:
-				var before_hull: int = states[0].hull
-				var notice: String = modifier.begin_round(round_number)
-				if kind == 1 and not notice.is_empty():
-					modifier.asteroid_strike(states[0], states[1])
-					if drive.take_hull_damage(Board.permanent_damage(before_hull, states[0].hull, player.hull_capacity)):
-						disruptions += 1
-				result = outcome(states, clock)
-				if not result.is_empty():
-					break
-				drive.begin_player_turn()
-			Rules.income(states[side])
-			# EMP is legal before taking an action and can save an expiring ship.
-			if side == 0 and use_emp and drive.can_warp():
-				result = "emp_escape"
-				break
-			var completed_turn := false
-			for action_index in range(ACTION_LIMIT):
-				for index in range(2):
-					states[index].systems_failure_remaining = clock.remaining[names[index]]
-				if side == 0:
-					hands[0].select_allocation("systems" if Rules.systems_failure_triggered(states[0]) else "balanced")
-				var move: Dictionary = brains[side].choose(hands[side].cards, states[side], states[1-side])
-				if move.is_empty():
-					completed_turn = true
-					break
-				var card: Resource = hands[side].cards[move.slot]
-				assert(move.discard or states[side][card.family] >= card.cost)
-				var before_hull: int = states[0].hull
-				if move.discard:
-					states[side][card.family] += floori(card.cost / 3.0)
-				else:
-					modifier.play(card, states[side], states[1-side])
-					# Report tracks intermediate damage before any same-card healing.
-					var key := "actor" if side == 0 else "target"
-					var report: Dictionary = modifier.last_hull_damage
-					var amount: int = report.get(key, 0)
-					var prior: int = report.get(key + "_before", before_hull)
-					if drive.take_hull_damage(Board.permanent_damage(prior, prior - amount, player.hull_capacity)):
-						disruptions += 1
-				hands[side].replace_card(move.slot)
-				actions += 1
-				var previous: Dictionary = clock.remaining.duplicate()
-				clock.sync({"player": states[0], "enemy": states[1]}, names[side], failure_turns)
-				for index in range(2):
-					if previous[names[index]] < 0 and clock.remaining[names[index]] >= 0:
-						activations[index] += 1
-				result = outcome(states, clock)
-				if not result.is_empty():
-					break
-				if side == 0 and use_emp and drive.can_warp():
-					result = "emp_escape"
-					break
-				if move.discard or not card.play_again:
-					completed_turn = true
-					break
-			if not result.is_empty():
-				break
-			if not completed_turn:
-				result = "action_limit"
-				break
-			clock.end_turn(names[side])
+		if side == 0:
+			var before_hull: int = states[0].hull
+			var notice: String = modifier.begin_round(round_number)
+			if kind == 1 and not notice.is_empty():
+				modifier.asteroid_strike(states[0], states[1])
+				if drive.take_hull_damage(Board.permanent_damage(before_hull, states[0].hull, player.hull_capacity)):
+					disruptions += 1
 			result = outcome(states, clock)
 			if not result.is_empty():
 				break
+			drive.begin_player_turn()
+		Execution.begin_turn(states[side])
+		# EMP is legal before taking an action and can save an expiring ship.
+		if side == 0 and use_emp and drive.can_warp():
+			result = "emp_escape"
+			break
+		var completed_turn := false
+		for action_index in range(ACTION_LIMIT):
+			for index in range(2):
+				states[index].systems_failure_remaining = clock.remaining[names[index]]
+			if side == 0:
+				hands[0].select_allocation("systems" if Rules.systems_failure_triggered(states[0]) else "balanced")
+			var move: Dictionary = brains[side].choose(hands[side].cards, states[side], states[1-side])
+			if move.is_empty():
+				completed_turn = true
+				break
+			var card: Resource = hands[side].cards[move.slot]
+			assert(move.discard or states[side][card.family] >= card.cost)
+			var before_hull: int = states[0].hull
+			var resolution = Execution.resolve(card, move.discard, states[side], states[1-side], modifier)
+			assert(resolution != null)
+			if not move.discard:
+				# Intermediate damage precedes any same-card healing.
+				var key := "actor" if side == 0 else "target"
+				var report: Dictionary = resolution.hull_damage
+				var amount: int = report.get(key, 0)
+				var prior: int = report.get(key + "_before", before_hull)
+				if drive.take_hull_damage(Board.permanent_damage(prior, prior - amount, player.hull_capacity)):
+					disruptions += 1
+			hands[side].replace_card(move.slot)
+			actions += 1
+			var previous: Dictionary = clock.remaining.duplicate()
+			clock.sync({"player": states[0], "enemy": states[1]}, names[side], failure_turns)
+			for index in range(2):
+				if previous[names[index]] < 0 and clock.remaining[names[index]] >= 0:
+					activations[index] += 1
+			result = outcome(states, clock)
+			if not result.is_empty():
+				break
+			if side == 0 and use_emp and drive.can_warp():
+				result = "emp_escape"
+				break
+			if not resolution.extra_action:
+				completed_turn = true
+				break
 		if not result.is_empty():
 			break
+		if not completed_turn:
+			result = "action_limit"
+			break
+		Execution.end_turn({"player": states[0], "enemy": states[1]}, clock, names[side], failure_turns)
+		result = outcome(states, clock)
+		if not result.is_empty():
+			break
+		cursor = Execution.next_turn(names[side], round_number)
 	if result.is_empty():
 		result = "round_limit"
 	assert(not (player.ship_name == "Titania" and result == "emp_escape"))

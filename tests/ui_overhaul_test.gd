@@ -226,6 +226,7 @@ func run() -> void:
 			check(held.get_node("DiscardButton").get_global_rect().size.y >= 43.9, "Discard touch target remains 44 pixels")
 		check(is_equal_approx(board.get_node("FTLPanel/Progress").size.x,154), "FTL bar 33% narrower")
 		board.ftl.charge = board.ftl.charge_target
+		board._record_result()
 		board.refresh_display()
 		check(root.get_visible_rect().encloses(board.get_node("FTLPanel/WarpButton").get_global_rect()), "Jump action fits")
 		await screenshot("combat-" + str(dimensions.x))
@@ -235,6 +236,7 @@ func run() -> void:
 	var defeated = host.battle
 	defeated.battle_effects.enabled = false
 	defeated.winner = "enemy"
+	defeated._record_result()
 	defeated.refresh_display()
 	check(not defeated.get_node("MatchResult/Panel/PlayAgain").visible, "No New Expedition on defeat")
 	check(defeated.get_node("MatchResult/Panel/Configure").text == "Main Menu", "Single defeat destination")

@@ -15,6 +15,7 @@ func run() -> void:
 	var ship = board.get_node("BattleView/Viewport/Battlefield/PlayerShip")
 	for hull in [15, 14, 5, 4, 20]:
 		board.player_hull = hull
+		board._record_result()
 		board.refresh_display()
 		var expected: float = 0.0 if hull >= 15 else (1.0 if hull < 5 else 0.45)
 		check(is_equal_approx(ship.damage_material.get_shader_parameter("damage"), expected), "Hull threshold or repair restoration failed")
@@ -27,6 +28,7 @@ func run() -> void:
 	board.player_materials += 2
 	board.player_reactor += 1
 	board.battle_effects.play_changes(before, board._both_states())
+	board._record_result()
 	board.refresh_display()
 	await create_timer(0.1).timeout
 	check(ship.shield_material.get_shader_parameter("keep_shell"), "Online shield gain must retain the bubble")
@@ -39,6 +41,7 @@ func run() -> void:
 		board.player_hull = 30 if result == "player" else 0
 		board.enemy_hull = 0 if result == "player" else 30
 		check(board._check_winner() and board.winner == result, "Hull destruction must select the correct winner")
+		board._record_result()
 		board.refresh_display()
 		check(board.get_node("MatchResult").visible, "Match result should be visible")
 		check(not board._act("player", 0, false), "Finished match must block cards")

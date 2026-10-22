@@ -35,14 +35,17 @@ func run() -> void:
 			board._sync_systems_failure()
 			board.systems_failure.remaining.enemy = 0
 		check(board._check_winner(), "Real win detected")
+		board._record_result()
 		board.refresh_display()
 		check(board.result_recorded and not board.get_node("MatchResult").visible, "Rewards record while final animation is running")
 		check(not board.result_music_started and music.current_track in ["battle1","battle2"], "Intro does not run behind hidden result screen")
 		await create_timer(0.15).timeout
 		board.battle_effects.busy = false
+		board._record_result()
 		board.refresh_display()
 		check(not board.result_music_started, "Card animation still holds result music")
 		board.resolving_card = false
+		board._record_result()
 		board.refresh_display()
 		check(board.get_node("MatchResult").visible and board.result_music_started and music.current_track == "victory", "Victory starts on result reveal")
 		check(music.player.stream is AudioStreamMP3 and music.player.playing, "Actual MP3 loaded and playing")
@@ -65,6 +68,7 @@ func run() -> void:
 	for outcome in ["enemy","draw"]:
 		var board = make_board()
 		board.winner = outcome
+		board._record_result()
 		board.refresh_display()
 		check(board.result_music_started and music.current_track.is_empty() and not music.player.playing, "Loss/draw stop battle music without victory")
 		board.queue_free()
@@ -73,6 +77,7 @@ func run() -> void:
 	var muted = make_board()
 	muted.enemy_hull = 0
 	muted._check_winner()
+	muted._record_result()
 	muted.refresh_display()
 	check(music.current_track == "victory" and music.player.stream_paused, "Muted wins respect the shared setting")
 	await create_timer(0.15).timeout

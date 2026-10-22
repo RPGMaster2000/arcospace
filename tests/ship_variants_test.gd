@@ -35,6 +35,7 @@ func run() -> void:
 			check(board.get("enemy_"+key) == enemy.get(key)+enemy.get(production), "Enemy profile production income")
 		board.player_hull += 20
 		board.winner = "player"
+		board._record_result()
 		board.refresh_display()
 		board._continue_encounter()
 		await process_frame

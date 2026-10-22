@@ -114,8 +114,10 @@ func run() -> void:
 		)
 	board.winner = "player"
 	board.enemy_hull = 0
+	board._record_result()
 	board.refresh_display()
 	var reveal: Tween = board.get_node("MatchResult/Panel/Title").get_meta("visual_reveal")
+	board._record_result()
 	board.refresh_display()
 	check(
 		board.get_node("MatchResult/Panel/Title").get_meta("visual_reveal") == reveal,
@@ -131,6 +133,7 @@ func run() -> void:
 	loss.enemy_timer.stop()
 	loss.player_hull = 0
 	loss.winner = "enemy"
+	loss._record_result()
 	loss.refresh_display()
 	await create_timer(Settings.result_heading_duration + 0.1).timeout
 	check(

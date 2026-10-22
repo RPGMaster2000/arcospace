@@ -31,6 +31,7 @@ func run() -> void:
 	board.turn_number = 7
 	board.escaped_by_ftl = true
 	board.winner = "player"
+	board._record_result()
 	board.refresh_display()
 	check(board.tactical_victory() and board.strategic_victory(), "FTL earns both rewards with qualifying state")
 	check(board.get_node("MatchResult/Panel/Details").text.contains("Turn 7") and board.get_node("MatchResult/Panel/Details").text.contains("Damage taken: 4"), "Compact details retain damage despite healing")
@@ -47,6 +48,7 @@ func run() -> void:
 	await process_frame
 	board.get_node("BattleEffects").enabled = false
 	board.winner = "player"
+	board._record_result()
 	board.refresh_display()
 	check(not board.tactical_victory() and not board.strategic_victory(), "Bonuses require fresh qualification")
 	board._continue_encounter()
@@ -70,6 +72,7 @@ func run() -> void:
 	check(description.contains("+40 Salvage") and description.contains("Elite:") and description.contains("Tactical:") and description.contains("Strategic:"), "Compact expedition summary keeps all earned rewards")
 	check(description.split("\n").size() == 4 and description.contains("Upgrade 3 cards") and not description.contains("Not earned"), "Maximum reward summary includes upgrades in four lines")
 	var bonuses_before: Dictionary = expedition.pending_bonuses.duplicate()
+	board._record_result()
 	board.refresh_display()
 	check(expedition.pending_bonuses == bonuses_before, "Rendering summary does not grant rewards")
 	check(not board.get_node("MatchResult/Panel/NextEncounter").visible, "Star System button needs no repeated instructions")

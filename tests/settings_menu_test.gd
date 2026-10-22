@@ -133,6 +133,7 @@ func run() -> void:
 	board.enemy_timer.stop()
 	board.winner = "player"
 	board.battle_effects.enabled = false
+	board._record_result()
 	board.refresh_display()
 	await settle()
 	check(not board.get_node("MatchResult/Panel/Configure").visible, "Victory removes ship-selection button")

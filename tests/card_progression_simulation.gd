@@ -6,7 +6,7 @@ const Ships = preload("res://scripts/ships/ship_library.gd")
 const Config = preload("res://encounters/expedition_rules.tres")
 const Hand = preload("res://scripts/cards/card_hand.gd")
 const AI = preload("res://scripts/enemy_ai.gd")
-const Effects = preload("res://scripts/cards/card_effects.gd")
+const Execution = preload("res://scripts/combat/combat_execution.gd")
 const Failure = preload("res://scripts/combat/systems_failure.gd")
 var failure_turns: int
 const Rules = preload("res://scripts/match_rules.gd")
@@ -73,44 +73,45 @@ func simulate(player: Resource, enemy: Resource, mode: String, seed_value: int, 
 	hands[1].deal(6)
 	var finished: bool = false
 	var rounds: int = 0
-	for round_number in range(1, 41):
+	var cursor: Dictionary = {"side": "player", "round": 1}
+	while cursor.round <= 40:
+		var round_number: int = cursor.round
+		var side: int = 0 if cursor.side == "player" else 1
 		rounds = round_number
 		for hand in hands: hand.current_round = round_number
-		for side in range(2):
-			Rules.income(states[side])
-			# Safety bound only for this diagnostic; production turn logic is unchanged.
-			for action in range(30):
-				for index in range(2): states[index].systems_failure_remaining = failure.remaining[names[index]]
-				var move: Dictionary = brains[side].choose(hands[side].cards,states[side],states[1-side])
-				if move.is_empty(): break
-				var card: Resource = hands[side].cards[move.slot]
-				if move.discard:
-					states[side][card.family] += floori(card.cost / 3.0)
-				else:
-					Effects.play(card,states[side],states[1-side],combat)
-					if card.tier == 2:
-						totals.played += 1
-						if side == 1 and round_number <= 5:
-							totals.early += 1
-							totals.burst = maxi(totals.burst, int(card.effects.get("damage",0)))
-				hands[side].replace_card(move.slot)
-				var replacement: Resource = hands[side].cards[move.slot]
-				if replacement != null and replacement.tier == 2: totals.drawn += 1
-				failure.sync({"player":states[0], "enemy":states[1]}, names[side], failure_turns)
-				# Match's simultaneous-loss rule is represented as a player loss here.
-				if states[0].hull <= 0 or states[1].hull <= 0 or Rules.wins(states[side],states[1-side]):
-					var winner: int = 1 if states[0].hull <= 0 else (0 if states[1].hull <= 0 else side)
-					totals["wins" if winner == 0 else "losses"] += 1
-					finished = true
-					break
-				if move.discard or not card.play_again: break
-			if not finished:
-				failure.end_turn(names[side])
-				if failure.remaining[names[side]] == 0:
-					totals["losses" if side == 0 else "wins"] += 1
-					finished = true
-			if finished: break
+		Execution.begin_turn(states[side])
+		# Safety bound only for this diagnostic; production turn logic is unchanged.
+		for action in range(30):
+			for index in range(2): states[index].systems_failure_remaining = failure.remaining[names[index]]
+			var move: Dictionary = brains[side].choose(hands[side].cards,states[side],states[1-side])
+			if move.is_empty(): break
+			var card: Resource = hands[side].cards[move.slot]
+			var resolution = Execution.resolve(card, move.discard, states[side], states[1-side], null, combat)
+			assert(resolution != null)
+			if not move.discard and card.tier == 2:
+				totals.played += 1
+				if side == 1 and round_number <= 5:
+					totals.early += 1
+					totals.burst = maxi(totals.burst, int(card.effects.get("damage",0)))
+			hands[side].replace_card(move.slot)
+			var replacement: Resource = hands[side].cards[move.slot]
+			if replacement != null and replacement.tier == 2: totals.drawn += 1
+			failure.sync({"player":states[0], "enemy":states[1]}, names[side], failure_turns)
+			var result: String = Execution.outcome({"player": states[0], "enemy": states[1]}, failure)
+			if not result.is_empty():
+				# This historical diagnostic counts draws as player losses.
+				totals["wins" if result.begins_with("win") else "losses"] += 1
+				finished = true
+				break
+			if not resolution.extra_action: break
+		if not finished:
+			Execution.end_turn({"player":states[0], "enemy":states[1]}, failure, names[side], failure_turns)
+			var result: String = Execution.outcome({"player":states[0], "enemy":states[1]}, failure)
+			if not result.is_empty():
+				totals["wins" if result.begins_with("win") else "losses"] += 1
+				finished = true
 		if finished: break
+		cursor = Execution.next_turn(names[side], round_number)
 	if not finished: totals.unresolved += 1
 	totals.rounds += rounds
 	for node in hands + brains: node.free()
