@@ -35,6 +35,12 @@ cancelled, completed results remain available and `complete` stays false. A true
 `complete` means every selected test ran, not that every test passed. CI uploads
 partial logs even when the job fails. These generated files are not source files.
 
+Godot 4.7.2's shader importer emitted a `ShaderFile` UI-thread error during clean
+CI import. The project disables parallel resource import via the editor-only
+[`editor/import/use_multiple_threads` setting](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-editor-import-use-multiple-threads).
+This leaves runtime threading unchanged and keeps import errors fatal instead of
+adding an error-message exception. Reassess this workaround when upgrading Godot.
+
 The workflow runs on pull requests as well as its existing push/manual triggers.
 Rendered tests retain their existing selection and now have individual 120-second
 bounds. Exported-startup validation remains a separate job. Lifecycle ownership
