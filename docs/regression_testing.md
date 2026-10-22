@@ -43,5 +43,7 @@ adding an error-message exception. Reassess this workaround when upgrading Godot
 
 The workflow runs on pull requests as well as its existing push/manual triggers.
 Rendered tests retain their existing selection and now have individual 120-second
-bounds. Exported-startup validation remains a separate job. Lifecycle ownership
+bounds, except Power Allocation (300 seconds for its statistical sampling and
+all-ship/viewport UI matrix on software rendering). The combined regression job
+has a 20-minute bound. Exported-startup validation remains a separate job. Lifecycle ownership
 investigation and splitting headless/rendered jobs remain future work.
