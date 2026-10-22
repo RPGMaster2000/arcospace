@@ -1,6 +1,7 @@
 """Run isolated headless Godot regressions with bounded execution and durable logs."""
 import argparse
 import json
+import os
 import re
 import subprocess
 import time
@@ -26,7 +27,9 @@ def run_process(command, log_path, timeout):
     launch_error = None
     with log_path.open("w", encoding="utf-8") as log:
         try:
-            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+            environment = os.environ.copy()
+            environment["XDG_DATA_HOME"] = str(log_path.parent / "userdata" / log_path.stem)
+            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, env=environment,
                                     timeout=timeout, check=False)
             exit_code = result.returncode
         except subprocess.TimeoutExpired:

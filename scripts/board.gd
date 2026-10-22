@@ -68,6 +68,8 @@ var next_modifier: int = -1
 var salvage: int = 0
 var battles_won: int = 0
 var result_recorded: bool = false
+# Leaving an unfinished battle preserves its entry checkpoint, including during VFX cleanup.
+var checkpoint_exit: bool = false
 # Presentation-only latch: reward recording can precede the visible result.
 var result_music_started: bool = false
 var earned_tactical: bool = false
@@ -287,7 +289,12 @@ func _ready() -> void:
 		BattleAdapter.apply_setup(self, battle_setup)
 		expedition.deck_changed.connect(_sync_expedition_hand)
 		starting_player_hull = player_hull
-	modifier.configure(int(setup_settings.get("modifier", 0)))
+	modifier.configure(int(setup_settings.get("modifier", 0)), battle_setup.battle_seed if battle_setup != null else -1)
+	if battle_setup != null and battle_setup.battle_seed >= 0:
+		hand.rng.seed = battle_setup.battle_seed ^ 101
+		enemy_hand.rng.seed = battle_setup.battle_seed ^ 103
+		enemy_ai.rng.seed = battle_setup.battle_seed ^ 107
+		ftl.rng.seed = battle_setup.battle_seed ^ 109
 	for active_hand in [hand, enemy_hand]:
 		active_hand.drop_multiplier = (
 			modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0
@@ -967,7 +974,7 @@ func _resource_reward_text(amount: int) -> String:
 
 
 func _record_result() -> void:
-	if winner.is_empty() or result_recorded:
+	if winner.is_empty() or result_recorded or checkpoint_exit:
 		return
 	# Freeze combat rewards before post-battle salvage repair changes hull.
 	earned_tactical = tactical_victory()

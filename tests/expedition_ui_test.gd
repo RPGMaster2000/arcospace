@@ -29,6 +29,7 @@ func snapshot(label: String) -> void:
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 456
 	root.add_child(host)

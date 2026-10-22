@@ -92,6 +92,7 @@ func run() -> void:
 	menu.free()
 	check(not paused, "Freeing an open menu cannot leave gameplay paused")
 	var host = load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	host.rules = host.rules.duplicate()
 	host.rules.debug_seed = 777
 	root.add_child(host)

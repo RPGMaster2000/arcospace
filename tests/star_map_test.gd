@@ -12,6 +12,7 @@ func settle() -> void:
 	for i in range(12): await process_frame
 func run() -> void:
 	host = preload("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	root.add_child(host)
 	host.star_map_travel_duration = .02
 	host.state.start(0, host.rules, 777)

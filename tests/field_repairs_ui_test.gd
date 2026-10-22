@@ -35,6 +35,7 @@ func capture(name: String) -> void:
 	root.get_texture().get_image().save_png("res://.godot/testlogs/field-repair-"+name+".png")
 func run() -> void:
 	host = preload("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	host.rules = host.rules.duplicate()
 	host.rules.debug_seed = 777
 	root.add_child(host)

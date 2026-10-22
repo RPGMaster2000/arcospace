@@ -12,6 +12,7 @@ func run() -> void:
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		for enemy in Rules.enemy_ships:
 			var host = load("res://scenes/expedition.tscn").instantiate()
+			host.persistence_enabled = false
 			host.selected_ship = ship_index
 			root.add_child(host)
 			host.state.encounters[0] = {"kind":"battle", "enemy":0, "enemy_data":enemy, "modifier":0, "completed":false, "title":enemy.ship_name}

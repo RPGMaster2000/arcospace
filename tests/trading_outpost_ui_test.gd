@@ -30,6 +30,7 @@ func _initialize() -> void:
 
 func run_tests() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 789
 	host.rules.log_rolls = false

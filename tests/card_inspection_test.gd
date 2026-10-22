@@ -155,6 +155,7 @@ func snapshot() -> String:
 	return JSON.stringify(values)
 func test_gallery() -> void:
 	var host=load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	root.add_child(host)
 	current_scene=host
 	host.state.pending_choice="card"; host.state.card_offers=host.state.random_card_offers()

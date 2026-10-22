@@ -4,6 +4,8 @@ extends Resource
 # EXTEND: Keep generation, ownership and completion here; expedition.gd only presents them.
 class_name ExpeditionState
 signal deck_changed
+signal progress_committed
+var run_ended: bool = false
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
 const BattleResult = preload("res://scripts/combat/battle_result.gd")
 const ShipState = preload("res://scripts/combat/ship_combat_state.gd")
@@ -62,6 +64,7 @@ var upgrades_remaining: int = 0
 var upgraded_this_event: Dictionary = {}
 # In-memory travel interruption; no separate combat or persistence system.
 var navigation_origin: int = -1
+var travel_destination: int = -1
 var pending_destination: int = -1
 var chasedown_index: int = -1
 var chasedowns_this_system: int = 0
@@ -79,6 +82,7 @@ func encounter_at(index: int) -> Dictionary:
 
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
+	run_ended = false
 	rules = configuration
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
 	hull = ship().hull_capacity
@@ -134,6 +138,7 @@ func production(key: String) -> int:
 func can_jump() -> bool:
 	return (
 		hull > 0
+		and not run_ended
 		and active_battle < 0
 		and pending_destination < 0
 		and pending_choice.is_empty()
@@ -263,6 +268,7 @@ func generate_system() -> bool:
 	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
 	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
 	navigation_origin = -1
+	travel_destination = -1
 	pending_destination = -1
 	chasedown_index = -1
 	chasedowns_this_system = 0
@@ -337,6 +343,7 @@ func generate_system() -> bool:
 		var swap: Dictionary = encounters[index]
 		encounters[index] = encounters[other]
 		encounters[other] = swap
+	progress_committed.emit()
 	return true
 
 
@@ -402,11 +409,14 @@ func survey(index: int) -> bool:
 		"Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: "
 		+ describe_modifiers(rules.survey_penalty)
 	)
+	progress_committed.emit()
 	return true
 
 
 func can_visit(index: int) -> bool:
-	if hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
+	if travel_destination != -1 and pending_destination < 0 and index != travel_destination:
+		return false
+	if run_ended or hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
 		return false
 	if pending_destination >= 0 and index != chasedown_index:
 		if chasedown_unresolved() or index != pending_destination:
@@ -420,6 +430,15 @@ func can_visit(index: int) -> bool:
 
 # Roll once at actual movement initiation; arrival, menus and battle returns never call this.
 # Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
+func begin_travel(destination: int, forced_roll: float = -1.0) -> bool:
+	if not can_visit(destination): return false
+	if travel_destination == destination: return false
+	var intercepted: bool = try_chasedown(destination, forced_roll)
+	travel_destination = destination
+	progress_committed.emit()
+	return intercepted
+
+
 func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 	if not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi":
 		return false
@@ -500,13 +519,16 @@ func choose_chasedown_response(choice: int) -> bool:
 	encounter.response = choice
 	add_modifiers(response.get("modifiers", {}))
 	hull = maxi(1, hull + int(response.get("hull", 0)))
+	progress_committed.emit()
 	return true
 
 
 func arrive_destination(index: int) -> void:
 	navigation_origin = index
+	if index == travel_destination: travel_destination = -1
 	if index == pending_destination and not chasedown_unresolved():
 		pending_destination = -1
+	progress_committed.emit()
 
 
 #endregion
@@ -565,6 +587,7 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	_apply_outcome(outcome)
+	progress_committed.emit()
 	return true
 
 
@@ -696,6 +719,7 @@ func field_repair(amount: int, revision: int) -> bool:
 	salvage -= Repairs.quantity_cost(amount, Repairs.FIELD_SALVAGE_PER_HULL)
 	hull += amount
 	service_revision += 1
+	progress_committed.emit()
 	return true
 
 
@@ -793,6 +817,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 			station_production_purchases += 1
 		last_outcome += describe_outcome(outcome)
 		_apply_outcome(outcome)
+	progress_committed.emit()
 	return true
 
 
@@ -874,8 +899,10 @@ func choose_card(index: int) -> bool:
 		pending_card = chosen
 		pending_choice = "replace"
 		card_offers.clear()
+		progress_committed.emit()
 		return true
 	_acquire_card(chosen)
+	progress_committed.emit()
 	return true
 
 
@@ -912,6 +939,7 @@ func replace_card(key: String) -> bool:
 	upgraded_cards.erase(key)
 	last_outcome += "\nRemoved %s." % owned[key].card_name
 	_acquire_card(pending_card)
+	progress_committed.emit()
 	return true
 
 
@@ -922,6 +950,7 @@ func decline_card() -> bool:
 	pending_card = null
 	pending_choice = ""
 	card_offers.clear()
+	progress_committed.emit()
 	return true
 
 
@@ -935,6 +964,7 @@ func choose_attribute(key: String) -> bool:
 	else:
 		return false
 	pending_choice = ""
+	progress_committed.emit()
 	return true
 
 
@@ -970,6 +1000,8 @@ func choose_upgrade(key: String) -> bool:
 		upgrades_remaining = maxi(0, upgrades_remaining - 1)
 		if upgrades_remaining == 0 or upgrade_candidates().is_empty():
 			finish_upgrades()
+		if pending_choice == "upgrade":
+			progress_committed.emit()
 		return true
 	return false
 
@@ -1003,6 +1035,7 @@ func finish_upgrades() -> void:
 	pending_choice = ""
 	upgrades_remaining = 0
 	upgraded_this_event.clear()
+	progress_committed.emit()
 
 
 #endregion
@@ -1099,7 +1132,11 @@ func record_battle(result: BattleResult) -> void:
 	):
 		return
 	_recorded_results[result.result_id] = true
-	sync_battle(result)
+	sync_battle(result, false)
+	if result.winner != "player":
+		run_ended = true
+		progress_committed.emit()
+		return
 	if active_battle >= 0 and active_battle < encounters.size():
 		if result.winner == "player":
 			# Escape and destruction both complete navigation; Salvage remains separate.
@@ -1127,10 +1164,14 @@ func record_battle(result: BattleResult) -> void:
 			last_outcome = "Combat victory — upgrade up to %d different cards." % count
 			start_upgrade_event(count)
 
+	progress_committed.emit()
 
-func sync_battle(result: BattleResult) -> void:
+
+func sync_battle(result: BattleResult, notify: bool = true) -> void:
 	hull = clampi(result.player_hull, 0, ship().hull_capacity)
 	salvage = result.salvage
 	battles_won = result.battles_won
+	if notify:
+		progress_committed.emit()
 
 #endregion

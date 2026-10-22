@@ -5,6 +5,9 @@ extends CanvasLayer
 signal main_menu_requested
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var is_main_menu: bool = false
+var save_quit_action: Callable
+var battle_restart_notice: bool = false
+var _quit_after_save: bool = false
 var shade: ColorRect
 var panel: PanelContainer
 var close_button: Button
@@ -80,7 +83,7 @@ func _ready() -> void:
 	if quit_button.disabled:
 		quit_button.tooltip_text = "Close the browser tab to quit."
 	actions.add_child(quit_button)
-	quit_button.pressed.connect(func(): get_tree().quit())
+	quit_button.pressed.connect(_request_quit)
 	music_toggle.toggled.connect(_music.set_enabled)
 	_music.enabled_changed.connect(_sync_music)
 	_sync_music(_music.enabled)
@@ -141,11 +144,47 @@ func _sync_music(enabled: bool) -> void:
 	music_toggle.set_pressed_no_signal(enabled)
 
 
+func configure_save_quit(action: Callable, in_battle: bool = false) -> void:
+	save_quit_action = action
+	battle_restart_notice = in_battle
+	main_menu_button.text = "Save & Quit"
+	main_menu_button.tooltip_text = "Return to the main menu after saving expedition progress"
+	close_button.text = "Resume"
+
+
 func _request_main_menu() -> void:
+	if save_quit_action.is_valid():
+		if battle_restart_notice:
+			var notice := ConfirmationDialog.new()
+			notice.dialog_text = "Your current battle will restart when you continue."
+			notice.ok_button_text = "Save & Quit"
+			notice.process_mode = Node.PROCESS_MODE_ALWAYS
+			add_child(notice)
+			notice.confirmed.connect(func(): _run_save_quit(); notice.queue_free())
+			notice.canceled.connect(func(): _quit_after_save = false; notice.queue_free())
+			notice.popup_centered(Vector2i(460, 160))
+		else:
+			_run_save_quit()
+		return
 	if main_menu_button.disabled:
 		return
 	dismiss()
 	main_menu_requested.emit()
+
+
+func _run_save_quit() -> void:
+	var quit_after: bool = _quit_after_save
+	_quit_after_save = false
+	if save_quit_action.call() and quit_after:
+		get_tree().quit()
+
+
+func _request_quit() -> void:
+	if save_quit_action.is_valid():
+		_quit_after_save = true
+		_request_main_menu()
+	else:
+		get_tree().quit()
 
 
 func _input(event: InputEvent) -> void:

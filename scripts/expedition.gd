@@ -2,6 +2,15 @@ extends Control
 # RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
 # DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 # EXTEND: Route choices to State; _clear resets UI only, never the expedition ledger.
+const Save = preload("res://scripts/persistence/expedition_save.gd")
+var save_store = Save.new()
+var persistence_enabled: bool = true
+var resume_data: Dictionary = {}
+var save_error: AcceptDialog
+var _battle_checkpoint: Dictionary = {}
+var _battle_marker: Dictionary = {}
+var _previous_auto_quit: bool = true
+var _previous_back_quit: bool = true
 const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -110,7 +119,23 @@ func _ready() -> void:
 	outcome_flash.visual_settings = visual_settings
 	add_child(outcome_flash)
 	_setup_field_repairs()
-	start_expedition()
+	if persistence_enabled:
+		_previous_auto_quit = get_tree().auto_accept_quit
+		get_tree().auto_accept_quit = false
+		_previous_back_quit = get_tree().quit_on_go_back
+		get_tree().quit_on_go_back = false
+		settings_button.menu.configure_save_quit(_save_and_quit)
+	if resume_data.is_empty():
+		start_expedition()
+	else:
+		state = resume_data.state
+		selected_ship = state.player_ship
+		_bind_progress()
+		var marker: Dictionary = resume_data.get("battle", {})
+		if marker.is_empty():
+			show_system()
+		else:
+			start_battle(int(marker.index), int(marker.seed))
 
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
@@ -305,12 +330,81 @@ func _clear(kind: String) -> void:
 #region System navigation
 
 
-func start_expedition() -> void:
+func start_expedition() -> bool:
+	var candidate = State.new()
+	candidate.start(selected_ship, rules)
+	if persistence_enabled and not save_store.save_run(candidate):
+		_show_save_error()
+		return false
 	map_system = -1
 	map_destination = -1
-	state = State.new()
-	state.start(selected_ship, rules)
+	if state != null and state.progress_committed.is_connected(_progress_committed):
+		state.progress_committed.disconnect(_progress_committed)
+	state = candidate
+	_battle_checkpoint = {}
+	_battle_marker = {}
+	_bind_progress()
 	show_system()
+	return true
+
+
+func _bind_progress() -> void:
+	if not state.progress_committed.is_connected(_progress_committed):
+		state.progress_committed.connect(_progress_committed)
+
+
+func _progress_committed() -> void:
+	if is_instance_valid(battle) and battle.result_recorded:
+		battle.settings_button.menu.battle_restart_notice = false
+	if persistence_enabled and not _save_progress():
+		_show_save_error()
+
+
+func _save_progress() -> bool:
+	if not persistence_enabled: return true
+	if state == null: return false
+	if state.run_ended or state.hull <= 0:
+		return save_store.clear_run()
+	if is_instance_valid(battle) and not battle.result_recorded:
+		return save_store.save_data(_battle_checkpoint, _battle_marker)
+	return save_store.save_run(state)
+
+
+func _show_save_error() -> void:
+	if not is_instance_valid(save_error):
+		save_error = AcceptDialog.new()
+		save_error.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(save_error)
+	save_error.dialog_text = save_store.error
+	save_error.popup_centered(Vector2i(520, 180))
+
+
+func _save_and_quit() -> bool:
+	if not _save_progress():
+		_show_save_error()
+		return false
+	_go_to_menu()
+	return true
+
+
+func _notification(what: int) -> void:
+	if not persistence_enabled or state == null: return
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		var menu = battle.settings_button.menu if is_instance_valid(battle) else settings_button.menu
+		menu.present()
+	elif what == NOTIFICATION_APPLICATION_PAUSED:
+		if not _save_progress(): _show_save_error()
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if _save_progress():
+			_prepare_departure()
+			get_tree().quit()
+		else: _show_save_error()
+
+
+func _exit_tree() -> void:
+	if persistence_enabled:
+		get_tree().auto_accept_quit = _previous_auto_quit
+		get_tree().quit_on_go_back = _previous_back_quit
 
 
 func show_system() -> void:
@@ -385,15 +479,16 @@ func show_system() -> void:
 			_grid_travel.bind(state.SERVICE_INDEX)
 		)
 
-	if state.pending_destination >= 0:
-		_grid_travel.call_deferred(state.pending_destination)
+	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
+	if destination != -1:
+		_grid_travel.call_deferred(destination)
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _show_star_map() -> void:
 	if map_system != state.system_number:
 		map_system = state.system_number
-		map_destination = -1
+		map_destination = state.navigation_origin
 	var entries: Array = []
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
@@ -444,11 +539,12 @@ func _show_star_map() -> void:
 		hash("%d:%d:sky" % [state.seed_used, state.system_number])
 	)
 	star_map.before_travel = state.can_visit
-	star_map.intercept_travel = state.try_chasedown
+	star_map.intercept_travel = state.begin_travel
 	star_map.interrupted.connect(_show_chasedown)
 	star_map.arrived.connect(visit)
-	if state.pending_destination >= 0:
-		star_map.travel.call_deferred(state.pending_destination)
+	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
+	if destination != -1:
+		star_map.travel.call_deferred(destination)
 
 
 func visit(index: int) -> void:
@@ -470,7 +566,7 @@ func _jump() -> void:
 func _request_travel(index: int) -> bool:
 	if not state.can_visit(index):
 		return false
-	if state.try_chasedown(index):
+	if state.begin_travel(index):
 		_show_chasedown()
 		return false
 	return true
@@ -945,9 +1041,24 @@ func _decline_card() -> void:
 
 
 # Set expedition/profile references and signal callbacks before add_child triggers Board initialization.
-func start_battle(index: int) -> void:
+func start_battle(index: int, battle_seed: int = -1) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
+	var checkpoint: Dictionary = Save.encode(state)
+	if battle_seed < 0:
+		var generator := RandomNumberGenerator.new()
+		generator.randomize()
+		battle_seed = generator.randi()
+	var marker: Dictionary = {"index": index, "seed": str(battle_seed)}
+	if persistence_enabled and not save_store.save_data(checkpoint, marker):
+		_show_save_error()
+		if view_kind.is_empty():
+			_clear("save_error")
+			view.add_child(_label("The battle could not be resumed until its checkpoint can be saved."))
+			_button("Retry Battle", start_battle.bind(index, battle_seed))
+		return
+	_battle_checkpoint = checkpoint
+	_battle_marker = marker
 	state.field_repairs_open = false
 	resource_bar.set_heartbeat(false)
 	resource_bar.overlay.dismiss()
@@ -955,11 +1066,15 @@ func start_battle(index: int) -> void:
 	view_kind = "battle"
 	battle = BOARD.instantiate()
 	battle.expedition = state
-	preload("res://scripts/combat/battle_adapter.gd").configure(battle, state.prepare_battle(index))
+	var setup = state.prepare_battle(index)
+	setup.battle_seed = battle_seed
+	preload("res://scripts/combat/battle_adapter.gd").configure(battle, setup)
 	battle.expedition_continue.connect(_battle_finished)
 	battle.expedition_restart.connect(_restart)
 	battle.expedition_exit.connect(_exit)
 	add_child(battle)
+	if persistence_enabled:
+		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)
 
 
 # Continue returns here after result recording; sync post-battle repairs before removing the board.
@@ -972,19 +1087,43 @@ func _battle_finished() -> void:
 
 func _remove_battle() -> void:
 	if is_instance_valid(battle):
+		if not battle.result_recorded: battle.checkpoint_exit = true
 		remove_child(battle)
 		battle.queue_free()
 	battle = null
 
 
 func _restart() -> void:
-	_remove_battle()
-	start_expedition()
+	if not persistence_enabled or state.run_ended or state.hull <= 0:
+		if start_expedition(): _remove_battle()
+		return
+	var notice := ConfirmationDialog.new()
+	notice.dialog_text = "Starting a new expedition will permanently abandon your current run."
+	add_child(notice)
+	notice.confirmed.connect(func():
+		if start_expedition(): _remove_battle()
+		notice.queue_free())
+	notice.canceled.connect(notice.queue_free)
+	notice.popup_centered(Vector2i(520, 180))
 
 
 func _exit() -> void:
+	_save_and_quit()
+
+
+func _prepare_departure() -> void:
+	if is_instance_valid(battle) and not battle.result_recorded:
+		battle.checkpoint_exit = true
+	if state != null and state.progress_committed.is_connected(_progress_committed):
+		state.progress_committed.disconnect(_progress_committed)
+
+
+func _go_to_menu() -> void:
+	_prepare_departure()
+	get_tree().paused = false
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	setup.initial_settings = {"player_ship": selected_ship}
+	setup.save_store = save_store
 	get_parent().add_child(setup)
 	get_tree().current_scene = setup
 	queue_free()

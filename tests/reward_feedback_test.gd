@@ -88,6 +88,7 @@ func run() -> void:
 		board.free()
 	root.size = Vector2i(1280,720)
 	var host = load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	root.add_child(host)
 	current_scene = host
 	host.state.start(0, Rules, 9004)

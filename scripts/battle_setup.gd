@@ -1,6 +1,12 @@
 extends Control
 # DOES NOT: Start combat directly; confirmation creates an Expedition controller.
 # RESPONSIBILITY: Read setup controls and configure a new board before its _ready runs.
+const Save = preload("res://scripts/persistence/expedition_save.gd")
+var save_store = Save.new()
+var saved_run: Dictionary = {}
+var new_expedition_button: Button
+var overwrite_confirmation: ConfirmationDialog
+var save_notice: AcceptDialog
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -46,7 +52,25 @@ func _ready() -> void:
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
 	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, Ships.PLAYERS.size() - 1)
 	_build_ship_pages()
-	$Start.pressed.connect(_start)
+	saved_run = save_store.load_run()
+	new_expedition_button = Button.new()
+	new_expedition_button.text = "New Expedition"
+	new_expedition_button.add_theme_font_size_override("font_size", 22)
+	Presentation.action(new_expedition_button)
+	add_child(new_expedition_button)
+	new_expedition_button.pressed.connect(_request_new)
+	overwrite_confirmation = ConfirmationDialog.new()
+	overwrite_confirmation.dialog_text = "Starting a new expedition will permanently abandon your current run."
+	overwrite_confirmation.ok_button_text = "New Expedition"
+	add_child(overwrite_confirmation)
+	overwrite_confirmation.confirmed.connect(_start)
+	save_notice = AcceptDialog.new()
+	add_child(save_notice)
+	if not save_store.error.is_empty() or not save_store.warning.is_empty():
+		save_notice.dialog_text = save_store.error if not save_store.error.is_empty() else save_store.warning
+		save_notice.popup_centered.call_deferred(Vector2i(520, 180))
+	$Start.text = "Continue Expedition" if not saved_run.is_empty() else "New Expedition"
+	$Start.pressed.connect(_primary_action)
 	for index in range(Ships.PLAYERS.size()):
 		var data = Ships.PLAYERS[index]
 		var panel = get_node("Ships/Ship%d" % index)
@@ -127,12 +151,45 @@ func read_settings() -> Dictionary:
 
 
 # Create the expedition only after ship confirmation; pass the library index before its _ready callback.
+func _primary_action() -> void:
+	if saved_run.is_empty(): _request_new()
+	else: _continue_expedition()
+
+
+func _request_new() -> void:
+	if not saved_run.is_empty() or FileAccess.file_exists(save_store.path):
+		overwrite_confirmation.popup_centered(Vector2i(520, 180))
+	else:
+		_start()
+
+
 func _start() -> void:
+	var candidate = preload("res://scripts/expedition_state.gd").new()
+	candidate.start(selected_ship, preload("res://encounters/expedition_rules.tres"))
+	if not save_store.save_run(candidate):
+		save_notice.dialog_text = save_store.error
+		save_notice.popup_centered(Vector2i(520, 180))
+		return
+	_launch({"state": candidate, "battle": {}})
+
+
+func _continue_expedition() -> void:
+	var loaded: Dictionary = save_store.load_run()
+	if loaded.is_empty():
+		save_notice.dialog_text = save_store.error if not save_store.error.is_empty() else "No active expedition remains."
+		save_notice.popup_centered(Vector2i(520, 180))
+		return
+	_launch(loaded)
+
+
+func _launch(data: Dictionary) -> void:
 	$Start.disabled = true
-	var board = load("res://scenes/expedition.tscn").instantiate()
-	board.selected_ship = selected_ship
-	get_parent().add_child(board)
-	get_tree().current_scene = board
+	var expedition = load("res://scenes/expedition.tscn").instantiate()
+	expedition.selected_ship = data.state.player_ship
+	expedition.resume_data = data
+	expedition.save_store = save_store
+	get_parent().add_child(expedition)
+	get_tree().current_scene = expedition
 	queue_free()
 
 
@@ -148,11 +205,16 @@ func _layout_cards() -> void:
 	$Ships.offset_right = -16
 	$Ships.offset_top = 60 if compact else 72
 	$Ships.offset_bottom = -80 if compact else -92
+	new_expedition_button.visible = not saved_run.is_empty()
 	$Start.custom_minimum_size.y = 56
 	$Start.offset_left = -16
 	$Start.offset_right = 274
 	$Start.offset_top = -68 if compact else -76
 	$Start.offset_bottom = -12 if compact else -20
+	new_expedition_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	new_expedition_button.position = Vector2(16, 8)
+	new_expedition_button.size = Vector2(190, 48)
+	new_expedition_button.add_theme_font_size_override("font_size", 18)
 	deck_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	deck_button.offset_left = -274
 	deck_button.offset_right = -32

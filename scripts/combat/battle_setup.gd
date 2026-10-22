@@ -1,6 +1,7 @@
 extends RefCounted
 # Data required to enter one expedition battle; no live scene references.
 const ShipState = preload("res://scripts/combat/ship_combat_state.gd")
+var battle_seed: int = -1
 var encounter_index: int = -1
 var system_number: int = 0
 var player_ship: int = 0

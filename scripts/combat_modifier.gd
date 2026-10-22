@@ -69,9 +69,12 @@ static func description(selection: int) -> String:
 	return "No environmental battle modifier. Pending expedition effects still apply."
 
 
-func configure(selection: int) -> void:
+func configure(selection: int, battle_seed: int = -1) -> void:
 	kind = clampi(selection, 0, NAMES.size() - 1)
-	rng.randomize()
+	if battle_seed < 0:
+		rng.randomize()
+	else:
+		rng.seed = battle_seed
 	active = false
 	ion_factor = 1.0
 	miss_rate = NEBULA_START

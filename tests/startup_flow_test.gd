@@ -40,7 +40,11 @@ func preview_has_ship(viewport: SubViewport) -> bool:
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	for index in range(Ships.PLAYERS.size()):
+		var store = preload("res://scripts/persistence/expedition_save.gd").new()
+		store.path = "user://test_startup_run.json"
+		store.clear_run()
 		var menu = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+		menu.save_store = store
 		root.add_child(menu)
 		current_scene = menu
 		await settle()

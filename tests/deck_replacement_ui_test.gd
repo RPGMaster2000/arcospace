@@ -30,6 +30,7 @@ func prepare() -> Resource:
 	return incoming
 func run() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.persistence_enabled = false
 	host.rules = Rules.duplicate(true)
 	host.rules.debug_seed = 2211
 	host.rules.log_rolls = false
