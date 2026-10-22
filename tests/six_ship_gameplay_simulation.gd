@@ -11,9 +11,6 @@ const SOURCE_REVISION = "8864ed8ee1b9ea594ddc4cca5ce257fd9a866721"
 var records: Array = []
 
 func run() -> void:
-	var settings = Board.new()
-	failure_turns = settings.systems_failure_turns
-	settings.free()
 	var args := OS.get_cmdline_user_args()
 	var selected := int(args[0]) if not args.is_empty() else -1
 	for player_index in range(Ships.PLAYERS.size()):

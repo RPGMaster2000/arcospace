@@ -11,15 +11,16 @@ const Failure = preload("res://scripts/combat/systems_failure.gd")
 var failure_turns: int
 const Rules = preload("res://scripts/match_rules.gd")
 func _initialize() -> void:
+	# Configure every diagnostic before dispatching its overridable run().
+	var match_settings = preload("res://scripts/board.gd").new()
+	failure_turns = match_settings.systems_failure_turns
+	match_settings.free()
 	call_deferred("run")
 func state(profile: Resource) -> Dictionary:
 	var result: Dictionary = {"hull":profile.hull_capacity, "shields":profile.shields, "hull_capacity":profile.hull_capacity}
 	for key in Rules.RESOURCES + Rules.PRODUCTION: result[key] = profile.get(key)
 	return result
 func run() -> void:
-	var match_settings = preload("res://scripts/board.gd").new()
-	failure_turns = match_settings.systems_failure_turns
-	match_settings.free()
 	print("mode,player,enemy,wins,losses,unresolved,average_rounds,tier2_drawn,tier2_played,early_enemy_tier2_plays,max_early_enemy_tier2_damage")
 	for mode in ["baseline", "updated", "progressed"]:
 		for player in Ships.PLAYERS:
