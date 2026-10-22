@@ -79,9 +79,9 @@ func run() -> void:
 			board.get_node("CardMotion").settings.enabled = false
 			root.add_child(board)
 			check(board.player_hull == cap+6, "Station plating reaches battle without clamping")
-			var actor: Dictionary = board._read_state("enemy")
+			var actor: Dictionary = board.ship_snapshot("enemy")
 			actor.energy = 999
-			var target: Dictionary = board._read_state("player")
+			var target: Dictionary = board.ship_snapshot("player")
 			target.shields = 0
 			var hit = preload("res://cards/12_laser_burst.tres")
 			Effects.play(hit,actor,target)

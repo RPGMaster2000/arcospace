@@ -206,7 +206,7 @@ func run() -> void:
 		var enemy_held: Array = board.enemy_hand.cards.duplicate()
 		var rng_state: int = board.hand.rng.state
 		var enemy_rng: int = board.enemy_hand.rng.state
-		var original_resources: Dictionary = board._read_state("player")
+		var original_resources: Dictionary = board.ship_snapshot("player")
 		var charge: int = board.ftl.charge
 		var turn: int = board.turn_number
 		board.allocation_settings.matching_draw_weight = 9
@@ -233,7 +233,7 @@ func run() -> void:
 				check(board.hand.allocation_mode == MODES[index] and not board.allocation_popup.shade.visible, "Choice applies and closes popup")
 				check(board.allocation_button.text == board.allocation_popup.ICONS[index], "Button shows selected emoji")
 				check(board.hand.cards == held and board.enemy_hand.cards == enemy_held and board.hand.rng.state == rng_state and board.enemy_hand.rng.state == enemy_rng, "Switch never modifies/rerolls either current hand")
-				check(board._read_state("player") == original_resources and board.ftl.charge == charge and board.turn_number == turn, "Switch has no cost, cooldown or turn effect")
+				check(board.ship_snapshot("player") == original_resources and board.ftl.charge == charge and board.turn_number == turn, "Switch has no cost, cooldown or turn effect")
 				for slot in range(6):
 					var card: Control = board.get_node(board.card_slots[slot])
 					check([card.position,card.size,card.scale] == poses[slot], "Popup never moves or resizes the hand")

@@ -24,15 +24,15 @@ func run() -> void:
 		board.player_materials = 0
 		board.player_energy = 0
 		board.player_crew = 0
-		var before: Dictionary = board._read_state("player")
-		var enemy_before: Dictionary = board._read_state("enemy")
+		var before: Dictionary = board.ship_snapshot("player")
+		var enemy_before: Dictionary = board.ship_snapshot("enemy")
 		board.MatchRules.income(enemy_before)
 		var previous: Array = hand.cards.duplicate()
 		before[card.family] += int(floor(card.cost / 3.0))
 		board.extra_action_requested = true
 		board._discard_card(0)
-		check(board._read_state("player") == before, "Incorrect refund or unwanted effect: " + card.card_name)
-		check(board._read_state("enemy") == enemy_before, "Only next-turn income may affect enemy")
+		check(board.ship_snapshot("player") == before, "Incorrect refund or unwanted effect: " + card.card_name)
+		check(board.ship_snapshot("enemy") == enemy_before, "Only next-turn income may affect enemy")
 		check(not board.extra_action_requested, "Discard must not grant play-again")
 		check(hand.cards.size() == 6 and hand.cards[0] != null, "Discard must refill slot")
 		for slot in range(1, 6):
@@ -79,9 +79,9 @@ func run() -> void:
 	check(footer.text.begins_with("Discard +"), "Footer must show the replacement refund")
 	board.enemy_hull = 0
 	var stopped: Array = hand.cards.duplicate()
-	var stopped_state: Dictionary = board._read_state("player")
+	var stopped_state: Dictionary = board.ship_snapshot("player")
 	board._discard_card(0)
-	check(hand.cards == stopped and board._read_state("player") == stopped_state, "No discard after Hull reaches zero")
+	check(hand.cards == stopped and board.ship_snapshot("player") == stopped_state, "No discard after Hull reaches zero")
 	board.free()
 	print("Discard checks: %d failures" % failures)
 	quit(1 if failures else 0)

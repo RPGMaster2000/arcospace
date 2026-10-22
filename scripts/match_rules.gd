@@ -2,9 +2,9 @@ extends RefCounted
 
 # RESPONSIBILITY: Check win conditions and grant production income.
 # DOES NOT: Select cards, change hands or update the scene.
-const RESOURCES = ["materials", "energy", "crew"]
+const RESOURCES = preload("res://scripts/combat/ship_combat_state.gd").RESOURCES
 const SYSTEMS_FAILURE_THRESHOLD = 2
-const PRODUCTION = ["synthesizer", "reactor", "quarters"]
+const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
 
 
 static func wins(_actor: Dictionary, enemy: Dictionary) -> bool:

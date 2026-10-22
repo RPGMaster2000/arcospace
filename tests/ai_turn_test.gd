@@ -25,10 +25,10 @@ func run() -> void:
 	board._on_card_pressed(0)
 	check(board.current_actor == "enemy" and board.enemy_energy == 18, "Normal play must begin enemy turn with income")
 	var hand_before: Array = board.hand.cards.duplicate()
-	var before: Dictionary = board._read_state("player")
+	var before: Dictionary = board.ship_snapshot("player")
 	board._discard_card(0)
 	board._on_card_pressed(1)
-	check(board.hand.cards == hand_before and board._read_state("player") == before, "Player input must be blocked during AI turn")
+	check(board.hand.cards == hand_before and board.ship_snapshot("player") == before, "Player input must be blocked during AI turn")
 	# Force a single legal enemy choice, then let the actual scene Timer fire.
 	board.enemy_hand.cards.assign([Library.CARDS[11]])
 	board.enemy_timer.start(0.01)
@@ -51,11 +51,11 @@ func run() -> void:
 	board.enemy_materials = 0
 	board.enemy_energy = 0
 	board.enemy_crew = 0
-	var player_before: Dictionary = board._read_state("player")
+	var player_before: Dictionary = board.ship_snapshot("player")
 	board.MatchRules.income(player_before)
 	board._on_enemy_timeout()
 	check(board.current_actor == "player" and board.enemy_crew == 3, "AI must discard when unable to afford any card")
-	check(board._read_state("player") == player_before, "AI discard must not execute Torpedo Salvo")
+	check(board.ship_snapshot("player") == player_before, "AI discard must not execute Torpedo Salvo")
 	# Winning piercing attack must beat an otherwise tempting production upgrade.
 	board.player_hull = 5
 	board.player_shields = 100

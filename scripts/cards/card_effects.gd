@@ -2,8 +2,8 @@ extends RefCounted
 
 # RESPONSIBILITY: Pay for and apply a card to two state dictionaries.
 # DOES NOT: Draw cards, grant turn income, choose AI moves or update the UI.
-const RESOURCES = ["materials", "energy", "crew"]
-const PRODUCTION = ["synthesizer", "reactor", "quarters"]
+const RESOURCES = preload("res://scripts/combat/ship_combat_state.gd").RESOURCES
+const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
 
 # Independent combat RNG; simulation mode never samples this generator.
 static var combat_rng: RandomNumberGenerator = _new_rng()

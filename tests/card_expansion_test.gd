@@ -218,7 +218,7 @@ func run() -> void:
 	board.get_node("BattleEffects").enabled=false
 	root.add_child(board)
 	board.enemy_timer.stop()
-	check(board._read_state("player").hull_capacity==board.player_hull_capacity and board._read_state("enemy").hull_capacity==board.enemy_hull_capacity, "Board supplies both original Hull capacities")
+	check(board.ship_snapshot("player").hull_capacity==board.player_hull_capacity and board.ship_snapshot("enemy").hull_capacity==board.enemy_hull_capacity, "Board supplies both original Hull capacities")
 	board.free()
 	await process_frame
 	var ai = preload("res://scripts/enemy_ai.gd").new()

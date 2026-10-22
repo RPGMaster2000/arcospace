@@ -8,8 +8,8 @@ const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
-const PRODUCTION = ["synthesizer", "reactor", "quarters"]
-const RESOURCES = ["materials", "energy", "crew"]
+const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
+const RESOURCES = preload("res://scripts/combat/ship_combat_state.gd").RESOURCES
 const LABELS = {
 	"synthesizer": "Synthesizer",
 	"reactor": "Reactor",

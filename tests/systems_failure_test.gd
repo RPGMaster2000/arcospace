@@ -301,7 +301,7 @@ func run() -> void:
 	check(
 		(
 			integration_view.systems_failure.remaining.enemy == -1
-			and Rules.offline_systems(integration_view._read_state("enemy")).size() == 1
+			and Rules.offline_systems(integration_view.ship_snapshot("enemy")).size() == 1
 		),
 		"A single real Disruption shutdown does not activate failure"
 	)

@@ -7,8 +7,8 @@ signal finished
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 const REPAIR_SHADER = preload("res://shaders/hull_repair.gdshader")
 const RIPPLE_SHADER = preload("res://shaders/shield_ripple.gdshader")
-const RESOURCES = ["materials", "energy", "crew"]
-const PRODUCTION = ["synthesizer", "reactor", "quarters"]
+const RESOURCES = preload("res://scripts/combat/ship_combat_state.gd").RESOURCES
+const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
 const COLORS = [Color(1, 0.35, 0.2), Color(0.25, 0.8, 1), Color(0.5, 1, 0.3)]
 ## TUNE: Set false to skip stat-change animations.
 @export var enabled: bool = true

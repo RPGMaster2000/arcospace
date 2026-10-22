@@ -26,6 +26,10 @@ const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 var player_ship_data: Resource
 var enemy_ship_data: Resource
 
+const ShipCombatState = preload("res://scripts/combat/ship_combat_state.gd")
+var _player_state = ShipCombatState.new()
+var _enemy_state = ShipCombatState.new()
+
 const MatchRules = preload("res://scripts/match_rules.gd")
 const CardEffects = preload("res://scripts/cards/card_effects.gd")
 # Assign the six editable scene card buttons in the Inspector.
@@ -43,8 +47,12 @@ const SystemsFailure = preload("res://scripts/combat/systems_failure.gd")
 var systems_failure = SystemsFailure.new()
 var result_cause: String = ""
 ## TUNE in Board3D Inspector: permanent capacity for each ship; excess is temporary plating.
-@export_range(1, 1000, 1) var player_hull_capacity: int = 30
-@export_range(1, 1000, 1) var enemy_hull_capacity: int = 30
+@export_range(1, 1000, 1) var player_hull_capacity: int = 30:
+	get: return _player_state.hull_capacity
+	set(value): _player_state.hull_capacity = value
+@export_range(1, 1000, 1) var enemy_hull_capacity: int = 30:
+	get: return _enemy_state.hull_capacity
+	set(value): _enemy_state.hull_capacity = value
 var current_actor: String = "player"
 var turn_number: int = 1
 var winner: String = ""
@@ -90,43 +98,75 @@ var resolving_card: bool = false
 
 #PLAYER
 ## TUNE: Starting hull for the player. Edit the board node in the Inspector if it has a saved override.
-@export var player_hull: int = 30
+@export var player_hull: int = 30:
+	get: return _player_state.hull
+	set(value): _player_state.hull = value
 ## TUNE: Starting shields for the player. Edit the board node in the Inspector if it has a saved override.
-@export var player_shields: int = 10
+@export var player_shields: int = 10:
+	get: return _player_state.shields
+	set(value): _player_state.shields = value
 
 ## TUNE: Starting materials for the player. Edit the board node in the Inspector if it has a saved override.
-@export var player_materials: int = 16
+@export var player_materials: int = 16:
+	get: return _player_state.materials
+	set(value): _player_state.materials = value
 ## TUNE: Starting energy for the player. Edit the board node in the Inspector if it has a saved override.
-@export var player_energy: int = 16
+@export var player_energy: int = 16:
+	get: return _player_state.energy
+	set(value): _player_state.energy = value
 ## TUNE: Starting crew for the player. Edit the board node in the Inspector if it has a saved override.
-@export var player_crew: int = 16
+@export var player_crew: int = 16:
+	get: return _player_state.crew
+	set(value): _player_state.crew = value
 
 ## TUNE: Starting materials gained each player turn. Edit the board node in the Inspector if it has a saved override.
-@export var player_synthesizer: int = 2
+@export var player_synthesizer: int = 2:
+	get: return _player_state.synthesizer
+	set(value): _player_state.synthesizer = value
 ## TUNE: Starting energy gained each player turn. Edit the board node in the Inspector if it has a saved override.
-@export var player_reactor: int = 2
+@export var player_reactor: int = 2:
+	get: return _player_state.reactor
+	set(value): _player_state.reactor = value
 ## TUNE: Starting crew gained each player turn. Edit the board node in the Inspector if it has a saved override.
-@export var player_quarters: int = 2
+@export var player_quarters: int = 2:
+	get: return _player_state.quarters
+	set(value): _player_state.quarters = value
 
 # ENEMY
 ## TUNE: Starting hull for the enemy. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_hull: int = 30
+@export var enemy_hull: int = 30:
+	get: return _enemy_state.hull
+	set(value): _enemy_state.hull = value
 ## TUNE: Starting shields for the enemy. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_shields: int = 10
+@export var enemy_shields: int = 10:
+	get: return _enemy_state.shields
+	set(value): _enemy_state.shields = value
 
 ## TUNE: Starting materials for the enemy. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_materials: int = 16
+@export var enemy_materials: int = 16:
+	get: return _enemy_state.materials
+	set(value): _enemy_state.materials = value
 ## TUNE: Starting energy for the enemy. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_energy: int = 16
+@export var enemy_energy: int = 16:
+	get: return _enemy_state.energy
+	set(value): _enemy_state.energy = value
 ## TUNE: Starting crew for the enemy. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_crew: int = 16
+@export var enemy_crew: int = 16:
+	get: return _enemy_state.crew
+	set(value): _enemy_state.crew = value
 
 ## TUNE: Starting materials gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_synthesizer: int = 2
+@export var enemy_synthesizer: int = 2:
+	get: return _enemy_state.synthesizer
+	set(value): _enemy_state.synthesizer = value
 ## TUNE: Starting energy gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_reactor: int = 2
+@export var enemy_reactor: int = 2:
+	get: return _enemy_state.reactor
+	set(value): _enemy_state.reactor = value
 ## TUNE: Starting crew gained each enemy turn. Edit the board node in the Inspector if it has a saved override.
-@export var enemy_quarters: int = 2
+@export var enemy_quarters: int = 2:
+	get: return _enemy_state.quarters
+	set(value): _enemy_state.quarters = value
 
 @onready var player_hull_label: Label = $PlayerHullLabel
 @onready var player_shields_label: Label = $PlayerShieldsLabel
@@ -274,30 +314,16 @@ func _ready() -> void:
 #region Battle state
 
 
-func _read_state(side: String) -> Dictionary:
-	var state: Dictionary = {}
-	for key in [
-		"hull",
-		"hull_capacity",
-		"shields",
-		"materials",
-		"energy",
-		"crew",
-		"synthesizer",
-		"reactor",
-		"quarters"
-	]:
-		state[key] = get(side + "_" + key)
-	return state
+func ship_snapshot(side: String) -> Dictionary:
+	return (_player_state if side == "player" else _enemy_state).snapshot()
 
 
-func _write_state(side: String, state: Dictionary) -> void:
-	for key in state:
-		set(side + "_" + key, state[key])
+func apply_ship_snapshot(side: String, state: Dictionary) -> void:
+	(_player_state if side == "player" else _enemy_state).apply_snapshot(state)
 
 
 func _both_states() -> Dictionary:
-	return {"player": _read_state("player"), "enemy": _read_state("enemy")}
+	return {"player": ship_snapshot("player"), "enemy": ship_snapshot("enemy")}
 
 
 static func permanent_damage(before: int, after: int, capacity: int) -> int:
@@ -343,8 +369,8 @@ func _begin_turn(side: String) -> void:
 				return
 		var announcement: String = modifier.begin_round(turn_number)
 		if modifier.kind == 1 and not announcement.is_empty():
-			var player: Dictionary = _read_state("player")
-			var enemy: Dictionary = _read_state("enemy")
+			var player: Dictionary = ship_snapshot("player")
+			var enemy: Dictionary = ship_snapshot("enemy")
 			announcement = modifier.asteroid_strike(player, enemy)
 			var report: Dictionary = {
 				"actor": maxi(0, before.player.hull - player.hull),
@@ -357,8 +383,8 @@ func _begin_turn(side: String) -> void:
 			var pending: Array[Dictionary] = _stage_overflow(
 				before, {"player": player, "enemy": enemy}, report, "player"
 			)
-			_write_state("player", player)
-			_write_state("enemy", enemy)
+			apply_ship_snapshot("player", player)
+			apply_ship_snapshot("enemy", enemy)
 			if pending.is_empty():
 				_apply_hull_report(report, "player", true)
 			else:
@@ -380,10 +406,10 @@ func _begin_turn(side: String) -> void:
 			ftl.begin_player_turn()
 			if was_offline and ftl.disabled_turns == 0:
 				$ModifierDisplay.ftl_online(ftl.can_warp())
-	var state: Dictionary = _read_state(side)
+	var state: Dictionary = ship_snapshot(side)
 	if winner.is_empty():
 		MatchRules.income(state)
-		_write_state(side, state)
+		apply_ship_snapshot(side, state)
 	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event)
 	resolving_card = battle_effects.busy or resolving_card
 	_check_winner()
@@ -477,7 +503,7 @@ func _sync_systems_failure() -> void:
 
 
 func _ai_state(side: String) -> Dictionary:
-	var state: Dictionary = _read_state(side)
+	var state: Dictionary = ship_snapshot(side)
 	state.systems_failure_remaining = systems_failure.remaining[side]
 	return state
 
@@ -502,8 +528,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	var before: Dictionary = _both_states()
 	var active_hand = hand if side == "player" else enemy_hand
 	var other: String = "enemy" if side == "player" else "player"
-	var actor: Dictionary = _read_state(side)
-	var target: Dictionary = _read_state(other)
+	var actor: Dictionary = ship_snapshot(side)
+	var target: Dictionary = ship_snapshot(other)
 	if discard:
 		actor[card.family] += int(floor(card.cost / 3.0))
 	else:
@@ -515,8 +541,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	)
 	var determined: Dictionary = {side: actor, other: target}
 	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
-	_write_state(side, actor)
-	_write_state(other, target)
+	apply_ship_snapshot(side, actor)
+	apply_ship_snapshot(other, target)
 	_sync_systems_failure()
 	if pending.is_empty():
 		_apply_hull_report(report, side, true)
@@ -789,8 +815,8 @@ func _display_snapshot() -> Dictionary:
 			}
 		)
 	return {
-		"player": _read_state("player"),
-		"enemy": _read_state("enemy"),
+		"player": ship_snapshot("player"),
+		"enemy": ship_snapshot("enemy"),
 		"enemy_name": enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship",
 		"enemy_subtitle": enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel",
 		"emp":
