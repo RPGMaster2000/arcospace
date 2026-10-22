@@ -82,14 +82,23 @@ func run() -> void:
 	for shield_hit in [false, true]:
 		tween = ship.create_tween()
 		ship.animate_hit(tween, true, 0.35)
+		# Sample the flash deterministically; a slow rendered frame can outlast it.
+		tween.pause()
+		tween.custom_step(0.07)
+		var shield_tween: Tween
 		if shield_hit:
-			ship.animate_shield(ship.create_tween(), 0.35)
-		await create_timer(0.07).timeout
+			shield_tween = ship.create_tween()
+			ship.animate_shield(shield_tween, 0.35)
+			shield_tween.pause()
+			shield_tween.custom_step(0.07)
 		check(
 			ship.hull_material.albedo_color != ship.base_color,
 			"Hull flash appears for hull/combined damage"
 		)
 		await capture("combined-hit" if shield_hit else "hull-hit")
+		tween.play()
+		if shield_tween != null:
+			shield_tween.play()
 		await tween.finished
 		await process_frame
 		check(

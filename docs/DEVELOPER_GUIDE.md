@@ -9,6 +9,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [I want to change X — where do I start?](#i-want-to-change-x--where-do-i-start)
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
+- [Shared local and CI regression runner](regression_testing.md)
 - [Architectural observations](#architectural-observations)
 
 ## Quick orientation
