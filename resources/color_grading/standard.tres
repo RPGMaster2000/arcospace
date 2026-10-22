@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BattlefieldGradePreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/visual/battlefield_grade_preset.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+strength = 0.65
+shadow_tint = Color(0.94, 0.98, 1.05, 1)
+midtone_tint = Color(0.98, 1.015, 1.025, 1)
+highlight_tint = Color(1.045, 1.025, 0.99, 1)
+shadow_brightness = 1.05
+midtone_brightness = 1.015
+highlight_brightness = 1.02
+contrast = 1.07
+saturation = 0.98
+vibrance = 0.025
+shadow_saturation = 0.94

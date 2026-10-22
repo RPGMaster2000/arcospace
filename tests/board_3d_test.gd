@@ -27,6 +27,7 @@ func run() -> void:
 	for strength in [20, 10, 5, 1, 0]:
 		enemy.set_shield_strength(strength)
 		check(is_equal_approx(float(enemy.shield_material.get_shader_parameter("strength")), minf(strength / 10.0, 1.0)), "Shield opacity must follow strength below ten")
+	var enemy_rest_position: Vector3 = enemy.body.position
 	var before: Dictionary = board._both_states()
 	board.enemy_hull -= 3
 	fx.play_changes(before, board._both_states(), "", "", 0, true)
@@ -37,7 +38,7 @@ func run() -> void:
 	await fx.finished
 	await process_frame
 	check(enemy.get_node("Body/Hull").get_child_count() == 0, "Explosions must clean up")
-	check(enemy.body.position == Vector3.ZERO, "Recoil must restore position")
+	check(enemy.body.position.is_equal_approx(enemy_rest_position), "Recoil must restore authored position")
 	check(enemy.hull_material.albedo_color == enemy.base_color, "Hull tint must restore")
 	before = board._both_states()
 	board.enemy_shields = 5

@@ -1,0 +1,95 @@
+{
+  "engine": "Godot 4.7.2",
+  "results": [
+    {
+      "adapter": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "battle_viewport": "(1280, 395)",
+      "blocks": [
+        {
+          "grading": "off",
+          "mean_frame_ms": 43.8815
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 41.85875
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 43.3291666666667
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 41.3425416666667
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 42.22125
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 41.9804166666667
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 55.1730833333333
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 43.0365
+        }
+      ],
+      "frames_per_block": 24,
+      "renderer": "mobile",
+      "scaling_3d": 2.0,
+      "viewport": "(1280, 720)",
+      "median_off_ms": 42.628874999999994,
+      "median_on_ms": 42.654791666666696,
+      "observed_change_ms": 0.02591666666670278
+    },
+    {
+      "adapter": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "battle_viewport": "(1280, 395)",
+      "blocks": [
+        {
+          "grading": "off",
+          "mean_frame_ms": 47.6502916666667
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 41.0217916666667
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 44.2097083333333
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 48.8785833333333
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 43.1935416666667
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 40.8268333333333
+        },
+        {
+          "grading": "on",
+          "mean_frame_ms": 38.9289166666667
+        },
+        {
+          "grading": "off",
+          "mean_frame_ms": 40.3008333333333
+        }
+      ],
+      "frames_per_block": 24,
+      "renderer": "gl_compatibility",
+      "scaling_3d": 2.0,
+      "viewport": "(1280, 720)",
+      "median_off_ms": 45.421916666666704,
+      "median_on_ms": 40.9243125,
+      "observed_change_ms": -4.497604166666704
+    }
+  ]
+}

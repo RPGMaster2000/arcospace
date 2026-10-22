@@ -68,6 +68,7 @@ func _enter_tree() -> void:
 			model.transform = location * model.transform
 			battlefield.add_child(model)
 	viewport.add_child(battlefield)
+	$BattleView.set_environment(selection)
 
 
 var backdrop_scale: Vector3

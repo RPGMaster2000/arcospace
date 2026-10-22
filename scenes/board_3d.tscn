@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://b8oky8vk8op0d" path="res://scenes/board.tscn" id="Board"]
 [ext_resource type="Script" uid="uid://dei73i6ba80u3" path="res://scripts/board_3d.gd" id="Script"]
 
+[ext_resource type="Script" path="res://scripts/visual/battlefield_grading.gd" id="BattleGrade"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6scva"]
 bg_color = Color(0.16, 0.088, 0.08, 1)
 border_width_left = 2
@@ -163,6 +165,7 @@ anchor_bottom = 1.0
 offset_bottom = -325.0
 mouse_filter = 2
 stretch = true
+script = ExtResource("BattleGrade")
 
 [node name="Viewport" type="SubViewport" parent="BattleView" index="0" unique_id=810749420]
 own_world_3d = true
