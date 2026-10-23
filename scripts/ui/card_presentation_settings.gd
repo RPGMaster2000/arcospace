@@ -30,3 +30,12 @@ class_name CardPresentationSettings
 @export var preview_transition: Tween.TransitionType = Tween.TRANS_CUBIC
 @export_range(0, 40) var preview_inspect_spacing: float = 8.0
 @export_range(0.0, 1.0) var preview_fade_duration: float = 0.12
+
+@export_group("Tactical target highlights")
+@export_range(0.2, 5.0) var target_pulse_duration: float = 1.6
+@export_range(0, 1) var target_pulse_intensity: float = 0.5
+@export var target_positive: Color = Color(0.2, 0.95, 0.75)
+@export var target_negative: Color = Color(1.0, 0.35, 0.12)
+@export var target_uncertain: Color = Color(1.0, 0.72, 0.2)
+@export var target_cost: Color = Color(0.8, 0.85, 0.9)
+@export var reduced_preview_animation: bool = false

@@ -77,6 +77,9 @@ func _init(board_view: Control) -> void:
 	tactical = preload("res://scripts/ui/tactical_preview.gd").new()
 	tactical.name = "TacticalPreview"
 	board_view.add_child(tactical)
+	for side in ["player", "enemy"]:
+		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
+			tactical.indicators[side + "_" + attribute] = nodes[side + "_" + attribute + "_label"]
 	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade, board_view.get_node("ModifierDisplay/Meter").details.shade])
 
 

@@ -260,10 +260,14 @@ func test_battle() -> void:
 	touch(point,true)
 	await create_timer(.48).timeout
 	touch(point,false)
-	check(overlay().is_open(),"Real combat hand hold works while card is unaffordable")
+	check(board.hud.tactical.source == card and not overlay().is_open(),"Unaffordable combat card holds into tactical preview")
+	board.hud.tactical.open_inspection()
+	await create_timer(.25).timeout
+	check(overlay().is_open(), "Inspect opens existing full overlay from unaffordable preview")
 	check(JSON.stringify([board._both_states(),board.turn_number,board.current_actor,board.hand.cards,board.salvage])==before,"Combat inspection never spends, discards, draws or advances turn")
 	await capture("combat")
 	overlay().dismiss(true)
+	board.hud.tactical.dismiss(true)
 	# A pending hold changing to another card cancels release activation on the new identity too.
 	var old_card: Resource=card.card_data
 	touch(point,true)

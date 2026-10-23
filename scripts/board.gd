@@ -826,6 +826,7 @@ func _display_snapshot() -> Dictionary:
 		"cards": shown_cards,
 		"effects_busy": battle_effects.busy,
 		"shields_disabled": modifier.shields_disabled(),
+		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
 		"repair_limit": _repair_spend_limit(),
 		"repair_unit_cost": RESULT_SALVAGE_PER_HULL,
 		"rewards_text": victory_description(),

@@ -1,6 +1,11 @@
 extends Control
 # RESPONSIBILITY: Own one temporary raised hand card; never execute a combat action.
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
+const Targets = preload("res://scripts/cards/card_targets.gd")
+var indicators: Dictionary = {}
+var targets: Dictionary = {}
+var target_context: String = ""
+var pulse_time: float = 0.0
 var cards: Array[Control] = []
 var source: Control
 var adapter: Node
@@ -43,6 +48,7 @@ func update_context(data: Dictionary) -> void:
 		if data.current_actor != "player" or not data.winner.is_empty() or data.resolving_card or data.effects_busy or data.turn_number != context.get("turn_number", data.turn_number):
 			dismiss()
 	context = data
+	if valid(): refresh_targets()
 
 
 func valid() -> bool:
@@ -72,6 +78,7 @@ func present(hold: Node) -> void:
 	origin = source.position
 	saved_z = source.z_index
 	signature = fingerprint(source.card_data)
+	refresh_targets()
 	source.z_index = 40
 	var height: float = source.size.y * source.scale.y
 	var target: Vector2 = origin - Vector2(0, height * settings.preview_raise_fraction)
@@ -113,10 +120,15 @@ func dismiss(immediate: bool = false) -> void:
 				if is_instance_valid(card): card.z_index = lowering[card].z
 				lowering.erase(card))
 	source = null
+	targets.clear()
+	target_context = ""
 	queue_redraw()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if source != null:
+		pulse_time += delta
+		queue_redraw()
 	if source == null: return
 	if not valid():
 		dismiss()
@@ -172,3 +184,28 @@ func _exit_tree() -> void:
 			card.position = lowering[card].origin
 			card.z_index = lowering[card].z
 	lowering.clear()
+
+
+func refresh_targets() -> void:
+	var stamp: String = signature + str(context.player) + str(context.enemy) + str(context.get("nebula_miss_rate", 0)) + str(context.shields_disabled)
+	if stamp == target_context: return
+	target_context = stamp
+	targets = Targets.analyze(source.card_data, context)
+	inspect.tooltip_text = "Cost: %d %s%s. + gain; − loss; ? uncertain; $ payment." % [source.card_data.cost, source.card_data.family, " (unaffordable)" if context.player[source.card_data.family] < source.card_data.cost else ""]
+
+
+func _draw() -> void:
+	if source == null or settings == null: return
+	var pulse: float = 1.0 if settings.reduced_preview_animation else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
+	var colors: Dictionary = {"positive": settings.target_positive, "negative": settings.target_negative, "uncertain": settings.target_uncertain, "cost": settings.target_cost}
+	var symbols: Dictionary = {"positive": "+", "negative": "−", "uncertain": "?", "cost": "$"}
+	for key in targets:
+		if not indicators.has(key): continue
+		var control: Control = indicators[key]
+		var rect: Rect2 = control.get_global_rect().grow(4)
+		for index in range(targets[key].size()):
+			var meaning: String = targets[key][index]
+			var color: Color = colors[meaning]
+			color.a = 0.5 + pulse * settings.target_pulse_intensity * 0.5
+			draw_rect(rect.grow(index * 3), color, false, 2)
+			draw_string(ThemeDB.fallback_font, rect.position + Vector2(index * 13, -3), symbols[meaning], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
