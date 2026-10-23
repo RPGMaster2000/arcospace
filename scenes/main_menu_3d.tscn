@@ -1,0 +1,137 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/main_menu_3d.gd" id="Script"]
+[ext_resource type="Shader" path="res://shaders/space_background.gdshader" id="Space"]
+[ext_resource type="Shader" path="res://shaders/planet_surface.gdshader" id="Planet"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.004, 0.008, 0.02, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.46, 0.6, 0.8, 1)
+ambient_light_energy = 0.65
+
+[sub_resource type="ShaderMaterial" id="SpaceMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("Space")
+shader_parameter/space_color = Color(0.006, 0.012, 0.028, 1)
+shader_parameter/cloud_color = Color(0.08, 0.17, 0.25, 1)
+shader_parameter/accent_color = Color(0.13, 0.11, 0.22, 1)
+shader_parameter/cloud_intensity = 0.38
+shader_parameter/cloud_scale = 4.0
+shader_parameter/animation_speed = 0.005
+shader_parameter/star_density = 0.25
+shader_parameter/star_brightness = 0.85
+shader_parameter/variation_seed = 7.0
+
+[sub_resource type="SphereMesh" id="SpaceSphere"]
+radius = 150.0
+height = 300.0
+radial_segments = 32
+rings = 16
+
+[sub_resource type="ShaderMaterial" id="PlanetMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("Planet")
+shader_parameter/ocean_color = Color(0.025, 0.08, 0.14, 1)
+shader_parameter/land_color = Color(0.12, 0.23, 0.27, 1)
+shader_parameter/rim_intensity = 0.15
+
+[sub_resource type="SphereMesh" id="PlanetSphere"]
+radius = 11.0
+height = 22.0
+radial_segments = 48
+rings = 24
+
+[sub_resource type="SystemFont" id="LogoFont"]
+font_names = PackedStringArray("Eurostile", "Microgramma", "Bank Gothic", "DejaVu Sans")
+font_weight = 800
+font_stretch = 150
+
+[node name="MainMenu3D" type="Node3D" node_paths=PackedStringArray("title_anchor", "selection_anchor")]
+script = ExtResource("Script")
+title_anchor = NodePath("TitleView")
+selection_anchor = NodePath("ShipSelectionView")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Space" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("SpaceSphere")
+material_override = SubResource("SpaceMaterial")
+
+[node name="Planet" type="MeshInstance3D" parent="."]
+position = Vector3(-28, 8, -22)
+cast_shadow = 0
+mesh = SubResource("PlanetSphere")
+material_override = SubResource("PlanetMaterial")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-35, -30, 0)
+light_color = Color(0.85, 0.93, 1, 1)
+light_energy = 1.5
+shadow_enabled = false
+
+[node name="Rim" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(20, 130, 0)
+light_color = Color(0.2, 0.6, 0.9, 1)
+light_energy = 0.6
+shadow_enabled = false
+
+[node name="TitleView" type="Marker3D" parent="."]
+
+[node name="ShipSelectionView" type="Marker3D" parent="."]
+position = Vector3(0, -3.3, 0)
+rotation_degrees = Vector3(-8, 90, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+fov = 45.0
+far = 200.0
+
+[node name="Fleet" type="Node3D" parent="."]
+position = Vector3(-12, 0, 0)
+
+[node name="Title" type="CanvasLayer" parent="."]
+
+[node name="Logo" type="Control" parent="Title"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -60.0
+offset_bottom = 60.0
+mouse_filter = 2
+
+[node name="Text" type="Label" parent="Title/Logo"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.86, 0.95, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.3, 0.5, 1)
+theme_override_constants/shadow_offset_y = 3
+theme_override_fonts/font = SubResource("LogoFont")
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Image" type="TextureRect" parent="Title/Logo"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Prompt" type="Label" parent="Title"]
+anchor_right = 1.0
+offset_top = -20.0
+offset_bottom = 20.0
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Curtain" type="ColorRect" parent="Title"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
