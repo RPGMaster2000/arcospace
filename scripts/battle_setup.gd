@@ -1,4 +1,6 @@
 extends Control
+
+const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Select a profile and use the existing new-run/Continue pathways.
 # Presentation owns camera and cinematic timing; persistence owns disk data.
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
@@ -143,7 +145,7 @@ func _navigate(direction: int) -> void:
 		var previous: int = selected_ship
 		_select(selected_ship + direction)
 		if selected_ship != previous:
-			Sfx.play_event(&"ui_select", self)
+			Sound.play(&"ui_select", self)
 
 
 func _input(event: InputEvent) -> void:

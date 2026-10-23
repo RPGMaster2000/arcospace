@@ -1,4 +1,6 @@
 extends Control
+
+const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
 # DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 # EXTEND: Route choices to State; _clear resets UI only, never the expedition ledger.
@@ -946,7 +948,7 @@ func _card_text(card: Resource) -> String:
 
 func _choose_card(index: int) -> void:
 	if state.choose_card(index):
-		Sfx.play_event(&"upgrade_acquired", self)
+		Sound.play(&"upgrade_acquired", self)
 		_purchase_finished()
 
 
@@ -992,13 +994,13 @@ func _confirm_card(card: Resource) -> void:
 
 func _upgrade(key: String) -> void:
 	if state.choose_upgrade(key):
-		Sfx.play_event(&"upgrade_acquired", self)
+		Sound.play(&"upgrade_acquired", self)
 		show_outcome()
 
 
 func _attribute(key: String) -> void:
 	if state.choose_attribute(key):
-		Sfx.play_event(&"upgrade_acquired", self)
+		Sound.play(&"upgrade_acquired", self)
 		_purchase_finished()
 
 

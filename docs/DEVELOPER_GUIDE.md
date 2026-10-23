@@ -590,3 +590,10 @@ baseline and cleaned revision both passed in isolation; no test/timing adjustmen
 Existing MP3 shutdown warnings remain. Godot import and formatting checks pass; the 105
 relative documentation file links resolve. Local Android APK export/device testing was not
 performed. No runtime or export dependencies were added.
+
+## Replaceable SFX
+
+See [sound_effects.md](sound_effects.md) for event mappings, volume/mixing,
+Inspector replacement (`resources/audio/sound_catalog.tres` → Events → Streams),
+scene ownership, regeneration and audio regression tests. Presentation requests
+stable sound IDs; combat rules and the existing Music transition owner are separate.

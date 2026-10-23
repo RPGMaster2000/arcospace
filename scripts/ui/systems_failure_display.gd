@@ -1,4 +1,6 @@
 extends Control
+
+const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Compact warnings from the authoritative failure snapshot; no timers or rules.
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var columns: Dictionary = {}
@@ -50,9 +52,9 @@ func refresh(status: Dictionary) -> void:
 		var data: Dictionary = status[side]
 		var active_now: bool = data.remaining >= 0 and not data.offline.is_empty()
 		if active_now and not _active[side]:
-			Sfx.play_event(&"systems_failure_warning", self)
+			Sound.play(&"systems_failure_warning", self)
 		elif not active_now and _active[side]:
-			Sfx.play_event(&"production_gain", self)
+			Sound.play(&"production_gain", self)
 		_active[side] = active_now
 		columns[side].visible = active_now
 		counts[side].text = "%d TURNS REMAINING" % maxi(0, data.remaining)

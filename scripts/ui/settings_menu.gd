@@ -26,12 +26,14 @@ var _previous_focus: Control
 var _was_paused: bool = false
 var _owns_pause: bool = false
 var _music: Node
+var _sfx: Node
 
 
 func _ready() -> void:
 	layer = 220
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_music = get_node("/root/Music")
+	_sfx = get_node("/root/Sfx")
 	shade = ColorRect.new()
 	shade.color = Color(0, 0, 0, 0.8)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -56,6 +58,7 @@ func _ready() -> void:
 	header.add_child(close_button)
 	close_button.pressed.connect(dismiss)
 	var scroll := ScrollContainer.new()
+	scroll.follow_focus = true
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	column.add_child(scroll)
@@ -76,7 +79,7 @@ func _ready() -> void:
 	extra_settings.add_theme_constant_override("separation", 14)
 	body.add_child(extra_settings)
 	music_volume = _volume_slider("Music Volume", _music.volume, _music.set_volume)
-	sfx_volume = _volume_slider("Sound Effects Volume (0 = mute)", Sfx.volume, Sfx.set_volume)
+	sfx_volume = _volume_slider("Sound Effects Volume (0 = mute)", _sfx.volume, _sfx.set_volume)
 	cinematics_toggle = CheckButton.new()
 	cinematics_toggle.text = "Skip Cinematics"
 	cinematics_toggle.custom_minimum_size.y = 52
@@ -161,7 +164,7 @@ func present() -> void:
 	_sync_music(_music.enabled)
 	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
 	music_volume.set_value_no_signal(_music.volume)
-	sfx_volume.set_value_no_signal(Sfx.volume)
+	sfx_volume.set_value_no_signal(_sfx.volume)
 	shade.show()
 	_fit()
 	close_button.grab_focus()

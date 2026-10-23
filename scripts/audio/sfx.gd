@@ -71,7 +71,14 @@ func play_event(event_id: StringName, scope: Node) -> bool:
 		if player.get_meta(&"event", &"") == event_id:
 			count += 1
 		if int(player.get_meta(&"priority", 0)) < event.priority:
-			if victim == null or int(player.get_meta(&"priority")) < int(victim.get_meta(&"priority")) or (int(player.get_meta(&"priority")) == int(victim.get_meta(&"priority")) and float(player.get_meta(&"started")) < float(victim.get_meta(&"started"))):
+			if (
+				victim == null
+				or int(player.get_meta(&"priority")) < int(victim.get_meta(&"priority"))
+				or (
+					int(player.get_meta(&"priority")) == int(victim.get_meta(&"priority"))
+					and float(player.get_meta(&"started")) < float(victim.get_meta(&"started"))
+				)
+			):
 				victim = player
 	if count >= event.concurrency_limit:
 		return false
@@ -79,7 +86,14 @@ func play_event(event_id: StringName, scope: Node) -> bool:
 	if voice == null:
 		return false
 	voice.stop()
-	voice.stream = streams[_rng.randi_range(0, streams.size() - 1)]
+	# A lightweight stream duplicate shares PCM data until modified. Force imported
+	# WAV/OGG/MP3 replacements to one-shot without mutating the catalog resource.
+	var stream: AudioStream = streams[_rng.randi_range(0, streams.size() - 1)].duplicate()
+	if stream is AudioStreamWAV:
+		stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	elif stream is AudioStreamOggVorbis or stream is AudioStreamMP3:
+		stream.loop = false
+	voice.stream = stream
 	voice.volume_db = event.volume_db
 	voice.pitch_scale = event.pitch_scale * (1.0 + _rng.randf_range(-event.pitch_variation, event.pitch_variation))
 	voice.set_meta(&"event", event_id)
@@ -112,15 +126,45 @@ func stop_all() -> void:
 
 
 # Opt-in binding at shared UI factories; no tree-wide scanning or generic event bus.
-# Specialized controls can pass an empty confirm event to avoid duplicate action cues.
-func bind_button(button: BaseButton, confirm: StringName = &"ui_confirm") -> void:
+func bind_button(button: BaseButton) -> void:
 	if button.has_meta(&"sfx_bound"):
 		return
 	button.set_meta(&"sfx_bound", true)
 	button.mouse_entered.connect(func():
-		if not button.disabled: play_event(&"ui_select", button))
+		if not button.disabled: _play_ui(&"ui_select", button))
 	button.focus_entered.connect(func():
-		if not button.disabled: play_event(&"ui_select", button))
-	if confirm != &"":
-		button.pressed.connect(func():
-			if not button.disabled: play_event(confirm, button))
+		if not button.disabled: _play_ui(&"ui_select", button))
+	# pressed already passed the input/disabled guard; an action may disable its button.
+	button.pressed.connect(func(): _play_ui(&"ui_confirm", button))
+
+
+func _play_ui(event_id: StringName, button: BaseButton) -> void:
+	if not button.is_inside_tree():
+		return
+	# A rebuilt panel must not cut off its confirmation; the screen owns UI tails.
+	var screen: Node = button.get_tree().current_scene
+	play_event(event_id, screen if is_instance_valid(screen) else button)
+
+
+# Explicit gateway also works when SceneTree regression scripts preload presentation code
+# before autoload names are registered. No gameplay state or file paths cross this boundary.
+static func play(event_id: StringName, scope: Node) -> bool:
+	if not is_instance_valid(scope) or not scope.is_inside_tree():
+		return false
+	var service: Node = scope.get_node_or_null("/root/Sfx")
+	return service.play_event(event_id, scope) if service != null else false
+
+
+static func bind_ui(button: BaseButton) -> void:
+	var bind := func():
+		var service: Node = button.get_node_or_null("/root/Sfx")
+		if service != null:
+			service.bind_button(button)
+	if button.is_node_ready():
+		bind.call()
+	else:
+		button.ready.connect(bind, CONNECT_ONE_SHOT)
+
+
+func _exit_tree() -> void:
+	stop_all()

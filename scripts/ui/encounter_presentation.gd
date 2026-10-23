@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Sound = preload("res://scripts/audio/sfx.gd")
+
 # RESPONSIBILITY: Share encounter glyphs, colors, fonts and control styling.
 # Presentation only: replace glyphs here later without touching encounter logic.
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
@@ -121,7 +123,7 @@ static func style(accent: Color, selected: bool = false, muted: bool = false) ->
 
 static func action(button: Button, primary: bool = false) -> void:
 	if not Engine.is_editor_hint():
-		Sfx.bind_button(button)
+		Sound.bind_ui(button)
 	var focus = style(COLORS.special, true)
 	focus.bg_color = Color(0, 0, 0, 0)
 	focus.border_color = Color("98c6ef")

@@ -1,4 +1,6 @@
 extends RefCounted
+
+const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Render combat HUD/results and fit generic 2D controls.
 # DOES NOT: Advance turns, record rewards, choose encounters or modify combat state.
 # EXTEND: Add display facts to Board._display_snapshot(), then update the relevant refresh method.
@@ -171,9 +173,9 @@ func refresh_results(data: Dictionary) -> void:
 	)
 	if visible_now and not result_visible:
 		if data.result_cause == "systems_failure":
-			Sfx.play_event(&"systems_failure_defeat", nodes["MatchResult"])
+			Sound.play(&"systems_failure_defeat", nodes["MatchResult"])
 		elif data.winner == "player" and not data.escaped_by_ftl:
-			Sfx.play_event(&"result_reveal", nodes["MatchResult"])
+			Sound.play(&"result_reveal", nodes["MatchResult"])
 		Effects.reveal(
 			heading,
 			visual_settings,
@@ -232,12 +234,12 @@ func refresh_emp(data: Dictionary) -> void:
 	var scope: Node = nodes["FTLPanel/WarpButton"]
 	var ready_now: bool = data.emp.can_warp and data.winner.is_empty()
 	if data.escaped_by_ftl and not _emp_fired:
-		Sfx.play_event(&"emp_fire", scope)
+		Sound.play(&"emp_fire", scope)
 		_emp_fired = true
 	elif ready_now and not _emp_ready:
-		Sfx.play_event(&"emp_ready", scope)
+		Sound.play(&"emp_ready", scope)
 	elif _emp_charge >= 0 and data.emp.charge > _emp_charge and data.emp.disabled_turns == 0 and data.winner.is_empty():
-		Sfx.play_event(&"emp_charge", scope)
+		Sound.play(&"emp_charge", scope)
 	_emp_charge = data.emp.charge
 	_emp_ready = ready_now
 	var ftl_status: String = "EMP Pulse %d / %d" % [data.emp.charge, data.emp.charge_target]
