@@ -124,6 +124,10 @@ func run() -> void:
 		await process_frame
 	# Exercise real setup controls, board initialization and round flow.
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
+	var save = preload("res://scripts/persistence/expedition_save.gd").new()
+	save.path = "user://combat_modifier_test.json"
+	save.clear_run()
+	setup.save_store = save
 	root.add_child(setup)
 	setup._select(2)
 	var board = load("res://scenes/board_3d.tscn").instantiate()
@@ -165,6 +169,8 @@ func run() -> void:
 	board._return_to_setup()
 	await process_frame
 	var returned = current_scene
+	returned.save_store = save
+	returned.saved_run.clear()
 	check(returned.selected_ship == 2, "Return to setup preserves ship selection")
 	returned.showcase.skip_cinematics = true
 	returned.showcase._stop_tween()
@@ -175,9 +181,12 @@ func run() -> void:
 	returned.white_fade_duration = 0.001
 	returned.map_reveal_duration = 0.001
 	returned.start_button.pressed.emit()
-	for frame in range(8): await process_frame
+	for frame in range(120):
+		if current_scene != returned: break
+		await process_frame
 	var restarted = current_scene
 	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ships/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")
+	save.clear_run()
 	restarted.queue_free()
 	setup.queue_free()
 	await process_frame

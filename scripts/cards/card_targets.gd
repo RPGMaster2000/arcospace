@@ -14,7 +14,7 @@ static func analyze(card: Resource, context: Dictionary) -> Dictionary:
 		actor.shields = 0
 		enemy.shields = 0
 	var uncertain: bool = context.get("nebula_miss_rate", 0) > 0 and Modifier.is_combat(card.effects)
-	visit(card.effects, card.family, actor, enemy, result, uncertain, flare)
+	visit(card.effects, card.family, actor, enemy, result, uncertain, flare, true)
 	if card.cost > 0:
 		var key: String = "player_" + card.family
 		if not result.has(key): result[key] = []
@@ -34,7 +34,7 @@ static func damage(result: Dictionary, side: String, state: Dictionary, amount: 
 	mark(result, side, "shields", -blocked, uncertain)
 	mark(result, side, "hull", -(amount - blocked), uncertain)
 
-static func visit(effects: Dictionary, family: String, actor: Dictionary, enemy: Dictionary, result: Dictionary, uncertain: bool, flare: bool) -> void:
+static func visit(effects: Dictionary, family: String, actor: Dictionary, enemy: Dictionary, result: Dictionary, uncertain: bool, flare: bool, top_level: bool = false) -> void:
 	for key in ATTRIBUTES:
 		if key != "shields" or not flare:
 			mark(result, "player", key, float(effects.get(key, 0)), uncertain)
@@ -71,7 +71,7 @@ static func visit(effects: Dictionary, family: String, actor: Dictionary, enemy:
 		mark(result, "enemy", "shields", -difference, uncertain)
 		target.shields = actor.shields
 	damage(result, "enemy", target, effects.get("damage", 0), effects.get("pierce", 0.0), uncertain, flare)
-	mark(result, "player", "hull", -float(effects.get("self_damage", 0)), false)
+	mark(result, "player", "hull", -float(effects.get("self_damage", 0)), uncertain and not top_level)
 	damage(result, "player", actor, effects.get("self_damage_regular", 0), 0.0, uncertain, flare)
 	var collapse: Dictionary = effects.get("shield_collapse", {})
 	if not collapse.is_empty() and enemy.shields >= collapse.get("threshold", 10):

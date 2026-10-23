@@ -52,7 +52,7 @@ func _ready() -> void:
 	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 	settings_option = _entry(column, "Settings", menu.present)
-	info_option = _entry(column, "Game Information", information.show_legend)
+	info_option = _entry(column, "GAME REFERENCE", information.show_legend)
 	close_button = _entry(column, "Close", func(): pass)
 	pressed.connect(
 		func():

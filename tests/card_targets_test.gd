@@ -52,6 +52,24 @@ func _initialize() -> void:
 	data = Targets.analyze(modifier.preview(energy),context)
 	check(data.has("enemy_hull") and data.has("enemy_shields"), "Ion effective damage reaches through Shields")
 	modifier.free()
+	data = preview({"random_gain_other":3},context)
+	check(data.has("player_materials") and data.has("player_crew") and data.player_energy == ["cost"], "Other-resource bonus excludes cost family")
+	data = preview({"shields":4,"crew":2,"synthesizer":1},context)
+	check(data.player_shields == ["positive"] and data.player_crew == ["positive"] and data.player_synthesizer == ["positive"], "Multi-attribute gains preserve precise categories")
+	data = preview({"drain":{"crew":3}},context)
+	check(data.enemy_crew == ["negative"] and not data.has("player_crew"), "Drain never implies a gain")
+	context.enemy.crew = 20
+	data = preview({"swap_resource":"crew"},context)
+	check(data.player_crew == ["positive"] and data.enemy_crew == ["negative"], "Reserve swap uses paid snapshot")
+	context.enemy.shields = 8
+	data = preview({"swap_shields":true},context)
+	check(data.player_shields == ["positive"] and data.enemy_shields == ["negative"], "Shield swap shows both directions")
+	data = preview({"self_damage":3},context)
+	check(data.player_hull == ["negative"] and not data.has("player_shields"), "Direct self-damage targets Hull")
+	data = preview({"break_shields":8,"damage":2},context)
+	check(data.enemy_shields == ["negative"] and data.enemy_hull == ["negative"], "Shield breaking precedes ordinary damage")
+	data = preview({"random_gain":2,"conditional":{"attribute":"crew","threshold":10,"then":{"hull":2},"else":{"shields":3}}},context)
+	check(data.player_hull == ["uncertain"] and data.player_shields == ["uncertain"], "Random precursor makes conditional alternatives uncertain")
 	var before: String = str(context)
 	var rng_state: int = Effects.combat_rng.state
 	for card in Cards.CARDS:

@@ -153,7 +153,7 @@ offset_left = -170.0
 offset_top = 12.0
 offset_right = -76.0
 offset_bottom = 60.0
-text = "Legend"
+text = "GAME REFERENCE"
 
 [node name="Transition" type="ColorRect" parent="."]
 visible = false

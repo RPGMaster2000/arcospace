@@ -127,8 +127,9 @@ func _hold() -> void:
 		_inspect()
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_I and (source.has_focus() or (footer != null and footer.has_focus())):
+func _unhandled_input(event: InputEvent) -> void:
+	var requested: bool = (event is InputEventKey and event.pressed and event.keycode == KEY_I) or (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_Y)
+	if requested and (source.has_focus() or (footer != null and footer.has_focus())):
 		_hold()
 		get_viewport().set_input_as_handled()
 
@@ -144,6 +145,7 @@ func _inspect() -> void:
 		return
 	activated = true
 	_reset_buttons()
+	if is_instance_valid(preview) and preview.source != source: preview.dismiss(true)
 	overlay().present(source, rendering, settings)
 
 

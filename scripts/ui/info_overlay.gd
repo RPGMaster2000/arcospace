@@ -35,7 +35,8 @@ func _ready() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
 	body = RichTextLabel.new()
-	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.mouse_filter = Control.MOUSE_FILTER_PASS
+	body.meta_clicked.connect(func(section): show_reference(str(section)))
 	body.bbcode_enabled = true
 	body.fit_content = true
 	body.scroll_active = false
@@ -75,16 +76,12 @@ func show_text(value: String) -> void:
 
 
 func show_legend() -> void:
-	var lines: Array[String] = ["[font_size=28][b]Icon legend[/b][/font_size]"]
-	var keys: Array = Presentation.MEANINGS.keys()
-	for key in Presentation.ICONS:
-		if not keys.has(key):
-			keys.append(key)
-	for key in keys:
-		lines.append(
-			Presentation.icon(key, body.get_theme_default_font()) + "  " + Presentation.meaning(key)
-		)
-	show_text("\n".join(lines))
+	show_reference()
+
+
+func show_reference(section: String = "") -> void:
+	show_text(preload("res://scripts/ui/game_reference.gd").text(body.get_theme_default_font(), section))
+	body.get_parent().scroll_vertical = 0
 	desired_height = 560
 	_fit()
 

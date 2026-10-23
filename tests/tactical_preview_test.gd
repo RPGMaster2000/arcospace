@@ -36,6 +36,9 @@ func run() -> void:
 		var neighbor: Vector2 = other.position
 		var state: String = str(board._both_states())
 		var rng_state: int = board.modifier.rng.state
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://.godot/testlogs/tactical-normal-%d.png" % dimensions.x)
 		var point: Vector2 = card.get_global_rect().get_center()
 		pointer(point, true)
 		await create_timer(0.55).timeout
@@ -46,9 +49,15 @@ func run() -> void:
 		check(other.position == neighbor and card.z_index > other.z_index, "Neighbors stay still; selected card draws above them")
 		check(str(board._both_states()) == state and board.modifier.rng.state == rng_state, "Hold/release changes neither state nor RNG")
 		check(preview.inspect.visible and root.get_visible_rect().encloses(preview.inspect.get_global_rect()), "Inspect touch target fits viewport")
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://.godot/testlogs/tactical-preview-%d.png" % dimensions.x)
 		preview.open_inspection()
 		await wait_motion()
 		var full = root.get_node("CardInspection")
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://.godot/testlogs/tactical-inspection-%d.png" % dimensions.x)
 		check(full.is_open() and full.current_card == card.card_data, "Reuses full card inspector")
 		full.dismiss(true)
 		await wait_motion()
@@ -63,6 +72,52 @@ func run() -> void:
 		pointer(Vector2(640, 30), false)
 		await wait_motion()
 		check(preview.source == null and str(board._both_states()) == state, "Outside tap dismisses without action")
+		# A short tap on a neighboring card dismisses only and cannot leave a hold timer.
+		card.hold_input._hold()
+		await wait_motion()
+		point = other.get_global_rect().get_center()
+		pointer(point, true)
+		pointer(point, false)
+		await create_timer(0.6).timeout
+		check(preview.source == null and str(board._both_states()) == state, "Short outside-card tap never creates a delayed preview or plays")
+		card.hold_input._hold()
+		await wait_motion()
+		var cancel_event := InputEventAction.new()
+		cancel_event.action = "ui_cancel"
+		cancel_event.pressed = true
+		root.push_input(cancel_event)
+		await wait_motion()
+		check(preview.source == null and preview.targets.is_empty(), "Cancel removes the card preview and all highlights")
+		card.hold_input._hold()
+		await wait_motion()
+		board.settings_button.information.show_reference("preview")
+		await wait_motion()
+		check(preview.source == null, "Another modal dismisses tactical preview")
+		board.settings_button.information.dismiss()
+		# Keyboard/gamepad inspection must use the same adapter and coordinator.
+		card.get_node("DiscardButton").grab_focus()
+		var inspect_key := InputEventKey.new()
+		inspect_key.keycode = KEY_I
+		inspect_key.pressed = true
+		root.push_input(inspect_key)
+		await wait_motion()
+		check(preview.source == card, "Focused card previews from keyboard")
+		root.push_input(inspect_key)
+		await wait_motion()
+		check(full.is_open(), "Second inspect key opens existing inspector")
+		full.dismiss(true)
+		preview.dismiss(true)
+		card.get_node("DiscardButton").grab_focus()
+		var inspect_pad := InputEventJoypadButton.new()
+		inspect_pad.button_index = JOY_BUTTON_Y
+		inspect_pad.pressed = true
+		root.push_input(inspect_pad)
+		await wait_motion()
+		check(preview.source == card, "Controller Y previews focused card")
+		card.card_data = preload("res://scripts/cards/card_library.gd").CARDS[0]
+		await wait_motion()
+		check(preview.source == null and preview.targets.is_empty(), "Card replacement clears obsolete highlights")
+		board.refresh_display()
 		other.hold_input._hold()
 		board.current_actor = "enemy"
 		board.refresh_display()

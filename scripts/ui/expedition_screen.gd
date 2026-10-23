@@ -67,7 +67,7 @@ func _build_ui() -> void:
 	deck_button.pressed.connect(deck_requested.emit)
 	heading_row.add_child(deck_button)
 	legend = Button.new()
-	legend.text = "Legend"
+	legend.text = "GAME REFERENCE"
 	legend.custom_minimum_size = Vector2(100, 48)
 	Presentation.action(legend)
 	heading_row.add_child(legend)

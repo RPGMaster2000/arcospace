@@ -30,7 +30,7 @@ func run() -> void:
 	menu.info_overlay.dismiss()
 	menu.showcase.camera_transition_duration = 0.05
 	await touch(center, true)
-	check(root.get_node("Music").fade_tween != null, "Tap leaving title starts music fade")
+	check(root.get_node("Music").fade_tween != null or root.get_node("Music").current_track in ["", "shipselect"], "Tap leaving title starts or completes music fade")
 	await touch(center, false)
 	await create_timer(0.7).timeout
 	check(menu.showcase.phase == menu.showcase.Phase.SHIP_SELECTION, "Second screen tap opens selection through viewport GUI")

@@ -81,6 +81,14 @@ func _init(board_view: Control) -> void:
 		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
 			tactical.indicators[side + "_" + attribute] = nodes[side + "_" + attribute + "_label"]
 	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade, board_view.get_node("ModifierDisplay/Meter").details.shade])
+	var reference: Node = board_view.settings_button.information
+	for side in ["player", "enemy"]:
+		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
+			bind_reference(nodes[side + "_" + attribute + "_label"], reference, "resources" if attribute not in ["hull", "shields"] else "defenses")
+	bind_reference(nodes["FTLPanel/Charge"], reference, "emp")
+	for column in nodes["SystemsFailureDisplay"].columns.values():
+		for label in column.get_children(): bind_reference(label, reference, "failure")
+
 
 
 func refresh(data: Dictionary) -> void:
@@ -325,6 +333,7 @@ func fit_board_lines(
 
 
 func fit_combat_controls(board_size: Vector2) -> void:
+	if is_instance_valid(tactical): tactical.dismiss(true)
 	var gap: float = 10.0
 	var card_scale: float = minf(1.0, (board_size.x - 32 - gap * 5) / (198 * 6))
 	var hand_width: float = 198 * card_scale * 6 + gap * 5
@@ -376,3 +385,13 @@ func update_jump_style(disabled_turns: int) -> void:
 			box.border_color = Color("ef7e88")
 			button.add_theme_stylebox_override(key, box)
 		button.add_theme_color_override("font_disabled_color", Color("ffd3d7"))
+
+
+static func bind_reference(control: Control, overlay: Node, section: String) -> void:
+	control.mouse_filter = Control.MOUSE_FILTER_STOP
+	control.tooltip_text += "\nTap for GAME REFERENCE"
+	control.gui_input.connect(func(event):
+		var pressed: bool = (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or (event is InputEventScreenTouch and event.pressed)
+		if pressed:
+			control.accept_event()
+			overlay.show_reference(section))

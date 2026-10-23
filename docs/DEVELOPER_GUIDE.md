@@ -11,6 +11,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Safe modification and testing](#safe-modification-and-testing)
 - [Shared local and CI regression runner](regression_testing.md)
 - [Cinematic menu ownership and Inspector calibration](cinematic_menu.md)
+- [Tactical preview, target analysis and Game Reference](tactical_preview.md)
 - [Architectural observations](#architectural-observations)
 
 ## Quick orientation
