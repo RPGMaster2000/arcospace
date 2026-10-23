@@ -4,8 +4,11 @@ signal arrived(index: int)
 signal interrupted
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
 const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
-const POINTS = [Vector3(-10, 0, -8), Vector3(0, 0, -11), Vector3(10, 0, -8), Vector3(-10, 0, 7), Vector3(0, 0, 10), Vector3(10, 0, 7)]
-@export var settings: Resource = preload("res://scripts/presentation/star_system/map_settings.gd").new()
+const POINTS = [
+	Vector3(-10, 0, -8), Vector3(0, 0, -11), Vector3(10, 0, -8),
+	Vector3(-10, 0, 7), Vector3(0, 0, 10), Vector3(10, 0, 7)
+]
+@export var settings: Resource = preload("res://resources/presentation/star_system_settings.tres")
 var viewport: SubViewport
 var world: Node3D
 var camera: Camera3D
@@ -23,6 +26,8 @@ var focused := false
 var interactive := true
 var player_profile: Resource
 var configured_seed := 0
+var travel_direction := Vector3.ZERO
+
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -65,6 +70,7 @@ func _ready() -> void:
 	material.set_shader_parameter("star_density", 0.20)
 	material.set_shader_parameter("cloud_intensity", 0.25)
 	space.material_override = material
+
 
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
 	if is_instance_valid(ship) and configured_seed == visual_seed:
@@ -117,6 +123,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.add_theme_color_override("font_outline_color", Color("020611"))
 		button.add_theme_constant_override("outline_size", 5)
 		button.disabled = entry.completed
+		preload("res://scripts/audio/sfx.gd").bind_ui(button)
 		button.pressed.connect(travel.bind(index))
 		add_child(button)
 		markers[index] = button
@@ -133,9 +140,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	focused = false
 	interactive = true
 
+
 func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
+	if traveling and travel_direction.length_squared() > 0.0:
+		_face(travel_direction, delta * 7.0)
 	if orbit_index != -1 and not traveling:
 		orbit_angle += delta * settings.orbit_speed
 		var center: Vector3 = objects[orbit_index].position
@@ -145,17 +155,25 @@ func _process(delta: float) -> void:
 	for index in markers:
 		var button: Button = markers[index]
 		var point: Vector3 = objects[index].position
-		button.visible = not focused and not camera.is_position_behind(point)
+		button.visible = (
+			not focused and not camera.is_position_behind(point)
+			and not (camera.motion != null and camera.motion.is_running())
+		)
 		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling else MOUSE_FILTER_IGNORE
 		button.position = camera.unproject_position(point) - button.size * 0.5 + Vector2(0, 28)
+
 
 func _face(direction: Vector3, weight: float = 1.0) -> void:
 	if direction.length_squared() < 0.00001:
 		return
 	var forward := direction.normalized()
 	var side := forward.cross(Vector3.UP).normalized()
-	var basis_to := Basis(forward, side.cross(forward), side)
+	var bank: float = 0.0
+	if traveling:
+		bank = clampf(ship.basis.x.signed_angle_to(forward, Vector3.UP) * 0.18, -0.16, 0.16)
+	var basis_to := Basis(forward, side.cross(forward), side) * Basis(Vector3.RIGHT, bank)
 	ship.quaternion = ship.quaternion.slerp(basis_to.get_rotation_quaternion(), clampf(weight, 0, 1))
+
 
 func travel(index: int) -> void:
 	if traveling or not interactive or not markers.has(index) or markers[index].disabled:
@@ -167,7 +185,7 @@ func travel(index: int) -> void:
 	orbit_index = -1
 	var origin := ship.position
 	var destination: Vector3 = objects[index].position + Vector3(settings.orbit_radius, 0.15, 0)
-	_face(destination - origin)
+	travel_direction = destination - origin
 	motion = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if intercepted:
 		# Same stop time as the existing map. Never emit the original arrival.
@@ -184,15 +202,27 @@ func travel(index: int) -> void:
 			orbit_angle = 0.0
 			arrived.emit(index))
 
+
 func _impact() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	add_child(layer)
 	var flash := ColorRect.new()
-	flash.color = Color(1, 0.12, 0.08, 0.35)
+	flash.color = Color(1, 0, 0, 0)
 	flash.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	flash.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(flash)
+	flash.mouse_filter = MOUSE_FILTER_STOP
+	layer.add_child(flash)
 	var effect := create_tween()
-	effect.tween_property(flash, "color:a", 0.0, 1.0)
-	effect.tween_callback(flash.queue_free)
+	effect.tween_method(func(progress: float):
+		# Retain the existing interception's two red pulses and decaying impact shake.
+		var first: float = maxf(0.0, 1.0 - absf(progress - 0.06) / 0.06)
+		var second: float = maxf(0.0, 1.0 - absf(progress - 0.24) / 0.06)
+		flash.color.a = 0.35 * maxf(first, second)
+		camera.h_offset = sin(progress * 93.0) * 0.12 * (1.0 - progress)
+		camera.v_offset = sin(progress * 127.0) * 0.12 * (1.0 - progress)
+	, 0.0, 1.0, 1.0)
+	effect.tween_callback(layer.queue_free)
+
 
 func focus(index: int) -> void:
 	if not objects.has(index):
@@ -201,12 +231,27 @@ func focus(index: int) -> void:
 	interactive = false
 	camera.focus(objects[index].position, settings)
 
+
 func overview() -> void:
+	if motion and motion.is_valid():
+		motion.kill()
+	traveling = false
 	focused = false
 	interactive = true
 	camera.overview(settings)
+
 
 func set_active(active: bool) -> void:
 	visible = active
 	set_process(active)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
+
+
+func depart() -> void:
+	traveling = true
+	orbit_index = -1
+	var direction: Vector3 = (camera.position - ship.position).normalized()
+	travel_direction = direction
+	motion = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	var end: Vector3 = ship.position + direction * settings.departure_speed * settings.departure_duration
+	motion.tween_property(ship, "position", end, settings.departure_duration)

@@ -226,6 +226,7 @@ func run_tests() -> void:
 	check(run.purchase_service(0, run.service_revision, 2) and run.hull == run.ship().hull_capacity and run.salvage == 3, "Outpost repairs selected Hull with exact one-to-one price")
 	# Live scene flow: opening battle -> result -> list -> PoI -> list -> chosen battle.
 	var host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_3d_star_map = false
 	host.persistence_enabled = false
 	host.rules = Rules.duplicate(true)
 	host.rules.debug_seed = 345

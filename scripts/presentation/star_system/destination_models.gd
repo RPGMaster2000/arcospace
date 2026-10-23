@@ -12,11 +12,15 @@ static func part(parent: Node3D, mesh: Mesh, color: Color, at := Vector3.ZERO) -
 	parent.add_child(node)
 	return node
 
+
 static func ship(profile: Resource) -> Node3D:
 	var mount := Node3D.new()
 	if profile != null:
 		# Standard enemies use the same legacy hull as the battlefield; variants provide model_scene.
-		var scene: PackedScene = profile.model_scene if profile.model_scene != null else preload("res://scenes/ship_3d.tscn")
+		var scene: PackedScene = (
+			profile.model_scene if profile.model_scene != null
+			else preload("res://scenes/ship_3d.tscn")
+		)
 		var model: Node3D = scene.instantiate()
 		mount.add_child(model)
 		model.ready.connect(func():
@@ -38,6 +42,7 @@ static func ship(profile: Resource) -> Node3D:
 		part(mount, mesh, Color.SLATE_GRAY)
 	return mount
 
+
 static func build(entry: Dictionary, rng: RandomNumberGenerator) -> Node3D:
 	if entry.get("profile") != null:
 		var model := ship(entry.profile)
@@ -50,7 +55,10 @@ static func build(entry: Dictionary, rng: RandomNumberGenerator) -> Node3D:
 		for i in range(6):
 			var mesh := BoxMesh.new()
 			mesh.size = Vector3.ONE * rng.randf_range(0.35, 0.85)
-			var rock := part(root, mesh, color, Vector3(rng.randf_range(-1.4, 1.4), rng.randf_range(-0.4, 0.4), rng.randf_range(-1.0, 1.0)))
+			var at := Vector3(
+				rng.randf_range(-1.4, 1.4), rng.randf_range(-0.4, 0.4), rng.randf_range(-1.0, 1.0)
+			)
+			var rock := part(root, mesh, color, at)
 			rock.rotation = Vector3(rng.randf(), rng.randf(), rng.randf()) * PI
 	elif key in ["research_station", "trading_outpost", "distress_signal", "quarantined_colony"]:
 		var hub := CylinderMesh.new()

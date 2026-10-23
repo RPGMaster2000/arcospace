@@ -186,6 +186,7 @@ func run_tests() -> void:
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(800,450)]:
 		root.size = dimensions
 		var host = load("res://scenes/expedition.tscn").instantiate()
+		host.use_3d_star_map = false
 		host.persistence_enabled = false
 		root.add_child(host)
 		host.state = milestone(2024,6)

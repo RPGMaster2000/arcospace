@@ -47,7 +47,7 @@ var card_inspector: CanvasLayer
 @export var use_star_map: bool = true
 ## Disable for the temporary 2D map fallback.
 @export var use_3d_star_map: bool = true
-@export var star_system_settings: Resource = preload("res://scripts/presentation/star_system/map_settings.gd").new()
+@export var star_system_settings: Resource = preload("res://resources/presentation/star_system_settings.tres")
 # TUNE: Seconds before a selected map destination opens; no travel cost or rules change.
 @export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
 @export_group("Hull warning")
@@ -60,6 +60,8 @@ var settings_button: Button
 var field_repairs: VBoxContainer
 var station_preview: VBoxContainer
 var star_map: Control
+var transition: CanvasLayer
+var transitioning: bool = false
 var map_system: int = -1
 var map_destination: int = -1
 
@@ -145,6 +147,8 @@ func _ready() -> void:
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
+	transition = preload("res://scripts/presentation/star_system/white_transition.gd").new()
+	add_child(transition)
 	screen = ExpeditionScreen.new()
 	screen.hull_pulse_period = hull_pulse_period
 	screen.hull_pulse_scale = hull_pulse_scale
@@ -289,6 +293,10 @@ func _clear(kind: String) -> void:
 		view.remove_child(child)
 		child.queue_free()
 	if not _uses_3d_map():
+		if is_instance_valid(star_map) and star_map.get_parent() == screen:
+			screen.remove_child(star_map)
+			star_map.queue_free()
+			screen.map_layer = null
 		star_map = null
 	replacement_panel = null
 	scroll.vertical_scroll_mode = (
@@ -330,14 +338,19 @@ func _clear(kind: String) -> void:
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
 	if _uses_3d_map():
-		screen.map_layout(true, kind != "system")
+		var split: bool = kind in ["poi", "preview", "chasedown"] or (
+			kind == "outcome" and state.pending_choice.is_empty() and map_destination != -1
+		)
+		var show_map: bool = kind == "system" or split
+		screen.map_layout(show_map, split)
 		if is_instance_valid(star_map):
-			star_map.set_active(state.hull > 0)
+			star_map.set_active(state.hull > 0 and show_map)
 			if kind == "system":
 				star_map.overview()
 			else:
 				star_map.interactive = false
-				star_map.focus(map_destination)
+				if split:
+					star_map.focus(map_destination)
 	else:
 		screen.map_layout(false, false)
 
@@ -353,6 +366,11 @@ func start_expedition() -> bool:
 	if persistence_enabled and not save_store.save_run(candidate):
 		_show_save_error()
 		return false
+	if is_instance_valid(star_map) and star_map.get_parent() == screen:
+		screen.remove_child(star_map)
+		star_map.queue_free()
+		star_map = null
+		screen.map_layer = null
 	map_system = -1
 	map_destination = -1
 	if state != null and state.progress_committed.is_connected(_progress_committed):
@@ -425,7 +443,7 @@ func _exit_tree() -> void:
 
 
 func show_system() -> void:
-	if presenting_outcome:
+	if presenting_outcome or transitioning:
 		return
 	if state.hull > 0 and state.chasedown_unresolved():
 		if state.active_battle < 0:
@@ -508,7 +526,7 @@ func _uses_3d_map() -> bool:
 	return use_star_map and use_3d_star_map
 
 
-func _show_star_map() -> void:
+func _show_star_map(resume_travel: bool = true) -> void:
 	if map_system != state.system_number:
 		map_system = state.system_number
 		map_destination = state.navigation_origin
@@ -581,12 +599,12 @@ func _show_star_map() -> void:
 		star_map.interrupted.connect(_show_chasedown)
 		star_map.arrived.connect(visit)
 	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
-	if destination != -1:
+	if resume_travel and destination != -1:
 		star_map.travel.call_deferred(destination)
 
 
 func visit(index: int) -> void:
-	if not state.can_visit(index):
+	if transitioning or not state.can_visit(index):
 		return
 	map_destination = index
 	state.arrive_destination(index)
@@ -597,8 +615,38 @@ func visit(index: int) -> void:
 
 
 func _jump() -> void:
-	if state.generate_system():
+	if transitioning or presenting_outcome or not state.can_jump():
+		return
+	if not _uses_3d_map() or not is_instance_valid(star_map):
+		if state.generate_system():
+			show_system()
+		return
+	transitioning = true
+	transition.block()
+	star_map.interactive = false
+	star_map.traveling = true
+	star_map.orbit_index = -1
+	star_map.camera.close_ship(star_map.ship.position, star_system_settings.camera_duration, &"ftl")
+	await get_tree().create_timer(star_system_settings.camera_duration + 0.15).timeout
+	if is_queued_for_deletion():
+		return
+	star_map.depart()
+	await get_tree().create_timer(maxf(0.0, star_system_settings.departure_duration - star_system_settings.white_fade_duration)).timeout
+	await transition.fade(1.0, star_system_settings.white_fade_duration)
+	if is_queued_for_deletion():
+		return
+	# The sole progression call, after the presentation reaches white.
+	var generated: bool = state.generate_system()
+	transitioning = false
+	if generated:
 		show_system()
+	else:
+		star_map.traveling = false
+		star_map.overview()
+	transitioning = true
+	await get_tree().process_frame
+	await transition.fade(0.0, star_system_settings.white_fade_duration)
+	transitioning = false
 
 
 func _request_travel(index: int) -> bool:
@@ -616,6 +664,8 @@ func _grid_travel(index: int) -> void:
 
 
 func _show_chasedown() -> void:
+	if _uses_3d_map() and not is_instance_valid(star_map):
+		_show_star_map(false)
 	_clear("chasedown")
 	jump_button.hide()
 	title.text = "Sublight Chasedown"
@@ -649,8 +699,8 @@ func _show_chasedown() -> void:
 
 
 func _chasedown_response(index: int) -> void:
-	if state.choose_chasedown_response(index):
-		start_battle(state.chasedown_index)
+	if not transitioning and state.choose_chasedown_response(index):
+		_enter_battle(state.chasedown_index)
 
 
 #endregion
@@ -680,7 +730,7 @@ func show_battle_preview(index: int) -> void:
 		details += "\nResolve by victory or EMP Pulse."
 	view.add_child(_label(details, 24))
 	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
-	_button("Enter combat", start_battle.bind(index))
+	_button("Enter combat", _enter_battle.bind(index))
 	_button("Return", show_system)
 
 
@@ -711,6 +761,8 @@ func show_poi(index: int) -> void:
 	approach_note.text = ""
 	confirm_button.text = "Initiate"
 	header.configure(poi)
+	if _uses_3d_map():
+		view.add_child(_label(poi.description, 18))
 	var options = _grid(1 if _uses_3d_map() else 2)
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
@@ -747,6 +799,8 @@ func show_outpost() -> void:
 	selected_encounter = state.SERVICE_INDEX
 	_clear("poi")
 	header.configure(state.service.poi)
+	if _uses_3d_map():
+		view.add_child(_label(state.service.poi.description, 18))
 	jump_button.hide()
 	outpost_screen = OutpostScreen.new()
 	view.add_child(outpost_screen)
@@ -755,6 +809,8 @@ func show_outpost() -> void:
 	outpost_screen.selection_changed.connect(_outpost_selection_changed.bind(outpost_screen))
 	# Preserve existing control accessors while the component owns their lifecycle.
 	grid = outpost_screen.options
+	if _uses_3d_map():
+		grid.columns = 1
 	approach_buttons = outpost_screen.buttons
 	confirmation = outpost_screen.confirmation
 	confirm_button = outpost_screen.confirm_button
@@ -939,7 +995,10 @@ func show_outcome() -> void:
 		VisualEffects.reveal(mission_header, visual_settings)
 	var result = PanelContainer.new()
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	result.custom_minimum_size.x = minf(900, (screen.sidebar.size.x if _uses_3d_map() else ui.size.x) - 32)
+	var available_width: float = get_viewport().get_visible_rect().size.x - 48.0
+	if _uses_3d_map() and screen.model_space.visible:
+		available_width *= 0.52
+	result.custom_minimum_size.x = minf(900, available_width - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
 	var picking_card: bool = state.pending_choice in ["card", "upgrade"]
 	result.add_child(
@@ -1106,7 +1165,32 @@ func _decline_card() -> void:
 #region Battle handoff
 
 
-# Set expedition/profile references and signal callbacks before add_child triggers Board initialization.
+# Presentation wrapper; checkpointing and combat setup remain in start_battle.
+func _enter_battle(index: int) -> void:
+	if transitioning or not state.can_visit(index):
+		return
+	if not _uses_3d_map() or not is_instance_valid(star_map):
+		start_battle(index)
+		return
+	transitioning = true
+	transition.block()
+	star_map.interactive = false
+	star_map.traveling = true
+	star_map.camera.close_ship(star_map.ship.position, star_system_settings.battle_zoom_duration, &"battle")
+	await get_tree().create_timer(maxf(0.0, star_system_settings.battle_zoom_duration - star_system_settings.white_fade_duration)).timeout
+	await transition.fade(1.0, star_system_settings.white_fade_duration)
+	if is_queued_for_deletion():
+		return
+	start_battle(index)
+	await get_tree().process_frame
+	if is_instance_valid(star_map) and not is_instance_valid(battle):
+		star_map.traveling = false
+		star_map.overview()
+	await transition.fade(0.0, star_system_settings.white_fade_duration)
+	transitioning = false
+
+
+# Set profile references and callbacks before add_child triggers Board initialization.
 func start_battle(index: int, battle_seed: int = -1) -> void:
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
@@ -1130,6 +1214,8 @@ func start_battle(index: int, battle_seed: int = -1) -> void:
 	resource_bar.overlay.dismiss()
 	ui.hide()
 	view_kind = "battle"
+	if _uses_3d_map() and is_instance_valid(star_map):
+		star_map.set_active(false)
 	battle = BOARD.instantiate()
 	battle.expedition = state
 	var setup = state.prepare_battle(index)

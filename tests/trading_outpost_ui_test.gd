@@ -30,6 +30,7 @@ func _initialize() -> void:
 
 func run_tests() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_3d_star_map = false
 	host.persistence_enabled = false
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 789

@@ -2,7 +2,7 @@
 
 ## Playing the prototype
 
-Choose a ship and **Begin Expedition** to open the system grid. There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a non-escape battle victory, the existing result screen offers repairs and **Upgrade Cards**, followed by the system view. EMP Pulse escape returns directly to the system. Battles and PoIs can be visited in any order. Completed entries are disabled.
+Choose a ship and **Begin Expedition** to open the [3D system map](star_system_3d.md) (2D map and grid fallbacks remain configurable). There is no mandatory opening battle: choose any encounter and charge the interstellar FTL Drive. After a non-escape battle victory, the existing result screen offers repairs and **Upgrade Cards**, followed by the system view. EMP Pulse escape returns directly to the system. Battles and PoIs can be visited in any order. Completed entries are disabled.
 
 Each system has six progression encounters, with a separate optional Trading Outpost in scheduled systems, targeting 3–4 ordinary PoIs, 0–2 hazardous PoIs and 1–2 enemies. The FTL Drive requires **PoI count + 1** charge. Completing a PoI grants +1; defeating **or escaping** an enemy grants its profile reward (standard 1, elite 2, boss 3). Wormhole outcomes may add extra charge. Rewards are single-use, and travel charge resets in each new system. Escape grants no combat Salvage.
 

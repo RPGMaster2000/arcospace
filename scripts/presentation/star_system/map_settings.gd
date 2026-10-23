@@ -1,6 +1,6 @@
 extends Resource
 ## Presentation tuning only. No expedition state or random encounters live here.
-@export var overview_position := Vector3(0, 23, 17)
+@export var overview_position := Vector3(0, 28, 21)
 @export var overview_target := Vector3.ZERO
 @export var destination_offset := Vector3(2.5, 3.2, 4.2)
 @export_range(0.1, 3.0) var camera_duration: float = 0.8

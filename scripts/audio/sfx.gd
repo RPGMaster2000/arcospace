@@ -140,6 +140,8 @@ func bind_button(button: BaseButton) -> void:
 
 
 func _queue_confirm(button: BaseButton) -> void:
+	if not is_instance_valid(button) or not button.is_inside_tree():
+		return
 	_ui_confirm_frame = Engine.get_process_frames()
 	var screen: Node = button.get_tree().current_scene
 	var scope: Node = screen if is_instance_valid(screen) else button

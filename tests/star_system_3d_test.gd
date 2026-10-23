@@ -14,10 +14,11 @@ func run() -> void:
 	var entries: Array = []
 	for i in range(6):
 		entries.append({"index":i, "name":"Destination %d" % i, "text":"Destination", "tooltip":"Test", "color":Color.CORNFLOWER_BLUE, "completed":false, "model_kind":"gas_giant"})
+	entries.append({"index":-2, "name":"Trading Outpost", "text":"Trading Outpost", "tooltip":"Test", "color":Color.CORNFLOWER_BLUE, "completed":false, "model_kind":"trading_outpost"})
 	map.configure(entries, -1, 0.08, 999)
 	await process_frame
 	await process_frame
-	check(map.objects.size() == 7 and map.markers.size() == 6, "Sun and six destinations")
+	check(map.objects.size() == 8 and map.markers.size() == 7, "Sun, six destinations and independent outpost")
 	check(map.ship.get_child_count() > 0, "Selected ship instantiated")
 	var positions: Array = []
 	for i in range(6):
@@ -25,6 +26,7 @@ func run() -> void:
 	map.configure(entries, -1, 0.08, 999)
 	for i in range(6):
 		check(map.objects[i].position == positions[i], "Visual seed reproducible")
+	await create_timer(0.9).timeout
 	var arrivals: Array = []
 	map.arrived.connect(func(index): arrivals.append(index))
 	map.travel(0)
@@ -39,10 +41,18 @@ func run() -> void:
 	check(map.orbit_index == -1, "Departure cancels orbit")
 	await create_timer(0.15).timeout
 	check(arrivals == [0, 1], "Next arrival once")
+	for index in range(2, 6):
+		map.travel(index)
+		await create_timer(0.15).timeout
+	check(arrivals == [0, 1, 2, 3, 4, 5], "All six destinations reachable")
+	map.travel(-2)
+	await create_timer(0.15).timeout
+	check(map.orbit_index == -2 and arrivals.back() == -2, "Separate Trading Outpost arrival")
+	arrivals.pop_back()
 	map.intercept_travel = func(_index): return true
 	map.travel(2)
 	await create_timer(0.6).timeout
-	check(map.orbit_index == -1 and arrivals == [0, 1], "Interception cancels arrival")
+	check(map.orbit_index == -1 and arrivals == [0, 1, 2, 3, 4, 5], "Interception cancels arrival")
 	map.queue_free()
 	await process_frame
 	var host = preload("res://scenes/expedition.tscn").instantiate()
@@ -81,6 +91,15 @@ func run() -> void:
 	host.show_system()
 	await process_frame
 	check(host.star_map.orbit_index == 0 and host.star_map.camera.viewing == &"overview", "Result returns to overview at last destination")
+	host.state.service = {"kind":"service", "poi":preload("res://encounters/trading_outpost.tres"), "title":"Trading Outpost", "completed":false}
+	host.star_map.free()
+	host.star_map = null
+	host.show_system()
+	await process_frame
+	host.star_map.travel_duration = 0.04
+	host.star_map.travel(-2)
+	await create_timer(0.15).timeout
+	check(host.selected_encounter == -2 and host.grid.columns == 1 and host.approach_buttons.size() == 4, "Outpost retains services in scrollable right pane")
 	host.queue_free()
 	await process_frame
 	print("Star system 3D: %d failures" % failures)
