@@ -15,6 +15,7 @@ var camera: Camera3D
 var ship: Node3D
 var objects: Dictionary = {}
 var markers: Dictionary = {}
+var input_allowed: Callable
 var before_travel: Callable
 var intercept_travel: Callable
 var traveling := false
@@ -32,6 +33,9 @@ var pinch_distance: float = 0.0
 var pinching: bool = false
 var gesture_block_until: int = 0
 var pinch_disabled: Dictionary = {}
+var drag_origin := Vector2.ZERO
+var mouse_down: bool = false
+var dragging: bool = false
 
 
 func _ready() -> void:
@@ -164,12 +168,14 @@ func _process(delta: float) -> void:
 	for index in markers:
 		var button: Button = markers[index]
 		var point: Vector3 = objects[index].position
+		var center: Vector2 = camera.unproject_position(point)
 		button.visible = (
 			not focused and not camera.is_position_behind(point)
+			and Rect2(Vector2.ZERO, size).has_point(center)
 			and not (camera.motion != null and camera.motion.is_running())
 		)
 		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
-		var projected: Vector2 = camera.unproject_position(point) - button.size * 0.5 + Vector2(0, 28)
+		var projected: Vector2 = center - button.size * 0.5 + Vector2(0, 28)
 		var border: float = settings.screen_border
 		button.position = projected.clamp(Vector2.ONE * border, (size - button.size - Vector2.ONE * border).max(Vector2.ONE * border))
 
@@ -238,6 +244,7 @@ func _impact() -> void:
 func focus(index: int) -> void:
 	if not objects.has(index):
 		return
+	_end_pinch()
 	focused = true
 	interactive = false
 	camera.focus(objects[index].position, settings)
@@ -253,6 +260,8 @@ func overview() -> void:
 
 
 func set_active(active: bool) -> void:
+	if not active:
+		_end_pinch()
 	visible = active
 	set_process(active)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
@@ -270,7 +279,11 @@ func depart() -> void:
 
 
 func _zoom_enabled() -> bool:
-	return is_visible_in_tree() and interactive and not traveling and not focused and camera.viewing == &"overview"
+	return (
+		is_visible_in_tree() and interactive and not traveling and not focused
+		and camera.viewing == &"overview" and not (camera.motion and camera.motion.is_running())
+		and (not input_allowed.is_valid() or input_allowed.call())
+	)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -292,22 +305,22 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed and get_global_rect().has_point(event.position):
+			if touches.is_empty():
+				drag_origin = event.position
 			touches[event.index] = event.position
 		else:
 			touches.erase(event.index)
 		if touches.size() == 2 and not pinching:
 			pinching = true
 			pinch_distance = _touch_distance()
-			# Disabling cancels any first-finger button press before its release can select.
-			for index in markers:
-				pinch_disabled[index] = markers[index].disabled
-				markers[index].disabled = true
-		if pinching:
+			_block_markers()
+		if pinching or dragging:
 			gesture_block_until = Time.get_ticks_msec() + 180
 			get_viewport().set_input_as_handled()
 			if touches.is_empty():
 				_end_pinch()
 	elif event is InputEventScreenDrag and touches.has(event.index):
+		var previous: Vector2 = touches[event.index]
 		touches[event.index] = event.position
 		if pinching:
 			var distance: float = _touch_distance()
@@ -315,6 +328,38 @@ func _input(event: InputEvent) -> void:
 				camera.zoom_by(distance / pinch_distance)
 			pinch_distance = distance
 			get_viewport().set_input_as_handled()
+		elif touches.size() == 1:
+			_drag_map(previous, event.position)
+	elif event is InputEventMouseButton and event.device != -1 and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed and get_global_rect().has_point(event.position):
+			mouse_down = true
+			drag_origin = event.position
+		elif not event.pressed:
+			mouse_down = false
+			if dragging:
+				get_viewport().set_input_as_handled()
+				_end_pinch()
+	elif event is InputEventMouseMotion and event.device != -1 and mouse_down:
+		_drag_map(event.position - event.relative, event.position)
+
+
+func _drag_map(previous: Vector2, current: Vector2) -> void:
+	if not dragging and current.distance_to(drag_origin) < settings.pan_drag_threshold:
+		return
+	if not dragging:
+		dragging = true
+		_block_markers()
+		previous = drag_origin
+	camera.pan_screen(previous - global_position, current - global_position)
+	gesture_block_until = Time.get_ticks_msec() + 180
+	get_viewport().set_input_as_handled()
+
+
+func _block_markers() -> void:
+	for index in markers:
+		if not pinch_disabled.has(index):
+			pinch_disabled[index] = markers[index].disabled
+		markers[index].disabled = true
 
 
 func _touch_distance() -> float:
@@ -329,4 +374,6 @@ func _end_pinch() -> void:
 	pinch_disabled.clear()
 	touches.clear()
 	pinching = false
+	dragging = false
+	mouse_down = false
 	pinch_distance = 0.0

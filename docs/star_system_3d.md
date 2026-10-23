@@ -15,9 +15,10 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 | Setting | Purpose |
 | --- | --- |
 | Overview Position / Overview Target | Fixed three-quarter camera position and look-at orientation |
-| Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.08 default, bounded to 0.95–6.0; higher means closer |
+| Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.20 default, bounded to 0.95–6.0; higher means closer |
 | Wheel Zoom Step | Mouse-wheel increment (default 6%); pinch uses finger-distance ratio |
 | System Bounds | X/Z destination-center rectangle, default X −16…16 and Z −10…10; changes only visual arrangement |
+| Pan Bounds / Pan Drag Threshold | Camera-center X/Z limits (default ±16 / ±10) and tap-to-drag threshold (12 pixels) |
 | Screen Border | Minimum inset for projected destination hit regions, default 8 logical pixels |
 | Destination Offset | Camera distance, height and angle relative to the focused destination; horizontal framing adapts to the viewport aspect |
 | Camera Duration | Overview/focus transition and FTL ship zoom (default 0.8 s) |
@@ -54,7 +55,10 @@ Projected buttons provide 140×64 logical-pixel hit regions, ordinary keyboard f
 mouse/touch activation. Labels ignore model occlusion and remain readable. Completed
 entries have a check mark and disabled input. Labels hide during camera transitions and
 inspection. The top UI keeps its existing position and controls. Overview-only mouse-wheel and
-two-finger pinch zoom smoothly within the configured limits; pinching cancels any held
+two-finger pinch zoom smoothly within the configured limits; one-finger or left-mouse
+drag pans on the system plane within Pan Bounds. Small movements remain taps. Existing
+overview pan/zoom is retained when returning from a destination. UI overlays block camera
+gestures; pinching cancels any held
 destination button and suppresses release activation. PoI scrolling does not zoom the map.
 The bottom overflow cue is a stationary gradient overlay (`ui/scroll_edge_fade.gd`),
 outside container layout and excluding the live scrollbar. Its opacity tracks remaining
@@ -98,7 +102,7 @@ visual RNG isolation, FTL single execution and battle fade cleanup. The other fo
 tests cover all six arrivals, the independent outpost, orbit, interrupted travel, result suspense and save/resume.
 
 This is deliberately crude art: no orbit lines, detailed destination textures, warp tunnel,
-free camera or particle effects. Non-planet categories share small geometric families.
+free camera rotation or particle effects. Non-planet categories share small geometric families.
 The ship is small in overview and enlarged by destination/battle framing. Shadows are
 disabled, and the inactive map viewport stops rendering. Godot-native meshes/materials
 and existing shaders were rendered successfully with both Compatibility/OpenGL and
@@ -129,3 +133,6 @@ limits, calibrated bounds, gesture release suppression, FTL clearance, fade/scro
 separation and stable scroll geometry. Map navigation, resume, Android layout, cinematic
 launch, PoI confirmation and the 104-check Mobile/Vulkan rendered transition fixture
 also passed. Physical Android pinch/performance testing remains outstanding.
+
+Camera-drag follow-up: mouse and single-finger pan, drag-release suppression, UI-overlay
+blocking and pan bounds are covered by `map_zoom_fade_test.gd`. Default zoom is 1.20×.

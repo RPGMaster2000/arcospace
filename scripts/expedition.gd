@@ -520,6 +520,14 @@ func show_system() -> void:
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
+func _map_input_allowed() -> bool:
+	return (
+		not transitioning and not resource_bar.overlay.shade.visible
+		and not current_deck_viewer.shade.visible and not card_inspector.shade.visible
+		and not settings_button.menu.shade.visible
+	)
+
+
 func _uses_3d_map() -> bool:
 	return use_star_map and use_3d_star_map
 
@@ -581,6 +589,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			star_map.settings = star_system_settings
 			screen.mount_map(star_map)
 		star_map.player_profile = state.ship()
+		star_map.input_allowed = _map_input_allowed
 	else:
 		star_map = preload("res://scripts/ui/star_map.gd").new()
 		star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL

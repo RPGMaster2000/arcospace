@@ -5,6 +5,7 @@ var viewing: StringName = &"overview"
 var zoom_scale: float = 1.0
 var zoom_target: float = 1.0
 var calibration: Resource
+var pan_offset := Vector2.ZERO
 
 
 func _process(delta: float) -> void:
@@ -15,7 +16,7 @@ func _process(delta: float) -> void:
 
 
 func _overview_position(settings: Resource) -> Vector3:
-	return settings.overview_target + (settings.overview_position - settings.overview_target) / zoom_scale
+	return _overview_target(settings) + (settings.overview_position - settings.overview_target) / zoom_scale
 
 
 func zoom_by(factor: float) -> void:
@@ -45,7 +46,7 @@ func overview(settings: Resource, immediate: bool = false) -> void:
 		zoom_by(1.0)
 		zoom_scale = zoom_target
 	frame(
-		_overview_position(settings), settings.overview_target,
+		_overview_position(settings), _overview_target(settings),
 		0.0 if immediate else settings.camera_duration, &"overview"
 	)
 
@@ -61,3 +62,21 @@ func focus(point: Vector3, settings: Resource) -> void:
 
 func close_ship(point: Vector3, duration: float, state: StringName) -> void:
 	frame(point + Vector3(1.5, 1.5, 2.2), point, duration, state)
+
+
+func _overview_target(settings: Resource) -> Vector3:
+	return settings.overview_target + Vector3(pan_offset.x, 0, pan_offset.y)
+
+
+func pan_screen(from: Vector2, to: Vector2) -> void:
+	if calibration == null or viewing != &"overview":
+		return
+	var plane := Plane(Vector3.UP, calibration.overview_target.y)
+	var origin: Variant = plane.intersects_ray(project_ray_origin(from), project_ray_normal(from))
+	var destination: Variant = plane.intersects_ray(project_ray_origin(to), project_ray_normal(to))
+	if origin == null or destination == null:
+		return
+	var shift: Vector3 = origin - destination
+	var bounds: Rect2 = calibration.pan_bounds.abs()
+	pan_offset = (pan_offset + Vector2(shift.x, shift.z)).clamp(bounds.position, bounds.end)
+	position = _overview_position(calibration)

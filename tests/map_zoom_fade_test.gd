@@ -53,6 +53,50 @@ func run() -> void:
 		root.push_input(touch, true)
 	check(not map.pinching and map.touches.is_empty(), "Touch release clears gesture")
 	check(not map.markers[0].disabled and not map.traveling, "Pinch cancels held marker and restores its enabled state")
+	await create_timer(0.2).timeout
+	var center: Vector2 = map.get_global_rect().get_center()
+	var initial_pan: Vector2 = camera.pan_offset
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = center
+	root.push_input(press, true)
+	var motion := InputEventMouseMotion.new()
+	motion.position = center + Vector2(100, 50)
+	motion.relative = Vector2(100, 50)
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	root.push_input(motion, true)
+	check(map.dragging and camera.pan_offset != initial_pan, "Left mouse drag pans camera")
+	map.travel(0)
+	check(not map.traveling, "Mouse drag cannot select destination")
+	press.pressed = false
+	press.position = motion.position
+	root.push_input(press, true)
+	check(not map.dragging and not map.mouse_down and not map.markers[0].disabled, "Mouse release restores input")
+	host.resource_bar.overlay.show_legend()
+	check(not map._zoom_enabled(), "Reference overlay blocks camera gestures")
+	host.resource_bar.overlay.dismiss()
+	var pan_after_mouse: Vector2 = camera.pan_offset
+	var finger := InputEventScreenTouch.new()
+	finger.index = 0
+	finger.position = center
+	finger.pressed = true
+	root.push_input(finger, true)
+	var swipe := InputEventScreenDrag.new()
+	swipe.index = 0
+	swipe.position = center + Vector2(-80, 30)
+	swipe.relative = Vector2(-80, 30)
+	root.push_input(swipe, true)
+	check(map.dragging and camera.pan_offset != pan_after_mouse, "One finger pans camera")
+	finger.pressed = false
+	finger.position = swipe.position
+	root.push_input(finger, true)
+	check(not map.dragging and not map.traveling, "Finger release does not initiate travel")
+	camera.pan_screen(Vector2(640, 300), Vector2(-100000, -100000))
+	var bounds: Rect2 = settings.pan_bounds.abs()
+	check(camera.pan_offset.x >= bounds.position.x and camera.pan_offset.x <= bounds.end.x and camera.pan_offset.y >= bounds.position.y and camera.pan_offset.y <= bounds.end.y, "Panning respects calibration bounds")
+	camera.pan_offset = Vector2.ZERO
+	camera.position = camera._overview_position(settings)
 	for index in map.markers:
 		var point: Vector3 = map.objects[index].position
 		check(settings.system_bounds.has_point(Vector2(point.x, point.z)), "Destinations respect calibrated borders")
