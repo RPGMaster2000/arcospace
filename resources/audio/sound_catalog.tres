@@ -1,0 +1,314 @@
+[gd_resource type="Resource" load_steps=65 format=3]
+
+[ext_resource type="Script" path="res://scripts/audio/sound_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://scripts/audio/sound_event.gd" id="event"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/card_select_01.wav" id="card_select_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/card_play_01.wav" id="card_play_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/card_play_02.wav" id="card_play_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/card_play_03.wav" id="card_play_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/card_discard_01.wav" id="card_discard_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/materials_gain_01.wav" id="materials_gain_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/materials_gain_02.wav" id="materials_gain_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/materials_gain_03.wav" id="materials_gain_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/energy_gain_01.wav" id="energy_gain_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/energy_gain_02.wav" id="energy_gain_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/energy_gain_03.wav" id="energy_gain_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/crew_gain_01.wav" id="crew_gain_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/crew_gain_02.wav" id="crew_gain_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/crew_gain_03.wav" id="crew_gain_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/resource_drain_01.wav" id="resource_drain_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/production_gain_01.wav" id="production_gain_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/production_loss_01.wav" id="production_loss_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/shield_hit_01.wav" id="shield_hit_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/shield_hit_02.wav" id="shield_hit_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/shield_hit_03.wav" id="shield_hit_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/shield_break_01.wav" id="shield_break_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/hull_hit_01.wav" id="hull_hit_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/hull_hit_02.wav" id="hull_hit_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/hull_hit_03.wav" id="hull_hit_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/hull_repair_01.wav" id="hull_repair_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ship_destroyed_01.wav" id="ship_destroyed_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/systems_failure_warning_01.wav" id="systems_failure_warning_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/systems_failure_defeat_01.wav" id="systems_failure_defeat_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/emp_charge_01.wav" id="emp_charge_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/emp_ready_01.wav" id="emp_ready_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/emp_fire_01.wav" id="emp_fire_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ship_departure_01.wav" id="ship_departure_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ui_select_01.wav" id="ui_select_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ui_select_02.wav" id="ui_select_2"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ui_select_03.wav" id="ui_select_3"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/ui_confirm_01.wav" id="ui_confirm_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/upgrade_acquired_01.wav" id="upgrade_acquired_1"]
+[ext_resource type="AudioStream" path="res://assets/sound/sfx/result_reveal_01.wav" id="result_reveal_1"]
+
+[sub_resource type="Resource" id="card_select"]
+script = ExtResource("event")
+resource_name = "card_select"
+event_id = &"card_select"
+streams = Array[AudioStream]([ExtResource("card_select_1")])
+volume_db = -5.0
+pitch_variation = 0.0
+replay_interval = 0.07
+concurrency_limit = 1
+priority = 0
+
+[sub_resource type="Resource" id="card_play"]
+script = ExtResource("event")
+resource_name = "card_play"
+event_id = &"card_play"
+streams = Array[AudioStream]([ExtResource("card_play_1"), ExtResource("card_play_2"), ExtResource("card_play_3")])
+volume_db = 0.0
+pitch_variation = 0.025
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="card_discard"]
+script = ExtResource("event")
+resource_name = "card_discard"
+event_id = &"card_discard"
+streams = Array[AudioStream]([ExtResource("card_discard_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="materials_gain"]
+script = ExtResource("event")
+resource_name = "materials_gain"
+event_id = &"materials_gain"
+streams = Array[AudioStream]([ExtResource("materials_gain_1"), ExtResource("materials_gain_2"), ExtResource("materials_gain_3")])
+volume_db = -5.0
+pitch_variation = 0.025
+replay_interval = 0.16
+concurrency_limit = 1
+priority = 0
+replay_group = &"minor_resources"
+
+[sub_resource type="Resource" id="energy_gain"]
+script = ExtResource("event")
+resource_name = "energy_gain"
+event_id = &"energy_gain"
+streams = Array[AudioStream]([ExtResource("energy_gain_1"), ExtResource("energy_gain_2"), ExtResource("energy_gain_3")])
+volume_db = -5.0
+pitch_variation = 0.025
+replay_interval = 0.16
+concurrency_limit = 1
+priority = 0
+replay_group = &"minor_resources"
+
+[sub_resource type="Resource" id="crew_gain"]
+script = ExtResource("event")
+resource_name = "crew_gain"
+event_id = &"crew_gain"
+streams = Array[AudioStream]([ExtResource("crew_gain_1"), ExtResource("crew_gain_2"), ExtResource("crew_gain_3")])
+volume_db = -5.0
+pitch_variation = 0.025
+replay_interval = 0.16
+concurrency_limit = 1
+priority = 0
+replay_group = &"minor_resources"
+
+[sub_resource type="Resource" id="resource_drain"]
+script = ExtResource("event")
+resource_name = "resource_drain"
+event_id = &"resource_drain"
+streams = Array[AudioStream]([ExtResource("resource_drain_1")])
+volume_db = -5.0
+pitch_variation = 0.0
+replay_interval = 0.16
+concurrency_limit = 1
+priority = 0
+replay_group = &"minor_resources"
+
+[sub_resource type="Resource" id="production_gain"]
+script = ExtResource("event")
+resource_name = "production_gain"
+event_id = &"production_gain"
+streams = Array[AudioStream]([ExtResource("production_gain_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="production_loss"]
+script = ExtResource("event")
+resource_name = "production_loss"
+event_id = &"production_loss"
+streams = Array[AudioStream]([ExtResource("production_loss_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="shield_hit"]
+script = ExtResource("event")
+resource_name = "shield_hit"
+event_id = &"shield_hit"
+streams = Array[AudioStream]([ExtResource("shield_hit_1"), ExtResource("shield_hit_2"), ExtResource("shield_hit_3")])
+volume_db = 0.0
+pitch_variation = 0.025
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="shield_break"]
+script = ExtResource("event")
+resource_name = "shield_break"
+event_id = &"shield_break"
+streams = Array[AudioStream]([ExtResource("shield_break_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="hull_hit"]
+script = ExtResource("event")
+resource_name = "hull_hit"
+event_id = &"hull_hit"
+streams = Array[AudioStream]([ExtResource("hull_hit_1"), ExtResource("hull_hit_2"), ExtResource("hull_hit_3")])
+volume_db = 0.0
+pitch_variation = 0.025
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 2
+
+[sub_resource type="Resource" id="hull_repair"]
+script = ExtResource("event")
+resource_name = "hull_repair"
+event_id = &"hull_repair"
+streams = Array[AudioStream]([ExtResource("hull_repair_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="ship_destroyed"]
+script = ExtResource("event")
+resource_name = "ship_destroyed"
+event_id = &"ship_destroyed"
+streams = Array[AudioStream]([ExtResource("ship_destroyed_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 2
+
+[sub_resource type="Resource" id="systems_failure_warning"]
+script = ExtResource("event")
+resource_name = "systems_failure_warning"
+event_id = &"systems_failure_warning"
+streams = Array[AudioStream]([ExtResource("systems_failure_warning_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 2
+
+[sub_resource type="Resource" id="systems_failure_defeat"]
+script = ExtResource("event")
+resource_name = "systems_failure_defeat"
+event_id = &"systems_failure_defeat"
+streams = Array[AudioStream]([ExtResource("systems_failure_defeat_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 2
+
+[sub_resource type="Resource" id="emp_charge"]
+script = ExtResource("event")
+resource_name = "emp_charge"
+event_id = &"emp_charge"
+streams = Array[AudioStream]([ExtResource("emp_charge_1")])
+volume_db = -3.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 1
+priority = 1
+
+[sub_resource type="Resource" id="emp_ready"]
+script = ExtResource("event")
+resource_name = "emp_ready"
+event_id = &"emp_ready"
+streams = Array[AudioStream]([ExtResource("emp_ready_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 1
+priority = 1
+
+[sub_resource type="Resource" id="emp_fire"]
+script = ExtResource("event")
+resource_name = "emp_fire"
+event_id = &"emp_fire"
+streams = Array[AudioStream]([ExtResource("emp_fire_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 2
+
+[sub_resource type="Resource" id="ship_departure"]
+script = ExtResource("event")
+resource_name = "ship_departure"
+event_id = &"ship_departure"
+streams = Array[AudioStream]([ExtResource("ship_departure_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="ui_select"]
+script = ExtResource("event")
+resource_name = "ui_select"
+event_id = &"ui_select"
+streams = Array[AudioStream]([ExtResource("ui_select_1"), ExtResource("ui_select_2"), ExtResource("ui_select_3")])
+volume_db = -5.0
+pitch_variation = 0.025
+replay_interval = 0.07
+concurrency_limit = 1
+priority = 0
+
+[sub_resource type="Resource" id="ui_confirm"]
+script = ExtResource("event")
+resource_name = "ui_confirm"
+event_id = &"ui_confirm"
+streams = Array[AudioStream]([ExtResource("ui_confirm_1")])
+volume_db = -5.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 1
+priority = 0
+
+[sub_resource type="Resource" id="upgrade_acquired"]
+script = ExtResource("event")
+resource_name = "upgrade_acquired"
+event_id = &"upgrade_acquired"
+streams = Array[AudioStream]([ExtResource("upgrade_acquired_1")])
+volume_db = 0.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[sub_resource type="Resource" id="result_reveal"]
+script = ExtResource("event")
+resource_name = "result_reveal"
+event_id = &"result_reveal"
+streams = Array[AudioStream]([ExtResource("result_reveal_1")])
+volume_db = -3.0
+pitch_variation = 0.0
+replay_interval = 0.1
+concurrency_limit = 2
+priority = 1
+
+[resource]
+script = ExtResource("catalog")
+events = Array[Resource]([SubResource("card_select"), SubResource("card_play"), SubResource("card_discard"), SubResource("materials_gain"), SubResource("energy_gain"), SubResource("crew_gain"), SubResource("resource_drain"), SubResource("production_gain"), SubResource("production_loss"), SubResource("shield_hit"), SubResource("shield_break"), SubResource("hull_hit"), SubResource("hull_repair"), SubResource("ship_destroyed"), SubResource("systems_failure_warning"), SubResource("systems_failure_defeat"), SubResource("emp_charge"), SubResource("emp_ready"), SubResource("emp_fire"), SubResource("ship_departure"), SubResource("ui_select"), SubResource("ui_confirm"), SubResource("upgrade_acquired"), SubResource("result_reveal")])
