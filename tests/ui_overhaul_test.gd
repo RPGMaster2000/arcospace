@@ -99,20 +99,20 @@ func run() -> void:
 	host.show_system()
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(setup)
+	setup.showcase._stop_tween()
+	setup.showcase.phase = setup.showcase.Phase.SHIP_SELECTION
+	setup._selection_ready()
+	await process_frame
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(1920,1080),Vector2i(960,540),Vector2i(800,450)]:
 		root.size = dimensions
 		await settle()
-		check(not setup.get_node("Instructions").visible, "No general game description")
+		check(not setup.has_node("Ships"), "Superseded preview grid removed")
 		for index in range(Ships.PLAYERS.size()):
 			setup._select(index)
 			await settle()
-			var panel: Control = setup.get_node("Ships/Ship%d" % index)
-			var preview: Control = panel.get_node("Preview")
-			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship panel inside viewport " + str(dimensions))
-			check(preview.size.y > 72 and preview.size.x > 0, "Larger ship preview " + str(dimensions))
-			check(panel.get_node("Select").size.y >= 48, "Ship select touch size")
-			check(panel.get_node("Stats").get_global_rect().end.y <= panel.get_node("Summary").get_global_rect().position.y + 1, "Stats do not cover EMP Pulse values")
-			check(panel.get_node("Summary").get_global_rect().end.y <= panel.get_node("Select").get_global_rect().position.y + 1, "EMP Pulse values visible above Select")
+			var panel: Control = setup.get_node("Selection/Information")
+			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship information inside viewport " + str(dimensions))
+			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics above actions")
 		setup.deck_button.pressed.emit()
 		await settle()
 		for index in range(Ships.PLAYERS.size()):

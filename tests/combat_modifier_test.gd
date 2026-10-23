@@ -166,7 +166,7 @@ func run() -> void:
 	await process_frame
 	var returned = current_scene
 	check(returned.selected_ship == 2, "Return to setup preserves ship selection")
-	returned.get_node("Start").pressed.emit()
+	returned.start_button.pressed.emit()
 	await process_frame
 	var restarted = current_scene
 	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ships/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")

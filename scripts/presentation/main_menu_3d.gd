@@ -22,6 +22,18 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export_range(0.1, 8) var camera_transition_duration: float = 2.5
 @export var camera_easing: Tween.EaseType = Tween.EASE_IN_OUT
 @export var camera_transition: Tween.TransitionType = Tween.TRANS_SINE
+@export_group("Fleet")
+@export_range(3, 12) var fleet_spacing: float = 6.2
+@export_range(0, 0.3) var fleet_curvature: float = 0.025
+@export var ship_orientation: Vector3 = Vector3(0, -35, 0)
+@export_range(0, 30) var rotation_degrees_per_second: float = 7.0
+@export_range(0.05, 3) var selection_duration: float = 0.55
+@export var framing_offset: Vector3 = Vector3.ZERO
+## Optional camera distance corrections in library order, without changing ship geometry.
+@export var ship_camera_offsets: PackedVector3Array = PackedVector3Array()
+var models: Array[Node3D] = []
+var selected_model: Node3D
+var camera_tween: Tween
 var phase: Phase = Phase.INTRO_BACKGROUND
 var phase_tween: Tween
 var prompt_time: float = 0.0
@@ -59,6 +71,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if phase == Phase.SHIP_SELECTION and selected_model != null:
+		selected_model.rotate_y(deg_to_rad(rotation_degrees_per_second) * delta)
 	if phase == Phase.PRESS_TO_PLAY:
 		prompt_time += delta
 		prompt.modulate.a = lerpf(prompt_min_opacity, prompt_max_opacity, (1.0 + cos(prompt_time * TAU / blink_duration)) * 0.5)
@@ -92,5 +106,39 @@ func advance() -> void:
 			selection_ready.emit())
 
 
+func populate(profiles: Array) -> void:
+	for index in range(profiles.size()):
+		var profile: Resource = profiles[index]
+		var mount := Node3D.new()
+		mount.name = profile.ship_name
+		$Fleet.add_child(mount)
+		mount.position = Vector3(fleet_curvature * index * index, 0, -index * fleet_spacing)
+		mount.rotation_degrees = ship_orientation
+		var model: Node3D = profile.model_scene.instantiate()
+		mount.add_child(model)
+		model.set_hull_color(profile.hull_color)
+		model.set_hull_strength(profile.hull_capacity)
+		model.get_node("Shield").hide()
+		model.set_process(false)
+		for light in model.find_children("*", "Light3D", true, false): light.hide()
+		models.append(mount)
+
+
+func select_ship(index: int, immediate: bool = false) -> void:
+	if models.is_empty(): return
+	selected_model = models[index]
+	if camera_tween != null: camera_tween.kill()
+	var target: Transform3D = selection_anchor.transform
+	target.origin += selected_model.position + framing_offset
+	if index < ship_camera_offsets.size(): target.origin += ship_camera_offsets[index]
+	# The fleet root controls the world placement; camera tracks only lineup displacement.
+	if phase == Phase.SHIP_SELECTION:
+		if immediate: camera.transform = target
+		else:
+			camera_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+			camera_tween.tween_property(camera, "transform", target, selection_duration)
+
+
 func _exit_tree() -> void:
 	_stop_tween()
+	if camera_tween != null: camera_tween.kill()

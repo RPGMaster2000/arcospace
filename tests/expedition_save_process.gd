@@ -81,7 +81,7 @@ func run() -> void:
 			var menu = load("res://scenes/battle_setup.tscn").instantiate()
 			menu.save_store = store
 			root.add_child(menu)
-			assert(menu.get_node("Start").text == "New Expedition")
+			assert(menu.start_button.text == "BEGIN EXPEDITION")
 			DirAccess.remove_absolute(EXPECTED)
 	print("Fresh-process phase passed: ", mode)
 	quit()

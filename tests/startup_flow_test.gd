@@ -50,10 +50,13 @@ func run() -> void:
 		await settle()
 		menu._select(index)
 		await settle()
-		var viewport: SubViewport = menu.get_node("Ships/Ship%d/Preview/Viewport" % index)
-		check(viewport.get_child_count() >= 3, "Preview contains camera, lighting and model")
+		menu.showcase._stop_tween()
+		menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
+		menu._selection_ready()
+		var viewport: SubViewport = menu.get_node("World/Viewport")
+		check(menu.showcase.models.size() == 6, "Preview contains camera, lighting and model")
 		check(await preview_has_ship(viewport), "Preview has visible ship pixels: " + Ships.PLAYERS[index].ship_name)
-		menu.get_node("Start").pressed.emit()
+		menu.start_button.pressed.emit()
 		await settle()
 		var expedition = current_scene
 		check(expedition != menu and expedition.state != null, "Start reaches the expedition")

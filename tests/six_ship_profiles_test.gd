@@ -94,39 +94,26 @@ func run() -> void:
 	menu.initial_settings = {"player_ship":5}
 	root.add_child(menu)
 	await settle()
-	check(menu.selected_ship == 5 and menu.ship_page == 1, "High-index selection restored")
+	check(menu.selected_ship == 5, "High-index selection restored")
+	menu.showcase._stop_tween()
+	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
+	menu._selection_ready()
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(960,540),Vector2i(800,450),Vector2i(686,384)]:
 		root.size = dimensions
 		for index in range(6):
 			menu._select(index)
 			await settle()
-			check(menu.ship_page == int(index / 3), "Selection opens correct page")
-			var panel: Control = menu.get_node("Ships/Ship%d" % index)
-			check(panel.is_visible_in_tree() and root.get_visible_rect().encloses(panel.get_global_rect()), "Selected panel visible and inside screen")
-			check(panel.get_node("Name").text == Ships.PLAYERS[index].ship_name.to_upper(), "All six names displayed")
-			check(panel.get_node("Select").size.y >= 48, "Touch-friendly selection")
-			for control in [menu.previous_page, menu.next_page, menu.deck_button, menu.get_node("Start"),menu.settings_button]:
+			check(menu.get_node("Selection/Information/Margin/Scroll/Column/Name").text == Ships.PLAYERS[index].ship_name.to_upper(), "All six names displayed")
+			for control in [menu.previous_ship, menu.next_ship, menu.deck_button, menu.start_button,menu.settings_button]:
 				check(root.get_visible_rect().encloses(control.get_global_rect()), "Navigation stays inside viewport")
-			check(not menu.previous_page.get_global_rect().intersects(menu.deck_button.get_global_rect()) and not menu.next_page.get_global_rect().intersects(menu.get_node("Start").get_global_rect()), "Paging does not overlap actions")
+			check(not menu.previous_ship.get_global_rect().intersects(menu.deck_button.get_global_rect()) and not menu.next_ship.get_global_rect().intersects(menu.start_button.get_global_rect()), "Navigation does not overlap actions")
 			menu.deck_button.pressed.emit()
 			check(menu.deck_viewer.gallery.cards == Ships.PLAYERS[index].starting_cards, "Deck follows all six ships")
 			menu.deck_viewer.dismiss()
-		if DisplayServer.get_name() != "headless":
-			for page in range(2):
-				menu._show_ship_page(page)
-				await settle()
-				await RenderingServer.frame_post_draw
-				DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
-				root.get_texture().get_image().save_png("res://.godot/testlogs/six-ships-%dx%d-page%d.png" % [dimensions.x,dimensions.y,page])
 	menu._select(-1)
-	check(menu.selected_ship == 0, "Low invalid index clamps safely")
+	check(menu.selected_ship == 0 and menu.previous_ship.disabled, "Low boundary")
 	menu._select(999)
-	check(menu.selected_ship == 5, "High invalid index clamps safely")
-	menu._show_ship_page(0)
-	menu.next_page.pressed.emit()
-	check(menu.ship_page == 1 and menu.next_page.disabled, "Next page boundary")
-	menu.previous_page.pressed.emit()
-	check(menu.ship_page == 0 and menu.previous_page.disabled, "Previous page boundary")
+	check(menu.selected_ship == 5 and menu.next_ship.disabled, "High boundary")
 	menu.free()
 	print("Six ship profiles: %d checks, %d failures" % [checks,failures])
 	quit(1 if failures else 0)

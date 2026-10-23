@@ -60,13 +60,19 @@ func run() -> void:
 	check(host._save_and_quit(), "Save and Quit succeeds")
 	await process_frame
 	var menu = current_scene
-	check(menu.scene_file_path.ends_with("battle_setup.tscn") and menu.get_node("Start").text == "Continue Expedition", "Main menu promotes Continue")
+	menu.showcase._stop_tween()
+	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
+	menu._selection_ready()
+	await process_frame
+	check(menu.scene_file_path.ends_with("battle_setup.tscn") and menu.start_button.text == "CONTINUE EXPEDITION", "Main menu promotes Continue")
 	for dimensions in [Vector2i(1280, 720), Vector2i(686, 384)]:
 		root.size = dimensions
-		menu._layout_cards()
-		check(not menu.new_expedition_button.get_global_rect().intersects(menu.get_node("Start").get_global_rect()), "Continue and New Expedition fit both landscape sizes")
+		menu._layout()
+		await process_frame
+		await process_frame
+		check(not menu.begin_button.get_global_rect().intersects(menu.start_button.get_global_rect()), "Continue and New Expedition fit both landscape sizes")
 	root.size = Vector2i(1280, 720)
-	menu._layout_cards()
+	menu._layout()
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("user://continue-expedition.png")

@@ -162,16 +162,19 @@ func run() -> void:
 	host._exit()
 	await settle()
 	var setup = current_scene
+	setup.showcase._stop_tween()
+	setup.showcase.phase = setup.showcase.Phase.SHIP_SELECTION
+	setup._selection_ready()
+	await process_frame
 	for window_size in [Vector2i(1280,720),Vector2i(1280,480),Vector2i(686,384)]:
 		root.size = window_size
 		await settle()
 		for index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 			setup._select(index)
 			await settle()
-			var panel = setup.get_node("Ships/Ship%d" % index)
-			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship card fits viewport")
-			check(panel.get_node("Stats").get_global_rect().end.y <= panel.get_node("Summary").get_global_rect().position.y, "Ship stats do not overlap summary")
-			check(panel.get_node("Summary").get_global_rect().end.y <= panel.get_node("Select").get_global_rect().position.y, "Ship summary does not overlap selection")
+			var panel = setup.get_node("Selection/Information")
+			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship information fits viewport")
+			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics do not overlap actions")
 		await screenshot("ships-%dx%d" % [window_size.x,window_size.y])
 	setup.free()
 	await process_frame

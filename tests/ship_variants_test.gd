@@ -75,7 +75,7 @@ func run() -> void:
 	check(menu.read_settings().player_ship == 1, "Selected ship controls battle settings")
 	check(not menu.has_node("Panel/player_materials"), "Old starting options removed")
 	for index in range(Ships.PLAYERS.size()):
-		check(menu.get_node("Ships/Ship%d/Preview/Viewport" % index).get_child_count() == 3, "Real model previews")
+		check(menu.showcase.models[index].get_child_count() == 1, "Real model previews")
 	menu.queue_free()
 	await process_frame
 	print("Ship variant checks: %d failures" % failures)

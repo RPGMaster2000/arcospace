@@ -79,16 +79,18 @@ func run() -> void:
 	root.size = Vector2i(1280,720)
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
+	menu.showcase._stop_tween()
+	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
+	menu._selection_ready()
 	for index in range(6):
-		var viewport: SubViewport = menu.get_node("Ships/Ship%d/Preview/Viewport" % index)
-		var displayed = viewport.get_child(viewport.get_child_count() - 1)
+		menu._select(index)
+		menu.showcase.select_ship(index, true)
+		var viewport: SubViewport = menu.get_node("World/Viewport")
+		var displayed = menu.showcase.models[index].get_child(0)
 		check(displayed.scene_file_path == Ships.PLAYERS[index].model_scene.resource_path, "Correct selection model")
-		displayed.set_shield_strength(0)
 		await process_frame
-		check_frame(displayed, viewport, viewport.get_node("Camera"))
-	for page in range(2):
-		menu._show_ship_page(page)
-		await capture("ship-models-selection-page%d" % page)
+		check_frame(displayed, viewport, menu.showcase.camera)
+		await capture("ship-models-selection-%d" % index)
 	menu.free()
 	# Real combat loader, mirrored enemy transform, every battlefield, compact and wide views.
 	for index in range(8):
