@@ -31,7 +31,7 @@ var header: PanelContainer
 var return_button: Button
 var scroll: ScrollContainer
 var view: VBoxContainer
-var more_hint: Label
+var more_hint: Control
 var footer: HBoxContainer
 var confirmation: CanvasLayer
 var approach_note: Label
@@ -115,10 +115,10 @@ func _build_ui() -> void:
 	view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	view.add_theme_constant_override("separation", 10)
 	scroll.add_child(view)
-	more_hint = _label("More options below — swipe or scroll", 16)
+	more_hint = preload("res://scripts/ui/scroll_edge_fade.gd").new()
+	more_hint.scroll = scroll
 	more_hint.hide()
-	more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sidebar.add_child(more_hint)
+	add_child(more_hint)
 	footer = HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 16)
 	confirmation = preload("res://scripts/ui/approach_confirmation.gd").new()

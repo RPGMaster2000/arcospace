@@ -95,7 +95,7 @@ var ui: MarginContainer
 var scroll: ScrollContainer
 var header: PanelContainer
 var footer: HBoxContainer
-var more_hint: Label
+var more_hint: Control
 var grid: GridContainer
 var selected_approach: int = -1
 var approach_buttons: Array[Button] = []
@@ -183,8 +183,6 @@ func _build_ui() -> void:
 func _process(_delta: float) -> void:
 	if not ui.visible:
 		return
-	var bar = scroll.get_v_scroll_bar()
-	more_hint.visible = view_kind != "system" and bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
 	if view_kind == "system" and is_instance_valid(grid):
 		# Fit six tiles plus the separate service button in the existing scroll area.
 		var available_height: float = scroll.size.y - 14

@@ -15,10 +15,15 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 | Setting | Purpose |
 | --- | --- |
 | Overview Position / Overview Target | Fixed three-quarter camera position and look-at orientation |
+| Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.08 default, bounded to 0.95–1.18; higher means closer |
+| Wheel Zoom Step | Mouse-wheel increment (default 6%); pinch uses finger-distance ratio |
+| System Bounds | X/Z destination-center rectangle, default X −16…16 and Z −10…10; changes only visual arrangement |
+| Screen Border | Minimum inset for projected destination hit regions, default 8 logical pixels |
 | Destination Offset | Camera distance, height and angle relative to the focused destination; horizontal framing adapts to the viewport aspect |
 | Camera Duration | Overview/focus transition and FTL ship zoom (default 0.8 s) |
 | Orbit Radius / Orbit Speed | Circular ship orbit in world units and radians/second |
 | Battle Zoom Duration | Ship zoom before battle (default 0.9 s) |
+| Departure Side Offset | Camera-space flyby clearance, default 1.4 world units to the right |
 | Departure Speed / Departure Duration | Accelerating FTL flight distance per second and flight duration |
 | White Fade Duration | White curtain fade at battle/FTL boundaries |
 | Result Suspense Duration | Presentation pause after an approach commits, before its flash (default 2 s) |
@@ -48,7 +53,12 @@ sizes, orientation and modest position offsets. It never consumes any run genera
 Projected buttons provide 140×64 logical-pixel hit regions, ordinary keyboard focus and
 mouse/touch activation. Labels ignore model occlusion and remain readable. Completed
 entries have a check mark and disabled input. Labels hide during camera transitions and
-inspection. The top UI keeps its existing position and controls.
+inspection. The top UI keeps its existing position and controls. Overview-only mouse-wheel and
+two-finger pinch zoom smoothly within the configured limits; pinching cancels any held
+destination button and suppresses release activation. PoI scrolling does not zoom the map.
+The bottom overflow cue is a stationary gradient overlay (`ui/scroll_edge_fade.gd`),
+outside container layout and excluding the live scrollbar. Its opacity tracks remaining
+content; it never changes scroll range, page size, input or layout when shown/hidden.
 
 Sublight movement uses a sine tween, smooth facing and restrained turn banking. Arrival
 emits once, starts an orbit and delegates the encounter to the controller. The map is
@@ -67,7 +77,7 @@ choices keep their full-width galleries and state navigation guards.
 Battle entry keeps the existing preview/Enter Combat interaction. `_enter_battle()`
 zooms at the player, fades white, then calls unchanged combat setup/checkpoint logic.
 The map viewport sleeps during battle. FTL locks immediately, zooms and pauses, flies
-the ship past the camera with acceleration, fades white, calls `generate_system()` once
+the ship beside and past the camera with acceleration, fades white, calls `generate_system()` once
 and reveals the newly seeded map. Existing music calls and all eight tracks are intact.
 
 No camera/tween state is serialized. Continue uses the existing last committed navigation
@@ -112,3 +122,10 @@ immediate/2D behavior. `audio/sfx.gd` has a two-line stale-button guard, covered
 `sfx_test.gd`; this prevents detached UI callbacks accessing a missing SceneTree.
 `DEVELOPER_GUIDE.md` and `expeditions.md` link here. No gameplay state, save format,
 combat rules, ship definitions, soundtrack or project renderer setting changed.
+
+
+Follow-up polish validation: `map_zoom_fade_test.gd` verifies default/wheel/pinch zoom,
+limits, calibrated bounds, gesture release suppression, FTL clearance, fade/scrollbar
+separation and stable scroll geometry. Map navigation, resume, Android layout, cinematic
+launch, PoI confirmation and the 104-check Mobile/Vulkan rendered transition fixture
+also passed. Physical Android pinch/performance testing remains outstanding.

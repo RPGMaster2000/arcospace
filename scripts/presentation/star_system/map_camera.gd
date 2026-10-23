@@ -2,6 +2,28 @@ extends Camera3D
 # Owns map camera framing; never reads or modifies expedition state.
 var motion: Tween
 var viewing: StringName = &"overview"
+var zoom_scale: float = 1.0
+var zoom_target: float = 1.0
+var calibration: Resource
+
+
+func _process(delta: float) -> void:
+	if calibration == null or viewing != &"overview" or (motion and motion.is_running()):
+		return
+	zoom_scale = lerpf(zoom_scale, zoom_target, 1.0 - exp(-18.0 * delta))
+	position = _overview_position(calibration)
+
+
+func _overview_position(settings: Resource) -> Vector3:
+	return settings.overview_target + (settings.overview_position - settings.overview_target) / zoom_scale
+
+
+func zoom_by(factor: float) -> void:
+	if calibration == null or viewing != &"overview":
+		return
+	var low: float = minf(calibration.minimum_zoom, calibration.maximum_zoom)
+	var high: float = maxf(calibration.minimum_zoom, calibration.maximum_zoom)
+	zoom_target = clampf(zoom_target * factor, maxf(0.1, low), maxf(0.1, high))
 
 
 func frame(position_to: Vector3, target: Vector3, duration: float, state: StringName) -> void:
@@ -17,8 +39,13 @@ func frame(position_to: Vector3, target: Vector3, duration: float, state: String
 
 
 func overview(settings: Resource, immediate: bool = false) -> void:
+	if calibration == null:
+		calibration = settings
+		zoom_target = settings.default_zoom
+		zoom_by(1.0)
+		zoom_scale = zoom_target
 	frame(
-		settings.overview_position, settings.overview_target,
+		_overview_position(settings), settings.overview_target,
 		0.0 if immediate else settings.camera_duration, &"overview"
 	)
 

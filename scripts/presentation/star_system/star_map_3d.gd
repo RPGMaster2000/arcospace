@@ -27,6 +27,11 @@ var interactive := true
 var player_profile: Resource
 var configured_seed := 0
 var travel_direction := Vector3.ZERO
+var touches: Dictionary = {}
+var pinch_distance: float = 0.0
+var pinching: bool = false
+var gesture_block_until: int = 0
+var pinch_disabled: Dictionary = {}
 
 
 func _ready() -> void:
@@ -43,6 +48,7 @@ func _ready() -> void:
 	world = Node3D.new()
 	viewport.add_child(world)
 	camera = Camera.new()
+	camera.process_priority = -1
 	camera.fov = 42
 	camera.far = 220
 	world.add_child(camera)
@@ -107,6 +113,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var model := Models.build(entry, rng)
 		model.position = POINTS[index] if index >= 0 and index < POINTS.size() else Vector3(15, 0, 0)
 		model.position += Vector3(rng.randf_range(-0.5, 0.5), 0, rng.randf_range(-0.5, 0.5))
+		var relative := Vector2(model.position.x / 32.0 + 0.5, model.position.z / 24.0 + 0.5)
+		var bounded: Vector2 = settings.system_bounds.position + relative.clamp(Vector2.ZERO, Vector2.ONE) * settings.system_bounds.size
+		model.position = Vector3(bounded.x, 0, bounded.y)
 		model.rotate_y(rng.randf_range(-0.25, 0.25))
 		world.add_child(model)
 		objects[index] = model
@@ -159,8 +168,10 @@ func _process(delta: float) -> void:
 			not focused and not camera.is_position_behind(point)
 			and not (camera.motion != null and camera.motion.is_running())
 		)
-		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling else MOUSE_FILTER_IGNORE
-		button.position = camera.unproject_position(point) - button.size * 0.5 + Vector2(0, 28)
+		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
+		var projected: Vector2 = camera.unproject_position(point) - button.size * 0.5 + Vector2(0, 28)
+		var border: float = settings.screen_border
+		button.position = projected.clamp(Vector2.ONE * border, (size - button.size - Vector2.ONE * border).max(Vector2.ONE * border))
 
 
 func _face(direction: Vector3, weight: float = 1.0) -> void:
@@ -176,7 +187,7 @@ func _face(direction: Vector3, weight: float = 1.0) -> void:
 
 
 func travel(index: int) -> void:
-	if traveling or not interactive or not markers.has(index) or markers[index].disabled:
+	if traveling or not interactive or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
@@ -250,8 +261,72 @@ func set_active(active: bool) -> void:
 func depart() -> void:
 	traveling = true
 	orbit_index = -1
-	var direction: Vector3 = (camera.position - ship.position).normalized()
+	var flyby: Vector3 = camera.position + camera.basis.x * settings.departure_side_offset
+	var direction: Vector3 = (flyby - ship.position).normalized()
 	travel_direction = direction
 	motion = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	var end: Vector3 = ship.position + direction * settings.departure_speed * settings.departure_duration
 	motion.tween_property(ship, "position", end, settings.departure_duration)
+
+
+func _zoom_enabled() -> bool:
+	return is_visible_in_tree() and interactive and not traveling and not focused and camera.viewing == &"overview"
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _zoom_enabled():
+		return
+	if event is InputEventMouseButton and event.pressed and get_global_rect().has_point(event.position):
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			var step: float = 1.0 + settings.wheel_zoom_step
+			camera.zoom_by(step if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / step)
+			get_viewport().set_input_as_handled()
+	elif event is InputEventMagnifyGesture and get_global_rect().has_point(event.position):
+		camera.zoom_by(event.factor)
+		get_viewport().set_input_as_handled()
+
+
+func _input(event: InputEvent) -> void:
+	if not _zoom_enabled():
+		_end_pinch()
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed and get_global_rect().has_point(event.position):
+			touches[event.index] = event.position
+		else:
+			touches.erase(event.index)
+		if touches.size() == 2 and not pinching:
+			pinching = true
+			pinch_distance = _touch_distance()
+			# Disabling cancels any first-finger button press before its release can select.
+			for index in markers:
+				pinch_disabled[index] = markers[index].disabled
+				markers[index].disabled = true
+		if pinching:
+			gesture_block_until = Time.get_ticks_msec() + 180
+			get_viewport().set_input_as_handled()
+			if touches.is_empty():
+				_end_pinch()
+	elif event is InputEventScreenDrag and touches.has(event.index):
+		touches[event.index] = event.position
+		if pinching:
+			var distance: float = _touch_distance()
+			if distance > 1.0 and pinch_distance > 1.0:
+				camera.zoom_by(distance / pinch_distance)
+			pinch_distance = distance
+			get_viewport().set_input_as_handled()
+
+
+func _touch_distance() -> float:
+	var points: Array = touches.values()
+	return points[0].distance_to(points[1]) if points.size() == 2 else 0.0
+
+
+func _end_pinch() -> void:
+	for index in pinch_disabled:
+		if markers.has(index):
+			markers[index].disabled = pinch_disabled[index]
+	pinch_disabled.clear()
+	touches.clear()
+	pinching = false
+	pinch_distance = 0.0
