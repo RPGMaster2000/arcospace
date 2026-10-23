@@ -166,8 +166,14 @@ func run() -> void:
 	await process_frame
 	var returned = current_scene
 	check(returned.selected_ship == 2, "Return to setup preserves ship selection")
+	returned.showcase.skip_cinematics = true
+	returned.showcase._stop_tween()
+	returned.showcase.phase = returned.showcase.Phase.SHIP_SELECTION
+	returned._selection_ready()
+	returned.white_fade_duration = 0.001
+	returned.map_reveal_duration = 0.001
 	returned.start_button.pressed.emit()
-	await process_frame
+	for frame in range(8): await process_frame
 	var restarted = current_scene
 	check(restarted.state.player_ship == 2 and restarted.state.ship() == preload("res://scripts/ships/ship_library.gd").PLAYERS[2], "Begin expedition uses selected ship Resource")
 	restarted.queue_free()

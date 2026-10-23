@@ -244,6 +244,12 @@ func run() -> void:
 	defeated.get_node("MatchResult/Panel/Configure").pressed.emit()
 	await settle()
 	check(current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Defeat goes to ship selection")
+	current_scene.showcase.skip_cinematics = true
+	current_scene.showcase._stop_tween()
+	current_scene.showcase.phase = current_scene.showcase.Phase.SHIP_SELECTION
+	current_scene._selection_ready()
+	current_scene.white_fade_duration = 0.001
+	current_scene.map_reveal_duration = 0.001
 	current_scene._select(1)
 	current_scene._start()
 	await settle()

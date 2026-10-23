@@ -50,6 +50,10 @@ func run() -> void:
 		await settle()
 		menu._select(index)
 		await settle()
+		menu.showcase.skip_cinematics = true
+		menu.continue_fade_duration = 0.001
+		menu.white_fade_duration = 0.001
+		menu.map_reveal_duration = 0.001
 		menu.showcase._stop_tween()
 		menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
 		menu._selection_ready()

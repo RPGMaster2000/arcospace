@@ -31,6 +31,14 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export var framing_offset: Vector3 = Vector3.ZERO
 ## Optional camera distance corrections in library order, without changing ship geometry.
 @export var ship_camera_offsets: PackedVector3Array = PackedVector3Array()
+@export_group("Launch")
+@export_range(0.05, 5) var orientation_duration: float = 1.2
+@export var orientation_easing: Tween.EaseType = Tween.EASE_IN_OUT
+## Camera-space +X is screen right, +Y is screen up, -Z travels away.
+@export var departure_direction: Vector3 = Vector3(1, 0.65, -0.6)
+@export_range(0, 4) var departure_pause_duration: float = 1.0
+@export_range(1, 200) var departure_acceleration: float = 80.0
+@export_range(0.1, 4) var departure_travel_duration: float = 1.0
 var models: Array[Node3D] = []
 var selected_model: Node3D
 var camera_tween: Tween
@@ -137,6 +145,28 @@ func select_ship(index: int, immediate: bool = false) -> void:
 		else:
 			camera_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 			camera_tween.tween_property(camera, "transform", target, selection_duration)
+
+
+func depart() -> void:
+	if phase != Phase.SHIP_SELECTION: return
+	phase = Phase.LAUNCHING
+	if camera_tween != null: camera_tween.kill()
+	_stop_tween()
+	phase_tween = create_tween()
+	if skip_cinematics:
+		phase_tween.tween_callback(departure_finished.emit)
+		return
+	var direction: Vector3 = (camera.global_basis * departure_direction).normalized()
+	if direction.is_zero_approx(): direction = camera.global_basis.x
+	var up: Vector3 = Vector3.UP if absf(direction.dot(Vector3.UP)) < 0.99 else Vector3.FORWARD
+	var side: Vector3 = direction.cross(up).normalized()
+	var heading := Basis(direction, side.cross(direction), side).get_rotation_quaternion()
+	phase_tween.set_ease(orientation_easing).set_trans(Tween.TRANS_SINE)
+	phase_tween.tween_property(selected_model, "quaternion", heading, orientation_duration)
+	phase_tween.tween_interval(departure_pause_duration)
+	var origin: Vector3 = selected_model.position
+	phase_tween.tween_method(func(t: float): selected_model.position = origin + direction * 0.5 * departure_acceleration * t * t, 0.0, departure_travel_duration, departure_travel_duration).set_trans(Tween.TRANS_LINEAR)
+	phase_tween.tween_callback(departure_finished.emit)
 
 
 func _exit_tree() -> void:

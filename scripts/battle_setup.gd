@@ -4,6 +4,12 @@ extends Control
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
+@export_group("Gameplay transition")
+@export_range(0.05, 3) var white_fade_duration: float = 0.35
+@export_range(0.05, 3) var map_reveal_duration: float = 1.0
+@export_range(0.05, 1) var continue_fade_duration: float = 0.18
+var transition_tween: Tween
+var launch_data: Dictionary = {}
 var save_store = Save.new()
 var saved_run: Dictionary = {}
 var initial_settings: Dictionary = {}
@@ -33,6 +39,7 @@ func _ready() -> void:
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
 	showcase.populate(Ships.PLAYERS)
 	showcase.selection_ready.connect(_selection_ready)
+	showcase.departure_finished.connect(func(): _fade_to_game(launch_data, white_fade_duration))
 	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, Ships.PLAYERS.size() - 1)
 	_select(selected_ship)
 	previous_ship.pressed.connect(_navigate.bind(-1))
@@ -134,6 +141,7 @@ func _set_actions_enabled(enabled: bool) -> void:
 
 
 func _request_new() -> void:
+	if showcase.phase != showcase.Phase.SHIP_SELECTION: return
 	if not saved_run.is_empty() or FileAccess.file_exists(save_store.path):
 		overwrite_confirmation.popup_centered(Vector2i(520, 180))
 	else:
@@ -141,32 +149,68 @@ func _request_new() -> void:
 
 
 func _start() -> void:
+	if showcase.phase != showcase.Phase.SHIP_SELECTION: return
 	var candidate = preload("res://scripts/expedition_state.gd").new()
 	candidate.start(selected_ship, preload("res://encounters/expedition_rules.tres"))
 	if not save_store.save_run(candidate):
 		save_notice.dialog_text = save_store.error
 		save_notice.popup_centered(Vector2i(520, 180))
 		return
-	_launch({"state": candidate, "battle": {}})
+	launch_data = {"state": candidate, "battle": {}}
+	_set_actions_enabled(false)
+	showcase.select_ship(selected_ship, true)
+	showcase.depart()
 
 
 func _continue_expedition() -> void:
+	if showcase.phase != showcase.Phase.SHIP_SELECTION: return
 	var loaded: Dictionary = save_store.load_run()
 	if loaded.is_empty():
 		save_notice.dialog_text = save_store.error if not save_store.error.is_empty() else "No active expedition remains."
 		save_notice.popup_centered(Vector2i(520, 180))
 		return
-	_launch(loaded)
+	_fade_to_game(loaded, continue_fade_duration)
+
+
+func _fade_to_game(data: Dictionary, seconds: float) -> void:
+	_set_actions_enabled(false)
+	showcase.phase = showcase.Phase.LOADING
+	$Transition.show()
+	$Transition.modulate.a = 0.0
+	transition_tween = create_tween()
+	transition_tween.tween_property($Transition, "modulate:a", 1.0, minf(seconds, 0.12) if showcase.skip_cinematics else seconds)
+	transition_tween.tween_callback(_launch.bind(data))
 
 
 func _launch(data: Dictionary) -> void:
-	_set_actions_enabled(false)
 	var expedition = load("res://scenes/expedition.tscn").instantiate()
 	expedition.selected_ship = data.state.player_ship
 	expedition.resume_data = data
 	expedition.save_store = save_store
+	var tree: SceneTree = get_tree()
+	var was_paused: bool = tree.paused
+	tree.paused = true
 	get_parent().add_child(expedition)
-	get_tree().current_scene = expedition
+	tree.current_scene = expedition
+	# This temporary cover belongs to the destination, so no callback retains this menu.
+	var cover := CanvasLayer.new()
+	cover.layer = 300
+	cover.process_mode = Node.PROCESS_MODE_ALWAYS
+	expedition.add_child(cover)
+	var white := ColorRect.new()
+	white.color = Color.WHITE
+	white.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cover.add_child(white)
+	var restore_pause: Callable = func(): tree.paused = was_paused
+	expedition.tree_exiting.connect(restore_pause)
+	var reveal: Tween = expedition.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	reveal.tween_property(white, "color:a", 0.0, minf(map_reveal_duration, 0.12) if showcase.skip_cinematics else map_reveal_duration)
+	reveal.tween_callback(func():
+		restore_pause.call()
+		expedition.tree_exiting.disconnect(restore_pause)
+		cover.queue_free())
 	queue_free()
 
 
+func _exit_tree() -> void:
+	if transition_tween != null: transition_tween.kill()

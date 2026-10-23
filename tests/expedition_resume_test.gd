@@ -60,6 +60,10 @@ func run() -> void:
 	check(host._save_and_quit(), "Save and Quit succeeds")
 	await process_frame
 	var menu = current_scene
+	menu.showcase.skip_cinematics = true
+	menu.continue_fade_duration = 0.001
+	menu.white_fade_duration = 0.001
+	menu.map_reveal_duration = 0.001
 	menu.showcase._stop_tween()
 	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
 	menu._selection_ready()
@@ -86,7 +90,7 @@ func run() -> void:
 	DirAccess.remove_absolute(store.path + ".tmp")
 	menu.save_notice.hide()
 	menu._continue_expedition()
-	await process_frame
+	for frame in range(8): await process_frame
 	host = current_scene
 	host.battle.enemy_timer.stop()
 	check(opening(host.battle) == expected, "Same enemy modifier stats opening decks and RNG after interruption")
