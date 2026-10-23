@@ -107,3 +107,43 @@ OpenGL rendering. This validates layouts and scene behavior, not Android GPU fra
 time or touch hardware. The Mobile renderer configuration is retained; physical
 Android/Windows hardware and driver performance still need device testing. No new
 particles, blur, volumetrics, shadow maps or compositor effects are used.
+
+## Touch and visual polish (October 23)
+
+The entry Control ignores pointer input, allowing raw Android taps to reach the
+intro handler without consuming Legend/Settings interactions. Legend text ignores
+pointer input; the existing encounter scroll helper now offers opt-in explicit
+kinetic touch dragging, enabled for information overlays. Other scroll consumers
+retain their previous behavior. Momentum stops on a new touch or hidden overlay.
+
+- Logo defaults to 152px (twice the previous 76px) and scales down only to fit.
+- Selected rotation is 14 degrees/second (previously 7).
+- Turn duration is 1 second; departure acceleration is 110 (previously 80),
+  with 0.9 seconds of travel. The one-second departure hold is unchanged.
+- Information is split into identity/colored statistics on the left and the ship
+  description on the right, capped to the central 16:9 area on ultrawide displays.
+- `MainMenu3D/Space` material exposes `star_resolution` (320 for the menu) and
+  `star_jitter` (1 for random positions), with varied size/brightness and pixel
+  antialiasing. Other scenes retain the original star settings and appearance.
+- `MainMenu3D/PlanetSunlight` affects layer 2 (Planet) only. Ship showcase lighting
+  remains on layer 1. `Planet` material's `ambient_visibility` controls the dark
+  hemisphere; its shared shader defaults to full ambient visibility elsewhere.
+- `MainMenu3D/SunDisc` uses an occludable transparent billboard: warm disc, corona and
+  a tunable `flare_intensity` on its material. It uses Godot's shader system, with
+  no add-ons, external textures or full-screen bloom passes.
+- Map scroll hints start hidden and remain hidden on the system map; longer
+  encounter-choice screens retain their useful overflow indication.
+
+`cinematic_touch_test` sends actual touch/drag events through the viewport and
+checks two-press intro progression, unblocked Legend interaction, momentum after
+release, the two-column width cap and isolated planet lighting. The launch test
+also checks the absent map hint during reveal. Physical Android touch/GPU testing
+still requires a device.
+
+Validation of this revision: Godot 4.7.2 passed all 78 headless suites,
+seven targeted rendered suites (including a clean UI-overhaul retest with 914
+assertions), the direct touch/momentum test and nine Python runner tests. The
+exported resource pack passed the six-ship startup flow outside the checkout.
+Rendered screenshots cover 1280×720, 960×540, 19.5:9, 21:9 and 686×384.
+Android hardware validation remains outstanding; existing ObjectDB shutdown
+warnings are retained in the regression logs.

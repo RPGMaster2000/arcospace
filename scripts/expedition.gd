@@ -175,7 +175,7 @@ func _process(_delta: float) -> void:
 	if not ui.visible:
 		return
 	var bar = scroll.get_v_scroll_bar()
-	more_hint.visible = bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
+	more_hint.visible = view_kind != "system" and bar.max_value > bar.page + 1 and bar.value + bar.page < bar.max_value - 1
 	if view_kind == "system" and is_instance_valid(grid):
 		# Fit six tiles plus the separate service button in the existing scroll area.
 		var available_height: float = scroll.size.y - 14

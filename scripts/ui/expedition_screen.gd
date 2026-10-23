@@ -94,6 +94,7 @@ func _build_ui() -> void:
 	view.add_theme_constant_override("separation", 10)
 	scroll.add_child(view)
 	more_hint = _label("More options below — swipe or scroll", 16)
+	more_hint.hide()
 	more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(more_hint)
 	footer = HBoxContainer.new()

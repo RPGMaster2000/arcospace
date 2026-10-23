@@ -105,7 +105,7 @@ func run() -> void:
 		for index in range(6):
 			menu._select(index)
 			await settle()
-			check(menu.get_node("Selection/Information/Margin/Scroll/Column/Name").text == Ships.PLAYERS[index].ship_name.to_upper(), "All six names displayed")
+			check(menu.get_node("Selection/Information/Margin/Scroll/Column/Identity/Name").text == Ships.PLAYERS[index].ship_name.to_upper(), "All six names displayed")
 			for control in [menu.previous_ship, menu.next_ship, menu.deck_button, menu.start_button,menu.settings_button]:
 				check(root.get_visible_rect().encloses(control.get_global_rect()), "Navigation stays inside viewport")
 			check(not menu.previous_ship.get_global_rect().intersects(menu.deck_button.get_global_rect()) and not menu.next_ship.get_global_rect().intersects(menu.start_button.get_global_rect()), "Navigation does not overlap actions")

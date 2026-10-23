@@ -176,7 +176,7 @@ func run() -> void:
 			await settle()
 			var panel = setup.get_node("Selection/Information")
 			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship information fits viewport")
-			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics do not overlap actions")
+			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Identity/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics do not overlap actions")
 		await screenshot("ships-%dx%d" % [window_size.x,window_size.y])
 	setup.free()
 	await process_frame

@@ -1,6 +1,6 @@
 shader_type spatial;
 render_mode unshaded, fog_disabled, cull_disabled;
-// One opaque backdrop: three low-frequency noise samples, one sparse star layer.
+// One opaque backdrop: three low-frequency noise samples, one sparse star layer with optional position jitter.
 // Scene-local uniforms define the appearance; there is no gameplay/modifier lookup.
 uniform vec4 space_color : source_color = vec4(0.008, 0.014, 0.028, 1.0);
 uniform vec4 cloud_color : source_color = vec4(0.06, 0.11, 0.18, 1.0);
@@ -9,6 +9,8 @@ uniform float cloud_intensity : hint_range(0.0, 1.0) = 0.1;
 uniform float cloud_scale : hint_range(1.0, 12.0) = 4.0;
 uniform float animation_speed : hint_range(0.0, 0.1) = 0.0;
 uniform float star_density : hint_range(0.0, 1.0) = 0.14;
+uniform float star_resolution : hint_range(50.0, 500.0) = 95.0;
+uniform float star_jitter : hint_range(0.0, 1.0) = 0.0;
 uniform float star_brightness : hint_range(0.0, 1.0) = 0.35;
 uniform float streak_intensity : hint_range(0.0, 1.0) = 0.0;
 uniform float rift_intensity : hint_range(0.0, 1.0) = 0.0;
@@ -26,9 +28,17 @@ void fragment() {
 	vec2 p = uv * cloud_scale + vec2(variation_seed, t);
 	float n = noise(p) * 0.60 + noise(p * 2.03 + vec2(t, 4.1)) * 0.28 + noise(p * 4.1) * 0.12;
 	vec3 color = space_color.rgb + mix(cloud_color.rgb, accent_color.rgb, smoothstep(0.45, 0.8, n)) * smoothstep(0.22, 0.85, n) * cloud_intensity;
-	vec2 cell = floor(uv * 95.0);
-	vec2 spot = fract(uv * 95.0) - vec2(0.5);
-	float stars = (1.0 - smoothstep(0.025, 0.14, length(spot))) * step(1.0 - star_density, hash(cell + variation_seed));
+	vec2 cell = floor(uv * star_resolution);
+	vec2 random_position = vec2(hash(cell + variation_seed + 17.3), hash(cell.yx + variation_seed + 53.9));
+	vec2 center = mix(vec2(0.5), vec2(0.16) + random_position * 0.68, star_jitter);
+	vec2 spot = fract(uv * star_resolution) - center;
+	float radius = mix(0.14, mix(0.045, 0.16, hash(cell + 92.7)), star_jitter);
+	float edge = max(length(fwidth(uv * star_resolution)) * 0.5, 0.015);
+	float stars = (1.0 - smoothstep(max(0.0, radius - edge), radius + edge, length(spot))) * step(1.0 - star_density, hash(cell + variation_seed));
+	stars *= mix(1.0, 0.3 + random_position.y * 0.7, star_jitter);
+	if (star_jitter == 0.0) {
+		stars = (1.0 - smoothstep(0.025, 0.14, length(spot))) * step(1.0 - star_density, hash(cell + variation_seed));
+	}
 	color += vec3(0.7, 0.82, 1.0) * stars * star_brightness;
 	// Sparse, gently moving streaks rather than full-screen lightning flashes.
 	float streak = exp(-abs(uv.y - 0.45 - sin(uv.x * 4.0 + t) * 0.16 - sin(uv.x * 15.0 - t) * 0.015) * 230.0);

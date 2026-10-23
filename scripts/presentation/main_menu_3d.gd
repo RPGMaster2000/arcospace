@@ -8,7 +8,7 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export_group("Title")
 @export var title_text: String = "ARCOSPACE"
 @export var logo_texture: Texture2D
-@export_range(24, 160) var title_font_size: int = 76
+@export_range(24, 160) var title_font_size: int = 152
 @export_range(0.1, 8) var background_fade_duration: float = 2.0
 @export_range(0.1, 8) var logo_fade_duration: float = 2.0
 @export_range(0, 1) var title_vertical_position: float = 0.40
@@ -27,19 +27,19 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export_range(3, 12) var fleet_spacing: float = 6.2
 @export_range(0, 0.3) var fleet_curvature: float = 0.025
 @export var ship_orientation: Vector3 = Vector3(0, -35, 0)
-@export_range(0, 30) var rotation_degrees_per_second: float = 7.0
+@export_range(0, 30) var rotation_degrees_per_second: float = 14.0
 @export_range(0.05, 3) var selection_duration: float = 0.55
 @export var framing_offset: Vector3 = Vector3.ZERO
 ## Optional camera distance corrections in library order, without changing ship geometry.
 @export var ship_camera_offsets: PackedVector3Array = PackedVector3Array()
 @export_group("Launch")
-@export_range(0.05, 5) var orientation_duration: float = 1.2
+@export_range(0.05, 5) var orientation_duration: float = 1.0
 @export var orientation_easing: Tween.EaseType = Tween.EASE_IN_OUT
 ## Camera-space +X is screen right, +Y is screen up, -Z travels away.
 @export var departure_direction: Vector3 = Vector3(1, 0.65, -0.6)
 @export_range(0, 4) var departure_pause_duration: float = 1.0
-@export_range(1, 200) var departure_acceleration: float = 80.0
-@export_range(0.1, 4) var departure_travel_duration: float = 1.0
+@export_range(1, 200) var departure_acceleration: float = 110.0
+@export_range(0.1, 4) var departure_travel_duration: float = 0.9
 var models: Array[Node3D] = []
 var selected_model: Node3D
 var camera_tween: Tween
@@ -59,7 +59,8 @@ var skip_cinematics: bool = false
 func _ready() -> void:
 	camera.transform = title_anchor.transform
 	$Title/Logo/Text.text = title_text
-	$Title/Logo/Text.add_theme_font_size_override("font_size", title_font_size)
+	get_viewport().size_changed.connect(_fit_title)
+	_fit_title()
 	$Title/Logo/Image.texture = logo_texture
 	$Title/Logo/Image.visible = logo_texture != null
 	$Title/Logo/Text.visible = logo_texture == null
@@ -80,6 +81,13 @@ func _ready() -> void:
 		phase_tween.tween_callback(func(): phase = Phase.INTRO_LOGO)
 		phase_tween.tween_property(logo, "modulate:a", 1.0, logo_fade_duration)
 		phase_tween.tween_callback(_finish_intro)
+
+
+func _fit_title() -> void:
+	var width: float = get_viewport().get_visible_rect().size.x
+	var font: Font = $Title/Logo/Text.get_theme_font("font")
+	var full_width: float = font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, title_font_size).x
+	$Title/Logo/Text.add_theme_font_size_override("font_size", int(title_font_size * minf(1.0, width * 0.90 / maxf(full_width, 1.0))))
 
 
 func _process(delta: float) -> void:

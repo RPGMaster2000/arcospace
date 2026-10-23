@@ -114,7 +114,7 @@ func run() -> void:
 			await settle()
 			var panel: Control = setup.get_node("Selection/Information")
 			check(root.get_visible_rect().encloses(panel.get_global_rect()), "Ship information inside viewport " + str(dimensions))
-			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics above actions")
+			check(setup.get_node("Selection/Information/Margin/Scroll/Column/Identity/Stats").get_global_rect().end.y <= setup.deck_button.get_global_rect().position.y, "Statistics above actions")
 		setup.deck_button.pressed.emit()
 		await settle()
 		for index in range(Ships.PLAYERS.size()):

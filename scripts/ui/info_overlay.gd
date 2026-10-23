@@ -30,9 +30,12 @@ func _ready() -> void:
 	close.pressed.connect(dismiss)
 	column.add_child(close)
 	var scroll = preload("res://scripts/ui/encounter_scroll.gd").new()
+	scroll.explicit_touch_drag = true
+	scroll.kinetic_touch_drag = true
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
 	body = RichTextLabel.new()
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.bbcode_enabled = true
 	body.fit_content = true
 	body.scroll_active = false

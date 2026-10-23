@@ -4,6 +4,8 @@
 [ext_resource type="Shader" path="res://shaders/space_background.gdshader" id="Space"]
 [ext_resource type="Shader" path="res://shaders/planet_surface.gdshader" id="Planet"]
 
+[ext_resource type="Shader" path="res://shaders/menu_sun.gdshader" id="SunShader"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.004, 0.008, 0.02, 1)
@@ -20,7 +22,9 @@ shader_parameter/accent_color = Color(0.13, 0.11, 0.22, 1)
 shader_parameter/cloud_intensity = 0.38
 shader_parameter/cloud_scale = 4.0
 shader_parameter/animation_speed = 0.005
-shader_parameter/star_density = 0.25
+shader_parameter/star_density = 0.20
+shader_parameter/star_resolution = 320.0
+shader_parameter/star_jitter = 1.0
 shader_parameter/star_brightness = 0.85
 shader_parameter/variation_seed = 7.0
 
@@ -33,15 +37,22 @@ rings = 16
 [sub_resource type="ShaderMaterial" id="PlanetMaterial"]
 resource_local_to_scene = true
 shader = ExtResource("Planet")
-shader_parameter/ocean_color = Color(0.025, 0.08, 0.14, 1)
-shader_parameter/land_color = Color(0.12, 0.23, 0.27, 1)
-shader_parameter/rim_intensity = 0.15
+shader_parameter/ocean_color = Color(0.07, 0.075, 0.09, 1)
+shader_parameter/land_color = Color(0.18, 0.16, 0.14, 1)
+shader_parameter/rim_intensity = 0.08
+shader_parameter/ambient_visibility = 0.04
 
 [sub_resource type="SphereMesh" id="PlanetSphere"]
 radius = 11.0
 height = 22.0
 radial_segments = 48
 rings = 24
+
+[sub_resource type="ShaderMaterial" id="SunMaterial"]
+shader = ExtResource("SunShader")
+
+[sub_resource type="QuadMesh" id="SunDisc"]
+size = Vector2(9, 9)
 
 [sub_resource type="SystemFont" id="LogoFont"]
 font_names = PackedStringArray("Eurostile", "Microgramma", "Bank Gothic", "DejaVu Sans")
@@ -62,18 +73,35 @@ mesh = SubResource("SpaceSphere")
 material_override = SubResource("SpaceMaterial")
 
 [node name="Planet" type="MeshInstance3D" parent="."]
+layers = 2
 position = Vector3(-24, 9, 24)
 cast_shadow = 0
 mesh = SubResource("PlanetSphere")
 material_override = SubResource("PlanetMaterial")
 
+[node name="SunDisc" type="MeshInstance3D" parent="."]
+position = Vector3(-12, 8, 26)
+cast_shadow = 0
+mesh = SubResource("SunDisc")
+material_override = SubResource("SunMaterial")
+
+[node name="PlanetSunlight" type="OmniLight3D" parent="."]
+position = Vector3(-12, 8, 26)
+light_color = Color(1, 0.78, 0.48, 1)
+light_energy = 4.0
+light_cull_mask = 2
+omni_range = 55.0
+shadow_enabled = false
+
 [node name="Sun" type="DirectionalLight3D" parent="."]
+light_cull_mask = 1
 rotation_degrees = Vector3(-35, -30, 0)
 light_color = Color(0.85, 0.93, 1, 1)
 light_energy = 1.5
 shadow_enabled = false
 
 [node name="Rim" type="DirectionalLight3D" parent="."]
+light_cull_mask = 1
 rotation_degrees = Vector3(20, 130, 0)
 light_color = Color(0.2, 0.6, 0.9, 1)
 light_energy = 0.6
@@ -106,8 +134,8 @@ shadow_enabled = false
 [node name="Logo" type="Control" parent="Title"]
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = -60.0
-offset_bottom = 60.0
+offset_top = -100.0
+offset_bottom = 100.0
 mouse_filter = 2
 
 [node name="Text" type="Label" parent="Title/Logo"]

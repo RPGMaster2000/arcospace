@@ -43,6 +43,7 @@ func run() -> void:
 	var expedition = current_scene
 	check(expedition != menu and expedition.state.player_ship == 2, "Launch uses selected ship and map")
 	check(paused, "Map stays locked during reveal")
+	check(not expedition.more_hint.visible, "Map reveal never flashes the options scroll hint")
 	await create_timer(0.2, true).timeout
 	check(not paused and expedition.view_kind != "battle", "Reveal restores interaction")
 	check(expedition._save_and_quit(), "Return to menu")

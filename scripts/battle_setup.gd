@@ -46,6 +46,13 @@ func _ready() -> void:
 	deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(deck_viewer)
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
+	var stats: RichTextLabel = $Selection/Information/Margin/Scroll/Column/Identity/Stats
+	stats.add_theme_font_override("normal_font", Presentation.UI_FONT)
+	var bold := FontVariation.new()
+	bold.base_font = ThemeDB.fallback_font
+	bold.variation_embolden = 0.7
+	bold.fallbacks = [Presentation.EMOJI_FONT]
+	stats.add_theme_font_override("bold_font", bold)
 	showcase.populate(Ships.PLAYERS)
 	showcase.phase_changed.connect(_update_chrome)
 	showcase.selection_ready.connect(_selection_ready)
@@ -92,12 +99,19 @@ func _selection_ready() -> void:
 func _layout() -> void:
 	var compact: bool = size.y < 600
 	$Selection/Information.anchor_top = 0.50 if compact else 0.55
+	var info_width: float = minf(size.x * 0.92, size.y * 16.0 / 9.0 * 0.92)
+	$Selection/Information.anchor_left = 0.5
+	$Selection/Information.anchor_right = 0.5
+	$Selection/Information.offset_left = -info_width / 2.0
+	$Selection/Information.offset_right = info_width / 2.0
 	$Selection/Actions.anchor_left = 0.04 if size.x < 1000 else 0.12
 	$Selection/Actions.anchor_right = 0.96 if size.x < 1000 else 0.88
 	$Selection/Heading.add_theme_font_size_override("font_size", 22 if compact else 30)
-	$Selection/Information/Margin/Scroll/Column/Name.add_theme_font_size_override("font_size", 25 if compact else 34)
-	for label in [$Selection/Information/Margin/Scroll/Column/Role, $Selection/Information/Margin/Scroll/Column/Description, $Selection/Information/Margin/Scroll/Column/Stats]:
+	$Selection/Information/Margin/Scroll/Column/Identity/Name.add_theme_font_size_override("font_size", 25 if compact else 34)
+	for label in [$Selection/Information/Margin/Scroll/Column/Identity/Role, $Selection/Information/Margin/Scroll/Column/Description]:
 		label.add_theme_font_size_override("font_size", 16 if compact else 21)
+	var stats: RichTextLabel = $Selection/Information/Margin/Scroll/Column/Identity/Stats
+	for font in ["normal_font_size", "bold_font_size"]: stats.add_theme_font_size_override(font, 15 if compact else 18)
 	for button in [deck_button, begin_button, start_button]: button.add_theme_font_size_override("font_size", (14 if size.x < 800 else 16) if compact else 21)
 	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	settings_button.offset_left = -62
@@ -109,11 +123,11 @@ func _layout() -> void:
 func _select(index: int) -> void:
 	selected_ship = clampi(index, 0, Ships.PLAYERS.size() - 1)
 	var data: Resource = Ships.PLAYERS[selected_ship]
-	var column: VBoxContainer = $Selection/Information/Margin/Scroll/Column
-	column.get_node("Name").text = data.ship_name.to_upper()
-	column.get_node("Role").text = data.subtitle + " · " + data.role
+	var column: HBoxContainer = $Selection/Information/Margin/Scroll/Column
+	column.get_node("Identity/Name").text = data.ship_name.to_upper()
+	column.get_node("Identity/Role").text = data.subtitle + " · " + data.role
 	column.get_node("Description").text = data.summary
-	column.get_node("Stats").text = "Hull %d   Shields %d   ·   Materials %d / Energy %d / Crew %d\nSynthesizer %d / Reactor %d / Quarters %d   ·   EMP %dt / %+.0f%% resistance" % [data.hull_capacity, data.shields, data.materials, data.energy, data.crew, data.synthesizer, data.reactor, data.quarters, data.ftl_turns, data.ftl_resistance * 100]
+	column.get_node("Identity/Stats").text = "[b]❤️ Hull %d   🛡️ Shields %d[/b]\n[color=#ef9da8]🛠️ Materials [b]%d[/b] · Synthesizer [b]%d[/b][/color]\n[color=#8fc5ff]⚡ Energy [b]%d[/b] · Reactor [b]%d[/b][/color]\n[color=#98ddb0]👥 Crew [b]%d[/b] · Quarters [b]%d[/b][/color]\n[b]EMP[/b] %dt · %+.0f%% resistance" % [data.hull_capacity, data.shields, data.materials, data.synthesizer, data.energy, data.reactor, data.crew, data.quarters, data.ftl_turns, data.ftl_resistance * 100]
 	deck_button.tooltip_text = data.ship_name + " · Starting card pool"
 	previous_ship.disabled = selected_ship == 0
 	next_ship.disabled = selected_ship == Ships.PLAYERS.size() - 1
