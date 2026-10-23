@@ -13,16 +13,39 @@ func _run() -> void:
 	var music = root.get_node("Music")
 	var original: bool = music.enabled
 	music.play_starmap()
-	check(music.current_track == "starmap", "Exploration track selected without audio assets")
+	check(music.current_track == "starsystem", "Star system track selected")
 	var first_player = music.player
 	music.play_starmap()
 	check(music.player == first_player, "One persistent audio player")
 	music.play_battle()
-	check(music.current_track in ["battle1", "battle2"], "Battle selects one of two tracks")
+	check(music.current_track in ["battle1", "battle2", "battle3"], "Battle selects one of three tracks")
 	music.play_result(true)
-	check(music.current_track == "victory", "Victory replaces battle music")
+	check(music.current_track == "victory_normal", "Victory replaces battle music")
 	music.play_result(false)
 	check(music.current_track.is_empty() and not music.player.playing, "Escape/defeat stop battle music")
+	for rank in range(3):
+		music.play_battle()
+		music.play_result(true, rank)
+		check(music.current_track == ("victory_normal" if rank == 0 else "victory_special"), "Victory follows enemy tier")
+		check(music.player.playing and not music.player.stream.loop, "Victory plays once")
+	var seen: Dictionary = {}
+	for n in range(100):
+		music.play_battle()
+		seen[music.current_track] = true
+	check(seen.size() == 3, "All three battle tracks are selectable")
+	for track in music.TRACKS:
+		music.play_track(track)
+		check(music.player.stream is AudioStreamMP3 and music.player.playing, "MP3 loads: " + track)
+		check(music.player.stream.loop == not track.begins_with("victory_"), "Only victory cues are one-shots: " + track)
+	music.play_title()
+	music.fade_title(0.05)
+	await music.fade_tween.finished
+	check(music.current_track.is_empty() and not music.player.playing, "Title fade stops at silence")
+	music.play_title()
+	music.fade_title(0.05)
+	music.play_ship_selection()
+	await create_timer(0.15).timeout
+	check(music.current_track == "shipselect" and music.player.playing and music.player.volume_db == music.BASE_VOLUME_DB, "Old title fade cannot stop the next track")
 	var script = load("res://scripts/ui/settings_button.gd")
 	var first = script.new()
 	var second = script.new()
@@ -33,7 +56,7 @@ func _run() -> void:
 	first.menu.music_toggle.button_pressed = true
 	check(music.enabled and first.menu.music_toggle.button_pressed and second.menu.music_toggle.button_pressed, "Toggle synchronizes both controls")
 	music.play_starmap()
-	check(music.enabled and music.current_track == "starmap", "Music returns to exploration")
+	check(music.enabled and music.current_track == "starsystem", "Music returns to exploration")
 	music.set_enabled(original)
 	first.queue_free()
 	second.queue_free()

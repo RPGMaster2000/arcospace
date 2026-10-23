@@ -33,7 +33,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
-	get_node("/root/Music").play_starmap()
+	get_node("/root/Music").play_title()
 	settings_button = preload("res://scripts/ui/settings_button.gd").new()
 	settings_button.is_main_menu = true
 	add_child(settings_button)
@@ -85,12 +85,15 @@ func _ready() -> void:
 
 
 func _update_chrome() -> void:
+	if showcase.phase == showcase.Phase.CAMERA_TRANSITION:
+		get_node("/root/Music").fade_title(0.08 if showcase.skip_cinematics else showcase.camera_transition_duration)
 	var interactive: bool = showcase.phase in [showcase.Phase.PRESS_TO_PLAY, showcase.Phase.SHIP_SELECTION]
 	settings_button.visible = interactive
 	$Legend.visible = interactive
 
 
 func _selection_ready() -> void:
+	get_node("/root/Music").play_ship_selection()
 	$Selection.show()
 	showcase.select_ship(selected_ship, true)
 	start_button.grab_focus()

@@ -1,14 +1,21 @@
 extends Node
 
 # RESPONSIBILITY: Keep one music player across screens and coordinate track transitions and muting.
-# One player survives scene transitions. Missing placeholder files stay silent.
+# One player survives scene transitions; every track starts at its beginning.
 signal enabled_changed(enabled: bool)
 const TRACKS = {
-	"starmap": "res://assets/sound/starmap.mp3",
+	"starsystem": "res://assets/sound/starsystem.mp3",
 	"battle1": "res://assets/sound/battle1.mp3",
 	"battle2": "res://assets/sound/battle2.mp3",
-	"victory": "res://assets/sound/victory.mp3"
+	"battle3": "res://assets/sound/battle3.mp3",
+	"victory_normal": "res://assets/sound/victory_normal.mp3",
+	"victory_special": "res://assets/sound/victory_special.mp3",
+	"shipselect": "res://assets/sound/shipselect.mp3",
+	"title": "res://assets/sound/title.mp3"
 }
+const BATTLE_TRACKS = ["battle1", "battle2", "battle3"]
+const BASE_VOLUME_DB: float = -12.0
+var fade_tween: Tween
 const SETTINGS_PATH = preload("res://scripts/ui/menu_preferences.gd").PATH
 var enabled: bool = true
 var current_track: String = ""
@@ -19,7 +26,7 @@ func _ready() -> void:
 	# Settings pause gameplay; audio must remain controllable and audible while open.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	player = AudioStreamPlayer.new()
-	player.volume_db = -12.0
+	player.volume_db = BASE_VOLUME_DB
 	add_child(player)
 	player.finished.connect(_finished)
 	var settings = ConfigFile.new()
@@ -29,17 +36,45 @@ func _ready() -> void:
 
 
 func play_starmap() -> void:
-	play_track("starmap")
+	play_track("starsystem")
 
 
 func play_battle() -> void:
-	play_track("battle1" if randi_range(0, 1) == 0 else "battle2", true)
+	play_track(BATTLE_TRACKS[randi_range(0, BATTLE_TRACKS.size() - 1)], true)
 
 
-func play_result(won: bool) -> void:
+func play_title() -> void:
+	play_track("title")
+
+
+func play_ship_selection() -> void:
+	play_track("shipselect")
+
+
+func fade_title(seconds: float) -> void:
+	if current_track != "title": return
+	_cancel_fade()
+	fade_tween = create_tween()
+	fade_tween.tween_property(player, "volume_db", -80.0, maxf(seconds, 0.001))
+	fade_tween.tween_callback(func():
+		player.stop()
+		current_track = ""
+		player.volume_db = BASE_VOLUME_DB
+		fade_tween = null)
+
+
+func _cancel_fade() -> void:
+	if fade_tween != null:
+		fade_tween.kill()
+		fade_tween = null
+	player.volume_db = BASE_VOLUME_DB
+
+
+func play_result(won: bool, enemy_rank: int = 0) -> void:
 	if won:
-		play_track("victory")
+		play_track("victory_normal" if enemy_rank == 0 else "victory_special")
 	else:
+		_cancel_fade()
 		current_track = ""
 		player.stop()
 
@@ -47,6 +82,7 @@ func play_result(won: bool) -> void:
 func play_track(track: String, restart: bool = false) -> void:
 	if track == current_track and not restart:
 		return
+	_cancel_fade()
 	current_track = track
 	player.stop()
 	player.stream = null
@@ -59,7 +95,8 @@ func play_track(track: String, restart: bool = false) -> void:
 	# Duplicate before setting loop: never mutate the imported resource.
 	var stream = source.duplicate() as AudioStream
 	if stream is AudioStreamMP3:
-		stream.loop = track != "victory"
+		stream.loop = not track.begins_with("victory_")
+		stream.loop_offset = 0.0
 	player.stream = stream
 	player.play(0.0)
 	_apply_mute()
@@ -83,5 +120,5 @@ func _apply_mute() -> void:
 
 
 func _finished() -> void:
-	if current_track != "victory" and player.stream != null:
+	if not current_track.is_empty() and not current_track.begins_with("victory_") and player.stream != null:
 		player.play()

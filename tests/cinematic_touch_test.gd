@@ -19,6 +19,7 @@ func run() -> void:
 	root.add_child(menu)
 	current_scene = menu
 	await process_frame
+	check(root.get_node("Music").current_track == "title", "Title screen plays title music")
 	var center := Vector2(640, 350)
 	await touch(center, true)
 	check(menu.showcase.phase == menu.showcase.Phase.PRESS_TO_PLAY, "Android tap finishes fades without double advance")
@@ -29,9 +30,11 @@ func run() -> void:
 	menu.info_overlay.dismiss()
 	menu.showcase.camera_transition_duration = 0.05
 	await touch(center, true)
+	check(root.get_node("Music").fade_tween != null, "Tap leaving title starts music fade")
 	await touch(center, false)
 	await create_timer(0.7).timeout
 	check(menu.showcase.phase == menu.showcase.Phase.SHIP_SELECTION, "Second screen tap opens selection through viewport GUI")
+	check(root.get_node("Music").current_track == "shipselect", "Arrival at fleet starts ship-selection music")
 	var overlay = menu.info_overlay
 	overlay.show_legend()
 	await process_frame
