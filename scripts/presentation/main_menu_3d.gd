@@ -27,6 +27,8 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export_range(3, 12) var fleet_spacing: float = 6.2
 @export_range(0, 0.3) var fleet_curvature: float = 0.025
 @export var ship_orientation: Vector3 = Vector3(0, 30, -30)
+## Bank around each ship's own forward (+X) axis, toward its right.
+@export_range(-180, 180) var ship_roll_degrees: float = 30.0
 @export_range(0, 30) var rotation_degrees_per_second: float = 14.0
 @export_range(0.05, 3) var selection_duration: float = 0.55
 @export var framing_offset: Vector3 = Vector3.ZERO
@@ -134,6 +136,7 @@ func populate(profiles: Array) -> void:
 		$Fleet.add_child(mount)
 		mount.position = Vector3(fleet_curvature * index * index, 0, -index * fleet_spacing)
 		mount.rotation_degrees = ship_orientation
+		mount.rotate_object_local(Vector3.RIGHT, deg_to_rad(ship_roll_degrees))
 		var model: Node3D = profile.model_scene.instantiate()
 		mount.add_child(model)
 		model.set_hull_color(profile.hull_color)

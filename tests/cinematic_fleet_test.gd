@@ -12,6 +12,9 @@ func run() -> void:
 	check(not menu.settings_button.visible and not menu.get_node("Legend").visible, "Initial black frame has no menu chrome")
 	check(menu.selected_ship == 0 and menu.showcase.models.size() == 6, "Endeavour and six persistent models")
 	check(menu.find_children("*", "SubViewport", true, false).size() == 1, "One shared viewport")
+	var base_basis := Basis.from_euler(menu.showcase.ship_orientation * PI / 180.0)
+	for mount in menu.showcase.models:
+		check(mount.basis.is_equal_approx(base_basis * Basis(Vector3.RIGHT, deg_to_rad(30.0))), "Each ship banks thirty degrees about its own forward axis")
 	menu.showcase.skip_cinematics = true
 	menu.showcase.advance()
 	menu.showcase.advance()

@@ -415,10 +415,10 @@ func show_system() -> void:
 			else:
 				start_battle(state.chasedown_index)
 		return
-	get_node("/root/Music").play_starmap()
 	if not state.pending_choice.is_empty():
 		show_outcome()
 		return
+	get_node("/root/Music").play_starmap()
 	return_to_outpost = false
 	_clear("system")
 	if state.hull <= 0:
