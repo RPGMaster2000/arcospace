@@ -21,3 +21,12 @@ class_name CardPresentationSettings
 @export_range(0.0, 1.0, 0.05) var background_dim_opacity: float = 0.8
 @export_range(14, 30, 1) var information_panel_text_size: int = 18
 @export_range(8, 64, 1) var panel_card_spacing: float = 20.0
+
+@export_group("Tactical preview")
+@export var tactical_preview_enabled: bool = true
+@export_range(0, 0.6) var preview_raise_fraction: float = 0.30
+@export_range(0.0, 1.0) var preview_raise_duration: float = 0.18
+@export_range(0.0, 1.0) var preview_lower_duration: float = 0.16
+@export var preview_transition: Tween.TransitionType = Tween.TRANS_CUBIC
+@export_range(0, 40) var preview_inspect_spacing: float = 8.0
+@export_range(0.0, 1.0) var preview_fade_duration: float = 0.12

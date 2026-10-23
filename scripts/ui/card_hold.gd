@@ -2,6 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Translate card holds/middle-click into inspection; cancel taps when gestures become holds.
 # Reusable gesture adapter. GUI starts a hold; global motion/release cancels it before scrolling/actions.
+var preview: Node
 var source: Button
 var rendering: Button
 var footer: Button
@@ -24,7 +25,7 @@ func bind_card(
 	timer = Timer.new()
 	timer.one_shot = true
 	add_child(timer)
-	timer.timeout.connect(_inspect)
+	timer.timeout.connect(_hold)
 	source.gui_input.connect(_gui.bind(source))
 	if footer != null:
 		footer.gui_input.connect(_gui.bind(footer))
@@ -115,6 +116,21 @@ func _process(_delta: float) -> void:
 		):
 			_cancel_drag()
 			return
+
+
+func _hold() -> void:
+	if is_instance_valid(preview) and is_instance_valid(source) and rendering.card_data != null:
+		activated = true
+		_reset_buttons()
+		preview.present(self)
+	else:
+		_inspect()
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_I and (source.has_focus() or (footer != null and footer.has_focus())):
+		_hold()
+		get_viewport().set_input_as_handled()
 
 
 func _inspect() -> void:

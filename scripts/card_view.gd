@@ -173,7 +173,7 @@ func refresh_card() -> void:
 	)
 	tooltip_text = card_data.card_name + "\n" + card_data.description
 	tooltip_text += (
-		"\nHold / middle-click to inspect\nRight-click: discard (+%d %s)"
+		"\nHold to preview · I: preview/inspect · Middle-click to inspect\nRight-click: discard (+%d %s)"
 		% [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
 	)
 

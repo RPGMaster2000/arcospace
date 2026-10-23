@@ -10,6 +10,7 @@ var result_visible: bool = false
 var nodes: Dictionary = {}
 var cards: Array[Control] = []
 var card_slots: Array[NodePath] = []
+var tactical: Control
 
 
 func _init(board_view: Control) -> void:
@@ -73,9 +74,14 @@ func _init(board_view: Control) -> void:
 	card_slots.assign(board_view.card_slots)
 	for path in card_slots:
 		cards.append(board_view.get_node(path))
+	tactical = preload("res://scripts/ui/tactical_preview.gd").new()
+	tactical.name = "TacticalPreview"
+	board_view.add_child(tactical)
+	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade, board_view.get_node("ModifierDisplay/Meter").details.shade])
 
 
 func refresh(data: Dictionary) -> void:
+	tactical.update_context(data)
 	nodes["SystemsFailureDisplay"].refresh(data.systems_failure)
 	refresh_results(data)
 	refresh_emp(data)
