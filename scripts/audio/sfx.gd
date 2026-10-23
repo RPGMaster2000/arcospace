@@ -8,6 +8,7 @@ var volume: float = 1.0
 var players: Array[AudioStreamPlayer] = []
 var _rng := RandomNumberGenerator.new()
 var _last_played: Dictionary = {}
+var _ui_confirm_frame: int = -10
 
 
 func _ready() -> void:
@@ -99,6 +100,7 @@ func play_event(event_id: StringName, scope: Node) -> bool:
 	voice.set_meta(&"event", event_id)
 	voice.set_meta(&"priority", event.priority)
 	voice.set_meta(&"started", now)
+	voice.set_meta(&"frame", Engine.get_process_frames())
 	voice.set_meta(&"scope", scope.get_instance_id())
 	var on_exit: Callable = stop_scope.bind(scope.get_instance_id())
 	if not scope.tree_exiting.is_connected(on_exit):
@@ -130,12 +132,43 @@ func bind_button(button: BaseButton) -> void:
 	if button.has_meta(&"sfx_bound"):
 		return
 	button.set_meta(&"sfx_bound", true)
-	button.mouse_entered.connect(func():
-		if not button.disabled: _play_ui(&"ui_select", button))
-	button.focus_entered.connect(func():
-		if not button.disabled: _play_ui(&"ui_select", button))
+	# Hover is silent. Defer keyboard/controller focus until the pointer press and
+	# its confirmation have been handled, so clicking cannot also sound navigation.
+	button.focus_entered.connect(func(): _focus_ui.call_deferred(weakref(button)))
 	# pressed already passed the input/disabled guard; an action may disable its button.
-	button.pressed.connect(func(): _play_ui(&"ui_confirm", button))
+	button.pressed.connect(func(): _queue_confirm(button))
+
+
+func _queue_confirm(button: BaseButton) -> void:
+	_ui_confirm_frame = Engine.get_process_frames()
+	var screen: Node = button.get_tree().current_scene
+	var scope: Node = screen if is_instance_valid(screen) else button
+	# Wait until every pressed callback has supplied its more specific action cue.
+	_confirm_ui.call_deferred(weakref(scope), _ui_confirm_frame)
+
+
+func _confirm_ui(scope_ref: WeakRef, input_frame: int) -> void:
+	var scope: Node = scope_ref.get_ref() as Node
+	if not is_instance_valid(scope): return
+	for player in players:
+		if (
+			player.playing
+			and int(player.get_meta(&"frame", -1)) == input_frame
+			and int(player.get_meta(&"priority", 0)) > 0
+		):
+			return
+	play_event(&"ui_confirm", scope)
+
+
+func _focus_ui(button_ref: WeakRef) -> void:
+	var button: BaseButton = button_ref.get_ref() as BaseButton
+	if not is_instance_valid(button) or not button.is_inside_tree():
+		return
+	if button.disabled or not button.has_focus() or button.is_hovered() or button.button_pressed:
+		return
+	if Engine.get_process_frames() <= _ui_confirm_frame + 1:
+		return
+	_play_ui(&"ui_select", button)
 
 
 func _play_ui(event_id: StringName, button: BaseButton) -> void:

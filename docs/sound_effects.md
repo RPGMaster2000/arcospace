@@ -53,7 +53,7 @@ means `_01`, `_02`, `_03` are available; otherwise the event has one stream.
 | `emp_ready` | EMP becomes available, including return online | 1 |
 | `emp_fire` | Successful escape first appears in the HUD | 1 |
 | `ship_departure` | Cinematic alignment completes and engine spool begins | 1 |
-| `ui_select` | Shared styled buttons hover/focus; ship navigation, including keyboard | 3 |
+| `ui_select` | Shared styled buttons keyboard/controller focus; ship navigation, including keyboard | 3 |
 | `ui_confirm` | Shared styled button press; ship selection, settings, expedition/result actions | 1 |
 | `upgrade_acquired` | Accepted card reward, card upgrade or attribute choice | 1 |
 | `result_reveal` | First visible ordinary victory result, under victory music | 1 |
@@ -94,7 +94,8 @@ beeps, per-frame sounds or cues based on predicted damage.
   their own cooldowns. The default traversal chooses Materials when all three
   arrive together; a standalone Energy/Crew gain retains its own identity.
 - Source synthesis targets -22 dBFS RMS with a -7 dBFS peak ceiling and short
-  endpoint fades. UI/minor resources get -5 dB catalog trims, charge/result -3 dB.
+  endpoint fades. Minor resources get -5 dB catalog trims, charge/result -3 dB.
+  UI navigation/confirmation use -11.0206 dB trims (half their initial amplitude).
   SFX bus headroom is -8 dB before the user gain. An SFX-only limiter provides a
   -1 dB ceiling for dense overlap, without changing soundtrack dynamics.
 - Variant selection and mild pitch variation use a dedicated
@@ -185,3 +186,25 @@ Validated with the repository-pinned **Godot 4.7.2**, using Dummy audio:
 Actual Windows/Android speaker/headphone playback, device latency and a new APK
 were not tested. The standard runner excludes its existing render-only enemy-model
 check; no additional rendered screenshot session was performed for this audio pass.
+
+
+## UI feedback polish
+
+Pointer hover is silent. Pointer focus does not add a navigation sound on top of
+a click. Keyboard/controller focus keeps its navigation cue. Confirmation waits
+until the button's callbacks finish; if a more specific action cue (e.g. an
+upgrade) was played for that input frame, its generic click is omitted. Deferred
+requests use weak references so closing a screen cannot retain its controls.
+
+Tactical preview highlights are feathered additive halos owned by each target
+Label: after its icon/badge graphics and behind its text. Gains use green/teal,
+losses red/orange and uncertainty amber, with resource-family tints and resource
+colors for payment. Existing +/−/?/$ symbols still distinguish meanings. All
+halos are removed on dismissal, target changes and scene exit.
+
+The title/selection Reference button is sized from its themed minimum width and
+placed to the left of Settings with a 12-pixel gap. Compact layouts also reserve
+header space. The halo shader is `shaders/tactical_target_glow.gdshader`,
+owned by `scripts/ui/tactical_preview.gd`. `tests/ui_feedback_test.gd` checks
+click/focus cues, half-volume
+trims, target glow ownership, cleanup and both menu phases at four landscape sizes.

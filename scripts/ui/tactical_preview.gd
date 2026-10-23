@@ -5,6 +5,14 @@ const Targets = preload("res://scripts/cards/card_targets.gd")
 var indicators: Dictionary = {}
 var targets: Dictionary = {}
 var target_marks: Array = []
+var target_glows: Array[ColorRect] = []
+const TARGET_GLOW = preload("res://shaders/tactical_target_glow.gdshader")
+const TARGET_COLORS = {
+	"hull": Color("ef9da8"), "shields": Color("8fc5ff"),
+	"materials": Color("ef9da8"), "synthesizer": Color("ef9da8"),
+	"energy": Color("8fc5ff"), "reactor": Color("8fc5ff"),
+	"crew": Color("98ddb0"), "quarters": Color("98ddb0")
+}
 var target_context: String = ""
 var pulse_time: float = 0.0
 var cards: Array[Control] = []
@@ -150,7 +158,7 @@ func dismiss(immediate: bool = false) -> void:
 				lowering.erase(card))
 	source = null
 	targets.clear()
-	target_marks.clear()
+	_clear_marks()
 	target_context = ""
 	queue_redraw()
 
@@ -158,6 +166,9 @@ func dismiss(immediate: bool = false) -> void:
 func _process(delta: float) -> void:
 	if source != null:
 		pulse_time += delta
+		var pulse: float = 1.0 if settings.reduced_preview_animation else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
+		for glow in target_glows:
+			glow.modulate.a = 0.55 + pulse * settings.target_pulse_intensity * 0.5
 		queue_redraw()
 	if source == null: return
 	if not valid():
@@ -219,7 +230,7 @@ func _input(event: InputEvent) -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(inspect): dismiss(true)
 	targets.clear()
-	target_marks.clear()
+	_clear_marks()
 	finish_lowering()
 
 
@@ -237,11 +248,17 @@ func refresh_targets() -> void:
 	if stamp == target_context: return
 	target_context = stamp
 	targets = Targets.analyze(source.card_data, context)
-	target_marks.clear()
+	_clear_marks()
 	var colors: Dictionary = {"positive": settings.target_positive, "negative": settings.target_negative, "uncertain": settings.target_uncertain, "cost": settings.target_cost}
 	var symbols: Dictionary = {"positive": "+", "negative": "−", "uncertain": "?", "cost": "$!" if context.player[source.card_data.family] < source.card_data.cost else "$"}
 	for key in targets:
 		if not indicators.has(key): continue
+		var control: Control = indicators[key]
+		var attribute: String = key.get_slice("_", 1)
+		var base: Color = TARGET_COLORS.get(attribute, settings.target_cost)
+		var glow_meaning: String = targets[key][0]
+		var tint: Color = base if glow_meaning == "cost" else colors[glow_meaning].lerp(base, 0.3)
+		_add_glow(control, tint)
 		for index in range(targets[key].size()):
 			var meaning: String = targets[key][index]
 			target_marks.append([indicators[key], colors[meaning], symbols[meaning], index])
@@ -257,5 +274,31 @@ func _draw() -> void:
 		var color: Color = mark[1]
 		var index: int = mark[3]
 		color.a = 0.5 + pulse * settings.target_pulse_intensity * 0.5
-		draw_rect(rect.grow(index * 3), color, false, 2)
 		draw_string(ThemeDB.fallback_font, rect.position + Vector2(index * 13, -3), mark[2], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
+
+
+# Child draw order places the additive halo above the existing icon/badge graphics
+# but behind its owning Label's glyphs. No full-HUD overlay or input interception.
+func _add_glow(control: Control, tint: Color) -> void:
+	var glow := ColorRect.new()
+	glow.name = "TacticalTargetGlow"
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow.show_behind_parent = true
+	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	glow.offset_left = -12
+	glow.offset_top = -10
+	glow.offset_right = 12
+	glow.offset_bottom = 10
+	var material := ShaderMaterial.new()
+	material.shader = TARGET_GLOW
+	material.set_shader_parameter("tint", tint)
+	glow.material = material
+	control.add_child(glow)
+	target_glows.append(glow)
+
+
+func _clear_marks() -> void:
+	for glow in target_glows:
+		if is_instance_valid(glow): glow.free()
+	target_glows.clear()
+	target_marks.clear()

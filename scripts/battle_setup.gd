@@ -123,6 +123,21 @@ func _layout() -> void:
 	settings_button.offset_right = -14
 	settings_button.offset_top = 12
 	settings_button.offset_bottom = 60
+	# The caption's themed minimum width exceeds its old fixed 94-pixel slot.
+	var reference: Button = $Legend
+	reference.text = "REFERENCE" if compact else "GAME REFERENCE"
+	reference.add_theme_font_size_override("font_size", 16 if compact else 18)
+	reference.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	reference.offset_right = settings_button.offset_left - 12
+	reference.offset_left = reference.offset_right - reference.get_combined_minimum_size().x
+	reference.offset_top = 12
+	reference.offset_bottom = 60
+	var heading: Label = $Selection/Heading
+	heading.anchor_left = 0.0 if compact else 0.2
+	heading.anchor_right = 1.0 if compact else 0.8
+	heading.offset_left = 20.0 if compact else 0.0
+	heading.offset_right = reference.offset_left - 16.0 if compact else 0.0
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if compact else HORIZONTAL_ALIGNMENT_CENTER
 
 
 func _select(index: int) -> void:

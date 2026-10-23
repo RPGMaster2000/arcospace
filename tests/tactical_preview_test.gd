@@ -114,7 +114,11 @@ func run() -> void:
 		root.push_input(inspect_pad)
 		await wait_motion()
 		check(preview.source == card, "Controller Y previews focused card")
-		card.card_data = preload("res://scripts/cards/card_library.gd").CARDS[0]
+		# The opening hand is randomized; replacement must actually change identity.
+		var replacement: Resource = preload("res://scripts/cards/card_library.gd").CARDS[0]
+		if card.card_data.identity_key() == replacement.identity_key():
+			replacement = preload("res://scripts/cards/card_library.gd").CARDS[1]
+		card.card_data = replacement
 		await wait_motion()
 		check(preview.source == null and preview.targets.is_empty(), "Card replacement clears obsolete highlights")
 		board.refresh_display()

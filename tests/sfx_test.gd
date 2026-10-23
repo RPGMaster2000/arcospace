@@ -30,6 +30,7 @@ func check(ok: bool, message: String) -> void:
 func reset_audio() -> void:
 	sfx.stop_all()
 	sfx._last_played.clear()
+	sfx._ui_confirm_frame = -10
 
 
 func heard(event: StringName) -> bool:
@@ -156,6 +157,7 @@ func run() -> void:
 	sfx.bind_button(button)
 	button.pressed.emit()
 	button.free()
+	await process_frame
 	check(active(&"ui_confirm") == 1, "Rebuilding a panel preserves its UI confirmation tail")
 	screen.free()
 	check(active() == 0, "Leaving UI screen stops confirmation tails")
@@ -315,6 +317,7 @@ func run() -> void:
 	check(heard(&"ui_select"), "Ship navigation cue")
 	reset_audio()
 	menu.start_button.pressed.emit()
+	await process_frame
 	check(heard(&"ui_confirm"), "Ship selection confirmation")
 	# Starting may create a save; isolated regression userdata is disposable.
 	menu.free()
