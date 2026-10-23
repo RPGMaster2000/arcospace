@@ -1,7 +1,8 @@
 extends Resource
 ## Presentation tuning only. No expedition state or random encounters live here.
-@export var overview_position := Vector3(0, 28, 21)
+@export var overview_position := Vector3(0, 42, 31.5)
 @export var overview_target := Vector3.ZERO
+@export_range(15.0, 60.0) var field_of_view: float = 29.0
 @export_group("Overview zoom and system borders")
 @export_range(0.5, 2.0, 0.01) var default_zoom: float = 1.20
 @export_range(0.5, 2.0, 0.01) var minimum_zoom: float = 0.95
@@ -15,7 +16,7 @@ extends Resource
 ## Minimum gap between projected labels and the viewport edge, in logical pixels.
 @export_range(0.0, 48.0) var screen_border: float = 8.0
 @export_group("Destination and movement")
-@export var destination_offset := Vector3(2.5, 3.2, 4.2)
+@export var destination_offset := Vector3(3.75, 4.8, 6.3)
 @export_range(0.1, 3.0) var camera_duration: float = 0.8
 @export_range(0.1, 5.0) var orbit_radius: float = 2.1
 @export_range(0.01, 2.0) var orbit_speed: float = 0.28

@@ -62,7 +62,7 @@ func run() -> void:
 			await settle()
 			if board.battle_effects.busy: await board.battle_effects.finished
 			var field: Node3D = board.get_node("BattleView/Viewport/Battlefield")
-			check(field.scene_file_path == (Planet.resource_path if selection == 6 else paths[selection].resource_path), "All original scenes remain selected by modifier; planet is opt-in")
+			check(field.scene_file_path in ([paths[0].resource_path, Planet.resource_path] if selection == 0 else [Planet.resource_path if selection == 6 else paths[selection].resource_path]), "Normal battles randomize deep space/planet; modifier and explicit arenas remain correct")
 			check(board.modifier.kind == (0 if selection == 6 else selection), "Visual variant never introduces a modifier")
 			check(board.player_hull == board.player_ship_data.hull_capacity and board.enemy_hull == board.enemy_ship_data.hull_capacity, "Lighting does not change ship stats")
 			for slot in board.card_slots:

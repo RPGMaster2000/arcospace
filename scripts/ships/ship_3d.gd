@@ -284,3 +284,57 @@ func set_hull_color(color: Color) -> void:
 	# Each instance already owns a duplicated Hull material; effect materials stay untouched.
 	base_color = color
 	hull_material.albedo_color = color
+
+
+# Terminal presentation only: deterministic visual fragments, no physics or combat mutations.
+func animate_destruction(sequence: Tween) -> void:
+	$Shield.hide()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 419
+	var world := get_parent()
+	var fragments: Array[MeshInstance3D] = []
+	var directions: Array[Vector3] = []
+	for node in $Body.find_children("*", "MeshInstance3D", true, false):
+		var fragment := MeshInstance3D.new()
+		fragment.mesh = node.mesh
+		fragment.material_override = node.material_override
+		fragment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		world.add_child(fragment)
+		fragment.global_transform = node.global_transform
+		fragment.hide()
+		fragments.append(fragment)
+		directions.append(Vector3(rng.randf_range(-1, 1), rng.randf_range(-0.4, 1), rng.randf_range(-1, 1)).normalized())
+	for i in range(9):
+		var flash := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.22
+		sphere.height = 0.44
+		sphere.radial_segments = 8
+		sphere.rings = 4
+		flash.mesh = sphere
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.albedo_color = Color(1, 0.65, 0.15)
+		flash.material_override = material
+		add_child(flash)
+		flash.position = Vector3(rng.randf_range(-1.2, 1.2), rng.randf_range(-0.2, 0.5), rng.randf_range(-0.5, 0.5))
+		flash.hide()
+		sequence.tween_callback(func():
+			flash.show()
+			preload("res://scripts/audio/sfx.gd").play(&"hull_hit", self))
+		sequence.tween_property(flash, "scale", Vector3.ONE * 3.0, 0.08)
+		sequence.tween_callback(flash.queue_free)
+	sequence.tween_callback(func():
+		$Body.hide()
+		$Shield.hide()
+		preload("res://scripts/audio/sfx.gd").play(&"ship_destroyed", self)
+		for fragment in fragments:
+			fragment.show())
+	for i in range(fragments.size()):
+		var fragment := fragments[i]
+		sequence.parallel().tween_property(fragment, "position", fragment.position + directions[i] * 5.0, 0.85).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		sequence.parallel().tween_property(fragment, "rotation", fragment.rotation + directions[i] * 5.0, 0.85)
+		sequence.parallel().tween_property(fragment, "scale", Vector3.ONE * 0.01, 0.85)
+	sequence.chain().tween_callback(func():
+		for fragment in fragments:
+			fragment.queue_free())

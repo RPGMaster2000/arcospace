@@ -116,14 +116,15 @@ func run() -> void:
 	board.enemy_hull = 0
 	board._record_result()
 	board.refresh_display()
-	var reveal: Tween = board.get_node("MatchResult/Panel/Title").get_meta("visual_reveal")
+	await process_frame
+	var reveal: Tween = board.get_node("MatchResult").animation
 	board._record_result()
 	board.refresh_display()
 	check(
-		board.get_node("MatchResult/Panel/Title").get_meta("visual_reveal") == reveal,
+		board.get_node("MatchResult").animation == reveal,
 		"Repeated HUD refresh does not restart heading animation"
 	)
-	await create_timer(Settings.result_heading_duration + 0.1).timeout
+	await create_timer(board.get_node("MatchResult").title_fade_duration + 0.1).timeout
 	await capture("victory")
 	board.free()
 	await process_frame
@@ -135,7 +136,7 @@ func run() -> void:
 	loss.winner = "enemy"
 	loss._record_result()
 	loss.refresh_display()
-	await create_timer(Settings.result_heading_duration + 0.1).timeout
+	await create_timer(loss.get_node("MatchResult").title_fade_duration + 0.1).timeout
 	check(
 		(
 			loss.get_node("MatchResult/Panel/Title").get_theme_color("font_color")

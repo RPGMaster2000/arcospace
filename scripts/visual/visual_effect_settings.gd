@@ -42,8 +42,6 @@ class_name VisualEffectSettings
 @export_range(0.01, 0.6, 0.01) var ui_transition_duration: float = 0.20
 @export_range(0.0, 1.0, 0.05) var reward_text_emphasis: float = 0.20
 @export_group("Battle results")
-@export_range(0.01, 0.6, 0.01) var result_heading_duration: float = 0.20
-@export_range(0.9, 1.0, 0.01) var result_heading_start_scale: float = 0.96
 @export_color_no_alpha var victory_accent_color: Color = Color(0.65, 1.0, 0.75)
 @export_color_no_alpha var defeat_accent_color: Color = Color(1.0, 0.55, 0.5)
 

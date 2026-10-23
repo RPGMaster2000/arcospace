@@ -14,7 +14,7 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 
 | Setting | Purpose |
 | --- | --- |
-| Overview Position / Overview Target | Fixed three-quarter camera position and look-at orientation |
+| Overview Position / Overview Target / Field Of View | Further-back three-quarter camera and 29° vertical FOV; focal distance and FOV are calibrated together to reduce perspective distortion |
 | Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.20 default, bounded to 0.95–6.0; higher means closer |
 | Wheel Zoom Step | Mouse-wheel increment (default 6%); pinch uses finger-distance ratio |
 | System Bounds | X/Z destination-center rectangle, default X −16…16 and Z −10…10; changes only visual arrangement |
@@ -54,12 +54,12 @@ sizes, orientation and modest position offsets. It never consumes any run genera
 Projected buttons provide 140×64 logical-pixel hit regions, ordinary keyboard focus and
 mouse/touch activation. Labels ignore model occlusion and remain readable. Completed
 entries have a check mark and disabled input. Labels hide during camera transitions and
-inspection. The top UI keeps its existing position and controls. Overview-only mouse-wheel and
+inspection. The top UI keeps its existing position and controls. Overview mouse-wheel and
 two-finger pinch zoom smoothly within the configured limits; one-finger or left-mouse
 drag pans on the system plane within Pan Bounds. Small movements remain taps. Existing
 overview pan/zoom is retained when returning from a destination. UI overlays block camera
 gestures; pinching cancels any held
-destination button and suppresses release activation. PoI scrolling does not zoom the map.
+destination button and suppresses release activation. Camera pan/zoom stays available during sublight PoI travel; selecting another destination remains locked until arrival. PoI interaction-panel scrolling does not zoom the map.
 The bottom overflow cue is a stationary gradient overlay (`ui/scroll_edge_fade.gd`),
 outside container layout and excluding the live scrollbar. Its opacity tracks remaining
 content; it never changes scroll range, page size, input or layout when shown/hidden.

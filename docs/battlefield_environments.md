@@ -11,7 +11,7 @@ and use F6 for a 3D-only preview, or run `board_3d.tscn` to see its combat HUD.
 | 3 / Solar Flare | `battlefield_solar_flare.tscn` | Dark warm space, bright stellar disc/corona, orange-yellow key and restrained red rim. |
 | 4 / Nebula | `battlefield_nebula.tscn` | Broad teal/rose clouds moving slowly; teal key and complementary rose rim. |
 | 5 / Temporal Rift | `battlefield_temporal_rift.tscn` | Green/cyan distorted ring and slow cloud motion; mint key and cool cyan rim. |
-| 0 / None, opt-in variant | `battlefield_planetary_orbit.tscn` | Standalone Deep Space duplicate with a large, partly visible dark blue-grey planet. |
+| 0 / None, random normal variant | `battlefield_planetary_orbit.tscn` | Standalone Deep Space duplicate with a large, partly visible dark blue-grey planet. |
 
 There is no radiation battlefield in the current modifier registry. The modifier
 scenes communicate the encounter environment for the whole battle; scheduled
@@ -74,13 +74,14 @@ reveals the scene's authored solid background; it does not enable another star l
 
 `board_3d.gd` still indexes the original six `BATTLEFIELDS` by the original modifier.
 The **Normal Battlefield** exported `PackedScene` is an optional override **only when
-modifier = 0**. Leave it empty for Deep Space. In `scenes/board_3d.tscn`, select the root
+modifier = 0**. Leave it empty to randomly choose Deep Space or Planetary Orbit. In `scenes/board_3d.tscn`, select the root
 Board3D and drag `battlefield_planetary_orbit.tscn` into that property to use the orbit
 variant for normal encounters. Alternatively assign `board.normal_battlefield` before
 adding a board in a test fixture. Overrides never replace modifier scenes.
 
-Planetary Orbit is deliberately opt-in by default: no RNG, encounter probabilities,
-progression or modifier values change. It can also be opened and played directly.
+Normal-variant selection uses a separate presentation RNG with equal probability.
+Encounter probabilities, gameplay RNG, progression and modifier values do not change.
+Planetary Orbit can also be opened and played directly.
 
 ## Performance and validation
 
@@ -116,3 +117,7 @@ The diff audit confirms card/ship/rule Resources, combat resolution/AI, expediti
 state, HUD layout and `project.godot` are unchanged. Available render hardware is
 software Mesa; it cannot establish device performance. The runtime also lacks audio
 hardware and uses Godot's existing Dummy audio fallback during rendered tests.
+
+Normal battles now choose Deep Space or the existing Planetary Orbit scene with equal
+probability, using a separate presentation RNG. Modifier-specific arenas and the explicit
+`Board3D.normal_battlefield` override retain their existing selection behavior.

@@ -82,8 +82,7 @@ and recoil can finish sooner without changing that turn-resolution wait.
 | POI and UI | `poi_reveal_duration` | `0.60` |
 | POI and UI | `ui_transition_duration` | `0.20` |
 | POI and UI | `reward_text_emphasis` | `0.20` |
-| Battle results | `result_heading_duration` | `0.20` |
-| Battle results | `result_heading_start_scale` | `0.96` |
+| Battle results | Title/line reveal timing moved to `scenes/match_result.tscn` | See [battle_results.md](battle_results.md) |
 | Battle results | `victory_accent_color` | `Color(0.65, 1.0, 0.75)` |
 | Battle results | `defeat_accent_color` | `Color(1.0, 0.55, 0.5)` |
 | Existing combat feedback timing | `count_step_seconds` | `0.065` |

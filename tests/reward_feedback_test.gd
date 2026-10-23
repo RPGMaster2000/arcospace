@@ -98,12 +98,15 @@ func run() -> void:
 	check(not host.card_gallery.filters.visible, "Entire acquisition toolbar hidden")
 	host.state.choose_card(0)
 	var acquired: Resource = host.state.acquired_cards[0]
-	host.state.pending_choice = "upgrade"
+	host.state.start_upgrade_event(1)
 	host.state.choose_upgrade(acquired.identity_key())
-	host.state.pending_choice = "upgrade"
+	host.state.start_upgrade_event(1)
 	host.show_outcome()
 	check(host.card_gallery.filters.visible, "Upgrade gallery keeps useful filters")
-	host.state.pending_choice = ""
+	for candidate in host.state.upgrade_candidates():
+		if candidate.identity_key() != acquired.identity_key():
+			host.state.choose_upgrade(candidate.identity_key())
+			break
 	host.show_system()
 	check(host.deck_button.get_parent() == host.legend.get_parent() and host.deck_button.get_index() + 1 == host.legend.get_index(), "Deck next to Legend")
 	var rng_before: int = host.state.rng.state

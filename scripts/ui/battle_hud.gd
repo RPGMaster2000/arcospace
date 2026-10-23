@@ -121,13 +121,13 @@ func refresh_results(data: Dictionary) -> void:
 	for path in ["Repair", "RepairMinus", "RepairPlus", "RepairAmount"]:
 		nodes["MatchResult/Panel/" + path].visible = data.winner == "player"
 	nodes["MatchResult/Panel/Repair"].disabled = (
-		data.repair_spend <= 0 or data.resolving_card or data.effects_busy
+		data.repair_spend <= 0 or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
 	)
 	nodes["MatchResult/Panel/RepairMinus"].disabled = (
-		data.repair_spend <= 0 or data.resolving_card or data.effects_busy
+		data.repair_spend <= 0 or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
 	)
 	nodes["MatchResult/Panel/RepairPlus"].disabled = (
-		data.repair_spend >= repair_limit or data.resolving_card or data.effects_busy
+		data.repair_spend >= repair_limit or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
 	)
 	var repair_amount: int = maxi(0, data.repair_spend)
 	nodes["repair_preview"].visible = data.winner == "player"
@@ -150,7 +150,7 @@ func refresh_results(data: Dictionary) -> void:
 	if not data.winner.is_empty():
 		nodes["allocation_popup"].dismiss()
 	nodes["MatchResult"].visible = (
-		not data.winner.is_empty() and not data.resolving_card and not data.effects_busy
+		not data.winner.is_empty() and not data.resolving_card and (not data.effects_busy or nodes["MatchResult"].started)
 	)
 	nodes["MatchResult/Panel/Title"].text = (
 		"EMP PULSE SUCCESS"
@@ -158,7 +158,7 @@ func refresh_results(data: Dictionary) -> void:
 		else (
 			"DRAW"
 			if data.winner == "draw"
-			else ("YOU WIN" if data.winner == "player" else "YOU LOSE")
+			else ("VICTORY" if data.winner == "player" else "DEFEAT")
 		)
 	)
 	var visible_now: bool = nodes["MatchResult"].visible
@@ -176,13 +176,7 @@ func refresh_results(data: Dictionary) -> void:
 			Sound.play(&"systems_failure_defeat", nodes["MatchResult"])
 		elif data.winner == "player" and not data.escaped_by_ftl:
 			Sound.play(&"result_reveal", nodes["MatchResult"])
-		Effects.reveal(
-			heading,
-			visual_settings,
-			visual_settings.result_heading_duration,
-			visual_settings.result_heading_start_scale
-		)
-		Effects.reveal(nodes["MatchResult/Panel"], visual_settings)
+		nodes["MatchResult"].play.call_deferred()
 	elif not visible_now and result_visible:
 		Effects.reset(heading)
 		Effects.reset(nodes["MatchResult/Panel"])

@@ -72,7 +72,7 @@ func run() -> void:
 	var escape = make_board()
 	escape.ftl.charge = escape.ftl.charge_target
 	escape._warp_out()
-	check(escape.escaped_by_ftl and escape.result_music_started and music.current_track.is_empty() and not music.player.playing, "EMP escape does not play a ship-defeat victory cue")
+	check(escape.escaped_by_ftl and escape.result_music_started and music.current_track == "victory_normal" and music.player.playing, "EMP victory plays the tier-based victory cue")
 	escape.queue_free()
 	await process_frame
 	for outcome in ["enemy","draw"]:

@@ -1,4 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/result_sequence.gd" id="Sequence"]
 
 [sub_resource type="SystemFont" id="Bold"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
@@ -13,6 +15,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 z_index = 100
+script = ExtResource("Sequence")
 
 [node name="Shade" type="ColorRect" parent="."]
 layout_mode = 1

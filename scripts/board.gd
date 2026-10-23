@@ -239,6 +239,7 @@ func _ready() -> void:
 	add_child(settings_button)
 	settings_button.main_menu_requested.connect(_return_to_setup)
 	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
+	repair_preview.name = "RepairPreview"
 	repair_preview.position = Vector2(30, 270)
 	repair_preview.size = Vector2(680, 70)
 	$MatchResult/Panel.add_child(repair_preview)
@@ -796,7 +797,7 @@ func refresh_display() -> void:
 	if $MatchResult.visible and not result_music_started:
 		result_music_started = true
 		# Start music only when the result is revealed, after combat presentation.
-		get_node("/root/Music").play_result(winner == "player" and not escaped_by_ftl, enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
+		get_node("/root/Music").play_result(winner == "player", enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
 
 
 func _display_snapshot() -> Dictionary:

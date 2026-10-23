@@ -3,7 +3,19 @@ extends "res://scripts/board.gd"
 
 # RESPONSIBILITY: Connect the optional 3D presentation to the existing board.
 # DOES NOT: Redefine card rules, input or turn handling; these are inherited from board.gd.
+var destruction_started: bool = false
+var destruction_pending: bool = false
+
+
 func refresh_display() -> void:
+	if (
+		not winner.is_empty() and result_cause == "hull" and not escaped_by_ftl
+		and (player_hull <= 0 or enemy_hull <= 0) and not destruction_started
+		and not resolving_card and not battle_effects.busy
+	):
+		destruction_started = true
+		if battle_effects.enabled:
+			_destroy_ships()
 	super.refresh_display()
 	$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(
@@ -13,11 +25,28 @@ func refresh_display() -> void:
 		mini(enemy_hull, enemy_hull_capacity)
 	)
 	$BattleView/Viewport/Battlefield/PlayerShip.set_shield_strength(
-		0 if modifier.shields_disabled() else player_shields
+		0 if modifier.shields_disabled() or (destruction_started and player_hull <= 0) else player_shields
 	)
 	$BattleView/Viewport/Battlefield/EnemyShip.set_shield_strength(
-		0 if modifier.shields_disabled() else enemy_shields
+		0 if modifier.shields_disabled() or (destruction_started and enemy_hull <= 0) else enemy_shields
 	)
+
+
+func _display_snapshot() -> Dictionary:
+	var data: Dictionary = super._display_snapshot()
+	data.effects_busy = data.effects_busy or destruction_pending
+	return data
+
+
+func _destroy_ships() -> void:
+	destruction_pending = true
+	var animation := create_tween()
+	for pair in [["PlayerShip", player_hull], ["EnemyShip", enemy_hull]]:
+		if pair[1] <= 0:
+			$BattleView/Viewport/Battlefield.get_node(pair[0]).animate_destruction(animation)
+	await animation.finished
+	destruction_pending = false
+	refresh_display()
 
 
 # EDIT: Each scene is an independent battlefield layout for this setup selection.
@@ -31,8 +60,8 @@ const BATTLEFIELDS = [
 	preload("res://scenes/battlefield_temporal_rift.tscn")
 ]
 
-## TUNE: Optional normal-only presentation override; leave empty for Deep Space.
-## Drag battlefield_planetary_orbit.tscn here to use that normal variant. No RNG or modifier changes.
+## TUNE: Optional normal-only override; empty randomizes Deep Space / Planetary Orbit.
+## Drag battlefield_planetary_orbit.tscn here to use that normal variant. No gameplay RNG or modifier changes.
 @export var normal_battlefield: PackedScene
 
 
@@ -51,6 +80,11 @@ func _enter_tree() -> void:
 		if selection == 0 and normal_battlefield != null
 		else BATTLEFIELDS[selection]
 	)
+	if selection == 0 and normal_battlefield == null:
+		var visual_rng := RandomNumberGenerator.new()
+		visual_rng.randomize()
+		if visual_rng.randi_range(0, 1) == 1:
+			scene = preload("res://scenes/battlefield_planetary_orbit.tscn")
 	var battlefield = scene.instantiate()
 	battlefield.name = "Battlefield"
 	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:

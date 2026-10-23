@@ -76,6 +76,8 @@ func run() -> void:
 	host.resource_bar.overlay.show_legend()
 	check(not map._zoom_enabled(), "Reference overlay blocks camera gestures")
 	host.resource_bar.overlay.dismiss()
+	map.traveling = true
+	check(map._zoom_enabled(), "Camera gestures remain enabled during PoI travel")
 	var pan_after_mouse: Vector2 = camera.pan_offset
 	var finger := InputEventScreenTouch.new()
 	finger.index = 0
@@ -91,7 +93,8 @@ func run() -> void:
 	finger.pressed = false
 	finger.position = swipe.position
 	root.push_input(finger, true)
-	check(not map.dragging and not map.traveling, "Finger release does not initiate travel")
+	check(not map.dragging and map.traveling, "Finger release leaves ongoing travel intact")
+	map.traveling = false
 	camera.pan_screen(Vector2(640, 300), Vector2(-100000, -100000))
 	var bounds: Rect2 = settings.pan_bounds.abs()
 	check(camera.pan_offset.x >= bounds.position.x and camera.pan_offset.x <= bounds.end.x and camera.pan_offset.y >= bounds.position.y and camera.pan_offset.y <= bounds.end.y, "Panning respects calibration bounds")

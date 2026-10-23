@@ -23,7 +23,7 @@ func _run() -> void:
 	music.play_result(true)
 	check(music.current_track == "victory_normal", "Victory replaces battle music")
 	music.play_result(false)
-	check(music.current_track.is_empty() and not music.player.playing, "Escape/defeat stop battle music")
+	check(music.current_track.is_empty() and not music.player.playing, "Defeat stops battle music")
 	for rank in range(3):
 		music.play_battle()
 		music.play_result(true, rank)

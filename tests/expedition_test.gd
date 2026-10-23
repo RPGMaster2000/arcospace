@@ -249,7 +249,8 @@ func run_tests() -> void:
 	battle.refresh_display()
 	battle._continue_encounter()
 	check(host.state.pending_choice == "upgrade", "Victory offers card upgrades before returning")
-	host.state.finish_upgrades()
+	while host.state.pending_choice == "upgrade":
+		host.state.choose_upgrade(host.state.upgrade_candidates()[0].identity_key())
 	host.show_system()
 	await process_frame
 	check(host.view_kind == "system" and host.state.hull == 20 and host.state.salvage == 10, "Victory Continue returns to list")

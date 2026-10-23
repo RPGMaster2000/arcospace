@@ -23,7 +23,8 @@ func run() -> void:
 		var candidate: Resource = host.state.upgrade_candidates()[0]
 		host._upgrade(candidate.identity_key())
 		check(music.current_track == expected and music.player.stream == original_stream, "Victory survives card upgrade without restarting")
-		host._finish_upgrades()
+		while host.state.pending_choice == "upgrade":
+			host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 		check(music.current_track == expected, "Victory continues through reward confirmation")
 		host.show_system()
 		check(music.current_track == "starsystem", "Map music starts only on returning after upgrades")

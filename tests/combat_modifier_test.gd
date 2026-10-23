@@ -119,7 +119,10 @@ func run() -> void:
 		scene_board.setup_settings = {"modifier":selection}
 		scene_board.get_node("ModifierDisplay").cinematic_enabled = false
 		root.add_child(scene_board)
-		check(scene_board.get_node("BattleView/Viewport/Battlefield").scene_file_path == scene_board.BATTLEFIELDS[selection].resource_path, "Setup selects correct editable battlefield")
+		var scene_path: String = scene_board.get_node("BattleView/Viewport/Battlefield").scene_file_path
+		var allowed: Array = [scene_board.BATTLEFIELDS[selection].resource_path]
+		if selection == 0: allowed.append("res://scenes/battlefield_planetary_orbit.tscn")
+		check(scene_path in allowed, "Setup selects correct editable battlefield, including random normal planet")
 		scene_board.queue_free()
 		await process_frame
 	# Exercise real setup controls, board initialization and round flow.

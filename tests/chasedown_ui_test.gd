@@ -157,7 +157,8 @@ func run() -> void:
 		await settle()
 		check(host.card_gallery.cards.size() == host.state.upgrade_candidates().size(), "Gallery tracks remaining distinct candidates")
 		await capture("upgrades-%d" % size.x)
-	host._finish_upgrades()
+	while host.state.pending_choice == "upgrade":
+		host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 	check(host.state.pending_choice.is_empty() and host.state.upgrades_remaining == 0, "Finish releases navigation")
 	host.free()
 	await process_frame

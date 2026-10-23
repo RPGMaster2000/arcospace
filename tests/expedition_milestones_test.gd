@@ -159,7 +159,8 @@ func run_tests() -> void:
 			run.active_battle = -1
 			if run.pending_choice == "upgrade":
 				check(not run.can_jump(), "Pending combat upgrades block departure until resolved or finished")
-				run.finish_upgrades()
+				while run.pending_choice == "upgrade":
+					run.choose_upgrade(run.upgrade_candidates()[0].identity_key())
 			if outcome == "loss":
 				check(run.mandatory_boss_pending() and not run.can_jump(), "Defeat never resolves mandatory Boss")
 			else:

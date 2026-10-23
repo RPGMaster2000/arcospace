@@ -203,7 +203,8 @@ func test_gallery() -> void:
 	click(point,MOUSE_BUTTON_MIDDLE,false)
 	check(overlay().is_open() and host.state.upgrades_remaining==2 and host.state.upgraded_cards.is_empty(),"Upgrade gallery inspection spends no upgrade")
 	overlay().dismiss(true)
-	host.state.finish_upgrades()
+	while host.state.pending_choice == "upgrade":
+		host.state.choose_upgrade(host.state.upgrade_candidates()[0].identity_key())
 	while host.state.player_pool().size() < host.state.deck_limit():
 		host.state.pending_choice="card"; host.state.card_offers=host.state.random_card_offers(); host.state.choose_card(0)
 	host.state.pending_choice="card"; host.state.card_offers=host.state.random_card_offers(); host.state.choose_card(0)

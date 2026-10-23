@@ -53,7 +53,7 @@ func _ready() -> void:
 	viewport.add_child(world)
 	camera = Camera.new()
 	camera.process_priority = -1
-	camera.fov = 42
+	camera.fov = settings.field_of_view
 	camera.far = 220
 	world.add_child(camera)
 	camera.overview(settings, true)
@@ -280,7 +280,7 @@ func depart() -> void:
 
 func _zoom_enabled() -> bool:
 	return (
-		is_visible_in_tree() and interactive and not traveling and not focused
+		is_visible_in_tree() and interactive and not focused
 		and camera.viewing == &"overview" and not (camera.motion and camera.motion.is_running())
 		and (not input_allowed.is_valid() or input_allowed.call())
 	)

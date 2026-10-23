@@ -981,6 +981,8 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 
 
 func show_outcome() -> void:
+	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
+		state.finish_upgrades()
 	if state.pending_choice == "replace":
 		_show_replacement()
 		return
@@ -1037,7 +1039,7 @@ func show_outcome() -> void:
 			_show_card_gallery(state.card_offers)
 		"upgrade":
 			_show_card_gallery(state.upgrade_candidates())
-			_button("Finish upgrades", _finish_upgrades, false, 48)
+			view.add_child(_label("Spend all remaining card upgrades to continue.", 18))
 		"resource", "production":
 			var choices = _grid(3)
 			var keys: Array = (

@@ -74,7 +74,7 @@ func run() -> void:
 	host.card_inspector.confirm_button.pressed.emit()
 	host.card_inspector.confirm_button.pressed.emit()
 	check(host.state.acquired_cards.size() == 1 and host.state.pending_choice.is_empty(), "Confirm is single-use")
-	host.state.pending_choice = "upgrade"
+	host.state.start_upgrade_event(1)
 	host.show_outcome()
 	await settle()
 	check(host.card_gallery.cards == host.state.upgrade_candidates(), "Only eligible identities")
@@ -92,10 +92,10 @@ func run() -> void:
 	host.card_inspector.confirm_button.pressed.emit()
 	check(host.state.upgraded_cards[card.identity_key()].upgrade_level == 1, "Upgrade confirmation single-use")
 	host.state.upgraded_cards[card.identity_key()] = card.with_upgrade(2)
-	host.state.pending_choice = "upgrade"
+	host.state.start_upgrade_event(1)
 	host.show_outcome()
 	for eligible in host.card_gallery.cards: check(eligible.identity_key() != card.identity_key(), "Maximum upgrades excluded")
-	host.state.pending_choice = ""
+	host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 	host.show_system()
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(setup)

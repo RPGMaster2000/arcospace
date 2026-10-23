@@ -62,7 +62,7 @@ func run() -> void:
 	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real selection button grants exactly one card")
 	check(host.view_kind == "poi" and host.selected_encounter == host.state.SERVICE_INDEX, "Card purchase returns directly to station")
 	await snapshot("outcome")
-	host.state.pending_choice = "upgrade"
+	host.state.start_upgrade_event(1)
 	host.show_outcome()
 	await snapshot("upgrades")
 	host._upgrade(host.state.upgrade_candidates()[0].identity_key())

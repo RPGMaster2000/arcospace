@@ -1030,6 +1030,8 @@ func start_upgrade_event(count: int) -> void:
 
 
 func finish_upgrades() -> void:
+	if upgrades_remaining > 0 and not upgrade_candidates().is_empty():
+		return
 	if pending_choice != "upgrade":
 		return
 	pending_choice = ""
@@ -1161,7 +1163,7 @@ func record_battle(result: BattleResult) -> void:
 			add_modifiers({"shields": result.strategic_shields})
 		var count: int = battle_upgrade_count(result)
 		if count > 0:
-			last_outcome = "Combat victory — upgrade up to %d different cards." % count
+			last_outcome = "Combat victory — upgrade %d different cards." % count
 			start_upgrade_event(count)
 
 	progress_committed.emit()
