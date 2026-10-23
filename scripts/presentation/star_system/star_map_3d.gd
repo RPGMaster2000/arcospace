@@ -38,7 +38,7 @@ func _ready() -> void:
 	world = Node3D.new()
 	viewport.add_child(world)
 	camera = Camera.new()
-	camera.fov = 48
+	camera.fov = 42
 	camera.far = 220
 	world.add_child(camera)
 	camera.overview(settings, true)
@@ -109,7 +109,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.custom_minimum_size = Vector2(132, 64)
-		button.size = Vector2(160, 64)
+		button.size = Vector2(140, 64)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_override("font", preload("res://assets/fonts/emoji_ui.tres"))
 		button.add_theme_font_size_override("font_size", 17)

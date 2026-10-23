@@ -60,6 +60,27 @@ func run() -> void:
 	host.show_system()
 	await process_frame
 	check(host.star_map == retained_map and host.star_map.orbit_index == 0, "Overview retains ship and map")
+	var poi = preload("res://encounters/mining_operation.tres")
+	host.state.encounters[0] = {"kind":"poi", "poi":poi, "title":poi.title, "completed":false}
+	host.show_poi(0)
+	await process_frame
+	await process_frame
+	check(host.grid.columns == 1 and host.screen.model_space.visible, "Approaches are a vertical list beside model")
+	check(host.star_map.camera.viewing == &"destination", "Camera focuses destination")
+	var salvage: int = host.state.salvage
+	host._select_approach(0)
+	host._confirm_approach()
+	host._confirm_approach()
+	check(host.presenting_outcome and host.state.salvage == salvage + 3, "Outcome commits exactly once before suspense")
+	await create_timer(0.1).timeout
+	check(host.view_kind == "poi" and host.return_button.disabled, "Suspense locks return and delays reveal")
+	host.show_system()
+	check(host.view_kind == "poi", "Cannot leave during suspense")
+	await create_timer(2.7).timeout
+	check(host.view_kind == "outcome" and not host.presenting_outcome, "Result revealed after two-second pause and flash")
+	host.show_system()
+	await process_frame
+	check(host.star_map.orbit_index == 0 and host.star_map.camera.viewing == &"overview", "Result returns to overview at last destination")
 	host.queue_free()
 	await process_frame
 	print("Star system 3D: %d failures" % failures)

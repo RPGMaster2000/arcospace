@@ -337,6 +337,7 @@ func _clear(kind: String) -> void:
 				star_map.overview()
 			else:
 				star_map.interactive = false
+				star_map.focus(map_destination)
 	else:
 		screen.map_layout(false, false)
 
@@ -424,6 +425,8 @@ func _exit_tree() -> void:
 
 
 func show_system() -> void:
+	if presenting_outcome:
+		return
 	if state.hull > 0 and state.chasedown_unresolved():
 		if state.active_battle < 0:
 			if state.encounters[state.chasedown_index].response < 0:
@@ -708,7 +711,7 @@ func show_poi(index: int) -> void:
 	approach_note.text = ""
 	confirm_button.text = "Initiate"
 	header.configure(poi)
-	var options = _grid(2)
+	var options = _grid(1 if _uses_3d_map() else 2)
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
 		var key: String = Presentation.approach_key(poi, slot)
@@ -778,6 +781,8 @@ func _purchase_finished() -> void:
 
 
 func _select_approach(slot: int) -> void:
+	if presenting_outcome:
+		return
 	if view_kind != "poi" or not state.can_visit(selected_encounter):
 		return
 	if selected_encounter == state.SERVICE_INDEX:
@@ -785,7 +790,7 @@ func _select_approach(slot: int) -> void:
 			outpost_screen.select_service(slot)
 		return
 	if slot == -2:
-		if not state.can_survey(selected_encounter):
+		if not state.can_survey(selected_encounter, _uses_3d_map()):
 			return
 	else:
 		var poi: Resource = state.encounter_at(selected_encounter).poi
@@ -838,7 +843,7 @@ func _confirm_approach() -> void:
 	if selected_approach == -2:
 		_survey(selected_encounter)
 	elif selected_approach >= 0:
-		_approach(selected_encounter, selected_approach)
+		_approach(selected_encounter, selected_approach, _uses_3d_map())
 
 
 func _outpost_selection_changed(slot: int, source: OutpostScreen) -> void:
@@ -861,12 +866,30 @@ func _purchase_outpost_service(
 		_purchase_finished()
 
 
-func _survey(index: int) -> void:
+func _survey(index: int, suspense: bool = false) -> void:
+	if presenting_outcome:
+		return
 	if state.survey(index):
-		show_outcome()
+		presenting_outcome = true
+		var resolved_state: Resource = state
+		if suspense:
+			await _result_suspense()
+		presenting_outcome = false
+		if state == resolved_state and not is_queued_for_deletion():
+			show_outcome()
 
 
-func _approach(index: int, slot: int) -> void:
+# Insertion point for a future approach animation. The outcome is already committed/saved.
+func _result_suspense() -> void:
+	return_button.disabled = true
+	for button in approach_buttons:
+		button.disabled = true
+	await get_tree().create_timer(star_system_settings.result_suspense_duration).timeout
+	if is_instance_valid(return_button):
+		return_button.disabled = false
+
+
+func _approach(index: int, slot: int, suspense: bool = false) -> void:
 	if presenting_outcome:
 		return
 	if index == state.SERVICE_INDEX:
@@ -878,6 +901,11 @@ func _approach(index: int, slot: int) -> void:
 	if state.resolve_approach(index, slot):
 		presenting_outcome = true
 		var resolved_state: Resource = state
+		if suspense:
+			await _result_suspense()
+		if state != resolved_state or is_queued_for_deletion():
+			presenting_outcome = false
+			return
 		await outcome_flash.play(state.last_poi_success == 1)
 		presenting_outcome = false
 		if not is_queued_for_deletion() and state == resolved_state:
@@ -911,7 +939,7 @@ func show_outcome() -> void:
 		VisualEffects.reveal(mission_header, visual_settings)
 	var result = PanelContainer.new()
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	result.custom_minimum_size.x = minf(900, ui.size.x - 32)
+	result.custom_minimum_size.x = minf(900, (screen.sidebar.size.x if _uses_3d_map() else ui.size.x) - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
 	var picking_card: bool = state.pending_choice in ["card", "upgrade"]
 	result.add_child(
