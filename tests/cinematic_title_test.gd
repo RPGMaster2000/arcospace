@@ -21,5 +21,15 @@ func run() -> void:
 	check(scene.phase == scene.Phase.SHIP_SELECTION and scene.camera.transform.is_equal_approx(scene.selection_anchor.transform), "Authored camera destination reached")
 	scene.queue_free()
 	await process_frame
+	scene = load("res://scenes/main_menu_3d.tscn").instantiate()
+	scene.background_fade_duration = 0.02
+	scene.logo_fade_duration = 1.0
+	root.add_child(scene)
+	await create_timer(0.15).timeout
+	check(scene.phase == scene.Phase.INTRO_LOGO, "Background naturally advances into logo fade")
+	scene.advance()
+	check(scene.phase == scene.Phase.PRESS_TO_PLAY and scene.logo.modulate.a == 1.0, "Press during logo fade stops at prompt")
+	scene.queue_free()
+	await process_frame
 	print("Cinematic title: %d failures" % failures)
 	quit(1 if failures else 0)

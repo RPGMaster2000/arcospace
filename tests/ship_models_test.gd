@@ -80,6 +80,8 @@ func run() -> void:
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
 	menu.showcase._stop_tween()
+	menu.showcase._finish_intro()
+	menu.showcase.logo.modulate.a = 0.0
 	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
 	menu._selection_ready()
 	for index in range(6):

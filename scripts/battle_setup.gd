@@ -1,6 +1,7 @@
 extends Control
 # RESPONSIBILITY: Select a profile and use the existing new-run/Continue pathways.
 # Presentation owns camera and cinematic timing; persistence owns disk data.
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -17,6 +18,7 @@ var selected_ship: int = 0
 var overwrite_confirmation: ConfirmationDialog
 var save_notice: AcceptDialog
 var deck_viewer: CanvasLayer
+var info_overlay: CanvasLayer
 var settings_button: Button
 @onready var showcase = $World/Viewport/MainMenu3D
 @onready var deck_button: Button = $Selection/Actions/ViewDeck
@@ -26,18 +28,26 @@ var settings_button: Button
 @onready var start_button: Button = $Selection/Actions/Start
 
 
+func _enter_tree() -> void:
+	$World/Viewport/MainMenu3D.skip_cinematics = Preferences.skip_cinematics()
+
+
 func _ready() -> void:
 	get_node("/root/Music").play_starmap()
 	settings_button = preload("res://scripts/ui/settings_button.gd").new()
 	settings_button.is_main_menu = true
 	add_child(settings_button)
-	var legend = preload("res://scripts/ui/info_overlay.gd").new()
-	add_child(legend)
-	$Legend.pressed.connect(legend.show_legend)
+	settings_button.menu.cinematics_changed.connect(func(enabled: bool):
+		showcase.skip_cinematics = enabled
+		if enabled and showcase.phase in [showcase.Phase.INTRO_BACKGROUND, showcase.Phase.INTRO_LOGO]: showcase.advance())
+	info_overlay = preload("res://scripts/ui/info_overlay.gd").new()
+	add_child(info_overlay)
+	$Legend.pressed.connect(info_overlay.show_legend)
 	deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(deck_viewer)
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
 	showcase.populate(Ships.PLAYERS)
+	showcase.phase_changed.connect(_update_chrome)
 	showcase.selection_ready.connect(_selection_ready)
 	showcase.departure_finished.connect(func(): _fade_to_game(launch_data, white_fade_duration))
 	selected_ship = clampi(int(initial_settings.get("player_ship", 0)), 0, Ships.PLAYERS.size() - 1)
@@ -62,8 +72,15 @@ func _ready() -> void:
 	for button in [deck_button, begin_button, start_button, $Legend]: Presentation.action(button, button == start_button)
 	start_button.add_theme_color_override("font_focus_color", Color("102838"))
 	$Selection.hide()
+	_update_chrome()
 	resized.connect(_layout)
 	_layout()
+
+
+func _update_chrome() -> void:
+	var interactive: bool = showcase.phase in [showcase.Phase.PRESS_TO_PLAY, showcase.Phase.SHIP_SELECTION]
+	settings_button.visible = interactive
+	$Legend.visible = interactive
 
 
 func _selection_ready() -> void:
@@ -108,20 +125,27 @@ func _navigate(direction: int) -> void:
 	if showcase.phase == showcase.Phase.SHIP_SELECTION: _select(selected_ship + direction)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if get_tree().paused or deck_viewer.shade.visible or overwrite_confirmation.visible or save_notice.visible: return
+func _input(event: InputEvent) -> void:
+	if showcase.phase != showcase.Phase.SHIP_SELECTION: return
+	if get_tree().paused or deck_viewer.shade.visible or info_overlay.shade.visible or overwrite_confirmation.visible or save_notice.visible: return
 	if event is InputEventKey and event.echo: return
+	if event is InputEventJoypadMotion and not Input.is_action_just_pressed("ui_left") and not Input.is_action_just_pressed("ui_right"): return
+	if event.is_action_pressed("ui_left"): _navigate(-1)
+	elif event.is_action_pressed("ui_right"): _navigate(1)
+	else: return
+	get_viewport().set_input_as_handled()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if get_tree().paused or deck_viewer.shade.visible or info_overlay.shade.visible or overwrite_confirmation.visible or save_notice.visible: return
+	if event is InputEventKey and event.echo: return
+	if event is InputEventJoypadMotion and not Input.is_action_just_pressed("ui_left") and not Input.is_action_just_pressed("ui_right"): return
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION: return
 	var pressed: bool = (event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton or event is InputEventScreenTouch) and event.pressed
 	if showcase.phase in [showcase.Phase.INTRO_BACKGROUND, showcase.Phase.INTRO_LOGO, showcase.Phase.PRESS_TO_PLAY]:
 		if pressed:
 			showcase.advance()
 			get_viewport().set_input_as_handled()
-	elif showcase.phase == showcase.Phase.SHIP_SELECTION:
-		if event.is_action_pressed("ui_left"): _navigate(-1)
-		elif event.is_action_pressed("ui_right"): _navigate(1)
-		else: return
-		get_viewport().set_input_as_handled()
 
 
 func read_settings() -> Dictionary:

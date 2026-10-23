@@ -55,6 +55,8 @@ func run() -> void:
 		menu.white_fade_duration = 0.001
 		menu.map_reveal_duration = 0.001
 		menu.showcase._stop_tween()
+		menu.showcase._finish_intro()
+		menu.showcase.logo.modulate.a = 0.0
 		menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
 		menu._selection_ready()
 		var viewport: SubViewport = menu.get_node("World/Viewport")

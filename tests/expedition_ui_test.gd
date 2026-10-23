@@ -74,8 +74,16 @@ func run() -> void:
 	host._exit()
 	await process_frame
 	check(current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Return to ship selection")
+	current_scene.showcase.skip_cinematics = true
+	current_scene.showcase._stop_tween()
+	current_scene.showcase._finish_intro()
+	current_scene.showcase.logo.modulate.a = 0.0
+	current_scene.showcase.phase = current_scene.showcase.Phase.SHIP_SELECTION
+	current_scene._selection_ready()
+	current_scene.white_fade_duration = 0.001
+	current_scene.map_reveal_duration = 0.001
 	current_scene._start()
-	await process_frame
+	for frame in range(8): await process_frame
 	host = current_scene
 	check(host.scene_file_path.ends_with("expedition.tscn") and host.view_kind == "system", "Ship selection starts expedition without mandatory battle")
 	host.free()

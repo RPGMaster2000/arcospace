@@ -50,8 +50,16 @@ func run() -> void:
 	var fresh = current_scene
 	check(fresh.scene_file_path.ends_with("battle_setup.tscn"), "Select Ship returns to initial selection")
 	check(fresh.get("state") == null, "Selecting a ship is required before a new expedition")
+	fresh.showcase.skip_cinematics = true
+	fresh.showcase._stop_tween()
+	fresh.showcase._finish_intro()
+	fresh.showcase.logo.modulate.a = 0.0
+	fresh.showcase.phase = fresh.showcase.Phase.SHIP_SELECTION
+	fresh._selection_ready()
+	fresh.white_fade_duration = 0.001
+	fresh.map_reveal_duration = 0.001
 	fresh._start()
-	await process_frame
+	for frame in range(8): await process_frame
 	fresh = current_scene
 	check(fresh.state != null and fresh.state.hull == fresh.state.ship().hull_capacity, "Confirming ship starts a fresh expedition")
 	fresh.queue_free()

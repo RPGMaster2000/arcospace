@@ -96,6 +96,8 @@ func run() -> void:
 	await settle()
 	check(menu.selected_ship == 5, "High-index selection restored")
 	menu.showcase._stop_tween()
+	menu.showcase._finish_intro()
+	menu.showcase.logo.modulate.a = 0.0
 	menu.showcase.phase = menu.showcase.Phase.SHIP_SELECTION
 	menu._selection_ready()
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(960,540),Vector2i(800,450),Vector2i(686,384)]:

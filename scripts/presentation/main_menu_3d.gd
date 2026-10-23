@@ -1,5 +1,6 @@
 extends Node3D
 # RESPONSIBILITY: Title, camera and fleet choreography; never reads or changes a run.
+signal phase_changed
 signal selection_ready
 signal departure_finished
 
@@ -42,7 +43,10 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 var models: Array[Node3D] = []
 var selected_model: Node3D
 var camera_tween: Tween
-var phase: Phase = Phase.INTRO_BACKGROUND
+var phase: Phase = Phase.INTRO_BACKGROUND:
+	set(value):
+		phase = value
+		phase_changed.emit()
 var phase_tween: Tween
 var prompt_time: float = 0.0
 var skip_cinematics: bool = false
@@ -135,9 +139,10 @@ func populate(profiles: Array) -> void:
 func select_ship(index: int, immediate: bool = false) -> void:
 	if models.is_empty(): return
 	selected_model = models[index]
+	$Fleet/ShowcaseLight.position = selected_model.position + Vector3(4, 3, 1)
 	if camera_tween != null: camera_tween.kill()
 	var target: Transform3D = selection_anchor.transform
-	target.origin += selected_model.position + framing_offset
+	target.origin += $Fleet.basis * selected_model.position + framing_offset
 	if index < ship_camera_offsets.size(): target.origin += ship_camera_offsets[index]
 	# The fleet root controls the world placement; camera tracks only lineup displacement.
 	if phase == Phase.SHIP_SELECTION:
@@ -158,14 +163,16 @@ func depart() -> void:
 		return
 	var direction: Vector3 = (camera.global_basis * departure_direction).normalized()
 	if direction.is_zero_approx(): direction = camera.global_basis.x
-	var up: Vector3 = Vector3.UP if absf(direction.dot(Vector3.UP)) < 0.99 else Vector3.FORWARD
-	var side: Vector3 = direction.cross(up).normalized()
-	var heading := Basis(direction, side.cross(direction), side).get_rotation_quaternion()
+	var motion: Vector3 = $Fleet.global_basis.inverse() * direction
+	var forward: Vector3 = motion.normalized()
+	var up: Vector3 = Vector3.UP if absf(forward.dot(Vector3.UP)) < 0.99 else Vector3.FORWARD
+	var side: Vector3 = forward.cross(up).normalized()
+	var heading := Basis(forward, side.cross(forward), side).get_rotation_quaternion()
 	phase_tween.set_ease(orientation_easing).set_trans(Tween.TRANS_SINE)
 	phase_tween.tween_property(selected_model, "quaternion", heading, orientation_duration)
 	phase_tween.tween_interval(departure_pause_duration)
 	var origin: Vector3 = selected_model.position
-	phase_tween.tween_method(func(t: float): selected_model.position = origin + direction * 0.5 * departure_acceleration * t * t, 0.0, departure_travel_duration, departure_travel_duration).set_trans(Tween.TRANS_LINEAR)
+	phase_tween.tween_method(func(t: float): selected_model.position = origin + motion * 0.5 * departure_acceleration * t * t, 0.0, departure_travel_duration, departure_travel_duration).set_trans(Tween.TRANS_LINEAR)
 	phase_tween.tween_callback(departure_finished.emit)
 
 

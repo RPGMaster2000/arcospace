@@ -100,6 +100,8 @@ func run() -> void:
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(setup)
 	setup.showcase._stop_tween()
+	setup.showcase._finish_intro()
+	setup.showcase.logo.modulate.a = 0.0
 	setup.showcase.phase = setup.showcase.Phase.SHIP_SELECTION
 	setup._selection_ready()
 	await process_frame
@@ -246,6 +248,8 @@ func run() -> void:
 	check(current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Defeat goes to ship selection")
 	current_scene.showcase.skip_cinematics = true
 	current_scene.showcase._stop_tween()
+	current_scene.showcase._finish_intro()
+	current_scene.showcase.logo.modulate.a = 0.0
 	current_scene.showcase.phase = current_scene.showcase.Phase.SHIP_SELECTION
 	current_scene._selection_ready()
 	current_scene.white_fade_duration = 0.001

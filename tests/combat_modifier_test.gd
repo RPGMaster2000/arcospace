@@ -168,6 +168,8 @@ func run() -> void:
 	check(returned.selected_ship == 2, "Return to setup preserves ship selection")
 	returned.showcase.skip_cinematics = true
 	returned.showcase._stop_tween()
+	returned.showcase._finish_intro()
+	returned.showcase.logo.modulate.a = 0.0
 	returned.showcase.phase = returned.showcase.Phase.SHIP_SELECTION
 	returned._selection_ready()
 	returned.white_fade_duration = 0.001

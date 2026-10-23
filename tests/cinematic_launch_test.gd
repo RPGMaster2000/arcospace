@@ -23,6 +23,7 @@ func run() -> void:
 	menu.showcase.departure_pause_duration = 0.1
 	menu.map_reveal_duration = 0.1
 	menu.white_fade_duration = 0.1
+	menu.showcase.get_node("Fleet").rotation.y = 0.15
 	menu._select(2)
 	menu._start()
 	var version: int = store.revision
@@ -32,7 +33,7 @@ func run() -> void:
 	check(store.revision == version, "Only one initialized run committed")
 	await menu.showcase.phase_tween.step_finished
 	var mount: Node3D = menu.showcase.selected_model
-	var direction: Vector3 = mount.basis.x.normalized()
+	var direction: Vector3 = mount.global_basis.x.normalized()
 	var before: Vector2 = menu.showcase.camera.unproject_position(mount.global_position)
 	var after: Vector2 = menu.showcase.camera.unproject_position(mount.global_position + direction)
 	check(after.x > before.x and after.y < before.y, "Forward heading points toward screen upper-right")

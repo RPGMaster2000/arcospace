@@ -9,12 +9,22 @@ func _initialize() -> void: call_deferred("run")
 func run() -> void:
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
+	check(not menu.settings_button.visible and not menu.get_node("Legend").visible, "Initial black frame has no menu chrome")
 	check(menu.selected_ship == 0 and menu.showcase.models.size() == 6, "Endeavour and six persistent models")
 	check(menu.find_children("*", "SubViewport", true, false).size() == 1, "One shared viewport")
 	menu.showcase.skip_cinematics = true
 	menu.showcase.advance()
 	menu.showcase.advance()
 	await menu.showcase.selection_ready
+	var right := InputEventKey.new()
+	right.keycode = KEY_RIGHT
+	right.pressed = true
+	root.push_input(right)
+	check(menu.selected_ship == 1, "Arrow navigation works while Begin has keyboard focus")
+	menu.info_overlay.show_legend()
+	root.push_input(right)
+	check(menu.selected_ship == 1, "Legend input cannot browse behind modal")
+	menu.info_overlay.dismiss()
 	for index in range(6):
 		menu._select(index)
 		var model = menu.showcase.models[index].get_child(0)

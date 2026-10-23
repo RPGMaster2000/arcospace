@@ -2,7 +2,9 @@ extends CanvasLayer
 
 # RESPONSIBILITY: Present audio/settings controls and pause gameplay while open.
 # DOES NOT: Reset an expedition; the owning screen handles main_menu_requested.
+signal cinematics_changed(enabled: bool)
 signal main_menu_requested
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var is_main_menu: bool = false
 var save_quit_action: Callable
@@ -12,6 +14,7 @@ var shade: ColorRect
 var panel: PanelContainer
 var close_button: Button
 var music_toggle: CheckButton
+var cinematics_toggle: CheckButton
 var main_menu_button: Button
 var quit_button: Button
 # Future settings belong here; the body already scrolls on compact displays.
@@ -70,6 +73,23 @@ func _ready() -> void:
 	extra_settings = VBoxContainer.new()
 	extra_settings.add_theme_constant_override("separation", 14)
 	body.add_child(extra_settings)
+	cinematics_toggle = CheckButton.new()
+	cinematics_toggle.text = "Skip Cinematics"
+	cinematics_toggle.custom_minimum_size.y = 52
+	cinematics_toggle.add_theme_font_size_override("font_size", 22)
+	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
+	extra_settings.add_child(cinematics_toggle)
+	cinematics_toggle.toggled.connect(func(enabled: bool):
+		if Preferences.set_skip_cinematics(enabled) == OK:
+			cinematics_changed.emit(enabled)
+		else:
+			cinematics_toggle.set_pressed_no_signal(not enabled)
+			var notice := AcceptDialog.new()
+			notice.dialog_text = "Could not save the cinematic preference."
+			notice.process_mode = Node.PROCESS_MODE_ALWAYS
+			add_child(notice)
+			notice.confirmed.connect(notice.queue_free)
+			notice.popup_centered(Vector2i(460, 160)))
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	column.add_child(actions)
@@ -118,6 +138,7 @@ func present() -> void:
 	_owns_pause = true
 	get_tree().paused = true
 	_sync_music(_music.enabled)
+	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
 	shade.show()
 	_fit()
 	close_button.grab_focus()

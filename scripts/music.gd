@@ -9,7 +9,7 @@ const TRACKS = {
 	"battle2": "res://assets/sound/battle2.mp3",
 	"victory": "res://assets/sound/victory.mp3"
 }
-const SETTINGS_PATH = "user://music.cfg"
+const SETTINGS_PATH = preload("res://scripts/ui/menu_preferences.gd").PATH
 var enabled: bool = true
 var current_track: String = ""
 var player: AudioStreamPlayer
@@ -71,6 +71,7 @@ func set_enabled(value: bool) -> void:
 	enabled = value
 	_apply_mute()
 	var settings = ConfigFile.new()
+	settings.load(SETTINGS_PATH)
 	settings.set_value("music", "enabled", enabled)
 	settings.save(SETTINGS_PATH)
 	enabled_changed.emit(enabled)

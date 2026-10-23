@@ -163,6 +163,8 @@ func run() -> void:
 	await settle()
 	var setup = current_scene
 	setup.showcase._stop_tween()
+	setup.showcase._finish_intro()
+	setup.showcase.logo.modulate.a = 0.0
 	setup.showcase.phase = setup.showcase.Phase.SHIP_SELECTION
 	setup._selection_ready()
 	await process_frame

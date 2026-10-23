@@ -47,6 +47,7 @@ func run() -> void:
 	var menu = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(menu)
 	current_scene = menu
+	if menu.showcase.phase in [menu.showcase.Phase.INTRO_BACKGROUND, menu.showcase.Phase.INTRO_LOGO]: menu.showcase.advance()
 	await settle()
 	if "--quit-probe" in OS.get_cmdline_user_args():
 		menu.settings_button.pressed.emit()
@@ -144,6 +145,14 @@ func run() -> void:
 	await activate(board.settings_button.menu.main_menu_button)
 	check(not paused and current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Battle Main Menu returns to ship selection and unpauses")
 	check(not is_instance_valid(host) and not is_instance_valid(board), "Leaving battle removes the expedition")
+	current_scene.showcase.skip_cinematics = true
+	current_scene.showcase._stop_tween()
+	current_scene.showcase._finish_intro()
+	current_scene.showcase.logo.modulate.a = 0.0
+	current_scene.showcase.phase = current_scene.showcase.Phase.SHIP_SELECTION
+	current_scene._selection_ready()
+	current_scene.white_fade_duration = 0.001
+	current_scene.map_reveal_duration = 0.001
 	current_scene._start()
 	await settle()
 	var exploration = current_scene

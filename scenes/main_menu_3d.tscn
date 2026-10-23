@@ -62,7 +62,7 @@ mesh = SubResource("SpaceSphere")
 material_override = SubResource("SpaceMaterial")
 
 [node name="Planet" type="MeshInstance3D" parent="."]
-position = Vector3(-28, 8, -22)
+position = Vector3(-24, 9, 24)
 cast_shadow = 0
 mesh = SubResource("PlanetSphere")
 material_override = SubResource("PlanetMaterial")
@@ -80,6 +80,7 @@ light_energy = 0.6
 shadow_enabled = false
 
 [node name="TitleView" type="Marker3D" parent="."]
+rotation_degrees = Vector3(0, 180, 0)
 
 [node name="ShipSelectionView" type="Marker3D" parent="."]
 position = Vector3(0, 0, 0)
@@ -92,6 +93,13 @@ far = 200.0
 
 [node name="Fleet" type="Node3D" parent="."]
 position = Vector3(-8, 0, 0)
+
+[node name="ShowcaseLight" type="OmniLight3D" parent="Fleet"]
+position = Vector3(4, 3, 1)
+light_color = Color(0.7, 0.88, 1, 1)
+light_energy = 2.5
+omni_range = 7.0
+shadow_enabled = false
 
 [node name="Title" type="CanvasLayer" parent="."]
 

@@ -10,6 +10,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
 - [Shared local and CI regression runner](regression_testing.md)
+- [Cinematic menu ownership and Inspector calibration](cinematic_menu.md)
 - [Architectural observations](#architectural-observations)
 
 ## Quick orientation
