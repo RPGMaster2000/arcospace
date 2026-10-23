@@ -82,6 +82,12 @@ func play_changes(
 		)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
+		if hull_delta < 0:
+			Sfx.play_event(&"ship_destroyed" if current.hull <= 0 and old.hull > 0 else &"hull_hit", self)
+		elif hull_delta > 0:
+			Sfx.play_event(&"hull_repair", self)
+		if shield_delta < 0:
+			Sfx.play_event(&"shield_break" if old.shields > 0 and current.shields == 0 else &"shield_hit", self)
 		if (
 			hull_delta < 0
 			and (current.shields == 0 or get_parent().modifier.shields_disabled())
@@ -126,13 +132,16 @@ func play_changes(
 			if delta > 0 or (delta < 0 and effect_delta < 0):
 				_count(icon.get_node(key), old[key], current[key])
 			if delta > 0:
+				Sfx.play_event([&"materials_gain", &"energy_gain", &"crew_gain"][index], self)
 				_resource_burst(icon, COLORS[index], false)
 			if effect_delta < 0:
+				Sfx.play_event(&"resource_drain", self)
 				_pulse_icon(icon, COLORS[index], false)
 			var production_delta: int = current[PRODUCTION[index]] - old[PRODUCTION[index]]
 			if production_delta > 0:
 				_resource_burst(icon, COLORS[index], true)
 			if production_delta != 0:
+				Sfx.play_event(&"production_gain" if production_delta > 0 else &"production_loss", self)
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
 
 	if not shatter_updates.is_empty():

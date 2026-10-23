@@ -7,6 +7,9 @@ const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Effects = preload("res://scripts/visual/visual_effects.gd")
 var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 var result_visible: bool = false
+var _emp_charge: int = -1
+var _emp_ready: bool = false
+var _emp_fired: bool = false
 var nodes: Dictionary = {}
 var cards: Array[Control] = []
 var card_slots: Array[NodePath] = []
@@ -167,6 +170,10 @@ func refresh_results(data: Dictionary) -> void:
 		)
 	)
 	if visible_now and not result_visible:
+		if data.result_cause == "systems_failure":
+			Sfx.play_event(&"systems_failure_defeat", nodes["MatchResult"])
+		elif data.winner == "player" and not data.escaped_by_ftl:
+			Sfx.play_event(&"result_reveal", nodes["MatchResult"])
 		Effects.reveal(
 			heading,
 			visual_settings,
@@ -222,6 +229,17 @@ func refresh_results(data: Dictionary) -> void:
 
 
 func refresh_emp(data: Dictionary) -> void:
+	var scope: Node = nodes["FTLPanel/WarpButton"]
+	var ready_now: bool = data.emp.can_warp and data.winner.is_empty()
+	if data.escaped_by_ftl and not _emp_fired:
+		Sfx.play_event(&"emp_fire", scope)
+		_emp_fired = true
+	elif ready_now and not _emp_ready:
+		Sfx.play_event(&"emp_ready", scope)
+	elif _emp_charge >= 0 and data.emp.charge > _emp_charge and data.emp.disabled_turns == 0 and data.winner.is_empty():
+		Sfx.play_event(&"emp_charge", scope)
+	_emp_charge = data.emp.charge
+	_emp_ready = ready_now
 	var ftl_status: String = "EMP Pulse %d / %d" % [data.emp.charge, data.emp.charge_target]
 	if data.emp.disabled_turns > 0:
 		ftl_status += " · Offline (%d turns)" % data.emp.disabled_turns

@@ -13,6 +13,8 @@ var _quit_after_save: bool = false
 var shade: ColorRect
 var panel: PanelContainer
 var close_button: Button
+var music_volume: HSlider
+var sfx_volume: HSlider
 var music_toggle: CheckButton
 var cinematics_toggle: CheckButton
 var main_menu_button: Button
@@ -73,6 +75,8 @@ func _ready() -> void:
 	extra_settings = VBoxContainer.new()
 	extra_settings.add_theme_constant_override("separation", 14)
 	body.add_child(extra_settings)
+	music_volume = _volume_slider("Music Volume", _music.volume, _music.set_volume)
+	sfx_volume = _volume_slider("Sound Effects Volume (0 = mute)", Sfx.volume, Sfx.set_volume)
 	cinematics_toggle = CheckButton.new()
 	cinematics_toggle.text = "Skip Cinematics"
 	cinematics_toggle.custom_minimum_size.y = 52
@@ -112,6 +116,23 @@ func _ready() -> void:
 	shade.hide()
 
 
+func _volume_slider(caption: String, value: float, change: Callable) -> HSlider:
+	var label := Label.new()
+	label.text = caption
+	label.add_theme_font_size_override("font_size", 20)
+	extra_settings.add_child(label)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.01
+	slider.value = value
+	slider.custom_minimum_size = Vector2(220, 40)
+	slider.tooltip_text = caption
+	slider.value_changed.connect(change)
+	extra_settings.add_child(slider)
+	return slider
+
+
 func _button(caption: String) -> Button:
 	var button := Button.new()
 	button.text = caption
@@ -139,6 +160,8 @@ func present() -> void:
 	get_tree().paused = true
 	_sync_music(_music.enabled)
 	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
+	music_volume.set_value_no_signal(_music.volume)
+	sfx_volume.set_value_no_signal(Sfx.volume)
 	shade.show()
 	_fit()
 	close_button.grab_focus()

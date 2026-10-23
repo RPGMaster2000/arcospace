@@ -18,6 +18,7 @@ func animate_action(
 	card: Resource, source: Control, side: String, discard: bool, resolve: Callable
 ) -> void:
 	if not settings.enabled:
+		Sfx.play_event(&"card_discard" if discard else &"card_play", self)
 		resolve.call()
 		return
 	source_view = source
@@ -42,6 +43,7 @@ func animate_action(
 	visual.set_playable(true)
 	_ignore_input(visual)
 	if discard:
+		Sfx.play_event(&"card_discard", self)
 		# A moving clip boundary gives a cheap scanner dissolve without textures.
 		clipper.clip_contents = true
 		if side == "enemy":
@@ -86,6 +88,7 @@ func animate_action(
 		if cancelling:
 			return
 		# Resolve once the card has arrived, while the player can read its text.
+		Sfx.play_event(&"card_play", self)
 		resolve.call()
 		active_tween = _new_tween()
 		active_tween.tween_interval(settings.hold_seconds)

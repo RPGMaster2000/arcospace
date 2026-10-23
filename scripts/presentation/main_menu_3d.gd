@@ -170,6 +170,7 @@ func depart() -> void:
 	_stop_tween()
 	phase_tween = create_tween()
 	if skip_cinematics:
+		Sfx.play_event(&"ui_confirm", self)
 		phase_tween.tween_callback(departure_finished.emit)
 		return
 	var direction: Vector3 = (camera.global_basis * departure_direction).normalized()
@@ -181,6 +182,7 @@ func depart() -> void:
 	var heading := Basis(forward, side.cross(forward), side).get_rotation_quaternion()
 	phase_tween.set_ease(orientation_easing).set_trans(Tween.TRANS_SINE)
 	phase_tween.tween_property(selected_model, "quaternion", heading, orientation_duration)
+	phase_tween.tween_callback(func(): Sfx.play_event(&"ship_departure", self))
 	phase_tween.tween_interval(departure_pause_duration)
 	var origin: Vector3 = selected_model.position
 	phase_tween.tween_method(func(t: float): selected_model.position = origin + motion * 0.5 * departure_acceleration * t * t, 0.0, departure_travel_duration, departure_travel_duration).set_trans(Tween.TRANS_LINEAR)

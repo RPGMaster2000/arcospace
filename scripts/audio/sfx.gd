@@ -1,7 +1,7 @@
 extends Node
 # RESPONSIBILITY: Play catalog events with bounded voices, isolated RNG and scene ownership.
 # DOES NOT: Resolve gameplay, select music or synthesize audio at runtime.
-@export var catalog: Resource = preload("res://resources/audio/sound_catalog.tres")
+@export var catalog: Resource
 const POOL_SIZE: int = 12
 const SETTINGS_PATH = preload("res://scripts/ui/menu_preferences.gd").PATH
 var volume: float = 1.0
@@ -11,6 +11,9 @@ var _last_played: Dictionary = {}
 
 
 func _ready() -> void:
+	# Load after import; @tool card scripts can parse this singleton on a clean editor scan.
+	if catalog == null:
+		catalog = load("res://resources/audio/sound_catalog.tres")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_rng.randomize() # Independent generator; never call global rand* functions here.
 	for index in range(POOL_SIZE):

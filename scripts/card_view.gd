@@ -52,6 +52,8 @@ func _ready() -> void:
 func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 	if Engine.is_editor_hint() or not is_node_ready():
 		return
+	if selected and not interaction_selected and card_data != null and not disabled:
+		Sfx.play_event(&"card_select", self)
 	interaction_hovered = hovered and card_data != null
 	interaction_selected = selected and card_data != null
 	if interaction_tween != null and interaction_tween.is_valid():

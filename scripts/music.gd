@@ -18,6 +18,7 @@ const BASE_VOLUME_DB: float = -12.0
 var fade_tween: Tween
 const SETTINGS_PATH = preload("res://scripts/ui/menu_preferences.gd").PATH
 var enabled: bool = true
+var volume: float = 1.0
 var current_track: String = ""
 var player: AudioStreamPlayer
 
@@ -27,11 +28,13 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	player = AudioStreamPlayer.new()
 	player.volume_db = BASE_VOLUME_DB
+	player.bus = &"Music"
 	add_child(player)
 	player.finished.connect(_finished)
 	var settings = ConfigFile.new()
 	if settings.load(SETTINGS_PATH) == OK:
 		enabled = bool(settings.get_value("music", "enabled", true))
+	set_volume(float(settings.get_value("music", "volume", 1.0)), false)
 	_apply_mute()
 
 
@@ -113,6 +116,21 @@ func set_enabled(value: bool) -> void:
 	settings.set_value("music", "enabled", enabled)
 	settings.save(SETTINGS_PATH)
 	enabled_changed.emit(enabled)
+
+
+# Bus gain preserves track-specific gain and cinematic fades on the existing player.
+func set_volume(value: float, persist: bool = true) -> void:
+	volume = clampf(value, 0.0, 1.0)
+	var bus: int = AudioServer.get_bus_index(&"Music")
+	if bus >= 0:
+		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(volume, 0.0001)))
+		AudioServer.set_bus_mute(bus, volume <= 0.0)
+	if persist:
+		var settings := ConfigFile.new()
+		settings.load(SETTINGS_PATH)
+		settings.set_value("music", "volume", volume)
+		if settings.save(SETTINGS_PATH) != OK:
+			push_warning("Could not save Music Volume")
 
 
 func _apply_mute() -> void:

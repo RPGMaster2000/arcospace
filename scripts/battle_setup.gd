@@ -139,7 +139,11 @@ func _select(index: int) -> void:
 
 
 func _navigate(direction: int) -> void:
-	if showcase.phase == showcase.Phase.SHIP_SELECTION: _select(selected_ship + direction)
+	if showcase.phase == showcase.Phase.SHIP_SELECTION:
+		var previous: int = selected_ship
+		_select(selected_ship + direction)
+		if selected_ship != previous:
+			Sfx.play_event(&"ui_select", self)
 
 
 func _input(event: InputEvent) -> void:
