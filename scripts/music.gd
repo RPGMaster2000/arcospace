@@ -84,6 +84,7 @@ func play_track(track: String, restart: bool = false) -> void:
 		return
 	_cancel_fade()
 	current_track = track
+	player.volume_db = BASE_VOLUME_DB + linear_to_db(1.5) if track == "starsystem" else BASE_VOLUME_DB
 	player.stop()
 	player.stream = null
 	var path: String = TRACKS.get(track, "")

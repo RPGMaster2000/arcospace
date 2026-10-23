@@ -796,7 +796,7 @@ func refresh_display() -> void:
 	if $MatchResult.visible and not result_music_started:
 		result_music_started = true
 		# Start music only when the result is revealed, after combat presentation.
-		get_node("/root/Music").play_result(winner == "player" and not escaped_by_ftl, enemy_ship_data.enemy_rank)
+		get_node("/root/Music").play_result(winner == "player" and not escaped_by_ftl, enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
 
 
 func _display_snapshot() -> Dictionary:

@@ -199,7 +199,7 @@ func run() -> void:
 						display.get_node("Meter/Text").text.contains("halved"),
 						"Ion HUD follows announced half multiplier"
 					)
-			await activate(panel, true)
+			await activate(panel.get_node("Text"), true)
 			check(
 				(
 					panel.details.shade.visible

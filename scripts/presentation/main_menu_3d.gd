@@ -26,7 +26,7 @@ enum Phase { INTRO_BACKGROUND, INTRO_LOGO, PRESS_TO_PLAY, CAMERA_TRANSITION, SHI
 @export_group("Fleet")
 @export_range(3, 12) var fleet_spacing: float = 6.2
 @export_range(0, 0.3) var fleet_curvature: float = 0.025
-@export var ship_orientation: Vector3 = Vector3(0, -35, 0)
+@export var ship_orientation: Vector3 = Vector3(0, 30, -30)
 @export_range(0, 30) var rotation_degrees_per_second: float = 14.0
 @export_range(0.05, 3) var selection_duration: float = 0.55
 @export var framing_offset: Vector3 = Vector3.ZERO

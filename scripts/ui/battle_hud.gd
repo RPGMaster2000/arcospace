@@ -339,7 +339,7 @@ func fit_combat_controls(board_size: Vector2) -> void:
 
 
 static func fit_jump_button(button: Button, progress_width: float) -> void:
-	button.size = Vector2(progress_width, 48)
+	button.size = Vector2(progress_width, 27)
 	button.position = Vector2.ZERO
 
 
@@ -354,6 +354,12 @@ func update_jump_style(disabled_turns: int) -> void:
 		return
 	button.set_meta("offline_style", offline)
 	ResultPresentation.action(button)
+	button.add_theme_font_size_override("font_size", 13)
+	for key in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var compact_box: StyleBox = button.get_theme_stylebox(key).duplicate()
+		compact_box.content_margin_top = 2
+		compact_box.content_margin_bottom = 2
+		button.add_theme_stylebox_override(key, compact_box)
 	if offline:
 		for key in ["normal", "hover", "pressed", "disabled"]:
 			var box: StyleBoxFlat = button.get_theme_stylebox(key).duplicate()

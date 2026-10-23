@@ -14,6 +14,7 @@ func _run() -> void:
 	var original: bool = music.enabled
 	music.play_starmap()
 	check(music.current_track == "starsystem", "Star system track selected")
+	check(is_equal_approx(db_to_linear(music.player.volume_db - music.BASE_VOLUME_DB), 1.5), "Star system music is fifty percent louder")
 	var first_player = music.player
 	music.play_starmap()
 	check(music.player == first_player, "One persistent audio player")

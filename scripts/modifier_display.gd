@@ -5,6 +5,11 @@ extends Control
 var flash_tween: Tween
 
 
+func _ready() -> void:
+	$Flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$FTLFlash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
 func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414) -> void:
 	$Meter.fit_panel(board_size, safe_inset, hand_top)
 

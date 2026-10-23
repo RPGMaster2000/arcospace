@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/ui/emp_ready_button.gd" id="ReadyButton"]
+
 [sub_resource type="StyleBoxFlat" id="Track"]
 bg_color = Color(0.15, 0.22, 0.27, 0.65)
 [sub_resource type="StyleBoxFlat" id="Fill"]
@@ -38,10 +40,11 @@ mouse_filter = 2
 
 [node name="WarpButton" type="Button" parent="."]
 visible = false
-offset_top = -10.0
+offset_top = 0.0
 offset_right = 154.0
-offset_bottom = 38.0
+offset_bottom = 27.0
 theme_override_font_sizes/font_size = 15
+script = ExtResource("ReadyButton")
 text = "EMP Pulse"
 flat = true
 disabled = true

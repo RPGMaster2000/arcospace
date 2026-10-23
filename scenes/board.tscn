@@ -200,6 +200,10 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.018, 0.039, 0.067, 1)
 
+[node name="ModifierDisplay" parent="." unique_id=1109157523 instance=ExtResource("ModifierDisplay")]
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="GameTitle" type="Label" parent="." unique_id=1499312453]
 visible = false
 layout_mode = 0
@@ -1062,10 +1066,6 @@ offset_bottom = -603.0
 
 [node name="CombatModifier" type="Node" parent="." unique_id=807608807]
 script = ExtResource("ModifierRules")
-
-[node name="ModifierDisplay" parent="." unique_id=1109157523 instance=ExtResource("ModifierDisplay")]
-grow_horizontal = 2
-grow_vertical = 2
 
 [editable path="ShieldPlatingCard"]
 [editable path="SynthesizerUpgradeCard"]

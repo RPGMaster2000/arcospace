@@ -28,6 +28,15 @@ func _ready() -> void:
 	add_child(details)
 
 
+# Only the centered, rendered text accepts input; the decorative strip passes through.
+func _has_point(point: Vector2) -> bool:
+	var label: Label = $Text
+	var font: Font = label.get_theme_font("font")
+	var text_width: float = minf(font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, panel_font_size).x, label.size.x)
+	var text_height: float = label.get_line_count() * label.get_line_height()
+	return Rect2(label.position + (label.size - Vector2(text_width, text_height)) * 0.5, Vector2(text_width, text_height)).has_point(point)
+
+
 func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414) -> void:
 	var width: float = minf(panel_max_width, board_size.x - 2 * (panel_side_padding + safe_inset))
 	self.set_anchors_preset(Control.PRESET_TOP_LEFT)
