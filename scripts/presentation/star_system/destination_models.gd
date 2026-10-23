@@ -14,8 +14,10 @@ static func part(parent: Node3D, mesh: Mesh, color: Color, at := Vector3.ZERO) -
 
 static func ship(profile: Resource) -> Node3D:
 	var mount := Node3D.new()
-	if profile != null and profile.model_scene != null:
-		var model: Node3D = profile.model_scene.instantiate()
+	if profile != null:
+		# Standard enemies use the same legacy hull as the battlefield; variants provide model_scene.
+		var scene: PackedScene = profile.model_scene if profile.model_scene != null else preload("res://scenes/ship_3d.tscn")
+		var model: Node3D = scene.instantiate()
 		mount.add_child(model)
 		model.ready.connect(func():
 			if model.has_method("set_hull_color"):

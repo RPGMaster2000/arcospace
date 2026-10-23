@@ -67,6 +67,16 @@ func _ready() -> void:
 	space.material_override = material
 
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
+	if is_instance_valid(ship) and configured_seed == visual_seed:
+		for entry in entries:
+			if markers.has(entry.index):
+				markers[entry.index].disabled = entry.completed
+				markers[entry.index].text = ("✓ " if entry.completed else "") + entry.get("name", entry.text)
+		overview()
+		return
+	if motion and motion.is_valid():
+		motion.kill()
+	traveling = false
 	configured_seed = visual_seed
 	travel_duration = duration
 	var rng := RandomNumberGenerator.new()

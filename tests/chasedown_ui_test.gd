@@ -18,6 +18,7 @@ func capture(label: String) -> void:
 	root.get_texture().get_image().save_png("res://.godot/testlogs/chasedown-" + label + ".png")
 func make_host(grid: bool = false) -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_3d_star_map = false
 	host.persistence_enabled = false
 	host.rules = Rules.duplicate(true)
 	host.rules.log_rolls = false

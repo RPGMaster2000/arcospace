@@ -45,6 +45,9 @@ var card_gallery: VBoxContainer
 var card_inspector: CanvasLayer
 # TUNE: Disable to restore the original grid; both presentations use the same encounter state.
 @export var use_star_map: bool = true
+## Disable for the temporary 2D map fallback.
+@export var use_3d_star_map: bool = true
+@export var star_system_settings: Resource = preload("res://scripts/presentation/star_system/map_settings.gd").new()
 # TUNE: Seconds before a selected map destination opens; no travel cost or rules change.
 @export_range(0.1, 2.0, 0.1) var star_map_travel_duration: float = 1.4
 @export_group("Hull warning")
@@ -285,7 +288,8 @@ func _clear(kind: String) -> void:
 	for child in view.get_children():
 		view.remove_child(child)
 		child.queue_free()
-	star_map = null
+	if not _uses_3d_map():
+		star_map = null
 	replacement_panel = null
 	scroll.vertical_scroll_mode = (
 		ScrollContainer.SCROLL_MODE_DISABLED
@@ -325,6 +329,16 @@ func _clear(kind: String) -> void:
 		jump_button.tooltip_text = "FTL resets to zero when entering the next system."
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = state.hull > 0
+	if _uses_3d_map():
+		screen.map_layout(true, kind != "system")
+		if is_instance_valid(star_map):
+			star_map.set_active(state.hull > 0)
+			if kind == "system":
+				star_map.overview()
+			else:
+				star_map.interactive = false
+	else:
+		screen.map_layout(false, false)
 
 
 #endregion
@@ -487,6 +501,10 @@ func show_system() -> void:
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
+func _uses_3d_map() -> bool:
+	return use_star_map and use_3d_star_map
+
+
 func _show_star_map() -> void:
 	if map_system != state.system_number:
 		map_system = state.system_number
@@ -510,6 +528,9 @@ func _show_star_map() -> void:
 		entries.append(
 			{
 				"index": index,
+				"name": encounter.title,
+				"model_kind": key,
+				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
 				"text":
 				(
 					("✓ " if encounter.completed else _icon(key) + " ")
@@ -526,24 +547,36 @@ func _show_star_map() -> void:
 		entries.append(
 			{
 				"index": state.SERVICE_INDEX,
+				"name": "Trading Outpost",
+				"model_kind": "trading_outpost",
 				"text": _icon("trading_outpost") + " Trading Outpost\nFree return · 0 FTL",
 				"tooltip": "Independent service station",
 				"color": Color("8fcab7"),
 				"completed": false
 			}
 		)
-	star_map = preload("res://scripts/ui/star_map.gd").new()
-	star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	view.add_child(star_map)
+	var new_map: bool = not is_instance_valid(star_map)
+	if _uses_3d_map():
+		if new_map:
+			star_map = preload("res://scenes/star_system_3d.tscn").instantiate()
+			star_map.settings = star_system_settings
+			screen.mount_map(star_map)
+		star_map.player_profile = state.ship()
+	else:
+		star_map = preload("res://scripts/ui/star_map.gd").new()
+		star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		star_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		view.add_child(star_map)
+		new_map = true
 	star_map.configure(
 		entries, map_destination, star_map_travel_duration,
 		hash("%d:%d:sky" % [state.seed_used, state.system_number])
 	)
 	star_map.before_travel = state.can_visit
 	star_map.intercept_travel = state.begin_travel
-	star_map.interrupted.connect(_show_chasedown)
-	star_map.arrived.connect(visit)
+	if new_map:
+		star_map.interrupted.connect(_show_chasedown)
+		star_map.arrived.connect(visit)
 	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
 	if destination != -1:
 		star_map.travel.call_deferred(destination)

@@ -12,6 +12,11 @@ signal cancel_requested
 signal confirm_requested
 signal jump_requested
 
+var body: HBoxContainer
+var sidebar: VBoxContainer
+var model_space: Control
+var map_layer: Control
+
 var hull_pulse_period: float = 1.45
 var hull_pulse_scale: float = 1.03
 var hull_pulse_intensity: float = 0.22
@@ -47,11 +52,13 @@ func _build_ui() -> void:
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	ui = MarginContainer.new()
+	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
 		ui.add_theme_constant_override("margin_" + edge, 24)
 	add_child(ui)
 	var column = VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_theme_constant_override("separation", 4)
 	ui.add_child(column)
 	title = _label("", 30)
@@ -81,13 +88,28 @@ func _build_ui() -> void:
 	column.add_child(resource_bar)
 	resource_bar.hull_requested.connect(hull_requested.emit)
 	legend.pressed.connect(func(): resource_bar.overlay.show_legend())
+	body = HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(body)
+	model_space = Control.new()
+	model_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	model_space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	model_space.size_flags_stretch_ratio = 0.48
+	body.add_child(model_space)
+	model_space.hide()
+	sidebar = VBoxContainer.new()
+	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar.size_flags_stretch_ratio = 0.52
+	sidebar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(sidebar)
 	header = Header.instantiate()
-	column.add_child(header)
+	sidebar.add_child(header)
 	header.return_requested.connect(return_requested.emit)
 	return_button = header.return_button
 	scroll = TouchScroll.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
+	sidebar.add_child(scroll)
 	view = VBoxContainer.new()
 	view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	view.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -96,7 +118,7 @@ func _build_ui() -> void:
 	more_hint = _label("More options below — swipe or scroll", 16)
 	more_hint.hide()
 	more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(more_hint)
+	sidebar.add_child(more_hint)
 	footer = HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 16)
 	confirmation = preload("res://scripts/ui/approach_confirmation.gd").new()
@@ -126,3 +148,20 @@ func _label(text: String, font_size: int = 20) -> Label:
 	label.add_theme_font_size_override("font_size", font_size)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
+
+
+func mount_map(map: Control) -> void:
+	map_layer = map
+	add_child(map)
+	move_child(map, 1)
+
+func map_layout(enabled: bool, focused: bool) -> void:
+	model_space.visible = enabled
+	sidebar.visible = not enabled or focused
+	if enabled:
+		model_space.size_flags_stretch_ratio = 0.48 if focused else 1.0
+
+func _process(_delta: float) -> void:
+	if is_instance_valid(map_layer) and is_instance_valid(body):
+		map_layer.position = body.global_position - global_position
+		map_layer.size = body.size

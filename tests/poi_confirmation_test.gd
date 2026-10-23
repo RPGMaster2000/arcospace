@@ -27,6 +27,7 @@ func header_rects() -> Array:
 	return [host.title.get_global_rect(), host.legend.get_global_rect(), host.resource_bar.get_global_rect()]
 func run() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
+	host.use_3d_star_map = false
 	host.persistence_enabled = false
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 789
