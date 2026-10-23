@@ -15,7 +15,7 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 | Setting | Purpose |
 | --- | --- |
 | Overview Position / Overview Target | Fixed three-quarter camera position and look-at orientation |
-| Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.08 default, bounded to 0.95–1.18; higher means closer |
+| Default Zoom / Minimum Zoom / Maximum Zoom | Overview distance multipliers: 1.08 default, bounded to 0.95–6.0; higher means closer |
 | Wheel Zoom Step | Mouse-wheel increment (default 6%); pinch uses finger-distance ratio |
 | System Bounds | X/Z destination-center rectangle, default X −16…16 and Z −10…10; changes only visual arrangement |
 | Screen Border | Minimum inset for projected destination hit regions, default 8 logical pixels |

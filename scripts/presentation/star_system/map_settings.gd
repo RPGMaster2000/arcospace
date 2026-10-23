@@ -5,7 +5,7 @@ extends Resource
 @export_group("Overview zoom and system borders")
 @export_range(0.5, 2.0, 0.01) var default_zoom: float = 1.08
 @export_range(0.5, 2.0, 0.01) var minimum_zoom: float = 0.95
-@export_range(0.5, 2.0, 0.01) var maximum_zoom: float = 1.18
+@export_range(0.5, 12.0, 0.01) var maximum_zoom: float = 6.0
 @export_range(0.01, 0.2, 0.01) var wheel_zoom_step: float = 0.06
 ## X/Z world-space rectangle. Destinations retain their seeded relative arrangement.
 @export var system_bounds := Rect2(-16, -10, 32, 20)
