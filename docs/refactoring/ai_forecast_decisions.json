@@ -1,0 +1,897 @@
+{
+	"baseline": "9ec97c6f3d8aca31422839830eb4e5577f358c29",
+	"cases": 480,
+	"changed_decisions": 6,
+	"changes": [
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"Laser Burst",
+				"Hull Patch",
+				"Shield Collapse",
+				"Overloaded Warhead",
+				"Plasma Strike",
+				"Reactor Upgrade"
+			],
+			"combat_seed": 120,
+			"context": {
+				"active": true,
+				"ion_factor": 0.5,
+				"kind": 2
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [
+					3
+				],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					3,
+					4
+				]
+			},
+			"id": "0/1/7/3",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 3
+			},
+			"new_rng": "-675120422737357875",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "-675120422737357875",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"Laser Burst",
+				"Hull Patch",
+				"Shield Collapse",
+				"Overloaded Warhead",
+				"Plasma Strike",
+				"Reactor Upgrade"
+			],
+			"combat_seed": 120,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					3,
+					4
+				]
+			},
+			"id": "0/1/7/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 4
+			},
+			"new_rng": "-3369913521587883864",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "-675120422737357875",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"Laser Burst",
+				"Hull Patch",
+				"Shield Collapse",
+				"Overloaded Warhead",
+				"Plasma Strike",
+				"Reactor Upgrade"
+			],
+			"combat_seed": 84,
+			"context": {
+				"active": true,
+				"ion_factor": 0.5,
+				"kind": 2
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [
+					3
+				],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					3,
+					4
+				]
+			},
+			"id": "0/1/43/3",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 3
+			},
+			"new_rng": "7072854751232570913",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "7072854751232570913",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"Laser Burst",
+				"Hull Patch",
+				"Shield Collapse",
+				"Overloaded Warhead",
+				"Plasma Strike",
+				"Reactor Upgrade"
+			],
+			"combat_seed": 84,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					3,
+					4
+				]
+			},
+			"id": "0/1/43/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 0
+			},
+			"new_rng": "9127987521650451820",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "7072854751232570913",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"Shield Collapse",
+				"Hull Patch",
+				"Overloaded Warhead",
+				"Laser Burst",
+				"Desperate Conversion",
+				"Synthesizer Upgrade"
+			],
+			"combat_seed": 120,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					2,
+					3
+				]
+			},
+			"id": "1/1/7/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 3
+			},
+			"new_rng": "-3369913521587883864",
+			"old": {
+				"discard": false,
+				"slot": 2
+			},
+			"old_rng": "-675120422737357875",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"Shield Collapse",
+				"Hull Patch",
+				"Overloaded Warhead",
+				"Laser Burst",
+				"Desperate Conversion",
+				"Synthesizer Upgrade"
+			],
+			"combat_seed": 84,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					2,
+					3
+				]
+			},
+			"id": "1/1/43/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 2
+			},
+			"new_rng": "9127987521650451820",
+			"old": {
+				"discard": false,
+				"slot": 2
+			},
+			"old_rng": "7072854751232570913",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"System Disruption",
+				"Reactor Salvage",
+				"Supply Diversion",
+				"Emergency Reserves",
+				"Desperate Conversion",
+				"Coordinated Assault"
+			],
+			"combat_seed": 120,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					5
+				]
+			},
+			"id": "2/1/7/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 5
+			},
+			"new_rng": "-4059858086083522215",
+			"old": {
+				"discard": false,
+				"slot": 5
+			},
+			"old_rng": "-675120422737357875",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"System Disruption",
+				"Reactor Salvage",
+				"Supply Diversion",
+				"Emergency Reserves",
+				"Desperate Conversion",
+				"Coordinated Assault"
+			],
+			"combat_seed": 84,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					5
+				]
+			},
+			"id": "2/1/43/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 1
+			},
+			"new_rng": "4454585337434023789",
+			"old": {
+				"discard": false,
+				"slot": 5
+			},
+			"old_rng": "7072854751232570913",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 4,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 12,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"System Disruption",
+				"Reactor Salvage",
+				"Supply Diversion",
+				"Emergency Reserves",
+				"Desperate Conversion",
+				"Coordinated Assault"
+			],
+			"combat_seed": 120,
+			"context": {
+				"active": true,
+				"kind": 3
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": []
+			},
+			"id": "2/2/7/5",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 5
+			},
+			"new_rng": "959544559245244975",
+			"old": {
+				"discard": false,
+				"slot": 5
+			},
+			"old_rng": "-4059858086083522215",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 40,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 12,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 4,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 12,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"System Disruption",
+				"Reactor Salvage",
+				"Supply Diversion",
+				"Emergency Reserves",
+				"Desperate Conversion",
+				"Coordinated Assault"
+			],
+			"combat_seed": 84,
+			"context": {
+				"active": true,
+				"kind": 3
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": []
+			},
+			"id": "2/2/43/5",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 5
+			},
+			"new_rng": "1857362195855470371",
+			"old": {
+				"discard": false,
+				"slot": 5
+			},
+			"old_rng": "4454585337434023789",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 40,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 12,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 7,
+			"cards": [
+				"Laser Burst++",
+				"Phase Lance++",
+				"Shield Exchange+",
+				"Shield Collapse+",
+				"Emergency Discharge++",
+				"Emergency Medical Team+"
+			],
+			"combat_seed": 120,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					1
+				]
+			},
+			"id": "4/1/7/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 2
+			},
+			"new_rng": "-3369913521587883864",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "-675120422737357875",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		},
+		{
+			"actor": {
+				"crew": 40,
+				"energy": 40,
+				"hull": 30,
+				"hull_capacity": 30,
+				"materials": 40,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 10,
+				"synthesizer": 2
+			},
+			"ai_seed": 43,
+			"cards": [
+				"Laser Burst++",
+				"Phase Lance++",
+				"Shield Exchange+",
+				"Shield Collapse+",
+				"Emergency Discharge++",
+				"Emergency Medical Team+"
+			],
+			"combat_seed": 84,
+			"context": {
+				"kind": 4,
+				"miss_rate": 30
+			},
+			"gates": {
+				"new_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"new_winning": [],
+				"old_safe": [
+					0,
+					1,
+					2,
+					3,
+					4,
+					5
+				],
+				"old_winning": [
+					0,
+					1
+				]
+			},
+			"id": "4/1/43/6",
+			"intentional": true,
+			"new": {
+				"discard": false,
+				"slot": 0
+			},
+			"new_rng": "9127987521650451820",
+			"old": {
+				"discard": false,
+				"slot": 0
+			},
+			"old_rng": "7072854751232570913",
+			"target": {
+				"crew": 16,
+				"energy": 16,
+				"hull": 6,
+				"hull_capacity": 30,
+				"materials": 16,
+				"quarters": 2,
+				"reactor": 2,
+				"shields": 0,
+				"synthesizer": 2
+			},
+			"weights": {}
+		}
+	],
+	"same_decision_rng_deltas": 6,
+	"unchanged_context_cases": 240
+}

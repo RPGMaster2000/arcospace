@@ -606,7 +606,7 @@ func _on_enemy_timeout() -> void:
 	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
 	var move: Dictionary = enemy_ai.choose(
-		enemy_hand.cards, _ai_state("enemy"), _ai_state("player")
+		enemy_hand.cards, _ai_state("enemy"), _ai_state("player"), modifier.forecast_context()
 	)
 	if move.is_empty():
 		# A deliberately undersized custom pool may leave the AI with no cards.

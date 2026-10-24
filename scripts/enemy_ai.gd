@@ -4,6 +4,8 @@ extends Node
 # DOES NOT: Spend resources, apply real effects or advance turns.
 # EXTEND: Score simulated copies here; never sample live combat RNG or mutate a hand.
 # Review card_effect_contract.gd coverage without treating a missing heuristic as a strategy defect.
+const Modifier = preload("res://scripts/combat_modifier.gd")
+const Forecast = preload("res://scripts/combat/combat_forecast.gd")
 const Effects = preload("res://scripts/cards/card_effects.gd")
 const FailureTactics = preload("res://scripts/combat/systems_failure_tactics.gd")
 const Rules = preload("res://scripts/match_rules.gd")
@@ -18,7 +20,7 @@ var hull_capacity: int = 35
 
 
 # Prefer safe immediate wins, then configured tactical scores or fallback priorities; discard if nothing is affordable.
-func choose(cards: Array, actor: Dictionary, enemy: Dictionary) -> Dictionary:
+func choose(cards: Array, actor: Dictionary, enemy: Dictionary, context: Dictionary = {}) -> Dictionary:
 	var held: Array[int] = []
 	var affordable: Array[int] = []
 	for slot in range(cards.size()):
@@ -31,12 +33,25 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary) -> Dictionary:
 		return {}
 	if affordable.is_empty():
 		return {"slot": FailureTactics.discard(held, cards, actor, enemy, _pick), "discard": true}
+	# Only the two early gates consume modifier forecasts. Scoring/recovery/discards stay unchanged.
+	var forecasts: Dictionary = {}
+	var kind: int = context.get("kind",0)
+	for slot in affordable:
+		var relevant: bool = (
+			(kind == 2 and context.get("active",false) and cards[slot].family == "energy")
+			or (kind == 3 and context.get("active",false))
+			or (kind == 4 and context.get("miss_rate",30) > 0 and Modifier.is_combat(cards[slot].effects))
+		)
+		if relevant:
+			forecasts[slot] = Forecast.predict(cards[slot],actor,enemy,context)
 	# Simulate on copies: decision-making never mutates live game state.
 	for slot in affordable:
 		var simulated: Dictionary = actor.duplicate(true)
 		var target: Dictionary = enemy.duplicate(true)
 		Effects.play(cards[slot], simulated, target, null, true)
-		if simulated.hull > 0 and Rules.wins(simulated, target):
+		var wins: bool = simulated.hull > 0 and Rules.wins(simulated, target)
+		if forecasts.has(slot): wins = forecasts[slot].guaranteed_win
+		if wins:
 			return {"slot": slot, "discard": false}
 	# Avoid fatal self damage when choosing a non-winning move.
 	var safe: Array[int] = []
@@ -44,7 +59,14 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary) -> Dictionary:
 		var safe_actor: Dictionary = actor.duplicate(true)
 		var safe_target: Dictionary = enemy.duplicate(true)
 		Effects.play(cards[slot], safe_actor, safe_target, null, true)
-		if safe_actor.hull > 0:
+		var survives: bool = safe_actor.hull > 0
+		if forecasts.has(slot):
+			# Incomplete enumeration cannot prove safety; retain old policy unless a fatal witness exists.
+			if forecasts[slot].complete:
+				survives = not forecasts[slot].possible_self_destruction
+			else:
+				survives = survives and not forecasts[slot].possible_self_destruction
+		if survives:
 			safe.append(slot)
 	if safe.is_empty():
 		return {"slot": _pick(affordable), "discard": true}

@@ -71,7 +71,9 @@ func _initialize() -> void:
 func uncertainty_cases() -> void:
 	var a: Dictionary = ship()
 	var b: Dictionary = ship()
-	var f: Dictionary = Forecast.predict(sample({"random_sabotage":1}),a,b)
+	var f: Dictionary = Forecast.predict(sample({"shield_collapse_below":11}),a,b)
+	check(f.complete and f.outcomes[0].target.shields == 0,"Strict-below clear, supported but not currently authored")
+	f = Forecast.predict(sample({"random_sabotage":1}),a,b)
 	check(f.complete and f.outcomes.size() == 3 and f.uncertain,"Three sabotage targets")
 	f = Forecast.predict(sample({"random_gain":2}),a,b)
 	check(f.complete and f.outcomes.size() == 3,"Three resource targets")
