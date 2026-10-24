@@ -176,3 +176,12 @@ claimed. Existing ObjectDB exit warnings remain visible rather than suppressed.
   `git diff --check` and the literal script dependency-cycle scan passed.
 - Existing ObjectDB shutdown warnings were retained in logs. These results are
   representative regression evidence, not exhaustive card-combination proof.
+
+## Step 4: read-only forecasts
+
+See [combat forecast ownership](combat_forecast.md). CombatExecution remains the command
+boundary. CombatModifier shares its detached effect adjustment/Shield scope with the
+forecast; CardEffects remains authoritative for formulas, ordering and random draw sites.
+Forecast data is ephemeral, never persisted or handed back as a live combat owner.
+Board supplies current modifier context only at AI intent selection. No typed battle
+setup/result or expedition ownership contract changes.

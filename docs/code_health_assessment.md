@@ -212,3 +212,14 @@ remain separate. No runtime validation, new registry, dispatch engine or ownersh
 was introduced. M2 remains an explicit AI forecast limitation; this pass does not change
 strategy or battlefield context. Historical counts and findings above describe their
 recorded baseline, not this revision.
+
+## Modifier-aware forecast follow-up (2026-10-24)
+
+Step 4 addresses the numerical boundary in M2: a pure RefCounted forecast replays the
+authoritative effects with explicit draw choices and shared modifier execution. It owns
+no combat state and samples no RNG. [The report](refactoring/combat_forecast.md) records
+Phase A parity and the independently gated Phase B integration: only immediate-win and
+fatal-self-damage gates consume active modifier forecasts. Scoring, recovery and discard
+heuristics deliberately remain approximate. Six selected-card and six RNG-only deltas
+are enumerated against 480 captured cases; this is not a claim of globally unchanged AI.
+No global manager, new effect vocabulary or second resolver was introduced.

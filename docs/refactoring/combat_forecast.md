@@ -128,3 +128,112 @@ These differences are accepted forecast corrections, not changed weights or new 
 The AI can still select a risky-to-hit attack through ordinary policy; it simply no
 longer treats it as a guaranteed immediate win. No fabricated probability-weighted
 expected score or new planning depth is introduced.
+
+## Ownership and preserved boundaries
+
+| Responsibility | Before | After |
+| --- | --- | --- |
+| Ship values, turn/countdown, hand and battle results | ShipCombatState / Board / existing rule modules | Unchanged; forecast owns no persistent fields |
+| Effect formulas/order and condition predicate | CardEffects | Same resolver; optional explicit forecast draws at existing sites |
+| Modifier schedule, state, live chance draw/notices | CombatModifier Node | Unchanged |
+| Modifier effect adjustment and stored-Shield scope | Inside CombatModifier.play | Shared static resolve_effects; live play and forecast both use it |
+| Numerical possibilities under modifiers | No common boundary; conservative AI copies | CombatForecast, detached and deterministic |
+| AI strategy and weights | EnemyAI / SystemsFailureTactics | Same owners; only two active-modifier gates consume forecast |
+| Current modifier context supplied to AI | Absent | Four-scalar snapshot from Board at decision time |
+| Tactical categories, inspection and visuals | CardTargets / TacticalPreview / existing UI | Byte-identical, independent |
+| Deck/rewards, exploration lifecycle, save and typed battle handoff | Existing Step 1–3 owners | Byte-identical |
+
+No new autoload, manager, Resource hierarchy, registry, UI, save field or effect key.
+There is no CombatSession script at this revision; CombatExecution remains the command
+boundary. No inverse dependency from effects/modifiers into AI or presentation is added.
+
+## Files and code size
+
+Created `scripts/combat/combat_forecast.gd`; tests `combat_forecast_test.gd`,
+`ai_forecast_cases.gd`, `ai_forecast_compatibility_test.gd`,
+`ai_modifier_forecast_test.gd`, `ai_forecast_scene_test.gd` (and all six UIDs);
+`tests/ai_forecast_baseline.json`; this report and `ai_forecast_decisions.json`.
+Modified runtime: `scripts/cards/card_effects.gd`, `scripts/combat_modifier.gd`,
+`scripts/enemy_ai.gd`, `scripts/board.gd` (one context argument).
+Modified documentation: developer guide, code-health assessment, card-effect contract
+and combat-boundaries document. No files removed or existing test fixtures changed.
+
+| Lines including comments/blanks | Before | After |
+| --- | ---: | ---: |
+| CardEffects | 205 | 210 |
+| CombatModifier | 251 | 264 |
+| EnemyAI | 204 | 226 |
+| Board | 1,029 | 1,029 |
+| New forecast | 0 | 74 |
+| Combined touched runtime code | 1,689 | 1,803 |
+| Five new test/support scripts | 0 | 315 |
+| Combined affected code | 1,689 | 2,118 |
+
+JSON, UIDs and prose are excluded. Runtime grows by 114 lines to establish the boundary;
+there is no attempt to reduce size by hiding policy or copying a resolver.
+
+## Performance and remaining limitations
+
+Headless Linux desktop, 2,400 six-card decisions per path, under concurrent test load:
+compatibility path mean **326 μs**, p95 **836 μs**; current-context path mean **551 μs**,
+p95 **1,432 μs**. Mean overhead is about **225 μs** per six-card decision. Maximums were
+6.1 / 18.3 ms under host contention, not a frame-time guarantee. The separate pure
+forecast sample took about 91 ms for 100 six-card hands (~0.91 ms/hand). All authored
+base/upgrades needed at most **17 resolver replays** in the measured five contexts;
+the enforced per-card ceiling is 64. No Monte Carlo work or Node creation occurs.
+These measurements do not establish physical Android performance or a cross-device
+budget. Extra allocations are bounded short-lived dictionaries/Resource copies.
+
+Approximate cases and remaining coupling:
+
+- Huge/combined outcome spaces can be incomplete. No guarantee comes from a subset.
+- Enumerated outcomes are possibilities, not probability weights or expected utility.
+  Collapse endpoint cases preserve native comparison semantics, not a 50/50 weighting.
+- Nominal Nebula rate is current context only; the forecast does not predict its next drift.
+- Scoring/recovery/discard heuristics remain legacy approximations; future integration
+  there needs a separate policy review. No multi-turn model, countdown expiry prediction,
+  future draw, future asteroid or multi-action plan is inferred.
+- Existing 72 combat traces intentionally use the compatible three-argument policy.
+  Modified live decisions are covered by the explicit comparison ledger and Board tests.
+- The effect resolver has a narrow optional draw-source seam. A future new random API
+  must add an explicit deterministic operation and forecast tests; it must not silently
+  fall back to live RNG. Development card validation remains separate and unchanged.
+- Existing scene-based regressions emit ObjectDB shutdown warnings; the new scene
+  fixture also reports them (4 headless / 2 rendered in focused runs). Pure forecast,
+  comparison and compatibility tests exit without them. This pass does not claim to
+  have fixed Board fixture shutdown ownership or attribute the warnings to forecasts.
+
+## Verification on this revision
+
+These are newly run checks, not historical results borrowed from earlier reports:
+
+- Unchanged starting baseline: **94 headless scripts + editor import passed**.
+- Phase A independent gate: eight focused suites + import passed before AI/Board edits.
+- Final focused numerical forecast: **1,554 authored card/upgrade/modifier combinations,
+  10,901 checks**, no failures. Covers exact deterministic results, sampled authoritative
+  random outcomes within enumerated sets, all listed effect families, upgrades, nested
+  and random-dependent conditions, fixed-range draw ordering, Collapse alternatives,
+  Nebula hit/miss, budget limits, affordability and returned-snapshot independence.
+- Compatibility: **480 captured decisions and RNG states match** on the legacy call.
+- Phase B comparison: **480 cases / 2,897 checks**; 6 selection changes and 6 RNG-only
+  deltas match the reviewed ledger. All 240 ordinary/inactive/no-op cases are identical.
+- Real Board context/safety test: **63 checks** covering activation/expiry, current Ion
+  factor, Nebula drift, fresh battles/restarts and targeted Ion/Flare/Nebula safety.
+- Existing **2,220 card-effect checkpoints**, **72 combat traces**, **1,044 expedition
+  checkpoints**, **43 deck ownership checks** and **1,011 contract checks** pass unchanged.
+- Mobile/Vulkan llvmpipe: scene handoff/safety 63 checks; tactical preview 43 checks at
+  1280×720 and 960×540. The first tactical invocation exited without a completion marker
+  and was not counted as a pass; the unchanged isolated recheck completed successfully.
+- Ten Python runner tests pass. Existing source-snapshot checks verify 93 protected
+  files byte-identical; AI score/pick functions, modifier schedule/classification and
+  condition predicate statements remain exact. Tracked eager preload/resource graph:
+  368 → 374 files, zero cycles. Documentation links and whitespace checks pass.
+- Scene fixture warning counts remain reported separately; no warnings/errors are
+  concealed by a zero exit status. Pure forecast/comparison tests have no shutdown leaks.
+- No physical Android/Windows device, APK/export, device input or device performance
+  validation was performed. No platform-specific dependency or renderer setting changed.
+
+Final shared runner: **98 headless regression scripts + editor import passed**, zero
+failed suites. This includes all previous 94 scripts and the four new standalone suites.
+Existing expected card/combat/expedition fixtures were not regenerated. Commit IDs are
+supplied with the final publication report; Phase A and Phase B are independent commits.

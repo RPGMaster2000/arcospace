@@ -10,6 +10,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
 - [Expedition presentation phases and cancellation](expedition_controller_lifecycle.md)
+- [Pure combat forecasts and modifier-aware AI gates](refactoring/combat_forecast.md)
 - [Card effect contracts, validation and consumer checklist](card_effect_contract.md)
 - [Persistent deck and reward ownership](expedition_deck_ownership.md)
 - [Shared local and CI regression runner](regression_testing.md)
@@ -612,3 +613,13 @@ registering CardData. The [effect contract](card_effect_contract.md) lists all 2
 nested structures, defaults, consumer coverage and extension tests. Validation is a
 development/CI operation; combat never runs it. Dictionary execution and consumer
 responsibilities remain unchanged.
+
+## Forecast a card without playing it
+
+Use `CombatForecast.predict(card, actor_snapshot, target_snapshot, modifier.forecast_context())`.
+Read `complete` before treating the outcome set as exhaustive; guaranteed flags are false
+for incomplete enumeration. This operation does not sample RNG or mutate inputs.
+[API, ownership, compatibility and intended AI differences](refactoring/combat_forecast.md)
+explain the distinction from CardTargets and from AI policy. Run `combat_forecast_test`,
+`ai_forecast_compatibility_test`, `ai_modifier_forecast_test` and `ai_forecast_scene_test`
+through the existing regression runner after changing this boundary.

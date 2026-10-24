@@ -290,3 +290,18 @@ arbitrary authored prose or future effect combinations correct.
   `git diff --check` passes. Both new test scripts exit without ObjectDB warnings;
   existing shutdown warnings elsewhere remain separately reported by the runner.
 - No physical Android/Windows device run, APK/export test or new runtime dependency.
+
+## Step 4 numerical forecasting boundary
+
+[CombatForecast](refactoring/combat_forecast.md) is a seventh, rules-facing consumer.
+All 27 keys delegate to the existing authoritative resolver; it does not define another
+vocabulary. Random outcomes use explicit bounded draw enumeration and conditions resolve
+through the same ordered code. Shared modifier execution owns Ion scaling, Flare reserve
+handling and the miss transform. CardTargets remains independent category presentation.
+
+New effects must additionally test forecast exactness or explicit incomplete uncertainty;
+new random draw APIs require a corresponding deterministic draw-source operation. Existing
+FORMS, validation behavior and six-column review ledger are unchanged. AI uses forecasts
+only for active-modifier immediate-win and self-damage gates; tactical scoring and recovery
+keep their documented legacy approximations. See the linked decision ledger for intentional
+selection/RNG differences. Historical Step 3 parity results above describe that stage.
