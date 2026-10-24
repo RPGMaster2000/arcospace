@@ -167,7 +167,7 @@ static func is_combat(effects: Dictionary) -> bool:
 	)
 
 
-func _scaled(effects: Dictionary, factor: float) -> Dictionary:
+static func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 	var result: Dictionary = effects.duplicate(true)
 	for key in result:
 		if key == "sabotage" and result[key] is bool:
@@ -184,37 +184,50 @@ func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 	return result
 
 
-# Resolve a temporary card copy through CardEffects, preserving shared definitions and reserved flare Shields.
-func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0) -> String:
+# Snapshot only current effect context, never the scheduler or RNG.
+func forecast_context() -> Dictionary:
+	return {"kind":kind,"active":active,"ion_factor":ion_factor,"miss_rate":miss_rate}
+
+
+# Shared detached-state execution. Caller owns snapshots, report and RNG/draw policy.
+static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionary, context: Dictionary,
+	generator: RandomNumberGenerator, report: Dictionary, forecast_draws: RefCounted = null,
+	missed: bool = false) -> bool:
 	if actor[card.family] < card.cost:
-		return ""
+		return false
 	var modified: Resource = card.duplicate(true)
-	var notice: String = ""
-	var chance: float = rng.randf() if roll < 0.0 else roll
-	if kind == 4 and is_combat(card.effects) and chance < miss_rate / 100.0:
-		# A miss cancels target/bonus effects; explicit self-damage remains an unavoidable cost.
-		modified.effects = (
-			{"self_damage": card.effects.self_damage} if card.effects.has("self_damage") else {}
-		)
-		notice = "MISS · NEBULA INTERFERENCE"
-	elif kind == 2 and active and card.family == "energy":
-		# The already announced storm multiplier also drives the card previews.
-		var factor: float = ion_factor
-		modified.effects = _scaled(card.effects, factor)
-		notice = "ION STORM · BLUE CARD " + ("×2" if factor == 2.0 else "×½")
+	if missed:
+		modified.effects = ({"self_damage":card.effects.self_damage} if card.effects.has("self_damage") else {})
+	elif context.get("kind",0) == 2 and context.get("active",false) and card.family == "energy":
+		modified.effects = _scaled(card.effects,context.get("ion_factor",1.0))
 	var saved_actor_shields: int = actor.shields
 	var saved_target_shields: int = target.shields
-	if shields_disabled():
+	var flare: bool = context.get("kind",0) == 3 and context.get("active",false)
+	if flare:
 		actor.shields = 0
 		target.shields = 0
 		modified.effects = modified.effects.duplicate(true)
 		modified.effects.erase("shields")
 		modified.effects.erase("swap_shields")
-	Effects.play(modified, actor, target, rng, false, last_hull_damage)
-	if shields_disabled():
-		# Shield strength is reserved during the flare, not destroyed or regenerated.
+	var played: bool = Effects.play(modified,actor,target,generator,false,report,-1,forecast_draws)
+	if flare:
 		actor.shields = saved_actor_shields
 		target.shields = saved_target_shields
+	return played
+
+
+# Live scheduler/RNG and notices stay here; forecast never calls this Node method.
+func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0) -> String:
+	if actor[card.family] < card.cost:
+		return ""
+	var chance: float = rng.randf() if roll < 0.0 else roll
+	var missed: bool = kind == 4 and is_combat(card.effects) and chance < miss_rate / 100.0
+	var notice: String = ""
+	if missed:
+		notice = "MISS · NEBULA INTERFERENCE"
+	elif kind == 2 and active and card.family == "energy":
+		notice = "ION STORM · BLUE CARD " + ("×2" if ion_factor == 2.0 else "×½")
+	resolve_effects(card,actor,target,forecast_context(),rng,last_hull_damage,null,missed)
 	return notice
 
 

@@ -5,6 +5,7 @@ extends RefCounted
 const RESOURCES = preload("res://scripts/combat/ship_combat_state.gd").RESOURCES
 const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
 
+# Optional forecast_draws replays explicit choices at the SAME draw sites; live calls leave it null.
 # Independent combat RNG; simulation mode never samples this generator.
 static var combat_rng: RandomNumberGenerator = _new_rng()
 
@@ -21,7 +22,8 @@ static func play(
 	generator: RandomNumberGenerator = null,
 	simulate: bool = false,
 	damage_report: Dictionary = {},
-	simulation_production_target: int = -1
+	simulation_production_target: int = -1,
+	forecast_draws: RefCounted = null
 ) -> bool:
 	damage_report.clear()
 	damage_report.merge({"actor": 0, "target": 0})
@@ -36,7 +38,8 @@ static func play(
 		generator,
 		simulate,
 		damage_report,
-		simulation_production_target
+		simulation_production_target,
+		forecast_draws
 	)
 	return true
 
@@ -50,7 +53,8 @@ static func _apply_effects(
 	generator: RandomNumberGenerator,
 	simulate: bool,
 	damage_report: Dictionary,
-	simulation_production_target: int
+	simulation_production_target: int,
+	forecast_draws: RefCounted = null
 ) -> void:
 	for key in ["hull", "shields"] + RESOURCES + PRODUCTION:
 		actor[key] += int(effects.get(key, 0))
@@ -75,7 +79,7 @@ static func _apply_effects(
 		enemy[swapped] = reserves[0]
 	# Random bonuses are ignored for conservative AI win checks: no assumed lucky gain.
 	if not simulate:
-		var random_source = combat_rng if generator == null else generator
+		var random_source = forecast_draws if forecast_draws != null else (combat_rng if generator == null else generator)
 		for key in ["random_gain", "random_gain_other", "random_gain_range_other"]:
 			if not effects.has(key):
 				continue
@@ -101,7 +105,7 @@ static func _apply_effects(
 	if not collapse.is_empty():
 		if enemy.shields >= int(collapse.get("threshold", 10)):
 			# AI assumes the harmful outcome, without sampling combat RNG.
-			var source = combat_rng if generator == null else generator
+			var source = forecast_draws if forecast_draws != null else (combat_rng if generator == null else generator)
 			if simulate or source.randf() < float(collapse.get("chance", 0.5)):
 				backlash = int(collapse.get("self_damage", 10))
 		enemy.shields = 0
@@ -134,7 +138,7 @@ static func _apply_effects(
 		# Simulation defaults to no lucky hit. AI may enumerate all three hypothetical targets.
 		var target: int = simulation_production_target
 		if not simulate:
-			var source = combat_rng if generator == null else generator
+			var source = forecast_draws if forecast_draws != null else (combat_rng if generator == null else generator)
 			target = source.randi_range(0, PRODUCTION.size() - 1)
 		if target >= 0 and target < PRODUCTION.size():
 			var key: String = PRODUCTION[target]
@@ -161,7 +165,8 @@ static func _apply_effects(
 			generator,
 			simulate,
 			damage_report,
-			simulation_production_target
+			simulation_production_target,
+			forecast_draws
 		)
 
 
