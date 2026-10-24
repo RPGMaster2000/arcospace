@@ -142,3 +142,14 @@ also passed. Physical Android pinch/performance testing remains outstanding.
 
 Camera-drag follow-up: mouse and single-finger pan, drag-release suppression, UI-overlay
 blocking and pan bounds are covered by `map_zoom_fade_test.gd`. Default zoom is 1.20×.
+
+
+## Expedition lifecycle boundary
+
+See [controller phases and cancellation](expedition_controller_lifecycle.md). The map now
+executes the existing battle-entry and FTL choreography through `battle_entry(curtain)` and
+`ftl_departure(curtain)`; Expedition validates/commits and requests the shared reveal. Camera,
+ship, impact and curtain owners cancel their own tweens. `travel_started` reports presentation
+entry only; State's existing callback still decides travel/interception once. No camera,
+input, model, label, timing or calibration value changed. Returning retains the same camera
+pan/zoom, and ordinary travel still allows camera interaction. 3D/2D/grid use the same State.

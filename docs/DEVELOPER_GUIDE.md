@@ -9,6 +9,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [I want to change X — where do I start?](#i-want-to-change-x--where-do-i-start)
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
+- [Expedition presentation phases and cancellation](expedition_controller_lifecycle.md)
 - [Persistent deck and reward ownership](expedition_deck_ownership.md)
 - [Shared local and CI regression runner](regression_testing.md)
 - [Battle ending sequence and mandatory upgrade completion](battle_results.md)
@@ -104,18 +105,19 @@ simulation in mind when changing effect keys; they share data rather than duplic
 
 ### Expedition UI component boundaries
 
-`expedition.gd` keeps screen routing, travel, battle handoff and calls that mutate
-`ExpeditionState`. Its runtime UI is split into focused presentation components:
+`expedition.gd` keeps screen routing, guarded presentation phases, travel/battle handoff and calls that mutate
+`ExpeditionState`. [Lifecycle ownership](expedition_controller_lifecycle.md) describes revision guards,
+cancellable suspense/fades, scoped callbacks and unchanged save/checkpoint boundaries. Its runtime UI is split into focused presentation components:
 
 | File | Functions and responsibility |
 | --- | --- |
-| `scripts/ui/expedition_screen.gd` | `_build_ui()` and its label factory construct the exploration shell: heading, resource bar, scroll area, POI header, ordinary approach confirmation and jump control. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
+| `scripts/ui/expedition_screen.gd` | `_build_ui()` constructs the exploration shell; `reset_view`, control factories, approach selection, result/gallery rendering and cancellable suspense own its internal presentation. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
 | `scripts/ui/outpost_screen.gd` | Owns outpost service tiles and its confirmation window, repair/plating selector, selection highlighting and price previews. Reads state queries and emits `purchase_requested(slot, amount, revision)`; never applies purchases. |
 | `scripts/ui/expedition_text.gd` | Static `compact_text()`, `compact_outcome()`, `highlight_outcome()` and `approach_text()` format descriptions. State is an explicit read-only argument where needed. |
 | `scripts/ui/deck_replacement.gd` | `configure()` builds the incoming-card explanation, owned-card gallery and replacement actions. `select_card()` owns the selected identity and button state. Signals request inspection, replacement or decline; this component never spends rewards or changes ownership. |
 
-The controller retains small forwarding methods and control references for existing
-callers. `_show_replacement()` mounts the panel; `_replace_card()` and `_decline_card()`
+The controller retains small forwarding methods and read-only control accessors for existing
+callers; Screen/Outpost/replacement components own the actual references and selection. `_show_replacement()` mounts the panel; `_replace_card()` and `_decline_card()`
 still call the authoritative state methods. `_clear()` removes screen content and
 resets the panel reference. Card inspection, drag suppression and state validation
 remain in their existing components. Field repairs remain in

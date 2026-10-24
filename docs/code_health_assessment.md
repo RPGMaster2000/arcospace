@@ -189,3 +189,16 @@ save shape and seeded baseline fixtures. Existing mutable CardData definitions r
 shared read-only inputs; whole-ledger compatibility setters remain for fixtures. No
 parallel inventory, State back-reference, Board dependency, autoload or transaction
 framework was introduced. Remaining generation and service coordination stays in State.
+
+
+## Expedition presentation lifecycle follow-up (2026-10-24)
+
+[Step 2 ownership/verification](expedition_controller_lifecycle.md) records the focused
+controller extraction. Existing Screen now owns internal view reset/selection/result styling
+and suspense; existing map/camera/curtain own cinematic execution and cancellation. A local
+phase/revision guards async callbacks without persisting presentation or duplicating State.
+Battle callbacks bind their originating Board; typed setup/results and version-1 saves stay
+unchanged. Controller shrinks 1332 → 1217 lines; all affected runtime files grow 2269 → 2515.
+The added cancellation and compatibility code is a maintenance tradeoff, not a runtime
+performance claim. Remaining map-entry composition/control aliases are documented. No new
+runtime manager or broad UI hierarchy was introduced; Stage 1 Deck ownership is preserved.
