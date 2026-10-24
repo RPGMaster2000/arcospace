@@ -26,7 +26,14 @@ func run() -> void:
 			display.cinematic_enabled = false
 			var meter = display.get_node("Meter")
 			check(mod.kind == kind,"Board retains appended modifier ID")
-			check(not board.get_node("BattleView/Viewport/Battlefield").scene_file_path.contains("temporal"),"Storm does not inherit unrelated Temporal Rift arena")
+			var field = board.get_node("BattleView/Viewport/Battlefield")
+			check(field.scene_file_path == preload("res://scripts/board_3d.gd").BATTLEFIELDS[kind].resource_path,"Both storms select their explicit Ion variant, never a normal/planetary arena")
+			var ion = preload("res://scenes/battlefield_ion_storm.tscn").instantiate()
+			check(field.get_node("Camera3D").transform == ion.get_node("Camera3D").transform,"Inherited Ion camera/framing preserved")
+			check(field.get_node("MeshInstance3D").material_override.shader == ion.get_node("MeshInstance3D").material_override.shader,"Same Ion space shader")
+			check(not field.has_node("BackgroundObjects/Planet"),"No planetary decoration in either storm")
+			check(board.get_node("BattleView").preset.resource_path.ends_with("metal_storm.tres" if kind == 6 else "psionic_storm.tres"),"Matching storm grade, never normal or Temporal")
+			ion.free()
 			mod.next_round = 2
 			check(StatusPanel.compact_status(mod,1).contains("Next storm in 1"),"New storm countdown")
 			var announcement: String = mod.begin_round(2)

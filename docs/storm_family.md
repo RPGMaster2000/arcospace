@@ -51,8 +51,8 @@ On expiry, the existing next-storm countdown and unscaled card presentation retu
 
 Board reuses its existing Ion cinematic boundaries for every matching storm card,
 regardless of acting ship. No new animation, particle, shader or expensive effect was
-created. New storms use existing normal 3D arenas/normal grade rather than accidentally
-clamping to Temporal Rift. Old 0..5 arena/preset selection is unchanged. Existing encounter
+created. Metal and Psionic use inherited Ion battlefield scenes with amber and cold blue-violet
+palettes and dedicated grading presets. They never enter the normal/planetary lottery. Old 0..5 arena/preset selection is unchanged. Existing encounter
 icons reuse Materials/Crew icons; the developer grading selector lists all eight names.
 The historical `ion_glow` / `set_ion_glow` contract stays, with an optional tint parameter.
 
@@ -123,7 +123,7 @@ legacy bool sabotage, nested/random effects, upgrades, extra actions, actual for
 outcomes, shared AI safety, immutable definitions, uniform calls, all eight saved IDs,
 and new distribution determinism after resume. Presentation coverage: **184 checks** at
 1280×720 and 960×540: names/family/factor, warning tint, unrelated-alert reset, matching
-card glow/expiry, rules and normal-arena fallback.
+card glow/expiry, rules and explicit Ion-variant selection.
 
 Commands from repository root:
 
@@ -134,7 +134,7 @@ godot --headless --path . --script tests/storm_presentation_test.gd
 python tools/run_regressions.py --godot godot --timeout 360 --results test-results
 ```
 
-## Size and limitations
+## Initial feature size and limitations
 
 | Lines including comments/blanks | Before | After |
 | --- | ---: | ---: |
@@ -150,8 +150,8 @@ code is focused regression coverage. 87 protected source/data/fixture files, inc
 all 74 card assets, CardEffectContract, CardEffects, tactical analysis, Deck/controller
 ownership and prior baseline files, remain byte-identical. The scaler body is exact.
 
-No bespoke dust/psionic 3D art or audio was added; the visual identity is existing UI
-and effect styling in different colors. Device/export/performance limitations and final
+No new meshes, shaders or audio were added. Both storm scenes inherit Ion geometry,
+camera and motion; local materials, lighting and grading supply their palettes. Device/export/performance limitations and final
 shared/rendered verification results are recorded with completion below.
 
 ## Completion checks
@@ -177,3 +177,21 @@ Final shared run: **101 headless regression scripts + editor import passed**, ze
 suites. All three new tests and all 98 existing suites ran through `tools/run_regressions.py`.
 The balance-document generator also passes Godot `--check-only`; it was not run over
 unrelated documentation. No established expected fixture was regenerated.
+
+## Battlefield correction
+
+The initial release incorrectly routed IDs 6/7 through the normal arena lottery. Both
+now select explicit inherited Ion variants. Psionic is a cold blue-violet cloud/streak
+field; Metal uses amber/copper dust colors. Separate scene-local materials/environments
+and grade Resources preserve Ion and prevent cross-instance tint leakage. The regression
+asserts exact scene paths, inherited camera/shader, absent planets and matching grade.
+
+Correction files: `scenes/battlefield_metal_storm.tscn`,
+`scenes/battlefield_psionic_storm.tscn`, their matching
+`resources/color_grading/*_storm.tres` presets, the Board battlefield/grade arrays,
+and strengthened `storm_presentation_test.gd`. Original Ion scene/preset are unchanged.
+Editor import and four focused suites passed (storm presentation, environment isolation,
+color grading and seeded Ion parity). Mobile/Vulkan rendered storm presentation passed
+200 checks at both landscape sizes; both palette variants were visually inspected.
+The full suite was not repeated for this scene-only correction; physical device testing
+remains unperformed.

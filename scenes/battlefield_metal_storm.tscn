@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/battlefield_ion_storm.tscn" id="1"]
+[ext_resource type="Shader" path="res://shaders/space_background.gdshader" id="2"]
+
+[sub_resource type="Environment" id="Environment"]
+resource_local_to_scene = true
+background_mode = 1
+background_color = Color(0.025, 0.014, 0.006, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.60, 0.47, 0.32, 1)
+ambient_light_energy = 0.60
+
+[sub_resource type="ShaderMaterial" id="Backdrop"]
+resource_local_to_scene = true
+shader = ExtResource("2")
+shader_parameter/space_color = Color(0.025, 0.014, 0.006, 1)
+shader_parameter/cloud_color = Color(0.30, 0.17, 0.055, 1)
+shader_parameter/accent_color = Color(0.65, 0.43, 0.18, 1)
+shader_parameter/cloud_intensity = 0.58
+shader_parameter/animation_speed = 0.036
+shader_parameter/variation_seed = 15.0
+shader_parameter/streak_intensity = 0.5
+shader_parameter/rift_intensity = 0.0
+shader_parameter/star_density = 0.09
+shader_parameter/star_brightness = 0.32
+
+[node name="Battlefield" instance=ExtResource("1")]
+
+[node name="WorldEnvironment" parent="." index="0"]
+environment = SubResource("Environment")
+
+[node name="Sun" parent="." index="2"]
+light_color = Color(1.0, 0.80, 0.52, 1)
+
+[node name="MeshInstance3D" parent="." index="5"]
+material_override = SubResource("Backdrop")
+
+[node name="RimLight" parent="." index="6"]
+light_color = Color(0.72, 0.59, 0.42, 1)

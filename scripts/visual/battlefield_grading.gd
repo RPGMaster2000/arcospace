@@ -9,7 +9,9 @@ const PRESETS = [
 	preload("res://resources/color_grading/ion_storm.tres"),
 	preload("res://resources/color_grading/solar_flare.tres"),
 	preload("res://resources/color_grading/nebula.tres"),
-	preload("res://resources/color_grading/temporal_rift.tres")
+	preload("res://resources/color_grading/temporal_rift.tres"),
+	preload("res://resources/color_grading/metal_storm.tres"),
+	preload("res://resources/color_grading/psionic_storm.tres")
 ]
 @export var preset: BattlefieldGradePreset = PRESETS[0]:
 	set(value):
@@ -31,7 +33,7 @@ func _ready() -> void:
 	_apply()
 
 func set_environment(kind: int) -> void:
-	preset = PRESETS[0 if kind in [6,7] else clampi(kind, 0, PRESETS.size()-1)]
+	preset = PRESETS[clampi(kind, 0, PRESETS.size()-1)]
 
 func _apply() -> void:
 	parameter_updates += 1
