@@ -10,6 +10,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
 - [Expedition presentation phases and cancellation](expedition_controller_lifecycle.md)
+- [Card effect contracts, validation and consumer checklist](card_effect_contract.md)
 - [Persistent deck and reward ownership](expedition_deck_ownership.md)
 - [Shared local and CI regression runner](regression_testing.md)
 - [Battle ending sequence and mandatory upgrade completion](battle_results.md)
@@ -603,3 +604,11 @@ See [sound_effects.md](sound_effects.md) for event mappings, volume/mixing,
 Inspector replacement (`resources/audio/sound_catalog.tres` → Events → Streams),
 scene ownership, regeneration and audio regression tests. Presentation requests
 stable sound IDs; combat rules and the existing Music transition owner are separate.
+
+## Validate card definitions
+
+Run `godot --headless --path . --script tools/validate_cards.gd` after editing or
+registering CardData. The [effect contract](card_effect_contract.md) lists all 27 keys,
+nested structures, defaults, consumer coverage and extension tests. Validation is a
+development/CI operation; combat never runs it. Dictionary execution and consumer
+responsibilities remain unchanged.

@@ -202,3 +202,13 @@ unchanged. Controller shrinks 1332 → 1217 lines; all affected runtime files gr
 The added cancellation and compatibility code is a maintenance tradeoff, not a runtime
 performance claim. Remaining map-entry composition/control aliases are documented. No new
 runtime manager or broad UI hierarchy was introduced; Stage 1 Deck ownership is preserved.
+
+## Card effect contract follow-up (2026-10-24)
+
+Step 3 addresses M1 with a development-only validator, precise nested diagnostics and
+all-library base/upgrade checks. See [inventory, coverage and parity](card_effect_contract.md).
+ShipCombatState shares the identical attribute vocabulary; consumer execution and policy
+remain separate. No runtime validation, new registry, dispatch engine or ownership copy
+was introduced. M2 remains an explicit AI forecast limitation; this pass does not change
+strategy or battlefield context. Historical counts and findings above describe their
+recorded baseline, not this revision.

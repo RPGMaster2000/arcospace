@@ -84,7 +84,7 @@ branches `{}`. Targets are exactly `self` or `enemy`. Comparisons are `below` (<
 `at_most` (≤), `equal` (=), `at_least` (≥), `above` (>). Attributes must be known ship
 fields. `compare_target` requires `compare_attribute` (otherwise ignored by runtime).
 A `compare_attribute` uses the other live field, default compare_target self, and takes
-precedence over fraction_of and threshold. A `fraction_of` requires an explicit numeric
+precedence over fraction_of and threshold. When no compare_attribute takes precedence, `fraction_of` requires an explicit numeric
 threshold because descriptions read it directly: threshold multiplies the subject's
 specified capacity/stat. This multiplier is not a probability: values outside [0,1]
 remain valid (e.g. comparison to twice capacity). Chance and pierce ARE bounded fractions.
@@ -225,4 +225,68 @@ description and upgrade-comparison text. Every card is affordable in these fixtu
 Read-only analysis is checked against the original states, definition and combat RNG.
 Existing expected combat/deck fixtures remain untouched.
 
-Final verification results follow after the shared run.
+Final shared runner: **94 headless regression scripts + editor import passed**, zero
+failed suites. This includes card progression/expansion/targets/inspection, AI, modifiers,
+combat execution/traces, ownership/determinism, save/resume, map/lifecycle, rewards and
+mandatory upgrades. The final positive compare_attribute/fraction_of edge case was added
+after the shared run had reached the contract test; the final editor import and both
+new suites were rerun through the same runner afterward (1,011 contract checks and
+2,220 parity checkpoints, all passing). Existing assertions and expected fixtures were
+not weakened or regenerated.
+
+### Files and size
+
+Added: `scripts/cards/card_effect_contract.gd`, `tools/validate_cards.gd`,
+`tests/card_effect_contract_test.gd`, `tests/card_effect_parity_test.gd` and their UIDs;
+`tests/card_effect_baseline.json`; this document.
+
+Modified: `scripts/combat/ship_combat_state.gd` adds the shared attribute constant;
+`scripts/cards/card_targets.gd` consumes it. `card_data.gd`, `card_effects.gd`,
+`card_library.gd`, `card_preferences.gd`, `scripts/combat_modifier.gd`,
+`scripts/enemy_ai.gd`, `scripts/ui/card_effect_text.gd` receive extension comments.
+Documentation updates: `DEVELOPER_GUIDE.md`, `code_health_assessment.md`,
+`tactical_preview.md`. No files removed; no existing tests or expected fixtures modified.
+
+| Code scope (lines including comments/blanks) | Before | After |
+| --- | ---: | ---: |
+| Nine existing touched runtime scripts | 1,274 | 1,283 |
+| New development-only contract | 0 | 186 |
+| Runtime-folder subtotal | 1,274 | 1,469 |
+| New CLI | 0 | 9 |
+| Two new test scripts | 0 | 226 |
+| Combined affected code | 1,274 | 1,704 |
+
+The 430 added code lines establish validation and tests, not a runtime engine.
+JSON fixtures, UIDs and prose are excluded from code totals. Existing executable
+function statements in the nine touched runtime scripts are unchanged; only comments
+and an identical ordered attribute constant differ. The original 74 card Resources,
+prior deck/controller owners, save codec, CombatExecution, TacticalPreview and existing
+combat/deck fixtures remain byte-identical. The tracked eager preload/ext_resource
+graph grows from 364 to 368 files with zero cycles before/after. Lazy runtime loads and
+node ownership are not inferred from that graph.
+
+Structurally invalid CardData that cannot be loaded at all still receives Godot's import
+error; precise contract diagnostics apply after loading syntactically valid Resources.
+There is no custom parser for broken `.tres` syntax and no claim that validation proves
+arbitrary authored prose or future effect combinations correct.
+
+### Newly verified checks (2026-10-24)
+
+- Library CLI: 74 identities, 148 upgrade dictionaries checked, zero errors.
+- Focused contract: 1,011 checks, zero failures; 38 deliberately malformed fixtures.
+  Includes every-key consumer examples, defaults, legacy bool sabotage, deep branches,
+  cycle rejection, duplicate identity, disabled authored upgrades and nested diagnostics.
+  The final positive edge case preserves compare_attribute precedence over unused
+  fraction_of metadata, without requiring an unused threshold.
+- New parity: 2,220 exact pre-change checkpoints match, including direct execution,
+  extra actions, all authored upgrade effects, modifiers, AI, descriptions and targets.
+- Existing combat parity: 72 unchanged baseline traces match; existing expedition parity:
+  1,044 unchanged checkpoints match; deck ownership: 43 checks pass. These are newly
+  rerun results, not figures borrowed from the previous refactors.
+- Rendered Mobile/Vulkan on llvmpipe: CardInspection 951 checks and TacticalPreview
+  42 checks pass at 1280×720 and 960×540. This is desktop software rendering, not a
+  physical Android performance measurement. No visual or input tuning changed.
+- Ten Python regression-runner unit tests pass; changed documentation links resolve;
+  `git diff --check` passes. Both new test scripts exit without ObjectDB warnings;
+  existing shutdown warnings elsewhere remain separately reported by the runner.
+- No physical Android/Windows device run, APK/export test or new runtime dependency.

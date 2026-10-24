@@ -99,7 +99,7 @@ func _initialize() -> void:
 	var deep: Dictionary = {"hull":1}
 	for index in range(64): deep = {"conditional":{"then":deep}}
 	check(Contract.effects(deep).is_empty(), "Deep valid branches accepted")
-	for value in [{"conditional":{}}, {"sabotage":true}, {"sabotage":false}, {"hull":-2.5}, {"pierce":0.5}, {"conditional":{"threshold":2.0,"fraction_of":"hull_capacity","compare_attribute":"hull"}}, {"random_gain_range_other":{"min":-2,"max":-1}}]:
+	for value in [{"conditional":{}}, {"sabotage":true}, {"sabotage":false}, {"hull":-2.5}, {"pierce":0.5}, {"conditional":{"threshold":2.0,"fraction_of":"hull_capacity","compare_attribute":"hull"}}, {"conditional":{"fraction_of":"hull_capacity","compare_attribute":"hull"}}, {"random_gain_range_other":{"min":-2,"max":-1}}]:
 		check(Contract.effects(value).is_empty(), "Existing defaults, signed numerics and precedence accepted")
 	for base in Cards.CARDS:
 		var before: Array = [base.effects.duplicate(true), base.upgrade_effects.duplicate(true), base.upgrade_level, base.identity_key()]

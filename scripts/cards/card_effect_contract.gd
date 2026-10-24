@@ -131,7 +131,7 @@ static func effects(value: Variant, path: String = "effects", ancestors: Array =
 							if item.has(stat): member(item[stat], CONDITION_ATTRIBUTES, at + "." + stat, errors)
 						if item.has("comparison"): member(item.comparison, COMPARISONS, at + ".comparison", errors)
 						if item.has("threshold"): number(item.threshold, at + ".threshold", errors)
-						if item.has("fraction_of") and not item.has("threshold"):
+						if item.has("fraction_of") and not item.has("compare_attribute") and not item.has("threshold"):
 							issue(errors, at + ".threshold", "required fraction multiplier", null)
 						if item.has("compare_target") and not item.has("compare_attribute"):
 							issue(errors, at + ".compare_attribute", "required comparison attribute", null)

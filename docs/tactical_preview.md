@@ -14,7 +14,7 @@ Calibration: select `resources/card_presentation.tres`. Existing Inspection inpu
 
 Tests: tactical_preview_test, card_targets_test and game_reference_test cover interaction/lifecycle, all card/upgrades' read-only analysis and reference entry/layout. card_inspection_test retains gallery, touch/drag, middle-click and unaffordable-card coverage; combat_trace_test verifies the 72 seeded baseline traces. Rendered screenshots are saved in `.godot/testlogs/tactical-{normal,preview,inspection}-{width}.png` and `game-reference-{width}.png`.
 
-Remaining coupling is explicit: the HUD binds scene labels/modals and hands the coordinator detached snapshots. A new effect key should extend the existing resolver/descriptions and CardTargets, with a focused category test. Android gesture events and landscape layout are exercised on desktop; physical-device audio/input/performance and Android export still require device/CI validation.
+Remaining coupling is explicit: the HUD binds scene labels/modals and hands the coordinator detached snapshots. A new effect key should follow the [effect contract and consumer checklist](card_effect_contract.md), extending CardTargets with an executable category test. Android gesture events and landscape layout are exercised on desktop; physical-device audio/input/performance and Android export still require device/CI validation.
 
 
 ## Validation recorded 2026-10-23
