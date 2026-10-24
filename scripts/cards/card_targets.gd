@@ -1,8 +1,9 @@
 extends RefCounted
 # RESPONSIBILITY: Describe possible HUD categories, never resolve a live action or sample RNG.
+# EXTEND: Review the target decision and sample in card_effect_contract.gd/tests.
 const Effects = preload("res://scripts/cards/card_effects.gd")
 const Modifier = preload("res://scripts/combat_modifier.gd")
-const ATTRIBUTES = ["hull", "shields", "materials", "energy", "crew", "synthesizer", "reactor", "quarters"]
+const ATTRIBUTES = preload("res://scripts/combat/ship_combat_state.gd").ATTRIBUTES
 
 static func analyze(card: Resource, context: Dictionary) -> Dictionary:
 	var result: Dictionary = {}

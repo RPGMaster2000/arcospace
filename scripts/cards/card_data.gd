@@ -3,6 +3,7 @@ extends Resource
 class_name CardData
 
 # RESPONSIBILITY: Store Inspector-editable card data.
+# EXTEND: Validate authoring with card_effect_contract.gd; see docs/card_effect_contract.md.
 # DOES NOT: Change game state or manage turns.
 ## TUNE: Original rarity controls draw eligibility and border presentation, independently of upgrades.
 @export_enum("Tier 1:1", "Tier 2:2", "Tier 3:3") var tier: int = 1

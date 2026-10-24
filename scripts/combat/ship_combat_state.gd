@@ -2,6 +2,7 @@ extends RefCounted
 # Authoritative ship attributes. Rule modules receive detached snapshots.
 const RESOURCES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
+const ATTRIBUTES = ["hull", "shields"] + RESOURCES + PRODUCTION
 
 var hull: int = 30
 var hull_capacity: int = 30

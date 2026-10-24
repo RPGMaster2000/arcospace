@@ -2,6 +2,7 @@ extends RefCounted
 
 # RESPONSIBILITY: List the Inspector-editable card resources.
 # DOES NOT: Apply effects or manage a hand.
+# EXTEND: Run tools/validate_cards.gd after registering definitions; no runtime validation needed.
 const CARDS = [
 	preload("res://cards/01_shield_plating.tres"),
 	preload("res://cards/02_shield_array.tres"),

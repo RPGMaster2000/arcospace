@@ -3,6 +3,7 @@ extends Node
 # RESPONSIBILITY: Choose a legal move, using Starship Duel's priorities.
 # DOES NOT: Spend resources, apply real effects or advance turns.
 # EXTEND: Score simulated copies here; never sample live combat RNG or mutate a hand.
+# Review card_effect_contract.gd coverage without treating a missing heuristic as a strategy defect.
 const Effects = preload("res://scripts/cards/card_effects.gd")
 const FailureTactics = preload("res://scripts/combat/systems_failure_tactics.gd")
 const Rules = preload("res://scripts/match_rules.gd")

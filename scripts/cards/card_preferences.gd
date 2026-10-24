@@ -1,6 +1,7 @@
 extends RefCounted
 
 # RESPONSIBILITY: Classify effects and compute soft family/effect draw preferences.
+# EXTEND: Review soft categories separately from the contract consumer checklist; preserve weights.
 
 
 # Shared soft preference categories for draws; every identity retains positive weight.

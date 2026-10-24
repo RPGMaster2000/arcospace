@@ -12,7 +12,8 @@ static var combat_rng: RandomNumberGenerator = _new_rng()
 
 
 # Mutate the supplied state dictionaries; Board writes them back, while EnemyAI passes copies.
-# EXTEND: New keys also need CardData descriptions, CombatModifier previews/scaling, AI scoring and tests.
+# EXTEND: Add the key to card_effect_contract.gd and its executable consumer coverage first.
+# See docs/card_effect_contract.md; this resolver remains authoritative for ordering and RNG.
 static func play(
 	card: Resource,
 	actor: Dictionary,

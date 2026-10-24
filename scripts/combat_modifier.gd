@@ -2,6 +2,7 @@ extends Node
 
 # RESPONSIBILITY: Schedule one encounter modifier and resolve its card adjustments.
 # DOES NOT: Advance turns, change hands, or present animations.
+# EXTEND: Record scaling/classification decisions in card_effect_contract.gd; preserve timing/RNG.
 const Effects = preload("res://scripts/cards/card_effects.gd")
 const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift"]
 ## TUNE: Full rounds between events, counted after an event ends.

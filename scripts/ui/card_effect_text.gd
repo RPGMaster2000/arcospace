@@ -2,6 +2,7 @@ extends RefCounted
 
 # RESPONSIBILITY: Compare actual effect dictionaries for upgrade presentation; never apply them.
 # Presentation-only effect comparison. Values always come from CardData dictionaries.
+# EXTEND: Keep description/inspection coverage explicit in card_effect_contract.gd.
 const Data = preload("res://scripts/cards/card_data.gd")
 const GREEN = "91e6ad"
 
