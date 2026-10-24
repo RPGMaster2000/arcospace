@@ -4,6 +4,7 @@ extends Control
 # Presentation only. The expedition controller supplies markers and handles arrival.
 signal arrived(index: int)
 signal interrupted
+signal travel_started
 # TUNE: Seconds of sublight movement before an interception opens.
 const INTERCEPTION_DELAY: float = 0.5
 # TUNE: Total stopped-ship impact duration, shake in pixels, and red flash opacity.
@@ -99,6 +100,7 @@ func travel(index: int) -> void:
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	traveling = true
+	travel_started.emit()
 	for button in markers.values():
 		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tween = create_tween()
@@ -168,7 +170,8 @@ func _move_ship(point: Vector2) -> void:
 	queue_redraw()
 
 
-func _exit_tree() -> void:
+func cancel_presentation() -> void:
+	traveling = false
 	if impact_tween:
 		impact_tween.kill()
 	_clear_impact()
@@ -177,6 +180,9 @@ func _exit_tree() -> void:
 	if tween:
 		tween.kill()
 
+
+func _exit_tree() -> void:
+	cancel_presentation()
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("0a1422"))

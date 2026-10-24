@@ -12,6 +12,7 @@ var shade: ColorRect
 var tween: Tween
 var active: bool = false
 var success: bool = false
+var revision: int = 0
 
 
 func _ready() -> void:
@@ -26,6 +27,7 @@ func _ready() -> void:
 func play(good_outcome: bool) -> void:
 	if active:
 		return
+	var request: int = revision
 	active = true
 	success = good_outcome
 	shade.color = (
@@ -38,11 +40,11 @@ func play(good_outcome: bool) -> void:
 	tween.tween_property(shade, "modulate:a", 0.0, duration * 0.3)
 	tween.finished.connect(func(): visual_finished.emit(), CONNECT_ONE_SHOT)
 	await visual_finished
-	if closing:
+	if closing or request != revision:
 		return
 	# Let the signal emission unwind before a caller can free this screen.
 	await get_tree().process_frame
-	if closing:
+	if closing or request != revision:
 		return
 	shade.hide()
 	active = false
@@ -53,9 +55,16 @@ func _input(_event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _exit_tree() -> void:
-	closing = true
+func cancel() -> void:
+	revision += 1
 	active = false
 	if tween != null and tween.is_valid():
 		tween.kill()
+	if is_instance_valid(shade):
+		shade.hide()
 	visual_finished.emit()
+
+
+func _exit_tree() -> void:
+	closing = true
+	cancel()

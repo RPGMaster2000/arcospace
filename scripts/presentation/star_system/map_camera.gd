@@ -80,3 +80,12 @@ func pan_screen(from: Vector2, to: Vector2) -> void:
 	var bounds: Rect2 = calibration.pan_bounds.abs()
 	pan_offset = (pan_offset + Vector2(shift.x, shift.z)).clamp(bounds.position, bounds.end)
 	position = _overview_position(calibration)
+
+
+func cancel() -> void:
+	if motion and motion.is_valid():
+		motion.kill()
+
+
+func _exit_tree() -> void:
+	cancel()

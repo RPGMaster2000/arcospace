@@ -16,9 +16,6 @@ var _previous_back_quit: bool = true
 const State = preload("res://scripts/expedition_state.gd")
 const BOARD = preload("res://scenes/board_3d.tscn")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
-const Tile = preload("res://scripts/ui/encounter_tile.gd")
-const CardGallery = preload("res://scripts/ui/card_gallery.gd")
-const VisualEffects = preload("res://scripts/visual/visual_effects.gd")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 const OutpostScreen = preload("res://scripts/ui/outpost_screen.gd")
 const ExpeditionScreen = preload("res://scripts/ui/expedition_screen.gd")
@@ -41,7 +38,8 @@ var replace_button: Button:
 var incoming_portrait: Button:
 	get:
 		return replacement_panel.incoming_portrait if is_instance_valid(replacement_panel) else null
-var card_gallery: VBoxContainer
+var card_gallery: VBoxContainer:
+	get: return replacement_panel.gallery if is_instance_valid(replacement_panel) else (screen.card_gallery if is_instance_valid(screen) else null)
 var card_inspector: CanvasLayer
 # TUNE: Disable to restore the original grid; both presentations use the same encounter state.
 @export var use_star_map: bool = true
@@ -56,20 +54,29 @@ var card_inspector: CanvasLayer
 @export_range(1.0, 1.04, 0.005) var hull_pulse_scale: float = 1.03
 @export_range(0.0, 0.5, 0.01) var hull_pulse_intensity: float = 0.22
 @export_group("")
-var settings_button: Button
+var settings_button: Button:
+	get: return screen.settings_button if is_instance_valid(screen) else null
 var field_repairs: VBoxContainer
-var station_preview: VBoxContainer
+var station_preview: VBoxContainer:
+	get: return outpost_screen.preview if is_instance_valid(outpost_screen) else null
 var star_map: Control
 var transition: CanvasLayer
-var transitioning: bool = false
+# Ephemeral presentation only; authoritative travel/rewards remain in State/Deck.
+enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, EXITED }
+var phase: Phase = Phase.OVERVIEW
+var _presentation_revision: int = 0
+var transitioning: bool:
+	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL]
 var map_system: int = -1
 var map_destination: int = -1
 
 @export var rules: Resource = preload("res://encounters/expedition_rules.tres")
 ## Optional accessibility preference; bundled emoji render by default on Android.
 @export var text_icons_on_android: bool = false
-var approach_note: Label
-var repair_selector: HSlider
+var approach_note: Label:
+	get: return outpost_screen.note if is_instance_valid(outpost_screen) else screen.approach_note
+var repair_selector: HSlider:
+	get: return outpost_screen.selector if is_instance_valid(outpost_screen) else null
 var service_confirmation_revision: int:
 	get:
 		return outpost_screen.revision if is_instance_valid(outpost_screen) else -1
@@ -77,29 +84,50 @@ var return_to_outpost: bool = false
 var selected_ship: int = 0
 var state: Resource
 var battle: Node
-var view: VBoxContainer
-var resource_bar: HFlowContainer
-var legend: Button
-var deck_button: Button
+var view: VBoxContainer:
+	get: return screen.view if is_instance_valid(screen) else null
+var resource_bar: HFlowContainer:
+	get: return screen.resource_bar if is_instance_valid(screen) else null
+var legend: Button:
+	get: return screen.legend if is_instance_valid(screen) else null
+var deck_button: Button:
+	get: return screen.deck_button if is_instance_valid(screen) else null
 var current_deck_viewer: CanvasLayer
 var outcome_flash: CanvasLayer
-var presenting_outcome: bool = false
-var mission_header: Label
-var heading_row: HBoxContainer
-var jump_button: Button
-var return_button: Button
-var confirmation: CanvasLayer
-var confirm_button: Button
-var title: Label
-var ui: MarginContainer
-var scroll: ScrollContainer
-var header: PanelContainer
-var footer: HBoxContainer
-var more_hint: Control
-var grid: GridContainer
-var selected_approach: int = -1
-var approach_buttons: Array[Button] = []
-var view_kind: String = ""
+var presenting_outcome: bool:
+	get: return phase == Phase.RESOLVING
+var mission_header: Label:
+	get: return screen.mission_header if is_instance_valid(screen) else null
+var heading_row: HBoxContainer:
+	get: return screen.heading_row if is_instance_valid(screen) else null
+var jump_button: Button:
+	get: return screen.jump_button if is_instance_valid(screen) else null
+var return_button: Button:
+	get: return screen.return_button if is_instance_valid(screen) else null
+var confirmation: CanvasLayer:
+	get: return outpost_screen.confirmation if is_instance_valid(outpost_screen) else screen.confirmation
+var confirm_button: Button:
+	get: return outpost_screen.confirm_button if is_instance_valid(outpost_screen) else screen.confirm_button
+var title: Label:
+	get: return screen.title if is_instance_valid(screen) else null
+var ui: MarginContainer:
+	get: return screen.ui if is_instance_valid(screen) else null
+var scroll: ScrollContainer:
+	get: return screen.scroll if is_instance_valid(screen) else null
+var header: PanelContainer:
+	get: return screen.header if is_instance_valid(screen) else null
+var footer: HBoxContainer:
+	get: return outpost_screen.footer if is_instance_valid(outpost_screen) else screen.footer
+var more_hint: Control:
+	get: return screen.more_hint if is_instance_valid(screen) else null
+var grid: GridContainer:
+	get: return outpost_screen.options if is_instance_valid(outpost_screen) else screen.grid
+var selected_approach: int:
+	get: return outpost_screen.selected_slot if is_instance_valid(outpost_screen) else screen.selected_approach
+var approach_buttons: Array[Button]:
+	get: return outpost_screen.buttons if is_instance_valid(outpost_screen) else screen.approach_buttons
+var view_kind: String:
+	get: return screen.kind if is_instance_valid(screen) else ""
 var selected_encounter: int = -1
 
 #region Screen initialization
@@ -154,23 +182,6 @@ func _build_ui() -> void:
 	screen.hull_pulse_scale = hull_pulse_scale
 	screen.hull_pulse_intensity = hull_pulse_intensity
 	add_child(screen)
-	ui = screen.ui
-	title = screen.title
-	heading_row = screen.heading_row
-	deck_button = screen.deck_button
-	legend = screen.legend
-	settings_button = screen.settings_button
-	resource_bar = screen.resource_bar
-	header = screen.header
-	return_button = screen.return_button
-	scroll = screen.scroll
-	view = screen.view
-	more_hint = screen.more_hint
-	footer = screen.footer
-	confirmation = screen.confirmation
-	approach_note = screen.approach_note
-	confirm_button = screen.confirm_button
-	jump_button = screen.jump_button
 	screen.deck_requested.connect(_show_current_deck)
 	screen.main_menu_requested.connect(_exit)
 	screen.hull_requested.connect(_show_hull_info)
@@ -180,56 +191,18 @@ func _build_ui() -> void:
 	screen.jump_requested.connect(_jump)
 
 
-func _process(_delta: float) -> void:
-	if not ui.visible:
-		return
-	if view_kind == "system" and is_instance_valid(grid):
-		# Fit six tiles plus the separate service button in the existing scroll area.
-		var available_height: float = scroll.size.y - 14
-		for child in view.get_children():
-			if child != grid:
-				available_height -= child.size.y + view.get_theme_constant("separation")
-		for tile in grid.get_children():
-			tile.minimum_height = maxf(100, available_height / 2)
-
-
 func _label(text: String, font_size: int = 20) -> Label:
-	var label = Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", font_size)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return label
+	return screen._label(text, font_size)
 
 
 func _button(
 	text: String, callback: Callable, disabled: bool = false, height: float = 64
 ) -> Button:
-	var button = Button.new()
-	button.text = text
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.custom_minimum_size.y = height
-	button.add_theme_font_size_override("font_size", 22)
-	button.disabled = disabled
-	Presentation.action(button)
-	button.pressed.connect(
-		func():
-			if scroll.allows_activation():
-				callback.call()
-	)
-	view.add_child(button)
-	return button
+	return screen.add_action(text, callback, disabled, height)
 
 
 func _grid(columns: int) -> GridContainer:
-	var result = GridContainer.new()
-	result.columns = columns
-	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	result.add_theme_constant_override("h_separation", 10)
-	result.add_theme_constant_override("v_separation", 10)
-	view.add_child(result)
-	grid = result
-	return result
+	return screen.add_grid(columns)
 
 
 func _tile(
@@ -241,17 +214,7 @@ func _tile(
 	disabled: bool = false,
 	centered: bool = false
 ) -> Button:
-	var button = Tile.new()
-	button.configure(heading, details, color, centered)
-	button.disabled = disabled
-	button.refresh_style()
-	button.pressed.connect(
-		func():
-			if button.is_inside_tree() and scroll.allows_activation() and not button.disabled:
-				callback.call()
-	)
-	parent.add_child(button)
-	return button
+	return screen.add_tile(parent, heading, details, color, callback, disabled, centered)
 
 
 func _icon(key: String) -> String:
@@ -261,80 +224,27 @@ func _icon(key: String) -> String:
 
 
 # Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
-func _clear(kind: String) -> void:
-	if is_instance_valid(current_deck_viewer):
-		current_deck_viewer.dismiss()
-	mission_header = null
-	if is_instance_valid(card_inspector):
-		card_inspector.dismiss()
-	card_gallery = null
-	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
-	resource_bar.overlay.dismiss()
+func _clear(kind: String, preserve_transition: bool = false) -> void:
+	if not preserve_transition:
+		_cancel_presentation()
+	current_deck_viewer.dismiss()
+	card_inspector.dismiss()
 	field_repairs.clear()
-	confirmation.dismiss()
 	if is_instance_valid(outpost_screen):
 		outpost_screen.clear()
 	outpost_screen = null
-	confirmation = screen.confirmation
-	confirm_button = screen.confirm_button
-	footer = screen.footer
-	approach_note = screen.approach_note
-	station_preview = null
-	repair_selector = null
-	view_kind = kind
+	replacement_panel = null
 	state.field_repairs_open = kind == "system" and state.hull > 0
-	resource_bar.field_repairs_enabled = state.field_repairs_open
-	selected_approach = -1
-	approach_buttons = []
-	grid = null
-	for child in view.get_children():
-		view.remove_child(child)
-		child.queue_free()
 	if not _uses_3d_map():
 		if is_instance_valid(star_map) and star_map.get_parent() == screen:
 			screen.remove_child(star_map)
 			star_map.queue_free()
 			screen.map_layer = null
 		star_map = null
-	replacement_panel = null
-	scroll.vertical_scroll_mode = (
-		ScrollContainer.SCROLL_MODE_DISABLED
-		if kind == "system" and use_star_map
-		else ScrollContainer.SCROLL_MODE_AUTO
-	)
-	scroll.scroll_vertical = 0
-	ui.show()
-	header.visible = kind == "poi"
-	return_button.visible = kind == "poi"
-	footer.hide()
-	confirm_button.disabled = true
-	heading_row.show()
-	title.visible = true
-	title.text = "System Encounters — " + state.system_name
-	resource_bar.exploration(state)
-	jump_button.text = (
-		"%s FTL Drive %d/%d · %s"
-		% [
-			_icon("travel"),
-			state.ftl_charge,
-			state.required_ftl_charge,
-			(
-				"Jump to Next System"
-				if state.ftl_charge >= state.required_ftl_charge
-				else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)
-			)
-		]
-	)
-	if state.mandatory_boss_pending():
-		jump_button.text = (
-			"%s FTL Drive %d/%d · Resolve Boss first"
-			% [_icon("travel"), state.ftl_charge, state.required_ftl_charge]
-		)
-		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
-	else:
-		jump_button.tooltip_text = "FTL resets to zero when entering the next system."
-	jump_button.disabled = not state.can_jump()
-	jump_button.visible = state.hull > 0
+	screen.reset_view(kind, state, use_star_map, _icon)
+	if not preserve_transition:
+		phase = {"system": Phase.OVERVIEW, "chasedown": Phase.CHASEDOWN,
+			"poi": Phase.DESTINATION, "preview": Phase.DESTINATION}.get(kind, Phase.REWARD)
 	if _uses_3d_map():
 		var split: bool = kind in ["poi", "preview", "chasedown"] or (
 			kind == "outcome" and state.pending_choice.is_empty() and map_destination != -1
@@ -353,6 +263,55 @@ func _clear(kind: String) -> void:
 		screen.map_layout(false, false)
 
 
+func _begin_presentation(next: Phase) -> int:
+	_presentation_revision += 1
+	phase = next
+	return _presentation_revision
+
+
+func _presentation_current(revision: int, owner: Resource) -> bool:
+	return revision == _presentation_revision and state == owner and is_inside_tree() and not is_queued_for_deletion() and phase != Phase.EXITED
+
+
+func _cancel_presentation() -> void:
+	# Invalidate first: cancellation wakes waiters synchronously.
+	_presentation_revision += 1
+	if is_instance_valid(screen):
+		screen.cancel_pending()
+	if is_instance_valid(outcome_flash):
+		outcome_flash.cancel()
+	if is_instance_valid(transition):
+		transition.cancel()
+	if is_instance_valid(star_map) and star_map.has_method("cancel_presentation"):
+		if star_map.traveling or transitioning:
+			star_map.cancel_presentation()
+
+
+# Both scene handoffs reveal only after the new presentation has initialized.
+func _reveal_presentation(revision: int, owner: Resource, next: Phase) -> void:
+	await get_tree().process_frame
+	if not _presentation_current(revision, owner):
+		return
+	if await transition.fade(0.0, star_system_settings.white_fade_duration):
+		if _presentation_current(revision, owner):
+			phase = next
+	else:
+		_abort_presentation(revision, owner, next)
+
+
+func _abort_presentation(revision: int, owner: Resource, next: Phase) -> void:
+	if _presentation_current(revision, owner):
+		_cancel_presentation()
+		phase = next
+		if is_instance_valid(star_map) and _uses_3d_map():
+			star_map.overview()
+
+
+func _travel_started() -> void:
+	if phase == Phase.OVERVIEW:
+		phase = Phase.TRAVELING
+
+
 #endregion
 
 #region System navigation
@@ -364,6 +323,8 @@ func start_expedition() -> bool:
 	if persistence_enabled and not save_store.save_run(candidate):
 		_show_save_error()
 		return false
+	_cancel_presentation()
+	phase = Phase.OVERVIEW
 	if is_instance_valid(star_map) and star_map.get_parent() == screen:
 		screen.remove_child(star_map)
 		star_map.queue_free()
@@ -413,6 +374,8 @@ func _show_save_error() -> void:
 
 
 func _save_and_quit() -> bool:
+	if phase == Phase.EXITED:
+		return true
 	if not _save_progress():
 		_show_save_error()
 		return false
@@ -435,13 +398,15 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	_cancel_presentation()
+	phase = Phase.EXITED
 	if persistence_enabled:
 		get_tree().auto_accept_quit = _previous_auto_quit
 		get_tree().quit_on_go_back = _previous_back_quit
 
 
-func show_system() -> void:
-	if presenting_outcome or transitioning:
+func show_system(preserve_transition: bool = false) -> void:
+	if phase == Phase.EXITED or presenting_outcome or (transitioning and not preserve_transition):
 		return
 	if state.hull > 0 and state.chasedown_unresolved():
 		if state.active_battle < 0:
@@ -455,7 +420,7 @@ func show_system() -> void:
 		return
 	get_node("/root/Music").play_starmap()
 	return_to_outpost = false
-	_clear("system")
+	_clear("system", preserve_transition)
 	if state.hull <= 0:
 		view.add_child(_label("Expedition ended — your ship was lost.", 26))
 		_button("Main Menu", _exit)
@@ -516,13 +481,13 @@ func show_system() -> void:
 
 	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
 	if destination != -1:
-		_grid_travel.call_deferred(destination)
+		_resume_navigation.call_deferred(destination, _presentation_revision, state)
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _map_input_allowed() -> bool:
 	return (
-		not transitioning and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not transitioning and not resource_bar.overlay.shade.visible
 		and not current_deck_viewer.shade.visible and not card_inspector.shade.visible
 		and not settings_button.menu.shade.visible
 	)
@@ -603,15 +568,20 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	star_map.before_travel = state.can_visit
 	star_map.intercept_travel = state.begin_travel
 	if new_map:
-		star_map.interrupted.connect(_show_chasedown)
-		star_map.arrived.connect(visit)
+		var source_map: Control = star_map
+		star_map.travel_started.connect(func():
+			if star_map == source_map: _travel_started())
+		star_map.interrupted.connect(func():
+			if star_map == source_map and phase == Phase.TRAVELING: _show_chasedown())
+		star_map.arrived.connect(func(index: int):
+			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
 	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
 	if resume_travel and destination != -1:
-		star_map.travel.call_deferred(destination)
+		_resume_navigation.call_deferred(destination, _presentation_revision, state, star_map)
 
 
 func visit(index: int) -> void:
-	if transitioning or not state.can_visit(index):
+	if phase == Phase.EXITED or transitioning or not state.can_visit(index):
 		return
 	map_destination = index
 	state.arrive_destination(index)
@@ -628,32 +598,30 @@ func _jump() -> void:
 		if state.generate_system():
 			show_system()
 		return
-	transitioning = true
-	transition.block()
-	star_map.interactive = false
-	star_map.traveling = true
-	star_map.orbit_index = -1
-	star_map.camera.close_ship(star_map.ship.position, star_system_settings.camera_duration, &"ftl")
-	await get_tree().create_timer(star_system_settings.camera_duration + 0.15).timeout
-	if is_queued_for_deletion():
+	var revision: int = _begin_presentation(Phase.FTL)
+	var departing_state: Resource = state
+	if not await star_map.ftl_departure(transition):
+		_abort_presentation(revision, departing_state, Phase.OVERVIEW)
 		return
-	star_map.depart()
-	await get_tree().create_timer(maxf(0.0, star_system_settings.departure_duration - star_system_settings.white_fade_duration)).timeout
-	await transition.fade(1.0, star_system_settings.white_fade_duration)
-	if is_queued_for_deletion():
+	if not _presentation_current(revision, departing_state):
 		return
-	# The sole progression call, after the presentation reaches white.
-	var generated: bool = state.generate_system()
-	transitioning = false
-	if generated:
-		show_system()
+	# Sole progression call, after reaching white. Rebuild without unlocking input.
+	if state.generate_system():
+		show_system(true)
 	else:
-		star_map.traveling = false
 		star_map.overview()
-	transitioning = true
-	await get_tree().process_frame
-	await transition.fade(0.0, star_system_settings.white_fade_duration)
-	transitioning = false
+	await _reveal_presentation(revision, departing_state, Phase.OVERVIEW)
+
+
+# Deferred resume is scoped to its overview and model, not merely a still-live node.
+func _resume_navigation(destination: int, revision: int, owner: Resource, source: Control = null) -> void:
+	if not _presentation_current(revision, owner) or phase != Phase.OVERVIEW or view_kind != "system":
+		return
+	if source != null:
+		if source == star_map and source.is_inside_tree():
+			source.travel(destination)
+	else:
+		_grid_travel(destination)
 
 
 func _request_travel(index: int) -> bool:
@@ -671,6 +639,8 @@ func _grid_travel(index: int) -> void:
 
 
 func _show_chasedown() -> void:
+	if transitioning or phase == Phase.EXITED:
+		return
 	if _uses_3d_map() and not is_instance_valid(star_map):
 		_show_star_map(false)
 	_clear("chasedown")
@@ -716,6 +686,8 @@ func _chasedown_response(index: int) -> void:
 
 
 func show_battle_preview(index: int) -> void:
+	if transitioning or phase == Phase.EXITED:
+		return
 	if not state.can_visit(index):
 		return
 	_clear("preview")
@@ -759,6 +731,8 @@ func approach_text(approach: Resource) -> String:
 
 
 func show_poi(index: int) -> void:
+	if transitioning or phase == Phase.EXITED:
+		return
 	if index == state.SERVICE_INDEX:
 		show_outpost()
 		return
@@ -796,6 +770,8 @@ func show_poi(index: int) -> void:
 
 
 func show_outpost() -> void:
+	if transitioning or phase == Phase.EXITED:
+		return
 	if not state.can_visit(state.SERVICE_INDEX):
 		if not state.pending_choice.is_empty():
 			show_outcome()
@@ -813,24 +789,10 @@ func show_outpost() -> void:
 	view.add_child(outpost_screen)
 	outpost_screen.configure(state, scroll.allows_activation)
 	outpost_screen.purchase_requested.connect(_purchase_outpost_service.bind(outpost_screen))
-	outpost_screen.selection_changed.connect(_outpost_selection_changed.bind(outpost_screen))
 	# Preserve existing control accessors while the component owns their lifecycle.
-	grid = outpost_screen.options
 	if _uses_3d_map():
-		grid.columns = 1
-	approach_buttons = outpost_screen.buttons
-	confirmation = outpost_screen.confirmation
-	confirm_button = outpost_screen.confirm_button
-	footer = outpost_screen.footer
-	approach_note = outpost_screen.note
-	station_preview = outpost_screen.preview
-	repair_selector = outpost_screen.selector
+		outpost_screen.options.columns = 1
 	ui.set_deferred("size", size)
-
-
-func _repair_selection_changed(value: float) -> void:
-	if is_instance_valid(outpost_screen):
-		outpost_screen.update_quantity(value)
 
 
 func _purchase_finished() -> void:
@@ -863,31 +825,19 @@ func _select_approach(slot: int) -> void:
 			or not state.locked_reason(poi.approaches[slot]).is_empty()
 		):
 			return
-	selected_approach = slot
-	footer.hide()
-	for index in range(approach_buttons.size()):
-		var button = approach_buttons[index]
-		button.selected = index == slot or (slot == -2 and index == approach_buttons.size() - 1)
-		button.refresh_style()
-	confirm_button.disabled = false
 	var selected_title: String = (
 		"Navigation survey"
 		if slot == -2
 		else state.encounter_at(selected_encounter).poi.approaches[slot].title
 	)
-	confirmation.present(selected_title)
+	screen.select_approach(slot, selected_title)
 
 
 func _cancel_approach() -> void:
 	if is_instance_valid(outpost_screen):
 		outpost_screen.cancel_selection()
 		return
-	confirmation.dismiss()
-	selected_approach = -1
-	confirm_button.disabled = true
-	for button in approach_buttons:
-		button.selected = false
-		button.refresh_style()
+	screen.cancel_approach()
 
 
 func _confirm_approach() -> void:
@@ -909,16 +859,11 @@ func _confirm_approach() -> void:
 		_approach(selected_encounter, selected_approach, _uses_3d_map())
 
 
-func _outpost_selection_changed(slot: int, source: OutpostScreen) -> void:
-	if source == outpost_screen:
-		selected_approach = slot
-
-
 func _purchase_outpost_service(
 	slot: int, amount: int, revision: int, source: OutpostScreen
 ) -> void:
 	if (
-		presenting_outcome
+		(presenting_outcome or transitioning or phase == Phase.EXITED)
 		or view_kind != "poi"
 		or not is_instance_valid(source)
 		or source != outpost_screen
@@ -930,49 +875,36 @@ func _purchase_outpost_service(
 
 
 func _survey(index: int, suspense: bool = false) -> void:
-	if presenting_outcome:
+	if presenting_outcome or transitioning:
 		return
 	if state.survey(index):
-		presenting_outcome = true
-		var resolved_state: Resource = state
-		if suspense:
-			await _result_suspense()
-		presenting_outcome = false
-		if state == resolved_state and not is_queued_for_deletion():
-			show_outcome()
+		await _present_resolved_outcome(suspense, false)
 
 
-# Insertion point for a future approach animation. The outcome is already committed/saved.
-func _result_suspense() -> void:
-	return_button.disabled = true
-	for button in approach_buttons:
-		button.disabled = true
-	await get_tree().create_timer(star_system_settings.result_suspense_duration).timeout
-	if is_instance_valid(return_button):
-		return_button.disabled = false
+# One presentation-only insertion point; the outcome was already committed/autosaved.
+func _present_resolved_outcome(suspense: bool, flash: bool) -> void:
+	var revision: int = _begin_presentation(Phase.RESOLVING)
+	var resolved_state: Resource = state
+	if suspense and not await screen.result_suspense(star_system_settings.result_suspense_duration):
+		return
+	if not _presentation_current(revision, resolved_state):
+		return
+	if flash:
+		await outcome_flash.play(state.last_poi_success == 1)
+	if _presentation_current(revision, resolved_state):
+		phase = Phase.DESTINATION
+		show_outcome()
 
 
 func _approach(index: int, slot: int, suspense: bool = false) -> void:
-	if presenting_outcome:
+	if presenting_outcome or transitioning:
 		return
 	if index == state.SERVICE_INDEX:
 		if is_instance_valid(outpost_screen):
-			_purchase_outpost_service(
-				slot, int(repair_selector.value), service_confirmation_revision, outpost_screen
-			)
+			_purchase_outpost_service(slot, int(repair_selector.value), service_confirmation_revision, outpost_screen)
 		return
 	if state.resolve_approach(index, slot):
-		presenting_outcome = true
-		var resolved_state: Resource = state
-		if suspense:
-			await _result_suspense()
-		if state != resolved_state or is_queued_for_deletion():
-			presenting_outcome = false
-			return
-		await outcome_flash.play(state.last_poi_success == 1)
-		presenting_outcome = false
-		if not is_queued_for_deletion() and state == resolved_state:
-			show_outcome()
+		await _present_resolved_outcome(suspense, true)
 
 
 #endregion
@@ -981,59 +913,15 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 
 
 func show_outcome() -> void:
+	if transitioning or phase == Phase.EXITED:
+		return
 	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
 		state.finish_upgrades()
 	if state.pending_choice == "replace":
 		_show_replacement()
 		return
 	_clear("outcome")
-	if state.last_poi_success >= 0:
-		mission_header = _label(
-			"Mission Successful" if state.last_poi_success == 1 else "Mission Compromised", 32
-		)
-		mission_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		mission_header.add_theme_color_override(
-			"font_color",
-			(
-				Color(visual_settings.poi_success_color, 1.0)
-				if state.last_poi_success == 1
-				else Color(visual_settings.poi_failure_color, 1.0)
-			)
-		)
-		view.add_child(mission_header)
-		VisualEffects.reveal(mission_header, visual_settings)
-	var result = PanelContainer.new()
-	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var available_width: float = get_viewport().get_visible_rect().size.x - 48.0
-	if _uses_3d_map() and screen.model_space.visible:
-		available_width *= 0.52
-	result.custom_minimum_size.x = minf(900, available_width - 32)
-	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
-	var picking_card: bool = state.pending_choice in ["card", "upgrade"]
-	result.add_child(
-		_label(
-			(
-				(
-					"Acquire one card"
-					if state.pending_choice == "card"
-					else (
-						"Upgrade different cards · %d remaining" % maxi(1, state.upgrades_remaining)
-					)
-				)
-				if picking_card
-				else compact_text(state.last_outcome)
-			),
-			26 if picking_card else 22
-		)
-	)
-	result.tooltip_text = state.last_outcome if picking_card else ""
-	view.add_child(result)
-	var reward_text: Label = result.get_child(0)
-	reward_text.add_theme_color_override(
-		"font_color",
-		Color.WHITE.lerp(visual_settings.card_selection_color, visual_settings.reward_text_emphasis)
-	)
-	VisualEffects.reveal(reward_text, visual_settings)
+	screen.present_result(state, visual_settings, _uses_3d_map())
 	match state.pending_choice:
 		"card":
 			_show_card_gallery(state.card_offers)
@@ -1061,20 +949,6 @@ func show_outcome() -> void:
 			_button("Continue", show_system)
 
 
-func _card_text(card: Resource) -> String:
-	var rarity: String = ["Common", "Uncommon", "Rare"][clampi(card.tier - 1, 0, 2)]
-	return (
-		"Cost %d %s · %s%s\n%s"
-		% [
-			card.cost,
-			card.family.capitalize(),
-			rarity,
-			" · Upgrade %d" % card.upgrade_level if card.upgrade_level > 0 else "",
-			card.description
-		]
-	)
-
-
 func _choose_card(index: int) -> void:
 	if state.choose_card(index):
 		Sound.play(&"upgrade_acquired", self)
@@ -1082,14 +956,10 @@ func _choose_card(index: int) -> void:
 
 
 func _show_card_gallery(cards: Array) -> void:
-	jump_button.hide()
-	card_gallery = CardGallery.new()
-	card_gallery.show_toolbar = state.pending_choice != "card"
-	card_gallery.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	card_gallery.custom_minimum_size.y = 250
-	view.add_child(card_gallery)
-	card_gallery.set_cards(cards)
-	card_gallery.card_selected.connect(_preview_card)
+	screen.show_card_gallery(cards, state.pending_choice == "card")
+	var source_gallery: VBoxContainer = card_gallery
+	card_gallery.card_selected.connect(func(card: Resource):
+		if phase != Phase.EXITED and source_gallery == card_gallery: _preview_card(card))
 
 
 func _preview_card(card: Resource) -> void:
@@ -1114,6 +984,8 @@ func _show_current_deck() -> void:
 
 
 func _confirm_card(card: Resource) -> void:
+	if phase == Phase.EXITED:
+		return
 	# The existing state methods validate eligibility and consume each choice once.
 	if state.pending_choice == "card":
 		_choose_card(state.card_offers.find(card))
@@ -1133,12 +1005,6 @@ func _attribute(key: String) -> void:
 		_purchase_finished()
 
 
-func _finish_upgrades() -> void:
-	state.finish_upgrades()
-	show_outcome()
-
-
-# Same outcome view/gallery: the incoming reward is fixed in ExpeditionState until confirmed/declined.
 func _show_replacement() -> void:
 	_clear("replacement")
 	jump_button.hide()
@@ -1146,12 +1012,14 @@ func _show_replacement() -> void:
 	replacement_panel = DeckReplacement.new()
 	view.add_child(replacement_panel)
 	replacement_panel.configure(state.pending_card, state.player_pool(), scroll.allows_activation)
-	card_gallery = replacement_panel.gallery
 	replacement_panel.inspect_incoming.connect(
 		func(): card_inspector.present(state.pending_card, null, true)
 	)
-	replacement_panel.replace_requested.connect(_replace_card)
-	replacement_panel.decline_requested.connect(_decline_card)
+	var source_panel: VBoxContainer = replacement_panel
+	replacement_panel.replace_requested.connect(func():
+		if phase != Phase.EXITED and source_panel == replacement_panel: _replace_card())
+	replacement_panel.decline_requested.connect(func():
+		if phase != Phase.EXITED and source_panel == replacement_panel: _decline_card())
 
 
 func _select_replacement(card: Resource) -> void:
@@ -1176,31 +1044,27 @@ func _decline_card() -> void:
 
 # Presentation wrapper; checkpointing and combat setup remain in start_battle.
 func _enter_battle(index: int) -> void:
-	if transitioning or not state.can_visit(index):
+	if transitioning or presenting_outcome or not state.can_visit(index):
 		return
 	if not _uses_3d_map() or not is_instance_valid(star_map):
 		start_battle(index)
 		return
-	transitioning = true
-	transition.block()
-	star_map.interactive = false
-	star_map.traveling = true
-	star_map.camera.close_ship(star_map.ship.position, star_system_settings.battle_zoom_duration, &"battle")
-	await get_tree().create_timer(maxf(0.0, star_system_settings.battle_zoom_duration - star_system_settings.white_fade_duration)).timeout
-	await transition.fade(1.0, star_system_settings.white_fade_duration)
-	if is_queued_for_deletion():
+	var revision: int = _begin_presentation(Phase.BATTLE_ENTRY)
+	var entering_state: Resource = state
+	if not await star_map.battle_entry(transition):
+		_abort_presentation(revision, entering_state, Phase.DESTINATION)
+		return
+	if not _presentation_current(revision, entering_state):
 		return
 	start_battle(index)
-	await get_tree().process_frame
-	if is_instance_valid(star_map) and not is_instance_valid(battle):
-		star_map.traveling = false
+	if not is_instance_valid(battle):
 		star_map.overview()
-	await transition.fade(0.0, star_system_settings.white_fade_duration)
-	transitioning = false
+	await _reveal_presentation(revision, entering_state, Phase.BATTLE if is_instance_valid(battle) else Phase.DESTINATION)
 
 
-# Set profile references and callbacks before add_child triggers Board initialization.
 func start_battle(index: int, battle_seed: int = -1) -> void:
+	if is_instance_valid(battle) or presenting_outcome or phase in [Phase.FTL, Phase.EXITED]:
+		return
 	if not state.can_visit(index) or state.encounters[index].kind != "battle":
 		return
 	var checkpoint: Dictionary = Save.encode(state)
@@ -1219,10 +1083,9 @@ func start_battle(index: int, battle_seed: int = -1) -> void:
 	_battle_checkpoint = checkpoint
 	_battle_marker = marker
 	state.field_repairs_open = false
-	resource_bar.set_heartbeat(false)
-	resource_bar.overlay.dismiss()
-	ui.hide()
-	view_kind = "battle"
+	screen.hide_for_battle()
+	if not transitioning:
+		phase = Phase.BATTLE
 	if _uses_3d_map() and is_instance_valid(star_map):
 		star_map.set_active(false)
 	battle = BOARD.instantiate()
@@ -1230,28 +1093,45 @@ func start_battle(index: int, battle_seed: int = -1) -> void:
 	var setup = state.prepare_battle(index)
 	setup.battle_seed = battle_seed
 	preload("res://scripts/combat/battle_adapter.gd").configure(battle, setup)
-	battle.expedition_continue.connect(_battle_finished)
-	battle.expedition_restart.connect(_restart)
-	battle.expedition_exit.connect(_exit)
+	battle.expedition_continue.connect(_battle_finished.bind(battle))
+	battle.expedition_restart.connect(_restart_from_battle.bind(battle))
+	battle.expedition_exit.connect(_exit_from_battle.bind(battle))
 	add_child(battle)
 	if persistence_enabled:
 		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)
 
 
 # Continue returns here after result recording; sync post-battle repairs before removing the board.
-func _battle_finished() -> void:
-	state.sync_battle(battle.battle_result())
+func _battle_finished(source: Node = null) -> void:
+	if source == null:
+		source = battle
+	if not is_instance_valid(source) or source != battle or phase == Phase.EXITED or not is_inside_tree() or is_queued_for_deletion():
+		return
+	state.sync_battle(source.battle_result())
 	state.active_battle = -1
 	_remove_battle()
+	phase = Phase.OVERVIEW
 	show_system()
 
 
 func _remove_battle() -> void:
-	if is_instance_valid(battle):
-		if not battle.result_recorded: battle.checkpoint_exit = true
-		remove_child(battle)
-		battle.queue_free()
+	var previous: Node = battle
 	battle = null
+	if is_instance_valid(previous):
+		if not previous.result_recorded:
+			previous.checkpoint_exit = true
+		remove_child(previous)
+		previous.queue_free()
+
+
+func _restart_from_battle(source: Node) -> void:
+	if source == battle and phase != Phase.EXITED:
+		_restart()
+
+
+func _exit_from_battle(source: Node) -> void:
+	if source == battle and phase != Phase.EXITED:
+		_exit()
 
 
 func _restart() -> void:
@@ -1261,8 +1141,11 @@ func _restart() -> void:
 	var notice := ConfirmationDialog.new()
 	notice.dialog_text = "Starting a new expedition will permanently abandon your current run."
 	add_child(notice)
+	var revision: int = _presentation_revision
+	var restarting_state: Resource = state
 	notice.confirmed.connect(func():
-		if start_expedition(): _remove_battle()
+		if _presentation_current(revision, restarting_state):
+			if start_expedition(): _remove_battle()
 		notice.queue_free())
 	notice.canceled.connect(notice.queue_free)
 	notice.popup_centered(Vector2i(520, 180))
@@ -1273,6 +1156,8 @@ func _exit() -> void:
 
 
 func _prepare_departure() -> void:
+	_cancel_presentation()
+	phase = Phase.EXITED
 	if is_instance_valid(battle) and not battle.result_recorded:
 		battle.checkpoint_exit = true
 	if state != null and state.progress_committed.is_connected(_progress_committed):

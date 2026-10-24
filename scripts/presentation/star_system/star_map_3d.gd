@@ -2,6 +2,7 @@ extends Control
 # Owns destination models, projected input and ship choreography; receives all run data.
 signal arrived(index: int)
 signal interrupted
+signal travel_started
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
 const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const POINTS = [
@@ -21,6 +22,8 @@ var intercept_travel: Callable
 var traveling := false
 var travel_duration := 1.4
 var motion: Tween
+var impact_motion: Tween
+var impact_layer: CanvasLayer
 var orbit_index := -1
 var orbit_angle := 0.0
 var focused := false
@@ -201,6 +204,7 @@ func travel(index: int) -> void:
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	traveling = true
+	travel_started.emit()
 	orbit_index = -1
 	var origin := ship.position
 	var destination: Vector3 = objects[index].position + Vector3(settings.orbit_radius, 0.15, 0)
@@ -223,7 +227,9 @@ func travel(index: int) -> void:
 
 
 func _impact() -> void:
+	_clear_impact()
 	var layer := CanvasLayer.new()
+	impact_layer = layer
 	layer.layer = 100
 	add_child(layer)
 	var flash := ColorRect.new()
@@ -232,6 +238,7 @@ func _impact() -> void:
 	flash.mouse_filter = MOUSE_FILTER_STOP
 	layer.add_child(flash)
 	var effect := create_tween()
+	impact_motion = effect
 	effect.tween_method(func(progress: float):
 		# Retain the existing interception's two red pulses and decaying impact shake.
 		var first: float = maxf(0.0, 1.0 - absf(progress - 0.06) / 0.06)
@@ -240,7 +247,7 @@ func _impact() -> void:
 		camera.h_offset = sin(progress * 93.0) * 0.12 * (1.0 - progress)
 		camera.v_offset = sin(progress * 127.0) * 0.12 * (1.0 - progress)
 	, 0.0, 1.0, 1.0)
-	effect.tween_callback(layer.queue_free)
+	effect.tween_callback(_clear_impact)
 
 
 func focus(index: int) -> void:
@@ -379,3 +386,54 @@ func _end_pinch() -> void:
 	dragging = false
 	mouse_down = false
 	pinch_distance = 0.0
+
+
+# Cinematic execution stays with the map/camera; the controller owns legality/checkpoints.
+func battle_entry(curtain: CanvasLayer) -> bool:
+	curtain.block()
+	interactive = false
+	traveling = true
+	camera.close_ship(ship.position, settings.battle_zoom_duration, &"battle")
+	if not await curtain.pause(maxf(0.0, settings.battle_zoom_duration - settings.white_fade_duration)):
+		return false
+	return await curtain.fade(1.0, settings.white_fade_duration)
+
+
+func ftl_departure(curtain: CanvasLayer) -> bool:
+	curtain.block()
+	interactive = false
+	traveling = true
+	orbit_index = -1
+	camera.close_ship(ship.position, settings.camera_duration, &"ftl")
+	if not await curtain.pause(settings.camera_duration + 0.15):
+		return false
+	depart()
+	if not await curtain.pause(maxf(0.0, settings.departure_duration - settings.white_fade_duration)):
+		return false
+	return await curtain.fade(1.0, settings.white_fade_duration)
+
+
+func cancel_presentation() -> void:
+	if motion and motion.is_valid():
+		motion.kill()
+	if is_instance_valid(camera):
+		camera.cancel()
+	_clear_impact()
+	traveling = false
+	travel_direction = Vector3.ZERO
+	_end_pinch()
+
+
+func _clear_impact() -> void:
+	if impact_motion and impact_motion.is_valid():
+		impact_motion.kill()
+	if is_instance_valid(impact_layer):
+		impact_layer.queue_free()
+	impact_layer = null
+	if is_instance_valid(camera):
+		camera.h_offset = 0
+		camera.v_offset = 0
+
+
+func _exit_tree() -> void:
+	cancel_presentation()

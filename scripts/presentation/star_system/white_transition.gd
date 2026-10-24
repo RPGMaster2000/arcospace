@@ -1,8 +1,10 @@
 extends CanvasLayer
 # Scene-owned curtain survives replacement of the map UI by the battle child.
+# Owns one cancellable fade/delay at a time; interrupted waiters return false.
 signal settled
 var curtain: ColorRect
 var motion: Tween
+var revision: int = 0
 
 
 func _ready() -> void:
@@ -19,19 +21,40 @@ func block() -> void:
 	curtain.show()
 
 
-func fade(opacity: float, duration: float) -> void:
+func fade(opacity: float, duration: float) -> bool:
+	cancel(false)
+	var request: int = revision
 	block()
-	if motion and motion.is_valid():
-		motion.kill()
 	motion = create_tween()
 	motion.tween_property(curtain, "color:a", opacity, duration)
 	motion.tween_callback(settled.emit)
 	await settled
-	if is_instance_valid(curtain) and opacity == 0:
+	if request != revision or not is_inside_tree():
+		return false
+	if opacity == 0:
 		curtain.hide()
+	return true
+
+
+func pause(duration: float) -> bool:
+	cancel(false)
+	var request: int = revision
+	motion = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	motion.tween_interval(duration)
+	motion.tween_callback(settled.emit)
+	await settled
+	return request == revision and is_inside_tree()
+
+
+func cancel(clear: bool = true) -> void:
+	revision += 1
+	if motion and motion.is_valid():
+		motion.kill()
+	if clear and is_instance_valid(curtain):
+		curtain.color.a = 0
+		curtain.hide()
+	settled.emit()
 
 
 func _exit_tree() -> void:
-	if motion and motion.is_valid():
-		motion.kill()
-	settled.emit()
+	cancel()
