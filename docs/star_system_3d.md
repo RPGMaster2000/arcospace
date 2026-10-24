@@ -26,6 +26,7 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 | Orbit Radius / Orbit Speed | Circular ship orbit in world units and radians/second |
 | Battle Zoom Duration | Ship zoom before battle (default 0.9 s) |
 | Departure Side Offset | Camera-space flyby clearance, default 1.4 world units to the right |
+| Departure Turn Duration | Stationary, eased turn before camera zoom and acceleration (default 1.1 s) |
 | Departure Speed / Departure Duration | Accelerating FTL flight distance per second and flight duration |
 | White Fade Duration | White curtain fade at battle/FTL boundaries |
 | Result Suspense Duration | Presentation pause after an approach commits, before its flash (default 2 s) |
@@ -86,7 +87,7 @@ choices keep their full-width galleries and state navigation guards.
 
 Battle entry keeps the existing preview/Enter Combat interaction. `_enter_battle()`
 zooms at the player, fades white, then calls unchanged combat setup/checkpoint logic.
-The map viewport sleeps during battle. FTL locks immediately, zooms and pauses, flies
+The map viewport sleeps during battle. FTL locks immediately, completes a slow stationary turn toward the calibrated flyby path, then zooms and pauses, flies
 the ship beside and past the camera with acceleration, fades white, calls `generate_system()` once
 and reveals the newly seeded map. Existing music calls and all eight tracks are intact.
 
@@ -153,3 +154,12 @@ ship, impact and curtain owners cancel their own tweens. `travel_started` report
 entry only; State's existing callback still decides travel/interception once. No camera,
 input, model, label, timing or calibration value changed. Returning retains the same camera
 pan/zoom, and ordinary travel still allows camera interaction. 3D/2D/grid use the same State.
+
+
+FTL turn polish (2026-10-24): turn and flight share the same ship-facing basis and projected
+camera-side path. The turn completes before `close_ship` and the subsequent acceleration;
+cancelling the sequence also cancels the rotation tween. Tune **Departure Turn Duration**
+in the existing settings Resource. Updated transition tests verify stationary turn timing,
+completed heading, exactly-once progression and fade cleanup: 130 checks pass headless and
+under Mobile/Vulkan at the two landscape sizes. The lifecycle test uses a local shortened
+turn only; shipping duration is 1.1 seconds. No travel legality, saves, rewards or music changed.

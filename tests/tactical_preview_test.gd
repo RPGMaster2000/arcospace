@@ -45,10 +45,14 @@ func run() -> void:
 		pointer(point, false)
 		await wait_motion()
 		check(preview.source == card, "Hold persists after release")
-		check(is_equal_approx(origin.y - card.position.y, card.size.y * card.scale.y * 0.3), "Raises by displayed card height")
+		check(origin.y - card.position.y >= card.size.y * card.scale.y * 0.3 - 0.01, "Raises enough for card and Inspect touch target")
 		check(other.position == neighbor and card.z_index > other.z_index, "Neighbors stay still; selected card draws above them")
 		check(str(board._both_states()) == state and board.modifier.rng.state == rng_state, "Hold/release changes neither state nor RNG")
 		check(preview.inspect.visible and root.get_visible_rect().encloses(preview.inspect.get_global_rect()), "Inspect touch target fits viewport")
+		check(preview.inspect.get_global_rect().position.y >= card.get_global_rect().end.y, "Inspect occupies space under raised card")
+		check(preview.dimmer.visible and is_equal_approx(preview.dimmer.material.get_shader_parameter("opacity"), 0.3), "Selection dims unrelated screen by thirty percent")
+		for glow in preview.target_glows:
+			check(preview.dim_holes.any(func(rect: Rect2): return rect.encloses(glow.get_global_rect())), "Relevant glow is excluded from dimmer")
 		if DisplayServer.get_name() != "headless":
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("res://.godot/testlogs/tactical-preview-%d.png" % dimensions.x)
@@ -87,7 +91,7 @@ func run() -> void:
 		cancel_event.pressed = true
 		root.push_input(cancel_event)
 		await wait_motion()
-		check(preview.source == null and preview.targets.is_empty(), "Cancel removes the card preview and all highlights")
+		check(preview.source == null and preview.targets.is_empty() and not preview.dimmer.visible, "Cancel removes the card preview, dimmer and all highlights")
 		card.hold_input._hold()
 		await wait_motion()
 		board.settings_button.information.show_reference("preview")

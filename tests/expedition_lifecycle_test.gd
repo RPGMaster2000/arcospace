@@ -28,6 +28,7 @@ func host(map_3d: bool = true, map_enabled: bool = true) -> Node:
 	node.star_system_settings.battle_zoom_duration = 0.12
 	node.star_system_settings.white_fade_duration = 0.02
 	node.star_system_settings.departure_duration = 0.08
+	node.star_system_settings.departure_turn_duration = 0.04
 	node.star_system_settings.result_suspense_duration = 0.12
 	root.add_child(node)
 	return node

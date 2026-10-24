@@ -85,6 +85,11 @@ func _init(board_view: Control) -> void:
 	for side in ["player", "enemy"]:
 		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
 			tactical.indicators[side + "_" + attribute] = nodes[side + "_" + attribute + "_label"]
+	tactical.extra_targets = {
+		"player_hull": [nodes["PlayerHullBar"]], "enemy_hull": [nodes["EnemyHullBar"]],
+		"player_shields": [nodes["PlayerShip/ShieldPlaceholder"]],
+		"enemy_shields": [nodes["EnemyShip/ShieldPlaceholder"]]
+	}
 	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade, board_view.get_node("ModifierDisplay/Meter").details.shade])
 	var reference: Node = board_view.settings_button.information
 	for side in ["player", "enemy"]:

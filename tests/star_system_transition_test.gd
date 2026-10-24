@@ -92,6 +92,13 @@ func run() -> void:
 	host._jump()
 	host._jump()
 	check(host.transitioning and state.system_number == old_system, "FTL locks immediately before progression")
+	var departure_origin: Vector3 = host.star_map.ship.position
+	await create_timer(host.star_system_settings.departure_turn_duration * 0.5).timeout
+	check(host.star_map.ship.position == departure_origin and host.star_map.camera.viewing == &"overview", "FTL turns in place before camera zoom")
+	await create_timer(host.star_system_settings.departure_turn_duration * 0.5 + 0.05).timeout
+	var view: Transform3D = host.star_map.camera.ship_view(departure_origin)
+	var direction: Vector3 = (view.origin + view.basis.x * host.star_system_settings.departure_side_offset - departure_origin).normalized()
+	check(host.star_map.ship.basis.x.normalized().dot(direction) > 0.999, "FTL turn completes before acceleration")
 	await create_timer(1.0).timeout
 	await capture("ftl-zoom")
 	await create_timer(0.8).timeout

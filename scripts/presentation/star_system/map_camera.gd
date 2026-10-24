@@ -61,7 +61,7 @@ func focus(point: Vector3, settings: Resource) -> void:
 
 
 func close_ship(point: Vector3, duration: float, state: StringName) -> void:
-	frame(point + Vector3(1.5, 1.5, 2.2), point, duration, state)
+	frame(ship_view(point).origin, point, duration, state)
 
 
 func _overview_target(settings: Resource) -> Vector3:
@@ -89,3 +89,7 @@ func cancel() -> void:
 
 func _exit_tree() -> void:
 	cancel()
+
+
+func ship_view(point: Vector3) -> Transform3D:
+	return Transform3D(Basis.IDENTITY, point + Vector3(1.5, 1.5, 2.2)).looking_at(point, Vector3.UP)

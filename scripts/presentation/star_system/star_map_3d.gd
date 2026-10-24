@@ -189,12 +189,17 @@ func _face(direction: Vector3, weight: float = 1.0) -> void:
 	if direction.length_squared() < 0.00001:
 		return
 	var forward := direction.normalized()
-	var side := forward.cross(Vector3.UP).normalized()
 	var bank: float = 0.0
 	if traveling:
 		bank = clampf(ship.basis.x.signed_angle_to(forward, Vector3.UP) * 0.18, -0.16, 0.16)
-	var basis_to := Basis(forward, side.cross(forward), side) * Basis(Vector3.RIGHT, bank)
+	var basis_to: Basis = _facing_basis(direction, bank)
 	ship.quaternion = ship.quaternion.slerp(basis_to.get_rotation_quaternion(), clampf(weight, 0, 1))
+
+
+func _facing_basis(direction: Vector3, bank: float = 0.0) -> Basis:
+	var forward := direction.normalized()
+	var side := forward.cross(Vector3.UP).normalized()
+	return Basis(forward, side.cross(forward), side) * Basis(Vector3.RIGHT, bank)
 
 
 func travel(index: int) -> void:
@@ -404,6 +409,14 @@ func ftl_departure(curtain: CanvasLayer) -> bool:
 	interactive = false
 	traveling = true
 	orbit_index = -1
+	travel_direction = Vector3.ZERO
+	var view: Transform3D = camera.ship_view(ship.position)
+	var facing: Quaternion = _facing_basis(view.origin + view.basis.x * settings.departure_side_offset - ship.position).get_rotation_quaternion()
+	motion = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	motion.tween_property(ship, "quaternion", facing, settings.departure_turn_duration)
+	if not await curtain.pause(settings.departure_turn_duration):
+		return false
+	ship.quaternion = facing
 	camera.close_ship(ship.position, settings.camera_duration, &"ftl")
 	if not await curtain.pause(settings.camera_duration + 0.15):
 		return false

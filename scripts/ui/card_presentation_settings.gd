@@ -32,6 +32,8 @@ class_name CardPresentationSettings
 @export_range(0.0, 1.0) var preview_fade_duration: float = 0.12
 
 @export_group("Tactical target highlights")
+@export_range(0.0, 1.0, 0.05) var preview_dim_opacity: float = 0.30
+@export var target_glow_padding := Vector2(28, 22)
 @export_range(0.2, 5.0) var target_pulse_duration: float = 1.6
 @export_range(0, 1) var target_pulse_intensity: float = 0.5
 @export var target_positive: Color = Color(0.2, 0.95, 0.75)

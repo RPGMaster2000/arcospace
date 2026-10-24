@@ -24,6 +24,8 @@ extends Resource
 @export_range(0.1, 3.0) var battle_zoom_duration: float = 0.9
 ## Camera-space side clearance at the flyby; positive values pass to the right.
 @export_range(-6.0, 6.0, 0.1) var departure_side_offset: float = 1.4
+## Finish this stationary turn before the camera closes in and acceleration begins.
+@export_range(0.1, 3.0, 0.05) var departure_turn_duration: float = 1.1
 @export_range(1.0, 100.0) var departure_speed: float = 42.0
 @export_range(0.1, 3.0) var departure_duration: float = 1.0
 @export_range(0.1, 2.0) var white_fade_duration: float = 0.35

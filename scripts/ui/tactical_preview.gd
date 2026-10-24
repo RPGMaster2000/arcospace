@@ -6,6 +6,9 @@ var indicators: Dictionary = {}
 var targets: Dictionary = {}
 var target_marks: Array = []
 var target_glows: Array[ColorRect] = []
+var extra_targets: Dictionary = {}
+var dimmer: ColorRect
+var dim_holes: Array[Rect2] = []
 const TARGET_GLOW = preload("res://shaders/tactical_target_glow.gdshader")
 const TARGET_COLORS = {
 	"hull": Color("ef9da8"), "shields": Color("8fc5ff"),
@@ -36,7 +39,17 @@ var button_tween: Tween
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 50
+	z_index = 200
+	dimmer = ColorRect.new()
+	dimmer.name = "TacticalFocusDim"
+	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dimmer.z_as_relative = false
+	dimmer.z_index = 120
+	var dim_material := ShaderMaterial.new()
+	dim_material.shader = preload("res://shaders/tactical_focus_dim.gdshader")
+	dimmer.material = dim_material
+	add_child(dimmer)
+	dimmer.hide()
 	inspect = Button.new()
 	inspect.text = "INSPECT"
 	inspect.custom_minimum_size = Vector2(120, 48)
@@ -98,7 +111,7 @@ func present(hold: Node) -> void:
 	saved_z = source.z_index
 	signature = fingerprint(source.card_data)
 	refresh_targets()
-	source.z_index = 40
+	source.z_index = 190
 	var preferences = preload("res://scripts/ui/menu_preferences.gd")
 	if not preferences.preview_hint_seen():
 		hint.position = Vector2(160, 76)
@@ -111,13 +124,16 @@ func present(hold: Node) -> void:
 	var height: float = source.size.y * source.scale.y
 	var target: Vector2 = origin - Vector2(0, height * settings.preview_raise_fraction)
 	var inset: Vector4 = preload("res://scripts/ui/battle_layout.gd").safe_insets(get_parent())
-	target.y = maxf(inset.y + 64 + settings.preview_inspect_spacing, target.y)
-	inspect.position = Vector2(clampf(target.x + (source.size.x * source.scale.x - inspect.size.x) * 0.5, inset.x + 12, get_viewport_rect().size.x - inspect.size.x - inset.z - 12), target.y - 48 - settings.preview_inspect_spacing)
-	# Prefer the space above this card, shifting around actual HUD labels when needed.
-	for indicator in indicators.values():
-		var bounds: Rect2 = indicator.get_global_rect().grow(6)
-		if inspect.get_global_rect().intersects(bounds):
-			inspect.position.x = clampf(bounds.end.x + 6 if bounds.get_center().x < get_viewport_rect().size.x * 0.5 else bounds.position.x - inspect.size.x - 6, inset.x + 12, get_viewport_rect().size.x - inspect.size.x - inset.z - 12)
+	inspect.size = inspect.get_combined_minimum_size()
+	# Reserve the vacated bottom space for a full touch target beneath the card.
+	target.y = minf(target.y, get_viewport_rect().size.y - inset.w - 12 - height - settings.preview_inspect_spacing - inspect.size.y)
+	target.y = maxf(inset.y + 64, target.y)
+	inspect.position = Vector2(
+		clampf(target.x + (source.size.x * source.scale.x - inspect.size.x) * 0.5, inset.x + 12, get_viewport_rect().size.x - inspect.size.x - inset.z - 12),
+		target.y + height + settings.preview_inspect_spacing
+	)
+	dimmer.show()
+	_update_dimmer()
 	if button_tween != null: button_tween.kill()
 	inspect.modulate.a = 0
 	inspect.disabled = true
@@ -157,6 +173,8 @@ func dismiss(immediate: bool = false) -> void:
 				if is_instance_valid(card): card.z_index = lowering[card].z
 				lowering.erase(card))
 	source = null
+	dimmer.hide()
+	dim_holes.clear()
 	targets.clear()
 	_clear_marks()
 	target_context = ""
@@ -168,7 +186,8 @@ func _process(delta: float) -> void:
 		pulse_time += delta
 		var pulse: float = 1.0 if settings.reduced_preview_animation else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
 		for glow in target_glows:
-			glow.modulate.a = 0.55 + pulse * settings.target_pulse_intensity * 0.5
+			glow.modulate.a = 0.7 + pulse * settings.target_pulse_intensity * 0.6
+		_update_dimmer()
 		queue_redraw()
 	if source == null: return
 	if not valid():
@@ -180,6 +199,7 @@ func _process(delta: float) -> void:
 			return
 	var full := get_tree().root.get_node_or_null("CardInspection")
 	inspect.visible = not (full != null and full.is_open())
+	dimmer.visible = inspect.visible
 
 
 func _input(event: InputEvent) -> void:
@@ -273,22 +293,22 @@ func _draw() -> void:
 		var rect: Rect2 = control.get_global_rect().grow(4)
 		var color: Color = mark[1]
 		var index: int = mark[3]
-		color.a = 0.5 + pulse * settings.target_pulse_intensity * 0.5
-		draw_string(ThemeDB.fallback_font, rect.position + Vector2(index * 13, -3), mark[2], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
+		color.a = 0.75 + pulse * settings.target_pulse_intensity * 0.5
+		draw_string(ThemeDB.fallback_font, rect.position + Vector2(index * 18, -6), mark[2], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
 
 
 # Child draw order places the additive halo above the existing icon/badge graphics
-# but behind its owning Label's glyphs. No full-HUD overlay or input interception.
+# but behind its owning Label's glyphs. The spotlight remains input-transparent.
 func _add_glow(control: Control, tint: Color) -> void:
 	var glow := ColorRect.new()
 	glow.name = "TacticalTargetGlow"
 	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	glow.show_behind_parent = true
 	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	glow.offset_left = -12
-	glow.offset_top = -10
-	glow.offset_right = 12
-	glow.offset_bottom = 10
+	glow.offset_left = -settings.target_glow_padding.x
+	glow.offset_top = -settings.target_glow_padding.y
+	glow.offset_right = settings.target_glow_padding.x
+	glow.offset_bottom = settings.target_glow_padding.y
 	var material := ShaderMaterial.new()
 	material.shader = TARGET_GLOW
 	material.set_shader_parameter("tint", tint)
@@ -302,3 +322,27 @@ func _clear_marks() -> void:
 		if is_instance_valid(glow): glow.free()
 	target_glows.clear()
 	target_marks.clear()
+
+
+func _update_dimmer() -> void:
+	if not valid(): return
+	dimmer.global_position = Vector2.ZERO
+	dimmer.size = get_viewport_rect().size
+	dim_holes.clear()
+	dim_holes.append(source.get_global_rect().grow(2))
+	for glow in target_glows:
+		dim_holes.append(glow.get_global_rect().grow(2))
+	for key in targets:
+		for control in extra_targets.get(key, []):
+			if is_instance_valid(control) and control.is_visible_in_tree():
+				dim_holes.append(control.get_global_rect().grow(6))
+	var holes := PackedVector4Array()
+	for rect in dim_holes:
+		var start: Vector2 = rect.position / dimmer.size
+		var end: Vector2 = rect.end / dimmer.size
+		holes.append(Vector4(start.x, start.y, end.x, end.y))
+	# The card, sixteen stat labels and their four defense bars fit this bounded mask.
+	holes.resize(24)
+	dimmer.material.set_shader_parameter("holes", holes)
+	dimmer.material.set_shader_parameter("hole_count", mini(dim_holes.size(), 24))
+	dimmer.material.set_shader_parameter("opacity", settings.preview_dim_opacity)
