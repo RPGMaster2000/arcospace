@@ -62,8 +62,8 @@ static func meaning(key: String) -> String:
 
 static func modifier_key(kind: int) -> String:
 	return [
-		"approach", "mining_operation", "energy", "hazard", "radiation_nebula", "spatial_anomaly"
-	][clampi(kind, 0, 5)]
+		"approach", "mining_operation", "energy", "hazard", "radiation_nebula", "spatial_anomaly", "materials", "crew"
+	][clampi(kind, 0, 7)]
 
 
 const COLORS = {

@@ -377,7 +377,7 @@ func _begin_turn(side: String) -> void:
 	var asteroid_hit_player: bool = false
 	if side == "player":
 		var event_due: bool = (
-			modifier.kind in [1, 2, 3]
+			(modifier.kind in [1, 3] or modifier.STORMS.has(modifier.kind))
 			and not modifier.active
 			and turn_number >= modifier.next_round
 		)
@@ -417,7 +417,7 @@ func _begin_turn(side: String) -> void:
 				# The staged impacts were already scheduled; subsequent income has its own delta.
 				before = _both_states()
 			asteroid_event = true
-		$ModifierDisplay.announce(announcement)
+		$ModifierDisplay.announce(announcement, modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE)
 		if event_due:
 			var player_hit: bool = asteroid_event and asteroid_hit_player
 			$ModifierDisplay.impact(modifier.kind, player_hit)
@@ -472,11 +472,11 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	resolving_card = true
 	enemy_timer.stop()
 	refresh_display()
-	var ion_card: bool = (
-		not discard and modifier.kind == 2 and modifier.active and card.family == "energy"
+	var storm_card: bool = (
+		not discard and modifier.affects_card(card)
 	)
-	if ion_card:
-		await $ModifierDisplay.warning(2, true, modifier.ion_text())
+	if storm_card:
+		await $ModifierDisplay.warning(modifier.kind, true, modifier.storm_text())
 		if is_queued_for_deletion():
 			return false
 	var source: Control = get_node(card_slots[slot]) if side == "player" else null
@@ -484,7 +484,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	await motion.animate_action(
 		modifier.preview(card), source, side, discard, _resolve_card.bind(side, slot, discard, card)
 	)
-	if ion_card:
+	if storm_card:
 		await $ModifierDisplay.hold_result()
 	if motion.cancelling or not is_inside_tree() or is_queued_for_deletion():
 		return false
@@ -556,9 +556,9 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	var resolution = Execution.resolve(card, discard, actor, target, modifier)
 	if resolution == null:
 		return
-	$ModifierDisplay.announce(resolution.announcement)
-	if not discard and modifier.kind == 2 and modifier.active and card.family == "energy":
-		$ModifierDisplay.impact(2)
+	$ModifierDisplay.announce(resolution.announcement, modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE)
+	if not discard and modifier.affects_card(card):
+		$ModifierDisplay.impact(modifier.kind)
 	var report: Dictionary = resolution.hull_damage
 	var determined: Dictionary = {side: actor, other: target}
 	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
@@ -809,7 +809,8 @@ func _display_snapshot() -> Dictionary:
 				"present": card != null,
 				"affordable": card != null and get("player_" + card.family) >= card.cost,
 				"ion_glow":
-				card != null and card.family == "energy" and modifier.kind == 2 and modifier.active
+				modifier.affects_card(card),
+				"storm_color": modifier.storm_color(modifier.kind,true)
 			}
 		)
 	return {

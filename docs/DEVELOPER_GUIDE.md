@@ -10,6 +10,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
 - [Expedition presentation phases and cancellation](expedition_controller_lifecycle.md)
+- [Ion, Metal and Psionic storm family](storm_family.md)
 - [Pure combat forecasts and modifier-aware AI gates](refactoring/combat_forecast.md)
 - [Card effect contracts, validation and consumer checklist](card_effect_contract.md)
 - [Persistent deck and reward ownership](expedition_deck_ownership.md)

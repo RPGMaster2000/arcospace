@@ -38,7 +38,7 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, context: Diction
 	var kind: int = context.get("kind",0)
 	for slot in affordable:
 		var relevant: bool = (
-			(kind == 2 and context.get("active",false) and cards[slot].family == "energy")
+			Modifier.storm_applies(cards[slot],context)
 			or (kind == 3 and context.get("active",false))
 			or (kind == 4 and context.get("miss_rate",30) > 0 and Modifier.is_combat(cards[slot].effects))
 		)

@@ -41,7 +41,7 @@ func run() -> void:
 	old_rng.seed = 123456
 	new_rng.seed = 123456
 	for n in range(10000):
-		check(old_rng.randi_range(0, 5) == Modifiers.roll_encounter(new_rng), "Exact original distribution and RNG sequence")
+		check(old_rng.randi_range(0, Modifiers.NAMES.size() - 1) == Modifiers.roll_encounter(new_rng), "Exact uniform eight-way distribution and one-call RNG sequence")
 	for key in Presentation.ICONS:
 		for character in str(Presentation.ICONS[key][0]):
 			if character.unicode_at(0) != 0xfe0f: check(Presentation.EMOJI_FONT.has_char(character.unicode_at(0)), "Bundled glyph " + key)

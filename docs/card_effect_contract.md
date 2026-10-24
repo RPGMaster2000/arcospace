@@ -305,3 +305,12 @@ FORMS, validation behavior and six-column review ledger are unchanged. AI uses f
 only for active-modifier immediate-win and self-damage gates; tactical scoring and recovery
 keep their documented legacy approximations. See the linked decision ledger for intentional
 selection/RNG differences. Historical Step 3 parity results above describe that stage.
+
+## Symmetric storm family
+
+Ion (Energy, ID 2), Metal (Materials, ID 6) and Psionic (Crew, ID 7) share the same
+`_scaled()` implementation and exclusions. All references to Ion numeric scaling in the
+consumer matrix now also apply to the matching family of either new storm. No FORMS,
+card assets, upgrades, base wording or validation rules change. The Step 4 forecast and
+AI relevance check both use the authoritative storm-family context. Legacy four-field
+Ion contexts remain accepted. See [storm implementation and tests](storm_family.md).

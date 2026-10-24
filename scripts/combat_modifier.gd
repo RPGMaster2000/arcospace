@@ -4,7 +4,30 @@ extends Node
 # DOES NOT: Advance turns, change hands, or present animations.
 # EXTEND: Record scaling/classification decisions in card_effect_contract.gd; preserve timing/RNG.
 const Effects = preload("res://scripts/cards/card_effects.gd")
-const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift"]
+const NAMES = ["None", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal Rift", "Metal storm", "Psionic storm"]
+# One storm implementation; IDs 0..5 and the historical ion_factor field stay compatible.
+const STORMS = {
+	2: {"family":"energy", "short":"ION", "color":Color(0.12,0.45,1.0), "glow":Color(0.15,0.55,1.0)},
+	6: {"family":"materials", "short":"METAL", "color":Color("d9a45a"), "glow":Color("d9a45a")},
+	7: {"family":"crew", "short":"PSIONIC", "color":Color("c586ed"), "glow":Color("c586ed")},
+}
+static func storm_family(selection: int) -> String:
+	return STORMS.get(selection,{}).get("family","")
+static func storm_color(selection: int, glow: bool = false) -> Color:
+	return STORMS.get(selection,{}).get("glow" if glow else "color",Color.WHITE)
+static func storm_applies(card: Resource, context: Dictionary) -> bool:
+	var selection: int = context.get("kind",0)
+	return card != null and STORMS.has(selection) and context.get("active",false) and card.family == context.get("storm_family",storm_family(selection))
+func affects_card(card: Resource) -> bool:
+	return storm_applies(card,forecast_context())
+func storm_text() -> String:
+	# Preserve Ion's existing text contract; new storms use the same factor, never another roll.
+	if kind == 2: return ion_text()
+	return "%s %s %s" % [storm_family(kind).to_upper(), "AMPLIFIED" if ion_factor == 2.0 else "SUPPRESSED", "×2" if ion_factor == 2.0 else "×½"]
+static func storm_notice(selection: int, factor: float) -> String:
+	var label: String = "BLUE CARD" if selection == 2 else storm_family(selection).to_upper()
+	return NAMES[selection].to_upper() + " · " + label + " " + ("×2" if factor == 2.0 else "×½")
+
 ## TUNE: Full rounds between events, counted after an event ends.
 const TEMPORAL_DROP_MULTIPLIER: float = 2.0  # TUNE: Tier 2 draw multiplier for the whole battle.
 const MIN_INTERVAL: int = 3
@@ -22,7 +45,7 @@ const NEBULA_STEP: int = 10
 const NEBULA_MAX: int = 70
 var kind: int = 0
 var active: bool = false
-# One announced multiplier applies to every blue card for the entire storm.
+# One announced multiplier for every storm; keep the public name for existing callers.
 var ion_factor: float = 1.0
 var next_round: int = 0
 var ends_round: int = 0
@@ -41,16 +64,14 @@ static func description(selection: int) -> String:
 		"First event on round %d–%d, then %d–%d rounds after each event ends"
 		% [1 + MIN_INTERVAL, 1 + MAX_INTERVAL, MIN_INTERVAL, MAX_INTERVAL]
 	)
+	if STORMS.has(selection):
+		var lore: String = {6:" Magnetized metallic dust disrupts fabrication and material transfer.",7:" Exotic particles disrupt neural coordination and crew communication."}.get(selection,"")
+		return "%s: %s card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged." % [timing,storm_family(selection).capitalize(),ACTIVE_ROUNDS] + lore
 	match selection:
 		1:
 			return (
 				"%s: each ship independently has a %d%% chance of taking %d damage, Shields first."
 				% [timing, roundi(ASTEROID_CHANCE * 100), ASTEROID_DAMAGE]
-			)
-		2:
-			return (
-				"%s: Energy card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged."
-				% [timing, ACTIVE_ROUNDS]
 			)
 		3:
 			return (
@@ -102,9 +123,9 @@ func begin_round(round_number: int) -> String:
 			return "ASTEROID SHOWER"
 		active = true
 		ends_round = round_number + ACTIVE_ROUNDS
-		if kind == 2:
+		if STORMS.has(kind):
 			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
-			return "ION STORM · " + ion_text()
+			return NAMES[kind].to_upper() + " · " + storm_text()
 		return ["", "ASTEROIDS INCOMING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
 	return ""
 
@@ -124,11 +145,11 @@ func status_text(round_number: int) -> String:
 		return (
 			NAMES[kind].to_upper()
 			+ " ACTIVE · "
-			+ ("Shields offline" if kind == 3 else ion_text())
+			+ ("Shields offline" if kind == 3 else storm_text())
 			+ " · %d rounds left" % maxi(0, ends_round - round_number)
 		)
 	var phrases: Array[String] = ["", "asteroids pass by", "next ion storm", "next solar flare"]
-	return "%d turns until %s" % [maxi(0, next_round - round_number), phrases[kind]]
+	return "%d turns until %s" % [maxi(0, next_round - round_number), ("next " + NAMES[kind].to_lower()) if STORMS.has(kind) else phrases[kind]]
 
 
 func meter_value(round_number: int) -> float:
@@ -186,7 +207,7 @@ static func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 
 # Snapshot only current effect context, never the scheduler or RNG.
 func forecast_context() -> Dictionary:
-	return {"kind":kind,"active":active,"ion_factor":ion_factor,"miss_rate":miss_rate}
+	return {"kind":kind,"active":active,"ion_factor":ion_factor,"miss_rate":miss_rate,"storm_family":storm_family(kind),"storm_factor":ion_factor}
 
 
 # Shared detached-state execution. Caller owns snapshots, report and RNG/draw policy.
@@ -198,8 +219,8 @@ static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionar
 	var modified: Resource = card.duplicate(true)
 	if missed:
 		modified.effects = ({"self_damage":card.effects.self_damage} if card.effects.has("self_damage") else {})
-	elif context.get("kind",0) == 2 and context.get("active",false) and card.family == "energy":
-		modified.effects = _scaled(card.effects,context.get("ion_factor",1.0))
+	elif storm_applies(card,context):
+		modified.effects = _scaled(card.effects,context.get("storm_factor",context.get("ion_factor",1.0)))
 	var saved_actor_shields: int = actor.shields
 	var saved_target_shields: int = target.shields
 	var flare: bool = context.get("kind",0) == 3 and context.get("active",false)
@@ -225,8 +246,8 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 	var notice: String = ""
 	if missed:
 		notice = "MISS · NEBULA INTERFERENCE"
-	elif kind == 2 and active and card.family == "energy":
-		notice = "ION STORM · BLUE CARD " + ("×2" if ion_factor == 2.0 else "×½")
+	elif affects_card(card):
+		notice = storm_notice(kind,ion_factor)
 	resolve_effects(card,actor,target,forecast_context(),rng,last_hull_damage,null,missed)
 	return notice
 
@@ -249,15 +270,15 @@ func ion_text() -> String:
 	return "ENERGY cards are powered up!" if ion_factor == 2.0 else "ENERGY cards are surpressed!"
 
 
-# Return presentation data for the active Ion multiplier; never apply a real combat action here.
+# Return presentation data for the active matching-family storm; never apply a real combat action here.
 func preview(card: Resource) -> Resource:
-	if card == null or kind != 2 or not active or card.family != "energy":
+	if not affects_card(card):
 		return card
 	var shown = card.duplicate(true)
 	shown.set_meta("inspection_base", card.get_meta("inspection_base", card))
 	shown.effects = _scaled(card.effects, ion_factor)
 	shown.description = (
-		("ION ×2 · " if ion_factor == 2.0 else "ION ×½ · ") + card.describe_effects(shown.effects)
+		(STORMS[kind].short + (" ×2 · " if ion_factor == 2.0 else " ×½ · ")) + card.describe_effects(shown.effects)
 	)
 	if card.play_again:
 		shown.description += "; play again"

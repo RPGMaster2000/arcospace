@@ -337,7 +337,7 @@ func generate_system() -> bool:
 						"enemy_data": entry,
 						"system_number": system_number,
 						"mandatory_boss": mandatory,
-						"modifier": Modifiers.roll_encounter(rng),
+						"modifier": _roll_battle_modifier(),
 						"title": entry.ship_name,
 						"completed": false,
 						"charge_awarded": false
@@ -360,6 +360,11 @@ func generate_system() -> bool:
 		encounters[other] = swap
 	progress_committed.emit()
 	return true
+
+
+# One authoritative uniform roll; overridable only for historical-distribution trace fixtures.
+func _roll_battle_modifier() -> int:
+	return Modifiers.roll_encounter(rng)
 
 
 func enemy_profile(encounter: Dictionary) -> Resource:

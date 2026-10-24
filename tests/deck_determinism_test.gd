@@ -3,6 +3,11 @@ const State = preload("res://scripts/expedition_state.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const Result = preload("res://scripts/combat/battle_result.gd")
+# Preserve the captured six-way encounter environment, not the new distribution.
+# All 1,044 original ownership/reward/RNG assertions and the fixture remain unchanged.
+class LegacyModifiers extends State:
+	func _roll_battle_modifier() -> int:
+		return rng.randi_range(0,5)
 var trace: Array = []
 var fixtures: Dictionary = {}
 func mark(state: Resource, label: String) -> void:
@@ -12,7 +17,7 @@ func _initialize() -> void:
 		for seed_value in [43, 65537, 98981]:
 			var rules: Resource = Rules.duplicate()
 			rules.log_rolls = false
-			var state = State.new()
+			var state = LegacyModifiers.new()
 			state.start(ship_index, rules, seed_value)
 			mark(state, "start/%s/%s" % [ship_index, seed_value])
 			for system in range(1, 7):

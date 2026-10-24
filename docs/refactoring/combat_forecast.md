@@ -237,3 +237,13 @@ Final shared runner: **98 headless regression scripts + editor import passed**, 
 failed suites. This includes all previous 94 scripts and the four new standalone suites.
 Existing expected card/combat/expedition fixtures were not regenerated. Commit IDs are
 supplied with the final publication report; Phase A and Phase B are independent commits.
+
+## Subsequent storm-family integration
+
+[Metal and Psionic Storm](../storm_family.md) append IDs 6/7. The context now also carries
+`storm_family` and `storm_factor`; `ion_factor` remains the compatible single backing
+value. Shared modifier execution performs the scaling and AI uses `storm_applies` for
+relevance, so no new forecast/scoring implementation exists. Four-field historical
+contexts retain their Ion fallback. The Step 4 decision ledger and existing card/combat
+fixtures remain unchanged; encounter-generation distribution changes are documented
+separately from forecast semantics.

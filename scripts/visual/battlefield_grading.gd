@@ -31,7 +31,7 @@ func _ready() -> void:
 	_apply()
 
 func set_environment(kind: int) -> void:
-	preset = PRESETS[clampi(kind, 0, PRESETS.size()-1)]
+	preset = PRESETS[0 if kind in [6,7] else clampi(kind, 0, PRESETS.size()-1)]
 
 func _apply() -> void:
 	parameter_updates += 1

@@ -213,11 +213,11 @@ func set_discardable(allowed: bool) -> void:
 	$DiscardButton.disabled = not allowed
 
 
-func set_ion_glow(active: bool) -> void:
-	# TUNE: Shadow size and alpha control the subtle blue outline during ion storms.
+func set_ion_glow(active: bool, tint: Color = Color(0.15,0.55,1.0)) -> void:
+	# TUNE: Shared storm outline; the default blue preserves the Ion caller contract.
 	for style in ["normal", "disabled", "hover", "pressed"]:
 		var box: StyleBoxFlat = get_theme_stylebox(style).duplicate()
-		box.shadow_color = Color(0.15, 0.55, 1.0, 0.55 if active else 0.0)
+		box.shadow_color = Color(tint, 0.55 if active else 0.0)
 		box.shadow_size = 9 if active else 0
 		add_theme_stylebox_override(style, box)
 

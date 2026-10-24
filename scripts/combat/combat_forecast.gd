@@ -26,7 +26,7 @@ class Draws extends RefCounted:
 		# Endpoints span every < chance outcome, including native randf's inclusive 1.
 		return float(pick(2))
 
-# Context is Modifier.forecast_context(): kind, active, ion_factor, miss_rate; no Node/RNG.
+# Context is Modifier.forecast_context(): current storm family/factor and modifier scalars; no Node/RNG.
 # Outcomes are attainable detached states, not expected values or equally weighted samples.
 # complete=false means a bounded subset only; never infer guarantees from that subset.
 static func predict(card: Resource, actor: Dictionary, target: Dictionary, context: Dictionary = {}) -> Dictionary:

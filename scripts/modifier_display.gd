@@ -2,6 +2,7 @@ extends Control
 # RESPONSIBILITY: Show modifier countdown and activation feedback; never change rules.
 ## TUNE: Seconds for the central message to remain visible before fading.
 @export var hold_seconds: float = 1.2
+const Modifier = preload("res://scripts/combat_modifier.gd")
 var flash_tween: Tween
 
 
@@ -18,13 +19,13 @@ func refresh(modifier: Node, round_number: int) -> void:
 	$Meter.refresh(modifier, round_number)
 
 
-func announce(message: String) -> void:
+func announce(message: String, tint: Color = Color.WHITE) -> void:
 	if message.is_empty():
 		return
 	if flash_tween:
 		flash_tween.kill()
 	$Flash.text = message
-	$Flash.modulate.a = 0.0
+	$Flash.modulate = Color(tint,0.0)
 	flash_tween = create_tween()
 	flash_tween.tween_property($Flash, "modulate:a", 1.0, 0.12)
 	flash_tween.tween_interval(hold_seconds)
@@ -55,7 +56,10 @@ func warning(kind: int, card_effect: bool = false, effect_text: String = "") -> 
 		2: "ION STORM APPROACHING\nEnergy systems destabilizing…",
 		3: "SOLAR FLARE INCOMING\n Shield emitters failing…"
 	}
-	announce(("ION SURGE\n" + effect_text) if card_effect else messages.get(kind, ""))
+	if kind in [6,7]: messages[kind] = Modifier.NAMES[kind].to_upper() + " APPROACHING\n" + Modifier.storm_family(kind).capitalize() + " systems destabilizing…"
+	var tint: Color = Modifier.storm_color(kind) if kind in [6,7] else Color.WHITE
+	var surge: String = Modifier.STORMS.get(kind,{}).get("short","ION") + " SURGE\n"
+	announce((surge + effect_text) if card_effect else messages.get(kind, ""),tint)
 	await get_tree().create_timer(warning_seconds).timeout
 
 
@@ -63,6 +67,7 @@ func impact(kind: int, player_hit: bool = false) -> void:
 	if not cinematic_enabled:
 		return
 	var colors = {1: Color(1.0, 0.08, 0.03), 2: Color(0.12, 0.45, 1.0), 3: Color(1.0, 0.9, 0.25)}
+	if Modifier.STORMS.has(kind): colors[kind] = Modifier.storm_color(kind)
 	if not colors.has(kind):
 		return
 	if screen_tween:

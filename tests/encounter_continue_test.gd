@@ -27,7 +27,7 @@ func run() -> void:
 	check(battle.get_node("MatchResult/Panel/Continue").visible, "Victory exposes Continue")
 	var next: int = battle.next_modifier
 	battle.refresh_display()
-	check(next == battle.next_modifier and next in [1,2,3,4,5], "Encounter modifier is rolled once and previewed")
+	check(next == battle.next_modifier and next >= 1 and next < battle.modifier.NAMES.size(), "Encounter modifier is rolled once and previewed")
 	battle.get_node("MatchResult/Panel/Continue").pressed.emit()
 	await process_frame
 	battle = current_scene

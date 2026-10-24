@@ -49,6 +49,7 @@ func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414
 func refresh(modifier: Node, round_number: int) -> void:
 	self.visible = true
 	$Text.text = compact_status(modifier, round_number)
+	$Text.modulate = modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE
 	self.tooltip_text = "Battle modifier · Tap for full rules"
 	current_rules = (
 		"[b]%s[/b]\n\n%s" % [modifier.NAMES[modifier.kind], modifier.description(modifier.kind)]
@@ -98,11 +99,11 @@ static func compact_status(modifier: Node, round_number: int) -> String:
 			return "◇  DEEP SPACE · No environmental modifier"
 		1:
 			return "◆  %s · Asteroid impact in %d rounds" % [name, wait_rounds]
-		2:
+		2, 6, 7:
 			return (
 				(
-					"ϟ  %s · Energy effects %s · %d rounds left"
-					% [name, "doubled" if modifier.ion_factor == 2.0 else "halved", remaining]
+					"ϟ  %s · %s effects %s · %d rounds left"
+					% [name, modifier.storm_family(modifier.kind).capitalize(), "doubled" if modifier.ion_factor == 2.0 else "halved", remaining]
 				)
 				if modifier.active
 				else "ϟ  %s · Next storm in %d rounds" % [name, wait_rounds]

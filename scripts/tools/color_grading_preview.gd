@@ -14,7 +14,7 @@ func _ready() -> void:
 	toolbar.position = Vector2(220, 4)
 	layer.add_child(toolbar)
 	var choices := OptionButton.new()
-	for name in ["Standard", "Asteroid belt", "Ion storm", "Solar flare", "Nebula", "Temporal rift"]:
+	for name in preload("res://scripts/combat_modifier.gd").NAMES:
 		choices.add_item(name)
 	choices.item_selected.connect(_show)
 	toolbar.add_child(choices)

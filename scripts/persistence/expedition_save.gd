@@ -83,7 +83,7 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 		if result.has(key): result[key] = int(result[key])
 	if value.kind == "battle":
 		if not ships.has(value.get("enemy_id")): return {}
-		if not _integer(value.get("modifier"), 0, 5): return {}
+		if not _integer(value.get("modifier"), 0, State.Modifiers.NAMES.size() - 1): return {}
 		result.enemy_data = ships[value.enemy_id]
 		result.enemy = maxi(0, Ships.ENEMIES.find(result.enemy_data))
 		result.erase("enemy_id")

@@ -334,7 +334,7 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 		var button = cards[slot]
 		var shown: Dictionary = data.cards[slot]
 		button.card_data = shown.preview
-		button.set_ion_glow(shown.ion_glow)
+		button.set_ion_glow(shown.ion_glow, shown.get("storm_color",Color(0.15,0.55,1.0)))
 		button.set_playable(
 			shown.present and player_can_act and shown.affordable, int(shown.affordable)
 		)

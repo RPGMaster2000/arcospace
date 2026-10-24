@@ -326,13 +326,15 @@ func _initialize() -> void:
 		[
 			"Event timing",
 			(
-				"First event round 1 + random integer %d–%d; next event %d–%d rounds after previous ends; active events last %d full rounds. One random modifier (0–5, uniform) per generated enemy."
+				"First event round 1 + random integer %d–%d; next event %d–%d rounds after previous ends; active events last %d full rounds. One random modifier (0–%d, uniform; %.1f%% each) per generated enemy."
 				% [
 					Mod.MIN_INTERVAL,
 					Mod.MAX_INTERVAL,
 					Mod.MIN_INTERVAL,
 					Mod.MAX_INTERVAL,
-					Mod.ACTIVE_ROUNDS
+					Mod.ACTIVE_ROUNDS,
+					Mod.NAMES.size()-1,
+					100.0/Mod.NAMES.size()
 				]
 			),
 			"combat_modifier.gd; expedition_state.gd"
@@ -360,6 +362,8 @@ func _initialize() -> void:
 			"combat_modifier.gd: begin_round, _scaled"
 		]
 	)
+	for kind in [6,7]:
+		text += row([Mod.NAMES[kind],Mod.description(kind),"combat_modifier.gd: STORMS, _scaled"])
 	text += row(
 		[
 			"Solar flare",

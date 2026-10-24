@@ -71,6 +71,9 @@ func _enter_tree() -> void:
 	# Replace before child _ready callbacks cache the ships for visual effects.
 	var selection: int = clampi(int(setup_settings.get("modifier", 0)), 0, BATTLEFIELDS.size() - 1)
 
+	if selection == BATTLEFIELDS.size() - 1 and int(setup_settings.get("modifier",0)) in [6,7]:
+		selection = 0 # New storms use the existing normal arenas, not Temporal Rift.
+
 	var viewport = $BattleView/Viewport
 	var previous = viewport.get_node("Battlefield")
 	viewport.remove_child(previous)
