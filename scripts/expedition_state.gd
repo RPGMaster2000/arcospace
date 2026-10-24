@@ -1,7 +1,7 @@
 extends Resource
 # RESPONSIBILITY: Own expedition state, generation, rewards and battle handoff.
 # DOES NOT: Create UI nodes, animate travel or resolve individual combat actions.
-# EXTEND: Keep generation, ownership and completion here; expedition.gd only presents them.
+# EXTEND: Deck owns card transactions; this facade coordinates encounters and persistence.
 class_name ExpeditionState
 signal deck_changed
 signal progress_committed
@@ -47,21 +47,43 @@ var station_production_purchases: int = 0
 var service_revision: int = 0
 var station_rng := RandomNumberGenerator.new()
 
+const Deck = preload("res://scripts/expedition/expedition_deck.gd")
+var _deck := Deck.new()
+# Compatibility/codec facade, never parallel state. Collection containers are copies;
+# CardData definitions remain shared read-only values as in the existing battle contract.
+# Normal callers mutate through choose/replace/upgrade; setters support restored fixtures.
+var acquired_cards: Array[Resource]:
+	get: return _deck.acquired_cards.duplicate()
+	set(value): _deck.acquired_cards = value.duplicate()
+var upgraded_cards: Dictionary:
+	get: return _deck.upgraded_cards.duplicate()
+	set(value): _deck.upgraded_cards = value.duplicate()
+var removed_starting_cards: Dictionary:
+	get: return _deck.removed_starting_cards.duplicate()
+	set(value): _deck.removed_starting_cards = value.duplicate()
+var pending_card: Resource:
+	get: return _deck.pending_card
+	set(value): _deck.pending_card = value
+var upgrades_remaining: int:
+	get: return _deck.upgrades_remaining
+	set(value): _deck.upgrades_remaining = value
+var upgraded_this_event: Dictionary:
+	get: return _deck.upgraded_this_event.duplicate()
+	set(value): _deck.upgraded_this_event = value.duplicate()
+var card_offers: Array[Resource]:
+	get: return _deck.card_offers.duplicate()
+	set(value): _deck.card_offers = value.duplicate()
+var pending_choice: String:
+	get: return _deck.pending_choice
+	set(value): _deck.pending_choice = value
+
 var production_upgrades: Dictionary = {}
 var pending_bonuses: Dictionary = {}
 var pending_penalties: Dictionary = {}
-var acquired_cards: Array[Resource] = []
-var upgraded_cards: Dictionary = {}
-var pending_choice: String = ""
 var choice_amount: int = 0
-var card_offers: Array[Resource] = []
 var last_outcome: String = ""
 # -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
 var last_poi_success: int = -1
-var removed_starting_cards: Dictionary = {}
-var pending_card: Resource
-var upgrades_remaining: int = 0
-var upgraded_this_event: Dictionary = {}
 # In-memory travel interruption; no separate combat or persistence system.
 var navigation_origin: int = -1
 var travel_destination: int = -1
@@ -97,16 +119,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	production_upgrades.clear()
 	pending_bonuses.clear()
 	pending_penalties.clear()
-	acquired_cards.clear()
-	removed_starting_cards.clear()
-	pending_card = null
-	upgraded_cards.clear()
+	_deck.reset()
 	_recorded_results.clear()
 	last_poi_success = -1
-	pending_choice = ""
-	upgrades_remaining = 0
-	upgraded_this_event.clear()
-	card_offers.clear()
 	active_battle = -1
 	field_repairs_open = false
 	var chosen_seed: int = seed_override if seed_override != 0 else rules.debug_seed
@@ -603,11 +618,7 @@ func _apply_outcome(outcome: Resource) -> void:
 		hull = mini(ship().hull_capacity, hull + outcome.hull)
 	add_modifiers(outcome.next_battle)
 	if outcome.card_reward:
-		pending_choice = "card"
-		card_offers = random_card_offers(outcome.minimum_card_tier)
-		if card_offers.is_empty():
-			pending_choice = ""
-			last_outcome += "\nNo unowned cards meet this reward's minimum tier."
+		last_outcome += _deck.start_card_reward(ship(), rules, rng, outcome.minimum_card_tier)
 	elif outcome.upgrade_card:
 		if upgrade_candidates().is_empty():
 			salvage += rules.unavailable_upgrade_salvage
@@ -835,123 +846,55 @@ func shared_pool() -> Array[Resource]:
 
 # Build owned identities with player-only upgrade copies; shared_pool remains the enemy base library.
 func player_pool() -> Array[Resource]:
-	var result: Array[Resource] = []
-	var starting: Array = (
-		ship().starting_cards if not ship().starting_cards.is_empty() else Cards.CARDS
-	)
-	var seen: Dictionary = {}
-	var retained: Array = []
-	for card in starting:
-		if not removed_starting_cards.has(card.identity_key()):
-			retained.append(card)
-	for card in retained + acquired_cards:
-		var key: String = card.identity_key()
-		if seen.has(key):
-			continue
-		seen[key] = true
-		result.append(upgraded_cards.get(key, card))
-	return result
+	return _deck.player_pool(ship())
 
 
 func acquired_draw_weights() -> Dictionary:
-	var result: Dictionary = {}
-	for card in acquired_cards:
-		result[card.identity_key()] = rules.acquired_card_draw_weight
-	return result
+	return _deck.acquired_draw_weights(rules)
 
 
 func available_reward_cards(minimum_tier: int = 1) -> Array[Resource]:
-	var owned: Dictionary = {}
-	for card in player_pool():
-		owned[card.identity_key()] = true
-	var candidates: Array[Resource] = []
-	for card in Cards.CARDS:
-		if card.tier >= minimum_tier and not owned.has(card.identity_key()):
-			candidates.append(card)
-	return candidates
+	return _deck.available_reward_cards(ship(), minimum_tier)
 
 
 func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
-	var candidates: Array[Resource] = available_reward_cards(minimum_tier)
-	var offers: Array[Resource] = []
-	for slot in range(mini(3, candidates.size())):
-		var preferred_tier: int = 2 if rng.randf() < rules.reward_tier_two_chance else 1
-		var bucket: Array[Resource] = []
-		for card in candidates:
-			if card.tier == preferred_tier:
-				bucket.append(card)
-		if bucket.is_empty():
-			bucket.assign(candidates)
-		var chosen: Resource = bucket[rng.randi_range(0, bucket.size() - 1)]
-		offers.append(chosen)
-		candidates.erase(chosen)
-	return offers
+	return _deck.random_card_offers(ship(), rules, rng, minimum_tier)
 
 
 func choose_card(index: int) -> bool:
-	if pending_choice != "card" or index < 0 or index >= card_offers.size():
-		return false
-	var chosen: Resource = card_offers[index]
-	for card in player_pool():
-		if card.identity_key() == chosen.identity_key():
-			return false
-	if player_pool().size() >= deck_limit():
-		pending_card = chosen
-		pending_choice = "replace"
-		card_offers.clear()
-		progress_committed.emit()
-		return true
-	_acquire_card(chosen)
-	progress_committed.emit()
-	return true
+	return _commit_deck_choice(_deck.choose_card(index, ship(), rules))
 
 
 func deck_limit() -> int:
-	# Never invalidate the existing starting pool if a custom configuration is too small.
-	return maxi(ship().starting_cards.size(), maxi(1, rules.max_deck_identities))
+	return _deck.deck_limit(ship(), rules)
 
 
-func _acquire_card(chosen: Resource) -> void:
-	acquired_cards.append(chosen)
-	last_outcome += (
-		"\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)."
-		% [chosen.card_name, rules.acquired_card_draw_weight]
-	)
-	pending_choice = ""
-	pending_card = null
-	card_offers.clear()
-	deck_changed.emit()
+# A successful card transaction notifies live hands before the existing autosave boundary.
+func _commit_deck_choice(result: Dictionary) -> bool:
+	if result.is_empty():
+		return false
+	last_outcome += result.message
+	if result.deck_changed:
+		deck_changed.emit()
+	progress_committed.emit()
+	return true
+
+
+func deck_snapshot() -> Dictionary:
+	return _deck.snapshot()
+
+
+# Save codec has already validated registry references and the version-1 payload.
+func restore_deck(data: Dictionary, cards: Dictionary) -> void:
+	_deck.restore(data, cards)
 
 
 func replace_card(key: String) -> bool:
-	if pending_choice != "replace" or pending_card == null:
-		return false
-	var owned: Dictionary = {}
-	for card in player_pool():
-		owned[card.identity_key()] = card
-	if not owned.has(key) or owned.has(pending_card.identity_key()):
-		return false
-	# No mutation until the explicit confirmation reaches this validated method.
-	removed_starting_cards[key] = true
-	for index in range(acquired_cards.size() - 1, -1, -1):
-		if acquired_cards[index].identity_key() == key:
-			acquired_cards.remove_at(index)
-	upgraded_cards.erase(key)
-	last_outcome += "\nRemoved %s." % owned[key].card_name
-	_acquire_card(pending_card)
-	progress_committed.emit()
-	return true
+	return _commit_deck_choice(_deck.replace_card(key, ship(), rules))
 
 
 func decline_card() -> bool:
-	if pending_choice != "replace" or pending_card == null:
-		return false
-	last_outcome += "\nKept current deck; new card declined."
-	pending_card = null
-	pending_choice = ""
-	card_offers.clear()
-	progress_committed.emit()
-	return true
+	return _commit_deck_choice(_deck.decline_card())
 
 
 func choose_attribute(key: String) -> bool:
@@ -974,36 +917,11 @@ func choose_attribute(key: String) -> bool:
 
 
 func upgrade_candidates() -> Array[Resource]:
-	var result: Array[Resource] = []
-	for card in player_pool():
-		if pending_choice == "upgrade" and upgraded_this_event.has(card.identity_key()):
-			continue
-		if card.upgrade_level < mini(2, mini(card.max_upgrades, card.upgrade_effects.size())):
-			result.append(card)
-	return result
+	return _deck.upgrade_candidates(ship())
 
 
-# Replace an owned identity; live consumers synchronize through deck_changed.
 func choose_upgrade(key: String) -> bool:
-	if pending_choice != "upgrade":
-		return false
-	for card in upgrade_candidates():
-		if card.identity_key() != key:
-			continue
-		var copy: Resource = card.with_upgrade(card.upgrade_level + 1)
-		upgraded_cards[key] = copy
-		deck_changed.emit()
-		last_outcome += (
-			"\nUpgraded %s: %s (cost unchanged; player only)." % [copy.card_name, copy.description]
-		)
-		upgraded_this_event[key] = true
-		upgrades_remaining = maxi(0, upgrades_remaining - 1)
-		if upgrades_remaining == 0 or upgrade_candidates().is_empty():
-			finish_upgrades()
-		if pending_choice == "upgrade":
-			progress_committed.emit()
-		return true
-	return false
+	return _commit_deck_choice(_deck.choose_upgrade(key, ship()))
 
 
 func battle_upgrade_count(result: BattleResult) -> int:
@@ -1022,22 +940,12 @@ func battle_upgrade_count(result: BattleResult) -> int:
 
 # One event upgrades each identity at most once; a later event may upgrade it again.
 func start_upgrade_event(count: int) -> void:
-	upgraded_this_event.clear()
-	upgrades_remaining = mini(maxi(0, count), upgrade_candidates().size())
-	pending_choice = "upgrade" if upgrades_remaining > 0 else ""
-	if upgrades_remaining == 0:
-		last_outcome += "\nNo eligible card upgrades remain."
+	last_outcome += _deck.start_upgrade_event(count, ship())
 
 
 func finish_upgrades() -> void:
-	if upgrades_remaining > 0 and not upgrade_candidates().is_empty():
-		return
-	if pending_choice != "upgrade":
-		return
-	pending_choice = ""
-	upgrades_remaining = 0
-	upgraded_this_event.clear()
-	progress_committed.emit()
+	if _deck.finish_upgrades(ship()):
+		progress_committed.emit()
 
 
 #endregion

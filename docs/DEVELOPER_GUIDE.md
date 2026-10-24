@@ -9,6 +9,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [I want to change X — where do I start?](#i-want-to-change-x--where-do-i-start)
 - [Practical walkthroughs](#practical-walkthroughs)
 - [Safe modification and testing](#safe-modification-and-testing)
+- [Persistent deck and reward ownership](expedition_deck_ownership.md)
 - [Shared local and CI regression runner](regression_testing.md)
 - [Battle ending sequence and mandatory upgrade completion](battle_results.md)
 - [3D star-system map, camera tuning and fallback](star_system_3d.md)
@@ -23,7 +24,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 | `scripts/` | Main screen/combat controllers and shared combat presentation. Start with `battle_setup.gd`, `board.gd`, `expedition.gd` and `expedition_state.gd`. |
 | `scripts/cards/` | Card definitions, registry, ordered effect resolution, hand eligibility/draws, preferences and allocation settings. |
 | `scripts/ships/` | Ship definitions/registry and shared procedural model animation scripts. |
-| `scripts/expedition/` | Inspector Resource classes for PoIs, approaches, outcomes, expedition rules and progression. The main state/controller stay at `scripts/`. |
+| `scripts/expedition/` | PoI/rule/progression Resources and the persistent deck/reward owner. The main state/controller stay at `scripts/`. |
 | `scripts/presentation/` | Scene-authored asteroid decoration motion; separate from encounter modifier rules. |
 | `scripts/ui/` | Runtime UI components: card galleries, modals, encounter tiles, resource indicators and the star-map prototype. These display data and send choices to controllers. |
 | `scenes/` | Saved node hierarchies for selection, exploration, battles, cards, ships and battlefields. A scene may inherit another scene and use runtime-created children. |
@@ -170,7 +171,8 @@ existing screen, formatting, deck replacement and repair components.
 |---|---|---|
 | [battle_setup.gd](../scripts/battle_setup.gd) | [ship_library.gd](../scripts/ships/ship_library.gd), ship previews, `expedition.tscn` | Selection and confirmation; does not run combat. |
 | [expedition.gd](../scripts/expedition.gd) | `ExpeditionState`, star map/grid, PoI/reward UI, `board_3d.tscn` | Screen routing and callbacks; does not calculate rewards. |
-| [expedition_state.gd](../scripts/expedition_state.gd) | expedition rules/progression, ship/card libraries, outcomes, repair rules | Persistent Hull, Salvage, owned cards, upgrades, generation, completion and pending bonuses. |
+| [expedition_state.gd](../scripts/expedition_state.gd) | expedition rules/progression, ship/card libraries, outcomes, repair rules | Authoritative run coordinator: Hull, Salvage, generation, completion, bonuses; delegates card ownership to ExpeditionDeck. |
+| [expedition_deck.gd](../scripts/expedition/expedition_deck.gd) | Card library; explicit profile/rules/RNG inputs | Sole card ledgers, reward selection, acquisition/replacement and upgrade events; no Board or State back-reference. |
 | [board.gd](../scripts/board.gd) | `CardHand`, `EnemyAI`, `CombatModifier`, `MatchRules`, `FTLDrive`, motion/effects | Authoritative battle properties, input locks, turns, result recording. |
 | [combat_modifier.gd](../scripts/combat_modifier.gd) | `CardEffects` | Round events and modified card copies; its `preview()` also drives Ion card presentation. |
 | [card_effects.gd](../scripts/cards/card_effects.gd) | Two ship-state dictionaries | Cost, damage, resources and other effects; no UI or turn advancement. |
@@ -517,7 +519,7 @@ Comment convention in critical scripts: **RESPONSIBILITY** identifies the owner;
 
 See [implementation, tuning and validation](chasedown_rewards.md). `ExpeditionRules` owns the 5% chance, per-system limit, four response dictionaries and 1/2/3/3 upgrade counts. `ExpeditionState.try_chasedown` validates real PoI-to-PoI travel and uses an independent seeded RNG. The existing `begin_battle` and `record_battle` pipeline handles scaled ordinary enemies, modifier consumption, exactly-once +1 FTL and non-escape upgrades. No separate battle scene or reward system is used.
 
-`upgraded_this_event` tracks identity keys: one selection per identity per event, even if level 2 is still available. `upgrades_remaining` drives the existing gallery; Finish clears the event, and a later event can select the identity again. Existing card costs, effects, acquisition weights and max levels are untouched. No combat-exhaustion Salvage is added. State is in memory; there is no disk save/load to migrate or validate.
+`ExpeditionDeck.upgraded_this_event` tracks identity keys: one selection per identity per event, even if level 2 is still available. `upgrades_remaining` drives the existing gallery; Finish cannot clear an event while eligible awarded selections remain; a later event can select the identity again. Existing card costs, effects, acquisition weights and max levels are untouched. No combat-exhaustion Salvage is added. The version-1 single-slot codec persists these ledgers through the state facade; see [ownership and compatibility](expedition_deck_ownership.md).
 
 ## Conditional cards and capped decks
 
@@ -539,7 +541,7 @@ Tune **Max Deck Identities** on `encounters/expedition_rules.tres` (script `Expe
 
 `choose_card()` acquires normally below capacity; at capacity it stores `pending_card`, consumes the original offers and sets `pending_choice = "replace"`. `_show_replacement()` reuses the existing outcome view, portrait, gallery, colors and scrolling. The incoming Resource stays fixed across rebuilding. A gallery selection changes only the UI; `replace_card(identity_key)` validates current ownership and incoming uniqueness, removes that identity/upgrade, then acquires the new card. `decline_card()` closes without modifying the deck or refunding Salvage. Both paths consume the event once. The existing Outpost return path is retained. `player_pool()` and `acquired_draw_weights()` rebuild the authoritative draw pool; active held copies of a removed identity are replaced without changing hand size.
 
-`upgraded_this_event` continues to enforce one selection per identity in a combat reward event. Removed upgrade state cannot transfer to another identity or survive reacquisition. The current Deck Viewer caption shows owned identities / capacity. All deck state is in memory only: there is still no disk save/load format or migration. Starting a new expedition clears removal, acquisition, upgrade and pending-replacement ledgers.
+`upgraded_this_event` continues to enforce one selection per identity in a combat reward event. Removed upgrade state cannot transfer to another identity or survive reacquisition. The current Deck Viewer caption shows owned identities / capacity. All deck ledgers have one owner in `ExpeditionDeck`; version-1 saves retain their existing fields and identity keys. Starting a new expedition clears removal, acquisition, upgrade and pending-replacement ledgers.
 
 Focused validation: `card_expansion_test.gd`, `deck_replacement_ui_test.gd`; existing modifier, card progression/tier/UI, Power Allocation, PoI, station, combat and expedition tests remain relevant. Regenerate only the card reference with `godot --headless --path . --script tools/generate_balance_docs.gd -- --cards-only`, leaving the independently maintained progression references intact.
 

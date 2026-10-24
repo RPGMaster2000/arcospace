@@ -36,12 +36,6 @@ static func _int_map(value: Variant, keys: Array, low: int) -> bool:
 	return true
 
 
-static func _card_ids(items: Array) -> Array:
-	var result: Array = []
-	for item in items: result.append(item.identity_key())
-	return result
-
-
 static func _entry(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for key in ENTRY_FIELDS:
@@ -54,18 +48,19 @@ static func _entry(value: Dictionary) -> Dictionary:
 
 
 static func encode(state: Resource) -> Dictionary:
+	var deck: Dictionary = state.deck_snapshot()
 	var data: Dictionary = {"ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
 		"pending_choice": state.pending_choice, "last_outcome": state.last_outcome,
 		"production_upgrades": state.production_upgrades.duplicate(),
 		"bonuses": state.pending_bonuses.duplicate(), "penalties": state.pending_penalties.duplicate(),
-		"acquired": _card_ids(state.acquired_cards), "removed": state.removed_starting_cards.keys(),
-		"upgrades": {}, "upgraded_this_event": state.upgraded_this_event.keys(),
-		"offers": _card_ids(state.card_offers),
-		"pending_card": state.pending_card.identity_key() if state.pending_card != null else "",
+		"acquired": deck.acquired, "removed": deck.removed,
+		"upgrades": {}, "upgraded_this_event": deck.upgraded_this_event,
+		"offers": deck.offers,
+		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
-	for key in state.upgraded_cards: data.upgrades[key] = state.upgraded_cards[key].upgrade_level
+	data.upgrades = deck.upgrades
 	for entry in state.encounters: data.encounters.append(_entry(entry))
 	for key in ["rng", "station_rng", "chasedown_rng"]:
 		var generator: RandomNumberGenerator = state.get(key)
@@ -155,10 +150,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	state.rules = configuration
 	state.player_ship = Ships.PLAYERS.find(players[data.ship_id])
 	state.seed_used = int(data.seed)
-	for key in COUNTERS: state.set(key, int(data[key]))
+	for key in COUNTERS:
+		if key != "upgrades_remaining": state.set(key, int(data[key]))
 	state.system_name = data.system_name
 	state.last_outcome = data.last_outcome
-	state.pending_choice = data.pending_choice
 	state.production_upgrades = data.production_upgrades.duplicate()
 	state.pending_bonuses = data.bonuses.duplicate()
 	state.pending_penalties = data.penalties.duplicate()
@@ -166,12 +161,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for key in values: values[key] = int(values[key])
 	state.encounters = entries
 	state.service = service
-	for id in data.acquired: state.acquired_cards.append(cards[id])
-	for id in data.removed: state.removed_starting_cards[id] = true
-	for id in data.upgrades: state.upgraded_cards[id] = cards[id].with_upgrade(int(data.upgrades[id]))
-	for id in data.upgraded_this_event: state.upgraded_this_event[id] = true
-	for id in data.offers: state.card_offers.append(cards[id])
-	state.pending_card = cards.get(data.pending_card)
+	state.restore_deck(data, cards)
 	var owned: Dictionary = {}
 	for card in state.player_pool(): owned[card.identity_key()] = true
 	for id in data.upgrades:

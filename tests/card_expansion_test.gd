@@ -258,7 +258,8 @@ func test_decks() -> void:
 			if card.identity_key() == incoming.identity_key(): check(card.upgrade_level == 0, "Removed upgrade never transferred")
 		check(not keys.has(removed.identity_key()) and keys.has(incoming.identity_key()) and not run.upgraded_cards.has(removed.identity_key()), "Removed identity and upgrade gone")
 		check(run.acquired_draw_weights()[incoming.identity_key()] == 3.0, "New acquisition retains weight")
-		run.pending_choice = "card"; run.card_offers.assign([removed])
+		var reacquired_offer: Array[Resource] = [removed]
+		run.pending_choice = "card"; run.card_offers = reacquired_offer
 		run.choose_card(0)
 		check(run.pending_card == removed, "Removed starting card can be reacquired")
 		check(run.replace_card(incoming.identity_key()) and run.player_pool().size() == 36, "Can replace acquired identity too")

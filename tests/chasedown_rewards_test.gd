@@ -147,8 +147,8 @@ func run() -> void:
 		await process_frame
 	state = fresh()
 	var eligible = state.player_pool()[0]
-	for card in state.player_pool(): state.upgraded_cards[card.identity_key()] = card.with_upgrade(2)
-	state.upgraded_cards[eligible.identity_key()] = eligible.with_upgrade(1)
+	for card in state.player_pool(): state.upgraded_cards = state.upgraded_cards.merged({card.identity_key(): card.with_upgrade(2)}, true)
+	state.upgraded_cards = state.upgraded_cards.merged({eligible.identity_key(): eligible.with_upgrade(1)}, true)
 	state.start_upgrade_event(3)
 	check(state.upgrades_remaining == 1 and state.choose_upgrade(eligible.identity_key()) and state.pending_choice.is_empty(), "Fewer eligible identities truncate reward")
 	var old_salvage: int = state.salvage

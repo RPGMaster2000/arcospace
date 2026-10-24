@@ -98,17 +98,22 @@ func run() -> void:
 			board.free()
 			await process_frame
 		# Exhaust the eligible reward pool without introducing duplicate offers.
-		state.acquired_cards.assign(Cards.CARDS)
+		var exhausted: Array[Resource] = []
+		exhausted.assign(Cards.CARDS)
+		state.acquired_cards = exhausted
 		check(state.random_card_offers().is_empty(), "Exhausted rewards empty internally")
 		var outcome = preload("res://scripts/expedition/encounter_outcome.gd").new()
 		outcome.card_reward = true
 		state._apply_outcome(outcome)
 		check(state.pending_choice.is_empty(), "Exhausted rewards never strand the UI")
-		state.acquired_cards.clear()
+		exhausted.clear()
+		state.acquired_cards = exhausted
 		var unowned_t2: Array[Resource] = []
 		for card in Cards.CARDS:
 			if card.tier == 2 and not identities.has(card.identity_key()): unowned_t2.append(card)
-		for slot in range(unowned_t2.size() - 2): state.acquired_cards.append(unowned_t2[slot])
+		var limited: Array[Resource] = []
+		for slot in range(unowned_t2.size() - 2): limited.append(unowned_t2[slot])
+		state.acquired_cards = limited
 		check(state.random_card_offers(2).size() == 2, "Two remaining rewards show two choices")
 	check(absf(reward_t2 / 1000.0 - 0.6) < 0.06, "60/40 reward tier weighting")
 	var draw = Hand.new()

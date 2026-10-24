@@ -91,7 +91,7 @@ func run() -> void:
 	host.card_inspector.confirm_button.pressed.emit()
 	host.card_inspector.confirm_button.pressed.emit()
 	check(host.state.upgraded_cards[card.identity_key()].upgrade_level == 1, "Upgrade confirmation single-use")
-	host.state.upgraded_cards[card.identity_key()] = card.with_upgrade(2)
+	host.state.upgraded_cards = host.state.upgraded_cards.merged({card.identity_key(): card.with_upgrade(2)}, true)
 	host.state.start_upgrade_event(1)
 	host.show_outcome()
 	for eligible in host.card_gallery.cards: check(eligible.identity_key() != card.identity_key(), "Maximum upgrades excluded")

@@ -48,7 +48,7 @@ func run() -> void:
 	restored.upgrades_remaining = 2
 	check(restored.choose_upgrade(acquired.identity_key()), "Upgrade commits")
 	var removal: String = restored.ship().starting_cards[0].identity_key()
-	restored.removed_starting_cards[removal] = true
+	restored.removed_starting_cards = restored.removed_starting_cards.merged({removal: true}, true)
 	check(store.save_run(restored), "Deck ledger saves")
 	var deck = store.load_run().state
 	check(deck.upgraded_cards[acquired.identity_key()].upgrade_level == 1 and deck.upgrades_remaining == 1, "Upgrade level and remaining selections survive")
@@ -147,7 +147,11 @@ func run() -> void:
 	# A full-deck reward restores the exact pending replacement without rerolling offers.
 	var full = State.new()
 	full.start(0, Rules, 5511)
-	while full.player_pool().size() < full.deck_limit(): full._acquire_card(full.available_reward_cards()[0])
+	while full.player_pool().size() < full.deck_limit():
+		full.pending_choice = "card"
+		var offer: Array[Resource] = [full.available_reward_cards()[0]]
+		full.card_offers = offer
+		full.choose_card(0)
 	full.pending_choice = "card"
 	full.card_offers = full.random_card_offers()
 	var incoming: String = full.card_offers[0].identity_key()

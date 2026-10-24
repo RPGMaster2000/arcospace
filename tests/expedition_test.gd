@@ -158,7 +158,9 @@ func run_tests() -> void:
 	# Pool weights and upgraded identities still enforce two identical cards per hand.
 	run = fresh()
 	var base: Resource = Library.CARDS[2]
-	for n in range(15): run.acquired_cards.append(base)
+	var repeated: Array[Resource] = []
+	for n in range(15): repeated.append(base)
+	run.acquired_cards = repeated
 	run.pending_choice = "upgrade"
 	check(run.choose_upgrade(base.identity_key()), "Upgrade acquired card")
 	var hand = Hand.new()
@@ -191,7 +193,7 @@ func run_tests() -> void:
 		var capped: Resource = candidate.duplicate(true)
 		capped.set_meta("card_identity", candidate.identity_key())
 		capped.upgrade_level = capped.max_upgrades
-		run.upgraded_cards[candidate.identity_key()] = capped
+		run.upgraded_cards = run.upgraded_cards.merged({candidate.identity_key(): capped}, true)
 	put_poi(run, Rules.pois[3])
 	var before_fallback: int = run.salvage
 	check(run.resolve_approach(0, 1, 0.0), "Research resolves with exhausted upgrade pool")

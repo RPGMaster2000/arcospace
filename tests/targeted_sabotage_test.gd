@@ -219,7 +219,8 @@ func run() -> void:
 					"New unowned card available as reward"
 				)
 				run_state.pending_choice = "card"
-				run_state.card_offers.assign([card])
+				var forced_offer: Array[Resource] = [card]
+				run_state.card_offers = forced_offer
 				check(run_state.choose_card(0), "New card acquisition")
 			for level in [1, 2]:
 				run_state.start_upgrade_event(1)

@@ -177,3 +177,15 @@ Performed against a local tree matching the baseline tree `45ba3cdbe3c668f12fd11
 - First-party dependency/size inventory and `git diff --check` completed. No broad refactor or balance changes were made.
 
 Runtime tests are regression evidence, not proof that every card combination or platform is correct. Physical Android testing, GPU performance profiling, penetration testing, save persistence and exhaustive stochastic balance analysis are outside this assessment.
+
+
+## Expedition deck ownership follow-up (2026-10-24)
+
+The assessment above describes its historical baseline. The focused deck extraction now
+addresses the card-ownership portion of H3/work package 5; it does not extract station
+services or alter combat/session boundaries. [Ownership and verification](expedition_deck_ownership.md)
+documents the one `ExpeditionDeck` owner, the retained State facade, unchanged version-1
+save shape and seeded baseline fixtures. Existing mutable CardData definitions remain
+shared read-only inputs; whole-ledger compatibility setters remain for fixtures. No
+parallel inventory, State back-reference, Board dependency, autoload or transaction
+framework was introduced. Remaining generation and service coordination stays in State.
