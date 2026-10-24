@@ -6,7 +6,7 @@ const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const EXPECTED = [
 	"card_select", "card_play", "card_discard", "materials_gain", "energy_gain", "crew_gain",
 	"resource_drain", "production_gain", "production_loss", "shield_hit", "shield_break",
-	"hull_hit", "hull_repair", "ship_destroyed", "systems_failure_warning",
+	"hull_hit", "hull_repair", "ship_destroyed", "destruction_burst", "systems_failure_warning",
 	"systems_failure_defeat", "emp_charge", "emp_ready", "emp_fire", "ship_departure",
 	"ui_select", "ui_confirm", "upgrade_acquired", "result_reveal"
 ]
@@ -69,9 +69,9 @@ func run() -> void:
 	music.set_volume(1.0, false)
 	music.set_enabled(true)
 	reset_audio()
-	check(sfx.catalog.events.size() == EXPECTED.size(), "Exactly 24 stable events")
+	check(sfx.catalog.events.size() == EXPECTED.size(), "All stable catalog events")
 	var ids: Dictionary = {}
-	var files: int = 0
+	var files: Dictionary = {}
 	for id in EXPECTED:
 		var event: Resource = sfx.catalog.find_event(id)
 		check(event != null and not ids.has(id), "Unique event maps: " + id)
@@ -80,10 +80,17 @@ func run() -> void:
 		check(event.enabled and not event.streams.is_empty(), "Enabled catalog mapping: " + id)
 		for stream in event.streams:
 			check(stream is AudioStreamWAV and stream.get_length() > 0.0 and ResourceLoader.exists(stream.resource_path), "Imported WAV: " + id)
-			check(stream.resource_path.get_file().begins_with(id + "_"), "Correct authored mapping: " + id)
-			files += 1
-	check(files == 38, "38 authored files including seven triplets")
+			var asset_id: String = "ship_destroyed" if id == "destruction_burst" else id
+			check(stream.resource_path.get_file().begins_with(asset_id + "_"), "Correct authored mapping: " + id)
+			files[stream.resource_path] = true
+	check(files.size() == 38, "38 authored files including seven triplets")
 	check(sfx.players.size() == 12, "Fixed twelve-player pool")
+	var burst_plays: int = 0
+	for i in range(9):
+		burst_plays += int(sfx.play_event(&"destruction_burst", root))
+		await create_timer(1.72 / 9.0).timeout
+	check(burst_plays == 9, "Every sequential destruction explosion is audible within voice limits")
+	reset_audio()
 	var sfx_bus: int = AudioServer.get_bus_index(&"SFX")
 	check(AudioServer.get_bus_effect_count(sfx_bus) == 1 and AudioServer.get_bus_effect(sfx_bus, 0) is AudioEffectLimiter and AudioServer.is_bus_effect_enabled(sfx_bus, 0), "SFX safety limiter enabled")
 	for id in [&"emp_ready", &"emp_fire", &"systems_failure_warning", &"systems_failure_defeat", &"result_reveal"]:

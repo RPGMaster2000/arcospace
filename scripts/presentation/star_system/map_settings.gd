@@ -15,6 +15,7 @@ extends Resource
 @export_range(4.0, 32.0) var pan_drag_threshold: float = 12.0
 ## Minimum gap between projected labels and the viewport edge, in logical pixels.
 @export_range(0.0, 48.0) var screen_border: float = 8.0
+@export var label_offset := Vector2(0, 58)
 @export_group("Destination and movement")
 @export var destination_offset := Vector3(3.75, 4.8, 6.3)
 @export_range(0.1, 3.0) var camera_duration: float = 0.8

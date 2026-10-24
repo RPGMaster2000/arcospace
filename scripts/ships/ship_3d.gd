@@ -3,13 +3,15 @@ extends Node3D
 # DOES NOT: Decide damage or repair amounts; Board supplies the resulting strengths.
 # RESPONSIBILITY: Animate the prototype mesh; never change combat state.
 
-# BattleEffects owns these tweens, so existing turn timing stays intact.
+# BattleEffects owns impact tweens; Board3D owns terminal destruction playback.
 signal hull_impact_started
 @onready var body: Node3D = $Body
 @onready var shield: MeshInstance3D = $Shield
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 var engine_materials: Array[StandardMaterial3D] = []
 var engine_colors: Array[Color] = []
+const DESTRUCTION_BURST_SECONDS: float = 1.72
+const DESTRUCTION_BURSTS: int = 9
 var engine_boost: bool = false
 var engine_multiplier: float = 1.0
 var hull_material: StandardMaterial3D
@@ -304,7 +306,7 @@ func animate_destruction(sequence: Tween) -> void:
 		fragment.hide()
 		fragments.append(fragment)
 		directions.append(Vector3(rng.randf_range(-1, 1), rng.randf_range(-0.4, 1), rng.randf_range(-1, 1)).normalized())
-	for i in range(9):
+	for i in range(DESTRUCTION_BURSTS):
 		var flash := MeshInstance3D.new()
 		var sphere := SphereMesh.new()
 		sphere.radius = 0.22
@@ -321,8 +323,8 @@ func animate_destruction(sequence: Tween) -> void:
 		flash.hide()
 		sequence.tween_callback(func():
 			flash.show()
-			preload("res://scripts/audio/sfx.gd").play(&"hull_hit", self))
-		sequence.tween_property(flash, "scale", Vector3.ONE * 3.0, 0.08)
+			preload("res://scripts/audio/sfx.gd").play(&"destruction_burst", self))
+		sequence.tween_property(flash, "scale", Vector3.ONE * 3.0, DESTRUCTION_BURST_SECONDS / DESTRUCTION_BURSTS)
 		sequence.tween_callback(flash.queue_free)
 	sequence.tween_callback(func():
 		$Body.hide()

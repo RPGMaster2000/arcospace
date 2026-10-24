@@ -42,7 +42,10 @@ func run() -> void:
 			check(board.destruction_pending and not board.get_node("MatchResult").visible, "Destruction precedes result overlay")
 			await create_timer(0.5).timeout
 			await capture(outcome + "-explosions")
-			await create_timer(0.45).timeout
+			await create_timer(0.75).timeout
+			var bursting_ship: Node3D = board.get_node("BattleView/Viewport/Battlefield/" + ("EnemyShip" if outcome == "victory" else "PlayerShip"))
+			check(bursting_ship.get_node("Body").visible and board.destruction_pending, "Explosion phase continues through the added second")
+			await create_timer(0.7).timeout
 			await capture(outcome + "-debris")
 			await create_timer(0.95).timeout
 			var ship: Node3D = board.get_node("BattleView/Viewport/Battlefield/" + ("EnemyShip" if outcome == "victory" else "PlayerShip"))

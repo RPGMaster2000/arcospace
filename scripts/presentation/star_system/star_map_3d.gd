@@ -123,18 +123,14 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		model.rotate_y(rng.randf_range(-0.25, 0.25))
 		world.add_child(model)
 		objects[index] = model
-		var button := Button.new()
+		var button := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
 		button.text = ("✓ " if entry.completed else "") + entry.get("name", entry.text)
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.custom_minimum_size = Vector2(132, 64)
 		button.size = Vector2(140, 64)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.add_theme_font_override("font", preload("res://assets/fonts/emoji_ui.tres"))
-		button.add_theme_font_size_override("font_size", 17)
-		button.add_theme_color_override("font_color", entry.color.lightened(0.3))
-		button.add_theme_color_override("font_outline_color", Color("020611"))
-		button.add_theme_constant_override("outline_size", 5)
+		button.style_tag(entry.color)
 		button.disabled = entry.completed
 		preload("res://scripts/audio/sfx.gd").bind_ui(button)
 		button.pressed.connect(travel.bind(index))
@@ -175,9 +171,15 @@ func _process(delta: float) -> void:
 			and not (camera.motion != null and camera.motion.is_running())
 		)
 		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
-		var projected: Vector2 = center - button.size * 0.5 + Vector2(0, 28)
+		var projected: Vector2 = center - button.size * 0.5 + settings.label_offset
 		var border: float = settings.screen_border
-		button.position = projected.clamp(Vector2.ONE * border, (size - button.size - Vector2.ONE * border).max(Vector2.ONE * border))
+		var limit: Vector2 = (size - button.size - Vector2.ONE * border).max(Vector2.ONE * border)
+		button.position = projected.clamp(Vector2.ONE * border, limit)
+		if Rect2(button.position, button.size).has_point(center):
+			# At the lower screen edge, put the tag above the model rather than over it.
+			button.position.y = clampf(center.y - absf(settings.label_offset.y) - button.size.y * 0.5, border, limit.y)
+		button.anchor_point = center - button.position
+		button.queue_redraw()
 
 
 func _face(direction: Vector3, weight: float = 1.0) -> void:

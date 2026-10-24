@@ -38,6 +38,10 @@ func run() -> void:
 		for index in map.markers:
 			var button: Button = map.markers[index]
 			check(map.get_global_rect().encloses(button.get_global_rect()), "Projected destination stays in map")
+			var plate: StyleBoxFlat = button.get_theme_stylebox("normal")
+			check(plate.corner_radius_top_left > 0 and button.get_theme_font("font").get("variation_embolden") > 0, "Rounded bold sci-fi tag")
+			var anchor: Vector2 = button.position + button.get("anchor_point")
+			check(anchor.is_equal_approx(map.camera.unproject_position(map.objects[index].position)), "Connector tracks projected destination")
 			for other in map.markers:
 				if index != other:
 					check(not button.get_global_rect().intersects(map.markers[other].get_global_rect()), "Destination touch regions separated")
@@ -68,7 +72,7 @@ func run() -> void:
 	# Mouse and Android-style screen touch use the same projected hit region.
 	host.star_map.travel_duration = 0.06
 	var target: int = 0
-	var center: Vector2 = host.star_map.markers[target].get_global_rect().get_center()
+	var center: Vector2 = host.star_map.global_position + host.star_map.camera.unproject_position(host.star_map.objects[target].position)
 	for pressed in [true, false]:
 		var event := InputEventScreenTouch.new()
 		event.index = 0
@@ -76,7 +80,7 @@ func run() -> void:
 		event.pressed = pressed
 		root.push_input(event, true)
 	await create_timer(0.15).timeout
-	check(state.navigation_origin == target, "Touch destination triggers normal arrival")
+	check(state.navigation_origin == target, "Touching the model still triggers arrival with its offset label")
 	# Test FTL with real default choreography; duplicate requests cannot consume twice.
 	state.pending_choice = ""
 	state.pending_destination = -1

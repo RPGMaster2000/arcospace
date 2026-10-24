@@ -7,7 +7,8 @@ These presentation changes never apply damage, roll outcomes or grant rewards ag
 
 `board_3d.gd` latches one destruction sequence when a Hull ending has settled its card
 and stat-change animations. `ship_3d.gd::animate_destruction()` plays nine rapid surface
-explosion flashes with existing SFX, hides the shield and intact hull, and sends copies of
+explosion flashes across 1.72 seconds (one second longer than the original burst),
+with a separately routed explosion sound on each flash, hides the shield and intact hull, and sends copies of
 the actual model's mesh parts spinning outward and shrinking away. Debris uses a local
 seeded visual generator, simple tweens and no physics. Temporary nodes belong to the
 battle scene and are removed after playback or scene teardown. EMP and Systems Failure
@@ -60,3 +61,8 @@ Validation: all 89 shared regression scripts passed, with focused rechecks of up
 normal-arena expectations and the legacy map's asynchronous arrival test. The focused
 ending sequence and 104-check map transition fixture also passed under software
 Mobile/Vulkan; captures cover 1280×720 and 960×540. Physical Android testing was not run.
+
+The `destruction_burst` catalog event reuses the generated destruction WAV at a quieter
+level and slightly higher, varied pitch. The sequence owns its timing; its replay interval
+is zero and its bounded nine-voice limit permits every burst even during frame catch-up.
+The final `ship_destroyed` accent retains its separate catalog settings.

@@ -1,6 +1,6 @@
 # Replaceable sound effects
 
-Arcospace's initial palette has **24 events / 38 files**, including three variants
+Arcospace's generated palette has **24 authored sound categories / 38 files**, including three variants
 for seven frequent events. Sources are **48 kHz, mono, signed 16-bit PCM WAV**,
 1,483,912 bytes total (1.42 MiB). Import settings retain lossless PCM, disable
 normalization and looping, and work with ordinary Godot audio imports on Windows,
@@ -208,3 +208,8 @@ header space. The halo shader is `shaders/tactical_target_glow.gdshader`,
 owned by `scripts/ui/tactical_preview.gd`. `tests/ui_feedback_test.gd` checks
 click/focus cues, half-volume
 trims, target glow ownership, cleanup and both menu phases at four landscape sizes.
+
+The runtime catalog additionally exposes `destruction_burst` (25 event IDs total),
+sharing the existing `ship_destroyed` WAV. Its quieter mix, subtle pitch variation and
+bounded overlap support the nine successive explosions during terminal ship destruction.
+This adds no audio files or runtime synthesis dependency.

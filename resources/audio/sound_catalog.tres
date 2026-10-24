@@ -1,4 +1,4 @@
-[gd_resource type="Resource" load_steps=65 format=3]
+[gd_resource type="Resource" load_steps=66 format=3]
 
 [ext_resource type="Script" path="res://scripts/audio/sound_catalog.gd" id="catalog"]
 [ext_resource type="Script" path="res://scripts/audio/sound_event.gd" id="event"]
@@ -188,6 +188,18 @@ replay_interval = 0.1
 concurrency_limit = 2
 priority = 1
 
+[sub_resource type="Resource" id="destruction_burst"]
+script = ExtResource("event")
+resource_name = "destruction_burst"
+event_id = &"destruction_burst"
+streams = Array[AudioStream]([ExtResource("ship_destroyed_1")])
+volume_db = -8.0
+pitch_scale = 1.25
+pitch_variation = 0.03
+replay_interval = 0.0
+concurrency_limit = 9
+priority = 2
+
 [sub_resource type="Resource" id="ship_destroyed"]
 script = ExtResource("event")
 resource_name = "ship_destroyed"
@@ -311,4 +323,4 @@ priority = 1
 
 [resource]
 script = ExtResource("catalog")
-events = Array[Resource]([SubResource("card_select"), SubResource("card_play"), SubResource("card_discard"), SubResource("materials_gain"), SubResource("energy_gain"), SubResource("crew_gain"), SubResource("resource_drain"), SubResource("production_gain"), SubResource("production_loss"), SubResource("shield_hit"), SubResource("shield_break"), SubResource("hull_hit"), SubResource("hull_repair"), SubResource("ship_destroyed"), SubResource("systems_failure_warning"), SubResource("systems_failure_defeat"), SubResource("emp_charge"), SubResource("emp_ready"), SubResource("emp_fire"), SubResource("ship_departure"), SubResource("ui_select"), SubResource("ui_confirm"), SubResource("upgrade_acquired"), SubResource("result_reveal")])
+events = Array[Resource]([SubResource("card_select"), SubResource("card_play"), SubResource("card_discard"), SubResource("materials_gain"), SubResource("energy_gain"), SubResource("crew_gain"), SubResource("resource_drain"), SubResource("production_gain"), SubResource("production_loss"), SubResource("shield_hit"), SubResource("shield_break"), SubResource("hull_hit"), SubResource("hull_repair"), SubResource("ship_destroyed"), SubResource("destruction_burst"), SubResource("systems_failure_warning"), SubResource("systems_failure_defeat"), SubResource("emp_charge"), SubResource("emp_ready"), SubResource("emp_fire"), SubResource("ship_departure"), SubResource("ui_select"), SubResource("ui_confirm"), SubResource("upgrade_acquired"), SubResource("result_reveal")])

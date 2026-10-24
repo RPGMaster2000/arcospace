@@ -19,6 +19,7 @@ select **scenes/expedition.tscn → Expedition → Star System Settings** and ex
 | Wheel Zoom Step | Mouse-wheel increment (default 6%); pinch uses finger-distance ratio |
 | System Bounds | X/Z destination-center rectangle, default X −16…16 and Z −10…10; changes only visual arrangement |
 | Pan Bounds / Pan Drag Threshold | Camera-center X/Z limits (default ±16 / ±10) and tap-to-drag threshold (12 pixels) |
+| Label Offset | Screen-space offset from a projected model to its label center (default 0, 58) |
 | Screen Border | Minimum inset for projected destination hit regions, default 8 logical pixels |
 | Destination Offset | Camera distance, height and angle relative to the focused destination; horizontal framing adapts to the viewport aspect |
 | Camera Duration | Overview/focus transition and FTL ship zoom (default 0.8 s) |
@@ -52,7 +53,12 @@ A local seeded RandomNumberGenerator uses expedition seed/system to vary colors,
 sizes, orientation and modest position offsets. It never consumes any run generator.
 
 Projected buttons provide 140×64 logical-pixel hit regions, ordinary keyboard focus and
-mouse/touch activation. Labels ignore model occlusion and remain readable. Completed
+mouse/touch activation. Labels use bright bold text on rounded dark sci-fi plates. Category-colored connector
+lines join each plate edge to the projected destination, updating on pan, zoom and resize.
+`poi_marker.gd` owns tag styling/connector drawing; **Label Offset** in the shared map
+settings tunes plate spacing. Both the plate and the projected model remain tappable;
+tags move above a model near the lower edge to preserve the connector. Labels ignore
+model occlusion and remain readable. Completed
 entries have a check mark and disabled input. Labels hide during camera transitions and
 inspection. The top UI keeps its existing position and controls. Overview mouse-wheel and
 two-finger pinch zoom smoothly within the configured limits; one-finger or left-mouse
