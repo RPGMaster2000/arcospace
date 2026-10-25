@@ -72,11 +72,15 @@ func _ready() -> void:
 	environment.environment.background_color = Color("020611")
 	environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.environment.ambient_light_color = Color("92afcf")
-	environment.environment.ambient_light_energy = 0.75
+	environment.environment.ambient_light_energy = settings.ambient_light_energy
 	world.add_child(environment)
-	var light := DirectionalLight3D.new()
-	light.rotation_degrees = Vector3(-40, -25, 0)
-	light.light_energy = 1.6
+	var light := OmniLight3D.new()
+	light.name = "SunLight"
+	light.light_color = Color(1.0,0.88,0.70)
+	light.light_energy = settings.sunlight_energy
+	light.omni_range = settings.sunlight_range
+	light.omni_attenuation = 0.35
+	light.shadow_enabled = false
 	world.add_child(light)
 
 
@@ -140,6 +144,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/menu_sun.gdshader")
 	material.set_shader_parameter("sun_color", visual_data.star_color)
+	material.set_shader_parameter("core_scale",settings.sun_core_scale)
 	material.render_priority = 10
 	disc.material_override = material
 	objects[-100] = disc

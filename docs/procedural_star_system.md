@@ -333,3 +333,19 @@ transparency priority above distant background layers. Shared menu/battle sun
 shader code is unchanged. `orbit_visibility_test.gd` checks 15 rendered combinations
 of grazing/overhead angles and near/far camera distances on both renderers, plus
 actual map visibility with the sky enabled and 17 sun camera poses.
+
+### Distant-lens / central-sun presentation calibration
+
+Overview now uses a 22-degree perspective FOV, with camera position (0,112,78)
+before the existing zoom factor: farther away and slightly steeper than the prior
+(0,90,67.5)/29-degree setup. Camera controls and transition timing are unchanged.
+A single warm, shadow-free OmniLight3D at the central star replaces the map
+directional light. Its 64-unit range covers the system; low blue ambient fill
+retains night-side readability. This gives objects sun-facing illumination without
+additional models, textures or post-processing. The existing sun shader has a
+map-local 2x core/corona setting for a stronger central visual anchor; its default
+remains 1x for title/battle materials. The UI is unchanged.
+
+Tune Overview Position / Field Of View and the new **System Lighting** group
+(Ambient Light Energy, Sun Core Scale, Sunlight Energy, Sunlight Range) in the existing settings
+Resource. Lighting remains local to the map, with no changes to battle/menu lights.

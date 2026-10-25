@@ -1,8 +1,13 @@
 extends Resource
 ## Presentation tuning only. No expedition state or random encounters live here.
-@export var overview_position := Vector3(0, 90, 67.5)
+@export var overview_position := Vector3(0, 112, 78)
 @export var overview_target := Vector3.ZERO
-@export_range(15.0, 60.0) var field_of_view: float = 29.0
+@export_range(15.0, 60.0) var field_of_view: float = 22.0
+@export_group("System lighting")
+@export_range(0.0, 1.0, 0.01) var ambient_light_energy: float = 0.28
+@export_range(1.0, 2.0, 0.1) var sun_core_scale: float = 2.0
+@export_range(0.0, 8.0, 0.1) var sunlight_energy: float = 2.8
+@export_range(32.0, 96.0, 1.0) var sunlight_range: float = 64.0
 @export_group("Overview zoom and system borders")
 @export_range(0.5, 2.0, 0.01) var default_zoom: float = 1.20
 @export_range(0.5, 2.0, 0.01) var minimum_zoom: float = 0.95

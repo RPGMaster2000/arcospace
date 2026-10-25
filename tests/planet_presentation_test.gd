@@ -21,6 +21,10 @@ func run() -> void:
 	var map = preload("res://scenes/star_system_3d.tscn").instantiate()
 	map.player_profile = preload("res://ships/player/endeavour.tres")
 	root.add_child(map)
+	check(map.camera.fov==22.0,"Map overview uses a compressed low-FOV presentation")
+	check(map.world.get_node("SunLight") is OmniLight3D,"Map is lit from the central sun")
+	check(map.world.get_node("SunLight").position==Vector3.ZERO,"Sun light is centered on the orbital focus")
+	check(map.world.find_children("*","DirectionalLight3D",true,false).is_empty(),"No unrelated directional map light")
 	var entries: Array = []
 	for i in range(6):
 		entries.append({"index":i,"name":"Encounter %d" % i,"text":"Destination","tooltip":"Existing encounter","color":Color.CORNFLOWER_BLUE,"completed":false,"model_kind":["mining_operation","research_station","gas_giant","quarantined_colony","derelict_starship","battle"][i]})
@@ -117,6 +121,7 @@ func run() -> void:
 	replacement.free()
 	check(map.ship.scale.is_equal_approx(Vector3.ONE*0.175),"Star-map player ship is half its previous size")
 	check(map.objects[-100].mesh.size==Vector2(18,18),"Star-map sun is 50 percent larger")
+	check(map.objects[-100].material_override.get_shader_parameter("core_scale")==2.0,"Map sun uses a stronger central core")
 	for planet in map.planet_nodes.values():
 		check(planet.scale.is_equal_approx(Vector3.ONE*1.5),"Star-map planets are 50 percent larger")
 	check(map.objects[5].scale.is_equal_approx(Vector3.ONE*0.275),"Star-map enemy ship is half its previous size")
