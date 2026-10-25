@@ -20,6 +20,7 @@ var orbit_nodes: Dictionary = {}
 var viewport: SubViewport
 var world: Node3D
 var camera: Camera3D
+var zoom_controls: HBoxContainer
 var feedback: Node3D
 var ship: Node3D
 var objects: Dictionary = {}
@@ -52,6 +53,7 @@ var dragging: bool = false
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
+	clip_contents = true
 	var container := SubViewportContainer.new()
 	container.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	container.stretch = true
@@ -86,7 +88,27 @@ func _ready() -> void:
 	light.omni_attenuation = 0.35
 	light.shadow_enabled = false
 	world.add_child(light)
-
+	zoom_controls = HBoxContainer.new()
+	zoom_controls.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
+	zoom_controls.grow_horizontal = GROW_DIRECTION_BEGIN
+	zoom_controls.grow_vertical = GROW_DIRECTION_BEGIN
+	zoom_controls.offset_left = -112
+	zoom_controls.offset_top = -68
+	zoom_controls.offset_right = -8
+	zoom_controls.offset_bottom = -8
+	zoom_controls.z_index = 50
+	zoom_controls.add_theme_constant_override("separation",8)
+	add_child(zoom_controls)
+	for closer in [false,true]:
+		var button := Button.new()
+		button.text = "+" if closer else "−"
+		button.tooltip_text = "Zoom in" if closer else "Zoom out"
+		button.custom_minimum_size = Vector2(48,48)
+		button.add_theme_font_size_override("font_size",26)
+		preload("res://scripts/ui/encounter_presentation.gd").action(button)
+		button.pressed.connect(func():
+			if _zoom_enabled(): camera.zoom_by(1.15 if closer else 1.0/1.15))
+		zoom_controls.add_child(button)
 
 
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
@@ -206,6 +228,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
+	zoom_controls.visible = _zoom_enabled()
 	for p in visual_data.get("planets",[]):
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
@@ -402,6 +425,8 @@ func _input(event: InputEvent) -> void:
 	if not _zoom_enabled():
 		_end_pinch()
 		return
+	if event is InputEventScreenTouch and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
+	if event is InputEventMouseButton and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
 	if event is InputEventScreenTouch:
 		if event.pressed and get_global_rect().has_point(event.position):
 			if touches.is_empty():

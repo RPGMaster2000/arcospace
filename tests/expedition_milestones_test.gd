@@ -194,7 +194,7 @@ func run_tests() -> void:
 		host.state.ftl_charge = host.state.required_ftl_charge
 		host.show_system()
 		for n in range(5): await process_frame
-		check(host.jump_button.disabled and host.jump_button.text.contains("Resolve Boss"), "UI explains mandatory lock despite sufficient charge")
+		check(host.jump_button.disabled and host.jump_button.text.contains("BOSS LOCK") and host.jump_button.tooltip_text.contains("mandatory Boss"), "UI explains mandatory lock despite sufficient charge")
 		await capture("system-" + str(dimensions.x))
 		var index: int = boss_index(host.state)
 		if index < 0:

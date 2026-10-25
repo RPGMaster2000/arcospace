@@ -172,6 +172,8 @@ func _draw_completion_badge() -> void:
 
 
 func _hit_distance(point: Vector2) -> float:
+	var map_parent: Control = get_parent() as Control
+	if map_parent != null and map_parent.clip_contents and not Rect2(Vector2.ZERO,map_parent.size).has_point(position+point): return INF
 	var distance := INF
 	if Rect2(Vector2.ZERO,size).has_point(point): distance = point.distance_to(icon_center)
 	var map: Control = get_parent() as Control

@@ -81,7 +81,7 @@ func run() -> void:
 	var card: Resource = Cards.CARDS[6]
 	host._preview_card(card)
 	await settle()
-	check(host.card_management.selected_card == card and host.card_management.details.get_children().any(func(c): return c is RichTextLabel and c.text == Text.comparison(card.with_upgrade(1), card)), "Inline next upgrade uses actual effects")
+	check(host.card_management.selected_card == card and host.card_management.details.get_children().any(func(c): return c.get_script() == preload("res://scripts/ui/card_portrait.gd") and c.card_data.effects == card.with_upgrade(1).effects), "Inline next upgrade uses actual effects")
 	check(Text.comparison(Cards.CARDS[3].with_upgrade(1), Cards.CARDS[3]).begins_with("+1 Synthesizer\n[color="), "Unchanged production neutral, added resources green")
 	check(Text.comparison(Cards.CARDS[41].with_upgrade(1), Cards.CARDS[41]).contains("[color=91e6ad]Take 3 direct Hull dmg"), "Reduced self damage highlighted as improvement")
 	await screenshot("comparison")

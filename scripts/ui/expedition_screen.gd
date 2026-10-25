@@ -70,7 +70,9 @@ func _build_ui() -> void:
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_theme_constant_override("separation", 4)
 	ui.add_child(column)
-	title = _label("", 30)
+	title = _label("", 24)
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title.clip_text = true
 	heading_row = HBoxContainer.new()
 	heading_row.add_theme_constant_override("separation", 8)
 	column.add_child(heading_row)
@@ -78,13 +80,14 @@ func _build_ui() -> void:
 	heading_row.add_child(title)
 	deck_button = Button.new()
 	deck_button.text = "Deck"
-	deck_button.custom_minimum_size = Vector2(90, 48)
+	deck_button.custom_minimum_size = Vector2(64, 44)
 	Presentation.action(deck_button)
 	deck_button.pressed.connect(deck_requested.emit)
 	heading_row.add_child(deck_button)
 	legend = Button.new()
-	legend.text = "GAME REFERENCE"
-	legend.custom_minimum_size = Vector2(100, 48)
+	legend.text = "Reference"
+	legend.tooltip_text = "Game Reference"
+	legend.custom_minimum_size = Vector2(100, 44)
 	Presentation.action(legend)
 	heading_row.add_child(legend)
 	settings_button = preload("res://scripts/ui/settings_button.gd").new()
@@ -142,12 +145,30 @@ func _build_ui() -> void:
 	confirm_button = confirmation.initiate
 	confirm_button.pressed.connect(confirm_requested.emit)
 	jump_button = Button.new()
-	jump_button.custom_minimum_size.y = 48
-	jump_button.add_theme_font_size_override("font_size", 21)
+	jump_button.custom_minimum_size = Vector2(210,44)
+	jump_button.add_theme_font_size_override("font_size", 18)
 	jump_button.add_theme_font_override("font", Presentation.UI_FONT)
 	Presentation.action(jump_button)
 	jump_button.pressed.connect(jump_requested.emit)
-	column.add_child(jump_button)
+	# Reserve the compact slot while other views hide its action, keeping the HUD stable.
+	var jump_slot := Control.new()
+	jump_slot.custom_minimum_size = Vector2(230,50)
+	jump_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	heading_row.add_child(jump_slot)
+	heading_row.move_child(jump_slot,1)
+	jump_slot.add_child(jump_button)
+	jump_button.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	jump_button.clip_text = true
+	var charge := ProgressBar.new()
+	charge.name = "Charge"
+	charge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	charge.show_percentage = false
+	charge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	charge.offset_left = 8
+	charge.offset_right = -8
+	charge.offset_top = -5
+	charge.offset_bottom = -2
+	jump_button.add_child(charge)
 
 
 func _label(text: String, font_size: int = 20) -> Label:
@@ -170,7 +191,7 @@ func mount_map(map: Control) -> void:
 
 func map_layout(enabled: bool, focused: bool) -> void:
 	# Keep bright celestial bodies from washing out the existing PoI header.
-	header.get_node("TextBacking").color.a = 0.92 if enabled and focused else 0.36
+	header.get_node("TextBacking").color.a = 0.0
 	model_space.visible = enabled
 	sidebar.visible = not enabled or focused
 	if enabled:
@@ -275,31 +296,20 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	confirm_button.disabled = true
 	heading_row.show()
 	title.visible = true
-	title.text = "System Encounters — " + state.system_name
+	title.text = state.system_name
 	resource_bar.exploration(state)
-	jump_button.text = (
-		"%s FTL Drive %d/%d · %s"
-		% [
-			icon.call("travel"),
-			state.ftl_charge,
-			state.required_ftl_charge,
-			(
-				"Jump to Next System"
-				if state.ftl_charge >= state.required_ftl_charge
-				else "Requires %d more charge" % (state.required_ftl_charge - state.ftl_charge)
-			)
-		]
-	)
+	jump_button.text = "FTL %d/%d · %s" % [state.ftl_charge,state.required_ftl_charge,"JUMP" if state.ftl_charge >= state.required_ftl_charge else "CHARGING"]
+	var charge: ProgressBar = jump_button.get_node("Charge")
+	charge.max_value = state.required_ftl_charge
+	charge.value = state.ftl_charge
 	if state.mandatory_boss_pending():
-		jump_button.text = (
-			"%s FTL Drive %d/%d · Resolve Boss first"
-			% [icon.call("travel"), state.ftl_charge, state.required_ftl_charge]
-		)
+		jump_button.text = "FTL %d/%d · BOSS LOCK" % [state.ftl_charge,state.required_ftl_charge]
 		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:
-		jump_button.tooltip_text = "FTL resets to zero when entering the next system."
+		jump_button.tooltip_text = "Jump to the next system. FTL resets to zero on arrival." if state.can_jump() else "Requires %d more charge. FTL resets on arrival." % maxi(0,state.required_ftl_charge-state.ftl_charge)
+	jump_button.modulate = Color("a3f3e5") if state.can_jump() else Color.WHITE
 	jump_button.disabled = not state.can_jump()
-	jump_button.visible = state.hull > 0
+	jump_button.visible = kind == "system" and state.hull > 0
 	return_button.disabled = false
 
 

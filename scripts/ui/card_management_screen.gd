@@ -7,7 +7,6 @@ signal closed
 signal save_quit_requested
 const Gallery = preload("res://scripts/ui/card_gallery.gd")
 const Portrait = preload("res://scripts/ui/card_portrait.gd")
-const EffectText = preload("res://scripts/ui/card_effect_text.gd")
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 const Scroll = preload("res://scripts/ui/encounter_scroll.gd")
 const FADE_TIME = 0.22
@@ -82,6 +81,7 @@ func _ready() -> void:
 	incoming_identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	incoming_header.add_child(incoming_identity)
 	details_scroll = Scroll.new()
+	details_scroll.resized.connect(func(): _fit_upgrade_preview.call_deferred())
 	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(details_scroll)
 	details = VBoxContainer.new()
@@ -226,20 +226,31 @@ func _refresh_details() -> void:
 	elif selected_card != null:
 		if mode == "upgrade":
 			var next: Resource = selected_card.with_upgrade(selected_card.upgrade_level + 1)
-			_card_section("AFTER UPGRADE · Level %d" % next.upgrade_level, next, true, 1.0)
-			_card_section("CURRENT · Level %d" % selected_card.upgrade_level, selected_card, false)
-			details.add_child(_label("CHANGES", 21))
-			var comparison = RichTextLabel.new()
-			comparison.bbcode_enabled = true
-			comparison.fit_content = true
-			comparison.scroll_active = false
-			comparison.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			comparison.add_theme_font_size_override("normal_font_size", 18)
-			comparison.text = EffectText.comparison(next, selected_card)
-			details.add_child(comparison)
+			selection.text = "After Upgrade"
+			var preview := Portrait.new()
+			preview.card_data = next
+			preview.card_scale = 1.2
+			preview.inspection_enabled = false
+			preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			preview.focus_mode = Control.FOCUS_NONE
+			preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			details.add_child(preview)
+			_fit_upgrade_preview.call_deferred()
 		else:
 			_card_section("SELECTED", selected_card, true)
 	details_scroll.scroll_vertical = 0
+
+func _fit_upgrade_preview() -> void:
+	var requested: int = revision
+	if not is_inside_tree(): return
+	await get_tree().process_frame
+	if not is_inside_tree() or requested != revision: return
+	if mode != "upgrade" or selected_card == null: return
+	for child in details.get_children():
+		if child is Portrait:
+			# Up to 20% larger; reduce only at short landscape heights to keep art intact.
+			var space: float = details_scroll.size.y-selection.size.y-16
+			child.set_card_scale(minf(1.2,minf((details_scroll.size.x-16)/198.0,maxf(0.1,space)/294.0)))
 
 func _card_section(title: String, card: Resource, art: bool, portrait_scale: float = 0.65) -> Button:
 	details.add_child(_label(title, 21))
@@ -307,6 +318,7 @@ func _stop_motion() -> void:
 		motion.kill()
 
 func _fit() -> void:
+	_fit_upgrade_preview.call_deferred()
 	# Small margins; no reserved expedition HUD height. Honor actual desktop/mobile safe area.
 	var safe: Rect2i = DisplayServer.get_display_safe_area() if OS.has_feature("android") else Rect2i()
 	var window: Vector2i = DisplayServer.window_get_size()

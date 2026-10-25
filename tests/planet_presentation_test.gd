@@ -251,7 +251,7 @@ func run() -> void:
 		host.show_poi(index)
 		await create_timer(0.9).timeout
 		check(host.screen.model_space.visible and host.grid.columns==1,"Planet focus keeps existing right approach UI")
-		check(host.header.get_node("TextBacking").color.a>=0.9,"Existing header backing protects text over bright planets")
+		check(host.header.get_node("TextBacking").color.a==0.0,"PoI headline uses outlined text without black backing")
 		await capture("expedition-poi")
 	host.free()
 	await process_frame

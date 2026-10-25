@@ -240,7 +240,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 		star_map = null
 	screen.reset_view(kind, state, use_star_map, _icon)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
-		title.text = "System Encounters — " + star_map.visual_data.name
+		title.text = star_map.visual_data.name
 	if not preserve_transition:
 		phase = {"system": Phase.OVERVIEW, "chasedown": Phase.CHASEDOWN,
 			"poi": Phase.DESTINATION, "preview": Phase.DESTINATION}.get(kind, Phase.REWARD)
@@ -570,7 +570,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		hash("%d:%d:sky" % [state.seed_used, state.system_number])
 	)
 	if _uses_3d_map():
-		title.text = "System Encounters — " + star_map.visual_data.name
+		title.text = star_map.visual_data.name
 	var stopped: Array = state.intercepted_position()
 	if stopped.size() == 3 and _uses_3d_map():
 		star_map.orbit_index = -1
