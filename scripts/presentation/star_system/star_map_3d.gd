@@ -5,10 +5,16 @@ signal interrupted
 signal travel_started
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
 const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
-const POINTS = [
-	Vector3(-10, 0, -8), Vector3(0, 0, -11), Vector3(10, 0, -8),
-	Vector3(-10, 0, 7), Vector3(0, 0, 10), Vector3(10, 0, 7)
-]
+const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
+const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
+const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
+var run_seed: int = 0
+var system_number: int = 1
+var visual_data: Dictionary = {}
+var visual_root: Node3D
+var destination_root: Node3D
+var background: Node3D
+var planet_nodes: Dictionary = {}
 @export var settings: Resource = preload("res://resources/presentation/star_system_settings.tres")
 var viewport: SubViewport
 var world: Node3D
@@ -72,17 +78,6 @@ func _ready() -> void:
 	light.rotation_degrees = Vector3(-40, -25, 0)
 	light.light_energy = 1.6
 	world.add_child(light)
-	var sky := SphereMesh.new()
-	sky.radius = 150
-	sky.height = 300
-	sky.radial_segments = 24
-	sky.rings = 12
-	var space := Models.part(world, sky, Color.WHITE)
-	var material := ShaderMaterial.new()
-	material.shader = preload("res://shaders/space_background.gdshader")
-	material.set_shader_parameter("star_density", 0.20)
-	material.set_shader_parameter("cloud_intensity", 0.25)
-	space.material_override = material
 
 
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
@@ -90,7 +85,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		for entry in entries:
 			if markers.has(entry.index):
 				markers[entry.index].disabled = entry.completed
-				markers[entry.index].text = ("✓ " if entry.completed else "") + entry.get("name", entry.text)
+				markers[entry.index].text = _marker_text(entry)
 		overview()
 		return
 	if motion and motion.is_valid():
@@ -98,36 +93,60 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	traveling = false
 	configured_seed = visual_seed
 	travel_duration = duration
-	var rng := RandomNumberGenerator.new()
-	rng.seed = visual_seed
-	for node in objects.values():
-		node.queue_free()
-	for button in markers.values():
-		button.queue_free()
+	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
+	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings)
+	for layer in [visual_root,destination_root,background]:
+		if is_instance_valid(layer):
+			world.remove_child(layer)
+			layer.queue_free()
+	for button in markers.values(): button.queue_free()
 	objects.clear()
 	markers.clear()
+	planet_nodes.clear()
+	visual_root = Node3D.new()
+	visual_root.name = "GeneratedSystem"
+	world.add_child(visual_root)
+	destination_root = Node3D.new()
+	destination_root.name = "EncounterRepresentations"
+	world.add_child(destination_root)
+	background = Space.new()
+	background.name = "BackgroundEnvironment"
+	world.add_child(background)
+	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"))
+	for p in visual_data.planets:
+		visual_root.add_child(Planets.orbit(p,settings))
+		var planet: Node3D = Planets.build(p,settings)
+		planet.position = p.position
+		visual_root.add_child(planet)
+		planet_nodes[p.index] = planet
+		if p.encounter != -1: objects[p.encounter] = planet
+		var label = Label3D.new()
+		label.text = p.name
+		label.position.y = p.radius+0.4
+		label.font_size = 24
+		label.pixel_size = 0.012
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.modulate = Color(0.65,0.78,0.9,0.8)
+		label.visible = p.encounter == -1
+		planet.add_child(label)
 	var sun := QuadMesh.new()
 	sun.size = Vector2(12, 12)
-	var disc := Models.part(world, sun, Color.WHITE)
+	var disc := Models.part(visual_root, sun, Color.WHITE)
 	disc.name = "Sun"
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/menu_sun.gdshader")
-	material.set_shader_parameter("sun_color", Color.from_hsv(rng.randf_range(0.02, 0.16), 0.5, 1.0))
+	material.set_shader_parameter("sun_color", visual_data.star_color)
 	disc.material_override = material
 	objects[-100] = disc
 	for entry in entries:
 		var index: int = entry.index
-		var model := Models.build(entry, rng)
-		model.position = POINTS[index] if index >= 0 and index < POINTS.size() else Vector3(15, 0, 0)
-		model.position += Vector3(rng.randf_range(-0.5, 0.5), 0, rng.randf_range(-0.5, 0.5))
-		var relative := Vector2(model.position.x / 32.0 + 0.5, model.position.z / 24.0 + 0.5)
-		var bounded: Vector2 = settings.system_bounds.position + relative.clamp(Vector2.ZERO, Vector2.ONE) * settings.system_bounds.size
-		model.position = Vector3(bounded.x, 0, bounded.y)
-		model.rotate_y(rng.randf_range(-0.25, 0.25))
-		world.add_child(model)
-		objects[index] = model
+		if not objects.has(index):
+			var model := Models.build(entry, VisualSystem.random_for(cosmetic_seed,system_number,"model-%d" % index), settings.destination_scenes.get(entry.get("model_kind","")))
+			model.position = visual_data.anchors[index]
+			destination_root.add_child(model)
+			objects[index] = model
 		var button := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
-		button.text = ("✓ " if entry.completed else "") + entry.get("name", entry.text)
+		button.text = _marker_text(entry)
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.custom_minimum_size = Vector2(132, 64)
@@ -144,10 +163,10 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	ship = Models.ship(player_profile)
 	ship.scale = Vector3.ONE * 0.35
 	world.add_child(ship)
-	ship.position = Vector3(0, 0, 3)
+	ship.position = _initial_ship_position()
 	orbit_index = last_destination if objects.has(last_destination) else -1
 	if orbit_index != -1:
-		ship.position = objects[orbit_index].position + Vector3(settings.orbit_radius, 0, 0)
+		ship.position = objects[orbit_index].position + Vector3(_orbit_radius(orbit_index), 0, 0)
 	camera.overview(settings, true)
 	focused = false
 	interactive = true
@@ -156,14 +175,17 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
+	for p in visual_data.get("planets",[]):
+		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
 		_face(travel_direction, delta * 7.0)
 	if orbit_index != -1 and not traveling:
 		orbit_angle += delta * settings.orbit_speed
 		var center: Vector3 = objects[orbit_index].position
-		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * settings.orbit_radius
+		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * _orbit_radius(orbit_index)
 		_face(next - ship.position, delta * 5)
 		ship.position = next
+	var label_rects: Array[Rect2] = []
 	for index in markers:
 		var button: Button = markers[index]
 		var point: Vector3 = objects[index].position
@@ -181,6 +203,14 @@ func _process(delta: float) -> void:
 		if Rect2(button.position, button.size).has_point(center):
 			# At the lower screen edge, put the tag above the model rather than over it.
 			button.position.y = clampf(center.y - absf(settings.label_offset.y) - button.size.y * 0.5, border, limit.y)
+		var desired: Vector2 = button.position
+		for step in [Vector2.ZERO,Vector2(0,-1),Vector2(1,0),Vector2(-1,0),Vector2(0,1),Vector2(1,-1),Vector2(-1,-1),Vector2(0,-2),Vector2(0,2)]:
+			var candidate: Vector2 = (desired+step*(button.size+Vector2(8,8))).clamp(Vector2.ONE*border,limit)
+			var rect = Rect2(candidate,button.size)
+			if not rect.has_point(center) and label_rects.all(func(other): return not other.grow(3).intersects(rect)):
+				button.position = candidate
+				break
+		label_rects.append(button.get_rect())
 		button.anchor_point = center - button.position
 		button.queue_redraw()
 
@@ -212,7 +242,7 @@ func travel(index: int) -> void:
 	travel_started.emit()
 	orbit_index = -1
 	var origin := ship.position
-	var destination: Vector3 = objects[index].position + Vector3(settings.orbit_radius, 0.15, 0)
+	var destination: Vector3 = objects[index].position + Vector3(_orbit_radius(index), 0.15, 0)
 	travel_direction = destination - origin
 	motion = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if intercepted:
@@ -261,7 +291,7 @@ func focus(index: int) -> void:
 	_end_pinch()
 	focused = true
 	interactive = false
-	camera.focus(objects[index].position, settings)
+	camera.focus(objects[index].position, settings, float(objects[index].get_meta("radius", 0.0)))
 
 
 func overview() -> void:
@@ -274,6 +304,7 @@ func overview() -> void:
 
 
 func set_active(active: bool) -> void:
+	if is_instance_valid(background): background.set_active(active)
 	if not active:
 		_end_pinch()
 	visible = active
@@ -450,3 +481,19 @@ func _clear_impact() -> void:
 
 func _exit_tree() -> void:
 	cancel_presentation()
+
+
+func _orbit_radius(index: int) -> float:
+	return maxf(settings.orbit_radius,float(objects[index].get_meta("radius",0.0))+1.0)
+
+func _marker_text(entry: Dictionary) -> String:
+	var label: String = entry.get("name",entry.text)
+	if visual_data.get("assignments",{}).has(entry.index):
+		label += "\n"+visual_data.planets[visual_data.assignments[entry.index]].name
+	return ("✓ " if entry.completed else "")+label
+
+func _initial_ship_position() -> Vector3:
+	for at in [Vector3(0,0,3),Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-3),Vector3(-2,0,2),Vector3(2,0,-2)]:
+		if visual_data.planets.all(func(p): return at.distance_to(p.position)>p.radius+1.25):
+			return at
+	return Vector3(0,1.5,3)

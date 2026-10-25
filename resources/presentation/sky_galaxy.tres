@@ -6,5 +6,5 @@ kind = 1
 tint = Color(0.62, 0.68, 0.78, 1)
 opacity = 0.22
 apparent_size = Vector2(18, 10)
-angular_position = Vector2(145, 38)
+angular_position = Vector2(145, -35)
 rotation_degrees = -30.0

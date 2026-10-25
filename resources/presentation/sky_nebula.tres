@@ -3,5 +3,5 @@
 [resource]
 script = ExtResource("Layer")
 tint = Color(0.25, 0.32, 0.6, 1)
-angular_position = Vector2(180, 28)
+angular_position = Vector2(180, -40)
 apparent_size = Vector2(55, 30)

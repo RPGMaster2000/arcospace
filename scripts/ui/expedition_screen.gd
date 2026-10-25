@@ -165,6 +165,8 @@ func mount_map(map: Control) -> void:
 	move_child(map, 1)
 
 func map_layout(enabled: bool, focused: bool) -> void:
+	# Keep bright celestial bodies from washing out the existing PoI header.
+	header.get_node("TextBacking").color.a = 0.92 if enabled and focused else 0.36
 	model_space.visible = enabled
 	sidebar.visible = not enabled or focused
 	if enabled:

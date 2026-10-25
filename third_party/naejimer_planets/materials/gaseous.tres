@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
+[ext_resource type="Shader" path="res://third_party/naejimer_planets/shaders/body.gdshader" id="Body"]
+[ext_resource type="Texture2D" path="res://third_party/naejimer_planets/noises/planet_gaseous.tres" id="Noise"]
+[resource]
+shader = ExtResource("Body")
+shader_parameter/emit = 0.0
+shader_parameter/color_1 = Color(0.784314, 0.545098, 0.227451, 1)
+shader_parameter/color_1_treshold = 0.422
+shader_parameter/color_1_roughness = 0.0
+shader_parameter/color_1_emit = false
+shader_parameter/color_2 = Color(0.564706, 0.380392, 0.301961, 1)
+shader_parameter/color_2_treshold = 0.505
+shader_parameter/color_3 = Color(0.827451, 0.611765, 0.494118, 1)
+shader_parameter/color_3_treshold = 0.529
+shader_parameter/color_4 = Color(0.654902, 0.611765, 0.52549, 1)
+shader_parameter/color_4_treshold = 0.574
+shader_parameter/color_5 = Color(0.25098, 0.266667, 0.211765, 1)
+shader_parameter/color_5_treshold = 1.0
+shader_parameter/noise_gaseous = true
+shader_parameter/noise_gaseous_speed = 0.0025
+shader_parameter/noise_scale = 1.425
+shader_parameter/noise = ExtResource("Noise")

@@ -40,7 +40,7 @@ extends Resource
 @export_group("Orbit appearance")
 @export var orbit_color := Color(0.48, 0.73, 0.86, 0.18)
 @export_range(32, 128, 8) var orbit_segments: int = 64
-@export_range(0.005, 0.05, 0.005) var orbit_thickness: float = 0.012
+@export_range(0.005, 0.05, 0.005) var orbit_thickness: float = 0.02
 @export_group("Background and quality")
 @export var background_layers: Array[Resource] = [preload("res://resources/presentation/sky_nebula.tres"), preload("res://resources/presentation/sky_galaxy.tres")]
 @export_range(0.0, 1.0, 0.05) var background_strength: float = 0.6
@@ -52,3 +52,6 @@ extends Resource
 @export_range(0, 160, 8) var stardust_density: int = 64
 @export_range(0.0, 1.0, 0.05) var stardust_parallax: float = 0.12
 @export_range(0.0, 0.5, 0.01) var stardust_opacity: float = 0.12
+
+@export_group("Replaceable encounter scenes")
+@export var destination_scenes: Dictionary[String, PackedScene] = {}

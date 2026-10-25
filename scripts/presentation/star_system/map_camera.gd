@@ -51,9 +51,9 @@ func overview(settings: Resource, immediate: bool = false) -> void:
 	)
 
 
-func focus(point: Vector3, settings: Resource) -> void:
+func focus(point: Vector3, settings: Resource, radius: float = 0.0) -> void:
 	# Aim to the right of the object: it appears in the left half of the viewport.
-	var offset: Vector3 = settings.destination_offset
+	var offset: Vector3 = settings.destination_offset * maxf(1.0, radius * 1.2)
 	var right := offset.cross(Vector3.UP).normalized() * -1.0
 	var aspect: float = get_viewport().get_visible_rect().size.aspect()
 	var shift: Vector3 = right * offset.length() * tan(deg_to_rad(fov * 0.5)) * aspect * 0.52
