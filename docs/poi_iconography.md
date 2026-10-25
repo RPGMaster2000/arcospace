@@ -52,3 +52,9 @@ The screenshot folder includes all three requested sizes and travel selection. C
 Runtime scripts: poi_marker.gd 163→197 lines; star_map_3d.gd 536→535. Combined runtime 699→732 (+33). Subset tool 22→25. The new focused test adds 72 lines (see actual source for current count). Existing focused assertions were adjusted only for emoji presentation and explicit selection priority. No files removed.
 
 Remaining limits: fixed anchored markers can overlap; selection gets draw priority while nearest-marker touch arbitration remains unchanged. Color emoji retain their authored palette rather than uniform category tint; category identity also remains in borders, names and connectors. Font updates require rerunning the development-only subset tool.
+
+## Emoji centering correction
+
+Removed synthetic FontVariation emboldening from bitmap emoji. In Godot 4.7.2 it changed the microscope's measured advance from 28px to 9px at 28pt, placing the rendered glyph right of its calculated center. Markers now use the bundled font directly; native advances and existing container alignment are preserved. Marker dimensions, anchors and font size remain unchanged.
+
+New verification: 52 icon checks passed under Mobile/Vulkan and Compatibility/OpenGL at all three target sizes, including native-advance checks for every catalog emoji. Transition tests passed 106 checks and map readability passed 71 checks. The full 110-script result above belongs to the prior iconography commit; this narrow correction reran focused tests only. No physical Android test performed.

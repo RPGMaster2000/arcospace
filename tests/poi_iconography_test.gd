@@ -27,6 +27,9 @@ func run() -> void:
  marker.set_label("Acubens IV",Marker.icon_for("mining_operation"),true)
  root.add_child(marker)
  var bounds: Vector2 = marker.size
+ for kind in Marker.ICONS:
+  var glyph: String = Marker.icon_for(kind)
+  check(marker.get_theme_font("font").get_string_size(glyph,HORIZONTAL_ALIGNMENT_LEFT,-1,28)==Marker.EMOJI_FONT.get_string_size(glyph,HORIZONTAL_ALIGNMENT_LEFT,-1,28),"Native emoji advance preserved: "+kind)
  marker.set_state(false,false,true)
  check(marker.priority()==3,"Explicit selection outranks hover/focus")
  check(marker.get_theme_stylebox("normal").border_width_left==3,"Selection has strong outer border")

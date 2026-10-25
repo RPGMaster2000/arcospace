@@ -39,7 +39,7 @@ func run() -> void:
 			var button: Button = map.markers[index]
 			check(button.position.y+button.size.y<map.camera.unproject_position(map.objects[index].position).y, "Projected destination tag stays above its object without edge clamping")
 			var plate: StyleBoxFlat = button.get_theme_stylebox("normal")
-			check(plate.corner_radius_top_left > 0 and button.get_theme_font("font").get("variation_embolden") > 0, "Rounded bold sci-fi tag")
+			check(plate.corner_radius_top_left > 0 and button.get_theme_font("font") == preload("res://assets/fonts/ArcospaceEmoji.ttf"), "Rounded tag uses native color emoji metrics")
 			var anchor: Vector2 = button.position + button.get("anchor_point")
 			check(anchor.is_equal_approx(map.camera.unproject_position(map.objects[index].position)), "Connector tracks projected destination")
 			var claims := 0

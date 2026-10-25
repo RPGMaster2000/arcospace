@@ -29,11 +29,8 @@ func style_tag(color: Color) -> void:
 	accent = color.lightened(0.3)
 	accent.a = 1.0
 	flat = false
-	var font := FontVariation.new()
-	font.base_font = EMOJI_FONT
-	font.fallbacks = [ThemeDB.fallback_font]
-	font.variation_embolden = 1.0
-	add_theme_font_override("font", font)
+	# Bitmap emoji must use native advances; synthetic emboldening distorts them.
+	add_theme_font_override("font", EMOJI_FONT)
 	add_theme_font_size_override("font_size", 28)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
