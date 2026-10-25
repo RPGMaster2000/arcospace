@@ -13,6 +13,17 @@ static func part(parent: Node3D, mesh: Mesh, color: Color, at := Vector3.ZERO) -
 	return node
 
 
+static func beacon(parent: Node3D, at: Vector3, color: Color, size: float = 0.12) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = size
+	mesh.height = size*2
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	var lamp := part(parent,mesh,color,at)
+	lamp.material_override.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	lamp.material_override.emission_enabled = true
+	lamp.material_override.emission = color
+
 static func ship(profile: Resource) -> Node3D:
 	var mount := Node3D.new()
 	if profile != null:
@@ -25,7 +36,7 @@ static func ship(profile: Resource) -> Node3D:
 		mount.add_child(model)
 		model.ready.connect(func():
 			if model.has_method("set_hull_color"):
-				model.set_hull_color(profile.hull_color)
+				model.set_hull_color(profile.hull_color.lightened(0.12))
 			if model.has_method("set_hull_strength"):
 				model.set_hull_strength(profile.hull_capacity)
 			model.set_process(false)
@@ -40,6 +51,8 @@ static func ship(profile: Resource) -> Node3D:
 		var mesh := PrismMesh.new()
 		mesh.size = Vector3(2.5, 0.5, 1)
 		part(mount, mesh, Color.SLATE_GRAY)
+	beacon(mount,Vector3(-1.2,0,0.25),Color("5edbff"),0.2)
+	beacon(mount,Vector3(-1.2,0,-0.25),Color("5edbff"),0.2)
 	return mount
 
 
@@ -78,6 +91,7 @@ static func build(entry: Dictionary, rng: RandomNumberGenerator, replacement: Pa
 		var wreck = ship(profile)
 		wreck.rotation = Vector3(0.4,0.8,0.6)
 		wreck.scale = Vector3.ONE*0.5
+		beacon(root,Vector3(0,0.2,0),Color("b54b37"),0.09)
 		root.add_child(wreck)
 	if key in ["mining_operation","derelict_starship","pirate_debris_field"]:
 		for i in range(7):
@@ -139,5 +153,8 @@ static func build(entry: Dictionary, rng: RandomNumberGenerator, replacement: Pa
 		window.size = Vector3(0.25,0.05,0.3)
 		var accent = part(root,window,Color("75c8df"),at*1.4+Vector3(0,0.25,0))
 		accent.material_override.emission_enabled = true
-		accent.material_override.emission = Color("437480")
+		var glow := Color("ffb457") if key == "mining_operation" else (Color("92ddff") if key == "research_station" else Color("75d6bd"))
+		accent.material_override.emission = glow
+		accent.material_override.albedo_color = glow
+		beacon(root,at*1.5+Vector3(0,0.35,0),glow,0.1)
 	return root

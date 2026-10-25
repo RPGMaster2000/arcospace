@@ -119,7 +119,7 @@ func set_label(value: String, symbol: String, is_planet: bool) -> void:
 		planet_name.mouse_filter = MOUSE_FILTER_IGNORE
 		planet_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		planet_name.add_theme_font_override("font",ThemeDB.fallback_font)
-		planet_name.add_theme_font_size_override("font_size",14)
+		planet_name.add_theme_font_size_override("font_size",18)
 		planet_name.add_theme_color_override("font_outline_color",Color("020611"))
 		planet_name.add_theme_constant_override("outline_size",2)
 		add_child(planet_name)
@@ -131,15 +131,15 @@ func set_label(value: String, symbol: String, is_planet: bool) -> void:
 	planet_name.text = value if is_planet else ""
 	planet_name.visible = is_planet
 	planet_name.add_theme_color_override("font_color",accent)
-	var width: float = ThemeDB.fallback_font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,14).x+24 if is_planet else 48.0
-	custom_minimum_size = Vector2(maxf(48,width),72 if is_planet else 48)
+	var width: float = ThemeDB.fallback_font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x+24 if is_planet else 48.0
+	custom_minimum_size = Vector2(maxf(48,width),78 if is_planet else 48)
 	size = custom_minimum_size
-	icon_center = Vector2(size.x*0.5,(26+size.y-4)*0.5) if is_planet else size*0.5
+	icon_center = Vector2(size.x*0.5,(32+size.y-4)*0.5) if is_planet else size*0.5
 	completion_badge.position = Vector2(size.x-4,-8)
 	planet_name.position = Vector2(6,4)
-	planet_name.size = Vector2(size.x-12,20)
+	planet_name.size = Vector2(size.x-12,24)
 	for state in ["normal","hover","pressed","disabled","focus"]:
-		get_theme_stylebox(state).content_margin_top = 26 if is_planet else 4
+		get_theme_stylebox(state).content_margin_top = 32 if is_planet else 4
 	_refresh_state()
 
 

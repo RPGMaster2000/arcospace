@@ -8,7 +8,8 @@ const EXPECTED = [
 	"resource_drain", "production_gain", "production_loss", "shield_hit", "shield_break",
 	"hull_hit", "hull_repair", "ship_destroyed", "destruction_burst", "systems_failure_warning",
 	"systems_failure_defeat", "emp_charge", "emp_ready", "emp_fire", "ship_departure",
-	"ui_select", "ui_confirm", "upgrade_acquired", "result_reveal"
+	"ui_select", "ui_confirm", "upgrade_acquired", "result_reveal",
+	"map_departure", "map_engine", "map_arrival"
 ]
 var checks: int = 0
 var failures: int = 0
@@ -80,7 +81,7 @@ func run() -> void:
 		check(event.enabled and not event.streams.is_empty(), "Enabled catalog mapping: " + id)
 		for stream in event.streams:
 			check(stream is AudioStreamWAV and stream.get_length() > 0.0 and ResourceLoader.exists(stream.resource_path), "Imported WAV: " + id)
-			var asset_id: String = "ship_destroyed" if id == "destruction_burst" else id
+			var asset_id: String = {"destruction_burst":"ship_destroyed","map_departure":"ship_departure","map_engine":"ship_departure","map_arrival":"ui_confirm"}.get(id,id)
 			check(stream.resource_path.get_file().begins_with(asset_id + "_"), "Correct authored mapping: " + id)
 			files[stream.resource_path] = true
 	check(files.size() == 38, "38 authored files including seven triplets")

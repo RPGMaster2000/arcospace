@@ -20,6 +20,7 @@ var orbit_nodes: Dictionary = {}
 var viewport: SubViewport
 var world: Node3D
 var camera: Camera3D
+var feedback: Node3D
 var ship: Node3D
 var objects: Dictionary = {}
 var markers: Dictionary = {}
@@ -87,6 +88,7 @@ func _ready() -> void:
 	world.add_child(light)
 
 
+
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
 	if is_instance_valid(ship) and configured_seed == visual_seed:
 		for entry in entries:
@@ -137,7 +139,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		label.text = p.name
 		label.position.y = p.radius+0.4/1.5
 		label.scale = Vector3.ONE/1.5
-		label.font_size = 18
+		label.font_size = 24
 		label.pixel_size = 0.012
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.modulate = Color(0.65,0.78,0.9,0.8)
@@ -187,6 +189,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	ship = Models.ship(player_profile)
 	ship.scale = Vector3.ONE * 0.175
 	world.add_child(ship)
+	if is_instance_valid(feedback): feedback.queue_free()
+	feedback = preload("res://scripts/presentation/star_system/map_feedback.gd").new()
+	feedback.canvas = self
+	feedback.camera = camera
+	feedback.ship = ship
+	world.add_child(feedback)
 	ship.position = _initial_ship_position()
 	orbit_index = last_destination if objects.has(last_destination) else -1
 	if orbit_index != -1:
@@ -240,8 +248,9 @@ func _select_destination(index: int) -> void:
 		var color: Color = settings.orbit_color
 		if key==planet:
 			color = color.lightened(0.2)
-			color.a = minf(0.48,color.a*2.0)
+			color.a = 0.7
 		orbit_nodes[key].material_override.set_shader_parameter("line_color",color)
+		orbit_nodes[key].material_override.set_shader_parameter("line_width",settings.orbit_line_width*(1.25 if key==planet else 1.0))
 	for key in markers:
 		var marker = markers[key]
 		marker.set_state(marker.completed,marker.unavailable,key==index)
@@ -271,6 +280,8 @@ func travel(index: int) -> void:
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	_select_destination(index)
+	feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
+	feedback.set_travel(true)
 	traveling = true
 	travel_started.emit()
 	orbit_index = -1
@@ -289,12 +300,16 @@ func travel(index: int) -> void:
 		motion.tween_property(ship, "position", destination, travel_duration)
 		motion.tween_callback(func():
 			traveling = false
+			feedback.set_travel(false,true)
+			feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
 			orbit_index = index
 			orbit_angle = 0.0
 			arrived.emit(index))
 
 
 func _impact() -> void:
+	feedback.set_travel(false)
+	_select_destination(-1)
 	_clear_impact()
 	var layer := CanvasLayer.new()
 	impact_layer = layer
@@ -332,6 +347,7 @@ func overview() -> void:
 	if motion and motion.is_valid():
 		motion.kill()
 	traveling = false
+	if is_instance_valid(feedback): feedback.set_travel(false)
 	_select_destination(-1)
 	focused = false
 	interactive = true
@@ -343,6 +359,9 @@ func set_active(active: bool) -> void:
 	if not active:
 		_end_pinch()
 	visible = active
+	if is_instance_valid(feedback):
+		feedback.set_process(active)
+		if not active: feedback.cancel()
 	set_process(active)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
 
@@ -493,6 +512,7 @@ func ftl_departure(curtain: CanvasLayer) -> bool:
 
 
 func cancel_presentation() -> void:
+	if is_instance_valid(feedback): feedback.cancel()
 	if motion and motion.is_valid():
 		motion.kill()
 	if is_instance_valid(camera):
