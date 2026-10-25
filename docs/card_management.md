@@ -62,7 +62,9 @@ The body uses Container stretch ratios 0.63 gallery / 0.37 details, with a
 20-logical-pixel gutter. Header and footer are siblings of the expanding body;
 neither belongs to either scroll area. Gallery and details scroll independently.
 Replacement keeps a compact 0.45-scale original incoming portrait outside the
-details scroll; other details use a 0.65-scale original portrait plus full text.
+details scroll; upgrade details show the actual next-level card at its original 198×294 logical
+size, followed by current effects and highlighted changes. Acquisition details
+retain a 0.65-scale portrait. The right panel scrolls independently.
 
 Margins are 12 logical pixels plus Android display-safe-area insets where
 reported. The expedition's top-bar height is not reserved. The project retains
@@ -163,7 +165,7 @@ documentation, and seven existing UI tests (inspection, Chasedown, replacement,
 expedition, reward feedback, outpost and UI overhaul).
 Removed: `scripts/ui/deck_replacement.gd` and its UID.
 
-Runtime comparison, excluding unchanged shared CardInspector/EffectText/scroll code:
+Initial Phase 1 runtime comparison, excluding unchanged shared CardInspector/EffectText/scroll code:
 
 | Script | Before lines | After lines |
 |---|---:|---:|
@@ -180,3 +182,17 @@ another gameplay owner or global manager. Remaining coupling: the controller sti
 supplies State snapshots, chooses the post-reward view and exposes existing
 read-only presentation aliases used by integration tests. Large descriptions are
 scrollable rather than guaranteed to fit simultaneously with all comparison text.
+
+## Original-size upgrade preview follow-up
+
+Selecting an upgrade candidate now shows its actual next-level CardPortrait first,
+at scale 1.0 (198×294 logical pixels), using the same renderer and dimensions as
+the gallery. Current effects and the existing highlighted comparison follow below
+in the independently scrolling right panel. The fixed Apply Upgrade footer is
+unchanged. No card definitions or transactions changed.
+
+New verification: import, card-management (107 checks), save/lifecycle (21 checks)
+and UI overhaul (910 checks) passed. Rendered Mobile/Vulkan card-management checks
+also passed (107), including all three target landscape sizes. The full shared
+suite above describes the preceding Phase 1 release and was not repeated for this
+small presentation adjustment. Physical Android display was not tested.

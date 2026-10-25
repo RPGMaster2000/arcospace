@@ -224,10 +224,11 @@ func _refresh_details() -> void:
 		details.add_child(_label("RECEIVE · Effects", 21))
 		details.add_child(_label(incoming.description, 18))
 	elif selected_card != null:
-		_card_section("CURRENT" if mode == "upgrade" else "SELECTED", selected_card, true)
 		if mode == "upgrade":
 			var next: Resource = selected_card.with_upgrade(selected_card.upgrade_level + 1)
-			details.add_child(_label("AFTER UPGRADE · Level %d" % next.upgrade_level, 21))
+			_card_section("AFTER UPGRADE · Level %d" % next.upgrade_level, next, true, 1.0)
+			_card_section("CURRENT · Level %d" % selected_card.upgrade_level, selected_card, false)
+			details.add_child(_label("CHANGES", 21))
 			var comparison = RichTextLabel.new()
 			comparison.bbcode_enabled = true
 			comparison.fit_content = true
@@ -236,15 +237,17 @@ func _refresh_details() -> void:
 			comparison.add_theme_font_size_override("normal_font_size", 18)
 			comparison.text = EffectText.comparison(next, selected_card)
 			details.add_child(comparison)
+		else:
+			_card_section("SELECTED", selected_card, true)
 	details_scroll.scroll_vertical = 0
 
-func _card_section(title: String, card: Resource, art: bool) -> Button:
+func _card_section(title: String, card: Resource, art: bool, portrait_scale: float = 0.65) -> Button:
 	details.add_child(_label(title, 21))
 	var portrait: Button
 	if art:
 		portrait = Portrait.new()
 		portrait.card_data = card
-		portrait.card_scale = 0.65
+		portrait.card_scale = portrait_scale
 		portrait.inspection_enabled = false
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		portrait.focus_mode = Control.FOCUS_NONE

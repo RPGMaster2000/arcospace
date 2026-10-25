@@ -92,6 +92,12 @@ func run() -> void:
 	modal.select_card(upgrade)
 	check(modal.heading.text.contains("2 upgrades remaining"), "Remaining counter")
 	check(modal.details.get_children().any(func(c): return c is RichTextLabel and c.text == preload("res://scripts/ui/card_effect_text.gd").comparison(upgrade.with_upgrade(upgrade.upgrade_level + 1), upgrade)), "Existing comparison formatter")
+	var preview: Button
+	for child in modal.details.get_children():
+		if child.get_script() == preload("res://scripts/ui/card_portrait.gd"):
+			preview = child
+	check(preview != null and preview.card_data.effects == upgrade.with_upgrade(upgrade.upgrade_level + 1).effects, "Right portrait shows actual next upgrade")
+	check(preview.card_scale == 1.0 and preview.custom_minimum_size == Vector2(198, 294), "Upgrade portrait retains original size")
 	await layout_checks("upgrade")
 	var old_revision: int = modal.revision
 	modal.confirm_button.pressed.emit()
