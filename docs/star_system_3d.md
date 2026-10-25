@@ -163,3 +163,10 @@ in the existing settings Resource. Updated transition tests verify stationary tu
 completed heading, exactly-once progression and fade cleanup: 130 checks pass headless and
 under Mobile/Vulkan at the two landscape sizes. The lifecycle test uses a local shortened
 turn only; shipping duration is 1.1 seconds. No travel legality, saves, rewards or music changed.
+
+
+Procedural visual foundation (2026-10-25): the map now composes a generated
+0–4-planet system, existing encounter representations and a camera-relative
+background. Navigation/cinematic interfaces and fallback maps remain unchanged.
+See [procedural_star_system.md](procedural_star_system.md) for orbital generation,
+IAU names, the MIT planet-shader subset, quality controls and PNG/scene replacement.

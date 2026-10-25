@@ -112,6 +112,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	background = Space.new()
 	background.name = "BackgroundEnvironment"
 	world.add_child(background)
+	camera.overview(settings, true)
 	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"))
 	for p in visual_data.planets:
 		visual_root.add_child(Planets.orbit(p,settings))
@@ -167,7 +168,6 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	orbit_index = last_destination if objects.has(last_destination) else -1
 	if orbit_index != -1:
 		ship.position = objects[orbit_index].position + Vector3(_orbit_radius(orbit_index), 0, 0)
-	camera.overview(settings, true)
 	focused = false
 	interactive = true
 

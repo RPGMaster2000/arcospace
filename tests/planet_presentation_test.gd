@@ -30,6 +30,10 @@ func run() -> void:
 	for seed_value in range(1,500):
 		var generated: Dictionary = Data.generate(seed_value,1,entries,map.settings)
 		if not seeds.has(generated.planets.size()): seeds[generated.planets.size()] = seed_value
+		if generated.planets.size()==4 and not seeds.has("dense_four"):
+			var sky_rng = Data.random_for(seed_value,1,"background")
+			sky_rng.randf_range(1,99)
+			if sky_rng.randf()>=0.3: seeds["dense_four"] = seed_value
 		for p in generated.planets:
 			if p.eccentricity>0.16 and abs(p.inclination)>deg_to_rad(10) and not seeds.has("tilted"): seeds["tilted"] = seed_value
 			if p.type=="gas_giant" and p.radius>0.78 and not seeds.has("giant"): seeds["giant"] = seed_value
@@ -64,6 +68,9 @@ func run() -> void:
 		var start: int = Time.get_ticks_usec()
 		for frame in range(30): await process_frame
 		print("Four-planet software render mean frame: %.2f ms; draw calls: %d" % [(Time.get_ticks_usec()-start)/30000.0,Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
+	map.camera.frame(map.ship.position+Vector3(1.5,1.5,2.2),map.ship.position,0.0,&"ftl")
+	map.configure(entries,-1,0.04,seeds[4]+123456)
+	check(map.background.origin==map.camera.position,"Rebuild records dust reference after restoring overview, not the prior cinematic")
 	# Both imported surfaces and the explicit legacy fallback can build every type.
 	var specimen: Dictionary = map.visual_data.planets[0].duplicate(true)
 	for kind in Data.TYPES:
@@ -144,9 +151,11 @@ func run() -> void:
 		map.settings.imported_planets = quality != "dark-reduced"
 		if quality == "dark-reduced": map.settings.background_layers.clear()
 		else:
+			map.run_seed = seeds["dense_four"]
 			map.settings.background_strength = 1.0
 			map.settings.background_layers[0].opacity = 0.45
 			map.settings.background_layers[0].angular_position = Vector2(180,-50)
+		check(Data.generate(seeds[4],1,entries,map.settings)==Data.generate(seeds[4],1,entries,normal_settings),"Quality changes do not reshuffle the cosmetic system")
 		map.configure(entries,-1,0.04,seeds[4]+100000+quality.hash())
 		await settle()
 		check(map.planet_nodes.size()==4,"Quality never changes planet count")
@@ -165,6 +174,7 @@ func run() -> void:
 	var visual: Dictionary = host.star_map.visual_data.duplicate(true)
 	await settle()
 	await capture("expedition-overview")
+	host.star_map.configured_seed += 1 # Exercise a full rebuild, not the refresh fast path.
 	host._show_star_map(false)
 	check(Save.encode(host.state)==before,"Cosmetics do not change any saved state or RNG stream")
 	var restored = Save.new().decode(before)

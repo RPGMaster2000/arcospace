@@ -17,6 +17,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [Shared local and CI regression runner](regression_testing.md)
 - [Battle ending sequence and mandatory upgrade completion](battle_results.md)
 - [3D star-system map, camera tuning and fallback](star_system_3d.md)
+- [Procedural systems, planet assets, model overrides and background textures](procedural_star_system.md)
 - [Cinematic menu ownership and Inspector calibration](cinematic_menu.md)
 - [Tactical preview, target analysis and Game Reference](tactical_preview.md)
 - [Architectural observations](#architectural-observations)
