@@ -25,6 +25,10 @@ func _initialize() -> void:
 		counts[a.planets.size()] = counts.get(a.planets.size(),0)+1
 		var assignments: Dictionary = {}
 		for p in a.planets:
+			if p.index>0:
+				check(p.radius>a.planets[p.index-1].radius,"Planet size increases with orbital distance")
+			if p.index<a.planets.size()/2:
+				check(p.type!="gas_giant","Gas giants remain outside the inner planetary region")
 			check(p.position.is_equal_approx(Data.orbit_point(p,p.phase)),"Planet lies on inclined ellipse")
 			check(p.eccentricity>=0 and p.eccentricity<=0.25 and abs(p.inclination)<=deg_to_rad(15),"Orbit parameter bounds")
 			check(p.distance*(1-p.eccentricity)-p.radius*1.5>2.1,"Star clearance")

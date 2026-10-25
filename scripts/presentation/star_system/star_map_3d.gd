@@ -32,6 +32,8 @@ var impact_motion: Tween
 var impact_layer: CanvasLayer
 var orbit_index := -1
 var orbit_angle := 0.0
+var compact_labels := false
+var label_zoom := -1.0
 var focused := false
 var interactive := true
 var player_profile: Resource
@@ -89,7 +91,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		for entry in entries:
 			if markers.has(entry.index):
 				markers[entry.index].disabled = entry.completed
-				markers[entry.index].text = _marker_text(entry)
+				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index))
 		overview()
 		return
 	if motion and motion.is_valid():
@@ -106,6 +108,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	for button in markers.values(): button.queue_free()
 	objects.clear()
 	markers.clear()
+	label_zoom = -1.0
 	planet_nodes.clear()
 	visual_root = Node3D.new()
 	visual_root.name = "GeneratedSystem"
@@ -129,7 +132,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		label.text = p.name
 		label.position.y = p.radius+0.4/1.5
 		label.scale = Vector3.ONE/1.5
-		label.font_size = 24
+		label.font_size = 18
 		label.pixel_size = 0.012
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.modulate = Color(0.65,0.78,0.9,0.8)
@@ -161,13 +164,11 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			destination_root.add_child(model)
 			objects[index] = model
 		var button := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
-		button.text = _marker_text(entry)
 		button.tooltip_text = entry.tooltip
 		button.flat = true
-		button.custom_minimum_size = Vector2(132, 64)
-		button.size = Vector2(140, 64)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.style_tag(entry.color)
+		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index))
 		button.disabled = entry.completed
 		preload("res://scripts/audio/sfx.gd").bind_ui(button)
 		button.pressed.connect(travel.bind(index))
@@ -199,33 +200,31 @@ func _process(delta: float) -> void:
 		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * _orbit_radius(orbit_index)
 		_face(next - ship.position, delta * 5)
 		ship.position = next
-	var label_rects: Array[Rect2] = []
+	# Change label detail only while zooming, never as a side effect of panning.
+	if absf(camera.zoom_scale-label_zoom)>0.01:
+		var full_rects: Array[Rect2] = []
+		var crowded := false
+		for index in markers:
+			var button = markers[index]
+			var center: Vector2 = camera.unproject_position(objects[index].position)
+			var rect = Rect2(center-Vector2(button.full_size.x*0.5,button.full_size.y+absf(settings.label_offset.y)),button.full_size)
+			if full_rects.any(func(other): return other.grow(4).intersects(rect)): crowded = true
+			full_rects.append(rect)
+		if camera.zoom_scale < settings.compact_label_zoom:
+			compact_labels = true
+		elif camera.zoom_scale > settings.compact_label_zoom+0.2:
+			compact_labels = crowded
+		label_zoom = camera.zoom_scale
 	for index in markers:
-		var button: Button = markers[index]
+		var button = markers[index]
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
-		button.visible = (
-			not focused and not camera.is_position_behind(point)
-			and Rect2(Vector2.ZERO, size).has_point(center)
-			and not (camera.motion != null and camera.motion.is_running())
-		)
+		button.show_compact(compact_labels)
+		button.visible = not focused and not camera.is_position_behind(point)
 		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
-		var projected: Vector2 = center - button.size * 0.5 + settings.label_offset
-		var border: float = settings.screen_border
-		var limit: Vector2 = (size - button.size - Vector2.ONE * border).max(Vector2.ONE * border)
-		button.position = projected.clamp(Vector2.ONE * border, limit)
-		if Rect2(button.position, button.size).has_point(center):
-			# At the lower screen edge, put the tag above the model rather than over it.
-			button.position.y = clampf(center.y - absf(settings.label_offset.y) - button.size.y * 0.5, border, limit.y)
-		var desired: Vector2 = button.position
-		for step in [Vector2.ZERO,Vector2(0,-1),Vector2(1,0),Vector2(-1,0),Vector2(0,1),Vector2(1,-1),Vector2(-1,-1),Vector2(0,-2),Vector2(0,2)]:
-			var candidate: Vector2 = (desired+step*(button.size+Vector2(8,8))).clamp(Vector2.ONE*border,limit)
-			var rect = Rect2(candidate,button.size)
-			if not rect.has_point(center) and label_rects.all(func(other): return not other.grow(3).intersects(rect)):
-				button.position = candidate
-				break
-		label_rects.append(button.get_rect())
-		button.anchor_point = center - button.position
+		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
+		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
+		button.anchor_point = center-button.position
 		button.queue_redraw()
 
 
@@ -501,10 +500,13 @@ func _orbit_radius(index: int) -> float:
 	return maxf(settings.orbit_radius,float(objects[index].get_meta("radius",0.0))+1.0)
 
 func _marker_text(entry: Dictionary) -> String:
-	var label: String = entry.get("name",entry.text)
 	if visual_data.get("assignments",{}).has(entry.index):
-		label += "\n"+visual_data.planets[visual_data.assignments[entry.index]].name
-	return ("✓ " if entry.completed else "")+label
+		return visual_data.planets[visual_data.assignments[entry.index]].name
+	return entry.get("name",entry.text)
+
+func _marker_icon(entry: Dictionary) -> String:
+	if entry.get("profile") != null: return "⚔"
+	return {"mining_operation":"⚒","research_station":"⌬","quarantined_colony":"☣","gas_giant":"◉","trading_outpost":"⚙","derelict_starship":"▱","pirate_debris_field":"⚔","spatial_anomaly":"◇","unstable_wormhole":"◎","radiation_nebula":"✦","distress_signal":"⚑"}.get(entry.get("model_kind",""),"◇")
 
 func _initial_ship_position() -> Vector3:
 	for at in [Vector3(0,0,3),Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-3),Vector3(-2,0,2),Vector3(2,0,-2)]:

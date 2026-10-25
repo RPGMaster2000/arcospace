@@ -23,15 +23,16 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {}, "assignments": {}}
 	var count: int = rng.randi_range(2, clampi(settings.maximum_planets, 2, 4))
 	# Disjoint radial shells guarantee clearance even when inclined paths cross in projection.
-	var largest_radius: float = maxf(settings.planet_radius_range.x, settings.planet_radius_range.y)*1.2*1.5
+	var largest_radius: float = maxf(settings.planet_radius_range.x, settings.planet_radius_range.y)*1.2*1.06*1.5
 	var band: float = largest_radius*2.0 + settings.minimum_orbit_spacing + 0.8
 	for i in range(count):
 		var kind: String = TYPES[rng.randi_range(0, TYPES.size()-1)]
 		var inner: float = 2.1 + i * band
 		var outer: float = inner + band
 		var space: float = settings.minimum_orbit_spacing
-		var radius: float = rng.randf_range(settings.planet_radius_range.x, settings.planet_radius_range.y)
-		if kind == "gas_giant": radius *= 1.2
+		var order: float = float(i)/maxi(1,count-1)
+		var radius: float = lerpf(settings.planet_radius_range.x*0.65,settings.planet_radius_range.y*1.2,order)*rng.randf_range(0.94,1.06)
+		if i < count/2 and kind == "gas_giant": kind = "rocky"
 		radius = clampf(radius, 0.15, (band - space) * 0.45)
 		var low: float = inner + radius*1.5 + space * 0.5
 		var high: float = outer - radius*1.5 - space * 0.5
@@ -53,7 +54,10 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 	var assignment_rng = random_for(seed_value, number, "assignments")
 	for p in result.planets:
 		if eligible.is_empty() or assignment_rng.randf() < 0.25: continue
-		var entry: Dictionary = eligible.pop_at(assignment_rng.randi_range(0, eligible.size()-1))
+		var candidates: Array = eligible.filter(func(e): return e.model_kind != "gas_giant" or p.index >= count/2)
+		if candidates.is_empty(): continue
+		var entry: Dictionary = candidates[assignment_rng.randi_range(0,candidates.size()-1)]
+		eligible.erase(entry)
 		p.encounter = entry.index
 		p.type = PLANETARY[entry.model_kind]
 		result.assignments[entry.index] = p.index

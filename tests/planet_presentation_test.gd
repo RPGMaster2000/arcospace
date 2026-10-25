@@ -126,6 +126,31 @@ func run() -> void:
 		check(planet.scale.is_equal_approx(Vector3.ONE*1.5),"Star-map planets are 50 percent larger")
 	check(map.objects[5].scale.is_equal_approx(Vector3.ONE*0.275),"Star-map enemy ship is half its previous size")
 	check(map.objects[-2].scale.is_equal_approx(Vector3.ONE*0.5),"Star-map station is half its previous size")
+	var old_zoom: float = map.camera.zoom_scale
+	map.camera.zoom_scale = 1.0
+	map.camera.zoom_target = 1.0
+	await settle()
+	check(map.markers[5].compact and map.markers[5].text=="⚔","Zoomed-out enemy PoI uses its relevant icon")
+	for index in map.visual_data.assignments:
+		check(map.markers[index].text==map.visual_data.planets[map.visual_data.assignments[index]].name,"Planet label contains only its name")
+		check(not map.markers[index].compact,"Planet names remain names at wide zoom")
+	var marker = map.markers[5]
+	var anchor: Vector3 = map.objects[5].position
+	check(marker.position.y+marker.size.y<map.camera.unproject_position(anchor).y,"PoI label stays above its object")
+	map.objects[5].position += Vector3(200,0,0)
+	await settle()
+	check(marker.position.x>map.size.x,"Offscreen labels are not clamped or relocated to other slots")
+	map.objects[5].position = anchor
+	map.camera.zoom_scale = 3.0
+	map.camera.zoom_target = 3.0
+	await settle()
+	check(not map.markers[5].compact and map.markers[5].text==entries[5].name,"Close zoom restores the PoI name")
+	var at_rest: Vector2 = marker.position
+	await settle()
+	check(marker.position.is_equal_approx(at_rest),"Labels do not hop between alternative positions")
+	map.camera.zoom_scale = old_zoom
+	map.camera.zoom_target = old_zoom
+	await settle()
 	var relative: Vector3 = map.background.sky.position
 	var layer_relative: Vector3 = map.background.layers[0].position
 	var dust_relative: Vector3 = map.background.dust[0].position

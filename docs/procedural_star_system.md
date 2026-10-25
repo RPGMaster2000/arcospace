@@ -36,7 +36,7 @@ Radial shells start at 2.1 world units. Each shell reserves the largest possible
 minimum surface clearance (default 1.5), and 0.8 units of placement variation.
 Semi-major axes and eccentricities are constrained using rendered radii, so adjacent
 radial envelopes remain at least 1.5 units apart even at periapsis/apoapsis. Defaults
-extend the four-planet region to 22.1 units. System/pan bounds are now ±24 units;
+extend the four-planet region to 22.75 units. System/pan bounds are now ±24 units;
 the overview pulls back to fit this larger region. Counts remain two to four.
 
 For eccentric anomaly E, the unrotated point is:
@@ -77,9 +77,9 @@ PoI resource basenames by existing EncounterPresentation, not title substrings:
 Assignments use their own seed and can leave planets decorative. Each planet gets
 at most one encounter; no encounter is duplicated. The same six encounter indices
 plus an optional separate outpost remain selectable. Decorative planets have only
-read-only Label3D names and no interactive marker. Assigned labels retain the real
-encounter name and append the planet's name. Label placement separates nearby tags
-while retaining dynamic connectors to their exact projected anchors.
+read-only Label3D names and no interactive marker. Assigned labels show only the planet's name. Other PoIs switch between names and
+semantic icons with zoom. All labels remain above their visual anchors, without
+border clamping or collision-driven relocation, retaining their dynamic connectors.
 
 The existing ship travels to the same selected index and emits arrival once, using
 the original timing/interception callbacks. Orbit/arrival distance has a minimum
@@ -349,3 +349,19 @@ remains 1x for title/battle materials. The UI is unchanged.
 Tune Overview Position / Field Of View and the new **System Lighting** group
 (Ambient Light Energy, Sun Core Scale, Sunlight Energy, Sunlight Range) in the existing settings
 Resource. Lighting remains local to the map, with no changes to battle/menu lights.
+
+### Lower camera, radial planet sizes and anchored labels
+
+The overview is now (0,78,112), lowering elevation to about 35 degrees while
+retaining the distant 22-degree lens. Planet radii grow with orbital order, from
+small inner rocky worlds to larger outer bodies; visual-only gas-giant assignments
+are restricted to the outer half. Generation still uses independent cosmetic RNG
+and the same six authoritative encounters. Enlarged-radius shell clearance remains.
+
+Map labels use 14-point text (decorative planet names: 18). Planet destinations show
+only their generated names. Other PoIs use semantic icons at wide zoom and restore
+names closer in. **Compact Label Zoom** (default 1.4) plus 0.2 hysteresis prevents
+threshold flicker; full-size label overlap keeps crowded PoIs compact. Labels remain
+anchored above each object's projected top with the existing connector. No border
+clamping, slot switching or overlap-avoidance relocation remains; labels can extend
+outside the map area. Touch/drag safeguards and model hit regions are retained.

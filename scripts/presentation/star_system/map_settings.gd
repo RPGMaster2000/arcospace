@@ -1,6 +1,6 @@
 extends Resource
 ## Presentation tuning only. No expedition state or random encounters live here.
-@export var overview_position := Vector3(0, 112, 78)
+@export var overview_position := Vector3(0, 78, 112)
 @export var overview_target := Vector3.ZERO
 @export_range(15.0, 60.0) var field_of_view: float = 22.0
 @export_group("System lighting")
@@ -18,9 +18,9 @@ extends Resource
 ## Camera look-at center limits relative to Overview Target, in X/Z world units.
 @export var pan_bounds := Rect2(-24, -24, 48, 48)
 @export_range(4.0, 32.0) var pan_drag_threshold: float = 12.0
-## Minimum gap between projected labels and the viewport edge, in logical pixels.
-@export_range(0.0, 48.0) var screen_border: float = 8.0
-@export var label_offset := Vector2(0, 58)
+## Screen-space offset above each object; labels may extend beyond the viewport.
+@export var label_offset := Vector2(0, -12)
+@export_range(0.5, 3.0, 0.1) var compact_label_zoom: float = 1.4
 @export_group("Destination and movement")
 @export var destination_offset := Vector3(3.75, 4.8, 6.3)
 @export_range(0.1, 3.0) var camera_duration: float = 0.8
