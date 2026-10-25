@@ -147,6 +147,9 @@ The map restores its overview before recording the dust reference, so rebuilding
 after a cinematic does not inherit the old camera pose. A map-local adaptation of
 the existing starfield shader (`map_sky.gdshader`) centers its sphere using the exact
 render camera's GPU matrix. It no longer waits for a CPU pre-draw translation.
+**Starfield Parallax** defaults to 0.12: distant stars shift gently under pan/zoom,
+much less than nearby white points. Set it to zero only for an infinitely distant,
+translation-locked sky. The far-depth draw still prevents object occlusion.
 Lower angular star density/resolution avoids tiny undersampled highlights. The
 shared battle/menu background shader is unchanged. Camera far clipping is unchanged;
 there is still exactly one map SubViewport.
@@ -163,16 +166,22 @@ translation field consistent across camera turns. Stationary camera frames produ
 identical pixels.
 
 Tune **Stardust Parallax**, **Opacity**, density and enabled state in the existing
-StarSystemSettings resource. Background layer quads retain their existing pre-draw
-placement; map deactivation disconnects that callback and suspends its viewport.
+StarSystemSettings resource. Nebula/galaxy/texture background quads also use GPU
+camera-relative placement and far-depth drawing, with stable transparency ordering.
+There is no background pre-draw callback or CPU camera-follow loop. Map deactivation
+hides the background and suspends its viewport. Encounter nebulae use the existing
+world-space/billboard branch of the shared shader.
 Backgrounds can be reduced through strength or removed by clearing Background Layers;
 clouds, atmosphere and dust each have a reduced/disabled setting.
 
 ### Parallax/spacing regression update
 
 `space_parallax_test.gd` checks rendered pixels on Mobile and Compatibility: an
-isolated distant starfield must remain unchanged under translation, stationary dots
-must be pixel-stable, and pan/zoom must change the white-point image. Headless runs
+isolated distant starfield must move under translation, stationary stars/dots
+must be pixel-stable, and pan/zoom must change the white-point image. A separate
+zero-parallax calibration check verifies the optional translation-locked setting.
+The same test isolates procedural nebulae, galaxies and PNG-style replacement
+textures, checking stationary pixels, pan, camera turns and optional layer parallax. Headless runs
 explicitly skip these GPU checks. Generation tests now measure shell clearance using
 the enlarged visible radius. Existing save schema and gameplay RNG remain unchanged;
 cosmetic orbital positions reconstruct using the new spacing rules.
@@ -303,7 +312,7 @@ larger bodies; label text retains its previous size. The later spacing update
 expands orbital coordinates while preserving travel timing. Generation now always creates two to four
 planets; old saves reconstruct the updated cosmetic layout without schema changes.
 
-Latest spacing/parallax verification: 5,427 generation checks and 171 presentation
+Latest spacing/parallax verification: 5,427 generation checks and 172 presentation
 checks passed, with nine focused headless scripts plus import passing. The GPU pixel
 test passes on Mobile/Vulkan and Compatibility/OpenGL (software llvmpipe). The full
 presentation test also passes on Mobile at all three landscape sizes. The headless

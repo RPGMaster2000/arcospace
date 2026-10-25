@@ -16,6 +16,8 @@ uniform float streak_intensity : hint_range(0.0, 1.0) = 0.0;
 uniform float rift_intensity : hint_range(0.0, 1.0) = 0.0;
 uniform vec2 feature_center = vec2(0.66, 0.50);
 uniform float variation_seed = 1.0;
+uniform vec3 reference_origin;
+uniform float parallax : hint_range(0.0, 0.5) = 0.12;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
 	vec2 i = floor(p), f = fract(p);
@@ -24,7 +26,8 @@ float noise(vec2 p) {
 }
 // Center on the exact render camera, without a late CPU transform update.
 void vertex() {
- VERTEX += (inverse(MODEL_MATRIX) * vec4(CAMERA_POSITION_WORLD, 0.0)).xyz;
+ vec3 center = CAMERA_POSITION_WORLD-(CAMERA_POSITION_WORLD-reference_origin)*parallax;
+ VERTEX += (inverse(MODEL_MATRIX) * vec4(center, 0.0)).xyz;
  POSITION = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
  POSITION.z = CLIP_SPACE_FAR * POSITION.w;
 }

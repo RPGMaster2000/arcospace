@@ -122,12 +122,12 @@ func run() -> void:
 	check(map.objects[5].scale.is_equal_approx(Vector3.ONE*0.275),"Star-map enemy ship is half its previous size")
 	check(map.objects[-2].scale.is_equal_approx(Vector3.ONE*0.5),"Star-map station is half its previous size")
 	var relative: Vector3 = map.background.sky.position
-	var layer_relative: Vector3 = map.background.layers[0].position-map.camera.position
+	var layer_relative: Vector3 = map.background.layers[0].position
 	var dust_relative: Vector3 = map.background.dust[0].position
 	map.camera.position += Vector3(3,0,0)
-	map.background.update_view(map.camera)
 	check(map.background.sky.position==relative,"Sky translation is computed from the render camera in the shader")
-	check((map.background.layers[0].position-map.camera.position).is_equal_approx(layer_relative),"Distant layer stays infinitely distant")
+	check(map.background.layers[0].position.is_equal_approx(layer_relative),"Distant layers have no late CPU transform updates")
+	check(map.background.layers[0].material_override.get_shader_parameter("camera_relative"),"Distant layers use the render camera in their shader")
 	check(map.background.dust[0].position==dust_relative,"Dust has no late CPU transform updates")
 	var near_material: ShaderMaterial = map.background.dust[0].multimesh.mesh.material
 	var far_material: ShaderMaterial = map.background.dust[1].multimesh.mesh.material
@@ -136,15 +136,12 @@ func run() -> void:
 	var camera_orientation: Basis = map.camera.basis
 	var fragment: Transform3D = map.background.dust[0].multimesh.get_instance_transform(0)
 	map.camera.rotate_y(0.1)
-	map.background.update_view(map.camera)
 	check(map.background.dust[0].basis.is_equal_approx(dust_orientation),"Debris orientation stays anchored during camera turns")
 	check(map.background.dust[0].multimesh.get_instance_transform(0)==fragment,"Camera updates never regenerate fragments")
 	check(map.background.dust[0].multimesh.mesh.size.x>=0.03 and map.background.dust[0].multimesh.mesh.size.x<0.1,"Debris uses small antialiased star-like dots")
 	var settled_transform: Transform3D = map.background.dust[0].transform
-	map.background.update_view(map.camera)
 	check(map.background.dust[0].transform==settled_transform,"Stationary camera produces no debris jitter")
 	map.camera.basis = camera_orientation
-	map.background.update_view(map.camera)
 	map.set_active(false)
 	check(map.viewport.render_target_update_mode==SubViewport.UPDATE_DISABLED and not map.background.is_processing(),"No inactive GPU/background loop")
 	map.set_active(true)

@@ -7,11 +7,9 @@ var dust: Array[MultiMeshInstance3D] = []
 var origin := Vector3.ZERO
 var dust_basis := Basis.IDENTITY
 var settings: Resource
-var source_camera: Camera3D
 
 func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null) -> void:
 	settings = calibration
-	source_camera = camera
 	origin = camera.position
 	dust_basis = camera.basis
 	var sphere = SphereMesh.new()
@@ -22,6 +20,8 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	sky = Models.part(self,sphere,Color.WHITE)
 	var space = ShaderMaterial.new()
 	space.shader = preload("res://shaders/map_sky.gdshader")
+	space.set_shader_parameter("reference_origin",origin)
+	space.set_shader_parameter("parallax",settings.starfield_parallax)
 	space.set_shader_parameter("star_density",0.12)
 	space.set_shader_parameter("star_resolution",220.0)
 	space.set_shader_parameter("star_brightness",0.25)
@@ -48,8 +48,12 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 		node.material_override = material
 		var yaw: float = deg_to_rad(specification.angular_position.x+rng.randf_range(-25,25))
 		var pitch: float = deg_to_rad(specification.angular_position.y+rng.randf_range(-12,12))
-		node.set_meta("direction",Vector3(sin(yaw)*cos(pitch),sin(pitch),cos(yaw)*cos(pitch)))
-		node.set_meta("parallax",specification.parallax)
+		material.set_shader_parameter("camera_relative",true)
+		material.set_shader_parameter("sky_direction",Vector3(sin(yaw)*cos(pitch),sin(pitch),cos(yaw)*cos(pitch)))
+		material.set_shader_parameter("reference_origin",origin)
+		material.set_shader_parameter("sky_parallax",specification.parallax)
+		material.render_priority = -100+layers.size()
+		node.extra_cull_margin = 1000.0
 		layers.append(node)
 	if dust_rng == null: dust_rng = rng
 	if settings.stardust_enabled:
@@ -78,24 +82,8 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(node)
 			dust.append(node)
-	update_view(camera)
 	set_active(true)
 
-func update_view(camera: Camera3D) -> void:
-	# Sky and dust use this draw's camera matrices directly in their shaders.
-	for node in layers:
-		node.position = camera.position+node.get_meta("direction")*55-(camera.position-origin)*float(node.get_meta("parallax"))
-		node.look_at(camera.position,Vector3.UP)
-
-# Run after camera tweens, immediately before drawing, so the sky never lags a frame.
-func _sync() -> void:
-	if is_instance_valid(source_camera): update_view(source_camera)
-
 func set_active(enabled: bool) -> void:
-	if enabled and not RenderingServer.frame_pre_draw.is_connected(_sync):
-		RenderingServer.frame_pre_draw.connect(_sync)
-	elif not enabled and RenderingServer.frame_pre_draw.is_connected(_sync):
-		RenderingServer.frame_pre_draw.disconnect(_sync)
-
-func _exit_tree() -> void:
-	set_active(false)
+	# All sky/debris placement uses render-camera matrices. No pre-draw callbacks.
+	visible = enabled

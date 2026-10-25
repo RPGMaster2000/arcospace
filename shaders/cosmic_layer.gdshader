@@ -4,6 +4,11 @@ uniform sampler2D source_texture : source_color, hint_default_white;
 uniform bool use_texture = false;
 uniform bool galaxy = false;
 uniform bool billboard = false;
+// Enabled only for map sky decorations; encounter nebulae stay in world space.
+uniform bool camera_relative = false;
+uniform vec3 sky_direction = vec3(0.0,0.0,-1.0);
+uniform vec3 reference_origin;
+uniform float sky_parallax = 0.0;
 uniform vec4 tint : source_color = vec4(0.3,0.4,0.7,1.0);
 uniform float opacity = 0.2;
 uniform float rotation = 0.0;
@@ -14,7 +19,12 @@ float noise(vec2 p) {
  return mix(mix(hash2(i),hash2(i+vec2(1,0)),f.x),mix(hash2(i+vec2(0,1)),hash2(i+vec2(1,1)),f.x),f.y);
 }
 void vertex() {
- if (billboard) MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0],INV_VIEW_MATRIX[1],INV_VIEW_MATRIX[2],MODEL_MATRIX[3]);
+ if (camera_relative) {
+  vec3 center = CAMERA_POSITION_WORLD+sky_direction*55.0-(CAMERA_POSITION_WORLD-reference_origin)*sky_parallax;
+  MODELVIEW_MATRIX = VIEW_MATRIX*mat4(INV_VIEW_MATRIX[0],INV_VIEW_MATRIX[1],INV_VIEW_MATRIX[2],vec4(center,1.0));
+ } else if (billboard) MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0],INV_VIEW_MATRIX[1],INV_VIEW_MATRIX[2],MODEL_MATRIX[3]);
+ POSITION = PROJECTION_MATRIX*MODELVIEW_MATRIX*vec4(VERTEX,1.0);
+ if (camera_relative) POSITION.z = CLIP_SPACE_FAR*POSITION.w;
 }
 void fragment() {
  vec2 p = UV - 0.5;

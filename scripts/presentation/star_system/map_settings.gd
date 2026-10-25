@@ -44,6 +44,8 @@ extends Resource
 @export_group("Background and quality")
 @export var background_layers: Array[Resource] = [preload("res://resources/presentation/sky_nebula.tres"), preload("res://resources/presentation/sky_galaxy.tres")]
 @export_range(0.0, 1.0, 0.05) var background_strength: float = 0.6
+## Distant-star translation response; zero restores an infinitely distant sky.
+@export_range(0.0, 0.5, 0.01) var starfield_parallax: float = 0.12
 @export var imported_planets: bool = true
 @export var atmospheres_enabled: bool = true
 @export var clouds_enabled: bool = true
