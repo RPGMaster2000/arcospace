@@ -30,6 +30,7 @@ var travel_duration := 1.4
 var motion: Tween
 var impact_motion: Tween
 var impact_layer: CanvasLayer
+var selected_index := -1
 var orbit_index := -1
 var orbit_angle := 0.0
 var focused := false
@@ -89,6 +90,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		for entry in entries:
 			if markers.has(entry.index):
 				markers[entry.index].disabled = entry.completed
+				markers[entry.index].set_state(entry.completed,false,false)
 				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index))
 		overview()
 		return
@@ -167,6 +169,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.style_tag(entry.color)
 		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index))
 		button.disabled = entry.completed
+		button.set_state(entry.completed,false,false)
 		preload("res://scripts/audio/sfx.gd").bind_ui(button)
 		button.pressed.connect(travel.bind(index))
 		add_child(button)
@@ -202,11 +205,31 @@ func _process(delta: float) -> void:
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
 		button.visible = not focused and not camera.is_position_behind(point)
-		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
+		var blocked: bool = not interactive or traveling or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
+		button.set_state(button.completed,blocked,index==selected_index)
+		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
 		button.anchor_point = center-button.position
 		button.queue_redraw()
+	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
+	for index in markers:
+		var button = markers[index]
+		var behind := false
+		for other_index in markers:
+			if other_index==index: continue
+			var other = markers[other_index]
+			if other.visible and button.get_rect().intersects(other.get_rect()) and (other.priority()>button.priority() or (other.priority()==button.priority() and other.get_index()>button.get_index())):
+				behind = true
+				break
+		button.set_secondary(behind)
+
+
+func _select_destination(index: int) -> void:
+	selected_index = index
+	for key in markers:
+		var marker = markers[key]
+		marker.set_state(marker.completed,marker.unavailable,key==index)
 
 
 func _face(direction: Vector3, weight: float = 1.0) -> void:
@@ -232,6 +255,7 @@ func travel(index: int) -> void:
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
+	_select_destination(index)
 	traveling = true
 	travel_started.emit()
 	orbit_index = -1
@@ -283,6 +307,7 @@ func focus(index: int) -> void:
 	if not objects.has(index):
 		return
 	_end_pinch()
+	_select_destination(index)
 	focused = true
 	interactive = false
 	camera.focus(objects[index].position, settings, float(objects[index].get_meta("radius", 0.0)))
@@ -292,6 +317,7 @@ func overview() -> void:
 	if motion and motion.is_valid():
 		motion.kill()
 	traveling = false
+	_select_destination(-1)
 	focused = false
 	interactive = true
 	camera.overview(settings)
