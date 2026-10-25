@@ -8,6 +8,9 @@ from fontTools.ttLib import TTFont
 root = Path(__file__).resolve().parents[1]
 text = (root / 'scripts/ui/encounter_presentation.gd').read_text(encoding='utf-8')
 glyphs = ''.join(re.findall(r'\["([^"\n]+)", "[A-Z]+"\]', text))
+marker = (root / "scripts/presentation/star_system/poi_marker.gd").read_text(encoding="utf-8")
+icon_map = marker.split("const ICONS = {", 1)[1].split("}", 1)[0]
+glyphs += "".join(re.findall(r'"[a-z_]+":\s*"([^"\n]+)"', icon_map))
 font = TTFont(sys.argv[1])
 options = subset.Options()
 options.recalc_timestamp = False

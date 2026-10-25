@@ -1,0 +1,461 @@
+{
+  "engine": "Godot 4.7.2",
+  "starting_revision": "7df3c13ca1a8309b4b9e1c310a462b7e82e95615",
+  "complete": true,
+  "runs": [
+    {
+      "name": "import",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_milestones_test",
+      "status": "passed"
+    },
+    {
+      "name": "ai_forecast_compatibility_test",
+      "status": "passed"
+    },
+    {
+      "name": "ai_forecast_scene_test",
+      "status": "passed"
+    },
+    {
+      "name": "ai_modifier_forecast_test",
+      "status": "passed"
+    },
+    {
+      "name": "ai_turn_test",
+      "status": "passed"
+    },
+    {
+      "name": "alpha_visual_test",
+      "status": "passed"
+    },
+    {
+      "name": "android_layout_test",
+      "status": "passed"
+    },
+    {
+      "name": "battle_effects_test",
+      "status": "passed"
+    },
+    {
+      "name": "battle_ending_sequence_test",
+      "status": "passed"
+    },
+    {
+      "name": "battle_hud_test",
+      "status": "passed"
+    },
+    {
+      "name": "battle_layout_test",
+      "status": "passed"
+    },
+    {
+      "name": "battlefield_environments_test",
+      "status": "passed"
+    },
+    {
+      "name": "board_3d_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_balance_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_effect_contract_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_effect_parity_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_expansion_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_inspection_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_management_lifecycle_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_management_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_motion_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_progression_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_targets_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_tier_test",
+      "status": "passed"
+    },
+    {
+      "name": "card_upgrade_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "chasedown_rewards_test",
+      "status": "passed"
+    },
+    {
+      "name": "chasedown_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_fleet_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_launch_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_lifecycle_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_preferences_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_title_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_touch_test",
+      "status": "passed"
+    },
+    {
+      "name": "cinematic_visual_test",
+      "status": "passed"
+    },
+    {
+      "name": "color_grading_test",
+      "status": "passed"
+    },
+    {
+      "name": "combat_execution_test",
+      "status": "passed"
+    },
+    {
+      "name": "combat_forecast_test",
+      "status": "passed"
+    },
+    {
+      "name": "combat_modifier_test",
+      "status": "passed"
+    },
+    {
+      "name": "combat_state_test",
+      "status": "passed"
+    },
+    {
+      "name": "combat_trace_test",
+      "status": "passed"
+    },
+    {
+      "name": "deck_determinism_test",
+      "status": "passed"
+    },
+    {
+      "name": "deck_ownership_test",
+      "status": "passed"
+    },
+    {
+      "name": "deck_replacement_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "discard_test",
+      "status": "passed"
+    },
+    {
+      "name": "encounter_continue_test",
+      "status": "passed"
+    },
+    {
+      "name": "enemy_roster_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_boundary_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_fresh_process_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_lifecycle_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_resume_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_save_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_test",
+      "status": "passed"
+    },
+    {
+      "name": "expedition_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "field_repairs_test",
+      "status": "passed"
+    },
+    {
+      "name": "field_repairs_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "ftl_progression_test",
+      "status": "passed"
+    },
+    {
+      "name": "ftl_test",
+      "status": "passed"
+    },
+    {
+      "name": "ftl_visual_test",
+      "status": "passed"
+    },
+    {
+      "name": "game_reference_test",
+      "status": "passed"
+    },
+    {
+      "name": "hull_capacity_test",
+      "status": "passed"
+    },
+    {
+      "name": "map_zoom_fade_test",
+      "status": "passed"
+    },
+    {
+      "name": "modifier_cinematic_test",
+      "status": "passed"
+    },
+    {
+      "name": "music_test",
+      "status": "passed"
+    },
+    {
+      "name": "opening_balance_test",
+      "status": "passed"
+    },
+    {
+      "name": "orbit_visibility_test",
+      "status": "passed"
+    },
+    {
+      "name": "outpost_screen_test",
+      "status": "passed"
+    },
+    {
+      "name": "planet_presentation_test",
+      "status": "passed"
+    },
+    {
+      "name": "player_hand_test",
+      "status": "passed"
+    },
+    {
+      "name": "poi_confirmation_test",
+      "status": "passed"
+    },
+    {
+      "name": "poi_iconography_test",
+      "status": "passed"
+    },
+    {
+      "name": "poi_reward_overhaul_test",
+      "status": "passed"
+    },
+    {
+      "name": "power_allocation_test",
+      "status": "passed"
+    },
+    {
+      "name": "repair_selection_test",
+      "status": "passed"
+    },
+    {
+      "name": "reward_feedback_test",
+      "status": "passed"
+    },
+    {
+      "name": "salvage_test",
+      "status": "passed"
+    },
+    {
+      "name": "settings_menu_test",
+      "status": "passed"
+    },
+    {
+      "name": "sfx_test",
+      "status": "passed"
+    },
+    {
+      "name": "shield_fit_test",
+      "status": "passed"
+    },
+    {
+      "name": "shield_shatter_test",
+      "status": "passed"
+    },
+    {
+      "name": "ship_models_test",
+      "status": "passed"
+    },
+    {
+      "name": "ship_variants_test",
+      "status": "passed"
+    },
+    {
+      "name": "simulation_failure_setup_test",
+      "status": "passed"
+    },
+    {
+      "name": "six_ship_profiles_test",
+      "status": "passed"
+    },
+    {
+      "name": "space_parallax_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_map_readability_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_map_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_system_3d_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_system_composition_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_system_resume_test",
+      "status": "passed"
+    },
+    {
+      "name": "star_system_transition_test",
+      "status": "passed"
+    },
+    {
+      "name": "startup_flow_test",
+      "status": "passed"
+    },
+    {
+      "name": "status_bar_stress_test",
+      "status": "passed"
+    },
+    {
+      "name": "status_bar_test",
+      "status": "passed"
+    },
+    {
+      "name": "status_presentation_test",
+      "status": "passed"
+    },
+    {
+      "name": "storm_family_test",
+      "status": "passed"
+    },
+    {
+      "name": "storm_ion_parity_test",
+      "status": "passed"
+    },
+    {
+      "name": "storm_presentation_test",
+      "status": "passed"
+    },
+    {
+      "name": "systems_failure_test",
+      "status": "passed"
+    },
+    {
+      "name": "tactical_cards_test",
+      "status": "passed"
+    },
+    {
+      "name": "tactical_preview_test",
+      "status": "passed"
+    },
+    {
+      "name": "targeted_sabotage_test",
+      "status": "passed"
+    },
+    {
+      "name": "trading_outpost_test",
+      "status": "passed"
+    },
+    {
+      "name": "trading_outpost_ui_test",
+      "status": "passed"
+    },
+    {
+      "name": "travel_battle_test",
+      "status": "passed"
+    },
+    {
+      "name": "ui_feedback_test",
+      "status": "passed"
+    },
+    {
+      "name": "ui_overhaul_test",
+      "status": "passed"
+    },
+    {
+      "name": "victory_music_test",
+      "status": "passed"
+    },
+    {
+      "name": "victory_rewards_test",
+      "status": "passed"
+    },
+    {
+      "name": "victory_upgrade_music_test",
+      "status": "passed"
+    },
+    {
+      "name": "visual_system_test",
+      "status": "passed"
+    }
+  ],
+  "rendered": {
+    "Mobile/Vulkan": "39 icon checks and 71 readability checks passed",
+    "Compatibility/OpenGL": "39 icon checks and 71 readability checks passed",
+    "resolutions": [
+      "1280x720",
+      "960x540",
+      "1680x720"
+    ]
+  },
+  "physical_android_tested": false
+}

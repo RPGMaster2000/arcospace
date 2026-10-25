@@ -130,7 +130,7 @@ func run() -> void:
 	map.camera.zoom_scale = 1.0
 	map.camera.zoom_target = 1.0
 	await settle()
-	check(map.markers[5].text=="⚔","Zoomed-out enemy PoI uses its relevant icon")
+	check(map.markers[5].text=="⚔️","Zoomed-out enemy PoI uses its relevant icon")
 	for index in map.visual_data.assignments:
 		check(map.markers[index].planet_name.text==map.visual_data.planets[map.visual_data.assignments[index]].name,"Planet name sits above the encounter icon")
 		check(map.markers[index].planet_name.visible and map.markers[index].text!="","Planet label keeps both name and icon")
@@ -148,7 +148,7 @@ func run() -> void:
 	map.camera.zoom_scale = 3.0
 	map.camera.zoom_target = 3.0
 	await settle()
-	check(map.markers[5].text=="⚔","Close zoom retains the PoI icon")
+	check(map.markers[5].text=="⚔️","Close zoom retains the PoI icon")
 	var at_rest: Vector2 = marker.position
 	await settle()
 	check(marker.position.is_equal_approx(at_rest),"Labels do not hop between alternative positions")

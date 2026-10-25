@@ -42,7 +42,7 @@ func run() -> void:
   check(marker.get_theme_color("font_color")!=available,"Completion is visibly subdued")
   check(marker.priority()==0,"Completed marker has lowest priority")
   marker.set_state(false,false,true)
-  check(marker.get_theme_stylebox("normal").shadow_size>0 and marker.priority()==2,"Selection has restrained glow and highest priority")
+  check(marker.get_theme_stylebox("normal").shadow_size>0 and marker.priority()==3,"Selection has restrained glow and highest priority")
   check(marker.size==bounds and marker.position==position,"Highlight never scales or repositions touch bounds")
   for state in ["normal","hover","pressed","focus","disabled"]:
    check(marker.get_theme_stylebox(state).bg_color.a==0.5,"All marker states preserve half-opacity background")

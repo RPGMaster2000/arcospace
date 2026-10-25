@@ -526,8 +526,7 @@ func _marker_text(entry: Dictionary) -> String:
 	return entry.get("name",entry.text)
 
 func _marker_icon(entry: Dictionary) -> String:
-	if entry.get("profile") != null: return "⚔"
-	return {"mining_operation":"⚒","research_station":"⌬","quarantined_colony":"☣","gas_giant":"◉","trading_outpost":"⚙","derelict_starship":"▱","pirate_debris_field":"⚔","spatial_anomaly":"◇","unstable_wormhole":"◎","radiation_nebula":"✦","distress_signal":"⚑"}.get(entry.get("model_kind",""),"◇")
+	return preload("res://scripts/presentation/star_system/poi_marker.gd").icon_for("battle" if entry.get("profile")!=null else entry.get("model_kind","unknown"))
 
 func _initial_ship_position() -> Vector3:
 	for at in [Vector3(0,0,3),Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-3),Vector3(-2,0,2),Vector3(2,0,-2)]:

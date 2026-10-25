@@ -628,3 +628,5 @@ through the existing regression runner after changing this boundary.
 
 Star-system marker state/priority, deterministic standalone composition, selected
 orbit materials and current validation are documented in [Star-map refinement](star_map_refinement.md).
+
+Star-map emoji catalog, selection/completion treatment and validation: [PoI iconography](poi_iconography.md).
