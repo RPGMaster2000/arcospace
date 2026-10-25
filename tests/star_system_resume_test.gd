@@ -31,7 +31,7 @@ func run() -> void:
 	await create_timer(0.9).timeout
 	host.star_map.travel_duration = 1.0
 	host.star_map.travel(1)
-	check(host.state.pending_destination == 1 and host.state.travel_destination == 1, "Chasedown uses existing saved travel state")
+	check(host.state.pending_destination == 1 and host.state.travel_destination == -1, "Chasedown cancels authoritative travel immediately")
 	await create_timer(0.65).timeout
 	var stopped: Vector3 = host.star_map.ship.position
 	await create_timer(0.3).timeout
@@ -53,7 +53,7 @@ func run() -> void:
 	await settle()
 	check(resumed.state.player_ship == selected and resumed.state.pending_destination == 1 and resumed.view_kind == "chasedown", "Continue preserves selected ship and pending interception")
 	check(resumed.star_map != null and resumed.star_map.ship != null, "Resumed interception retains 3D ship presentation")
-	# Resolution still uses State, and the original destination resumes without a second roll.
+	# Resolution still uses State, but no former command resumes.
 	var chase: int = resumed.state.chasedown_index
 	check(resumed.state.choose_chasedown_response(0), "Existing response accepted")
 	resumed.state.encounters[chase].completed = true
@@ -61,9 +61,13 @@ func run() -> void:
 	resumed.state.active_battle = -1
 	resumed.show_system()
 	await settle()
-	check(resumed.star_map != null and resumed.star_map.traveling, "Resolved interception resumes original destination")
+	check(resumed.star_map != null and not resumed.star_map.traveling, "Resolved interception returns stationary")
+	check(resumed.star_map.ship.position.is_equal_approx(stopped), "Actual intercepted position survives save/resume")
 	await create_timer(1.6).timeout
-	check(resumed.state.navigation_origin == 1 and resumed.state.pending_destination == -1 and resumed.selected_encounter == 1, "Original destination arrives exactly once after resume")
+	check(resumed.state.navigation_origin == 0 and resumed.star_map.selected_index == -1 and resumed.view_kind == "system", "No unsolicited arrival or selection")
+	resumed.star_map.travel(1)
+	await create_timer(1.6).timeout
+	check(resumed.state.navigation_origin == 1 and resumed.selected_encounter == 1, "Explicit reselection travels and arrives once")
 	resumed.queue_free()
 	await settle()
 	print("Star system resume: %d failures" % failures)

@@ -102,10 +102,10 @@ func run() -> void:
 				host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 				host.show_system()
 			for attempt in range(120):
-				if host.state.pending_destination < 0: break
+				if host.view_kind == "system": break
 				await process_frame
-			check(host.map_destination == 1 and host.selected_encounter == 1 and host.view_kind == "poi", "Victory/escape resumes original destination")
-			check(host.state.pending_destination == -1 and host.state.ftl_charge == 1 and host.state.chasedowns_this_system == 1 and not host.state.encounters[1].completed, "Arrival grants no second reward or destination completion")
+			check(host.map_destination == 0 and host.view_kind == "system", "Victory/escape returns stationary without visiting former destination")
+			check(host.state.travel_destination == -1 and host.state.ftl_charge == 1 and host.state.chasedowns_this_system == 1 and not host.state.encounters[1].completed, "Cancelled travel grants no second reward or destination completion")
 			if not grid:
 				host.show_system()
 				check(is_instance_valid(host.star_map) and host.star_map.markers.size() == 6 + int(not host.state.service.is_empty()), "No extra map marker for interception")

@@ -155,7 +155,7 @@ func can_jump() -> bool:
 		hull > 0
 		and not run_ended
 		and active_battle < 0
-		and pending_destination < 0
+		and not chasedown_unresolved()
 		and pending_choice.is_empty()
 		and ftl_charge >= required_ftl_charge
 		and not mandatory_boss_pending()
@@ -438,9 +438,8 @@ func can_visit(index: int) -> bool:
 		return false
 	if run_ended or hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
 		return false
-	if pending_destination >= 0 and index != chasedown_index:
-		if chasedown_unresolved() or index != pending_destination:
-			return false
+	if chasedown_unresolved() and index != chasedown_index:
+		return false
 	if index == chasedown_index and chasedown_unresolved() and encounters[index].response < 0:
 		return false
 	if index == SERVICE_INDEX:
@@ -453,8 +452,9 @@ func can_visit(index: int) -> bool:
 func begin_travel(destination: int, forced_roll: float = -1.0) -> bool:
 	if not can_visit(destination): return false
 	if travel_destination == destination: return false
+	if not chasedown_unresolved(): pending_destination = -1
 	var intercepted: bool = try_chasedown(destination, forced_roll)
-	travel_destination = destination
+	travel_destination = -1 if intercepted else destination
 	progress_committed.emit()
 	return intercepted
 
@@ -524,6 +524,20 @@ func chasedown_unresolved() -> bool:
 	)
 
 
+# The cancelled destination is historical context only while the interception is unresolved.
+# Optional coordinates on that existing encounter retain the actual stop across v1 saves.
+func stop_intercepted_travel(position: Array = []) -> void:
+	if chasedown_index < 0: return
+	travel_destination = -1
+	if position.size() in [2,3] and not encounters[chasedown_index].has("intercept_position"):
+		encounters[chasedown_index].intercept_position = position.duplicate()
+	progress_committed.emit()
+
+func intercepted_position() -> Array:
+	if chasedown_index < 0: return []
+	return encounters[chasedown_index].get("intercept_position", []).duplicate()
+
+
 func choose_chasedown_response(choice: int) -> bool:
 	if (
 		hull <= 0
@@ -544,6 +558,8 @@ func choose_chasedown_response(choice: int) -> bool:
 
 
 func arrive_destination(index: int) -> void:
+	if chasedown_index >= 0:
+		encounters[chasedown_index].erase("intercept_position")
 	navigation_origin = index
 	if index == travel_destination: travel_destination = -1
 	if index == pending_destination and not chasedown_unresolved():

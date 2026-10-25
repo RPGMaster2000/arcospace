@@ -61,6 +61,17 @@ static func build(entry: Dictionary, rng: RandomNumberGenerator, replacement: Pa
 	var root = Node3D.new()
 	var key: String = entry.get("model_kind", "research_station")
 	var color = Color.from_hsv(rng.randf(),0.24,0.55)
+	if key == "gas_giant":
+		var sphere := SphereMesh.new()
+		sphere.radius = 1.25
+		sphere.height = 2.5
+		sphere.radial_segments = 32
+		sphere.rings = 16
+		var body := part(root,sphere,Color.WHITE)
+		body.name = "Surface"
+		body.material_override = preload("res://third_party/naejimer_planets/materials/gaseous.tres").duplicate()
+		root.set_meta("radius",1.25)
+		return root
 	if key == "derelict_starship":
 		var profile = preload("res://ships/enemy/marauder.tres").duplicate(false)
 		profile.hull_color = Color("394047")

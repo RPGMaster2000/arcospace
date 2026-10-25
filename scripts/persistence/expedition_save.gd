@@ -11,7 +11,7 @@ const COUNTERS = ["hull", "salvage", "battles_won", "ftl_charge", "required_ftl_
 	"choice_amount", "last_poi_success", "upgrades_remaining", "navigation_origin",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
-	"completed", "charge_awarded", "chasedown", "response", "resolution"]
+	"completed", "charge_awarded", "chasedown", "response", "resolution", "intercept_position"]
 var path: String = PATH
 var error: String = ""
 var warning: String = ""
@@ -39,7 +39,7 @@ static func _int_map(value: Variant, keys: Array, low: int) -> bool:
 static func _entry(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for key in ENTRY_FIELDS:
-		if value.has(key): result[key] = value[key]
+		if value.has(key): result[key] = value[key].duplicate() if key == "intercept_position" else value[key]
 	if value.kind == "battle":
 		result.enemy_id = value.get("enemy_data", Ships.ENEMIES[int(value.get("enemy", 0))]).resource_path
 	else:
@@ -77,8 +77,13 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 		if key not in ENTRY_FIELDS + ["enemy_id", "poi_id"]: return {}
 		if key in ["mandatory_boss", "charge_awarded", "chasedown"] and not value[key] is bool: return {}
 		if key in ["system_number", "modifier", "response"] and not _integer(value[key], -1): return {}
+	if value.has("intercept_position"):
+		var at: Variant = value.intercept_position
+		if not value.get("chasedown", false) or not at is Array or at.size() not in [2,3]: return {}
+		for coordinate in at:
+			if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)) or absf(float(coordinate)) > 10000: return {}
 	if value.has("resolution") and value.resolution not in ["escaped", "defeated"]: return {}
-	var result: Dictionary = value.duplicate()
+	var result: Dictionary = value.duplicate(true)
 	for key in ["system_number", "modifier", "response"]:
 		if result.has(key): result[key] = int(result[key])
 	if value.kind == "battle":
@@ -159,6 +164,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	state.pending_penalties = data.penalties.duplicate()
 	for values in [state.production_upgrades, state.pending_bonuses, state.pending_penalties]:
 		for key in values: values[key] = int(values[key])
+	# Older v1 checkpoints may still contain the superseded continuation command.
+	if state.pending_destination >= 0 and state.chasedown_index >= 0:
+		state.travel_destination = -1
 	state.encounters = entries
 	state.service = service
 	state.restore_deck(data, cards)

@@ -57,6 +57,7 @@ func _ready() -> void:
 	container.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(container)
 	viewport = SubViewport.new()
+	viewport.size = Vector2i(size.max(Vector2.ONE))
 	viewport.own_world_3d = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(viewport)

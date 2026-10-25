@@ -480,7 +480,7 @@ func show_system(preserve_transition: bool = false) -> void:
 			_grid_travel.bind(state.SERVICE_INDEX)
 		)
 
-	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
+	var destination: int = state.travel_destination
 	if destination != -1:
 		_resume_navigation.call_deferred(destination, _presentation_revision, state)
 
@@ -571,6 +571,12 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	)
 	if _uses_3d_map():
 		title.text = "System Encounters — " + star_map.visual_data.name
+	var stopped: Array = state.intercepted_position()
+	if stopped.size() == 3 and _uses_3d_map():
+		star_map.orbit_index = -1
+		star_map.ship.position = Vector3(stopped[0],stopped[1],stopped[2])
+	elif stopped.size() == 2 and not _uses_3d_map():
+		star_map.ship_position = Vector2(stopped[0],stopped[1])
 	star_map.before_travel = state.can_visit
 	star_map.intercept_travel = state.begin_travel
 	if new_map:
@@ -581,7 +587,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			if star_map == source_map and phase == Phase.TRAVELING: _show_chasedown())
 		star_map.arrived.connect(func(index: int):
 			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
-	var destination: int = state.pending_destination if state.pending_destination >= 0 else state.travel_destination
+	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
 		_resume_navigation.call_deferred(destination, _presentation_revision, state, star_map)
 
@@ -649,6 +655,15 @@ func _show_chasedown() -> void:
 		return
 	if _uses_3d_map() and not is_instance_valid(star_map):
 		_show_star_map(false)
+	if is_instance_valid(star_map):
+		var stopped: Array = [star_map.ship.position.x,star_map.ship.position.y,star_map.ship.position.z] if _uses_3d_map() else [star_map.ship_position.x,star_map.ship_position.y]
+		state.stop_intercepted_travel(stopped)
+		star_map.cancel_presentation()
+		if _uses_3d_map():
+			star_map.orbit_index = -1
+			star_map._select_destination(-1)
+	else:
+		state.stop_intercepted_travel()
 	_clear("chasedown")
 	jump_button.hide()
 	title.text = "Sublight Chasedown"
@@ -662,7 +677,7 @@ func _show_chasedown() -> void:
 		)
 	)
 	view.add_child(
-		_label("Destination preserved: " + state.encounters[state.pending_destination].title, 18)
+		_label("Travel cancelled · Previous destination: " + state.encounters[state.pending_destination].title, 18)
 	)
 	var choices = _grid(2)
 	for index in range(state.rules.chasedown_responses.size()):

@@ -161,8 +161,12 @@ func _label(text: String, font_size: int = 20) -> Label:
 
 func mount_map(map: Control) -> void:
 	map_layer = map
+	map.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	add_child(map)
 	move_child(map, 1)
+	_sync_map_rect()
+	if not body.item_rect_changed.is_connected(_sync_map_rect):
+		body.item_rect_changed.connect(_sync_map_rect)
 
 func map_layout(enabled: bool, focused: bool) -> void:
 	# Keep bright celestial bodies from washing out the existing PoI header.
@@ -181,6 +185,9 @@ func _process(_delta: float) -> void:
 				available_height -= child.size.y + view.get_theme_constant("separation")
 		for tile in grid.get_children():
 			tile.minimum_height = maxf(100, available_height / 2)
+	_sync_map_rect()
+
+func _sync_map_rect() -> void:
 	if is_instance_valid(map_layer) and is_instance_valid(body):
 		map_layer.position = body.global_position - global_position
 		map_layer.size = body.size

@@ -77,7 +77,7 @@ func run() -> void:
 	board.salvage = salvage
 	board.refresh_display()
 	check(charge == 1 and state.ftl_charge == charge and state.salvage == salvage and state.upgrades_remaining == remaining and remaining == 1, "Exactly one charge and one upgrade reward, duplicate result rejected")
-	check(state.required_ftl_charge == required and not state.encounters[1].completed and state.pending_destination == 1, "Requirement/destination intact")
+	check(state.required_ftl_charge == required and not state.encounters[1].completed and state.pending_destination == 1 and state.travel_destination == -1, "Former destination remains history, not a travel command")
 	state.active_battle = -1
 	while state.pending_choice == "upgrade":
 		state.choose_upgrade(state.upgrade_candidates()[0].identity_key())
