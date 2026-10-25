@@ -32,8 +32,6 @@ var impact_motion: Tween
 var impact_layer: CanvasLayer
 var orbit_index := -1
 var orbit_angle := 0.0
-var compact_labels := false
-var label_zoom := -1.0
 var focused := false
 var interactive := true
 var player_profile: Resource
@@ -108,7 +106,6 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	for button in markers.values(): button.queue_free()
 	objects.clear()
 	markers.clear()
-	label_zoom = -1.0
 	planet_nodes.clear()
 	visual_root = Node3D.new()
 	visual_root.name = "GeneratedSystem"
@@ -200,26 +197,10 @@ func _process(delta: float) -> void:
 		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * _orbit_radius(orbit_index)
 		_face(next - ship.position, delta * 5)
 		ship.position = next
-	# Change label detail only while zooming, never as a side effect of panning.
-	if absf(camera.zoom_scale-label_zoom)>0.01:
-		var full_rects: Array[Rect2] = []
-		var crowded := false
-		for index in markers:
-			var button = markers[index]
-			var center: Vector2 = camera.unproject_position(objects[index].position)
-			var rect = Rect2(center-Vector2(button.full_size.x*0.5,button.full_size.y+absf(settings.label_offset.y)),button.full_size)
-			if full_rects.any(func(other): return other.grow(4).intersects(rect)): crowded = true
-			full_rects.append(rect)
-		if camera.zoom_scale < settings.compact_label_zoom:
-			compact_labels = true
-		elif camera.zoom_scale > settings.compact_label_zoom+0.2:
-			compact_labels = crowded
-		label_zoom = camera.zoom_scale
 	for index in markers:
 		var button = markers[index]
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
-		button.show_compact(compact_labels)
 		button.visible = not focused and not camera.is_position_behind(point)
 		button.mouse_filter = MOUSE_FILTER_STOP if interactive and not traveling and not pinching and Time.get_ticks_msec() >= gesture_block_until else MOUSE_FILTER_IGNORE
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))

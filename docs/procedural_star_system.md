@@ -77,8 +77,8 @@ PoI resource basenames by existing EncounterPresentation, not title substrings:
 Assignments use their own seed and can leave planets decorative. Each planet gets
 at most one encounter; no encounter is duplicated. The same six encounter indices
 plus an optional separate outpost remain selectable. Decorative planets have only
-read-only Label3D names and no interactive marker. Assigned labels show only the planet's name. Other PoIs switch between names and
-semantic icons with zoom. All labels remain above their visual anchors, without
+read-only Label3D names and no interactive marker. Assigned labels show only the planet's name. All PoIs retain semantic icons at every zoom level, with planet names above
+their linked encounter icons. All labels remain above their visual anchors, without
 border clamping or collision-driven relocation, retaining their dynamic connectors.
 
 The existing ship travels to the same selected index and emits arrival once, using
@@ -358,10 +358,25 @@ small inner rocky worlds to larger outer bodies; visual-only gas-giant assignmen
 are restricted to the outer half. Generation still uses independent cosmetic RNG
 and the same six authoritative encounters. Enlarged-radius shell clearance remains.
 
-Map labels use 14-point text (decorative planet names: 18). Planet destinations show
-only their generated names. Other PoIs use semantic icons at wide zoom and restore
-names closer in. **Compact Label Zoom** (default 1.4) plus 0.2 hysteresis prevents
-threshold flicker; full-size label overlap keeps crowded PoIs compact. Labels remain
+Planet name labels use 14-point text (decorative planet names: 18). Planet destinations show
+only their generated names. PoIs now retain semantic icons at every zoom, with 28-point glyphs (twice the
+previous icon size). Planet-linked labels show their 14-point name above the icon.
+The obsolete zoom-dependent label detail setting/logic has been removed. Labels remain
 anchored above each object's projected top with the existing connector. No border
 clamping, slot switching or overlap-avoidance relocation remains; labels can extend
 outside the map area. Touch/drag safeguards and model hit regions are retained.
+
+### Persistent, category-colored encounter icons
+
+All encounter tags now keep their icons at every zoom. Linked planets show the
+planet name on the first line, followed by the encounter icon beneath it. Icons
+use 28-point text; planet names stay at 14. Label borders, text and dark background
+tints use the supplied encounter category color. Each background style (including
+hover, focus and disabled) has exactly 0.5 alpha. Content and emoji retain full
+opacity; no Control modulate alpha is applied. Decorative planet-only names are
+unchanged. Above-object anchoring, connectors and touch regions remain intact.
+
+Fixed-position tags can overlap visually. Hit testing chooses the nearest icon or
+model anchor, with deterministic ties, so one tap cannot claim two destinations.
+The transition regression now checks that input contract rather than assuming all
+label rectangles remain disjoint.

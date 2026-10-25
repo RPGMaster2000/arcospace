@@ -130,11 +130,15 @@ func run() -> void:
 	map.camera.zoom_scale = 1.0
 	map.camera.zoom_target = 1.0
 	await settle()
-	check(map.markers[5].compact and map.markers[5].text=="⚔","Zoomed-out enemy PoI uses its relevant icon")
+	check(map.markers[5].text=="⚔","Zoomed-out enemy PoI uses its relevant icon")
 	for index in map.visual_data.assignments:
-		check(map.markers[index].text==map.visual_data.planets[map.visual_data.assignments[index]].name,"Planet label contains only its name")
-		check(not map.markers[index].compact,"Planet names remain names at wide zoom")
+		check(map.markers[index].planet_name.text==map.visual_data.planets[map.visual_data.assignments[index]].name,"Planet name sits above the encounter icon")
+		check(map.markers[index].planet_name.visible and map.markers[index].text!="","Planet label keeps both name and icon")
 	var marker = map.markers[5]
+	check(marker.get_theme_font_size("font_size")==28,"Encounter icon is twice its previous size")
+	for style in ["normal","hover","pressed","disabled","focus"]:
+		check(marker.get_theme_stylebox(style).bg_color.a==0.5,"Only label background uses 50 percent opacity: "+style)
+	check(marker.modulate.a==1.0 and marker.get_theme_color("font_color").a==1.0,"Icon/text content stays fully opaque")
 	var anchor: Vector3 = map.objects[5].position
 	check(marker.position.y+marker.size.y<map.camera.unproject_position(anchor).y,"PoI label stays above its object")
 	map.objects[5].position += Vector3(200,0,0)
@@ -144,7 +148,7 @@ func run() -> void:
 	map.camera.zoom_scale = 3.0
 	map.camera.zoom_target = 3.0
 	await settle()
-	check(not map.markers[5].compact and map.markers[5].text==entries[5].name,"Close zoom restores the PoI name")
+	check(map.markers[5].text=="⚔","Close zoom retains the PoI icon")
 	var at_rest: Vector2 = marker.position
 	await settle()
 	check(marker.position.is_equal_approx(at_rest),"Labels do not hop between alternative positions")

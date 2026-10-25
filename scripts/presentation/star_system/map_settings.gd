@@ -20,7 +20,6 @@ extends Resource
 @export_range(4.0, 32.0) var pan_drag_threshold: float = 12.0
 ## Screen-space offset above each object; labels may extend beyond the viewport.
 @export var label_offset := Vector2(0, -12)
-@export_range(0.5, 3.0, 0.1) var compact_label_zoom: float = 1.4
 @export_group("Destination and movement")
 @export var destination_offset := Vector3(3.75, 4.8, 6.3)
 @export_range(0.1, 3.0) var camera_duration: float = 0.8
