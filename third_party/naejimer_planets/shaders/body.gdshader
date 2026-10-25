@@ -49,6 +49,10 @@ void vertex() {
 	triplanar_pos += noise_offset;
 }
 
+// Arcospace map calibration; defaults preserve the upstream material response.
+uniform float minimum_roughness = 0.0;
+uniform float specular_strength = 0.5;
+uniform float rim_fill = 0.0;
 void fragment() {
 	vec3 triplanar_pos_clone = triplanar_pos;
 	if (noise_gaseous) {
@@ -80,5 +84,7 @@ void fragment() {
 		EMISSION = color.rgb * emit;
 	}
 	ALBEDO = color.rgb;
-	ROUGHNESS = roughness;
+	ROUGHNESS = max(roughness,minimum_roughness);
+	SPECULAR = specular_strength;
+	EMISSION += vec3(0.06,0.11,0.17)*pow(1.0-max(dot(normalize(NORMAL),normalize(VIEW)),0.0),3.0)*rim_fill;
 }

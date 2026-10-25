@@ -9,3 +9,6 @@ extends Resource
 @export var angular_position := Vector2(0, 20)
 @export_range(-180.0, 180.0) var rotation_degrees: float = 0.0
 @export_range(0.0, 0.1, 0.01) var parallax: float = 0.0
+
+## Reduce central-screen decoration contrast while keeping outer sky detail.
+@export_range(0.0, 1.0, 0.05) var foreground_protection: float = 0.6

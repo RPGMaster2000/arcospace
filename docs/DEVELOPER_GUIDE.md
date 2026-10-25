@@ -625,3 +625,6 @@ for incomplete enumeration. This operation does not sample RNG or mutate inputs.
 explain the distinction from CardTargets and from AI policy. Run `combat_forecast_test`,
 `ai_forecast_compatibility_test`, `ai_modifier_forecast_test` and `ai_forecast_scene_test`
 through the existing regression runner after changing this boundary.
+
+Star-system marker state/priority, deterministic standalone composition, selected
+orbit materials and current validation are documented in [Star-map refinement](star_map_refinement.md).

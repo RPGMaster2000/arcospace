@@ -11,6 +11,7 @@ uniform vec3 reference_origin;
 uniform float sky_parallax = 0.0;
 uniform vec4 tint : source_color = vec4(0.3,0.4,0.7,1.0);
 uniform float opacity = 0.2;
+uniform float foreground_protection = 0.0;
 uniform float rotation = 0.0;
 uniform float variation = 0.0;
 float hash2(vec2 p) {return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -36,5 +37,6 @@ void fragment() {
  float alpha = galaxy ? (exp(-r*11.0)*0.7+exp(-r*7.0)*arms*0.5) : cloud*edge;
  vec4 image = texture(source_texture,p+0.5);
  ALBEDO = tint.rgb * (use_texture ? image.rgb : vec3(1.0));
- ALPHA = opacity * (use_texture ? image.a : alpha) * edge;
+ float corridor = 1.0-smoothstep(0.55,1.15,length((SCREEN_UV-vec2(0.5,0.48))/vec2(0.42,0.36)));
+ ALPHA = opacity * (use_texture ? image.a : alpha) * edge * (1.0-corridor*foreground_protection);
 }

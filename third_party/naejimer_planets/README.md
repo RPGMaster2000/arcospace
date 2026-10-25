@@ -29,3 +29,8 @@ Adaptations:
 Fallback: StarSystemSettings → Background and quality → Imported Planets = Off.
 This uses the unchanged res://shaders/planet_surface.gdshader and omits imported
 cloud/atmosphere shells. Atmospheres and clouds can also be disabled separately.
+
+Readability calibration adds optional minimum_roughness, specular_strength and
+rim_fill uniforms. Their defaults preserve upstream response; map materials set a
+roughness floor, lower specular strength and a restrained cool rim for silhouettes.
+No new light/shadow pass or plugin dependency is introduced.

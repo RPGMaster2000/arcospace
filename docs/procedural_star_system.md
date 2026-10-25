@@ -380,3 +380,6 @@ Fixed-position tags can overlap visually. Hit testing chooses the nearest icon o
 model anchor, with deterministic ties, so one tap cannot claim two destinations.
 The transition regression now checks that input contract rather than assuming all
 label rectangles remain disjoint.
+
+For the two-pass state hierarchy, procedural standalone placement, orbit selection,
+material/background refinements and verification, see [Star-map refinement](star_map_refinement.md).

@@ -1,0 +1,731 @@
+{
+  "starting_revision": "d26d7ac3d8015caf31143117e5ee0a8c3c1d036c",
+  "pass1_commit": "8b5413e5d9c97cf8a1177ec0b663b5a1cbc5dd26",
+  "engine": "Godot 4.7.2",
+  "shared_runner": "tools/run_regressions.py",
+  "passing_scripts": 109,
+  "import_passed": true,
+  "renderers": [
+    "Mobile/Vulkan llvmpipe",
+    "Compatibility/OpenGL llvmpipe"
+  ],
+  "rendered_state_checks": 71,
+  "rendered_presentation_checks": 193,
+  "generation_checks": 6392,
+  "composition_checks": 10281,
+  "composition_systems": 300,
+  "physical_android_tested": false,
+  "baselines": {
+    "card_effect_checkpoints": 2220,
+    "combat_traces": 72,
+    "deck_expedition_checkpoints": 1044,
+    "deck_ownership_checks": 43
+  },
+  "runs": [
+    {
+      "name": "import",
+      "status": "passed",
+      "seconds": 3.63,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "expedition_milestones_test",
+      "status": "passed",
+      "seconds": 2.722,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ai_forecast_compatibility_test",
+      "status": "passed",
+      "seconds": 0.365,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "ai_forecast_scene_test",
+      "status": "passed",
+      "seconds": 0.566,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ai_modifier_forecast_test",
+      "status": "passed",
+      "seconds": 0.917,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "ai_turn_test",
+      "status": "passed",
+      "seconds": 0.716,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "alpha_visual_test",
+      "status": "passed",
+      "seconds": 6.882,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "android_layout_test",
+      "status": "passed",
+      "seconds": 16.41,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "battle_effects_test",
+      "status": "passed",
+      "seconds": 5.329,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "battle_ending_sequence_test",
+      "status": "passed",
+      "seconds": 22.37,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "battle_hud_test",
+      "status": "passed",
+      "seconds": 0.666,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "battle_layout_test",
+      "status": "passed",
+      "seconds": 3.825,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "battlefield_environments_test",
+      "status": "passed",
+      "seconds": 9.141,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "board_3d_test",
+      "status": "passed",
+      "seconds": 4.375,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_balance_test",
+      "status": "passed",
+      "seconds": 0.265,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_effect_contract_test",
+      "status": "passed",
+      "seconds": 0.265,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_effect_parity_test",
+      "status": "passed",
+      "seconds": 0.917,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_expansion_test",
+      "status": "passed",
+      "seconds": 0.716,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_inspection_test",
+      "status": "passed",
+      "seconds": 11.146,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_management_lifecycle_test",
+      "status": "passed",
+      "seconds": 1.468,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_management_test",
+      "status": "passed",
+      "seconds": 5.33,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_motion_test",
+      "status": "passed",
+      "seconds": 1.571,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_progression_test",
+      "status": "passed",
+      "seconds": 49.188,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_targets_test",
+      "status": "passed",
+      "seconds": 0.265,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "card_tier_test",
+      "status": "passed",
+      "seconds": 17.568,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "card_upgrade_ui_test",
+      "status": "passed",
+      "seconds": 3.374,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "chasedown_rewards_test",
+      "status": "passed",
+      "seconds": 1.418,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "chasedown_ui_test",
+      "status": "passed",
+      "seconds": 12.099,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_fleet_test",
+      "status": "passed",
+      "seconds": 1.218,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_launch_test",
+      "status": "passed",
+      "seconds": 2.425,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_lifecycle_test",
+      "status": "passed",
+      "seconds": 1.117,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_preferences_test",
+      "status": "passed",
+      "seconds": 0.716,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_title_test",
+      "status": "passed",
+      "seconds": 0.917,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "cinematic_touch_test",
+      "status": "passed",
+      "seconds": 1.874,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "cinematic_visual_test",
+      "status": "passed",
+      "seconds": 5.779,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "color_grading_test",
+      "status": "passed",
+      "seconds": 1.569,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "combat_execution_test",
+      "status": "passed",
+      "seconds": 1.018,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "combat_forecast_test",
+      "status": "passed",
+      "seconds": 0.817,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "combat_modifier_test",
+      "status": "passed",
+      "seconds": 1.368,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "combat_state_test",
+      "status": "passed",
+      "seconds": 0.365,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "combat_trace_test",
+      "status": "passed",
+      "seconds": 2.722,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "deck_determinism_test",
+      "status": "passed",
+      "seconds": 0.566,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "deck_ownership_test",
+      "status": "passed",
+      "seconds": 0.365,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "deck_replacement_ui_test",
+      "status": "passed",
+      "seconds": 3.83,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "discard_test",
+      "status": "passed",
+      "seconds": 1.869,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "encounter_continue_test",
+      "status": "passed",
+      "seconds": 1.017,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "enemy_roster_test",
+      "status": "passed",
+      "seconds": 2.823,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "expedition_boundary_test",
+      "status": "passed",
+      "seconds": 0.666,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "expedition_fresh_process_test",
+      "status": "passed",
+      "seconds": 3.228,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "expedition_lifecycle_test",
+      "status": "passed",
+      "seconds": 5.989,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "expedition_resume_test",
+      "status": "passed",
+      "seconds": 1.431,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "expedition_save_test",
+      "status": "passed",
+      "seconds": 0.523,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "expedition_test",
+      "status": "passed",
+      "seconds": 2.647,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "expedition_ui_test",
+      "status": "passed",
+      "seconds": 2.794,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "field_repairs_test",
+      "status": "passed",
+      "seconds": 1.776,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "field_repairs_ui_test",
+      "status": "passed",
+      "seconds": 5.81,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ftl_progression_test",
+      "status": "passed",
+      "seconds": 7.088,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "ftl_test",
+      "status": "passed",
+      "seconds": 0.666,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ftl_visual_test",
+      "status": "passed",
+      "seconds": 0.666,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "game_reference_test",
+      "status": "passed",
+      "seconds": 2.17,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "hull_capacity_test",
+      "status": "passed",
+      "seconds": 0.767,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "map_zoom_fade_test",
+      "status": "passed",
+      "seconds": 1.87,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "modifier_cinematic_test",
+      "status": "passed",
+      "seconds": 1.671,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "music_test",
+      "status": "passed",
+      "seconds": 0.766,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "opening_balance_test",
+      "status": "passed",
+      "seconds": 0.666,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "orbit_visibility_test",
+      "status": "passed",
+      "seconds": 0.365,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "outpost_screen_test",
+      "status": "passed",
+      "seconds": 1.218,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "planet_presentation_test",
+      "status": "passed",
+      "seconds": 8.439,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "player_hand_test",
+      "status": "passed",
+      "seconds": 2.722,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "poi_confirmation_test",
+      "status": "passed",
+      "seconds": 7.435,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "poi_reward_overhaul_test",
+      "status": "passed",
+      "seconds": 63.447,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "power_allocation_test",
+      "status": "passed",
+      "seconds": 50.265,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "repair_selection_test",
+      "status": "passed",
+      "seconds": 0.917,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "reward_feedback_test",
+      "status": "passed",
+      "seconds": 2.42,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "salvage_test",
+      "status": "passed",
+      "seconds": 1.419,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "settings_menu_test",
+      "status": "passed",
+      "seconds": 3.825,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "sfx_test",
+      "status": "passed",
+      "seconds": 4.377,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "shield_fit_test",
+      "status": "passed",
+      "seconds": 9.941,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "shield_shatter_test",
+      "status": "passed",
+      "seconds": 2.32,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ship_models_test",
+      "status": "passed",
+      "seconds": 4.929,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ship_variants_test",
+      "status": "passed",
+      "seconds": 8.492,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "simulation_failure_setup_test",
+      "status": "passed",
+      "seconds": 0.465,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "six_ship_profiles_test",
+      "status": "passed",
+      "seconds": 2.772,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "space_parallax_test",
+      "status": "passed",
+      "seconds": 0.267,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "star_map_readability_test",
+      "status": "passed",
+      "seconds": 5.48,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "star_map_test",
+      "status": "passed",
+      "seconds": 1.619,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "star_system_3d_test",
+      "status": "passed",
+      "seconds": 6.887,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "star_system_composition_test",
+      "status": "passed",
+      "seconds": 1.669,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "star_system_resume_test",
+      "status": "passed",
+      "seconds": 5.78,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "star_system_transition_test",
+      "status": "passed",
+      "seconds": 11.643,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "startup_flow_test",
+      "status": "passed",
+      "seconds": 2.873,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "status_bar_stress_test",
+      "status": "passed",
+      "seconds": 22.529,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "status_bar_test",
+      "status": "passed",
+      "seconds": 5.228,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "status_presentation_test",
+      "status": "passed",
+      "seconds": 1.368,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "storm_family_test",
+      "status": "passed",
+      "seconds": 0.766,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "storm_ion_parity_test",
+      "status": "passed",
+      "seconds": 0.265,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "storm_presentation_test",
+      "status": "passed",
+      "seconds": 0.716,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "systems_failure_test",
+      "status": "passed",
+      "seconds": 1.869,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "tactical_cards_test",
+      "status": "passed",
+      "seconds": 0.365,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "tactical_preview_test",
+      "status": "passed",
+      "seconds": 15.914,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "targeted_sabotage_test",
+      "status": "passed",
+      "seconds": 2.22,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "trading_outpost_test",
+      "status": "passed",
+      "seconds": 2.722,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "trading_outpost_ui_test",
+      "status": "passed",
+      "seconds": 14.858,
+      "shutdown_warnings": 0
+    },
+    {
+      "name": "travel_battle_test",
+      "status": "passed",
+      "seconds": 20.672,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ui_feedback_test",
+      "status": "passed",
+      "seconds": 1.117,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "ui_overhaul_test",
+      "status": "passed",
+      "seconds": 12.805,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "victory_music_test",
+      "status": "passed",
+      "seconds": 1.97,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "victory_rewards_test",
+      "status": "passed",
+      "seconds": 1.319,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "victory_upgrade_music_test",
+      "status": "passed",
+      "seconds": 1.468,
+      "shutdown_warnings": 1
+    },
+    {
+      "name": "visual_system_test",
+      "status": "passed",
+      "seconds": 1.017,
+      "shutdown_warnings": 0
+    }
+  ],
+  "post_suite_focus_fix": {
+    "change": "Native focus style is outline-only to avoid duplicate alpha fill",
+    "passing_scripts": 8,
+    "import_passed": true,
+    "rendered_checks_mobile": 71,
+    "rendered_checks_compatibility": 71,
+    "runs": [
+      {
+        "name": "import",
+        "status": "passed"
+      },
+      {
+        "name": "star_map_readability_test",
+        "status": "passed"
+      },
+      {
+        "name": "star_system_composition_test",
+        "status": "passed"
+      },
+      {
+        "name": "planet_presentation_test",
+        "status": "passed"
+      },
+      {
+        "name": "star_system_3d_test",
+        "status": "passed"
+      },
+      {
+        "name": "star_system_transition_test",
+        "status": "passed"
+      },
+      {
+        "name": "star_system_resume_test",
+        "status": "passed"
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "status": "passed"
+      },
+      {
+        "name": "chasedown_ui_test",
+        "status": "passed"
+      }
+    ]
+  }
+}

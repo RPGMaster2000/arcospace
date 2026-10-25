@@ -51,6 +51,7 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 		var yaw: float = deg_to_rad(specification.angular_position.x+rng.randf_range(-25,25))
 		var pitch: float = deg_to_rad(specification.angular_position.y+rng.randf_range(-12,12))
 		material.set_shader_parameter("camera_relative",true)
+		material.set_shader_parameter("foreground_protection",specification.foreground_protection)
 		material.set_shader_parameter("sky_direction",Vector3(sin(yaw)*cos(pitch),sin(pitch),cos(yaw)*cos(pitch)))
 		material.set_shader_parameter("reference_origin",origin)
 		material.set_shader_parameter("sky_parallax",specification.parallax)

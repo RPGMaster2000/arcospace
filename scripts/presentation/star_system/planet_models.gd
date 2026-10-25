@@ -29,6 +29,9 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 	var material: ShaderMaterial
 	if settings.imported_planets:
 		material = PRESETS[data.type].duplicate()
+		material.set_shader_parameter("minimum_roughness",0.55)
+		material.set_shader_parameter("specular_strength",0.22)
+		material.set_shader_parameter("rim_fill",0.12)
 		var rng = Data.random_for(data.material_seed, 0, "material")
 		material.set_shader_parameter("noise_scale", rng.randf_range(0.8, 2.3) / data.radius)
 		material.set_shader_parameter("noise_offset", Vector3(rng.randf()*20, rng.randf()*20, rng.randf()*20))
@@ -55,8 +58,8 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 		var air = Models.part(root, sphere(data.radius*1.035), Color.WHITE)
 		var atmosphere = ShaderMaterial.new()
 		atmosphere.shader = preload("res://third_party/naejimer_planets/shaders/atmosphere.gdshader")
-		atmosphere.set_shader_parameter("alpha", 0.10)
-		atmosphere.set_shader_parameter("intensity", 1.1)
+		atmosphere.set_shader_parameter("alpha", 0.12)
+		atmosphere.set_shader_parameter("intensity", 1.3)
 		atmosphere.set_shader_parameter("emit", true)
 		air.material_override = atmosphere
 	return root

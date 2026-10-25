@@ -23,6 +23,7 @@ func style_tag(color: Color) -> void:
 	add_theme_font_size_override("font_size", 28)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
+		box.draw_center = state!="focus" # Focus overlays the normal box: no second half-alpha fill.
 		box.bg_color = Color(accent.r*0.12,accent.g*0.12,accent.b*0.12,0.5)
 		box.border_color = accent * Color(1, 1, 1, 0.65)
 		box.set_border_width_all(1)

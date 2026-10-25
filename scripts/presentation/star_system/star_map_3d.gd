@@ -15,6 +15,7 @@ var visual_root: Node3D
 var destination_root: Node3D
 var background: Node3D
 var planet_nodes: Dictionary = {}
+var orbit_nodes: Dictionary = {}
 @export var settings: Resource = preload("res://resources/presentation/star_system_settings.tres")
 var viewport: SubViewport
 var world: Node3D
@@ -97,6 +98,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	if motion and motion.is_valid():
 		motion.kill()
 	traveling = false
+	selected_index = -1
 	configured_seed = visual_seed
 	travel_duration = duration
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
@@ -109,6 +111,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	objects.clear()
 	markers.clear()
 	planet_nodes.clear()
+	orbit_nodes.clear()
 	visual_root = Node3D.new()
 	visual_root.name = "GeneratedSystem"
 	world.add_child(visual_root)
@@ -121,7 +124,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	camera.overview(settings, true)
 	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"))
 	for p in visual_data.planets:
-		visual_root.add_child(Planets.orbit(p,settings))
+		var orbit: MeshInstance3D = Planets.orbit(p,settings)
+		visual_root.add_child(orbit)
+		orbit_nodes[p.index] = orbit
 		var planet: Node3D = Planets.build(p,settings)
 		planet.position = p.position
 		visual_root.add_child(planet)
@@ -159,6 +164,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			model.scale *= size_factor
 			if model.has_meta("radius"):
 				model.set_meta("radius", float(model.get_meta("radius"))*size_factor)
+			if not model.has_meta("radius"):
+				model.set_meta("radius",visual_data.placement[index].radius)
 			model.position = visual_data.anchors[index]
 			destination_root.add_child(model)
 			objects[index] = model
@@ -227,6 +234,13 @@ func _process(delta: float) -> void:
 
 func _select_destination(index: int) -> void:
 	selected_index = index
+	var planet: int = visual_data.get("assignments",{}).get(index,-1)
+	for key in orbit_nodes:
+		var color: Color = settings.orbit_color
+		if key==planet:
+			color = color.lightened(0.2)
+			color.a = minf(0.48,color.a*2.0)
+		orbit_nodes[key].material_override.set_shader_parameter("line_color",color)
 	for key in markers:
 		var marker = markers[key]
 		marker.set_state(marker.completed,marker.unavailable,key==index)

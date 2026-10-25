@@ -41,6 +41,8 @@ extends Resource
 @export_range(0.0, 0.25, 0.01) var maximum_eccentricity: float = 0.25
 @export_range(0.0, 15.0, 1.0) var maximum_inclination: float = 15.0
 @export var planet_radius_range := Vector2(0.45, 0.75)
+## Minimum visible surface separation for standalone destinations.
+@export_range(0.5, 3.0, 0.1) var destination_clearance: float = 1.0
 @export_group("Orbit appearance")
 @export var orbit_color := Color(0.48, 0.73, 0.86, 0.18)
 @export_range(32, 128, 8) var orbit_segments: int = 64

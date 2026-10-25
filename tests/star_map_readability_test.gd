@@ -50,6 +50,7 @@ func run() -> void:
   marker.set_state(false,false,false)
   marker.grab_focus()
   check(marker.highlighted(),"Keyboard focus highlights marker")
+  check(not marker.get_theme_stylebox("focus").draw_center,"Focus outline does not double-composite the half-opacity background")
   marker.release_focus()
   entries[0].completed = true
   map.configure(entries,-1,0.15,seeds[4])
@@ -59,7 +60,20 @@ func run() -> void:
   await settle()
   check(map.markers[0].completed and map.markers[1].selected,"Actual map propagates completion and selection")
   check(map.markers[1].z_index>map.markers[0].z_index,"Selected marker draws above completed marker")
+  var selectable: Array = map.visual_data.assignments.keys().filter(func(index): return index!=0)
+  if not selectable.is_empty():
+   var destination: int = selectable[0]
+   var planet: int = map.visual_data.assignments[destination]
+   var orbit = map.orbit_nodes[planet]
+   var mesh_id: int = orbit.mesh.get_instance_id()
+   map._select_destination(destination)
+   check(orbit.material_override.get_shader_parameter("line_color").a>map.settings.orbit_color.a,"Selected planet emphasizes only its existing orbit material")
+   map._select_destination(-1)
+   check(orbit.material_override.get_shader_parameter("line_color")==map.settings.orbit_color,"Overview restores normal orbit color")
+   check(orbit.mesh.get_instance_id()==mesh_id,"Selection never rebuilds orbit geometry")
+   map._select_destination(destination)
   await capture("states-%d" % dimensions.x)
+  map._select_destination(1)
   # A deliberately crowded projection must retain anchors and deterministic hit tests.
   var original: Vector3 = map.objects[5].position
   map.objects[5].position = map.objects[1].position+Vector3(0.4,0,0)
@@ -83,6 +97,7 @@ func run() -> void:
   entries[0].completed = false
  map.run_seed = seeds[2]
  map.configure(entries,-1,0.5,seeds[2]+10000)
+ check(map.selected_index==-1,"A newly generated system clears obsolete presentation selection")
  map._select_destination(1)
  await settle()
  await capture("two-planets")
@@ -101,6 +116,11 @@ func run() -> void:
  await process_frame
  check(map.markers[1].selected,"Destination activation highlights immediately")
  await capture("travel")
+ var standalone: Array = entries.duplicate(true)
+ for index in range(3): standalone[index].model_kind = "derelict_starship"
+ map.configure(standalone,-1,0.5,seeds[4]+40000)
+ await settle()
+ await capture("standalone")
  map.free()
  print("Star map readability: %d checks, %d failures" % [checks,failures])
  quit(1 if failures else 0)

@@ -4,7 +4,7 @@ const Names = preload("res://scripts/presentation/star_system/astronomical_names
 const TYPES = ["rocky", "terrestrial", "desert", "frozen", "volcanic", "gas_giant", "barren"]
 const PLANETARY = {"mining_operation": "rocky", "gas_giant": "gas_giant", "research_station": "frozen", "quarantined_colony": "terrestrial"}
 const ROMAN = ["I", "II", "III", "IV"]
-const ANCHORS = [Vector3(-12,0,-7), Vector3(0,0,-9), Vector3(12,0,-7), Vector3(-12,0,7), Vector3(0,0,9), Vector3(12,0,7)]
+
 
 static func random_for(seed_value: int, number: int, channel: String) -> RandomNumberGenerator:
 	var rng = RandomNumberGenerator.new()
@@ -62,22 +62,111 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		p.type = PLANETARY[entry.model_kind]
 		result.assignments[entry.index] = p.index
 		result.anchors[entry.index] = p.position
-	var occupied: Array = result.planets.map(func(p): return {"position":p.position,"radius":p.radius*1.5})
+	var occupied: Array = [{"position":Vector3.ZERO,"radius":2.6,"label":false}]
+	for p in result.planets:
+		occupied.append({"position":p.position,"radius":p.radius*1.5,"label":p.encounter!=-1,"named":true})
+	result.placement = {}
 	var ordered: Array = entries.duplicate()
 	ordered.sort_custom(func(a,b): return a.index < b.index)
 	for entry in ordered:
 		if result.anchors.has(entry.index): continue
-		var local = random_for(seed_value, number, "destination-%d" % entry.index)
-		var anchor: Vector3 = ANCHORS[entry.index] if entry.index >= 0 and entry.index < 6 else Vector3(14,0,0)
-		var at: Vector3 = anchor
-		for attempt in range(64):
-			at = anchor + Vector3(local.randf_range(-1.3,1.3), local.randf_range(-0.3,0.3), local.randf_range(-1.0,1.0))
-			var bounds: Rect2 = settings.system_bounds.abs()
-			var xz: Vector2 = Vector2(at.x,at.z).clamp(bounds.position, bounds.end)
-			at = Vector3(xz.x, at.y, xz.y)
-			if occupied.all(func(o): return at.distance_to(o.position) > o.radius + 1.6): break
-		result.anchors[entry.index] = at
-		occupied.append({"position": at, "radius": 1.2})
+		var local = random_for(seed_value,number,"destination-%d" % entry.index)
+		var placed: Dictionary = place_destination(entry,local,result.planets,occupied,settings)
+		result.anchors[entry.index] = placed.position
+		result.placement[entry.index] = placed
+		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
 	var star_rng = random_for(seed_value, number, "star")
 	result.star_color = Color.from_hsv(star_rng.randf_range(0.02,0.16), 0.45, 1)
 	return result
+
+# Only generation-time cosmetic calculations. No live camera or scene is required.
+static func placement_region(entry: Dictionary, planets: Array) -> Vector2:
+	var outer: float = planets.back().distance if not planets.is_empty() else 12.0
+	match entry.get("model_kind",""):
+		"trading_outpost": return Vector2(maxf(7,outer*0.75),minf(23,outer+3))
+		"spatial_anomaly","unstable_wormhole","radiation_nebula": return Vector2(maxf(10,outer*0.85),minf(23,outer+6))
+		"mining_operation": return Vector2(5,maxf(10,outer))
+		"derelict_starship": return Vector2(5,maxf(10,outer*0.85))
+	return Vector2(5,maxf(12,minf(23,outer+2)))
+
+static func model_radius(entry: Dictionary) -> float:
+	if entry.get("profile")!=null: return 1.2
+	return 2.8 if entry.get("model_kind","") in ["radiation_nebula","spatial_anomaly","unstable_wormhole","gas_giant"] else 1.2
+
+static func clearance(at: Vector3, radius: float, occupied: Array) -> float:
+	var result := INF
+	for other in occupied: result = minf(result,at.distance_to(other.position)-radius-other.radius)
+	return result
+
+static func _project(at: Vector3, context: Dictionary) -> Vector2:
+	var point: Vector3 = context.view*at
+	return Vector2(0.5+point.x/(-point.z*context.tan_fov*context.aspect*2),0.5-point.y/(-point.z*context.tan_fov*2))
+
+static func _label_rect(at: Vector3, radius: float, named: bool, context: Dictionary, settings: Resource) -> Rect2:
+	var pixels: Vector2 = Vector2(116,72) if named else Vector2(48,48)
+	var scale: Vector2 = Vector2(context.height*context.aspect,context.height)
+	var top := _project(at+Vector3.UP*radius,context)
+	return Rect2(top+(Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(pixels.x*0.5,pixels.y))/scale,pixels/scale)
+
+static func _contexts(occupied: Array, settings: Resource) -> Array:
+	var camera_at: Vector3 = settings.overview_target+(settings.overview_position-settings.overview_target)/settings.default_zoom
+	var view := Transform3D(Basis.IDENTITY,camera_at).looking_at(settings.overview_target,Vector3.UP).affine_inverse()
+	var contexts: Array = []
+	for dimensions in [Vector2(1280,720),Vector2(960,540),Vector2(1680,720)]:
+		var context: Dictionary = {"view":view,"tan_fov":tan(deg_to_rad(settings.field_of_view*0.5)),"aspect":dimensions.aspect(),"height":dimensions.y,"rects":[]}
+		for other in occupied:
+			if other.label: context.rects.append(_label_rect(other.position,other.radius,other.get("named",false),context,settings))
+			var center := _project(other.position,context)
+			var depth: float = -(view*other.position).z
+			var extent: Vector2 = Vector2(other.radius/context.aspect,other.radius)/(depth*context.tan_fov*2)
+			context.rects.append(Rect2(center-extent,extent*2))
+		contexts.append(context)
+	return contexts
+
+static func _composition_score(at: Vector3, radius: float, contexts: Array, settings: Resource) -> float:
+	var score := 0.0
+	for context in contexts:
+		var rect := _label_rect(at,radius,false,context,settings)
+		if not Rect2(0.025,0.025,0.95,0.95).encloses(rect): score -= 40
+		for other in context.rects:
+			if rect.intersects(other): score -= 12+rect.intersection(other).get_area()*1000
+	return score
+
+static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, planets: Array, occupied: Array, settings: Resource, attempts: int = 48) -> Dictionary:
+	var region := placement_region(entry,planets)
+	var radius := model_radius(entry)
+	var contexts := _contexts(occupied,settings)
+	var bounds: Rect2 = settings.system_bounds.abs().grow(-radius)
+	var best := Vector3.ZERO
+	var best_score := -INF
+	var found := false
+	var fallback := false
+	for attempt in range(attempts):
+		var angle: float = rng.randf_range(0,TAU)
+		var distance: float = rng.randf_range(region.x,region.y)
+		var at := Vector3(cos(angle)*distance,rng.randf_range(-0.45,0.45),sin(angle)*distance)
+		if not bounds.has_point(Vector2(at.x,at.z)): continue
+		var gap := clearance(at,radius,occupied)
+		if gap<settings.destination_clearance: continue
+		var score := _composition_score(at,radius,contexts,settings)+minf(gap,8)*0.15
+		if score>best_score:
+			best = at
+			best_score = score
+			found = true
+	if not found:
+		fallback = true
+		# Finite grid fallback, scored rather than accepted blindly after failed rolls.
+		for row in range(19):
+			for column in range(19):
+				var point: Vector2 = bounds.position+bounds.size*Vector2(column/18.0,row/18.0)
+				var at := Vector3(point.x,0,point.y)
+				var gap := clearance(at,radius,occupied)
+				if gap<settings.destination_clearance: continue
+				var score := _composition_score(at,radius,contexts,settings)+minf(gap,8)*0.15
+				if score>best_score:
+					best = at
+					best_score = score
+					found = true
+	# Default 48x48 bounds and seven encounters leave ample fallback space. An
+	# impossible manual calibration is reported explicitly rather than looping.
+	return {"position":best,"radius":radius,"region":region,"fallback":fallback,"valid":found}
