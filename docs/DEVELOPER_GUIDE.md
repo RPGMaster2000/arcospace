@@ -630,3 +630,5 @@ Star-system marker state/priority, deterministic standalone composition, selecte
 orbit materials and current validation are documented in [Star-map refinement](star_map_refinement.md).
 
 Star-map emoji catalog, selection/completion treatment and validation: [PoI iconography](poi_iconography.md).
+
+Star-map feedback, compact controls and stationary Chasedown return: [Star-system polish](star_system_polish.md).

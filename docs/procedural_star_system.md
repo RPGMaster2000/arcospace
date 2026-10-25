@@ -383,3 +383,5 @@ label rectangles remain disjoint.
 
 For the two-pass state hierarchy, procedural standalone placement, orbit selection,
 material/background refinements and verification, see [Star-map refinement](star_map_refinement.md).
+
+Presentation polish and optional intercepted-position save compatibility: [Star-system polish](star_system_polish.md).
