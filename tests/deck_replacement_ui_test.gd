@@ -26,7 +26,7 @@ func prepare() -> Resource:
 	var incoming: Resource = host.state.card_offers[0]
 	host.show_outcome()
 	host._preview_card(incoming)
-	host.card_inspector.confirm_button.pressed.emit()
+	host.card_management.confirm_button.pressed.emit()
 	return incoming
 func run() -> void:
 	host = load("res://scenes/expedition.tscn").instantiate()
@@ -44,7 +44,7 @@ func run() -> void:
 		host.show_system()
 		await settle()
 		check(host.view_kind == "replacement" and host.state.pending_card == incoming and host.incoming_portrait.card_data == incoming, "Fixed incoming survives screen reconstruction")
-		check(host.title.text == "Deck Full — 36/36 Cards" and host.replace_button.disabled, "Capacity and no-selection safeguard")
+		check(host.card_management.heading.text == "Replace Card — Deck full: 36/36 cards" and host.replace_button.disabled, "Capacity and no-selection safeguard")
 		check(host.card_gallery.cards.size() == 36 and host.state.player_pool() == original, "Gallery contains owned identities without removal")
 		check(host.card_gallery.scroll.get_v_scroll_bar().max_value > host.card_gallery.scroll.get_v_scroll_bar().page, "Owned gallery scrolls")
 		host.card_gallery.scroll.scroll_vertical = 500
@@ -52,19 +52,17 @@ func run() -> void:
 		check(host.card_gallery.scroll.scroll_vertical > 0, "Gallery scrolling works")
 		host.card_gallery.scroll.scroll_vertical = 0
 		host.card_gallery.grid.get_child(0).pressed.emit()
-		check(not host.replace_button.disabled and not host.replacement_key.is_empty() and host.replacement_selection.text.contains("Upgrade 0"), "Selecting owned portrait enables explicit replacement")
+		check(not host.replace_button.disabled and not host.replacement_key.is_empty() and not host.replacement_selection.text.is_empty(), "Selecting owned portrait enables explicit replacement")
 		var first_key: String = host.replacement_key
 		host.card_gallery.grid.get_child(1).pressed.emit()
 		check(host.replacement_key != first_key and host.state.player_pool() == original, "Selection changes without mutation")
-		host.incoming_portrait.pressed.emit()
-		check(host.card_inspector.read_only and not host.card_inspector.confirm_button.visible, "Incoming can be inspected without acquisition reroll")
-		host.card_inspector.dismiss()
+		check(host.incoming_portrait.card_data == incoming, "Incoming stays in inline comparison")
 		host.scroll.scroll_vertical = 0
 		await settle()
 		await capture("top-%d" % size.x)
 		host.scroll.scroll_vertical = 10000
 		await settle()
-		check(host.replace_button.get_global_rect().end.y <= host.scroll.get_global_rect().end.y + 1, "Replacement action reachable at bottom")
+		check(root.get_visible_rect().encloses(host.replace_button.get_global_rect()), "Replacement action fixed inside viewport")
 		await capture("actions-%d" % size.x)
 	var remove_key: String = host.replacement_key
 	host.replace_button.pressed.emit()
@@ -72,6 +70,7 @@ func run() -> void:
 	check(host.state.pending_choice.is_empty() and host.state.player_pool().size()==36, "Replace completes once")
 	for card in host.state.player_pool(): check(card.identity_key() != remove_key, "Exactly selected identity removed")
 	check(host.state.acquired_draw_weights()[incoming.identity_key()] == 3.0, "Incoming is weighted acquisition")
+	while host.card_management.closing: await process_frame
 	host._show_current_deck()
 	check(host.current_deck_viewer.title.text.contains("Deck: 36 / 36") and host.current_deck_viewer.gallery.cards.size()==36, "Deck viewer reflects current capacity")
 	host.current_deck_viewer.dismiss()

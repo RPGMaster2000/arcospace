@@ -38,11 +38,14 @@ was introduced. `Expedition` retains the authoritative State reference, state co
 route decisions, save/checkpoint coordination and the live battle handle.
 
 `ExpeditionScreen` now owns view reset, grid fitting, control factories, approach highlights,
-result panel/header styling, card-gallery construction and cancellable result suspense.
+result panel/header styling and cancellable result suspense. Reward galleries now
+belong to the later CardManagementScreen overlay.
 The controller's existing control accessors are read-only references to Screen or the active
 Outpost/replacement component; there are no second mutable control/selection stores.
 Screen queries State for display but never retains or mutates it. Existing Outpost,
-DeckReplacement, ApproachConfirmation, FieldRepairControls and CardGallery remain in place.
+ApproachConfirmation, FieldRepairControls and CardGallery remain in place.
+The later [card-management UI](card_management.md) replaces DeckReplacement and
+reward confirmation modals with one presentation-only full-screen overlay.
 
 A local `Expedition.Phase` enum replaces the two mutable animation booleans. Their old
 `transitioning` and `presenting_outcome` names remain derived read-only accessors for callers.

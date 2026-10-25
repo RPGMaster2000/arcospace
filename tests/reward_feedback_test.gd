@@ -110,6 +110,7 @@ func run() -> void:
 	host.show_system()
 	check(host.deck_button.get_parent() == host.legend.get_parent() and host.deck_button.get_index() + 1 == host.legend.get_index(), "Deck next to Legend")
 	var rng_before: int = host.state.rng.state
+	while host.card_management.closing: await process_frame
 	host.deck_button.pressed.emit()
 	await settle()
 	var viewer = host.current_deck_viewer
@@ -149,7 +150,7 @@ func run() -> void:
 		check(host.state.rng.state == state_after_roll and host.state.salvage == salvage_before + (7 if good else 2), "No duplicate roll/reward during flash")
 		while host.presenting_outcome: await process_frame
 		check(host.outcome_flash.tween.get_total_elapsed_time() + 0.001 >= host.visual_settings.poi_reveal_duration, "Flash respects configured duration")
-		check(host.view_kind == "outcome" and host.mission_header.text == ("Mission Successful" if good else "Mission Compromised"), "Matching mission reward header")
+		check(host.view_kind == "outcome" and host.card_management.instruction.text.begins_with("Mission Successful" if good else "Mission Compromised"), "Matching mission reward header")
 		check(not host.card_gallery.filters.visible, "PoI reward toolbar hidden")
 		await settle()
 		await screenshot("success" if good else "compromised")

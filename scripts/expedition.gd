@@ -20,27 +20,24 @@ const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const OutpostScreen = preload("res://scripts/ui/outpost_screen.gd")
 const ExpeditionScreen = preload("res://scripts/ui/expedition_screen.gd")
 const ExpeditionText = preload("res://scripts/ui/expedition_text.gd")
-const DeckReplacement = preload("res://scripts/ui/deck_replacement.gd")
+const CardManagement = preload("res://scripts/ui/card_management_screen.gd")
 const FieldRepairControls = preload("res://scripts/ui/field_repair_controls.gd")
 var outpost_screen: OutpostScreen
 var screen: ExpeditionScreen
-var replacement_panel: DeckReplacement
-# Read-only aliases preserve the controller interface; the panel owns selection.
+var card_management: CardManagement
+var _card_owner: Resource
+var _card_revision: int = -1
+# Presentation aliases for existing expedition callers.
 var replacement_key: String:
-	get:
-		return replacement_panel.selected_key if is_instance_valid(replacement_panel) else ""
+	get: return card_management.selected_card.identity_key() if is_instance_valid(card_management) and card_management.selected_card != null else ""
 var replacement_selection: Label:
-	get:
-		return replacement_panel.selection if is_instance_valid(replacement_panel) else null
+	get: return card_management.selection if is_instance_valid(card_management) else null
 var replace_button: Button:
-	get:
-		return replacement_panel.replace_button if is_instance_valid(replacement_panel) else null
+	get: return card_management.confirm_button if is_instance_valid(card_management) else null
 var incoming_portrait: Button:
-	get:
-		return replacement_panel.incoming_portrait if is_instance_valid(replacement_panel) else null
+	get: return card_management.incoming_portrait if is_instance_valid(card_management) else null
 var card_gallery: VBoxContainer:
-	get: return replacement_panel.gallery if is_instance_valid(replacement_panel) else (screen.card_gallery if is_instance_valid(screen) else null)
-var card_inspector: CanvasLayer
+	get: return card_management.gallery if is_instance_valid(card_management) and card_management.shade.visible else null
 # TUNE: Disable to restore the original grid; both presentations use the same encounter state.
 @export var use_star_map: bool = true
 ## Disable for the temporary 2D map fallback.
@@ -127,7 +124,10 @@ var selected_approach: int:
 var approach_buttons: Array[Button]:
 	get: return outpost_screen.buttons if is_instance_valid(outpost_screen) else screen.approach_buttons
 var view_kind: String:
-	get: return screen.kind if is_instance_valid(screen) else ""
+	get:
+		if is_instance_valid(card_management) and card_management.shade.visible and not card_management.closing:
+			return "replacement" if card_management.mode == "replace" else "outcome"
+		return screen.kind if is_instance_valid(screen) else ""
 var selected_encounter: int = -1
 
 #region Screen initialization
@@ -135,19 +135,17 @@ var selected_encounter: int = -1
 
 func _ready() -> void:
 	_build_ui()
-	card_inspector = preload("res://scripts/ui/card_inspector.gd").new()
-	add_child(card_inspector)
-	card_inspector.confirmed.connect(_confirm_card)
-	card_inspector.opened.connect(
-		func():
-			if is_instance_valid(card_gallery):
-				card_gallery.set_interaction_enabled(false)
-	)
-	card_inspector.closed.connect(
-		func():
-			if is_instance_valid(card_gallery):
-				card_gallery.set_interaction_enabled(true)
-	)
+	card_management = CardManagement.new()
+	add_child(card_management)
+	card_management.confirmed.connect(_management_confirmed)
+	card_management.declined.connect(_management_declined)
+	card_management.save_quit_button.visible = persistence_enabled
+	card_management.save_quit_requested.connect(func():
+		if phase == Phase.REWARD and not card_management.closing: _save_and_quit())
+	card_management.closed.connect(func():
+		screen.process_mode = Node.PROCESS_MODE_INHERIT
+		_card_owner = null
+		_card_revision = -1)
 	current_deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
@@ -228,12 +226,11 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 	if not preserve_transition:
 		_cancel_presentation()
 	current_deck_viewer.dismiss()
-	card_inspector.dismiss()
 	field_repairs.clear()
 	if is_instance_valid(outpost_screen):
 		outpost_screen.clear()
 	outpost_screen = null
-	replacement_panel = null
+	card_management.dismiss()
 	state.field_repairs_open = kind == "system" and state.hull > 0
 	if not _uses_3d_map():
 		if is_instance_valid(star_map) and star_map.get_parent() == screen:
@@ -264,6 +261,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 
 
 func _begin_presentation(next: Phase) -> int:
+	card_management.dismiss(true)
 	_presentation_revision += 1
 	phase = next
 	return _presentation_revision
@@ -398,6 +396,7 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	if is_instance_valid(card_management): card_management.dismiss(true)
 	_cancel_presentation()
 	phase = Phase.EXITED
 	if persistence_enabled:
@@ -488,7 +487,8 @@ func show_system(preserve_transition: bool = false) -> void:
 func _map_input_allowed() -> bool:
 	return (
 		phase != Phase.EXITED and not transitioning and not resource_bar.overlay.shade.visible
-		and not current_deck_viewer.shade.visible and not card_inspector.shade.visible
+		and not current_deck_viewer.shade.visible
+		and not card_management.shade.visible
 		and not settings_button.menu.shade.visible
 	)
 
@@ -917,17 +917,12 @@ func show_outcome() -> void:
 		return
 	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
 		state.finish_upgrades()
-	if state.pending_choice == "replace":
-		_show_replacement()
+	if state.pending_choice in ["card", "upgrade", "replace"]:
+		_present_card_management()
 		return
 	_clear("outcome")
 	screen.present_result(state, visual_settings, _uses_3d_map())
 	match state.pending_choice:
-		"card":
-			_show_card_gallery(state.card_offers)
-		"upgrade":
-			_show_card_gallery(state.upgrade_candidates())
-			view.add_child(_label("Spend all remaining card upgrades to continue.", 18))
 		"resource", "production":
 			var choices = _grid(3)
 			var keys: Array = (
@@ -955,24 +950,53 @@ func _choose_card(index: int) -> void:
 		_purchase_finished()
 
 
-func _show_card_gallery(cards: Array) -> void:
-	screen.show_card_gallery(cards, state.pending_choice == "card")
-	var source_gallery: VBoxContainer = card_gallery
-	card_gallery.card_selected.connect(func(card: Resource):
-		if phase != Phase.EXITED and source_gallery == card_gallery: _preview_card(card))
+func _present_card_management() -> void:
+	# Keep the underlying view intact. The modal alone owns gallery/details/input.
+	if not card_management.shade.visible or card_management.closing:
+		_cancel_presentation()
+	phase = Phase.REWARD
+	_card_owner = state
+	_card_revision = _presentation_revision
+	current_deck_viewer.dismiss()
+	screen.resource_bar.overlay.dismiss()
+	screen.confirmation.dismiss()
+	screen.process_mode = Node.PROCESS_MODE_DISABLED
+	var cards: Array = state.card_offers if state.pending_choice == "card" else (
+		state.player_pool() if state.pending_choice == "replace" else state.upgrade_candidates())
+	var result_context: String = ""
+	if state.last_poi_success >= 0:
+		result_context = "Mission Successful" if state.last_poi_success == 1 else "Mission Compromised"
+	card_management.present(state.pending_choice, cards, state.upgrades_remaining, state.pending_card, state.deck_limit(), result_context)
+
+
+func _management_current(revision: int) -> bool:
+	return (
+		_presentation_current(_card_revision, _card_owner) and phase == Phase.REWARD
+		and revision == card_management.revision and state.pending_choice == card_management.mode
+	)
+
+
+func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
+	if not _management_current(revision):
+		return
+	match mode:
+		"card": _choose_card(state.card_offers.find(card))
+		"upgrade": _upgrade(card.identity_key())
+		"replace": _replace_card()
+
+
+func _management_declined(revision: int) -> void:
+	if _management_current(revision):
+		_decline_card()
 
 
 func _preview_card(card: Resource) -> void:
-	if state.pending_choice == "card" and card in state.card_offers:
-		card_inspector.present(card)
-	elif state.pending_choice == "upgrade" and card in state.upgrade_candidates():
-		card_inspector.present(card, card.with_upgrade(card.upgrade_level + 1))
+	card_management.select_card(card)
 
 
 func _show_current_deck() -> void:
-	if presenting_outcome:
+	if presenting_outcome or card_management.shade.visible:
 		return
-	card_inspector.dismiss()
 	resource_bar.overlay.dismiss()
 	current_deck_viewer.show_cards(
 		state.player_pool(),
@@ -981,16 +1005,6 @@ func _show_current_deck() -> void:
 			+ " · Deck: %d / %d · Read only" % [state.player_pool().size(), state.deck_limit()]
 		)
 	)
-
-
-func _confirm_card(card: Resource) -> void:
-	if phase == Phase.EXITED:
-		return
-	# The existing state methods validate eligibility and consume each choice once.
-	if state.pending_choice == "card":
-		_choose_card(state.card_offers.find(card))
-	elif state.pending_choice == "upgrade":
-		_upgrade(card.identity_key())
 
 
 func _upgrade(key: String) -> void:
@@ -1005,26 +1019,9 @@ func _attribute(key: String) -> void:
 		_purchase_finished()
 
 
-func _show_replacement() -> void:
-	_clear("replacement")
-	jump_button.hide()
-	title.text = "Deck Full — %d/%d Cards" % [state.player_pool().size(), state.deck_limit()]
-	replacement_panel = DeckReplacement.new()
-	view.add_child(replacement_panel)
-	replacement_panel.configure(state.pending_card, state.player_pool(), scroll.allows_activation)
-	replacement_panel.inspect_incoming.connect(
-		func(): card_inspector.present(state.pending_card, null, true)
-	)
-	var source_panel: VBoxContainer = replacement_panel
-	replacement_panel.replace_requested.connect(func():
-		if phase != Phase.EXITED and source_panel == replacement_panel: _replace_card())
-	replacement_panel.decline_requested.connect(func():
-		if phase != Phase.EXITED and source_panel == replacement_panel: _decline_card())
-
-
 func _select_replacement(card: Resource) -> void:
-	if state.pending_choice == "replace" and is_instance_valid(replacement_panel):
-		replacement_panel.select_card(card)
+	if state.pending_choice == "replace":
+		card_management.select_card(card)
 
 
 func _replace_card() -> void:

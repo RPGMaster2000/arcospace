@@ -64,3 +64,18 @@ func set_card_scale(value: float) -> void:
 	if rendering:
 		rendering.size = Vector2(198, 294)
 		rendering.scale = Vector2.ONE * value
+
+
+# Selection decoration surrounds the original renderer without altering its artwork.
+func set_selected(active: bool) -> void:
+	var border: ReferenceRect = get_node_or_null("SelectionBorder")
+	if border == null:
+		border = ReferenceRect.new()
+		border.name = "SelectionBorder"
+		border.editor_only = false
+		border.border_color = Color("9ddfff")
+		border.border_width = 3.0
+		border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		border.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(border)
+	border.visible = active

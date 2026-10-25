@@ -148,7 +148,7 @@ func run() -> void:
 	host.show_outcome()
 	var card = host.state.upgrade_candidates()[0]
 	host._preview_card(card)
-	host.card_inspector.confirm_button.pressed.emit()
+	host.card_management.confirm_button.pressed.emit()
 	check(host.state.upgrades_remaining == 2 and host.state.upgraded_cards[card.identity_key()].upgrade_level == 1, "First UI confirmation applies one upgrade")
 	for candidate in host.card_gallery.cards: check(candidate.identity_key() != card.identity_key(), "Already chosen identity removed from this event")
 	check(not host.state.choose_upgrade(card.identity_key()), "Stale duplicate rejected by state")

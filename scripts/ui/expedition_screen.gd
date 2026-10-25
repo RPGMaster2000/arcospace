@@ -2,7 +2,6 @@ extends Control
 # RESPONSIBILITY: Own exploration screen controls; emits user intent without accessing expedition state.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
-const CardGallery = preload("res://scripts/ui/card_gallery.gd")
 const Text = preload("res://scripts/ui/expedition_text.gd")
 const Effects = preload("res://scripts/visual/visual_effects.gd")
 var kind: String = ""
@@ -10,7 +9,6 @@ var view_revision: int = 0
 var grid: GridContainer
 var selected_approach: int = -1
 var approach_buttons: Array[Button] = []
-var card_gallery: VBoxContainer
 var mission_header: Label
 const Header = preload("res://scenes/poi_header.tscn")
 const TouchScroll = preload("res://scripts/ui/encounter_scroll.gd")
@@ -247,7 +245,6 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	confirmation.dismiss()
 	self.kind = kind
 	mission_header = null
-	card_gallery = null
 	view_revision += 1
 	resource_bar.field_repairs_enabled = state.field_repairs_open
 	selected_approach = -1
@@ -365,16 +362,6 @@ func present_result(state: Resource, visual_settings: Resource, split_map: bool)
 		Color.WHITE.lerp(visual_settings.card_selection_color, visual_settings.reward_text_emphasis)
 	)
 	Effects.reveal(reward_text, visual_settings)
-
-
-func show_card_gallery(cards: Array, acquiring: bool) -> void:
-	jump_button.hide()
-	card_gallery = CardGallery.new()
-	card_gallery.show_toolbar = not acquiring
-	card_gallery.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	card_gallery.custom_minimum_size.y = 250
-	view.add_child(card_gallery)
-	card_gallery.set_cards(cards)
 
 
 func allows_activation() -> bool:

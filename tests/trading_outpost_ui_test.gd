@@ -10,6 +10,8 @@ func check(ok: bool, message: String) -> void:
 		if failures < 30: push_error(message)
 
 func settle() -> void:
+	if is_instance_valid(host.card_management) and host.card_management.closing:
+		while host.card_management.closing: await process_frame
 	for n in range(10): await process_frame
 
 func geometry() -> void:
@@ -80,7 +82,7 @@ func run_tests() -> void:
 					var stale_choice: Button = host.card_gallery.grid.get_child(0) if slot == 2 else host.grid.get_child(0)
 					stale_choice.pressed.emit()
 					if slot == 2:
-						host.card_inspector.confirm_button.pressed.emit()
+						host.card_management.confirm_button.pressed.emit()
 						if host.state.pending_choice == "replace":
 							check(host.view_kind == "replacement" and host.state.player_pool().size()==host.state.deck_limit(), "Paid full-deck reward opens replacement")
 							host._select_replacement(host.state.player_pool()[0])

@@ -9,6 +9,8 @@ var cards: Array[Resource] = []
 var visible_cards: Array[Resource] = []
 var category: String = "All"
 var show_toolbar: bool = true
+var inspection_enabled: bool = true
+var selected_identity: String = ""
 var sort_mode: int = 0
 var filters: HFlowContainer
 var sorting: OptionButton
@@ -149,12 +151,14 @@ func rebuild() -> void:
 	for card in visible_cards:
 		var portrait = Portrait.new()
 		portrait.card_data = card
+		portrait.inspection_enabled = inspection_enabled
 		grid.add_child(portrait)
 		portrait.pressed.connect(
 			func():
 				if scroll.allows_activation():
 					card_selected.emit(card)
 		)
+	select_identity(selected_identity)
 	count.text = "%d / %d cards" % [visible_cards.size(), cards.size()]
 	_fit.call_deferred()
 
@@ -169,3 +173,9 @@ func set_interaction_enabled(enabled: bool) -> void:
 	scroll.set_process_input(enabled)
 	scroll.touch_index = -1
 	scroll.dragged = false
+
+
+func select_identity(key: String) -> void:
+	selected_identity = key
+	for portrait in grid.get_children():
+		portrait.set_selected(portrait.card_data.identity_key() == key)

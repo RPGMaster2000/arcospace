@@ -117,7 +117,7 @@ cancellable suspense/fades, scoped callbacks and unchanged save/checkpoint bound
 | `scripts/ui/expedition_screen.gd` | `_build_ui()` constructs the exploration shell; `reset_view`, control factories, approach selection, result/gallery rendering and cancellable suspense own its internal presentation. Signals report user intent to the controller. Hull pulse tuning still comes from the Expedition Inspector fields. |
 | `scripts/ui/outpost_screen.gd` | Owns outpost service tiles and its confirmation window, repair/plating selector, selection highlighting and price previews. Reads state queries and emits `purchase_requested(slot, amount, revision)`; never applies purchases. |
 | `scripts/ui/expedition_text.gd` | Static `compact_text()`, `compact_outcome()`, `highlight_outcome()` and `approach_text()` format descriptions. State is an explicit read-only argument where needed. |
-| `scripts/ui/deck_replacement.gd` | `configure()` builds the incoming-card explanation, owned-card gallery and replacement actions. `select_card()` owns the selected identity and button state. Signals request inspection, replacement or decline; this component never spends rewards or changes ownership. |
+| `scripts/ui/card_management_screen.gd` | Full-screen acquisition, upgrade and replacement presentation: gallery, inline comparison, pinned incoming card and fixed actions. Emits revision-scoped intent; State/Deck retain transactions. See [card management](card_management.md). |
 
 The controller retains small forwarding methods and read-only control accessors for existing
 callers; Screen/Outpost/replacement components own the actual references and selection. `_show_replacement()` mounts the panel; `_replace_card()` and `_decline_card()`

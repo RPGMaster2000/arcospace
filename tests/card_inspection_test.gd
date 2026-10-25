@@ -168,7 +168,7 @@ func test_gallery() -> void:
 	await create_timer(.48).timeout
 	check(overlay().is_open(),"Gallery touch hold opens shared overlay")
 	touch(point,false)
-	check(host.state.pending_choice=="card" and host.state.acquired_cards.is_empty() and not host.card_inspector.shade.visible,"Hold never acquires or opens confirmation")
+	check(host.state.pending_choice=="card" and host.state.acquired_cards.is_empty() and host.card_management.selected_card == null,"Hold never acquires or opens confirmation")
 	overlay().dismiss(true)
 	await create_timer(.3).timeout
 	check(host.scroll.scroll_vertical==scroll_before,"Scroll position preserved")
@@ -177,10 +177,11 @@ func test_gallery() -> void:
 	for attempt in range(120):
 		if host.card_gallery.scroll.allows_activation() and Time.get_ticks_msec()>=portrait.hold_input.blocked_until: break
 		await process_frame
-	# Short tap still invokes the existing acquisition confirmation workflow.
+	# Short tap updates inline details; only the fixed footer acquires.
 	click(point,MOUSE_BUTTON_LEFT,true); click(point,MOUSE_BUTTON_LEFT,false)
-	check(host.card_inspector.shade.visible and not host.card_inspector.read_only,"Normal acquisition tap unchanged")
-	host.card_inspector.dismiss()
+	check(host.card_management.selected_card == portrait.card_data,"Normal acquisition tap selects inline details")
+	host.card_management.confirm_button.pressed.emit()
+	await create_timer(.25).timeout
 	host._show_current_deck()
 	await settle()
 	portrait=host.current_deck_viewer.gallery.grid.get_child(0)
