@@ -123,6 +123,19 @@ func run() -> void:
 	check((map.background.sky.position-map.camera.position)==relative,"Sky follows camera translation")
 	check((map.background.layers[0].position-map.camera.position).is_equal_approx(layer_relative),"Distant layer stays infinitely distant")
 	check((map.background.dust[0].position-map.camera.position)!=dust_relative,"Dust has subtle differential parallax")
+	var dust_orientation: Basis = map.background.dust[0].basis
+	var camera_orientation: Basis = map.camera.basis
+	var fragment: Transform3D = map.background.dust[0].multimesh.get_instance_transform(0)
+	map.camera.rotate_y(0.1)
+	map.background.update_view(map.camera)
+	check(map.background.dust[0].basis.is_equal_approx(dust_orientation),"Debris orientation stays anchored during camera turns")
+	check(map.background.dust[0].multimesh.get_instance_transform(0)==fragment,"Camera updates never regenerate fragments")
+	check(map.background.dust[0].multimesh.mesh.size.x>=0.1,"Debris has a visible silhouette rather than subpixel star points")
+	var settled_transform: Transform3D = map.background.dust[0].transform
+	map.background.update_view(map.camera)
+	check(map.background.dust[0].transform==settled_transform,"Stationary camera produces no debris jitter")
+	map.camera.basis = camera_orientation
+	map.background.update_view(map.camera)
 	map.set_active(false)
 	check(map.viewport.render_target_update_mode==SubViewport.UPDATE_DISABLED and not map.background.is_processing(),"No inactive GPU/background loop")
 	map.set_active(true)

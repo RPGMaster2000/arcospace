@@ -148,9 +148,13 @@ with finer jittered stars. A pre-draw callback follows camera transforms after t
 so panning/zooming cannot reveal a nearby starbox or a one-frame sky lag. Camera far
 clipping is unchanged. There is still exactly one map SubViewport.
 
-Dust uses two MultiMeshInstance3D layers, 64 small soft particles total by default
+Dust uses two MultiMeshInstance3D layers, 64 soft irregular fragments total by default
 (maximum 160). Distribution is deterministic; only two transforms change with the
-camera. No per-particle Nodes, physics, continuous texture generation or runtime
+camera. Fragments retain the initial system-view orientation instead of rotating
+with the camera. Their visible silhouettes replace the previous subpixel Gaussian
+points, which shimmered like background stars. Two depths give differential parallax;
+stationary camera updates never regenerate or move individual fragments.
+No per-particle Nodes, physics, continuous texture generation or runtime
 Python is required. Map deactivation disables its viewport and disconnects background
 pre-draw updates. Backgrounds can be reduced through strength or removed by clearing
 Background Layers; clouds, atmosphere and dust each have a reduced/disabled setting.
