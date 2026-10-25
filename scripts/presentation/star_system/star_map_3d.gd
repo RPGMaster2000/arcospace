@@ -135,9 +135,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	sun.size = Vector2(18, 18)
 	var disc := Models.part(visual_root, sun, Color.WHITE)
 	disc.name = "Sun"
+	# Billboard vertices rotate outside the original flat quad bounds.
+	disc.custom_aabb = AABB(Vector3.ONE*-9.0,Vector3.ONE*18.0)
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/menu_sun.gdshader")
 	material.set_shader_parameter("sun_color", visual_data.star_color)
+	material.render_priority = 10
 	disc.material_override = material
 	objects[-100] = disc
 	for entry in entries:

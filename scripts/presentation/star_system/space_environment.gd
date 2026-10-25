@@ -20,6 +20,8 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	sky = Models.part(self,sphere,Color.WHITE)
 	var space = ShaderMaterial.new()
 	space.shader = preload("res://shaders/map_sky.gdshader")
+	# The far-depth sky must draw before every transparent celestial object.
+	space.render_priority = -128
 	space.set_shader_parameter("reference_origin",origin)
 	space.set_shader_parameter("parallax",settings.starfield_parallax)
 	space.set_shader_parameter("star_density",0.12)

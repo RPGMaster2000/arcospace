@@ -40,7 +40,8 @@ extends Resource
 @export_group("Orbit appearance")
 @export var orbit_color := Color(0.48, 0.73, 0.86, 0.18)
 @export_range(32, 128, 8) var orbit_segments: int = 64
-@export_range(0.005, 0.05, 0.005) var orbit_thickness: float = 0.02
+## Screen pixels, so orbit paths remain visible at grazing angles and distant zoom.
+@export_range(1.0, 4.0, 0.25) var orbit_line_width: float = 2.0
 @export_group("Background and quality")
 @export var background_layers: Array[Resource] = [preload("res://resources/presentation/sky_nebula.tres"), preload("res://resources/presentation/sky_galaxy.tres")]
 @export_range(0.0, 1.0, 0.05) var background_strength: float = 0.6

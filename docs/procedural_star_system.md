@@ -317,3 +317,19 @@ checks passed, with nine focused headless scripts plus import passing. The GPU p
 test passes on Mobile/Vulkan and Compatibility/OpenGL (software llvmpipe). The full
 presentation test also passes on Mobile at all three landscape sizes. The headless
 pixel-test entry explicitly skips GPU assertions. No physical Android testing.
+
+### Orbit visibility and sun stability
+
+The map sky now draws at the lowest transparency priority (-128). It previously
+could paint over orbit lines and compete with the sun during camera movement,
+despite being projected to far depth. A rendered with/without-sky comparison
+reproduced that loss and now guards against it.
+
+Orbit paths are camera-facing GPU ribbons on their original 3D ellipses. The old
+horizontal strips could disappear when viewed edge-on. **Orbit Line Width** is now
+a screen-pixel setting (default 2), rather than a world-unit thickness. Opacity is
+unchanged. The sun has rotation-safe billboard culling bounds and explicit
+transparency priority above distant background layers. Shared menu/battle sun
+shader code is unchanged. `orbit_visibility_test.gd` checks 15 rendered combinations
+of grazing/overhead angles and near/far camera distances on both renderers, plus
+actual map visibility with the sky enabled and 17 sun camera poses.

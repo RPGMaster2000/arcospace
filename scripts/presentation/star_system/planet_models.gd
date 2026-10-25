@@ -62,7 +62,7 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 	return root
 
 static func orbit(data: Dictionary, settings: Resource) -> MeshInstance3D:
-	# A single thin triangle strip; consistent width on Mobile and Compatibility.
+	# A camera-facing ribbon on the exact 3D orbit, extruded in screen pixels.
 	var mesh = ImmediateMesh.new()
 	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	var segments: int = clampi(settings.orbit_segments, 32, 128)
@@ -70,17 +70,22 @@ static func orbit(data: Dictionary, settings: Resource) -> MeshInstance3D:
 		var angle: float = TAU*i/segments
 		var at: Vector3 = Data.orbit_point(data, angle)
 		var direction: Vector3 = (Data.orbit_point(data, angle+0.001)-at).normalized()
-		var side: Vector3 = direction.cross(Vector3.UP).normalized()*settings.orbit_thickness
-		mesh.surface_add_vertex(at-side)
-		mesh.surface_add_vertex(at+side)
+		# NORMAL carries the path tangent; UV.x selects the side of the ribbon.
+		mesh.surface_set_normal(direction)
+		mesh.surface_set_uv(Vector2(0,0))
+		mesh.surface_add_vertex(at)
+		mesh.surface_set_uv(Vector2(1,0))
+		mesh.surface_add_vertex(at)
 	mesh.surface_end()
 	var node = MeshInstance3D.new()
+	node.name = "Orbit%d" % data.get("index",0)
 	node.mesh = mesh
-	var material = StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.albedo_color = settings.orbit_color
+	var material = ShaderMaterial.new()
+	material.shader = preload("res://shaders/orbit_line.gdshader")
+	material.set_shader_parameter("line_color",settings.orbit_color)
+	material.set_shader_parameter("line_width",settings.orbit_line_width)
+	material.render_priority = -10
+	node.extra_cull_margin = 1.0
 	node.material_override = material
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return node
