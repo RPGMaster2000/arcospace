@@ -23,17 +23,18 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {}, "assignments": {}}
 	var count: int = rng.randi_range(2, clampi(settings.maximum_planets, 2, 4))
 	# Disjoint radial shells guarantee clearance even when inclined paths cross in projection.
-	var band: float = 8.4 / maxi(1, count)
+	var largest_radius: float = maxf(settings.planet_radius_range.x, settings.planet_radius_range.y)*1.2*1.5
+	var band: float = largest_radius*2.0 + settings.minimum_orbit_spacing + 0.8
 	for i in range(count):
 		var kind: String = TYPES[rng.randi_range(0, TYPES.size()-1)]
-		var inner: float = 1.4 + i * band
+		var inner: float = 2.1 + i * band
 		var outer: float = inner + band
-		var space: float = minf(settings.minimum_orbit_spacing, band * 0.3)
+		var space: float = settings.minimum_orbit_spacing
 		var radius: float = rng.randf_range(settings.planet_radius_range.x, settings.planet_radius_range.y)
 		if kind == "gas_giant": radius *= 1.2
 		radius = clampf(radius, 0.15, (band - space) * 0.45)
-		var low: float = inner + radius + space * 0.5
-		var high: float = outer - radius - space * 0.5
+		var low: float = inner + radius*1.5 + space * 0.5
+		var high: float = outer - radius*1.5 - space * 0.5
 		var a: float = rng.randf_range(low, high)
 		var allowed_e: float = maxf(0, minf(a-low, high-a) / a)
 		var p: Dictionary = {"index": i, "name": result.name + " " + ROMAN[i], "type": kind,

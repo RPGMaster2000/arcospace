@@ -27,10 +27,10 @@ func _initialize() -> void:
 		for p in a.planets:
 			check(p.position.is_equal_approx(Data.orbit_point(p,p.phase)),"Planet lies on inclined ellipse")
 			check(p.eccentricity>=0 and p.eccentricity<=0.25 and abs(p.inclination)<=deg_to_rad(15),"Orbit parameter bounds")
-			check(p.distance*(1-p.eccentricity)-p.radius>1.4,"Star clearance")
+			check(p.distance*(1-p.eccentricity)-p.radius*1.5>2.1,"Star clearance")
 			for other in a.planets:
 				if other.index==p.index+1:
-					check(other.distance*(1-other.eccentricity)-other.radius-(p.distance*(1+p.eccentricity)+p.radius)>=settings.minimum_orbit_spacing-0.0001,"Shell clearance")
+					check(other.distance*(1-other.eccentricity)-other.radius*1.5-(p.distance*(1+p.eccentricity)+p.radius*1.5)>=settings.minimum_orbit_spacing-0.0001,"Shell clearance")
 			if p.encounter>=0:
 				check(p.encounter<4 and not assignments.has(p.encounter),"Suitable encounters assigned at most once")
 				assignments[p.encounter]=true

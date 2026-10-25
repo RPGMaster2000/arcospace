@@ -31,11 +31,13 @@ clamped to 2–4), guaranteeing at least two orbital lines. Count does not depen
 index, type, radius, semi-major axis, eccentricity, inclination, orientation, phase,
 initial spin, spin speed, material seed and optional encounter index.
 
-Base geometry uses radial shells spanning radii 1.4–9.8 world units. Irregular
-semi-major axes are drawn within each available shell. Radius and eccentricity are
-constrained to leave the configured shell clearance; high-count systems therefore
-use more conservative eccentricities than sparse systems. This prevents planets,
-orbits and the star from intersecting without any orbital simulation.
+Radial shells start at 2.1 world units. Each shell reserves the largest possible
+**rendered** planet diameter (including the map's 1.5 size multiplier), the configured
+minimum surface clearance (default 1.5), and 0.8 units of placement variation.
+Semi-major axes and eccentricities are constrained using rendered radii, so adjacent
+radial envelopes remain at least 1.5 units apart even at periapsis/apoapsis. Defaults
+extend the four-planet region to 22.1 units. System/pan bounds are now ±24 units;
+the overview pulls back to fit this larger region. Counts remain two to four.
 
 For eccentric anomaly E, the unrotated point is:
 
@@ -142,22 +144,38 @@ To replace a nebula/galaxy with PNG artwork:
 Empty Texture uses the procedural source. Quads sit at a fixed 55-unit camera-relative
 radius; Apparent Size is quad size at that distance. Layer parallax defaults to zero.
 The map restores its overview before recording the dust reference, so rebuilding
-after a cinematic does not inherit the old camera pose. The existing starfield shader
-is reused on a 70-unit sphere centered on the camera,
-with finer jittered stars. A pre-draw callback follows camera transforms after tweens,
-so panning/zooming cannot reveal a nearby starbox or a one-frame sky lag. Camera far
-clipping is unchanged. There is still exactly one map SubViewport.
+after a cinematic does not inherit the old camera pose. A map-local adaptation of
+the existing starfield shader (`map_sky.gdshader`) centers its sphere using the exact
+render camera's GPU matrix. It no longer waits for a CPU pre-draw translation.
+Lower angular star density/resolution avoids tiny undersampled highlights. The
+shared battle/menu background shader is unchanged. Camera far clipping is unchanged;
+there is still exactly one map SubViewport.
 
-Dust uses two MultiMeshInstance3D layers, 64 soft irregular fragments total by default
-(maximum 160). Distribution is deterministic; only two transforms change with the
-camera. Fragments retain the initial system-view orientation instead of rotating
-with the camera. Their visible silhouettes replace the previous subpixel Gaussian
-points, which shimmered like background stars. Two depths give differential parallax;
-stationary camera updates never regenerate or move individual fragments.
-No per-particle Nodes, physics, continuous texture generation or runtime
-Python is required. Map deactivation disables its viewport and disconnects background
-pre-draw updates. Backgrounds can be reduced through strength or removed by clearing
-Background Layers; clouds, atmosphere and dust each have a reduced/disabled setting.
+Dust uses two MultiMeshInstance3D layers, 64 small **white circular points** total
+by default (maximum 160), with antialiased soft edges. No irregular rock silhouettes
+or time-driven flicker remain. Shader positioning reads the same render camera as
+the sky, with stronger translation response for the near layer (0.8 versus 0.4 by
+default). Camera-relative wrapping keeps the field populated through long pans and
+focus transitions; depth-boundary fades hide recycling. Billboards face the render
+camera. No per-frame CPU dust transforms, per-particle Nodes, physics, texture
+generation or runtime Python are required. The initial reference basis keeps the
+translation field consistent across camera turns. Stationary camera frames produce
+identical pixels.
+
+Tune **Stardust Parallax**, **Opacity**, density and enabled state in the existing
+StarSystemSettings resource. Background layer quads retain their existing pre-draw
+placement; map deactivation disconnects that callback and suspends its viewport.
+Backgrounds can be reduced through strength or removed by clearing Background Layers;
+clouds, atmosphere and dust each have a reduced/disabled setting.
+
+### Parallax/spacing regression update
+
+`space_parallax_test.gd` checks rendered pixels on Mobile and Compatibility: an
+isolated distant starfield must remain unchanged under translation, stationary dots
+must be pixel-stable, and pan/zoom must change the white-point image. Headless runs
+explicitly skip these GPU checks. Generation tests now measure shell clearance using
+the enlarged visible radius. Existing save schema and gameplay RNG remain unchanged;
+cosmetic orbital positions reconstruct using the new spacing rules.
 
 ## Verification and limits
 
@@ -281,6 +299,12 @@ The star-map sun, planet bodies and space phenomena render at 150% of their prio
 size. Player/enemy ship models, wrecks and installations render at 50%. These
 changes are local to the map: shared battle scenes, ship Resources and shaders are
 unchanged. Planet clearance metadata and decorative-label offsets account for the
-larger bodies; label text retains its previous size. Existing orbital coordinates
-and travel timing remain unchanged. Generation now always creates two to four
+larger bodies; label text retains its previous size. The later spacing update
+expands orbital coordinates while preserving travel timing. Generation now always creates two to four
 planets; old saves reconstruct the updated cosmetic layout without schema changes.
+
+Latest spacing/parallax verification: 5,427 generation checks and 171 presentation
+checks passed, with nine focused headless scripts plus import passing. The GPU pixel
+test passes on Mobile/Vulkan and Compatibility/OpenGL (software llvmpipe). The full
+presentation test also passes on Mobile at all three landscape sizes. The headless
+pixel-test entry explicitly skips GPU assertions. No physical Android testing.

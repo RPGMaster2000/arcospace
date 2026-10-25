@@ -1,6 +1,6 @@
 extends Resource
 ## Presentation tuning only. No expedition state or random encounters live here.
-@export var overview_position := Vector3(0, 42, 31.5)
+@export var overview_position := Vector3(0, 90, 67.5)
 @export var overview_target := Vector3.ZERO
 @export_range(15.0, 60.0) var field_of_view: float = 29.0
 @export_group("Overview zoom and system borders")
@@ -9,9 +9,9 @@ extends Resource
 @export_range(0.5, 12.0, 0.01) var maximum_zoom: float = 6.0
 @export_range(0.01, 0.2, 0.01) var wheel_zoom_step: float = 0.06
 ## X/Z world-space rectangle. Destinations retain their seeded relative arrangement.
-@export var system_bounds := Rect2(-16, -10, 32, 20)
+@export var system_bounds := Rect2(-24, -24, 48, 48)
 ## Camera look-at center limits relative to Overview Target, in X/Z world units.
-@export var pan_bounds := Rect2(-16, -10, 32, 20)
+@export var pan_bounds := Rect2(-24, -24, 48, 48)
 @export_range(4.0, 32.0) var pan_drag_threshold: float = 12.0
 ## Minimum gap between projected labels and the viewport edge, in logical pixels.
 @export_range(0.0, 48.0) var screen_border: float = 8.0
@@ -33,7 +33,7 @@ extends Resource
 
 @export_group("Planet generation")
 @export_range(2, 4, 1) var maximum_planets: int = 4
-@export_range(0.1, 0.6, 0.05) var minimum_orbit_spacing: float = 0.35
+@export_range(0.5, 3.0, 0.1) var minimum_orbit_spacing: float = 1.5
 @export_range(0.0, 0.25, 0.01) var maximum_eccentricity: float = 0.25
 @export_range(0.0, 15.0, 1.0) var maximum_inclination: float = 15.0
 @export var planet_radius_range := Vector2(0.45, 0.75)
@@ -50,8 +50,8 @@ extends Resource
 @export_group("Stardust")
 @export var stardust_enabled: bool = true
 @export_range(0, 160, 8) var stardust_density: int = 64
-@export_range(0.0, 1.0, 0.05) var stardust_parallax: float = 0.12
-@export_range(0.0, 0.5, 0.01) var stardust_opacity: float = 0.12
+@export_range(0.0, 1.0, 0.05) var stardust_parallax: float = 0.8
+@export_range(0.0, 1.0, 0.01) var stardust_opacity: float = 0.55
 
 @export_group("Replaceable encounter scenes")
 @export var destination_scenes: Dictionary[String, PackedScene] = {}

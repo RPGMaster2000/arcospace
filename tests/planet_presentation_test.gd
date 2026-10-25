@@ -121,14 +121,17 @@ func run() -> void:
 		check(planet.scale.is_equal_approx(Vector3.ONE*1.5),"Star-map planets are 50 percent larger")
 	check(map.objects[5].scale.is_equal_approx(Vector3.ONE*0.275),"Star-map enemy ship is half its previous size")
 	check(map.objects[-2].scale.is_equal_approx(Vector3.ONE*0.5),"Star-map station is half its previous size")
-	var relative: Vector3 = map.background.sky.position-map.camera.position
+	var relative: Vector3 = map.background.sky.position
 	var layer_relative: Vector3 = map.background.layers[0].position-map.camera.position
-	var dust_relative: Vector3 = map.background.dust[0].position-map.camera.position
+	var dust_relative: Vector3 = map.background.dust[0].position
 	map.camera.position += Vector3(3,0,0)
 	map.background.update_view(map.camera)
-	check((map.background.sky.position-map.camera.position)==relative,"Sky follows camera translation")
+	check(map.background.sky.position==relative,"Sky translation is computed from the render camera in the shader")
 	check((map.background.layers[0].position-map.camera.position).is_equal_approx(layer_relative),"Distant layer stays infinitely distant")
-	check((map.background.dust[0].position-map.camera.position)!=dust_relative,"Dust has subtle differential parallax")
+	check(map.background.dust[0].position==dust_relative,"Dust has no late CPU transform updates")
+	var near_material: ShaderMaterial = map.background.dust[0].multimesh.mesh.material
+	var far_material: ShaderMaterial = map.background.dust[1].multimesh.mesh.material
+	check(near_material.get_shader_parameter("parallax")>far_material.get_shader_parameter("parallax"),"Nearby white points have stronger parallax than distant points")
 	var dust_orientation: Basis = map.background.dust[0].basis
 	var camera_orientation: Basis = map.camera.basis
 	var fragment: Transform3D = map.background.dust[0].multimesh.get_instance_transform(0)
@@ -136,7 +139,7 @@ func run() -> void:
 	map.background.update_view(map.camera)
 	check(map.background.dust[0].basis.is_equal_approx(dust_orientation),"Debris orientation stays anchored during camera turns")
 	check(map.background.dust[0].multimesh.get_instance_transform(0)==fragment,"Camera updates never regenerate fragments")
-	check(map.background.dust[0].multimesh.mesh.size.x>=0.1,"Debris has a visible silhouette rather than subpixel star points")
+	check(map.background.dust[0].multimesh.mesh.size.x>=0.03 and map.background.dust[0].multimesh.mesh.size.x<0.1,"Debris uses small antialiased star-like dots")
 	var settled_transform: Transform3D = map.background.dust[0].transform
 	map.background.update_view(map.camera)
 	check(map.background.dust[0].transform==settled_transform,"Stationary camera produces no debris jitter")

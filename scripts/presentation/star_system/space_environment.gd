@@ -21,14 +21,15 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	sphere.rings = 12
 	sky = Models.part(self,sphere,Color.WHITE)
 	var space = ShaderMaterial.new()
-	space.shader = preload("res://shaders/space_background.gdshader")
+	space.shader = preload("res://shaders/map_sky.gdshader")
 	space.set_shader_parameter("star_density",0.12)
-	space.set_shader_parameter("star_resolution",500.0)
+	space.set_shader_parameter("star_resolution",220.0)
 	space.set_shader_parameter("star_brightness",0.25)
 	space.set_shader_parameter("star_jitter",0.9)
 	space.set_shader_parameter("variation_seed",rng.randf_range(1,99))
 	space.set_shader_parameter("cloud_intensity",0.06*settings.background_strength)
 	sky.material_override = space
+	sky.extra_cull_margin = 1000.0
 	var sparse: bool = rng.randf()<0.3
 	for specification in settings.background_layers:
 		if specification == null: continue
@@ -54,11 +55,15 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	if settings.stardust_enabled:
 		for level in range(2):
 			var mesh = QuadMesh.new()
-			# Visible fragments rather than subpixel points that shimmer like distant stars.
-			mesh.size = Vector2.ONE*(0.16 if level==0 else 0.21)
+			# Soft white points, with finite pixel footprints at both depth layers.
+			mesh.size = Vector2.ONE*(0.035 if level==0 else 0.06)
 			var material = ShaderMaterial.new()
 			material.shader = preload("res://shaders/stardust.gdshader")
 			material.set_shader_parameter("opacity",settings.stardust_opacity)
+			material.set_shader_parameter("reference_origin",origin)
+			material.set_shader_parameter("reference_basis",dust_basis)
+			material.set_shader_parameter("parallax",settings.stardust_parallax*(1.0 if level==0 else 0.5))
+			material.set_shader_parameter("near_depth",5.0+level*5.0)
 			mesh.material = material
 			var node = MultiMeshInstance3D.new()
 			node.multimesh = MultiMesh.new()
@@ -66,9 +71,10 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 			node.multimesh.mesh = mesh
 			node.multimesh.instance_count = clampi(settings.stardust_density,0,160)/2
 			for i in range(node.multimesh.instance_count):
-				var at = Vector3(dust_rng.randf_range(-6,6),dust_rng.randf_range(-4,4),-dust_rng.randf_range(5+level*5,9+level*5))
-				var shape = Basis(Vector3.FORWARD,dust_rng.randf_range(0,TAU)).scaled(Vector3(dust_rng.randf_range(0.65,1.4),dust_rng.randf_range(0.5,1.0),1))
-				node.multimesh.set_instance_transform(i,Transform3D(shape,at))
+				var at = Vector3(dust_rng.randf_range(-12,12),dust_rng.randf_range(-6,6),-dust_rng.randf_range(5+level*5,9+level*5))
+				node.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,at))
+			# Shader positioning bypasses CPU transforms; do not cull against the origin.
+			node.extra_cull_margin = 1000.0
 			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(node)
 			dust.append(node)
@@ -76,15 +82,10 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	set_active(true)
 
 func update_view(camera: Camera3D) -> void:
-	sky.position = camera.position
+	# Sky and dust use this draw's camera matrices directly in their shaders.
 	for node in layers:
 		node.position = camera.position+node.get_meta("direction")*55-(camera.position-origin)*float(node.get_meta("parallax"))
 		node.look_at(camera.position,Vector3.UP)
-	for i in range(dust.size()):
-		var drift: Vector3 = (camera.position-origin)*settings.stardust_parallax*(0.65+i*0.35)
-		# Keep orientation anchored to the system. Rotating with the camera made the
-		# foreground look screen-locked and jump during focus/cinematic camera turns.
-		dust[i].transform = Transform3D(dust_basis,camera.position-drift)
 
 # Run after camera tweens, immediately before drawing, so the sky never lags a frame.
 func _sync() -> void:
