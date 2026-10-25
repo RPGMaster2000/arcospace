@@ -1,0 +1,7 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/star_system/sky_layer.gd" id="Layer"]
+[resource]
+script = ExtResource("Layer")
+tint = Color(0.25, 0.32, 0.6, 1)
+angular_position = Vector2(180, 28)
+apparent_size = Vector2(55, 30)
