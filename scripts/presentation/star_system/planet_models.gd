@@ -21,7 +21,8 @@ static func sphere(radius: float) -> SphereMesh:
 static func build(data: Dictionary, settings: Resource) -> Node3D:
 	var root = Node3D.new()
 	root.name = "Planet%d" % data.index
-	root.set_meta("radius", data.radius)
+	root.scale = Vector3.ONE*1.5
+	root.set_meta("radius", data.radius*1.5)
 	var body = Models.part(root, sphere(data.radius), Color.WHITE)
 	body.name = "Surface"
 	body.rotation.y = data.rotation

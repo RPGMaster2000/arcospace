@@ -123,7 +123,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		if p.encounter != -1: objects[p.encounter] = planet
 		var label = Label3D.new()
 		label.text = p.name
-		label.position.y = p.radius+0.4
+		label.position.y = p.radius+0.4/1.5
+		label.scale = Vector3.ONE/1.5
 		label.font_size = 24
 		label.pixel_size = 0.012
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -131,7 +132,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		label.visible = p.encounter == -1
 		planet.add_child(label)
 	var sun := QuadMesh.new()
-	sun.size = Vector2(12, 12)
+	sun.size = Vector2(18, 18)
 	var disc := Models.part(visual_root, sun, Color.WHITE)
 	disc.name = "Sun"
 	var material := ShaderMaterial.new()
@@ -143,6 +144,11 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var index: int = entry.index
 		if not objects.has(index):
 			var model := Models.build(entry, VisualSystem.random_for(cosmetic_seed,system_number,"model-%d" % index), settings.destination_scenes.get(entry.get("model_kind","")))
+			var phenomenon: bool = entry.get("profile") == null and entry.get("model_kind", "") in ["radiation_nebula", "spatial_anomaly", "unstable_wormhole", "gas_giant"]
+			var size_factor: float = 1.5 if phenomenon else 0.5
+			model.scale *= size_factor
+			if model.has_meta("radius"):
+				model.set_meta("radius", float(model.get_meta("radius"))*size_factor)
 			model.position = visual_data.anchors[index]
 			destination_root.add_child(model)
 			objects[index] = model
@@ -162,7 +168,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	if is_instance_valid(ship):
 		ship.queue_free()
 	ship = Models.ship(player_profile)
-	ship.scale = Vector3.ONE * 0.35
+	ship.scale = Vector3.ONE * 0.175
 	world.add_child(ship)
 	ship.position = _initial_ship_position()
 	orbit_index = last_destination if objects.has(last_destination) else -1
@@ -494,6 +500,6 @@ func _marker_text(entry: Dictionary) -> String:
 
 func _initial_ship_position() -> Vector3:
 	for at in [Vector3(0,0,3),Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-3),Vector3(-2,0,2),Vector3(2,0,-2)]:
-		if visual_data.planets.all(func(p): return at.distance_to(p.position)>p.radius+1.25):
+		if visual_data.planets.all(func(p): return at.distance_to(p.position)>p.radius*1.5+1.25):
 			return at
 	return Vector3(0,1.5,3)

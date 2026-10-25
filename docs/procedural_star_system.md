@@ -26,12 +26,12 @@ assignments, individual destination models/anchors, the star, backgrounds and du
 They never consume State, reward, station, Chasedown, combat or AI random streams.
 Changing a background layer does not reshuffle planets or stardust.
 
-Planet count is uniformly drawn from 0 through the configured maximum (default 4,
-clamped to 0–4). Count does not depend on encounter count. Each planet records its
+Planet count is uniformly drawn from 2 through the configured maximum (default 4,
+clamped to 2–4), guaranteeing at least two orbital lines. Count does not depend on encounter count. Each planet records its
 index, type, radius, semi-major axis, eccentricity, inclination, orientation, phase,
 initial spin, spin speed, material seed and optional encounter index.
 
-Four maximum-capacity radial shells span radii 1.4–9.8 world units. Irregular
+Base geometry uses radial shells spanning radii 1.4–9.8 world units. Irregular
 semi-major axes are drawn within each available shell. Radius and eccentricity are
 constrained to leave the configured shell clearance; high-count systems therefore
 use more conservative eccentricities than sparse systems. This prevents planets,
@@ -274,3 +274,13 @@ Actual Compatibility/OpenGL captures; the same cases also passed Mobile/Vulkan.
 ![Existing PoI UI and planet focus](procedural_system_screenshots/expedition-poi.png)
 ![Standalone ship focus](procedural_system_screenshots/ship-focus.png)
 ![Calibrated nebula layer](procedural_system_screenshots/bright-nebula.png)
+
+### Star-map size calibration update
+
+The star-map sun, planet bodies and space phenomena render at 150% of their prior
+size. Player/enemy ship models, wrecks and installations render at 50%. These
+changes are local to the map: shared battle scenes, ship Resources and shaders are
+unchanged. Planet clearance metadata and decorative-label offsets account for the
+larger bodies; label text retains its previous size. Existing orbital coordinates
+and travel timing remain unchanged. Generation now always creates two to four
+planets; old saves reconstruct the updated cosmetic layout without schema changes.

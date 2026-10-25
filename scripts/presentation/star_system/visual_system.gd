@@ -21,7 +21,7 @@ static func orbit_point(planet: Dictionary, angle: float) -> Vector3:
 static func generate(seed_value: int, number: int, entries: Array, settings: Resource) -> Dictionary:
 	var rng = random_for(seed_value, number, "planets")
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {}, "assignments": {}}
-	var count: int = rng.randi_range(0, clampi(settings.maximum_planets, 0, 4))
+	var count: int = rng.randi_range(2, clampi(settings.maximum_planets, 2, 4))
 	# Disjoint radial shells guarantee clearance even when inclined paths cross in projection.
 	var band: float = 8.4 / maxi(1, count)
 	for i in range(count):
@@ -57,7 +57,7 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		p.type = PLANETARY[entry.model_kind]
 		result.assignments[entry.index] = p.index
 		result.anchors[entry.index] = p.position
-	var occupied: Array = result.planets.map(func(p): return {"position":p.position,"radius":p.radius})
+	var occupied: Array = result.planets.map(func(p): return {"position":p.position,"radius":p.radius*1.5})
 	var ordered: Array = entries.duplicate()
 	ordered.sort_custom(func(a,b): return a.index < b.index)
 	for entry in ordered:

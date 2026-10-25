@@ -21,7 +21,7 @@ func _initialize() -> void:
 		var a: Dictionary = Data.generate(seed_value, 3, entries, settings)
 		check(a == Data.generate(seed_value, 3, entries, settings),"Deterministic visual reconstruction")
 		check(a.anchors.size()==6,"Exactly existing encounter indices")
-		check(a.planets.size()>=0 and a.planets.size()<=4,"Planet count bounded")
+		check(a.planets.size()>=2 and a.planets.size()<=4,"Planet count bounded")
 		counts[a.planets.size()] = counts.get(a.planets.size(),0)+1
 		var assignments: Dictionary = {}
 		for p in a.planets:
@@ -35,7 +35,7 @@ func _initialize() -> void:
 				check(p.encounter<4 and not assignments.has(p.encounter),"Suitable encounters assigned at most once")
 				assignments[p.encounter]=true
 				check(a.anchors[p.encounter]==p.position,"Assigned encounter uses planet anchor")
-	check(counts.size()==5,"All counts including zero represented")
+	check(counts.size()==3,"All counts from two through four represented")
 	check(var_to_str(entries)==source,"Generation never mutates encounter input")
 	print("Visual system: %d checks, %d failures" % [checks,failures])
 	quit(1 if failures else 0)

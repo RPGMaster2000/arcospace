@@ -32,7 +32,7 @@ extends Resource
 @export_range(0.0, 5.0) var result_suspense_duration: float = 2.0
 
 @export_group("Planet generation")
-@export_range(0, 4, 1) var maximum_planets: int = 4
+@export_range(2, 4, 1) var maximum_planets: int = 4
 @export_range(0.1, 0.6, 0.05) var minimum_orbit_spacing: float = 0.35
 @export_range(0.0, 0.25, 0.01) var maximum_eccentricity: float = 0.25
 @export_range(0.0, 15.0, 1.0) var maximum_inclination: float = 15.0

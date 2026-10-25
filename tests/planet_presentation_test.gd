@@ -37,8 +37,8 @@ func run() -> void:
 		for p in generated.planets:
 			if p.eccentricity>0.16 and abs(p.inclination)>deg_to_rad(10) and not seeds.has("tilted"): seeds["tilted"] = seed_value
 			if p.type=="gas_giant" and p.radius>0.78 and not seeds.has("giant"): seeds["giant"] = seed_value
-	check(seeds.has(0) and seeds.has(1) and seeds.has(4),"Representative zero/one/four planet seeds")
-	for count in [0,1,4]:
+	check(seeds.has(2) and seeds.has(3) and seeds.has(4),"Representative two/three/four planet seeds")
+	for count in [2,3,4]:
 		for dimensions in [Vector2i(1280,720),Vector2i(960,540),Vector2i(1680,720)]:
 			root.size = dimensions
 			map.run_seed = seeds[count]
@@ -115,6 +115,12 @@ func run() -> void:
 	var replacement = Models.build({"model_kind":"research_station"},Data.random_for(1,1,"replacement"),scene)
 	check(replacement.name=="ReplacementModel","PackedScene model replacement has no gameplay dependency")
 	replacement.free()
+	check(map.ship.scale.is_equal_approx(Vector3.ONE*0.175),"Star-map player ship is half its previous size")
+	check(map.objects[-100].mesh.size==Vector2(18,18),"Star-map sun is 50 percent larger")
+	for planet in map.planet_nodes.values():
+		check(planet.scale.is_equal_approx(Vector3.ONE*1.5),"Star-map planets are 50 percent larger")
+	check(map.objects[5].scale.is_equal_approx(Vector3.ONE*0.275),"Star-map enemy ship is half its previous size")
+	check(map.objects[-2].scale.is_equal_approx(Vector3.ONE*0.5),"Star-map station is half its previous size")
 	var relative: Vector3 = map.background.sky.position-map.camera.position
 	var layer_relative: Vector3 = map.background.layers[0].position-map.camera.position
 	var dust_relative: Vector3 = map.background.dust[0].position-map.camera.position
@@ -141,7 +147,7 @@ func run() -> void:
 	map.set_active(true)
 	var target: int = map.visual_data.assignments.keys()[0] if not map.visual_data.assignments.is_empty() else 0
 	for p in map.visual_data.planets:
-		check(map.ship.position.distance_to(p.position)>p.radius+1.0,"Initial selected ship avoids planet surfaces")
+		check(map.ship.position.distance_to(p.position)>p.radius*1.5+1.0,"Initial selected ship avoids planet surfaces")
 	var arrival: Array = []
 	map.arrived.connect(func(i): arrival.append(i))
 	map.travel(target)
@@ -174,6 +180,12 @@ func run() -> void:
 		check(map.planet_nodes.size()==4,"Quality never changes planet count")
 		if quality == "dark-reduced": check(map.background.dust.is_empty() and map.background.layers.is_empty(),"Reduced quality removes decorative passes")
 		await capture(quality)
+	for phenomenon in ["radiation_nebula", "spatial_anomaly", "unstable_wormhole"]:
+		entries[4].model_kind = phenomenon
+		map.configured_seed += 1
+		map.configure(entries,-1,0.04,seeds[4])
+		check(map.objects[4].scale.is_equal_approx(Vector3.ONE*1.5),"Space phenomenon is 50 percent larger: "+phenomenon)
+	entries[4].model_kind = "derelict_starship"
 	map.free()
 	# Codec and gameplay random streams remain untouched by visual reconstruction.
 	var host = preload("res://scenes/expedition.tscn").instantiate()
