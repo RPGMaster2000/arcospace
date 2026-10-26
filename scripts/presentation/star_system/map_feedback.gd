@@ -33,17 +33,18 @@ func _ready() -> void:
  identification.material_override.render_priority = 21
  for z in [-0.16,0.16]:
   var mesh := CylinderMesh.new()
-  mesh.top_radius = 0.025
-  mesh.bottom_radius = 0.09
-  mesh.height = 0.7
+  mesh.top_radius = 0.09
+  mesh.bottom_radius = 0.02
+  mesh.height = 1.0
   mesh.radial_segments = 8
+  mesh.cap_top = false
+  mesh.cap_bottom = false
   var jet := Models.part(engines,mesh,Color(0.25,0.8,1.0,0.7),Vector3(-0.55,0,z))
   jet.rotation.z = -PI*0.5
-  jet.material_override.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-  jet.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-  jet.material_override.render_priority = 20
-  jet.material_override.emission_enabled = true
-  jet.material_override.emission = Color("42bcff")
+  var exhaust := ShaderMaterial.new()
+  exhaust.shader = preload("res://shaders/map_exhaust.gdshader")
+  exhaust.render_priority = 20
+  jet.material_override = exhaust
  var light := OmniLight3D.new()
  light.position.x = -0.25
  light.light_color = Color("54bfff")
@@ -101,14 +102,17 @@ func _process(delta: float) -> void:
  player_marker.position = camera.unproject_position(ship.position)
  var heading: Vector2 = camera.unproject_position(ship.position+ship.basis.x)-player_marker.position
  player_marker.rotation = heading.angle()+PI*0.5
- engines.basis = ship.basis
- engines.scale.x = 0.45 + engine_level*1.4
+ engines.basis = ship.basis.orthonormalized()
  identification.position.y = -0.22
  engine_level = move_toward(engine_level,1.0 if moving else 0.0,delta*5.0)
  engines.visible = visible
  for node in engines.get_children():
   if node is MeshInstance3D:
-   node.material_override.albedo_color.a = 0.28+engine_level*0.55
+   # Keep the nozzle fixed while extending only the tail away from the ship.
+   var length: float = lerpf(0.32,3.6,engine_level)
+   node.scale.y = length
+   node.position.x = -0.25-length*0.5
+   node.material_override.set_shader_parameter("opacity",0.28+engine_level*0.55)
  if engine_audio.playing:
   engine_audio.volume_db = lerpf(-60,engine_volume,engine_level)
   if not moving and engine_level <= 0.0: engine_audio.stop()
