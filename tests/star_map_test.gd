@@ -61,7 +61,7 @@ func run() -> void:
 	map.travel(1)
 	check(map.traveling and host.view_kind == "system", "Travel starts without opening early")
 	await create_timer(.08).timeout
-	check(host.map_destination == 0 and ((host.view_kind == "preview" and host.view.get_child(0).text.contains(host.state.encounters[0].title)) or host.selected_encounter == 0), "Only first arrival opens correct encounter")
+	check(host.map_destination == 0 and ((host.view_kind == "preview" and host.view.find_children("*","Label",true,false).any(func(label): return label.text.contains(host.state.enemy_profile(host.state.encounters[0]).ship_name))) or host.selected_encounter == 0), "Only first arrival opens correct encounter")
 	host.show_system()
 	await settle()
 	check(host.star_map.ship_position == host.star_map.destination(0) and initial != host.star_map.ship_position, "Return retains ship location")

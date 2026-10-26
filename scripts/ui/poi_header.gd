@@ -23,6 +23,8 @@ func configure(poi: Resource, category: String = "") -> void:
 	var classification: String = "Hazardous location" if poi.hazardous else ("Spatial phenomenon" if poi.anomalous_presentation else "Point of interest")
 	$Overlay/Caption.text = (category if not category.is_empty() else classification) if compact else "POINT OF INTEREST"
 	title.text = poi.title
+	var palette = preload("res://scripts/ui/encounter_presentation.gd").COLORS
+	title.add_theme_color_override("font_color", palette.hazard if poi.hazardous else (palette.special if poi.anomalous_presentation else palette.ordinary))
 	image.texture = poi.banner_texture if poi.banner_texture != null else banner_texture
 	$Overlay/Placeholder.visible = image.texture == null
 	_fit()
@@ -31,8 +33,9 @@ func configure(poi: Resource, category: String = "") -> void:
 func _fit() -> void:
 	get_node("Overlay/Placeholder").hide()
 	if compact:
-		custom_minimum_size.y = 58
-		title.add_theme_font_size_override("font_size",24)
+		custom_minimum_size.y = 44
+		$Overlay/Caption.hide()
+		title.add_theme_font_size_override("font_size",27)
 		title.offset_left = 8
 		title.offset_right = -8
 		title.offset_top = -36
@@ -40,6 +43,7 @@ func _fit() -> void:
 		$Overlay/Caption.offset_top = -58
 		$Overlay/Caption.add_theme_font_size_override("font_size",13)
 		return
+	$Overlay/Caption.show()
 	title.add_theme_font_size_override("font_size",30)
 	title.offset_left = 20
 	title.offset_right = -190

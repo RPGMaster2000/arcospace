@@ -1,0 +1,1982 @@
+{
+  "starting_revision": "4d0393cf115ae0715c8c2127829215b6089b2e8f",
+  "engine": "Godot 4.7.2",
+  "initial_shared": {
+    "complete": true,
+    "runs": [
+      {
+        "name": "import",
+        "status": "passed",
+        "seconds": 3.527,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_milestones_test",
+        "status": "passed",
+        "seconds": 2.986,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "status": "passed",
+        "seconds": 0.566,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "status": "passed",
+        "seconds": 0.666,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "status": "passed",
+        "seconds": 1.118,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ai_turn_test",
+        "status": "passed",
+        "seconds": 0.966,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "alpha_visual_test",
+        "status": "passed",
+        "seconds": 7.083,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "android_layout_test",
+        "status": "passed",
+        "seconds": 17.169,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "battle_effects_test",
+        "status": "passed",
+        "seconds": 5.412,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "status": "passed",
+        "seconds": 22.389,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "battle_hud_test",
+        "status": "passed",
+        "seconds": 0.716,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battle_layout_test",
+        "status": "passed",
+        "seconds": 3.83,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battlefield_environments_test",
+        "status": "passed",
+        "seconds": 9.242,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "board_3d_test",
+        "status": "passed",
+        "seconds": 4.478,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_balance_test",
+        "status": "passed",
+        "seconds": 0.265,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_effect_contract_test",
+        "status": "passed",
+        "seconds": 0.366,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_effect_parity_test",
+        "status": "passed",
+        "seconds": 1.219,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_expansion_test",
+        "status": "passed",
+        "seconds": 0.716,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_inspection_test",
+        "status": "passed",
+        "seconds": 11.246,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "status": "passed",
+        "seconds": 1.669,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_management_test",
+        "status": "passed",
+        "seconds": 5.583,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_motion_test",
+        "status": "passed",
+        "seconds": 1.569,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_progression_test",
+        "status": "passed",
+        "seconds": 58.939,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_targets_test",
+        "status": "passed",
+        "seconds": 0.265,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_tier_test",
+        "status": "passed",
+        "seconds": 18.628,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "status": "passed",
+        "seconds": 3.375,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "status": "passed",
+        "seconds": 1.418,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "chasedown_ui_test",
+        "status": "passed",
+        "seconds": 12.257,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "status": "passed",
+        "seconds": 1.12,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_launch_test",
+        "status": "passed",
+        "seconds": 2.728,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "status": "passed",
+        "seconds": 1.423,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "status": "passed",
+        "seconds": 0.978,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_title_test",
+        "status": "passed",
+        "seconds": 0.981,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "cinematic_touch_test",
+        "status": "passed",
+        "seconds": 1.89,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_visual_test",
+        "status": "passed",
+        "seconds": 6.032,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "color_grading_test",
+        "status": "passed",
+        "seconds": 1.991,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "combat_execution_test",
+        "status": "passed",
+        "seconds": 1.123,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 14 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "combat_forecast_test",
+        "status": "passed",
+        "seconds": 1.074,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "combat_modifier_test",
+        "status": "passed",
+        "seconds": 1.883,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "combat_state_test",
+        "status": "passed",
+        "seconds": 0.365,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "combat_trace_test",
+        "status": "passed",
+        "seconds": 3.275,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "status": "passed",
+        "seconds": 30.22,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "deck_determinism_test",
+        "status": "passed",
+        "seconds": 0.666,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "deck_ownership_test",
+        "status": "passed",
+        "seconds": 0.466,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "status": "passed",
+        "seconds": 4.035,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "discard_test",
+        "status": "passed",
+        "seconds": 2.07,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "encounter_continue_test",
+        "status": "passed",
+        "seconds": 1.218,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "enemy_roster_test",
+        "status": "passed",
+        "seconds": 2.973,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_boundary_test",
+        "status": "passed",
+        "seconds": 0.666,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "status": "passed",
+        "seconds": 3.624,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "status": "passed",
+        "seconds": 11.398,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_resume_test",
+        "status": "passed",
+        "seconds": 1.317,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_save_test",
+        "status": "passed",
+        "seconds": 0.465,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_test",
+        "status": "failed",
+        "seconds": 360.006,
+        "error_lines": [
+          "SCRIPT ERROR: Invalid access to property or key 'pressed' on a base object of type 'PanelContainer'."
+        ],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_ui_test",
+        "status": "passed",
+        "seconds": 1.77,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "field_repairs_test",
+        "status": "passed",
+        "seconds": 1.97,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "status": "passed",
+        "seconds": 14.309,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ftl_progression_test",
+        "status": "passed",
+        "seconds": 8.551,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ftl_test",
+        "status": "passed",
+        "seconds": 0.867,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ftl_visual_test",
+        "status": "passed",
+        "seconds": 0.968,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "game_reference_test",
+        "status": "passed",
+        "seconds": 2.626,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "hull_capacity_test",
+        "status": "passed",
+        "seconds": 0.969,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "status": "passed",
+        "seconds": 1.974,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "status": "passed",
+        "seconds": 1.67,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "music_test",
+        "status": "passed",
+        "seconds": 0.868,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "opening_balance_test",
+        "status": "passed",
+        "seconds": 0.767,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "orbit_visibility_test",
+        "status": "passed",
+        "seconds": 0.366,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "outpost_screen_test",
+        "status": "passed",
+        "seconds": 1.621,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "planet_presentation_test",
+        "status": "passed",
+        "seconds": 8.596,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "player_hand_test",
+        "status": "passed",
+        "seconds": 4.09,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "poi_confirmation_test",
+        "status": "passed",
+        "seconds": 7.794,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "poi_iconography_test",
+        "status": "passed",
+        "seconds": 0.674,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "status": "passed",
+        "seconds": 81.836,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "power_allocation_test",
+        "status": "passed",
+        "seconds": 61.426,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "repair_selection_test",
+        "status": "passed",
+        "seconds": 1.349,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "reward_feedback_test",
+        "status": "passed",
+        "seconds": 3.182,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "salvage_test",
+        "status": "passed",
+        "seconds": 1.841,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "settings_menu_test",
+        "status": "passed",
+        "seconds": 9.661,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "sfx_test",
+        "status": "passed",
+        "seconds": 4.781,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "shield_fit_test",
+        "status": "passed",
+        "seconds": 10.996,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "shield_shatter_test",
+        "status": "passed",
+        "seconds": 2.825,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ship_models_test",
+        "status": "passed",
+        "seconds": 7.501,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ship_variants_test",
+        "status": "passed",
+        "seconds": 11.93,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "status": "passed",
+        "seconds": 0.619,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "status": "passed",
+        "seconds": 3.375,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "space_parallax_test",
+        "status": "passed",
+        "seconds": 0.315,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_map_readability_test",
+        "status": "passed",
+        "seconds": 4.281,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_map_test",
+        "status": "failed",
+        "seconds": 360.005,
+        "error_lines": [
+          "SCRIPT ERROR: Invalid access to property or key 'text' on a base object of type 'PanelContainer'."
+        ],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_system_3d_test",
+        "status": "passed",
+        "seconds": 6.684,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_composition_test",
+        "status": "passed",
+        "seconds": 1.57,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_system_feedback_test",
+        "status": "passed",
+        "seconds": 2.321,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "status": "passed",
+        "seconds": 7.188,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "status": "passed",
+        "seconds": 1.218,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "status": "passed",
+        "seconds": 7.297,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_resume_test",
+        "status": "passed",
+        "seconds": 7.592,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_transition_test",
+        "status": "failed",
+        "seconds": 17.524,
+        "error_lines": [
+          "ERROR: Readable right-side panel",
+          "Star system transitions: 106 checks, 1 failures"
+        ],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "startup_flow_test",
+        "status": "passed",
+        "seconds": 3.173,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "status_bar_stress_test",
+        "status": "passed",
+        "seconds": 23.034,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "status_bar_test",
+        "status": "passed",
+        "seconds": 5.785,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "status_presentation_test",
+        "status": "passed",
+        "seconds": 1.774,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "storm_family_test",
+        "status": "passed",
+        "seconds": 0.868,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "status": "passed",
+        "seconds": 0.265,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "storm_presentation_test",
+        "status": "passed",
+        "seconds": 1.167,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "systems_failure_test",
+        "status": "passed",
+        "seconds": 2.528,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "tactical_cards_test",
+        "status": "passed",
+        "seconds": 0.416,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "tactical_focus_test",
+        "status": "passed",
+        "seconds": 24.744,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "tactical_preview_test",
+        "status": "passed",
+        "seconds": 16.061,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "status": "passed",
+        "seconds": 2.523,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "trading_outpost_test",
+        "status": "passed",
+        "seconds": 2.672,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "status": "passed",
+        "seconds": 15.314,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "travel_battle_test",
+        "status": "passed",
+        "seconds": 20.54,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 12 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ui_feedback_test",
+        "status": "passed",
+        "seconds": 1.117,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ui_overhaul_test",
+        "status": "passed",
+        "seconds": 13.255,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_music_test",
+        "status": "passed",
+        "seconds": 2.372,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_rewards_test",
+        "status": "passed",
+        "seconds": 1.574,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "status": "passed",
+        "seconds": 1.893,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "visual_system_test",
+        "status": "passed",
+        "seconds": 1.625,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      }
+    ]
+  },
+  "fresh_shared": {
+    "complete": true,
+    "runs": [
+      {
+        "name": "import",
+        "status": "passed",
+        "seconds": 4.032,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_milestones_test",
+        "status": "passed",
+        "seconds": 3.178,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "status": "passed",
+        "seconds": 0.567,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "status": "passed",
+        "seconds": 0.767,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "status": "passed",
+        "seconds": 1.334,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ai_turn_test",
+        "status": "passed",
+        "seconds": 1.068,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "alpha_visual_test",
+        "status": "passed",
+        "seconds": 7.423,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "android_layout_test",
+        "status": "passed",
+        "seconds": 20.346,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battle_effects_test",
+        "status": "passed",
+        "seconds": 5.489,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "status": "passed",
+        "seconds": 22.393,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "battle_hud_test",
+        "status": "passed",
+        "seconds": 0.967,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battle_layout_test",
+        "status": "passed",
+        "seconds": 4.144,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "battlefield_environments_test",
+        "status": "passed",
+        "seconds": 9.356,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "board_3d_test",
+        "status": "passed",
+        "seconds": 4.598,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_balance_test",
+        "status": "passed",
+        "seconds": 0.418,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_effect_contract_test",
+        "status": "passed",
+        "seconds": 0.365,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_effect_parity_test",
+        "status": "passed",
+        "seconds": 1.32,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_expansion_test",
+        "status": "passed",
+        "seconds": 0.967,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_inspection_test",
+        "status": "passed",
+        "seconds": 11.662,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "status": "passed",
+        "seconds": 1.87,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_management_test",
+        "status": "passed",
+        "seconds": 5.995,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_motion_test",
+        "status": "passed",
+        "seconds": 1.793,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_progression_test",
+        "status": "passed",
+        "seconds": 54.945,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_targets_test",
+        "status": "passed",
+        "seconds": 0.265,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "card_tier_test",
+        "status": "passed",
+        "seconds": 19.274,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "status": "passed",
+        "seconds": 3.374,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "status": "passed",
+        "seconds": 1.418,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "chasedown_ui_test",
+        "status": "passed",
+        "seconds": 12.21,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "status": "passed",
+        "seconds": 1.121,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_launch_test",
+        "status": "passed",
+        "seconds": 2.722,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "status": "passed",
+        "seconds": 1.418,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "status": "passed",
+        "seconds": 0.869,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_title_test",
+        "status": "passed",
+        "seconds": 1.017,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "cinematic_touch_test",
+        "status": "passed",
+        "seconds": 1.971,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "cinematic_visual_test",
+        "status": "passed",
+        "seconds": 6.085,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "color_grading_test",
+        "status": "passed",
+        "seconds": 1.97,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "combat_execution_test",
+        "status": "passed",
+        "seconds": 1.017,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 14 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "combat_forecast_test",
+        "status": "passed",
+        "seconds": 0.917,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "combat_modifier_test",
+        "status": "passed",
+        "seconds": 1.971,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "combat_state_test",
+        "status": "passed",
+        "seconds": 0.466,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "combat_trace_test",
+        "status": "passed",
+        "seconds": 3.174,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "status": "passed",
+        "seconds": 30.352,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "deck_determinism_test",
+        "status": "passed",
+        "seconds": 0.667,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "deck_ownership_test",
+        "status": "passed",
+        "seconds": 0.365,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "status": "passed",
+        "seconds": 4.027,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "discard_test",
+        "status": "passed",
+        "seconds": 1.971,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "encounter_continue_test",
+        "status": "passed",
+        "seconds": 1.019,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "enemy_roster_test",
+        "status": "passed",
+        "seconds": 3.277,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_boundary_test",
+        "status": "passed",
+        "seconds": 0.666,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "status": "passed",
+        "seconds": 3.629,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "status": "passed",
+        "seconds": 11.402,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_resume_test",
+        "status": "passed",
+        "seconds": 1.47,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_save_test",
+        "status": "passed",
+        "seconds": 0.466,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "expedition_test",
+        "status": "passed",
+        "seconds": 2.722,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "expedition_ui_test",
+        "status": "passed",
+        "seconds": 2.071,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "field_repairs_test",
+        "status": "passed",
+        "seconds": 2.273,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "status": "passed",
+        "seconds": 14.265,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ftl_progression_test",
+        "status": "passed",
+        "seconds": 7.64,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "ftl_test",
+        "status": "passed",
+        "seconds": 0.767,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ftl_visual_test",
+        "status": "passed",
+        "seconds": 0.767,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "game_reference_test",
+        "status": "passed",
+        "seconds": 2.322,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "hull_capacity_test",
+        "status": "passed",
+        "seconds": 0.767,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "status": "passed",
+        "seconds": 2.174,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "status": "passed",
+        "seconds": 1.772,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "music_test",
+        "status": "passed",
+        "seconds": 0.867,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "opening_balance_test",
+        "status": "passed",
+        "seconds": 0.666,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "orbit_visibility_test",
+        "status": "passed",
+        "seconds": 0.365,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "outpost_screen_test",
+        "status": "passed",
+        "seconds": 1.319,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "planet_presentation_test",
+        "status": "passed",
+        "seconds": 8.24,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "player_hand_test",
+        "status": "passed",
+        "seconds": 2.828,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "poi_confirmation_test",
+        "status": "passed",
+        "seconds": 7.636,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "poi_iconography_test",
+        "status": "passed",
+        "seconds": 0.566,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "status": "passed",
+        "seconds": 72.905,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "power_allocation_test",
+        "status": "passed",
+        "seconds": 54.278,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "repair_selection_test",
+        "status": "passed",
+        "seconds": 1.017,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "reward_feedback_test",
+        "status": "passed",
+        "seconds": 2.873,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "salvage_test",
+        "status": "passed",
+        "seconds": 1.62,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "settings_menu_test",
+        "status": "passed",
+        "seconds": 10.217,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "sfx_test",
+        "status": "passed",
+        "seconds": 4.886,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "shield_fit_test",
+        "status": "passed",
+        "seconds": 12.059,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "shield_shatter_test",
+        "status": "passed",
+        "seconds": 2.622,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ship_models_test",
+        "status": "passed",
+        "seconds": 5.38,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ship_variants_test",
+        "status": "passed",
+        "seconds": 9.996,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "status": "passed",
+        "seconds": 0.465,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "status": "passed",
+        "seconds": 3.073,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "space_parallax_test",
+        "status": "passed",
+        "seconds": 0.265,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_map_readability_test",
+        "status": "passed",
+        "seconds": 4.278,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_map_test",
+        "status": "passed",
+        "seconds": 1.773,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_3d_test",
+        "status": "passed",
+        "seconds": 6.739,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_composition_test",
+        "status": "passed",
+        "seconds": 2.071,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_system_feedback_test",
+        "status": "passed",
+        "seconds": 2.574,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "status": "passed",
+        "seconds": 7.291,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "status": "passed",
+        "seconds": 1.117,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "status": "passed",
+        "seconds": 7.141,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_resume_test",
+        "status": "passed",
+        "seconds": 7.688,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "star_system_transition_test",
+        "status": "failed",
+        "seconds": 17.37,
+        "error_lines": [
+          "ERROR: Readable right-side panel",
+          "Star system transitions: 106 checks, 1 failures"
+        ],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "startup_flow_test",
+        "status": "passed",
+        "seconds": 3.274,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "status_bar_stress_test",
+        "status": "passed",
+        "seconds": 23.142,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "status_bar_test",
+        "status": "passed",
+        "seconds": 5.785,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "status_presentation_test",
+        "status": "passed",
+        "seconds": 1.72,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "storm_family_test",
+        "status": "passed",
+        "seconds": 0.971,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "status": "passed",
+        "seconds": 0.416,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "storm_presentation_test",
+        "status": "passed",
+        "seconds": 0.967,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "systems_failure_test",
+        "status": "passed",
+        "seconds": 2.422,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "tactical_cards_test",
+        "status": "passed",
+        "seconds": 0.365,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "tactical_focus_test",
+        "status": "passed",
+        "seconds": 24.695,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "tactical_preview_test",
+        "status": "passed",
+        "seconds": 16.18,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "status": "passed",
+        "seconds": 2.473,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "trading_outpost_test",
+        "status": "passed",
+        "seconds": 3.585,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "status": "passed",
+        "seconds": 18.064,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "travel_battle_test",
+        "status": "passed",
+        "seconds": 20.632,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ui_feedback_test",
+        "status": "passed",
+        "seconds": 1.169,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "ui_overhaul_test",
+        "status": "passed",
+        "seconds": 13.356,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_music_test",
+        "status": "passed",
+        "seconds": 2.172,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_rewards_test",
+        "status": "passed",
+        "seconds": 1.32,
+        "error_lines": [],
+        "shutdown_warning_lines": [
+          "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+        ]
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "status": "passed",
+        "seconds": 1.572,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      },
+      {
+        "name": "visual_system_test",
+        "status": "passed",
+        "seconds": 1.118,
+        "error_lines": [],
+        "shutdown_warning_lines": []
+      }
+    ]
+  },
+  "focused_reruns": {
+    "tactical-final.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nTactical focus: 84 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-mobile-final.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\nVulkan 1.4.318 - Forward Mobile - Using Device #0: Unknown - llvmpipe (LLVM 20.1.2, 256 bits)\n\nTactical focus: 84 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-compatibility-final.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\nWARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.\n     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)\nOpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.2 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)\n\nTactical focus: 84 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-expedition-fixed.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9999 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=2 roll=0.9999 success=false\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=3 roll=0.9999 success=false\nExpedition seed=123456 system=2 encounter=0 approach=1 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=0 roll=0.0000 success=true\nExpedition seed=123456 system=1 encounter=0 approach=1 roll=0.9900 success=false\nExpedition seed=345 system=1 encounter=5 approach=0 roll=0.7720 success=true\nExpedition checks: 0 failures\nWARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-starmap-fixed.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nStar map: 290 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-status-fixed.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nStatus and modifier checks: 10693 assertions, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+    "tactical-transition-fixed.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nStar system transitions: 106 checks, 0 failures\n"
+  },
+  "effective_result": "116 regression scripts and import verified; fresh shared run had one obsolete 45%-width assertion, corrected and passed in the 106-check focused transition rerun. Initial child-index test failures were corrected before the fresh run. No gameplay fixtures changed.",
+  "physical_android_tested": false,
+  "rendered_resolutions": [
+    "960x540",
+    "1280x720",
+    "1680x720"
+  ],
+  "renderer_environment": "Linux software Mesa llvmpipe, Mobile/Vulkan and Compatibility/OpenGL",
+  "baselines": {
+    "card_effect_checkpoints": 2220,
+    "combat_traces": 72,
+    "expedition_checkpoints": 1044
+  }
+}

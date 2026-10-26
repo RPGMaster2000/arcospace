@@ -57,7 +57,7 @@ func run() -> void:
 		await settle()
 		var point: Vector2 = map.camera.unproject_position(map.objects[0].position)
 		check(point.x < map.size.x * 0.48 and point.y > 0 and point.y < map.size.y, "Focus frames destination on left")
-		check(host.screen.sidebar.size.x >= dimensions.x * 0.45, "Readable right-side panel")
+		check(host.screen.sidebar.size.x >= dimensions.x * (0.35 if host.view_kind == "poi" else 0.45), "Readable right-side panel")
 		check(host.screen.compact_focus and not host.heading_row.visible and not host.resource_bar.visible, "Focus suspends the global HUD and uses the compact interaction panel")
 		for index in map.markers:
 			map.camera.focus(map.objects[index].position, map.settings)

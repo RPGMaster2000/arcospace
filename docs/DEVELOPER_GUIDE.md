@@ -636,3 +636,5 @@ Star-map feedback, compact controls and stationary Chasedown return: [Star-syste
 Full-screen overview HUD and arrival camera: [Corner HUD and introduction](star_system_corner_hud.md).
 
 Compact PoI/Outpost layout and contextual balances: [Focus Mode](compact_poi_focus.md).
+
+PoI focus and tactical encounter presentation: [ownership, controls and verification](tactical_poi_focus.md).

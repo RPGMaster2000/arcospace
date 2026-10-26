@@ -222,8 +222,8 @@ func map_layout(enabled: bool, focused: bool) -> void:
 	model_space.visible = enabled
 	sidebar.visible = not enabled or focused
 	if enabled:
-		model_space.size_flags_stretch_ratio = 0.42 if focused else 1.0
-		sidebar.size_flags_stretch_ratio = 0.58 if focused else 0.52
+		model_space.size_flags_stretch_ratio = (0.5 if kind in ["preview","chasedown"] else 0.60) if focused else 1.0
+		sidebar.size_flags_stretch_ratio = (0.5 if kind in ["preview","chasedown"] else 0.40) if focused else 0.52
 	if returning_from_focus and enabled and not focused:
 		_fade_focus(overview_hud)
 	returning_from_focus = false
@@ -309,6 +309,10 @@ func add_tile(
 
 # Query-only State input: the controller has already established field-repair eligibility.
 func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable) -> void:
+	var combat_entry = sidebar.get_node_or_null("CombatEntry")
+	if combat_entry != null:
+		sidebar.remove_child(combat_entry)
+		combat_entry.queue_free()
 	returning_from_focus = compact_focus and kind == "system"
 	_set_compact_focus(false)
 	overview_hud.set_overview(false)
@@ -399,7 +403,7 @@ func present_result(state: Resource, visual_settings: Resource, split_map: bool)
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var available_width: float = get_viewport().get_visible_rect().size.x - 48.0
 	if compact_focus:
-		available_width = (minf(size.x,1440)-32)*0.58
+		available_width = (minf(size.x,1440)-32)*0.40
 	elif split_map and model_space.visible:
 		available_width *= 0.52
 	result.custom_minimum_size.x = minf(900, available_width - 32)

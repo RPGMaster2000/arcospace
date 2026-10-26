@@ -13,6 +13,7 @@ var pulse_motion: Tween
 var engine_audio: AudioStreamPlayer
 var engine_level := 0.0
 var moving := false
+var tactical := false
 var engine_volume := -32.0
 
 func _ready() -> void:
@@ -98,13 +99,14 @@ func acknowledge(at: Vector3, radius: float, tint: Color) -> void:
 func _process(delta: float) -> void:
  if not is_instance_valid(ship): return
  position = ship.position
- player_marker.visible = not camera.is_position_behind(ship.position)
+ player_marker.visible = not tactical and not camera.is_position_behind(ship.position)
+ identification.visible = not tactical
  player_marker.position = camera.unproject_position(ship.position)
  var heading: Vector2 = camera.unproject_position(ship.position+ship.basis.x)-player_marker.position
  player_marker.rotation = heading.angle()+PI*0.5
  engines.basis = ship.basis.orthonormalized()
  identification.position.y = -0.22
- engine_level = move_toward(engine_level,1.0 if moving else 0.0,delta*5.0)
+ engine_level = move_toward(engine_level,(0.12 if tactical else 1.0) if moving else 0.0,delta*5.0)
  engines.visible = visible
  for node in engines.get_children():
   if node is MeshInstance3D:

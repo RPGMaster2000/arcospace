@@ -63,7 +63,7 @@ func run() -> void:
 	for n in range(5):
 		host.visit(enemy_index)
 		check(host.view_kind == "preview" and not is_instance_valid(host.battle), "Enemy selection previews before combat")
-		check(host.view.get_child(1).text == Modifiers.description(assigned), "Preview matches actual definition")
+		check(host.view.find_children("*","Label",true,false).any(func(label): return label.text == Modifiers.description(assigned)), "Preview matches actual definition")
 		host.show_system()
 		host.show_poi(poi_index)
 		host.show_system()

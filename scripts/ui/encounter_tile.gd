@@ -10,6 +10,7 @@ var content: MarginContainer
 var accent: Color = Presentation.COLORS.special
 var selected: bool = false
 var compact := false
+var requirement_only := false
 var minimum_height: float = 84.0
 
 
@@ -86,7 +87,7 @@ func _process(_delta: float) -> void:
 			(
 				icon_height
 				+ heading.get_combined_minimum_size().y
-				+ details.get_combined_minimum_size().y
+				+ (0 if requirement_only else details.get_combined_minimum_size().y)
 				+ 16
 			)
 		)
@@ -117,10 +118,18 @@ func refresh_style() -> void:
 
 func set_compact(value: bool) -> void:
 	compact = value
-	minimum_height = 72 if value else 84
+	minimum_height = 60 if value else 84
 	heading.add_theme_font_size_override("font_size",20 if value else 23)
 	if details is RichTextLabel:
 		details.add_theme_font_size_override("normal_font_size",18 if value else 22)
 		details.add_theme_font_size_override("bold_font_size",18 if value else 22)
 	else:
 		details.add_theme_font_size_override("font_size",18 if value else 20)
+
+# Locked actions deliberately expose only the authoritative gate, never their outcomes.
+func collapse_requirement(value: String) -> void:
+	requirement_only = true
+	heading.text += " — " + value
+	details.hide()
+	minimum_height = 42
+	details.custom_minimum_size = Vector2.ZERO

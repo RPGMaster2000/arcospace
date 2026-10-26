@@ -46,8 +46,8 @@ func run():
   check(host.return_button.get_parent()==host.screen and host.return_button.text=="Back","Existing Back control reused in upper-left")
   check(root.get_visible_rect().encloses(host.return_button.get_global_rect()),"Back is visible")
   check(host.return_button.get_instance_id()==back_id,"No duplicate Back controls")
-  check(host.screen.sidebar.size.x<=820 and host.screen.sidebar.size.x>root.get_visible_rect().size.x*0.45,"Right panel is compact and capped on wide screens")
-  check(host.header.title.get_theme_font_size("font_size")==24,"Compact PoI heading")
+  check(host.screen.sidebar.size.x<=820 and host.screen.sidebar.size.x>root.get_visible_rect().size.x*0.30,"Right panel is compact and capped on wide screens")
+  check(host.header.title.get_theme_font_size("font_size")==27,"Compact PoI heading")
   check(host.screen.scroll.get_global_rect().end.y<=root.get_visible_rect().end.y,"Scrollable panel stays in viewport")
   for button in host.approach_buttons:
    check(button.heading.get_theme_font_size("font_size")==20,"Compact option typography")

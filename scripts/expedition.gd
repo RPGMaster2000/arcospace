@@ -501,7 +501,7 @@ func show_system(preserve_transition: bool = false) -> void:
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _map_input_allowed() -> bool:
 	return (
-		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
 		and not settings_button.menu.shade.visible
@@ -703,18 +703,9 @@ func _show_chasedown() -> void:
 		return_button.tooltip_text = "Resolve the interception first"
 	jump_button.hide()
 	title.text = "Sublight Chasedown"
-	(
-		view
-		. add_child(
-			_label(
-				"A hostile vessel emerges from sensor range and accelerates toward your ship. You have moments to respond before weapons come online.",
-				22
-			)
-		)
-	)
-	view.add_child(
-		_label("Travel cancelled · Previous destination: " + state.encounters[state.pending_destination].title, 18)
-	)
+	var encounter: Dictionary = state.encounters[state.chasedown_index]
+	if _uses_3d_map(): star_map.tactical_focus(state.chasedown_index,true,state.enemy_profile(encounter))
+	_add_tactical_briefing(encounter,state.enemy_profile(encounter),true)
 	var choices = _grid(2)
 	for index in range(state.rules.chasedown_responses.size()):
 		var response: Dictionary = state.rules.chasedown_responses[index]
@@ -750,24 +741,42 @@ func show_battle_preview(index: int) -> void:
 	_clear("preview")
 	var encounter: Dictionary = state.encounters[index]
 	var enemy: Resource = state.enemy_profile(encounter)
-	var heading: String = (
-		encounter.title
-		+ " · "
-		+ State.Modifiers.NAMES[encounter.modifier]
-		+ " · Lv %d" % state.difficulty_level()
-	)
-	if encounter.get("mandatory_boss", false):
-		heading = "Mandatory Boss · " + heading
-	var preview_title = _label(heading, 28)
-	preview_title.tooltip_text = "Hull %d · Shields %d" % [enemy.hull_capacity, enemy.shields]
-	view.add_child(preview_title)
-	var details: String = State.Modifiers.description(encounter.modifier)
-	if encounter.get("mandatory_boss", false):
-		details += "\nResolve by victory or EMP Pulse."
-	view.add_child(_label(details, 24))
-	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
-	_button("Enter combat", _enter_battle.bind(index))
+	if _uses_3d_map(): star_map.tactical_focus(index)
+	_add_tactical_briefing(encounter, enemy, false)
+	var enter = _button("Enter Combat", _enter_battle.bind(index))
+	enter.name = "CombatEntry"
+	if screen.compact_focus:
+		enter.reparent(screen.sidebar)
+	_style_combat_entry(enter)
 	if not _uses_3d_map(): _button("Return", show_system)
+
+
+func _style_combat_entry(button: Button) -> void:
+	for key in ["normal","hover","pressed"]:
+		button.add_theme_stylebox_override(key,Presentation.style(Color("ed7777"),key != "normal"))
+	button.add_theme_color_override("font_color",Color("ffbaba"))
+
+
+func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
+	var sections = [
+		["SUBLIGHT INTERCEPTION" if pursuit else "HOSTILE CONTACT", "%s · Level %d\n%s · Weapons threat" % [enemy.ship_name,state.difficulty_level(),enemy.subtitle]],
+		["ENEMY SYSTEMS", "Hull %d   ·   Shields %d\nMaterials %d · Energy %d · Crew %d\nSynthesizer %d · Reactor %d · Quarters %d" % [enemy.hull_capacity,enemy.shields,enemy.materials,enemy.energy,enemy.crew,enemy.synthesizer,enemy.reactor,enemy.quarters]],
+		["TACTICAL PROFILE", enemy.summary if not enemy.summary.is_empty() else enemy.role],
+		[_icon(Presentation.modifier_key(encounter.modifier)) + "  " + State.Modifiers.NAMES[encounter.modifier], State.Modifiers.description(encounter.modifier)],
+		["ENTRY EFFECTS", state.pending_description()]
+	]
+	if encounter.get("mandatory_boss",false): sections.append(["MANDATORY CONTACT","Resolve by victory or EMP Pulse."])
+	for section in sections:
+		var box = PanelContainer.new()
+		box.add_theme_stylebox_override("panel",Presentation.style(Color("b65e66")))
+		var column = VBoxContainer.new()
+		box.add_child(column)
+		var caption = _label(section[0],16)
+		caption.add_theme_color_override("font_color",Color("f29ba2"))
+		caption.add_theme_font_override("font",Presentation.UI_FONT)
+		column.add_child(caption)
+		column.add_child(_label(section[1],18))
+		view.add_child(box)
 
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.
@@ -813,7 +822,11 @@ func show_poi(index: int) -> void:
 			_select_approach.bind(slot),
 			not state.locked_reason(approach).is_empty()
 		)
-		button.set_rich_details(highlight_outcome(approach_text(approach)))
+		var locked: String = state.locked_reason(approach)
+		if _uses_3d_map() and not locked.is_empty():
+			button.collapse_requirement(locked)
+		else:
+			button.set_rich_details(highlight_outcome(approach_text(approach)))
 		approach_buttons.append(button)
 	if state.can_survey(index):
 		var survey = _tile(

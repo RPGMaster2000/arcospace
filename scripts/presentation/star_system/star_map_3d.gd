@@ -40,6 +40,16 @@ var selected_index := -1
 var orbit_index := -1
 var orbit_angle := 0.0
 var focused := false
+var tactical_snapshot: Dictionary = {}
+var tactical_enemy: Node3D
+var tactical_temporary := false
+var tactical_overlay: Control
+var tactical_light: OmniLight3D
+var focus_orbit_enabled := false
+var orbit_pointer := -2
+var orbit_velocity := Vector2.ZERO
+var focus_target := Vector3.ZERO
+var focus_offset := Vector3.ZERO
 var interactive := true
 var player_profile: Resource
 var configured_seed := 0
@@ -67,6 +77,10 @@ func _ready() -> void:
 	viewport.own_world_3d = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(viewport)
+	tactical_overlay = Control.new()
+	tactical_overlay.mouse_filter = MOUSE_FILTER_IGNORE
+	tactical_overlay.draw.connect(_draw_tactical)
+	add_child(tactical_overlay)
 	world = Node3D.new()
 	viewport.add_child(world)
 	camera = Camera.new()
@@ -229,6 +243,21 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 
 
 func _process(delta: float) -> void:
+	if not tactical_snapshot.is_empty(): tactical_overlay.queue_redraw()
+	if focus_orbit_enabled and camera.viewing == &"destination" and not (camera.motion and camera.motion.is_running()):
+		if orbit_velocity.length_squared() > 0.000001:
+			var offset: Vector3 = focus_offset
+			offset = offset.rotated(Vector3.UP,orbit_velocity.x*delta)
+			var axis: Vector3 = offset.cross(Vector3.UP).normalized()
+			var pitched: Vector3 = offset.rotated(axis,orbit_velocity.y*delta)
+			if pitched.normalized().y > 0.12 and pitched.normalized().y < 0.85: offset = pitched
+			# Preserve the existing left-side screen composition while orbiting.
+			var right: Vector3 = -offset.cross(Vector3.UP).normalized()
+			var shift: Vector3 = right*offset.length()*tan(deg_to_rad(camera.fov*0.5))*viewport.size.x/viewport.size.y*0.52
+			focus_offset = offset
+			camera.position = focus_target+offset+shift
+			camera.look_at(focus_target+shift,Vector3.UP)
+			orbit_velocity *= exp(-7.0*delta)
 	if not is_instance_valid(ship):
 		return
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
@@ -361,16 +390,25 @@ func _impact() -> void:
 
 
 func focus(index: int) -> void:
+	_restore_tactical()
+	focus_orbit_enabled = true
+	orbit_velocity = Vector2.ZERO
 	_end_pinch()
 	focused = true
 	interactive = false
 	if not objects.has(index):
 		return
 	_select_destination(index)
-	camera.focus(objects[index].position, settings, float(objects[index].get_meta("radius", 0.0)))
+	focus_target = objects[index].position
+	focus_offset = settings.destination_offset*maxf(1.0,float(objects[index].get_meta("radius",0.0))*1.2)
+	camera.focus(focus_target, settings, float(objects[index].get_meta("radius", 0.0)))
 
 
 func overview() -> void:
+	_restore_tactical()
+	focus_orbit_enabled = false
+	orbit_pointer = -2
+	orbit_velocity = Vector2.ZERO
 	if motion and motion.is_valid():
 		motion.kill()
 	traveling = false
@@ -426,6 +464,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if focused and focus_orbit_enabled and is_visible_in_tree() and (not input_allowed.is_valid() or input_allowed.call()):
+		_focus_input(event)
+		return
 	if not _zoom_enabled():
 		_end_pinch()
 		return
@@ -615,3 +656,103 @@ func finish_introduction() -> void:
 	camera.finish_introduction()
 	introducing = false
 	interactive = true
+
+# Only ephemeral transforms are held here. Neither ship identity nor travel state changes.
+func tactical_focus(index: int, pursuit: bool = false, profile: Resource = null) -> void:
+	_restore_tactical()
+	focus_orbit_enabled = false
+	focused = true
+	interactive = false
+	_end_pinch()
+	if motion and motion.is_valid(): motion.kill()
+	var enemy: Node3D = objects.get(index)
+	if enemy == null:
+		if profile == null: return
+		enemy = Models.ship(profile)
+		enemy.scale = Vector3.ONE*0.275
+		world.add_child(enemy)
+		tactical_temporary = true
+		enemy.position = ship.position+Vector3(-3,0,0)
+	tactical_enemy = enemy
+	tactical_snapshot = {"enemy":enemy.transform,"ship":ship.transform,"orbit":orbit_index}
+	orbit_index = -1
+	enemy.scale *= 1.45
+	ship.scale *= 0.85
+	enemy.position.y += 8.0
+	var center: Vector3 = enemy.position
+	if not is_instance_valid(tactical_light):
+		tactical_light = OmniLight3D.new()
+		tactical_light.light_color = Color("a9cced")
+		tactical_light.light_energy = 1.2
+		tactical_light.omni_range = 8
+		tactical_light.shadow_enabled = false
+		world.add_child(tactical_light)
+	tactical_light.position = center+Vector3(0,2,3)
+	tactical_light.show()
+	var enemy_radius: float = _ship_extent(enemy)
+	var player_radius: float = _ship_extent(ship)
+	var separation: float = maxf(1.35,enemy_radius+player_radius+0.3)
+	ship.position = center+Vector3(separation,0,0.5)
+	ship.basis = _facing_basis(Vector3.RIGHT if pursuit else Vector3.LEFT).scaled(ship.scale)
+	enemy.basis = _facing_basis(Vector3.RIGHT).scaled(enemy.scale)
+	var target: Vector3 = center+Vector3(separation*0.5,0,0)
+	var offset: Vector3 = Vector3(2.5,3.2,7.5)*maxf(1.0,(separation+enemy_radius+player_radius)/2.7)
+	var right: Vector3 = -offset.cross(Vector3.UP).normalized()
+	var shift: Vector3 = right*offset.length()*tan(deg_to_rad(camera.fov*0.5))*viewport.size.x/viewport.size.y*0.50
+	camera.frame(target+offset+shift,target+shift,settings.camera_duration,&"tactical")
+	if is_instance_valid(feedback):
+		feedback.tactical = true
+		feedback.moving = pursuit
+
+func _restore_tactical() -> void:
+	if tactical_snapshot.is_empty(): return
+	if is_instance_valid(ship): ship.transform = tactical_snapshot.ship
+	orbit_index = tactical_snapshot.orbit
+	if is_instance_valid(tactical_enemy):
+		if tactical_temporary:
+			tactical_enemy.hide()
+			tactical_enemy.queue_free()
+		else: tactical_enemy.transform = tactical_snapshot.enemy
+	tactical_enemy = null
+	tactical_temporary = false
+	tactical_snapshot.clear()
+	if is_instance_valid(tactical_light): tactical_light.hide()
+	if is_instance_valid(feedback): feedback.tactical = false
+	if is_instance_valid(tactical_overlay): tactical_overlay.queue_redraw()
+	if is_instance_valid(feedback): feedback.set_travel(false)
+
+func _focus_input(event: InputEvent) -> void:
+	# Right-side UI and upper-left Back remain exclusively GUI-owned.
+	var region := Rect2(global_position+Vector2(0,80),Vector2(size.x*0.56,size.y-80))
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		orbit_pointer = -1 if event.pressed and region.has_point(event.position) else -2
+	elif event is InputEventScreenTouch:
+		if event.pressed and region.has_point(event.position): orbit_pointer = event.index
+		elif not event.pressed and orbit_pointer == event.index: orbit_pointer = -2
+	elif event is InputEventMouseMotion and orbit_pointer == -1:
+		orbit_velocity = -event.relative*0.06
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and orbit_pointer == event.index:
+		orbit_velocity = -event.relative*0.06
+		get_viewport().set_input_as_handled()
+
+func _draw_tactical() -> void:
+	if not is_instance_valid(tactical_enemy) or tactical_snapshot.is_empty(): return
+	var center: Vector2 = camera.unproject_position(tactical_enemy.position)
+	var extent := Vector2(72,48)
+	var color := Color(1.0,0.4,0.45,0.8)
+	for corner in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
+		var at: Vector2 = center+extent*corner
+		tactical_overlay.draw_line(at,at-Vector2(corner.x*16,0),color,1.5,true)
+		tactical_overlay.draw_line(at,at-Vector2(0,corner.y*12),color,1.5,true)
+	var scan: float = sin(Time.get_ticks_msec()*0.001)*extent.y
+	tactical_overlay.draw_line(center+Vector2(-extent.x,scan),center+Vector2(extent.x,scan),Color(1,0.4,0.45,0.16),1,true)
+
+func _ship_extent(model: Node3D) -> float:
+	var extent: float = 0.1
+	for mesh in model.find_children("*","MeshInstance3D",true,false):
+		if not mesh.is_visible_in_tree() or mesh.mesh == null: continue
+		var bounds: AABB = mesh.mesh.get_aabb()
+		for i in range(8):
+			extent = maxf(extent,(mesh.to_global(bounds.get_endpoint(i))-model.global_position).length())
+	return extent
