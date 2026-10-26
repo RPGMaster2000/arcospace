@@ -2,6 +2,7 @@ extends PanelContainer
 
 # RESPONSIBILITY: Present independently replaceable PoI artwork, backing and return action.
 # Image, backing and overlays remain separate so artwork can be replaced independently.
+var compact := false
 signal return_requested
 @export var banner_texture: Texture2D
 @export var maximum_height: float = 100.0
@@ -18,7 +19,9 @@ func _ready() -> void:
 	_fit()
 
 
-func configure(poi: Resource) -> void:
+func configure(poi: Resource, category: String = "") -> void:
+	var classification: String = "Hazardous location" if poi.hazardous else ("Spatial phenomenon" if poi.anomalous_presentation else "Point of interest")
+	$Overlay/Caption.text = (category if not category.is_empty() else classification) if compact else "POINT OF INTEREST"
 	title.text = poi.title
 	image.texture = poi.banner_texture if poi.banner_texture != null else banner_texture
 	$Overlay/Placeholder.visible = image.texture == null
@@ -27,6 +30,23 @@ func configure(poi: Resource) -> void:
 
 func _fit() -> void:
 	get_node("Overlay/Placeholder").hide()
+	if compact:
+		custom_minimum_size.y = 58
+		title.add_theme_font_size_override("font_size",24)
+		title.offset_left = 8
+		title.offset_right = -8
+		title.offset_top = -36
+		$Overlay/Caption.offset_left = 8
+		$Overlay/Caption.offset_top = -58
+		$Overlay/Caption.add_theme_font_size_override("font_size",13)
+		return
+	title.add_theme_font_size_override("font_size",30)
+	title.offset_left = 20
+	title.offset_right = -190
+	title.offset_top = -43
+	$Overlay/Caption.offset_left = 20
+	$Overlay/Caption.offset_top = -63
+	$Overlay/Caption.add_theme_font_size_override("font_size",16)
 	custom_minimum_size.y = clampf(
 		size.x / 5.5, 88, minf(maximum_height, get_viewport_rect().size.y * .24)
 	)

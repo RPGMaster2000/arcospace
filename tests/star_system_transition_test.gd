@@ -58,7 +58,7 @@ func run() -> void:
 		var point: Vector2 = map.camera.unproject_position(map.objects[0].position)
 		check(point.x < map.size.x * 0.48 and point.y > 0 and point.y < map.size.y, "Focus frames destination on left")
 		check(host.screen.sidebar.size.x >= dimensions.x * 0.45, "Readable right-side panel")
-		check(host.ui.visible and not host.screen.overview_hud.active, "Focus restores the preserved exploration header")
+		check(host.screen.compact_focus and not host.heading_row.visible and not host.resource_bar.visible, "Focus suspends the global HUD and uses the compact interaction panel")
 		for index in map.markers:
 			map.camera.focus(map.objects[index].position, map.settings)
 			map.camera.motion.custom_step(2.0)
@@ -67,7 +67,7 @@ func run() -> void:
 		map.camera.focus(map.objects[0].position, map.settings)
 		map.camera.motion.custom_step(2.0)
 		if state.encounters[0].kind == "poi":
-			check(host.grid.columns == 1 and host.scroll.get_v_scroll_bar().max_value > host.scroll.get_v_scroll_bar().page, "Vertical approach list scrolls")
+			check(host.grid.columns == 1 and host.scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Vertical approach list retains scrolling for overflow")
 		await capture("focus-%d" % dimensions.x)
 	check(state.rng.state == rng_before, "Visuals never consume gameplay RNG")
 	host.show_system()

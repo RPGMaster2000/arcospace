@@ -115,6 +115,9 @@ func run() -> void:
 	map.traveling = false
 	map.overview()
 	host.map_destination = 0
+	var overflow_poi: Resource = host.state.encounters[0].poi.duplicate(true)
+	overflow_poi.description += "\nScrollable location detail.".repeat(30)
+	host.state.encounters[0].poi = overflow_poi
 	host.show_poi(0)
 	await settle()
 	var scroll: ScrollContainer = host.scroll

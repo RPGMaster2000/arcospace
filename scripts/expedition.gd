@@ -241,6 +241,8 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			screen.map_layer = null
 		star_map = null
 	screen.reset_view(kind, state, use_star_map, _icon)
+	if _uses_3d_map() and kind == "outcome" and not is_instance_valid(star_map) and state.navigation_origin != -1:
+		_show_star_map(false)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
 		screen.set_system_name(star_map.visual_data.name)
 	if not preserve_transition:
@@ -248,7 +250,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			"poi": Phase.DESTINATION, "preview": Phase.DESTINATION}.get(kind, Phase.REWARD)
 	if _uses_3d_map():
 		var split: bool = kind in ["poi", "preview", "chasedown"] or (
-			kind == "outcome" and state.pending_choice.is_empty() and map_destination != -1
+			kind == "outcome" and map_destination != -1
 		)
 		var show_map: bool = kind == "system" or split
 		screen.map_layout(show_map and state.hull > 0, split)
@@ -260,6 +262,11 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 				star_map.interactive = false
 				if split:
 					star_map.focus(map_destination)
+					if kind == "outcome":
+						var context: Dictionary = state.encounter_at(map_destination)
+						if context.kind in ["poi","service"]:
+							header.configure(context.poi,"Trading Outpost" if context.kind == "service" else "")
+							header.show()
 	else:
 		screen.map_layout(false, false)
 
@@ -494,7 +501,7 @@ func show_system(preserve_transition: bool = false) -> void:
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
 func _map_input_allowed() -> bool:
 	return (
-		phase != Phase.EXITED and not transitioning and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not resource_bar.overlay.shade.visible
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
 		and not settings_button.menu.shade.visible
@@ -691,6 +698,9 @@ func _show_chasedown() -> void:
 	else:
 		state.stop_intercepted_travel()
 	_clear("chasedown")
+	if screen.compact_focus:
+		return_button.disabled = true
+		return_button.tooltip_text = "Resolve the interception first"
 	jump_button.hide()
 	title.text = "Sublight Chasedown"
 	(
@@ -757,7 +767,7 @@ func show_battle_preview(index: int) -> void:
 	view.add_child(_label(details, 24))
 	view.add_child(_label("Pending effects: " + state.pending_description(), 22))
 	_button("Enter combat", _enter_battle.bind(index))
-	_button("Return", show_system)
+	if not _uses_3d_map(): _button("Return", show_system)
 
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.
@@ -774,7 +784,7 @@ func highlight_outcome(value: String) -> String:
 
 
 func approach_text(approach: Resource) -> String:
-	return ExpeditionText.approach_text(state, approach)
+	return ExpeditionText.approach_text(state, approach, _uses_3d_map())
 
 
 func show_poi(index: int) -> void:
@@ -828,13 +838,14 @@ func show_outpost() -> void:
 	return_to_outpost = false
 	selected_encounter = state.SERVICE_INDEX
 	_clear("poi")
-	header.configure(state.service.poi)
+	header.configure(state.service.poi,"Trading Outpost")
 	if _uses_3d_map():
 		view.add_child(_label(state.service.poi.description, 18))
 	jump_button.hide()
 	outpost_screen = OutpostScreen.new()
+	outpost_screen.compact = _uses_3d_map()
 	view.add_child(outpost_screen)
-	outpost_screen.configure(state, scroll.allows_activation)
+	outpost_screen.configure(state, screen.allows_activation)
 	outpost_screen.purchase_requested.connect(_purchase_outpost_service.bind(outpost_screen))
 	# Preserve existing control accessors while the component owns their lifecycle.
 	if _uses_3d_map():
@@ -968,6 +979,9 @@ func show_outcome() -> void:
 		_present_card_management()
 		return
 	_clear("outcome")
+	if screen.compact_focus:
+		return_button.disabled = not state.pending_choice.is_empty()
+		return_button.tooltip_text = "Complete the reward selection first" if return_button.disabled else "Return to system overview"
 	screen.present_result(state, visual_settings, _uses_3d_map())
 	match state.pending_choice:
 		"resource", "production":
@@ -976,10 +990,16 @@ func show_outcome() -> void:
 				state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION
 			)
 			for key in keys:
+				var detail: String = "+%d" % state.choice_amount
+				if screen.compact_focus:
+					if state.pending_choice == "production":
+						detail += " · Current: %d" % state.production(key)
+					else:
+						detail += " · Next-battle start: %d" % state.starting_value(state.ship(),key)
 				_tile(
 					choices,
 					state.LABELS[key],
-					"+%d" % state.choice_amount,
+					detail,
 					Presentation.COLORS.special,
 					_attribute.bind(key)
 				)

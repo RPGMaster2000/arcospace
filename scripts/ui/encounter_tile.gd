@@ -9,6 +9,7 @@ var details: Control
 var content: MarginContainer
 var accent: Color = Presentation.COLORS.special
 var selected: bool = false
+var compact := false
 var minimum_height: float = 84.0
 
 
@@ -67,8 +68,8 @@ func set_rich_details(value: String) -> void:
 	bold.variation_embolden = .7
 	bold.fallbacks = [Presentation.EMOJI_FONT]
 	rich.add_theme_font_override("bold_font", bold)
-	rich.add_theme_font_size_override("normal_font_size", 22)
-	rich.add_theme_font_size_override("bold_font_size", 22)
+	rich.add_theme_font_size_override("normal_font_size", 18 if compact else 22)
+	rich.add_theme_font_size_override("bold_font_size", 18 if compact else 22)
 	rich.text = value
 	details = rich
 	column.add_child(details)
@@ -113,3 +114,13 @@ func refresh_style() -> void:
 	if is_instance_valid(heading):
 		heading.modulate = Color("82909f") if disabled else Color("f3f6fa")
 		details.modulate = Color("82909f") if disabled else Color("c2d7e7")
+
+func set_compact(value: bool) -> void:
+	compact = value
+	minimum_height = 72 if value else 84
+	heading.add_theme_font_size_override("font_size",20 if value else 23)
+	if details is RichTextLabel:
+		details.add_theme_font_size_override("normal_font_size",18 if value else 22)
+		details.add_theme_font_size_override("bold_font_size",18 if value else 22)
+	else:
+		details.add_theme_font_size_override("font_size",18 if value else 20)

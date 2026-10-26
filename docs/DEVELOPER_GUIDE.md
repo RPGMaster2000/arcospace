@@ -634,3 +634,5 @@ Star-map emoji catalog, selection/completion treatment and validation: [PoI icon
 Star-map feedback, compact controls and stationary Chasedown return: [Star-system polish](star_system_polish.md).
 
 Full-screen overview HUD and arrival camera: [Corner HUD and introduction](star_system_corner_hud.md).
+
+Compact PoI/Outpost layout and contextual balances: [Focus Mode](compact_poi_focus.md).

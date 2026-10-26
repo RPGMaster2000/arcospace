@@ -206,10 +206,10 @@ func run() -> void:
 		host.state.encounters[0] = {"kind":"poi","poi":host.rules.pois[0],"title":"Test","completed":false}
 		host.show_poi(0)
 		await settle()
-		check(host.view.alignment == BoxContainer.ALIGNMENT_END, "PoI approach group bottom aligned")
+		check(host.view.alignment == BoxContainer.ALIGNMENT_BEGIN, "Compact PoI content starts near its headline")
 		await screenshot("poi-" + str(dimensions.x))
 		if host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1:
-			check(absf(host.grid.get_global_rect().end.y - host.scroll.get_global_rect().end.y) < 4, "Options anchored to bottom")
+			check(host.grid.get_global_rect().end.y <= host.scroll.get_global_rect().end.y+1, "Fitting options stay inside the compact scroll area")
 		var expanded: Resource = host.rules.pois[0].duplicate(true)
 		while expanded.approaches.size() < 8: expanded.approaches.append(expanded.approaches[0])
 		host.state.encounters[0].poi = expanded

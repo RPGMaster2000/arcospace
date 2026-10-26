@@ -361,12 +361,12 @@ func _impact() -> void:
 
 
 func focus(index: int) -> void:
-	if not objects.has(index):
-		return
 	_end_pinch()
-	_select_destination(index)
 	focused = true
 	interactive = false
+	if not objects.has(index):
+		return
+	_select_destination(index)
 	camera.focus(objects[index].position, settings, float(objects[index].get_meta("radius", 0.0)))
 
 

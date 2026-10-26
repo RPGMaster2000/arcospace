@@ -1,0 +1,610 @@
+{
+  "starting_revision": "4d6f4ca23b14c0c5473ec67ad2e3ad34497c1a7e",
+  "engine": "Godot 4.7.2",
+  "shared_runs": 116,
+  "shared_scripts": 115,
+  "note": "Four existing UI tests were adapted to transition timing or compact layout and rerun successfully; no second full-suite invocation followed those updates. Initial statuses are retained.",
+  "runs": [
+    {
+      "name": "import",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_milestones_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ai_forecast_compatibility_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ai_forecast_scene_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ai_modifier_forecast_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ai_turn_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "alpha_visual_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "android_layout_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "battle_effects_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "battle_ending_sequence_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "battle_hud_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "battle_layout_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "battlefield_environments_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "board_3d_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_balance_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_effect_contract_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_effect_parity_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_expansion_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_inspection_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_management_lifecycle_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_management_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_motion_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_progression_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_targets_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_tier_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "card_upgrade_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "chasedown_rewards_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "chasedown_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_fleet_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_launch_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_lifecycle_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_preferences_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_title_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_touch_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "cinematic_visual_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "color_grading_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "combat_execution_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "combat_forecast_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "combat_modifier_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "combat_state_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "combat_trace_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "compact_poi_focus_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "deck_determinism_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "deck_ownership_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "deck_replacement_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "discard_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "encounter_continue_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "enemy_roster_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_boundary_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_fresh_process_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_lifecycle_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_resume_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_save_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "expedition_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "field_repairs_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "field_repairs_ui_test",
+      "shared_status": "failed",
+      "final_status": "passed",
+      "focused_rerun": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nField repair UI: 102 checks, 0 failures\nWARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n"
+    },
+    {
+      "name": "ftl_progression_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ftl_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ftl_visual_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "game_reference_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "hull_capacity_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "map_zoom_fade_test",
+      "shared_status": "failed",
+      "final_status": "passed",
+      "focused_rerun": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nMap zoom/fade: 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n"
+    },
+    {
+      "name": "modifier_cinematic_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "music_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "opening_balance_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "orbit_visibility_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "outpost_screen_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "planet_presentation_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "player_hand_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "poi_confirmation_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "poi_iconography_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "poi_reward_overhaul_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "power_allocation_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "repair_selection_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "reward_feedback_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "salvage_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "settings_menu_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "sfx_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "shield_fit_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "shield_shatter_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ship_models_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ship_variants_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "simulation_failure_setup_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "six_ship_profiles_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "space_parallax_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_map_readability_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_map_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_3d_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_composition_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_feedback_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_hud_intro_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_polish_correctness_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_polish_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_resume_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "star_system_transition_test",
+      "shared_status": "failed",
+      "final_status": "passed",
+      "focused_rerun": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nStar system transitions: 106 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n"
+    },
+    {
+      "name": "startup_flow_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "status_bar_stress_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "status_bar_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "status_presentation_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "storm_family_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "storm_ion_parity_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "storm_presentation_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "systems_failure_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "tactical_cards_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "tactical_preview_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "targeted_sabotage_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "trading_outpost_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "trading_outpost_ui_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "travel_battle_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ui_feedback_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "ui_overhaul_test",
+      "shared_status": "failed",
+      "final_status": "passed",
+      "focused_rerun": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nUI overhaul: 914 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n"
+    },
+    {
+      "name": "victory_music_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "victory_rewards_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "victory_upgrade_music_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    },
+    {
+      "name": "visual_system_test",
+      "shared_status": "passed",
+      "final_status": "passed"
+    }
+  ],
+  "focused_checks": 71,
+  "renderers": [
+    "Mobile/Vulkan Mesa llvmpipe",
+    "Compatibility/OpenGL Mesa llvmpipe"
+  ],
+  "output_sizes": [
+    "960x540",
+    "1280x720",
+    "1680x720"
+  ],
+  "physical_android_tested": false,
+  "baseline_parity": {
+    "card_effect_checkpoints": 2220,
+    "combat_traces": 72,
+    "expedition_checkpoints": 1044
+  },
+  "gameplay_fixtures_regenerated": false
+}

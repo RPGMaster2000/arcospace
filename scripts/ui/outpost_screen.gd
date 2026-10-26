@@ -7,6 +7,7 @@ const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Text = preload("res://scripts/ui/expedition_text.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
+var compact := false
 var options: GridContainer
 var buttons: Array[Button] = []
 var confirmation: CanvasLayer
@@ -64,6 +65,14 @@ func configure(state: Resource, allows_activation: Callable) -> void:
 	_state = state
 	_allows_activation = allows_activation
 	revision = state.service_revision
+	if compact:
+		var balance := Label.new()
+		balance.text = "%s Salvage available: %d" % [Presentation.icon("salvage",ThemeDB.fallback_font),state.salvage]
+		balance.add_theme_font_override("font",Presentation.UI_FONT)
+		balance.add_theme_font_size_override("font_size",18)
+		balance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(balance)
+		move_child(balance,0)
 	note.text = "Service station · No travel FTL · Free to leave"
 	for slot in range(state.service.poi.approaches.size()):
 		var approach: Resource = state.service.poi.approaches[slot]
@@ -97,6 +106,7 @@ func configure(state: Resource, allows_activation: Callable) -> void:
 		button.disabled = not reason.is_empty()
 		button.refresh_style()
 		button.set_rich_details(Text.highlight_outcome(details))
+		if compact: button.set_compact(true)
 		button.pressed.connect(
 			func():
 				if is_inside_tree() and not button.disabled and _allows_activation.call():

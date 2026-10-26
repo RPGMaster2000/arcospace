@@ -9,6 +9,7 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 func settle() -> void:
+	await create_timer(0.26).timeout
 	for i in range(10): await process_frame
 func activate(control: Control, touch: bool = false) -> void:
 	var location: Vector2 = control.get_global_rect().get_center()

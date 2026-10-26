@@ -39,7 +39,7 @@ static func highlight_outcome(value: String) -> String:
 	return result + value.substr(offset)
 
 
-static func approach_text(state: Resource, approach: Resource) -> String:
+static func approach_text(state: Resource, approach: Resource, contextual: bool = false) -> String:
 	var lines: Array[String] = []
 	if not approach.requirement.is_empty():
 		lines.append(
@@ -53,7 +53,7 @@ static func approach_text(state: Resource, approach: Resource) -> String:
 			)
 		)
 	if approach.salvage_cost > 0:
-		lines.append("Cost: %d Salvage" % approach.salvage_cost)
+		lines.append("Cost: %d Salvage" % approach.salvage_cost + (" · Available: %d" % state.salvage if contextual else ""))
 	lines.append(
 		(
 			"%s%% — %s"
@@ -73,6 +73,18 @@ static func approach_text(state: Resource, approach: Resource) -> String:
 				]
 			)
 		)
+	if contextual:
+		var keys: Dictionary = {}
+		var show_hull := false
+		for outcome in [approach.success,approach.failure]:
+			if outcome == null: continue
+			show_hull = show_hull or outcome.hull != 0
+			for key in outcome.next_battle:
+				if key in state.RESOURCES or key == "shields": keys[key] = true
+		var balances: Array[String] = []
+		if show_hull: lines.append("Current Hull: %d/%d" % [state.hull,state.ship().hull_capacity])
+		for key in keys: balances.append("%s %d" % [state.LABELS[key],state.starting_value(state.ship(),key)])
+		if not balances.is_empty(): lines.append("Next-battle start: " + " · ".join(balances))
 	var reason: String = state.locked_reason(approach)
 	if not reason.is_empty():
 		lines.append(

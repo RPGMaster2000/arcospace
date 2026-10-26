@@ -22,6 +22,12 @@ signal confirm_requested
 signal jump_requested
 
 var overview_hud: Control
+var focus_layout_size := Vector2(-1,-1)
+var compact_focus := false
+var focus_transition := false
+var focus_motion: Tween
+var focus_backing: Panel
+var returning_from_focus := false
 var body: HBoxContainer
 var sidebar: VBoxContainer
 var model_space: Control
@@ -173,6 +179,15 @@ func _build_ui() -> void:
 	overview_hud = preload("res://scripts/ui/star_system_hud.gd").new()
 	overview_hud.owner_screen = self
 	add_child(overview_hud)
+	focus_backing = Panel.new()
+	focus_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var backing := Presentation.style(Presentation.COLORS.special)
+	backing.bg_color = Color(0.035,0.075,0.12,0.88)
+	backing.set_border_width_all(0)
+	focus_backing.add_theme_stylebox_override("panel",backing)
+	add_child(focus_backing)
+	move_child(focus_backing,1)
+	focus_backing.hide()
 
 
 func set_system_name(value: String) -> void:
@@ -181,6 +196,7 @@ func set_system_name(value: String) -> void:
 	overview_hud.refresh()
 
 func _label(text: String, font_size: int = 20) -> Label:
+	if compact_focus: font_size = mini(font_size,24)
 	var label = Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -199,13 +215,19 @@ func mount_map(map: Control) -> void:
 		body.item_rect_changed.connect(_sync_map_rect)
 
 func map_layout(enabled: bool, focused: bool) -> void:
+	_set_compact_focus(enabled and focused)
 	overview_hud.set_overview(enabled and not focused and kind == "system")
 	# Keep bright celestial bodies from washing out the existing PoI header.
 	header.get_node("TextBacking").color.a = 0.0
 	model_space.visible = enabled
 	sidebar.visible = not enabled or focused
 	if enabled:
-		model_space.size_flags_stretch_ratio = 0.48 if focused else 1.0
+		model_space.size_flags_stretch_ratio = 0.42 if focused else 1.0
+		sidebar.size_flags_stretch_ratio = 0.58 if focused else 0.52
+	if returning_from_focus and enabled and not focused:
+		_fade_focus(overview_hud)
+	returning_from_focus = false
+	_sync_map_rect()
 
 func _process(_delta: float) -> void:
 	if ui.visible and kind == "system" and is_instance_valid(grid):
@@ -217,11 +239,15 @@ func _process(_delta: float) -> void:
 		for tile in grid.get_children():
 			tile.minimum_height = maxf(100, available_height / 2)
 	_sync_map_rect()
+	if compact_focus:
+		_fit_focus()
+		focus_backing.position = sidebar.global_position-global_position-Vector2(10,8)
+		focus_backing.size = sidebar.size+Vector2(20,16)
 
 func _sync_map_rect() -> void:
 	if is_instance_valid(map_layer) and is_instance_valid(body):
-		map_layer.position = Vector2.ZERO if overview_hud.active else body.global_position-global_position
-		map_layer.size = size if overview_hud.active else body.size
+		map_layer.position = Vector2.ZERO if overview_hud.active or compact_focus else body.global_position-global_position
+		map_layer.size = size if overview_hud.active or compact_focus else body.size
 		if overview_hud.active: map_layer.hud_regions = overview_hud.regions()
 		else: map_layer.hud_regions.clear()
 
@@ -232,8 +258,8 @@ func add_action(
 	var button = Button.new()
 	button.text = text
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.custom_minimum_size.y = height
-	button.add_theme_font_size_override("font_size", 22)
+	button.custom_minimum_size.y = minf(height,52) if compact_focus else height
+	button.add_theme_font_size_override("font_size", 20 if compact_focus else 22)
 	button.disabled = disabled
 	Presentation.action(button)
 	var revision: int = view_revision
@@ -268,6 +294,7 @@ func add_tile(
 ) -> Button:
 	var button = Tile.new()
 	button.configure(heading, details, color, centered)
+	if compact_focus: button.set_compact(true)
 	button.disabled = disabled
 	button.refresh_style()
 	var revision: int = view_revision
@@ -282,6 +309,8 @@ func add_tile(
 
 # Query-only State input: the controller has already established field-repair eligibility.
 func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable) -> void:
+	returning_from_focus = compact_focus and kind == "system"
+	_set_compact_focus(false)
 	overview_hud.set_overview(false)
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
@@ -327,6 +356,7 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = kind == "system" and state.hull > 0
 	return_button.disabled = false
+	return_button.tooltip_text = "Return to system overview"
 
 
 func select_approach(slot: int, selected_title: String) -> void:
@@ -368,7 +398,9 @@ func present_result(state: Resource, visual_settings: Resource, split_map: bool)
 	var result = PanelContainer.new()
 	result.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var available_width: float = get_viewport().get_visible_rect().size.x - 48.0
-	if split_map and model_space.visible:
+	if compact_focus:
+		available_width = (minf(size.x,1440)-32)*0.58
+	elif split_map and model_space.visible:
 		available_width *= 0.52
 	result.custom_minimum_size.x = minf(900, available_width - 32)
 	result.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
@@ -400,10 +432,11 @@ func present_result(state: Resource, visual_settings: Resource, split_map: bool)
 
 
 func allows_activation() -> bool:
-	return is_inside_tree() and scroll.allows_activation()
+	return is_inside_tree() and not focus_transition and scroll.allows_activation()
 
 
 func hide_for_battle() -> void:
+	_set_compact_focus(false)
 	overview_hud.set_overview(false)
 	resource_bar.set_heartbeat(false)
 	resource_bar.overlay.dismiss()
@@ -438,6 +471,7 @@ func cancel_suspense() -> void:
 	suspense_finished.emit()
 
 func cancel_pending() -> void:
+	_cancel_focus_motion()
 	overview_hud.cancel()
 	view_revision += 1
 	cancel_suspense()
@@ -445,3 +479,67 @@ func cancel_pending() -> void:
 
 func _exit_tree() -> void:
 	cancel_pending()
+
+# Focus borrows the existing Back control; all gameplay/choice ownership stays outside.
+func _set_compact_focus(enabled: bool) -> void:
+	if compact_focus == enabled: return
+	_cancel_focus_motion()
+	compact_focus = enabled
+	focus_backing.visible = enabled
+	header.compact = enabled
+	header._fit()
+	heading_row.visible = not enabled
+	resource_bar.visible = not enabled
+	if enabled:
+		return_button.reparent(self)
+		return_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+		return_button.position = Vector2(16,16)
+		return_button.size = Vector2(104,52)
+		return_button.text = "Back"
+		return_button.show()
+		return_button.z_index = 80
+		view.alignment = BoxContainer.ALIGNMENT_BEGIN
+		view.add_theme_constant_override("separation",6)
+		_fit_focus()
+		_fade_focus(sidebar)
+	else:
+		focus_layout_size = Vector2(-1,-1)
+		return_button.reparent(header.get_node("Overlay"))
+		return_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		return_button.offset_left = -172
+		return_button.offset_top = 12
+		return_button.offset_right = -12
+		return_button.offset_bottom = 68
+		return_button.text = "Return"
+		return_button.z_index = 0
+		view.add_theme_constant_override("separation",10)
+		for edge in ["left","right","top","bottom"]: ui.add_theme_constant_override("margin_"+edge,24)
+
+func _fit_focus() -> void:
+	if focus_layout_size == size: return
+	focus_layout_size = size
+	var edge: int = roundi(maxf(16,(size.x-1440)*0.5+16))
+	ui.add_theme_constant_override("margin_left",edge)
+	ui.add_theme_constant_override("margin_right",edge)
+	ui.add_theme_constant_override("margin_top",16)
+	ui.add_theme_constant_override("margin_bottom",16)
+
+func _fade_focus(target: Control) -> void:
+	focus_transition = true
+	target.modulate.a = 0
+	focus_motion = create_tween()
+	focus_motion.tween_property(target,"modulate:a",1.0,0.24)
+	if target == sidebar:
+		focus_backing.modulate.a = 0
+		focus_motion.parallel().tween_property(focus_backing,"modulate:a",1.0,0.24)
+	focus_motion.tween_callback(func(): focus_transition = false)
+
+func _cancel_focus_motion() -> void:
+	if focus_motion and focus_motion.is_valid(): focus_motion.kill()
+	focus_transition = false
+	if is_instance_valid(sidebar): sidebar.modulate.a = 1
+	if is_instance_valid(focus_backing): focus_backing.modulate.a = 1
+	if is_instance_valid(overview_hud): overview_hud.modulate.a = 1
+
+func _input(_event: InputEvent) -> void:
+	if focus_transition: get_viewport().set_input_as_handled()
