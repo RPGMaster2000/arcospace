@@ -55,13 +55,10 @@ func run():
   check(map.tactical_enemy == enemy_node,"Actual existing enemy model reused")
   check(map.orbit_index == -1 and not map.focus_orbit_enabled,"No orbit in tactical mode")
   check(map.camera.viewing == &"tactical","Tactical framing active")
-  var preview = host.view.find_child("EnemySensorPreview",true,false)
+  check(host.view.find_child("EnemySensorPreview",true,false)==null,"No secondary targeting viewport")
   var left_basis: Basis = enemy_node.basis
-  var preview_basis: Basis = preview.model.basis
   await create_timer(0.2).timeout
-  check(enemy_node.basis.is_equal_approx(left_basis),"Cinematic enemy is not rotated by UI")
-  check(not preview.model.basis.is_equal_approx(preview_basis),"Right-side sensor ship rotates independently")
-  check(preview.overlay.get_parent()==preview,"Reticle belongs to right UI preview")
+  check(enemy_node.basis.is_equal_approx(left_basis),"Cinematic enemy remains stationary")
   check(host.screen.sidebar.size.x < root.get_visible_rect().size.x*0.53,"Tactical panel <=52%")
   check(host.return_button.is_visible_in_tree(),"Back accessible")
   await capture("hostile-%d" % dimensions.x)

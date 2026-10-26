@@ -177,6 +177,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		label.pixel_size = 0.012
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.modulate = Color(0.65,0.78,0.9,0.8)
+		label.name = "OverviewName"
 		label.visible = p.encounter == -1
 		planet.add_child(label)
 	var sun := QuadMesh.new()
@@ -256,6 +257,7 @@ func _process(delta: float) -> void:
 		return
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
 	for p in visual_data.get("planets",[]):
+		planet_nodes[p.index].get_node("OverviewName").visible = p.encounter == -1 and not focused and not introducing
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
 		_face(travel_direction, delta * 7.0)
@@ -715,7 +717,12 @@ func _restore_tactical() -> void:
 	if is_instance_valid(feedback): feedback.set_travel(false)
 
 func _focus_input(event: InputEvent) -> void:
-	# Right-side UI and upper-left Back remain exclusively GUI-owned.
+	# Persistent edge HUD and Back remain exclusively GUI-owned.
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		for rect in hud_regions:
+			if rect.has_point(event.position):
+				orbit_pointer = -2
+				return
 	var region := Rect2(global_position+Vector2(0,80),Vector2(size.x*0.56,size.y-80))
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		orbit_pointer = -1 if event.pressed and region.has_point(event.position) else -2
@@ -723,10 +730,10 @@ func _focus_input(event: InputEvent) -> void:
 		if event.pressed and region.has_point(event.position): orbit_pointer = event.index
 		elif not event.pressed and orbit_pointer == event.index: orbit_pointer = -2
 	elif event is InputEventMouseMotion and orbit_pointer == -1:
-		orbit_velocity = -event.relative*0.06
+		orbit_velocity = Vector2(-event.relative.x,event.relative.y)*0.06
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and orbit_pointer == event.index:
-		orbit_velocity = -event.relative*0.06
+		orbit_velocity = Vector2(-event.relative.x,event.relative.y)*0.06
 		get_viewport().set_input_as_handled()
 
 func _ship_extent(model: Node3D) -> float:

@@ -97,3 +97,11 @@ static func approach_text(state: Resource, approach: Resource, contextual: bool 
 			)
 		)
 	return "\n".join(lines)
+
+
+# Reuse the existing HUD symbols; keep every signed amount and mechanical qualifier.
+static func effect_indicators(value: String) -> String:
+	var presentation = preload("res://scripts/ui/encounter_presentation.gd")
+	for pair in [["Materials","materials"],["Energy","energy"],["Crew","crew"],["Shields","shields"],["Hull","hull"]]:
+		value = value.replace(pair[0],presentation.icon(pair[1],presentation.UI_FONT))
+	return value.replace("EMP Pulse charge","EMP charge").replace("EMP Pulse offline","EMP offline").replace("No starting modifiers","No modifiers").replace("minimum 1","min 1")

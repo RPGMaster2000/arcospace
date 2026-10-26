@@ -1,10 +1,10 @@
 extends Control
-# Overview-only layout and introduction typography. Reuses the screen's actual controls.
+# Shared edge HUD layout and introduction typography. Reuses the screen's actual controls.
 signal settled
 var owner_screen: Control
 var panels: Array[Control] = []
 var reserved: Array[Rect2] = []
-var resources: VBoxContainer
+var resources: HBoxContainer
 var status: VBoxContainer
 var utilities: HBoxContainer
 var hull_bar: ProgressBar
@@ -12,6 +12,8 @@ var identifier: Label
 var title: Label
 var subtitle: Label
 var active := false
+var focused := false
+var economy: HBoxContainer
 var originals: Dictionary = {}
 var blocked_buttons: Dictionary = {}
 var motion: Tween
@@ -35,10 +37,14 @@ func _ready() -> void:
   panel.minimum_size_changed.connect(func(): layout.call_deferred())
  identifier = Label.new()
  identifier.add_theme_font_size_override("font_size",30)
- panels[0].add_child(identifier)
- resources = VBoxContainer.new()
+ economy = HBoxContainer.new()
+ economy.add_theme_constant_override("separation",4)
+ panels[0].add_child(economy)
+ economy.add_child(identifier)
+ resources = HBoxContainer.new()
  resources.add_theme_constant_override("separation",2)
- panels[1].add_child(resources)
+ economy.add_child(resources)
+ panels[1].hide()
  status = VBoxContainer.new()
  status.add_theme_constant_override("separation",2)
  panels[2].add_child(status)
@@ -84,6 +90,7 @@ func set_overview(enabled: bool) -> void:
    originals[control] = [control.get_parent(),control.get_index()]
   move_control(bar,self) # Keeps heartbeat and its existing info overlay active.
   bar.position = Vector2(-1000,-1000)
+  bar.show()
   for key in ["salvage","materials","energy","crew"]: move_control(bar.entries[key],resources)
   move_control(bar.entries.hull,status)
   status.add_child(hull_bar)
@@ -91,8 +98,6 @@ func set_overview(enabled: bool) -> void:
   row.name = "ShieldEmp"
   status.add_child(row)
   for key in ["shields","jump"]: move_control(bar.entries[key],row)
-  bar.entries.jump.text = "EMP " + bar.entries.jump.text
-  bar.entries.jump.get_node("Values/Base").text = "EMP " + bar.entries.jump.get_node("Values/Base").text
   for key in bar.entries:
    var button: Button = bar.entries[key]
    button.add_theme_font_size_override("font_size",17)
@@ -131,6 +136,19 @@ func set_overview(enabled: bool) -> void:
   owner_screen.ui.show()
  layout()
 
+func set_focus(value: bool) -> void:
+ focused = value
+ if not active: return
+ panels[3].visible = not focused
+ panels[4].visible = not focused
+ # Hidden utility descendants lose keyboard focus as well as pointer hit testing.
+ for panel in [panels[3],panels[4]]:
+  for button in panel.find_children("*","BaseButton",true,false):
+   if focused: button.release_focus()
+ if focused: owner_screen.ui.show()
+ else: owner_screen.ui.hide()
+ layout()
+
 func refresh() -> void:
  identifier.text = "%02d | %s" % [system_number,system_name]
  layout.call_deferred()
@@ -148,19 +166,30 @@ func layout() -> void:
  var title_width: float = title.get_theme_font("font").get_string_size(title.text,HORIZONTAL_ALIGNMENT_LEFT,-1,96).x
  title.add_theme_font_size_override("font_size",mini(96,int(96*size.x*0.9/maxf(1,title_width))))
  var identifier_width: float = identifier.get_theme_font("font").get_string_size(identifier.text,HORIZONTAL_ALIGNMENT_LEFT,-1,30).x
- identifier.add_theme_font_size_override("font_size",mini(30,int(30*size.x*0.56/maxf(1,identifier_width))))
+ identifier.add_theme_font_size_override("font_size",20)
+ identifier.clip_text = false
+ identifier.tooltip_text = identifier.text
+ identifier.custom_minimum_size.x = minf(identifier_width*20.0/30.0+8,size.x*0.24)
+ identifier.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ for key in owner_screen.resource_bar.entries:
+  var button: Button = owner_screen.resource_bar.entries[key]
+  button.custom_minimum_size.y = 44
+  for label in button.get_node("Values").get_children(): label.add_theme_font_size_override("font_size",17)
+  button.add_theme_font_size_override("font_size",17)
  for panel in panels: panel.reset_size()
+ panels[0].custom_minimum_size.x = 0
+ panels[0].size.x = minf(panels[0].size.x,size.x-inset.x-inset.z-(0 if focused else panels[3].size.x+10))
  panels[0].position = Vector2(inset.x,inset.y)
- panels[1].position = Vector2(inset.x,panels[0].position.y+panels[0].size.y+4)
- panels[2].position = Vector2(size.x-panels[2].size.x-inset.z,inset.y)
- panels[3].position = Vector2(inset.x,size.y-panels[3].size.y-inset.w)
+ panels[2].position = Vector2(inset.x,size.y-panels[2].size.y-inset.w)
+ panels[3].position = Vector2(size.x-panels[3].size.x-inset.z,inset.y)
  panels[4].position = size-panels[4].size-Vector2(inset.z,inset.w)
  title.position = Vector2(0,size.y*0.38)
  title.size = Vector2(size.x,124)
  subtitle.position = Vector2(0,size.y*0.38+128)
  subtitle.size = Vector2(size.x,62)
  reserved.clear()
- for panel in panels: reserved.append(panel.get_global_rect().grow(4))
+ for panel in panels:
+  if panel.visible: reserved.append(panel.get_global_rect().grow(4))
 
 func regions() -> Array[Rect2]:
  return reserved if active else []
@@ -232,8 +261,16 @@ func _exit_tree() -> void:
 
 func attach_zoom(map: Control) -> void:
  if not active: return
+ # A replaced map destroys the original zoom parent, but the borrowed buttons live here.
+ for control in originals.keys():
+  if not is_instance_valid(originals[control][0]):
+   if is_instance_valid(control):
+    control.get_parent().remove_child(control)
+    control.queue_free()
+   originals.erase(control)
  map.external_zoom_controls = true
  var buttons: Array = map.zoom_controls.get_children()
- for button in buttons: originals[button] = [button.get_parent(),button.get_index()]
+ for button in buttons:
+  if not originals.has(button): originals[button] = [button.get_parent(),button.get_index()]
  for button in buttons: move_control(button,utilities)
  layout.call_deferred()

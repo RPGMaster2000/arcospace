@@ -707,6 +707,7 @@ func _show_chasedown() -> void:
 	if _uses_3d_map(): star_map.tactical_focus(state.chasedown_index,true,state.enemy_profile(encounter))
 	_add_tactical_briefing(encounter,state.enemy_profile(encounter),true)
 	var choices = _grid(2)
+	if screen.compact_focus: choices.add_theme_constant_override("v_separation",4)
 	for index in range(state.rules.chasedown_responses.size()):
 		var response: Dictionary = state.rules.chasedown_responses[index]
 		var details: String = state.describe_modifiers(response.get("modifiers", {}))
@@ -714,13 +715,20 @@ func _show_chasedown() -> void:
 			details += " · %+d Hull (minimum 1)" % int(response.hull)
 		if details.is_empty():
 			details = "No starting modifiers"
-		_tile(
+		var response_button = _tile(
 			choices,
 			str(response.title),
 			details,
 			Presentation.COLORS.battle,
 			_chasedown_response.bind(index)
 		)
+		if screen.compact_focus:
+			response_button.minimum_height = 52
+			response_button.heading.add_theme_font_size_override("font_size",18)
+			response_button.details.add_theme_font_size_override("font_size",16)
+			response_button.set_rich_details(highlight_outcome(ExpeditionText.effect_indicators(details)))
+			response_button.details.add_theme_font_size_override("normal_font_size",16)
+			response_button.details.add_theme_font_size_override("bold_font_size",16)
 
 
 func _chasedown_response(index: int) -> void:
@@ -810,7 +818,13 @@ func show_poi(index: int) -> void:
 		)
 		var locked: String = state.locked_reason(approach)
 		if _uses_3d_map() and not locked.is_empty():
-			button.collapse_requirement(locked)
+			button.heading.text = approach.title
+			var gate: String = locked
+			if not approach.requirement.is_empty() and state.production(approach.requirement) < approach.minimum_production:
+				gate = "%s %d required (%d)" % [state.LABELS[approach.requirement],approach.minimum_production,state.production(approach.requirement)]
+			elif state.salvage < approach.salvage_cost:
+				gate = "Salvage %d required (%d)" % [approach.salvage_cost,state.salvage]
+			button.collapse_requirement(gate)
 		else:
 			button.set_rich_details(highlight_outcome(approach_text(approach)))
 		approach_buttons.append(button)

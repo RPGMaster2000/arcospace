@@ -22,7 +22,7 @@ func run():
   var screen = host.screen
   var map = host.star_map
   check(screen.title.text==map.visual_data.name,"Header shows generated astronomical name only")
-  check(screen.jump_button.get_parent()==screen.overview_hud.panels[3],"FTL lives in floating lower-left panel")
+  check(screen.jump_button.get_parent()==screen.overview_hud.panels[3],"FTL lives in floating upper-right panel")
   check(screen.jump_button.disabled==not host.state.can_jump(),"FTL legality remains authoritative")
   check(root.get_visible_rect().encloses(screen.heading_row.get_global_rect()),"Header fits viewport")
   var previous: Control

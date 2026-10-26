@@ -35,7 +35,7 @@ func _fit() -> void:
 	if compact:
 		custom_minimum_size.y = 44
 		$Overlay/Caption.hide()
-		title.add_theme_font_size_override("font_size",27)
+		title.add_theme_font_size_override("font_size",30)
 		title.offset_left = 8
 		title.offset_right = -8
 		title.offset_top = -36

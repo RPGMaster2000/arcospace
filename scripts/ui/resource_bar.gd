@@ -19,6 +19,7 @@ var pulse_period: float = 1.45
 var pulse_scale: float = 1.03
 var pulse_intensity: float = 0.22
 var field_repairs_enabled: bool = false
+var edge_compact := false
 var heartbeat_active: bool = false
 var pulse_elapsed: float = 0.0
 var overlay: CanvasLayer
@@ -96,6 +97,7 @@ func put(
 		Presentation.icon(key, get_theme_default_font())
 		+ (" " + value if not value.is_empty() else "")
 	)
+	if edge_compact and key == "jump": base = base.replace(Presentation.icon(key,get_theme_default_font()),Presentation.icon(key,get_theme_default_font())+" EMP")
 	var suffix: String = " " + adjustment if not adjustment.is_empty() else ""
 	var bonus: String = " · " + extra_bonus if not extra_bonus.is_empty() else ""
 	entry.text = base + suffix + bonus
@@ -131,7 +133,7 @@ func starting_resource(state: Resource, key: String, production: String = "") ->
 	var value: String = str(base)
 	var detail: String = heading(key, name) + "\n\n"
 	if not production.is_empty():
-		value = "+%d/t · %d %s" % [state.production(production), base, name]
+		value = "+%d/t · %d" % [state.production(production), base] if edge_compact else "+%d/t · %d %s" % [state.production(production), base, name]
 		detail += (
 			"[b]%s[/b]  +%d / turn\n" % [state.LABELS[production], state.production(production)]
 		)

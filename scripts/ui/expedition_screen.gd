@@ -216,7 +216,8 @@ func mount_map(map: Control) -> void:
 
 func map_layout(enabled: bool, focused: bool) -> void:
 	_set_compact_focus(enabled and focused)
-	overview_hud.set_overview(enabled and not focused and kind == "system")
+	overview_hud.set_overview(enabled and (focused or kind == "system"))
+	overview_hud.set_focus(focused)
 	# Keep bright celestial bodies from washing out the existing PoI header.
 	header.get_node("TextBacking").color.a = 0.0
 	model_space.visible = enabled
@@ -248,7 +249,9 @@ func _sync_map_rect() -> void:
 	if is_instance_valid(map_layer) and is_instance_valid(body):
 		map_layer.position = Vector2.ZERO if overview_hud.active or compact_focus else body.global_position-global_position
 		map_layer.size = size if overview_hud.active or compact_focus else body.size
-		if overview_hud.active: map_layer.hud_regions = overview_hud.regions()
+		if overview_hud.active:
+			map_layer.hud_regions = overview_hud.regions().duplicate()
+			if compact_focus: map_layer.hud_regions.append(return_button.get_global_rect())
 		else: map_layer.hud_regions.clear()
 
 
@@ -315,7 +318,8 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 		combat_entry.queue_free()
 	returning_from_focus = compact_focus and kind == "system"
 	_set_compact_focus(false)
-	overview_hud.set_overview(false)
+	if not (map_enabled and kind in ["system","poi","preview","chasedown","outcome"]): overview_hud.set_overview(false)
+	resource_bar.edge_compact = map_enabled and kind in ["system","poi","preview","chasedown","outcome"]
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
 	confirmation.dismiss()
@@ -344,6 +348,7 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	title.visible = true
 	title.text = state.system_name
 	resource_bar.exploration(state)
+	if overview_hud.active: overview_hud.refresh()
 	overview_hud.system_number = state.system_number
 	overview_hud.hull_bar.max_value = state.ship().hull_capacity
 	overview_hud.hull_bar.value = state.hull
@@ -497,13 +502,13 @@ func _set_compact_focus(enabled: bool) -> void:
 	if enabled:
 		return_button.reparent(self)
 		return_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-		return_button.position = Vector2(16,16)
+		return_button.position = Vector2(16,74)
 		return_button.size = Vector2(104,52)
 		return_button.text = "Back"
 		return_button.show()
 		return_button.z_index = 80
 		view.alignment = BoxContainer.ALIGNMENT_BEGIN
-		view.add_theme_constant_override("separation",6)
+		view.add_theme_constant_override("separation",4)
 		_fit_focus()
 		_fade_focus(sidebar)
 	else:
@@ -522,11 +527,13 @@ func _set_compact_focus(enabled: bool) -> void:
 func _fit_focus() -> void:
 	if focus_layout_size == size: return
 	focus_layout_size = size
+	var safe := preload("res://scripts/ui/battle_layout.gd").safe_insets(self)
 	var edge: int = roundi(maxf(16,(size.x-1440)*0.5+16))
-	ui.add_theme_constant_override("margin_left",edge)
-	ui.add_theme_constant_override("margin_right",edge)
-	ui.add_theme_constant_override("margin_top",16)
-	ui.add_theme_constant_override("margin_bottom",16)
+	ui.add_theme_constant_override("margin_left",edge+roundi(safe.x))
+	ui.add_theme_constant_override("margin_right",edge+roundi(safe.z))
+	ui.add_theme_constant_override("margin_top",76+roundi(safe.y))
+	ui.add_theme_constant_override("margin_bottom",16+roundi(safe.w))
+	return_button.position = Vector2(16+safe.x,74+safe.y)
 
 func _fade_focus(target: Control) -> void:
 	focus_transition = true

@@ -63,7 +63,11 @@ func run() -> void:
 	for n in range(5):
 		host.visit(enemy_index)
 		check(host.view_kind == "preview" and not is_instance_valid(host.battle), "Enemy selection previews before combat")
-		check(host.view.find_children("*","Label",true,false).any(func(label): return label.text == Modifiers.description(assigned)), "Preview matches actual definition")
+		var modifier_button = host.view.find_child("ModifierDetails",true,false)
+		modifier_button.pressed.emit()
+		var modifier_overlay = modifier_button.get_parent().find_children("*","CanvasLayer",true,false)[0]
+		check(modifier_overlay.shade.visible and modifier_overlay.body.text.ends_with(Modifiers.description(assigned)), "Tapped preview matches actual definition")
+		modifier_overlay.dismiss()
 		host.show_system()
 		host.show_poi(poi_index)
 		host.show_system()

@@ -60,9 +60,12 @@ func run():
   for frame in range(16): await process_frame
   check(map.get_global_rect()==root.get_visible_rect(),"Full-screen viewport "+str(dimensions))
   var regions = hud.regions()
-  for a in range(regions.size()):
+  for a in range(hud.panels.size()):
+   if not hud.panels[a].visible: continue
    check(root.get_visible_rect().encloses(hud.panels[a].get_global_rect()),"Corner fits viewport")
-   for b in range(a+1,regions.size()): check(not hud.panels[a].get_global_rect().intersects(hud.panels[b].get_global_rect()),"Corner groups do not overlap")
+   for b in range(a+1,hud.panels.size()):
+    if not hud.panels[b].visible: continue
+    check(not hud.panels[a].get_global_rect().intersects(hud.panels[b].get_global_rect()),"Corner groups do not overlap")
   for key in ["materials","energy","crew"]:
    check(host.resource_bar.entries[key].get_parent()==hud.resources,"Same resource button and adjustments reused")
   check(host.resource_bar.entries.hull.get_parent()==hud.status,"Same repair interaction reused")

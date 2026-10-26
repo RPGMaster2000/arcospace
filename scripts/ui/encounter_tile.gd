@@ -79,6 +79,9 @@ func set_rich_details(value: String) -> void:
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(content):
+		if requirement_only and size.x > 0:
+			var width: float = heading.get_theme_font("font").get_string_size(heading.text,HORIZONTAL_ALIGNMENT_LEFT,-1,16).x
+			heading.add_theme_font_size_override("font_size",mini(16,int(16*(size.x-20)/maxf(1,width))))
 		var icon_height: float = (
 			icon_label.get_combined_minimum_size().y + 4 if is_instance_valid(icon_label) else 0
 		)
@@ -88,7 +91,7 @@ func _process(_delta: float) -> void:
 				icon_height
 				+ heading.get_combined_minimum_size().y
 				+ (0 if requirement_only else details.get_combined_minimum_size().y)
-				+ 16
+				+ (10 if compact else 16)
 			)
 		)
 
@@ -129,7 +132,10 @@ func set_compact(value: bool) -> void:
 # Locked actions deliberately expose only the authoritative gate, never their outcomes.
 func collapse_requirement(value: String) -> void:
 	requirement_only = true
-	heading.text += " — " + value
+	heading.text = ("🔒 " if Presentation.EMOJI_FONT.has_char(0x1f512) else "LOCK ") + heading.text + " — " + value
+	heading.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heading.add_theme_font_size_override("font_size",16)
+	for edge in ["left","right"]: content.add_theme_constant_override("margin_"+edge,8)
 	details.hide()
 	minimum_height = 42
 	details.custom_minimum_size = Vector2.ZERO
