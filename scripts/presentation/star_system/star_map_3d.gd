@@ -43,7 +43,6 @@ var focused := false
 var tactical_snapshot: Dictionary = {}
 var tactical_enemy: Node3D
 var tactical_temporary := false
-var tactical_overlay: Control
 var tactical_light: OmniLight3D
 var focus_orbit_enabled := false
 var orbit_pointer := -2
@@ -77,10 +76,6 @@ func _ready() -> void:
 	viewport.own_world_3d = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(viewport)
-	tactical_overlay = Control.new()
-	tactical_overlay.mouse_filter = MOUSE_FILTER_IGNORE
-	tactical_overlay.draw.connect(_draw_tactical)
-	add_child(tactical_overlay)
 	world = Node3D.new()
 	viewport.add_child(world)
 	camera = Camera.new()
@@ -243,7 +238,6 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 
 
 func _process(delta: float) -> void:
-	if not tactical_snapshot.is_empty(): tactical_overlay.queue_redraw()
 	if focus_orbit_enabled and camera.viewing == &"destination" and not (camera.motion and camera.motion.is_running()):
 		if orbit_velocity.length_squared() > 0.000001:
 			var offset: Vector3 = focus_offset
@@ -718,7 +712,6 @@ func _restore_tactical() -> void:
 	tactical_snapshot.clear()
 	if is_instance_valid(tactical_light): tactical_light.hide()
 	if is_instance_valid(feedback): feedback.tactical = false
-	if is_instance_valid(tactical_overlay): tactical_overlay.queue_redraw()
 	if is_instance_valid(feedback): feedback.set_travel(false)
 
 func _focus_input(event: InputEvent) -> void:
@@ -735,18 +728,6 @@ func _focus_input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag and orbit_pointer == event.index:
 		orbit_velocity = -event.relative*0.06
 		get_viewport().set_input_as_handled()
-
-func _draw_tactical() -> void:
-	if not is_instance_valid(tactical_enemy) or tactical_snapshot.is_empty(): return
-	var center: Vector2 = camera.unproject_position(tactical_enemy.position)
-	var extent := Vector2(72,48)
-	var color := Color(1.0,0.4,0.45,0.8)
-	for corner in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
-		var at: Vector2 = center+extent*corner
-		tactical_overlay.draw_line(at,at-Vector2(corner.x*16,0),color,1.5,true)
-		tactical_overlay.draw_line(at,at-Vector2(0,corner.y*12),color,1.5,true)
-	var scan: float = sin(Time.get_ticks_msec()*0.001)*extent.y
-	tactical_overlay.draw_line(center+Vector2(-extent.x,scan),center+Vector2(extent.x,scan),Color(1,0.4,0.45,0.16),1,true)
 
 func _ship_extent(model: Node3D) -> float:
 	var extent: float = 0.1

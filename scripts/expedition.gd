@@ -753,30 +753,16 @@ func show_battle_preview(index: int) -> void:
 
 func _style_combat_entry(button: Button) -> void:
 	for key in ["normal","hover","pressed"]:
-		button.add_theme_stylebox_override(key,Presentation.style(Color("ed7777"),key != "normal"))
+		var style = Presentation.style(Color("ed7777"),key != "normal")
+		style.bg_color = Color("893846") if key == "normal" else Color("ac4c5d")
+		button.add_theme_stylebox_override(key,style)
 	button.add_theme_color_override("font_color",Color("ffbaba"))
 
 
 func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
-	var sections = [
-		["SUBLIGHT INTERCEPTION" if pursuit else "HOSTILE CONTACT", "%s · Level %d\n%s · Weapons threat" % [enemy.ship_name,state.difficulty_level(),enemy.subtitle]],
-		["ENEMY SYSTEMS", "Hull %d   ·   Shields %d\nMaterials %d · Energy %d · Crew %d\nSynthesizer %d · Reactor %d · Quarters %d" % [enemy.hull_capacity,enemy.shields,enemy.materials,enemy.energy,enemy.crew,enemy.synthesizer,enemy.reactor,enemy.quarters]],
-		["TACTICAL PROFILE", enemy.summary if not enemy.summary.is_empty() else enemy.role],
-		[_icon(Presentation.modifier_key(encounter.modifier)) + "  " + State.Modifiers.NAMES[encounter.modifier], State.Modifiers.description(encounter.modifier)],
-		["ENTRY EFFECTS", state.pending_description()]
-	]
-	if encounter.get("mandatory_boss",false): sections.append(["MANDATORY CONTACT","Resolve by victory or EMP Pulse."])
-	for section in sections:
-		var box = PanelContainer.new()
-		box.add_theme_stylebox_override("panel",Presentation.style(Color("b65e66")))
-		var column = VBoxContainer.new()
-		box.add_child(column)
-		var caption = _label(section[0],16)
-		caption.add_theme_color_override("font_color",Color("f29ba2"))
-		caption.add_theme_font_override("font",Presentation.UI_FONT)
-		column.add_child(caption)
-		column.add_child(_label(section[1],18))
-		view.add_child(box)
+	var briefing = preload("res://scripts/ui/tactical_briefing.gd").new()
+	view.add_child(briefing)
+	briefing.configure(enemy,state.difficulty_level(),encounter.modifier,state.pending_description(),pursuit,encounter.get("mandatory_boss",false))
 
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.

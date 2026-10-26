@@ -1,0 +1,22 @@
+{
+  "tactical_focus_test": [
+    "Tactical focus: 93 checks, 0 failures"
+  ],
+  "compact_poi_focus_test": [
+    "Compact PoI focus: 71 checks, 0 failures"
+  ],
+  "expedition_test": [
+    "Expedition checks: 0 failures"
+  ],
+  "status_bar_test": [
+    "Status and modifier checks: 10693 assertions, 0 failures"
+  ],
+  "star_system_transition_test": [
+    "Star system transitions: 106 checks, 0 failures"
+  ],
+  "sensor-compatibility-final.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\nWARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.\n     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)\nOpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.2 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)\n\nTactical focus: 93 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n",
+  "scope": "Focused tests and rendered checks only; the full shared suite was not rerun for this follow-up.",
+  "left_cinematic": "Camera and ship transforms unchanged. Removed only map-projected reticle drawing.",
+  "physical_android_tested": false,
+  "sensor-mobile-final.log": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\nVulkan 1.4.318 - Forward Mobile - Using Device #0: Unknown - llvmpipe (LLVM 20.1.2, 256 bits)\n\nTactical focus: 93 checks, 0 failures\nWARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\n   at: cleanup (core/object/object.cpp:2536)\n"
+}

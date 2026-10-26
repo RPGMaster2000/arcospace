@@ -64,3 +64,5 @@ No files removed. `project.godot`, camera calibration, StarSystemHUD, ship asset
 ![Sublight interception](tactical_focus_screenshots/chasedown.webp)
 
 Measured results: 84 focused tactical checks passed headlessly and under both rendered backends. The shared runner completed all 116 scripts plus import. Its fresh pass recorded one obsolete normal-panel-width assertion; the corrected transition test then passed all 106 checks. The initial run also exposed two legacy child-index assumptions, fixed before the fresh pass. Results JSON preserves both raw runs and focused reruns. Exact baselines matched: 2,220 card-effect checkpoints, 72 combat traces and 1,044 expedition checkpoints. No expected gameplay fixture was regenerated.
+
+Right-panel sensor UI follow-up: [rotating UI preview and reticle ownership](tactical_sensor_ui.md). The older screenshots above document the preceding layout.
