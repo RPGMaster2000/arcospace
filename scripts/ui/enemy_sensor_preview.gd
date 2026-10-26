@@ -7,10 +7,10 @@ var overlay: Control
 
 func _ready() -> void:
  stretch = true
- custom_minimum_size.y = 170
+ custom_minimum_size.y = 110
  mouse_filter = Control.MOUSE_FILTER_IGNORE
  var viewport = SubViewport.new()
- viewport.size = Vector2i(640,170)
+ viewport.size = Vector2i(640,110)
  viewport.own_world_3d = true
  viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
  viewport.transparent_bg = false
@@ -52,12 +52,12 @@ func _process(delta: float) -> void:
 
 func _draw_sensor() -> void:
  var center: Vector2 = overlay.size*0.5
- var extent := Vector2(66,56)
+ var extent := Vector2(52,42)
  var cyan := Color("76b9cc")
- overlay.draw_arc(center,55,0,TAU,64,Color(0.3,0.7,0.8,0.4),1,true)
+ overlay.draw_arc(center,40,0,TAU,64,Color(0.3,0.7,0.8,0.4),1,true)
  for corner in [Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
   var at: Vector2 = center+extent*corner
   overlay.draw_line(at,at-Vector2(corner.x*18,0),cyan,1.5,true)
   overlay.draw_line(at,at-Vector2(0,corner.y*18),cyan,1.5,true)
  for direction in [Vector2.LEFT,Vector2.RIGHT,Vector2.UP,Vector2.DOWN]:
-  overlay.draw_line(center+direction*61,center+direction*76,Color("ef6479"),1.5,true)
+  overlay.draw_line(center+direction*45,center+direction*55,Color("ef6479"),1.5,true)

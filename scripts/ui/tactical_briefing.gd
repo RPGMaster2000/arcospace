@@ -21,18 +21,18 @@ func section(parent: Node, caption: String, tint := Color("59869a")) -> VBoxCont
  style.bg_color = Color("132b3c")
  style.content_margin_left = 12
  style.content_margin_right = 12
- style.content_margin_top = 8
- style.content_margin_bottom = 8
+ style.content_margin_top = 5
+ style.content_margin_bottom = 5
  panel.add_theme_stylebox_override("panel",style)
  parent.add_child(panel)
  var column = VBoxContainer.new()
- column.add_theme_constant_override("separation",5)
+ column.add_theme_constant_override("separation",3)
  panel.add_child(column)
  column.add_child(label(caption,13,tint.lightened(0.3)))
  return column
 
 func configure(enemy: Resource, level: int, modifier: int, pending: String, pursuit: bool, boss: bool) -> void:
- add_theme_constant_override("separation",10)
+ add_theme_constant_override("separation",3)
  add_child(label("SUBLIGHT INTERCEPTION" if pursuit else "HOSTILE CONTACT DETECTED",13,Color("ed7777")))
  var heading = HBoxContainer.new()
  add_child(heading)
@@ -76,7 +76,20 @@ func configure(enemy: Resource, level: int, modifier: int, pending: String, purs
  profile.add_child(label(enemy.role,18,Color.WHITE))
  profile.add_child(label(enemy.summary if not enemy.summary.is_empty() else "No additional verified profile.",16))
  var modifiers = preload("res://scripts/combat_modifier.gd")
- var conditions = section(self,Presentation.icon(Presentation.modifier_key(modifier),Presentation.UI_FONT)+"  "+modifiers.NAMES[modifier],Color("c79751"))
- conditions.add_child(label(modifiers.description(modifier),16))
+ var tint: Color = modifiers.storm_color(modifier) if modifier in modifiers.STORMS else Color("c79751")
+ var conditions = Button.new()
+ conditions.name = "ModifierDetails"
+ conditions.text = Presentation.icon(Presentation.modifier_key(modifier),Presentation.UI_FONT)+"  "+modifiers.NAMES[modifier]
+ conditions.custom_minimum_size.y = 44
+ conditions.add_theme_font_override("font",Presentation.UI_FONT)
+ conditions.add_theme_font_size_override("font_size",17)
+ Presentation.action(conditions)
+ conditions.add_theme_color_override("font_color",tint.lightened(0.2))
+ conditions.add_theme_stylebox_override("normal",Presentation.style(tint))
+ conditions.tooltip_text = "Tap for modifier description"
+ add_child(conditions)
+ var overlay = preload("res://scripts/ui/info_overlay.gd").new()
+ add_child(overlay)
+ conditions.pressed.connect(func(): overlay.show_text("[b]"+conditions.text+"[/b]\n\n"+modifiers.description(modifier)))
  add_child(label("Entry effects: "+pending,16,Color("e8a3aa")))
  if boss: add_child(label("Mandatory contact · Resolve by victory or EMP Pulse.",16))

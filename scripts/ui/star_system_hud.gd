@@ -34,7 +34,7 @@ func _ready() -> void:
   panels.append(panel)
   panel.minimum_size_changed.connect(func(): layout.call_deferred())
  identifier = Label.new()
- identifier.add_theme_font_size_override("font_size",20)
+ identifier.add_theme_font_size_override("font_size",30)
  panels[0].add_child(identifier)
  resources = VBoxContainer.new()
  resources.add_theme_constant_override("separation",2)
@@ -54,14 +54,14 @@ func _ready() -> void:
  panels[4].add_child(utilities)
  title = Label.new()
  title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- title.add_theme_font_size_override("font_size",48)
+ title.add_theme_font_size_override("font_size",96)
  title.add_theme_color_override("font_outline_color",Color("03101d"))
  title.add_theme_constant_override("outline_size",4)
  title.mouse_filter = MOUSE_FILTER_IGNORE
  add_child(title)
  subtitle = Label.new()
  subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- subtitle.add_theme_font_size_override("font_size",22)
+ subtitle.add_theme_font_size_override("font_size",44)
  subtitle.add_theme_color_override("font_outline_color",Color("03101d"))
  subtitle.add_theme_constant_override("outline_size",3)
  subtitle.mouse_filter = MOUSE_FILTER_IGNORE
@@ -144,6 +144,11 @@ func layout() -> void:
   if window.x>0 and window.y>0 and safe.size.x>0:
    var ratio := size/Vector2(window)
    inset += Vector4(safe.position.x*ratio.x,safe.position.y*ratio.y,(window.x-safe.end.x)*ratio.x,(window.y-safe.end.y)*ratio.y)
+ # Keep longer generated names readable inside the existing screen space.
+ var title_width: float = title.get_theme_font("font").get_string_size(title.text,HORIZONTAL_ALIGNMENT_LEFT,-1,96).x
+ title.add_theme_font_size_override("font_size",mini(96,int(96*size.x*0.9/maxf(1,title_width))))
+ var identifier_width: float = identifier.get_theme_font("font").get_string_size(identifier.text,HORIZONTAL_ALIGNMENT_LEFT,-1,30).x
+ identifier.add_theme_font_size_override("font_size",mini(30,int(30*size.x*0.56/maxf(1,identifier_width))))
  for panel in panels: panel.reset_size()
  panels[0].position = Vector2(inset.x,inset.y)
  panels[1].position = Vector2(inset.x,panels[0].position.y+panels[0].size.y+4)
@@ -151,9 +156,9 @@ func layout() -> void:
  panels[3].position = Vector2(inset.x,size.y-panels[3].size.y-inset.w)
  panels[4].position = size-panels[4].size-Vector2(inset.z,inset.w)
  title.position = Vector2(0,size.y*0.38)
- title.size = Vector2(size.x,70)
- subtitle.position = Vector2(0,size.y*0.38+76)
- subtitle.size = Vector2(size.x,36)
+ title.size = Vector2(size.x,124)
+ subtitle.position = Vector2(0,size.y*0.38+128)
+ subtitle.size = Vector2(size.x,62)
  reserved.clear()
  for panel in panels: reserved.append(panel.get_global_rect().grow(4))
 
