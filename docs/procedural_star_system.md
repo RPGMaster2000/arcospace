@@ -385,3 +385,5 @@ For the two-pass state hierarchy, procedural standalone placement, orbit selecti
 material/background refinements and verification, see [Star-map refinement](star_map_refinement.md).
 
 Presentation polish and optional intercepted-position save compatibility: [Star-system polish](star_system_polish.md).
+
+New-system framing and corner UI: [Corner HUD and introduction](star_system_corner_hud.md).

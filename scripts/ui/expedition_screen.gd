@@ -21,6 +21,7 @@ signal cancel_requested
 signal confirm_requested
 signal jump_requested
 
+var overview_hud: Control
 var body: HBoxContainer
 var sidebar: VBoxContainer
 var model_space: Control
@@ -169,7 +170,15 @@ func _build_ui() -> void:
 	charge.offset_top = -5
 	charge.offset_bottom = -2
 	jump_button.add_child(charge)
+	overview_hud = preload("res://scripts/ui/star_system_hud.gd").new()
+	overview_hud.owner_screen = self
+	add_child(overview_hud)
 
+
+func set_system_name(value: String) -> void:
+	title.text = value
+	overview_hud.system_name = value
+	overview_hud.refresh()
 
 func _label(text: String, font_size: int = 20) -> Label:
 	var label = Label.new()
@@ -190,6 +199,7 @@ func mount_map(map: Control) -> void:
 		body.item_rect_changed.connect(_sync_map_rect)
 
 func map_layout(enabled: bool, focused: bool) -> void:
+	overview_hud.set_overview(enabled and not focused and kind == "system")
 	# Keep bright celestial bodies from washing out the existing PoI header.
 	header.get_node("TextBacking").color.a = 0.0
 	model_space.visible = enabled
@@ -210,8 +220,10 @@ func _process(_delta: float) -> void:
 
 func _sync_map_rect() -> void:
 	if is_instance_valid(map_layer) and is_instance_valid(body):
-		map_layer.position = body.global_position - global_position
-		map_layer.size = body.size
+		map_layer.position = Vector2.ZERO if overview_hud.active else body.global_position-global_position
+		map_layer.size = size if overview_hud.active else body.size
+		if overview_hud.active: map_layer.hud_regions = overview_hud.regions()
+		else: map_layer.hud_regions.clear()
 
 
 func add_action(
@@ -270,6 +282,7 @@ func add_tile(
 
 # Query-only State input: the controller has already established field-repair eligibility.
 func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable) -> void:
+	overview_hud.set_overview(false)
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
 	confirmation.dismiss()
@@ -298,6 +311,9 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	title.visible = true
 	title.text = state.system_name
 	resource_bar.exploration(state)
+	overview_hud.system_number = state.system_number
+	overview_hud.hull_bar.max_value = state.ship().hull_capacity
+	overview_hud.hull_bar.value = state.hull
 	jump_button.text = "FTL %d/%d · %s" % [state.ftl_charge,state.required_ftl_charge,"JUMP" if state.ftl_charge >= state.required_ftl_charge else "CHARGING"]
 	var charge: ProgressBar = jump_button.get_node("Charge")
 	charge.max_value = state.required_ftl_charge
@@ -388,6 +404,7 @@ func allows_activation() -> bool:
 
 
 func hide_for_battle() -> void:
+	overview_hud.set_overview(false)
 	resource_bar.set_heartbeat(false)
 	resource_bar.overlay.dismiss()
 	ui.hide()
@@ -421,6 +438,7 @@ func cancel_suspense() -> void:
 	suspense_finished.emit()
 
 func cancel_pending() -> void:
+	overview_hud.cancel()
 	view_revision += 1
 	cancel_suspense()
 

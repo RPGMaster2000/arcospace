@@ -98,7 +98,7 @@ func run() -> void:
 	await process_frame
 	check(not node.transitioning and node.state.system_number == before and not node.transition.curtain.visible, "Cancelled FTL unlocks without progression")
 	node._jump()
-	await create_timer(0.35).timeout
+	await create_timer(0.35 + node.star_system_settings.introduction_duration*1.1).timeout
 	check(node.state.system_number == before + 1 and node.phase == node.Phase.OVERVIEW, "FTL commits once and reveals overview")
 	var index: int = enemy_index(node)
 	node._enter_battle(index)

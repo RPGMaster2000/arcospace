@@ -156,6 +156,7 @@ func run() -> void:
 	current_scene._start()
 	await settle()
 	var exploration = current_scene
+	await create_timer(exploration.star_system_settings.introduction_duration*1.1).timeout
 	await activate(exploration.settings_button)
 	await activate(exploration.settings_button.menu.main_menu_button)
 	check(not paused and current_scene.scene_file_path.ends_with("battle_setup.tscn"), "Exploration Main Menu returns to ship selection")

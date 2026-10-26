@@ -632,3 +632,5 @@ orbit materials and current validation are documented in [Star-map refinement](s
 Star-map emoji catalog, selection/completion treatment and validation: [PoI iconography](poi_iconography.md).
 
 Star-map feedback, compact controls and stationary Chasedown return: [Star-system polish](star_system_polish.md).
+
+Full-screen overview HUD and arrival camera: [Corner HUD and introduction](star_system_corner_hud.md).

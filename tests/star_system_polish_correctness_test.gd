@@ -14,10 +14,10 @@ func run():
  var first: Transform3D = host.star_map.camera.transform
  for i in range(12):
   await process_frame
-  check(host.star_map.viewport.size==Vector2i(host.screen.body.size),"Every visible frame uses final map bounds")
+  check(host.star_map.viewport.size==Vector2i(host.size),"Every visible frame uses final map bounds")
  check(host.star_map.camera.transform.is_equal_approx(first),"First camera transform is the settled default, with no initial zoom")
- check(host.star_map.viewport.size == Vector2i(host.screen.body.size),"Viewport fits usable map before navigation")
- check(is_equal_approx(host.star_map.camera.zoom_scale,host.star_map.settings.default_zoom),"Default zoom initialized synchronously")
+ check(host.star_map.viewport.size == Vector2i(host.size),"Viewport fits usable map before navigation")
+ check(is_equal_approx(host.star_map.camera.zoom_scale,host.star_map.camera.zoom_target),"Fitted overview zoom initialized synchronously")
  var giant = load("res://scripts/presentation/star_system/destination_models.gd").build({"model_kind":"gas_giant"},RandomNumberGenerator.new())
  check(giant.get_node("Surface").mesh is SphereMesh,"Standalone gas giant is a sphere, not a station")
  check(giant.get_node("Surface").material_override.shader == preload("res://third_party/naejimer_planets/materials/gaseous.tres").shader,"Gas giant uses shared gaseous material")
@@ -53,7 +53,7 @@ func run():
  var entry_camera: Transform3D = entering.star_map.camera.transform
  for frame in range(6):
   await process_frame
-  check(entering.star_map.viewport.size==Vector2i(entering.screen.body.size),"Paused menu reveal already has final map bounds")
+  check(entering.star_map.viewport.size==Vector2i(entering.size),"Paused menu reveal already has final map bounds")
   check(entering.star_map.camera.transform.is_equal_approx(entry_camera),"Paused reveal cannot snap camera on resume")
  paused = false
  entering.free()

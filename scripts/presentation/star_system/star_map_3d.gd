@@ -20,6 +20,9 @@ var orbit_nodes: Dictionary = {}
 var viewport: SubViewport
 var world: Node3D
 var camera: Camera3D
+var hud_regions: Array[Rect2] = []
+var external_zoom_controls := false
+var introducing := false
 var zoom_controls: HBoxContainer
 var feedback: Node3D
 var ship: Node3D
@@ -228,7 +231,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
-	zoom_controls.visible = _zoom_enabled()
+	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
 	for p in visual_data.get("planets",[]):
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
@@ -243,12 +246,13 @@ func _process(delta: float) -> void:
 		var button = markers[index]
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
-		button.visible = not focused and not camera.is_position_behind(point)
+		button.visible = not focused and not introducing and not camera.is_position_behind(point)
 		var blocked: bool = not interactive or traveling or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
 		button.set_state(button.completed,blocked,index==selected_index)
 		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
+		if hud_regions.any(func(rect): return rect.intersects(button.get_global_rect().grow(14))): button.visible = false
 		button.anchor_point = center-button.position
 		button.queue_redraw()
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
@@ -425,6 +429,8 @@ func _input(event: InputEvent) -> void:
 	if not _zoom_enabled():
 		_end_pinch()
 		return
+	if event is InputEventScreenTouch and event.pressed and point_is_reserved(event.position): return
+	if event is InputEventMouseButton and event.pressed and point_is_reserved(event.position): return
 	if event is InputEventScreenTouch and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
 	if event is InputEventMouseButton and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
 	if event is InputEventScreenTouch:
@@ -546,6 +552,10 @@ func cancel_presentation() -> void:
 	traveling = false
 	travel_direction = Vector3.ZERO
 	_end_pinch()
+	if introducing:
+		introducing = false
+		interactive = true
+		camera.finish_introduction()
 
 
 func _clear_impact() -> void:
@@ -579,3 +589,29 @@ func _initial_ship_position() -> Vector3:
 		if visual_data.planets.all(func(p): return at.distance_to(p.position)>p.radius*1.5+1.25):
 			return at
 	return Vector3(0,1.5,3)
+
+func point_is_reserved(point: Vector2) -> bool:
+	return hud_regions.any(func(rect): return rect.has_point(point))
+
+func fit_overview() -> void:
+	var points: Array[Vector3] = []
+	for p in visual_data.planets:
+		for i in range(64): points.append(VisualSystem.orbit_point(p,TAU*i/64.0))
+	for key in objects:
+		var at: Vector3 = objects[key].position
+		var radius: float = float(objects[key].get_meta("radius",2.6 if key==-100 else 1.0))+2.0
+		for x in [-1,1]:
+			for y in [-1,1]:
+				for z in [-1,1]: points.append(at+Vector3(x,y,z)*radius)
+	camera.fit_system(points,settings)
+
+func begin_introduction() -> void:
+	cancel_presentation()
+	introducing = true
+	interactive = false
+	camera.introduce(settings)
+
+func finish_introduction() -> void:
+	camera.finish_introduction()
+	introducing = false
+	interactive = true

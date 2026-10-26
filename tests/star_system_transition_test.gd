@@ -58,7 +58,7 @@ func run() -> void:
 		var point: Vector2 = map.camera.unproject_position(map.objects[0].position)
 		check(point.x < map.size.x * 0.48 and point.y > 0 and point.y < map.size.y, "Focus frames destination on left")
 		check(host.screen.sidebar.size.x >= dimensions.x * 0.45, "Readable right-side panel")
-		check(host.heading_row.get_global_rect() == heading and host.resource_bar.get_global_rect() == bar, "Top bar unchanged by focus")
+		check(host.ui.visible and not host.screen.overview_hud.active, "Focus restores the preserved exploration header")
 		for index in map.markers:
 			map.camera.focus(map.objects[index].position, map.settings)
 			map.camera.motion.custom_step(2.0)
@@ -106,7 +106,7 @@ func run() -> void:
 	await capture("ftl-zoom")
 	await create_timer(0.8).timeout
 	await capture("ftl-departure")
-	await create_timer(1.0).timeout
+	await create_timer(1.0 + host.star_system_settings.introduction_duration*1.1).timeout
 	check(not host.transitioning and state.system_number == old_system + 1 and state.ftl_charge == 0, "FTL progresses exactly once")
 	check(not host.transition.curtain.visible and host.star_map.visible, "White curtain clears onto new map")
 	check(host.star_map.orbit_index == -1 and not host.star_map.traveling, "New system restores navigation")

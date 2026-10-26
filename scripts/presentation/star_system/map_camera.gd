@@ -93,3 +93,31 @@ func _exit_tree() -> void:
 
 func ship_view(point: Vector3) -> Transform3D:
 	return Transform3D(Basis.IDENTITY, point + Vector3(1.5, 1.5, 2.2)).looking_at(point, Vector3.UP)
+
+# Fit a fixed 16:9 design box, or the actual narrower aspect. No cosmetic RNG.
+func fit_system(points: Array[Vector3], settings: Resource) -> void:
+	calibration = settings
+	pan_offset = Vector2.ZERO
+	var direction: Vector3 = (settings.overview_position-settings.overview_target).normalized()
+	var axes := Basis.looking_at(-direction,Vector3.UP)
+	var tangent: float = tan(deg_to_rad(fov*0.5))
+	var aspect: float = minf(16.0/9.0,get_viewport().get_visible_rect().size.aspect())
+	var distance: float = 1.0
+	for point in points:
+		var local: Vector3 = axes.inverse()*(point-settings.overview_target)
+		distance = maxf(distance,local.z+maxf(absf(local.x)/(tangent*aspect),absf(local.y)/tangent)*settings.introduction_margin)
+	zoom_scale = (settings.overview_position-settings.overview_target).length()/distance
+	zoom_target = zoom_scale
+	frame(_overview_position(settings),settings.overview_target,0.0,&"overview")
+
+func introduce(settings: Resource) -> void:
+	var final: Vector3 = _overview_position(settings)
+	var close: Vector3 = settings.overview_target+(final-settings.overview_target).normalized()*22.0
+	frame(close,settings.overview_target,0.0,&"introduction")
+	frame(final,settings.overview_target,settings.introduction_duration*0.9,&"introduction")
+	motion.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+
+func finish_introduction() -> void:
+	cancel()
+	viewing = &"overview"
+	position = _overview_position(calibration)

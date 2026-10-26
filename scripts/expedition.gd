@@ -59,11 +59,11 @@ var station_preview: VBoxContainer:
 var star_map: Control
 var transition: CanvasLayer
 # Ephemeral presentation only; authoritative travel/rewards remain in State/Deck.
-enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, EXITED }
+enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, INTRO, EXITED }
 var phase: Phase = Phase.OVERVIEW
 var _presentation_revision: int = 0
 var transitioning: bool:
-	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL]
+	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL, Phase.INTRO]
 var map_system: int = -1
 var map_destination: int = -1
 
@@ -78,6 +78,7 @@ var service_confirmation_revision: int:
 	get:
 		return outpost_screen.revision if is_instance_valid(outpost_screen) else -1
 var return_to_outpost: bool = false
+var play_system_intro := false
 var selected_ship: int = 0
 var state: Resource
 var battle: Node
@@ -170,6 +171,7 @@ func _ready() -> void:
 		else:
 			start_battle(int(marker.index), int(marker.seed))
 
+	if play_system_intro and not resume_data.is_empty() and view_kind == "system" and _uses_3d_map(): _introduce_system()
 
 # Construct exploration controls at runtime; many of these nodes do not exist in expedition.tscn.
 func _build_ui() -> void:
@@ -240,7 +242,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 		star_map = null
 	screen.reset_view(kind, state, use_star_map, _icon)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
-		title.text = star_map.visual_data.name
+		screen.set_system_name(star_map.visual_data.name)
 	if not preserve_transition:
 		phase = {"system": Phase.OVERVIEW, "chasedown": Phase.CHASEDOWN,
 			"poi": Phase.DESTINATION, "preview": Phase.DESTINATION}.get(kind, Phase.REWARD)
@@ -249,7 +251,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			kind == "outcome" and state.pending_choice.is_empty() and map_destination != -1
 		)
 		var show_map: bool = kind == "system" or split
-		screen.map_layout(show_map, split)
+		screen.map_layout(show_map and state.hull > 0, split)
 		if is_instance_valid(star_map):
 			star_map.set_active(state.hull > 0 and show_map)
 			if kind == "system":
@@ -339,6 +341,7 @@ func start_expedition() -> bool:
 	_battle_marker = {}
 	_bind_progress()
 	show_system()
+	if play_system_intro and _uses_3d_map(): _introduce_system()
 	return true
 
 
@@ -385,6 +388,9 @@ func _save_and_quit() -> bool:
 
 func _notification(what: int) -> void:
 	if not persistence_enabled or state == null: return
+	if phase == Phase.INTRO and what in [NOTIFICATION_WM_GO_BACK_REQUEST,NOTIFICATION_APPLICATION_PAUSED]:
+		_cancel_presentation()
+		phase = Phase.OVERVIEW
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		var menu = battle.settings_button.menu if is_instance_valid(battle) else settings_button.menu
 		menu.present()
@@ -500,6 +506,7 @@ func _uses_3d_map() -> bool:
 
 
 func _show_star_map(resume_travel: bool = true) -> void:
+	var new_system: bool = map_system != state.system_number
 	if map_system != state.system_number:
 		map_system = state.system_number
 		map_destination = state.navigation_origin
@@ -570,7 +577,11 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		hash("%d:%d:sky" % [state.seed_used, state.system_number])
 	)
 	if _uses_3d_map():
-		title.text = star_map.visual_data.name
+		screen.set_system_name(star_map.visual_data.name)
+	if _uses_3d_map():
+		screen.overview_hud.attach_zoom(star_map)
+		screen._sync_map_rect()
+		if new_system: star_map.fit_overview()
 	var stopped: Array = state.intercepted_position()
 	if stopped.size() == 3 and _uses_3d_map():
 		star_map.orbit_index = -1
@@ -620,9 +631,24 @@ func _jump() -> void:
 	# Sole progression call, after reaching white. Rebuild without unlocking input.
 	if state.generate_system():
 		show_system(true)
+		await _introduce_system(true)
+		return
 	else:
 		star_map.overview()
 	await _reveal_presentation(revision, departing_state, Phase.OVERVIEW)
+
+
+func _introduce_system(reveal_white: bool = false) -> void:
+	var revision: int = _begin_presentation(Phase.INTRO)
+	var owner: Resource = state
+	var hud: Control = screen.overview_hud
+	hud.prepare_introduction(star_map.visual_data.name,state.system_number)
+	star_map.begin_introduction()
+	if reveal_white: transition.fade(0.0,star_system_settings.white_fade_duration)
+	if not await hud.introduce(star_system_settings.introduction_duration): return
+	if not _presentation_current(revision,owner): return
+	star_map.finish_introduction()
+	phase = Phase.OVERVIEW
 
 
 # Deferred resume is scoped to its overview and model, not merely a still-live node.

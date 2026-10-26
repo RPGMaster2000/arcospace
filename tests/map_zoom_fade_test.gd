@@ -19,14 +19,15 @@ func run() -> void:
 	var map = host.star_map
 	var camera = map.camera
 	var settings = map.settings
-	check(camera.zoom_target == settings.default_zoom and settings.default_zoom > 1, "Closer default overview")
+	var fitted_zoom: float = camera.zoom_target
+	check(fitted_zoom == camera.zoom_scale and fitted_zoom > 0, "Generated overview initializes synchronized fitted zoom")
 	var rng: int = host.state.rng.state
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
 	wheel.pressed = true
 	wheel.position = map.get_global_rect().get_center()
 	map._unhandled_input(wheel)
-	check(camera.zoom_target > settings.default_zoom, "Wheel zooms overview")
+	check(camera.zoom_target > fitted_zoom, "Wheel zooms overview")
 	camera.zoom_by(100)
 	check(is_equal_approx(camera.zoom_target, settings.maximum_zoom), "Maximum zoom clamps")
 	camera.zoom_by(0.001)

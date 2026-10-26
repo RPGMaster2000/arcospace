@@ -64,3 +64,7 @@ extends Resource
 
 @export_group("Replaceable encounter scenes")
 @export var destination_scenes: Dictionary[String, PackedScene] = {}
+
+@export_group("System introduction")
+@export_range(4.0, 6.0, 0.1) var introduction_duration: float = 5.0
+@export_range(1.05, 1.4, 0.01) var introduction_margin: float = 1.18

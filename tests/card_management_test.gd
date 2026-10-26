@@ -58,7 +58,7 @@ func run() -> void:
 		check(modal.shade.get_global_rect() == root.get_visible_rect(), "Covers entire viewport " + str(dimensions))
 		check(host.screen.process_mode == Node.PROCESS_MODE_DISABLED, "Underlying screen input disabled")
 		var event = InputEventMouseButton.new()
-		event.position = host.deck_button.get_global_rect().get_center()
+		event.position = modal.margin.get_global_rect().position-Vector2.ONE
 		event.button_index = MOUSE_BUTTON_LEFT
 		event.pressed = true
 		root.push_input(event, true)

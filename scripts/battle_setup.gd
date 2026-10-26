@@ -218,7 +218,7 @@ func _start() -> void:
 		save_notice.dialog_text = save_store.error
 		save_notice.popup_centered(Vector2i(520, 180))
 		return
-	launch_data = {"state": candidate, "battle": {}}
+	launch_data = {"state": candidate, "battle": {}, "new_system":true}
 	_set_actions_enabled(false)
 	showcase.select_ship(selected_ship, true)
 	showcase.depart()
@@ -246,6 +246,7 @@ func _fade_to_game(data: Dictionary, seconds: float) -> void:
 
 func _launch(data: Dictionary) -> void:
 	var expedition = load("res://scenes/expedition.tscn").instantiate()
+	expedition.play_system_intro = data.get("new_system",false)
 	expedition.selected_ship = data.state.player_ship
 	expedition.resume_data = data
 	expedition.save_store = save_store

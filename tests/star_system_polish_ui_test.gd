@@ -22,22 +22,22 @@ func run():
   var screen = host.screen
   var map = host.star_map
   check(screen.title.text==map.visual_data.name,"Header shows generated astronomical name only")
-  check(screen.jump_button.get_parent().get_parent()==screen.heading_row,"FTL lives in top bar")
+  check(screen.jump_button.get_parent()==screen.overview_hud.panels[3],"FTL lives in floating lower-left panel")
   check(screen.jump_button.disabled==not host.state.can_jump(),"FTL legality remains authoritative")
   check(root.get_visible_rect().encloses(screen.heading_row.get_global_rect()),"Header fits viewport")
   var previous: Control
   for control in screen.heading_row.get_children():
    if previous != null: check(previous.get_global_rect().end.x<=control.get_global_rect().position.x+1,"Header controls do not overlap")
    previous = control
-  check(map.clip_contents and map.get_global_rect().position.y>=screen.resource_bar.get_global_rect().end.y,"Map clips labels below reserved HUD")
+  check(map.clip_contents and map.get_global_rect()==root.get_visible_rect(),"Map occupies viewport with HUD exclusion regions")
   var tag = map.markers[0]
   var original: Vector2 = tag.position
   tag.position = Vector2(0,-tag.size.y)
   check(not tag._has_point(tag.size*0.5),"Off-map clipped marker cannot intercept input")
   tag.position = original
-  check(map.zoom_controls.visible and map.get_global_rect().encloses(map.zoom_controls.get_global_rect()),"Zoom controls fit map")
+  check(screen.overview_hud.utilities.get_child_count()==5 and not map.zoom_controls.visible,"Zoom controls fit map")
   var before: float = map.camera.zoom_target
-  map.zoom_controls.get_child(1).pressed.emit()
+  screen.overview_hud.utilities.get_child(4).pressed.emit()
   check(map.camera.zoom_target>before,"Plus button uses existing bounded zoom")
   map.camera.zoom_by(9999)
   check(map.camera.zoom_target==map.settings.maximum_zoom,"Zoom buttons retain max calibration")
