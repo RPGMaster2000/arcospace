@@ -10,14 +10,14 @@ class_name ExpeditionRules
 @export_range(2, 3, 1) var maximum_station_interval: int = 3
 ## TUNE: Shipyard base price lives in trading_outpost.tres → Approaches → Shipyard.
 ## First price increase (25 → 40); subsequent increases add acceleration: 15, 20, 25, ...
-@export_range(0, 1000, 1) var production_price_increment: int = 15
+@export_range(0, 1000, 1) var production_price_increment: int = 20
 @export_range(0, 1000, 1) var production_price_acceleration: int = 5
 @export var pois: Array[PoiData] = []
 @export_range(2, 20, 1) var encounters_per_system: int = 9
-@export_range(1, 19, 1) var minimum_battles: int = 1
-@export_range(1, 19, 1) var maximum_battles: int = 3
-@export_range(0, 19, 1) var minimum_ordinary: int = 4
-@export_range(0, 19, 1) var maximum_ordinary: int = 6
+@export_range(1, 19, 1) var minimum_battles: int = 2
+@export_range(1, 19, 1) var maximum_battles: int = 4
+@export_range(0, 19, 1) var minimum_ordinary: int = 3
+@export_range(0, 19, 1) var maximum_ordinary: int = 5
 @export_range(0, 19, 1) var minimum_hazardous: int = 0
 @export_range(0, 19, 1) var maximum_hazardous: int = 3
 @export_range(0.01, 10, 0.01) var ordinary_weight: float = 1.0
@@ -52,12 +52,12 @@ class_name ExpeditionRules
 
 @export_group("Sublight Chasedown")
 ## TUNE: Chance per valid PoI-to-PoI movement; 0 disables interceptions, 1 always intercepts.
-@export_range(0.0, 1.0, 0.01) var chasedown_chance: float = 0.05
+@export_range(0.0, 1.0, 0.01) var chasedown_chance: float = 0.08
 ## TUNE: Maximum interceptions per system; resets only on entering a new system.
-@export_range(0, 5, 1) var chasedown_limit: int = 1
+@export_range(0, 5, 1) var chasedown_limit: int = 2
 ## TUNE: Additive risk per completed regular encounter, before profile weighting and cap.
-@export_range(0.0, 1.0, 0.001) var pressure_chasedown_increment: float = 0.015
-@export_range(0.0, 1.0, 0.01) var maximum_chasedown_chance: float = 0.35
+@export_range(0.0, 1.0, 0.001) var pressure_chasedown_increment: float = 0.03
+@export_range(0.0, 1.0, 0.01) var maximum_chasedown_chance: float = 0.65
 ## TUNE: Response titles, existing next-battle modifiers and immediate Hull adjustment.
 ## Evasive charge is additionally capped before the first-turn tick to avoid instant escape.
 @export var chasedown_responses: Array[Dictionary] = [
