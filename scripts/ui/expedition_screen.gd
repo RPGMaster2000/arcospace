@@ -175,16 +175,6 @@ func _build_ui() -> void:
 	jump_slot.add_child(jump_button)
 	jump_button.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	jump_button.clip_text = true
-	var charge := ProgressBar.new()
-	charge.name = "Charge"
-	charge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	charge.show_percentage = false
-	charge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	charge.offset_left = 8
-	charge.offset_right = -8
-	charge.offset_top = -5
-	charge.offset_bottom = -2
-	jump_button.add_child(charge)
 	overview_hud = EdgeHUD.new()
 	add_child(overview_hud)
 	var utility_actions: Array[Button] = [deck_button, legend, settings_button]
@@ -371,15 +361,12 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	overview_hud.system_number = state.system_number
 	overview_hud.hull_bar.max_value = state.ship().hull_capacity
 	overview_hud.hull_bar.value = state.hull
-	jump_button.text = "FTL %d/%d · %s" % [state.ftl_charge,state.required_ftl_charge,"JUMP" if state.ftl_charge >= state.required_ftl_charge else "CHARGING"]
-	var charge: ProgressBar = jump_button.get_node("Charge")
-	charge.max_value = state.required_ftl_charge
-	charge.value = state.ftl_charge
+	overview_hud.set_metagame(state.profile_name(), state.pressure, state.ftl_status())
+	jump_button.text = state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
 	if state.mandatory_boss_pending():
-		jump_button.text = "FTL %d/%d · BOSS LOCK" % [state.ftl_charge,state.required_ftl_charge]
 		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:
-		jump_button.tooltip_text = "Jump to the next system. FTL resets to zero on arrival." if state.can_jump() else "Requires %d more charge. FTL resets on arrival." % maxi(0,state.required_ftl_charge-state.ftl_charge)
+		jump_button.tooltip_text = "Jump to the next system. FTL Access resets on arrival." if state.can_jump() else "Complete an FTL objective to acquire access."
 	jump_button.modulate = Color("a3f3e5") if state.can_jump() else Color.WHITE
 	jump_button.disabled = not state.can_jump()
 	jump_button.visible = kind == "system" and state.hull > 0

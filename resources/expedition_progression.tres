@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1")
-ftl_carryover_cap = 0
 systems_per_difficulty = 3
 hull_bonus_per_level = 2
 shields_bonus_per_level = 1

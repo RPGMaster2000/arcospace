@@ -41,9 +41,8 @@ func run_tests() -> void:
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		host.selected_ship = ship_index
 		host.start_expedition()
-		while host.state.service.is_empty():
-			host.state.ftl_charge = host.state.required_ftl_charge
-			host.state.generate_system()
+		# Station geometry is independent of procedural station probability.
+		host.state.service = {"kind":"service", "poi":host.rules.trading_outpost, "title":"Trading Outpost", "completed":false}
 		for window_size in [Vector2i(1280,720),Vector2i(1560,720),Vector2i(960,540),Vector2i(1280,480),Vector2i(686,384)]:
 			root.size = window_size
 			host.state.salvage = 1000
@@ -53,8 +52,8 @@ func run_tests() -> void:
 			check(host.approach_buttons.size() == 4 and host.resource_bar.entries.salvage.text.contains("1000"), "Four services and current balance shown")
 			check(host.approach_buttons[3].details.text.contains(str(host.state.service_cost(3))), "Current escalating price shown")
 			geometry()
-			var ftl: int = host.state.ftl_charge
-			var required: int = host.state.required_ftl_charge
+			var access: bool = host.state.ftl_access
+			var pressure: int = host.state.pressure
 			host.approach_buttons[0].pressed.emit()
 			check(host.repair_selector.visible and host.confirm_button.disabled, "Zero repair cannot confirm")
 			host.confirm_button.pressed.emit()
@@ -91,7 +90,7 @@ func run_tests() -> void:
 				check(host.state.salvage == balance - price and host.view_kind == "poi" and host.state.pending_choice.is_empty(), "Each service spends once and returns to station")
 				if slot == 1: check(host.state.modifier_value("materials") == material_bonus + 5, "UI supplies add five exactly once")
 				if slot == 2: check(host.state.acquired_cards.size() == card_count + 1, "UI acquisition adds one card exactly once")
-			check(host.state.ftl_charge == ftl and host.state.required_ftl_charge == required, "All UI purchases preserve travel accounting")
+			check(host.state.ftl_access == access and host.state.pressure == pressure, "All UI purchases preserve FTL access and pressure")
 			host.return_button.pressed.emit()
 			check(host.view_kind == "system" and host.state.can_visit(host.state.SERVICE_INDEX), "Return leaves station revisitable")
 			host.visit(host.state.SERVICE_INDEX)

@@ -6,12 +6,16 @@ const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const VERSION: int = 1
 const PATH: String = "user://expedition_save.json"
-const COUNTERS = ["hull", "salvage", "battles_won", "ftl_charge", "required_ftl_charge",
+const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"system_number", "next_outpost_system", "station_production_purchases", "service_revision",
 	"choice_amount", "last_poi_success", "upgrades_remaining", "navigation_origin",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
-	"completed", "charge_awarded", "chasedown", "response", "resolution", "intercept_position"]
+	"completed", "chasedown", "response", "resolution", "intercept_position",
+	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive"]
+const OBJECTIVE_POIS = [preload("res://encounters/fuel_depot.tres"),
+	preload("res://encounters/sensor_relay.tres"), preload("res://encounters/ancient_navigation_array.tres")]
+const PROFILE_IDS = ["quiet", "industrial", "hostile", "ancient"]
 var path: String = PATH
 var error: String = ""
 var warning: String = ""
@@ -49,7 +53,9 @@ static func _entry(value: Dictionary) -> Dictionary:
 
 static func encode(state: Resource) -> Dictionary:
 	var deck: Dictionary = state.deck_snapshot()
-	var data: Dictionary = {"ship_id": state.ship().resource_path,
+	var data: Dictionary = {"metagame_version": 1, "pressure": state.pressure,
+		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
+		"navigation": state.navigation.snapshot(), "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
 		"pending_choice": state.pending_choice, "last_outcome": state.last_outcome,
 		"production_upgrades": state.production_upgrades.duplicate(),
@@ -74,17 +80,19 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 	if not value.get("title") is String or value.title.length() > 512: return {}
 	if not value.get("completed") is bool: return {}
 	for key in value:
-		if key not in ENTRY_FIELDS + ["enemy_id", "poi_id"]: return {}
-		if key in ["mandatory_boss", "charge_awarded", "chasedown"] and not value[key] is bool: return {}
-		if key in ["system_number", "modifier", "response"] and not _integer(value[key], -1): return {}
+		if key not in ENTRY_FIELDS + ["enemy_id", "poi_id", "charge_awarded"]: return {}
+		if key in ["mandatory_boss", "charge_awarded", "chasedown", "objective_known", "pressure_sensitive"] and not value[key] is bool: return {}
+		if key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance"] and not _integer(value[key], -1): return {}
 	if value.has("intercept_position"):
 		var at: Variant = value.intercept_position
 		if not value.get("chasedown", false) or not at is Array or at.size() not in [2,3]: return {}
 		for coordinate in at:
 			if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)) or absf(float(coordinate)) > 10000: return {}
 	if value.has("resolution") and value.resolution not in ["escaped", "defeated"]: return {}
+	if value.has("objective_role") and value.objective_role not in ["", "access", "prerequisite"]: return {}
 	var result: Dictionary = value.duplicate(true)
-	for key in ["system_number", "modifier", "response"]:
+	result.erase("charge_awarded")
+	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance"]:
 		if result.has(key): result[key] = int(result[key])
 	if value.kind == "battle":
 		if not ships.has(value.get("enemy_id")): return {}
@@ -102,9 +110,15 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 # Returns null on any invalid reference/shape; never loads a path supplied by a save.
 func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data is Dictionary: return null
+	var legacy: bool = not data.has("metagame_version")
+	if legacy:
+		data = _migrate_legacy(data)
+		if data.is_empty(): return null
+	if data.get("metagame_version") != 1: return null
+	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
 	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()])
-	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost])
+	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
 	if not data.get("seed") is String or not data.seed.is_valid_int(): return null
@@ -112,10 +126,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not data.get(key) is String or data[key].length() > 65536: return null
 	if data.pending_choice not in ["", "card", "upgrade", "replace", "resource", "production"]: return null
 	for key in COUNTERS:
-		var minimum: int = -2 if key in ["navigation_origin", "travel_destination"] else (-1 if key in ["pending_destination", "chasedown_index", "last_poi_success"] else 0)
+		var minimum: int = -3 if key in ["navigation_origin", "travel_destination", "pending_destination"] else (-1 if key in ["chasedown_index", "last_poi_success"] else 0)
 		if not _integer(data.get(key), minimum): return null
 	if data.hull <= 0 or data.system_number < 1 or data.salvage < 0: return null
-	if data.ftl_charge < 0 or data.required_ftl_charge < 1 or int(data.last_poi_success) not in [-1, 0, 1]: return null
+	if int(data.last_poi_success) not in [-1, 0, 1]: return null
 	if not _int_map(data.get("production_upgrades"), State.PRODUCTION, 0): return null
 	var modifier_keys: Array = State.RESOURCES + ["shields", "emp_pulse_charge", "emp_pulse_offline"]
 	if not _int_map(data.get("bonuses"), modifier_keys, 0) or not _int_map(data.get("penalties"), modifier_keys, -1000000000): return null
@@ -137,6 +151,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		var entry: Dictionary = _decode_entry(value, enemies, pois)
 		if entry.is_empty() or entry.kind == "service": return null
 		entries.append(entry)
+	if not _valid_objectives(entries, data.ftl_access): return null
 	if not data.get("service") is Dictionary: return null
 	var service: Dictionary = {}
 	if not data.service.is_empty():
@@ -152,6 +167,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for field in ["seed", "state"]:
 			if not generator.get(field) is String or not generator[field].is_valid_int(): return null
 	var state = State.new()
+	if not data.get("navigation") is Dictionary or not state.navigation.restore(data.navigation): return null
+	if not _valid_navigation(data, entries): return null
+	state.system_profile = data.system_profile
+	state.ftl_access = data.ftl_access
 	state.rules = configuration
 	state.player_ship = Ships.PLAYERS.find(players[data.ship_id])
 	state.seed_used = int(data.seed)
@@ -182,6 +201,90 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		generator.seed = int(data.rng[key].seed)
 		generator.state = int(data.rng[key].state)
 	return state
+
+
+# Payload migration is deterministic and rewardless: retain every existing encounter,
+# deck ledger, outcome and RNG stream, adding an always-viable route only when needed.
+static func _migrate_legacy(original: Dictionary) -> Dictionary:
+	if not _integer(original.get("ftl_charge"), 0) or not _integer(original.get("required_ftl_charge"), 1): return {}
+	if not original.get("encounters") is Array: return {}
+	for key in ["navigation_origin", "travel_destination", "pending_destination", "chasedown_index"]:
+		if not _integer(original.get(key), -2): return {}
+	var data: Dictionary = original.duplicate(true)
+	data.metagame_version = 1
+	data.system_profile = "industrial"
+	data.pressure = 0
+	data.ftl_access = int(data.ftl_charge) >= int(data.required_ftl_charge)
+	data.erase("ftl_charge")
+	data.erase("required_ftl_charge")
+	for entry in data.encounters:
+		if not entry is Dictionary: return {}
+		if entry.get("completed", false) and not entry.get("chasedown", false): data.pressure += 1
+		entry.erase("charge_awarded")
+	if not data.ftl_access:
+		data.encounters.append({"kind": "poi", "poi_id": OBJECTIVE_POIS[0].resource_path,
+			"title": OBJECTIVE_POIS[0].title, "completed": false, "objective_role": "access",
+			"objective_prerequisite": -1, "objective_known": false, "pressure_sensitive": false,
+			"pressure_tolerance": 12})
+	var traveling: bool = int(data.get("travel_destination", -1)) != -1
+	var position: Array = []
+	var chase: int = int(data.get("chasedown_index", -1))
+	if chase >= 0 and chase < data.encounters.size():
+		var entry: Dictionary = data.encounters[chase]
+		if entry.get("chasedown", false) and not entry.get("completed", false):
+			traveling = false
+			data.travel_destination = -1
+			var saved: Variant = entry.get("intercept_position", [])
+			if not saved is Array: return {}
+			if saved.size() == 3: position = saved.duplicate()
+			elif saved.size() == 2: position = [saved[0], 0.0, saved[1]]
+	data.navigation = {"position": position, "target": [], "leg_active": traveling,
+		"rolled_this_leg": traveling, "cooldown_remaining": 10.0}
+	# Older numeric travel has no world target; presentation restores it from the marker.
+	return data
+
+
+static func _valid_objectives(entries: Array[Dictionary], access: bool) -> bool:
+	var routes: int = 0
+	for index in range(entries.size()):
+		var entry: Dictionary = entries[index]
+		var role: String = entry.get("objective_role", "")
+		var prerequisite: int = int(entry.get("objective_prerequisite", -1))
+		if role.is_empty():
+			if prerequisite != -1: return false
+			continue
+		if entry.kind != "poi" or entry.get("pressure_sensitive", false): return false
+		if not entry.get("poi") in OBJECTIVE_POIS: return false
+		if role == "prerequisite":
+			if prerequisite != -1: return false
+		else:
+			routes += 1
+			if prerequisite >= 0:
+				if prerequisite >= entries.size() or prerequisite == index: return false
+				var required: Dictionary = entries[prerequisite]
+				if required.get("objective_role", "") != "prerequisite": return false
+				if int(required.get("objective_prerequisite", -1)) != -1: return false
+				if entry.completed and not required.completed: return false
+			if entry.completed and not access: return false
+	# A migrated already-ready run may have no objective in its historic roster.
+	return routes > 0 or access
+
+
+static func _valid_navigation(data: Dictionary, entries: Array[Dictionary]) -> bool:
+	var nav: Dictionary = data.navigation
+	var destination: int = int(data.travel_destination)
+	if int(data.pending_destination) == -2: return false
+	if destination == -2 and data.service.is_empty(): return false
+	if destination >= 0 and entries[destination].completed: return false
+	if nav.leg_active:
+		if destination == -1: return false
+		if destination == -3 and (nav.target.size() != 3 or nav.position.size() != 3): return false
+	elif destination != -1: return false
+	if not nav.leg_active and not nav.target.is_empty(): return false
+	if int(data.chasedown_index) >= 0:
+		var encounter: Dictionary = entries[int(data.chasedown_index)]
+		if not encounter.completed and nav.leg_active: return false
+	return true
 
 
 static func _json(text: String) -> Variant:
@@ -244,6 +347,8 @@ func load_run() -> Dictionary:
 	if best.ended:
 		_remove_files()
 		return {}
+	if not best.expedition.has("metagame_version"):
+		warning += (" " if not warning.is_empty() else "") + "Updated expedition: FTL Access replaces charging; a safe access route is available. Travel interception cooldown is preserved conservatively."
 	return {"state": decode(best.expedition), "battle": best.battle, "data": best.expedition}
 
 

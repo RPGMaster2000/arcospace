@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/poi_data.gd" id="Poi"]
+[ext_resource type="Script" path="res://scripts/expedition/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" path="res://scripts/expedition/encounter_outcome.gd" id="Outcome"]
+
+[sub_resource type="Resource" id="Result"]
+script = ExtResource("Outcome")
+blurb = "FTL Access secured."
+
+[sub_resource type="Resource" id="Action"]
+script = ExtResource("Approach")
+title = "Acquire FTL Access"
+success = SubResource("Result")
+failure = SubResource("Result")
+
+[resource]
+script = ExtResource("Poi")
+title = "Ancient Navigation Array"
+description = "A navigation array awaits a relay signal."
+approaches = Array[ExtResource("Approach")]([SubResource("Action")])

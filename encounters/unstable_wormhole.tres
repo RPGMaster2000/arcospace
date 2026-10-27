@@ -38,7 +38,6 @@ next_battle = {
 script = ExtResource("Outcome")
 blurb = "The shortcut contributes extra interstellar charge."
 salvage = 5
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -59,7 +58,6 @@ next_battle = {
 script = ExtResource("Outcome")
 blurb = "A stable corridor supplies one extra travel charge."
 salvage = 7
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -82,7 +80,6 @@ next_battle = {
 script = ExtResource("Outcome")
 blurb = "The reinforced probe charts a shortcut and recovers valuable readings."
 salvage = 9
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")

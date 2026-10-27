@@ -80,11 +80,16 @@ func _configure_sky(visual_seed: int) -> void:
 
 
 func destination(index: int) -> Vector2:
-	return SERVICE if index == -2 else POINTS[index]
+	if index == -2: return SERVICE
+	if markers.size() - int(markers.has(-2)) <= POINTS.size(): return POINTS[index]
+	var count: int = markers.size() - int(markers.has(-2))
+	var columns: int = ceili(sqrt(float(count)))
+	var rows: int = ceili(float(count)/columns)
+	return Vector2(lerpf(.12,.78,float(index%columns)/maxi(1,columns-1)),lerpf(.18,.82,float(index/columns)/maxi(1,rows-1)))
 
 
 func _layout() -> void:
-	var target_size = Vector2(clampf(size.x * .23, 120, 230), clampf(size.y * .20, 64, 100))
+	var target_size = Vector2(clampf(size.x * (.18 if markers.size() > 7 else .23), 100, 230), clampf(size.y * (.17 if markers.size() > 7 else .20), 60, 100))
 	for index in markers:
 		var button: Button = markers[index]
 		button.size = target_size

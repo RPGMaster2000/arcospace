@@ -16,6 +16,7 @@ var reserved: Array[Rect2] = []
 var resources: HBoxContainer
 var status: VBoxContainer
 var utilities: HBoxContainer
+var metagame: Label
 var hull_bar: ProgressBar
 var identifier: Label
 var title: Label
@@ -60,6 +61,11 @@ func _ready() -> void:
 	status = VBoxContainer.new()
 	status.add_theme_constant_override("separation",2)
 	panels[2].add_child(status)
+	metagame = Label.new()
+	metagame.name = "SystemPressure"
+	metagame.add_theme_font_size_override("font_size", 14)
+	metagame.mouse_filter = MOUSE_FILTER_IGNORE
+	status.add_child(metagame)
 	hull_bar = ProgressBar.new()
 	hull_bar.custom_minimum_size.y = 4
 	hull_bar.show_percentage = false
@@ -334,3 +340,10 @@ func _release_zoom() -> void:
 		originals.erase(button)
 	_zoom_actions.clear()
 	_zoom_source = null
+
+
+# Read-only facts from the expedition screen; no gameplay state is stored here.
+func set_metagame(profile: String, pressure: int, access: String) -> void:
+	metagame.text = "%s · PRESSURE %d / 12\n%s" % [profile, pressure, access]
+	metagame.add_theme_color_override("font_color", Color("ff8e9b") if pressure >= 7 else (Color("e3bb6b") if pressure >= 4 else Color("9ad8e5")))
+	queue_layout()

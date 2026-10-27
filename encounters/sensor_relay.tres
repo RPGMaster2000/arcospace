@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/poi_data.gd" id="Poi"]
+[ext_resource type="Script" path="res://scripts/expedition/encounter_approach.gd" id="Approach"]
+[ext_resource type="Script" path="res://scripts/expedition/encounter_outcome.gd" id="Outcome"]
+
+[sub_resource type="Resource" id="Result"]
+script = ExtResource("Outcome")
+blurb = "Navigation objective identified."
+
+[sub_resource type="Resource" id="Action"]
+script = ExtResource("Approach")
+title = "Activate relay"
+success = SubResource("Result")
+failure = SubResource("Result")
+
+[resource]
+script = ExtResource("Poi")
+title = "Sensor Relay"
+description = "A dormant relay can identify a navigation objective."
+approaches = Array[ExtResource("Approach")]([SubResource("Action")])

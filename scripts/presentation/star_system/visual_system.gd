@@ -18,7 +18,7 @@ static func orbit_point(planet: Dictionary, angle: float) -> Vector3:
 	var point = Vector3(a * (cos(angle) - e), 0, a * sqrt(1.0 - e * e) * sin(angle))
 	return Basis(Vector3.UP, planet.orientation) * Basis(Vector3.RIGHT, planet.inclination) * point
 
-static func generate(seed_value: int, number: int, entries: Array, settings: Resource) -> Dictionary:
+static func generate(seed_value: int, number: int, entries: Array, settings: Resource, profile: String = "industrial") -> Dictionary:
 	var rng = random_for(seed_value, number, "planets")
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {}, "assignments": {}}
 	var count: int = rng.randi_range(2, clampi(settings.maximum_planets, 2, 4))
@@ -76,18 +76,28 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		result.placement[entry.index] = placed
 		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
 	var star_rng = random_for(seed_value, number, "star")
-	result.star_color = Color.from_hsv(star_rng.randf_range(0.02,0.16), 0.45, 1)
+	# Independent cosmetic streams keep appearance changes away from encounter/loot RNG.
+	var favored: Array = [0.02,0.08,0.56,0.64]
+	match profile:
+		"quiet": favored = [0.07,0.12,0.54]
+		"hostile": favored = [0.0,0.04,0.63]
+		"ancient": favored = [0.54,0.65,0.78,0.9]
+	var hue: float = star_rng.randf() if star_rng.randf() < 0.18 else fposmod(float(favored[star_rng.randi_range(0,favored.size()-1)])+star_rng.randf_range(-0.035,0.035),1.0)
+	result.star_color = Color.from_hsv(hue,star_rng.randf_range(0.48,0.88),1)
+	var atmosphere_rng = random_for(seed_value,number,"atmosphere")
+	var bright_chance: float = 0.55 if profile == "ancient" else (0.2 if profile == "quiet" else 0.35)
+	result.atmosphere_strength = atmosphere_rng.randf_range(1.1,1.55) if atmosphere_rng.randf() < bright_chance else atmosphere_rng.randf_range(0.7,1.05)
 	return result
 
 # Only generation-time cosmetic calculations. No live camera or scene is required.
 static func placement_region(entry: Dictionary, planets: Array) -> Vector2:
 	var outer: float = planets.back().distance if not planets.is_empty() else 12.0
 	match entry.get("model_kind",""):
-		"trading_outpost": return Vector2(maxf(7,outer*0.75),minf(23,outer+3))
-		"spatial_anomaly","unstable_wormhole","radiation_nebula": return Vector2(maxf(10,outer*0.85),minf(23,outer+6))
+		"trading_outpost": return Vector2(maxf(7,outer*0.75),minf(27,outer+4))
+		"spatial_anomaly","unstable_wormhole","radiation_nebula": return Vector2(maxf(10,outer*0.85),minf(27,outer+7))
 		"mining_operation": return Vector2(5,maxf(10,outer))
 		"derelict_starship": return Vector2(5,maxf(10,outer*0.85))
-	return Vector2(5,maxf(12,minf(23,outer+2)))
+	return Vector2(5,maxf(12,minf(27,outer+4)))
 
 static func model_radius(entry: Dictionary) -> float:
 	if entry.get("profile")!=null: return 1.2

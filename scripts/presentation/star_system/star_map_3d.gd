@@ -3,6 +3,8 @@ extends Control
 signal arrived(index: int)
 signal interrupted
 signal travel_started
+signal free_move_requested(point: Vector3)
+signal free_arrived
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
 const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
@@ -10,6 +12,7 @@ const Planets = preload("res://scripts/presentation/star_system/planet_models.gd
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
 var run_seed: int = 0
 var system_number: int = 1
+var system_profile: String = "industrial"
 var visual_data: Dictionary = {}
 var visual_root: Node3D
 var destination_root: Node3D
@@ -31,6 +34,9 @@ var markers: Dictionary = {}
 var input_allowed: Callable
 var before_travel: Callable
 var intercept_travel: Callable
+var before_free_travel: Callable
+var intercept_free_travel: Callable
+var interception_pending := false
 var traveling := false
 var travel_duration := 1.4
 var motion: Tween
@@ -130,6 +136,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 				markers[entry.index].disabled = entry.completed
 				markers[entry.index].set_state(entry.completed,false,false)
 				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index))
+				markers[entry.index].set_objective(entry.get("objective_marker",""))
 		overview()
 		return
 	if motion and motion.is_valid():
@@ -139,7 +146,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	configured_seed = visual_seed
 	travel_duration = duration
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
-	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings)
+	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings, system_profile)
 	for layer in [visual_root,destination_root,background]:
 		if is_instance_valid(layer):
 			world.remove_child(layer)
@@ -159,7 +166,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	background.name = "BackgroundEnvironment"
 	world.add_child(background)
 	camera.overview(settings, true)
-	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"))
+	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength)
 	for p in visual_data.planets:
 		var orbit: MeshInstance3D = Planets.orbit(p,settings)
 		visual_root.add_child(orbit)
@@ -213,6 +220,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.style_tag(entry.color)
 		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index))
+		button.set_objective(entry.get("objective_marker",""))
+		button.hit_allowed = func(point): return not point_is_reserved(point)
+		button.nearest_hit = func(point): return nearest_marker(point) == index
 		button.disabled = entry.completed
 		button.set_state(entry.completed,false,false)
 		preload("res://scripts/audio/sfx.gd").bind_ui(button)
@@ -272,9 +282,9 @@ func _process(delta: float) -> void:
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
 		button.visible = not focused and not introducing and not camera.is_position_behind(point)
-		var blocked: bool = not interactive or traveling or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
+		var blocked: bool = not interactive or interception_pending or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
 		button.set_state(button.completed,blocked,index==selected_index)
-		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
+		button.mouse_filter = MOUSE_FILTER_IGNORE # One release-based map arbiter handles touch and mouse.
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
 		if hud_regions.any(func(rect): return rect.intersects(button.get_global_rect().grow(14))): button.visible = false
@@ -326,23 +336,40 @@ func _facing_basis(direction: Vector3, bank: float = 0.0) -> Basis:
 
 
 func travel(index: int) -> void:
-	if traveling or not interactive or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
+	if not interactive or interception_pending or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
 	_select_destination(index)
 	feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
-	feedback.set_travel(true)
+	_start_journey(objects[index].position + Vector3(_orbit_radius(index), 0.15, 0), index, intercepted)
+
+
+# Free movement uses exactly the same presentation and interception path as PoI travel.
+# The coordinator authorizes intent; this map never changes expedition state.
+func travel_to_position(point: Vector3, check_eligibility: bool = true) -> void:
+	if not interactive or interception_pending or focused:
+		return
+	if check_eligibility and before_free_travel.is_valid() and not before_free_travel.call(point):
+		return
+	var intercepted: bool = check_eligibility and intercept_free_travel.is_valid() and intercept_free_travel.call(point)
+	_select_destination(-1)
+	feedback.acknowledge(point,0.45,Color("8de8ff"))
+	_start_journey(point, -3, intercepted)
+
+
+func _start_journey(destination: Vector3, index: int, intercepted: bool) -> void:
+	if motion and motion.is_valid(): motion.kill()
+	if not traveling: feedback.set_travel(true)
 	traveling = true
+	interception_pending = intercepted
 	travel_started.emit()
 	orbit_index = -1
-	var origin := ship.position
-	var destination: Vector3 = objects[index].position + Vector3(_orbit_radius(index), 0.15, 0)
+	var origin: Vector3 = ship.position
 	travel_direction = destination - origin
 	motion = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if intercepted:
-		# Same stop time as the existing map. Never emit the original arrival.
 		var fraction := minf(0.5 / maxf(travel_duration, 0.6), 0.8)
 		motion.tween_property(ship, "position", origin.lerp(destination, fraction), 0.5)
 		motion.tween_callback(_impact)
@@ -353,10 +380,21 @@ func travel(index: int) -> void:
 		motion.tween_callback(func():
 			traveling = false
 			feedback.set_travel(false,true)
-			feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
-			orbit_index = index
-			orbit_angle = 0.0
-			arrived.emit(index))
+			if index == -3:
+				free_arrived.emit()
+			else:
+				feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
+				orbit_index = index
+				orbit_angle = 0.0
+				arrived.emit(index))
+
+
+func apply_navigation_position(point: Vector3) -> void:
+	if motion and motion.is_valid(): motion.kill()
+	traveling = false
+	orbit_index = -1
+	ship.position = point
+	if is_instance_valid(feedback): feedback.set_travel(false)
 
 
 func _impact() -> void:
@@ -401,6 +439,7 @@ func focus(index: int) -> void:
 
 
 func overview() -> void:
+	interception_pending = false
 	_restore_tactical()
 	focus_orbit_enabled = false
 	orbit_pointer = -2
@@ -466,48 +505,100 @@ func _input(event: InputEvent) -> void:
 	if not _zoom_enabled():
 		_end_pinch()
 		return
-	if event is InputEventScreenTouch and event.pressed and point_is_reserved(event.position): return
-	if event is InputEventMouseButton and event.pressed and point_is_reserved(event.position): return
-	if event is InputEventScreenTouch and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
-	if event is InputEventMouseButton and event.pressed and zoom_controls.visible and zoom_controls.get_global_rect().has_point(event.position): return
 	if event is InputEventScreenTouch:
-		if event.pressed and get_global_rect().has_point(event.position):
-			if touches.is_empty():
-				drag_origin = event.position
+		if event.pressed:
+			if point_is_reserved(event.position) or not get_global_rect().has_point(event.position): return
+			if touches.is_empty(): drag_origin = event.position
 			touches[event.index] = event.position
+			if touches.size() >= 2:
+				pinching = true
+				pinch_distance = _touch_distance()
+				_block_markers()
 		else:
+			if not touches.has(event.index): return
+			var tap: bool = not pinching and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
 			touches.erase(event.index)
-		if touches.size() == 2 and not pinching:
-			pinching = true
-			pinch_distance = _touch_distance()
-			_block_markers()
-		if pinching or dragging:
-			gesture_block_until = Time.get_ticks_msec() + 180
+			if tap and touches.is_empty(): _tap_at(event.position)
+			if pinching or dragging: gesture_block_until = Time.get_ticks_msec() + 180
+			if touches.is_empty(): _end_pinch()
 			get_viewport().set_input_as_handled()
-			if touches.is_empty():
-				_end_pinch()
 	elif event is InputEventScreenDrag and touches.has(event.index):
 		var previous: Vector2 = touches[event.index]
 		touches[event.index] = event.position
 		if pinching:
 			var distance: float = _touch_distance()
-			if distance > 1.0 and pinch_distance > 1.0:
-				camera.zoom_by(distance / pinch_distance)
+			if distance > 1.0 and pinch_distance > 1.0: camera.zoom_by(distance / pinch_distance)
 			pinch_distance = distance
 			get_viewport().set_input_as_handled()
-		elif touches.size() == 1:
-			_drag_map(previous, event.position)
+		elif touches.size() == 1: _drag_map(previous, event.position)
 	elif event is InputEventMouseButton and event.device != -1 and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and get_global_rect().has_point(event.position):
+		if event.pressed:
+			if point_is_reserved(event.position) or not get_global_rect().has_point(event.position): return
 			mouse_down = true
 			drag_origin = event.position
-		elif not event.pressed:
-			mouse_down = false
-			if dragging:
-				get_viewport().set_input_as_handled()
-				_end_pinch()
-	elif event is InputEventMouseMotion and event.device != -1 and mouse_down:
-		_drag_map(event.position - event.relative, event.position)
+		elif mouse_down:
+			var tap: bool = not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
+			if tap: _tap_at(event.position)
+			if dragging: gesture_block_until = Time.get_ticks_msec() + 180
+			_end_pinch()
+			get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and event.device != -1:
+		if mouse_down: _drag_map(event.position - event.relative, event.position)
+		var nearest: int = nearest_marker(event.position)
+		for index in markers: markers[index]._set_hovered(index == nearest)
+
+
+# The same nearest-target arbitration is used for native touch, mouse and GUI hit tests.
+func nearest_marker(point: Vector2) -> int:
+	if point_is_reserved(point) or not get_global_rect().has_point(point): return -1
+	var nearest: int = -1
+	var distance: float = INF
+	for index in markers:
+		var button = markers[index]
+		if button.disabled or button.unavailable or not button.is_visible_in_tree(): continue
+		var candidate: float = button.hit_distance(point - button.global_position)
+		if candidate == INF: continue
+		if candidate < distance or (is_equal_approx(candidate,distance) and index > nearest):
+			nearest = index
+			distance = candidate
+	return nearest
+
+
+func _tap_at(point: Vector2) -> void:
+	if interception_pending or point_is_reserved(point) or Time.get_ticks_msec() < gesture_block_until: return
+	var index: int = nearest_marker(point)
+	if index != -1:
+		travel(index)
+		return
+	# Completed tags, ships and celestial objects never turn into empty-space movement.
+	for button in markers.values():
+		if button.visible and button.hit_distance(point-button.global_position) != INF: return
+	if _point_on_object(point): return
+	var target: Vector3 = screen_to_navigation(point)
+	free_move_requested.emit(target)
+
+
+func screen_to_navigation(point: Vector2) -> Vector3:
+	var local: Vector2 = point - global_position
+	var origin: Vector3 = camera.project_ray_origin(local)
+	var direction: Vector3 = camera.project_ray_normal(local)
+	if absf(direction.y) < 0.0001: return ship.position
+	var target: Vector3 = origin + direction * (-origin.y/direction.y)
+	var bounds: Rect2 = settings.system_bounds.abs()
+	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x),0,clampf(target.z,bounds.position.y,bounds.end.y))
+
+
+func _point_on_object(point: Vector2) -> bool:
+	var local: Vector2 = point-global_position
+	var models: Array = objects.values()
+	models.append(ship)
+	for model in models:
+		var at: Vector3 = model.position
+		if camera.is_position_behind(at): continue
+		var center: Vector2 = camera.unproject_position(at)
+		var edge: Vector2 = camera.unproject_position(at+camera.basis.x*float(model.get_meta("radius",0.65)))
+		if local.distance_to(center) < maxf(12,center.distance_to(edge)): return true
+	return false
 
 
 func _drag_map(previous: Vector2, current: Vector2) -> void:
@@ -580,6 +671,7 @@ func ftl_departure(curtain: CanvasLayer) -> bool:
 
 
 func cancel_presentation() -> void:
+	interception_pending = false
 	if is_instance_valid(feedback): feedback.cancel()
 	if motion and motion.is_valid():
 		motion.kill()
@@ -628,7 +720,7 @@ func _initial_ship_position() -> Vector3:
 	return Vector3(0,1.5,3)
 
 func point_is_reserved(point: Vector2) -> bool:
-	return hud_regions.any(func(rect): return rect.has_point(point))
+	return hud_regions.any(func(rect): return rect.has_point(point)) or (is_instance_valid(zoom_controls) and zoom_controls.visible and zoom_controls.get_global_rect().has_point(point))
 
 func fit_overview() -> void:
 	var points: Array[Vector3] = []

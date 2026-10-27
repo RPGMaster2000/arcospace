@@ -14,9 +14,9 @@ extends Resource
 @export_range(0.5, 12.0, 0.01) var maximum_zoom: float = 6.0
 @export_range(0.01, 0.2, 0.01) var wheel_zoom_step: float = 0.06
 ## X/Z world-space rectangle. Destinations retain their seeded relative arrangement.
-@export var system_bounds := Rect2(-24, -24, 48, 48)
+@export var system_bounds := Rect2(-28, -28, 56, 56)
 ## Camera look-at center limits relative to Overview Target, in X/Z world units.
-@export var pan_bounds := Rect2(-24, -24, 48, 48)
+@export var pan_bounds := Rect2(-28, -28, 56, 56)
 @export_range(4.0, 32.0) var pan_drag_threshold: float = 12.0
 ## Screen-space offset above each object; labels may extend beyond the viewport.
 @export var label_offset := Vector2(0, -12)

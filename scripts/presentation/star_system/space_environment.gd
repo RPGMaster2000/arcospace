@@ -8,7 +8,7 @@ var origin := Vector3.ZERO
 var dust_basis := Basis.IDENTITY
 var settings: Resource
 
-func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null) -> void:
+func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null, atmosphere_strength: float = 1.0) -> void:
 	settings = calibration
 	origin = camera.position
 	dust_basis = camera.basis
@@ -29,7 +29,7 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	space.set_shader_parameter("star_brightness",0.25)
 	space.set_shader_parameter("star_jitter",0.9)
 	space.set_shader_parameter("variation_seed",rng.randf_range(1,99))
-	space.set_shader_parameter("cloud_intensity",0.06*settings.background_strength)
+	space.set_shader_parameter("cloud_intensity",0.06*settings.background_strength*atmosphere_strength)
 	sky.material_override = space
 	sky.extra_cull_margin = 1000.0
 	var sparse: bool = rng.randf()<0.3
@@ -44,7 +44,7 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 		if specification.texture != null: material.set_shader_parameter("source_texture",specification.texture)
 		material.set_shader_parameter("galaxy",specification.kind == 1)
 		material.set_shader_parameter("tint",specification.tint)
-		material.set_shader_parameter("opacity",specification.opacity*settings.background_strength*(0.15 if sparse else 1.0))
+		material.set_shader_parameter("opacity",specification.opacity*settings.background_strength*atmosphere_strength*(0.15 if sparse else 1.0))
 		material.set_shader_parameter("rotation",deg_to_rad(specification.rotation_degrees))
 		material.set_shader_parameter("variation",rng.randf_range(0,TAU))
 		node.material_override = material

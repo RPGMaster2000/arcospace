@@ -25,6 +25,8 @@
 [ext_resource type="Resource" path="res://ships/enemy/axiom_7.tres" id="N1"]
 [ext_resource type="Resource" path="res://ships/enemy/hollow_choir.tres" id="N2"]
 
+[ext_resource type="Resource" path="res://encounters/raider_cache.tres" id="Raider"]
+
 [resource]
 script = ExtResource("Rules")
 progression = ExtResource("Progression")
@@ -33,10 +35,13 @@ minimum_station_interval = 2
 maximum_station_interval = 3
 production_price_increment = 15
 production_price_acceleration = 5
-pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4")])
-encounters_per_system = 6
+pois = Array[ExtResource("Poi")]([ExtResource("0"), ExtResource("1"), ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("H0"), ExtResource("H1"), ExtResource("H2"), ExtResource("H3"), ExtResource("H4"), ExtResource("Raider")])
+encounters_per_system = 9
 minimum_battles = 1
-maximum_battles = 2
+maximum_battles = 3
+minimum_ordinary = 4
+maximum_ordinary = 6
+maximum_hazardous = 3
 destruction_salvage = 10
 max_deck_identities = 36
 unavailable_upgrade_salvage = 4

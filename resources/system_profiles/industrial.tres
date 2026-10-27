@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SystemProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/system_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "industrial"
+display_name = "Industrial System"
+ordinary_weight = 1.2
+hazardous_weight = 0.9
+battle_weight = 1.0
+outpost_chance = 0.08
+chasedown_multiplier = 1.0
+tolerance_min = 5
+tolerance_max = 9
+sensitive_chance = 0.25
+star_hue_bias = 0.08
+nebula_chance = 0.3
+poi_weights = {"mining_operation": 2.0, "research_station": 1.8, "derelict_starship": 1.5}

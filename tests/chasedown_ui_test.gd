@@ -28,7 +28,7 @@ func make_host(grid: bool = false) -> void:
 	host.use_star_map = not grid
 	root.add_child(host)
 	current_scene = host
-	for index in range(2): host.state.encounters[index] = {"kind":"poi","poi":Rules.pois[index],"title":Rules.pois[index].title,"completed":false,"charge_awarded":false}
+	for index in range(2): host.state.encounters[index] = {"kind":"poi","poi":Rules.pois[index],"title":Rules.pois[index].title,"completed":false}
 	host.show_system()
 func run() -> void:
 	for grid in [false,true]:
@@ -105,10 +105,10 @@ func run() -> void:
 				if host.view_kind == "system": break
 				await process_frame
 			check(host.map_destination == 0 and host.view_kind == "system", "Victory/escape returns stationary without visiting former destination")
-			check(host.state.travel_destination == -1 and host.state.ftl_charge == 1 and host.state.chasedowns_this_system == 1 and not host.state.encounters[1].completed, "Cancelled travel grants no second reward or destination completion")
+			check(host.state.travel_destination == -1 and host.state.pressure == 0 and not host.state.ftl_access and host.state.chasedowns_this_system == 1 and not host.state.encounters[1].completed, "Cancelled travel grants no second reward or destination completion")
 			if not grid:
 				host.show_system()
-				check(is_instance_valid(host.star_map) and host.star_map.markers.size() == 6 + int(not host.state.service.is_empty()), "No extra map marker for interception")
+				check(is_instance_valid(host.star_map) and host.star_map.markers.size() == host.rules.encounters_per_system + int(not host.state.service.is_empty()), "No extra map marker for interception")
 			host.free()
 			await process_frame
 	# Removing a map during its delay must cancel the old callback.

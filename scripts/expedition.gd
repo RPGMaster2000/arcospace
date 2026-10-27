@@ -365,6 +365,7 @@ func _progress_committed() -> void:
 
 
 func _save_progress() -> bool:
+	_sample_navigation_position()
 	if not persistence_enabled: return true
 	if state == null: return false
 	if state.run_ended or state.hull <= 0:
@@ -394,6 +395,7 @@ func _save_and_quit() -> bool:
 
 
 func _notification(what: int) -> void:
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_RESUMED]: _navigation_clock = Time.get_ticks_msec()
 	if not persistence_enabled or state == null: return
 	if phase == Phase.INTRO and what in [NOTIFICATION_WM_GO_BACK_REQUEST,NOTIFICATION_APPLICATION_PAUSED]:
 		_cancel_presentation()
@@ -466,7 +468,7 @@ func show_system(preserve_transition: bool = false) -> void:
 		var status: String = (
 			"Completed"
 			if encounter.completed
-			else "%s · +%d FTL" % [descriptor, state.encounter_charge(index)]
+			else descriptor + (" · FTL Access" if state.encounters[index].get("objective_role", "") == "access" else "")
 		)
 		if encounter.kind == "battle" and not encounter.completed:
 			status += (
@@ -489,7 +491,7 @@ func show_system(preserve_transition: bool = false) -> void:
 
 	if not state.service.is_empty():
 		_button(
-			"Trading Outpost · Service station · No travel FTL · Free to return",
+			"Trading Outpost · Service station · No pressure · Free to return",
 			_grid_travel.bind(state.SERVICE_INDEX)
 		)
 
@@ -525,7 +527,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		var key: String = (
 			"battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
 		)
-		var detail: String = "+%d FTL" % state.encounter_charge(index)
+		var detail: String = "FTL Access" if encounter.get("objective_role", "") == "access" else ("Objective prerequisite" if encounter.has("objective_role") else "Explore")
 		if encounter.kind == "battle":
 			key = ["battle", "elite", "boss"][state.enemy_profile(encounter).enemy_rank]
 			if encounter.get("mandatory_boss", false):
@@ -548,7 +550,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 				),
 				"tooltip": tooltip,
 				"color": Presentation.COLORS[Presentation.classification(encounter)],
-				"completed": encounter.completed
+				"completed": encounter.completed,
+				"objective_marker": state.objective_marker(index)
 			}
 		)
 	if not state.service.is_empty():
@@ -557,7 +560,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 				"index": state.SERVICE_INDEX,
 				"name": "Trading Outpost",
 				"model_kind": "trading_outpost",
-				"text": _icon("trading_outpost") + " Trading Outpost\nFree return · 0 FTL",
+				"text": _icon("trading_outpost") + " Trading Outpost\nFree return · No pressure",
 				"tooltip": "Independent service station",
 				"color": Color("8fcab7"),
 				"completed": false
@@ -571,6 +574,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			screen.mount_map(star_map)
 		star_map.run_seed = state.seed_used
 		star_map.system_number = state.system_number
+		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.input_allowed = _map_input_allowed
 	else:
@@ -589,6 +593,9 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.overview_hud.attach_zoom(star_map)
 		screen._sync_map_rect()
 		if new_system: star_map.fit_overview()
+	if _uses_3d_map() and state.navigation.position.size() == 3:
+		var at: Array = state.navigation.position
+		star_map.apply_navigation_position(Vector3(at[0], at[1], at[2]))
 	var stopped: Array = state.intercepted_position()
 	if stopped.size() == 3 and _uses_3d_map():
 		star_map.orbit_index = -1
@@ -596,9 +603,15 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	elif stopped.size() == 2 and not _uses_3d_map():
 		star_map.ship_position = Vector2(stopped[0],stopped[1])
 	star_map.before_travel = state.can_visit
-	star_map.intercept_travel = state.begin_travel
+	star_map.intercept_travel = _begin_map_travel
+	if _uses_3d_map():
+		star_map.before_free_travel = func(_point: Vector3): return state.can_navigate()
+		star_map.intercept_free_travel = _begin_free_travel
 	if new_map:
 		var source_map: Control = star_map
+		if _uses_3d_map():
+			star_map.free_arrived.connect(func():
+				if star_map == source_map: _free_arrived())
 		star_map.travel_started.connect(func():
 			if star_map == source_map: _travel_started())
 		star_map.interrupted.connect(func():
@@ -607,14 +620,16 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
 	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
-		_resume_navigation.call_deferred(destination, _presentation_revision, state, star_map)
+		_resume_navigation.call_deferred(destination, _presentation_revision, state, weakref(star_map))
 
 
 func visit(index: int) -> void:
-	if phase == Phase.EXITED or transitioning or not state.can_visit(index):
+	if phase == Phase.EXITED or transitioning or (not state.can_visit(index) and not state.objective_locked(index)):
 		return
+	_sample_navigation_position()
 	map_destination = index
 	state.arrive_destination(index)
+	state.identify_objective(index)
 	if state.encounter_at(index).kind == "battle":
 		show_battle_preview(index)
 	else:
@@ -659,12 +674,16 @@ func _introduce_system(reveal_white: bool = false) -> void:
 
 
 # Deferred resume is scoped to its overview and model, not merely a still-live node.
-func _resume_navigation(destination: int, revision: int, owner: Resource, source: Control = null) -> void:
+func _resume_navigation(destination: int, revision: int, owner: Resource, source_ref: WeakRef = null) -> void:
 	if not _presentation_current(revision, owner) or phase != Phase.OVERVIEW or view_kind != "system":
 		return
+	var source: Control = source_ref.get_ref() if source_ref != null else null
 	if source != null:
 		if source == star_map and source.is_inside_tree():
-			source.travel(destination)
+			if destination == state.FREE_DESTINATION and _uses_3d_map():
+				var point: Array = state.navigation.target
+				if point.size() == 3: source.travel_to_position(Vector3(point[0],point[1],point[2]), false)
+			else: source.travel(destination)
 	else:
 		_grid_travel(destination)
 
@@ -770,7 +789,7 @@ func _style_combat_entry(button: Button) -> void:
 func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
 	var briefing = preload("res://scripts/ui/tactical_briefing.gd").new()
 	view.add_child(briefing)
-	briefing.configure(enemy,state.difficulty_level(),encounter.modifier,state.pending_description(),pursuit,encounter.get("mandatory_boss",false))
+	briefing.configure(enemy,state.difficulty_level(),encounter.modifier,state.pending_description(),pursuit,encounter.get("mandatory_boss",false),State.Pressure.description(state.pressure))
 
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.
@@ -802,6 +821,12 @@ func show_poi(index: int) -> void:
 	approach_note.text = ""
 	confirm_button.text = "Initiate"
 	header.configure(poi)
+	if state.objective_locked(index):
+		var prerequisite: int = state.encounters[index].objective_prerequisite
+		_tile(view, "Activate " + state.encounters[prerequisite].title + " first", "", Presentation.COLORS.special, Callable(), true)
+		return
+	var risk: String = state.pressure_risk_description(index)
+	if not risk.is_empty(): view.add_child(_label(risk, 16))
 	if _uses_3d_map():
 		view.add_child(_label(poi.description, 18))
 	var options = _grid(1 if _uses_3d_map() else 2)
@@ -1287,3 +1312,42 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 	field_repairs.refresh_after_repair()
 
 #endregion
+
+
+# Navigation owns rules; the coordinator supplies elapsed active gameplay and actual positions.
+var _navigation_clock: int = 0
+
+func _process(_delta: float) -> void:
+	var now: int = Time.get_ticks_msec()
+	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
+	_navigation_clock = now
+	if state == null or not is_instance_valid(screen) or get_tree().paused: return
+	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
+		state.advance_navigation_time(elapsed)
+	if state.navigation.leg_active: _sample_navigation_position()
+
+func _sample_navigation_position() -> void:
+	if state == null or not is_instance_valid(star_map) or not _uses_3d_map(): return
+	# Cosmetic idle orbit is presentation-only and must never change serialized gameplay state.
+	if not state.navigation.leg_active: return
+	var at: Vector3 = star_map.ship.position
+	state.update_navigation_position([at.x,at.y,at.z])
+
+func _begin_map_travel(index: int) -> bool:
+	if _uses_3d_map():
+		var at: Vector3 = star_map.ship.position
+		state.update_navigation_position([at.x,at.y,at.z])
+	return state.begin_travel(index)
+
+func _begin_free_travel(point: Vector3) -> bool:
+	var at: Vector3 = star_map.ship.position
+	state.update_navigation_position([at.x,at.y,at.z])
+	return state.begin_free_travel([point.x,point.y,point.z])
+
+func _free_arrived() -> void:
+	if phase != Phase.TRAVELING: return
+	_sample_navigation_position()
+	state.arrive_free_destination()
+	map_destination = -1
+	phase = Phase.OVERVIEW
+	screen.clear(state, "system")

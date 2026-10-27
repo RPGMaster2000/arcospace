@@ -16,5 +16,3 @@ class_name EncounterOutcome
 @export var upgrade_card: bool = false
 @export var resource_choice: int = 0
 @export var production_choice: int = 0
-## Extra interstellar travel charge, in addition to the one earned by completing a PoI.
-@export_range(0, 10, 1) var extra_ftl_charge: int = 0
