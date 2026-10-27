@@ -90,7 +90,7 @@ func run() -> void:
 	await create_timer(0.5).timeout
 	check(node.state == fresh and node.view_kind == "system" and node.state.salvage == 0, "New run invalidates old result continuation")
 	var before: int = node.state.system_number
-	node.state.ftl_charge = node.state.required_ftl_charge
+	node.state.ftl_access = true
 	node._jump()
 	node._jump()
 	check(node.transitioning and node.state.system_number == before, "Duplicate FTL requests share one owner")
@@ -164,6 +164,8 @@ func run() -> void:
 	poi(node, 0)
 	poi(node, 1)
 	node.state.rules.chasedown_chance = 1.0
+	node.state.rules.maximum_chasedown_chance = 1.0
+	node.state.system_profile = "industrial"
 	node.state.arrive_destination(0)
 	node.show_system()
 	node.star_map.travel_duration = 1.0

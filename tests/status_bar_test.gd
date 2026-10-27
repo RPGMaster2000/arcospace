@@ -106,7 +106,7 @@ func run() -> void:
 	host.state.pending_penalties = saved_penalties
 	host.state.production_upgrades.clear()
 	host.show_system()
-	var before: int = host.state.ftl_charge
+	var before: int = host.state.pressure
 	await settle()
 	Input.emulate_touch_from_mouse = true
 	click_at(host.legend.get_global_rect().get_center())
@@ -120,13 +120,13 @@ func run() -> void:
 	await settle()
 	check(not host.resource_bar.overlay.shade.visible, "Touch-emulated Close dismisses legend")
 	Input.emulate_touch_from_mouse = false
-	check(host.state.ftl_charge == before and host.state.active_battle == -1, "Legend has no gameplay effects")
+	check(host.state.pressure == before and host.state.active_battle == -1, "Legend has no gameplay effects")
 	for viewport_size in [Vector2i(1280,720), Vector2i(1680,720), Vector2i(2400,1080), Vector2i(686,384)]:
 		root.size = viewport_size
 		host.show_system()
 		await shot("system-%d" % viewport_size.x)
 		geometry(host.resource_bar)
-		check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "System fits without scroll")
+		check(host.scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Expanded fallback roster remains scrollable")
 		host.show_poi(poi_index)
 		await shot("poi-%d" % viewport_size.x)
 		geometry(host.resource_bar)

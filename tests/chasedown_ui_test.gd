@@ -24,9 +24,11 @@ func make_host(grid: bool = false) -> void:
 	host.rules.log_rolls = false
 	host.rules.debug_seed = 1042
 	host.rules.chasedown_chance = 1
+	host.rules.maximum_chasedown_chance = 1
 	host.star_map_travel_duration = 0.05
 	host.use_star_map = not grid
 	root.add_child(host)
+	host.state.system_profile = "industrial"
 	current_scene = host
 	for index in range(2): host.state.encounters[index] = {"kind":"poi","poi":Rules.pois[index],"title":Rules.pois[index].title,"completed":false}
 	host.show_system()
@@ -135,7 +137,7 @@ func run() -> void:
 	# A lost interception must show the normal expedition-ended screen, never reopen it.
 	make_host()
 	host.state.navigation_origin = 0
-	check(host.state.try_chasedown(1), "Pending interception prepared for loss restoration")
+	check(host.state.begin_travel(1), "Pending interception prepared for loss restoration")
 	host.state.choose_chasedown_response(3)
 	host.state.hull = 0
 	host.show_system()

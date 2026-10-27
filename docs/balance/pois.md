@@ -1,14 +1,14 @@
 # Points of interest and generation
 
-Generated from `encounters/expedition_rules.tres` and all referenced PoI Resources. Each completed PoI grants **+1 FTL Drive charge once**, in addition to rewards below. Extra FTL in a row adds to this base. All next-battle values apply once; Hull/Salvage and interstellar charge apply immediately.
+Generated from `encounters/expedition_rules.tres` and all referenced PoI Resources. Each completed regular PoI increases system pressure once, in addition to rewards below. FTL Access comes only from an objective. All next-battle values apply once; Hull/Salvage apply immediately.
 
 | Generation category | Min / max | Weight |
 |---|---|---|
-| Ordinary | 3 / 4 | 1.0 |
-| Hazardous | 0 / 2 | 0.8 |
-| Enemy | 1 / 2 | 1.0 |
+| Ordinary | 4 / 6 | 1.0 |
+| Hazardous | 0 / 3 | 0.8 |
+| Enemy | 1 / 3 | 1.0 |
 
-Total 6 progression encounters plus an independently scheduled optional Trading Outpost; requirement = actual non-trading PoI count + 1. Service visits give zero charge and do not increase the requirement. Valid count combinations are sampled with weight ordinary_weight^ordinary × hazardous_weight^hazards × battle_weight^enemies. Each category samples Resources by encounter_weight without replacement until exhausted. At least 1 enemy; reward floor 1. Invalid bounds warn and fall back to one enemy plus available PoIs (all enemies if no PoIs). No hidden reduction in travel requirement. Tune counts/weights/registry in `encounters/expedition_rules.tres`; type weights in each PoI/ship Resource.
+Total 9 progression encounters plus an independent profile-selected Trading Outpost. Composition weights multiply profile and rule category biases; Resources sample by encounter_weight and profile PoI biases without replacement until exhausted. Objective routes replace ordinary slots: guaranteed direct Fuel Depot; optionally Sensor Relay then Ancient Navigation Array. Routes and prerequisites remain pressure-safe. See [exploration prototype](../star_system_exploration.md) for tuning.
 
 ## Ordinary
 
@@ -109,9 +109,9 @@ Edit `encounters/unstable_wormhole.tres`; expand Approaches → Success / Failur
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
 | Map the perimeter | None | 0 | 100.0% | +3 Salvage · +1 EMP Pulse offline turns next battle | Not rolled |
-| Probe the shortcut | None | 0 | 40.0% | +1 extra FTL Drive charge · +5 Salvage | 60.0%: +2 Salvage · -8 Shields next battle |
-| Stabilize corridor | Reactor ≥4 | 0 | 50.0% | +1 extra FTL Drive charge · +7 Salvage | 50.0%: +3 Salvage · +3 EMP Pulse offline turns next battle |
-| Reinforce transit probe | Synthesizer ≥3 | 0 | 45.0% | +1 extra FTL Drive charge · +9 Salvage | 55.0%: +4 Salvage · -8 Energy next battle |
+| Probe the shortcut | None | 0 | 40.0% | +5 Salvage | 60.0%: +2 Salvage · -8 Shields next battle |
+| Stabilize corridor | Reactor ≥4 | 0 | 50.0% | +7 Salvage | 50.0%: +3 Salvage · +3 EMP Pulse offline turns next battle |
+| Reinforce transit probe | Synthesizer ≥3 | 0 | 45.0% | +9 Salvage | 55.0%: +4 Salvage · -8 Energy next battle |
 
 ### Quarantined Colony
 
@@ -124,9 +124,20 @@ Edit `encounters/quarantined_colony.tres`; expand Approaches → Success / Failu
 | Recover research | Reactor ≥3 | 0 | 80.0% | +6 Salvage · -3 Energy next battle · Upgrade one player card | 20.0%: +3 Salvage · -5 Energy next battle |
 | Evacuate scientists | Quarters ≥4 | 0 | 85.0% | +8 Salvage · -3 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +4 Salvage · -5 Crew next battle |
 
+### Raider Cache
+
+Edit `encounters/raider_cache.tres`; expand Approaches → Success / Failure. Generation weight (ignored for service stations): 1.0. All listed effects in a guaranteed row happen together; randomized rows show the complete outcome of each branch.
+
+| Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
+|---|---|---|---|---|---|
+| Drone perimeter scan | None | 0 | 100.0% | +3 Salvage · -1 permanent Hull | Not rolled |
+| Recover cargo | None | 0 | 65.0% | +10 Salvage · -2 permanent Hull | 35.0%: +2 Salvage · -5 permanent Hull |
+| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 20.0%: +4 Salvage · -4 permanent Hull |
+| Board pirate flagship | Quarters ≥4 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 30.0%: +5 Salvage · -7 permanent Hull |
+
 ## Services
 
-First station: system 2–3; subsequent system-number intervals 2–3, hard cap 3. The seeded station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no travel charge, requirement increase, penalties or survey. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.
+Trading Outpost probability: Quiet Frontier 100%, Industrial 8%, Hostile 4%, Ancient 4%. Station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no pressure or FTL Access reward. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.
 
 The same Hull service tile repairs damaged Hull for 1 Salvage/Hull up to capacity, then switches to Install Ablative Plating for 2 Salvage/point up to capacity +10. It selects an affordable quantity, previews total cost/result and rejects zero confirmation; at +10 it remains in place disabled. Shared quantity bounds live in `scripts/repair_rules.gd`; post-battle repairs cost 2 Salvage/Hull. Field repairs are separate, accessed through the system Hull popup at 2 Salvage/Hull and cannot create plating. Supply/card base prices and shipyard base price are editable in `encounters/trading_outpost.tres` approach Salvage Cost; supply amount/production amount remain editable outcome Resources. Shipyard cost for purchase n: base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2. Current increment 15, acceleration 5; prices 25, 40, 60, 85, 115, 150, 190. Counter combines all production categories and resets only when a later station appears; permanent upgrades persist. Intervals and escalation parameters: `ExpeditionRules` Inspector. The table shows initial prices; repair amount is variable.
 
@@ -143,41 +154,18 @@ Edit `encounters/trading_outpost.tres`; expand Approaches → Success / Failure.
 
 ## Progression safeguard
 
-If a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and grants only that PoI's +1 charge, with guaranteed next-battle penalty `{"energy":-3}`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. Unlimited affordable services and free revisits while present; ignoring a station never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.
+If a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and completes the encounter with +1 pressure and guaranteed next-battle penalty `{"energy":-3}`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. Unlimited affordable services and free revisits while present; ignoring a station never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.
 
-All escaped enemies complete normally and award their full profile charge. Repeated result/approach calls cannot award more charge. The shipping carryover cap is zero: every normal system transition begins at zero charge. New expeditions start at 0. Mandatory Boss encounters must resolve before any transition. Pending choices must be resolved before leaving. Hull 0 ends the expedition; voluntarily lethal approaches and battle losses remain possible. The simulation guarantees charge availability for surviving players, not victory against every enemy. **Not implemented:** hostile follow-up battles from pirate debris; current pirate hazards use Hull costs.
+All escaped regular enemies complete normally and increase pressure once. Repeated result/approach calls cannot duplicate pressure or rewards. FTL Access unlocks by completing any access objective and persists until Jump. Mandatory Boss encounters independently gate departure. Pending choices must resolve before leaving. Hull 0 ends the expedition. At least one free, deterministic direct access route remains viable at any pressure.
 
-## Expedition difficulty and milestones
+## Expedition progression
 
-Inspector: `encounters/expedition_rules.tres` → Progression → `resources/expedition_progression.tres` (script `scripts/expedition/expedition_progression.gd`).
+Inspector: encounters/expedition_rules.tres -> Progression -> resources/expedition_progression.tres.
 
-| Property | Initial value |
-|---|---|
-| FTL carryover cap | 0 (editable 0–2) |
-| Systems per difficulty increase | 3 |
-| Hull bonus per extra level | +2 |
-| Shields bonus per extra level | +1 |
-| Each starting resource per extra level | +1 |
-| Each production attribute per extra level | +0.25, accumulated then floored |
-| Elite probability increase per extra level | +0.025 (2.5 percentage points) |
-| Maximum Elite probability | 0.35 |
-| Mandatory Boss interval | 6 systems |
+New systems start with zero pressure and locked FTL Access. Completing any access objective unlocks Jump, independently of mandatory Boss restrictions.
 
-`level = 1 + floor((system_number - 1) / 3)`; `steps = level - 1`. Hull/Shields/resources add `steps × bonus`; each production adds `floor(steps × 0.25)`. This makes systems 1–3 baseline; 4–6 level 2; 7–9 level 3; 10–12 level 4. The first production increase is system 13. Only system number matters: optional encounter count does not accelerate scaling. Effective enemy profiles are shallow copies; shared ship Resources, card values, AI and profile rewards are unchanged.
+Level = 1 + floor((system - 1) / 3); steps = level - 1. Per extra level: +2 Hull, +1 Shields, +1 each starting resource; each production adds floor(steps * 0.25). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.
 
-| Systems | Extra Hull / Shields | Each resource | Each production |
-|---|---|---|---|
-| 1–3 | 0 / 0 | 0 | 0 |
-| 4–6 | +2 / +1 | +1 | 0 |
-| 7–9 | +4 / +2 | +2 | 0 |
-| 10–12 | +6 / +3 | +3 | 0 |
-| 13–15 | +8 / +4 | +4 | +1 |
-| 16–18 | +10 / +5 | +5 | +1 |
+Elite selection retains original baseline odds in level 1, then uses min(0.35, available Elite weight / total available weight + steps * 0.025). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.
 
-Systems 1–3 retain the original weighted enemy selector. Thereafter, for each enemy slot, `base = available Elite weight / total available weight` and `p = min(0.35, base + steps × 0.025)`. Choose Elite versus other profiles with p, then use the original weights within that bucket. Draws remain without replacement until a bucket registry is exhausted as before. The full shipping registry starts at 11.27%; its first-slot chance becomes 13.77% on system 4, 16.27% on system 7, 18.77% on system 10, capped at 35%. Conditional odds vary after profiles leave the available registry. An empty bucket falls back to valid profiles; an Inspector pool containing only Elites necessarily has probability 1.
-
-Normal-system carryover still uses `min(cap, max(0, current_ftl - required_ftl))`, with the shipping Resource and script default cap both **0** (Inspector range 0–2). Every new system therefore begins at zero, regardless of surplus. The requirement remains non-trading PoI count + 1. Charge earned within a system is retained until departure; EMP Pulse is separate and unchanged.
-
-Systems 6, 12, 18, 24, … replace one enemy slot with a mandatory Sentinel Dreadnought (or the configured existing Boss). They keep six slots, all PoI slots, their normal requirement, and the independent station schedule. Only one encounter is marked mandatory. Missing milestone metadata fails closed. Sufficient FTL never bypasses an unresolved Boss; a blocked jump consumes no charge or RNG.
-
-Combat victory or successful existing EMP Pulse marks the encounter complete and grants the profile's 3 FTL once. Destruction and Systems Failure retain the profile’s 30 Salvage; escape grants 0 Salvage. Resolution records `defeated` versus `escaped` for future defeat-only reward checks. Escape does not perform a system transition: return to the system screen and use the ordinary FTL transition, with zero carried charge, once. Boss stats use the same level formula: system 6 has 57 Hull / 23 Shields / 16 of each resource / 3 of each production; system 12 has 61 / 25 / 18 / 3.
+Every 6 systems, starting at system 6, one enemy slot becomes a mandatory existing Boss (nine slots retained). Resolve by combat victory or existing EMP Pulse before normal FTL travel. Both resolve the Boss gate; FTL Access remains a separate objective. Destruction/resource/escape Salvage remains distinct. Escape never transitions systems. Missing mandatory metadata blocks travel.

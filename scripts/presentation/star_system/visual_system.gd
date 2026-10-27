@@ -77,15 +77,12 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
 	var star_rng = random_for(seed_value, number, "star")
 	# Independent cosmetic streams keep appearance changes away from encounter/loot RNG.
-	var favored: Array = [0.02,0.08,0.56,0.64]
-	match profile:
-		"quiet": favored = [0.07,0.12,0.54]
-		"hostile": favored = [0.0,0.04,0.63]
-		"ancient": favored = [0.54,0.65,0.78,0.9]
+	var profile_data: Resource = preload("res://scripts/expedition/system_profile.gd").for_id(profile)
+	var favored: Array = [profile_data.star_hue_bias,0.56,0.64]
 	var hue: float = star_rng.randf() if star_rng.randf() < 0.18 else fposmod(float(favored[star_rng.randi_range(0,favored.size()-1)])+star_rng.randf_range(-0.035,0.035),1.0)
 	result.star_color = Color.from_hsv(hue,star_rng.randf_range(0.48,0.88),1)
 	var atmosphere_rng = random_for(seed_value,number,"atmosphere")
-	var bright_chance: float = 0.55 if profile == "ancient" else (0.2 if profile == "quiet" else 0.35)
+	var bright_chance: float = profile_data.nebula_chance
 	result.atmosphere_strength = atmosphere_rng.randf_range(1.1,1.55) if atmosphere_rng.randf() < bright_chance else atmosphere_rng.randf_range(0.7,1.05)
 	return result
 

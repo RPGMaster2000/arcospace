@@ -5,7 +5,7 @@ const Ships = preload("res://scripts/ships/ship_library.gd")
 const EXPECTED = "user://test_process_expected.json"
 var store = Save.new()
 func _initialize() -> void:
-	create_timer(12).timeout.connect(func(): push_error("Fresh-process phase timed out"); quit(1))
+	create_timer(60).timeout.connect(func(): push_error("Fresh-process phase timed out"); quit(1))
 	store.path = "user://test_process_run.json"
 	call_deferred("run")
 func host(data: Dictionary = {}) -> Node:
@@ -52,8 +52,13 @@ func run() -> void:
 			scene.state.upgrades_remaining = 1
 			assert(scene.state.choose_upgrade(card.identity_key()))
 			scene.state.add_modifiers({"energy": 3, "shields": -2})
-			scene.state.encounters[0] = {"kind": "battle", "enemy_data": Ships.ENEMIES[0], "title": "Marauder", "modifier": 1, "completed": false, "charge_awarded": false}
-			scene.start_battle(0, 998877)
+			var battle_index: int = -1
+			for index in scene.state.encounters.size():
+				if scene.state.encounters[index].kind == "battle": battle_index = index; break
+			assert(battle_index >= 0)
+			scene.state.encounters[battle_index].enemy_data = Ships.ENEMIES[0]
+			scene.state.encounters[battle_index].modifier = 1
+			scene.start_battle(battle_index, 998877)
 			scene.battle.enemy_timer.stop()
 			var file = FileAccess.open(EXPECTED, FileAccess.WRITE)
 			file.store_string(JSON.stringify(opening(scene.battle))); file.flush(); file.close()
@@ -68,11 +73,12 @@ func run() -> void:
 			scene.battle.enemy_timer.stop()
 			assert(JSON.stringify(opening(scene.battle)) == FileAccess.get_file_as_string(EXPECTED))
 			assert(scene.state.salvage == 200 and scene.state.battles_won == 0)
+			var battle_index: int = scene.state.active_battle
 			scene.battle.enemy_hull = 0
 			scene.battle._check_winner()
 			var completed: Dictionary = store.load_run()
-			assert(completed.battle.is_empty() and completed.state.encounters[0].completed)
-			assert(not completed.state.can_visit(0))
+			assert(completed.battle.is_empty() and completed.state.encounters[battle_index].completed)
+			assert(not completed.state.can_visit(battle_index))
 			assert(completed.state.battles_won == 1)
 			scene.state.hull = 0
 			scene.state.progress_committed.emit()

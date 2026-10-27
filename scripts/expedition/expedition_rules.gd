@@ -58,8 +58,6 @@ class_name ExpeditionRules
 ## TUNE: Additive risk per completed regular encounter, before profile weighting and cap.
 @export_range(0.0, 1.0, 0.001) var pressure_chasedown_increment: float = 0.015
 @export_range(0.0, 1.0, 0.01) var maximum_chasedown_chance: float = 0.35
-## Shared active-gameplay cooldown; redirects never reset it.
-@export_range(1.0, 120.0, 1.0) var chasedown_roll_cooldown: float = 10.0
 ## TUNE: Response titles, existing next-battle modifiers and immediate Hull adjustment.
 ## Evasive charge is additionally capped before the first-turn tick to avoid instant escape.
 @export var chasedown_responses: Array[Dictionary] = [

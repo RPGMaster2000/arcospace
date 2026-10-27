@@ -284,7 +284,7 @@ func _process(delta: float) -> void:
 		button.visible = not focused and not introducing and not camera.is_position_behind(point)
 		var blocked: bool = not interactive or interception_pending or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
 		button.set_state(button.completed,blocked,index==selected_index)
-		button.mouse_filter = MOUSE_FILTER_IGNORE # One release-based map arbiter handles touch and mouse.
+		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
 		if hud_regions.any(func(rect): return rect.intersects(button.get_global_rect().grow(14))): button.visible = false
@@ -514,6 +514,8 @@ func _input(event: InputEvent) -> void:
 				pinching = true
 				pinch_distance = _touch_distance()
 				_block_markers()
+			# Capture presses as well as releases so native Button activation cannot duplicate the map intent.
+			get_viewport().set_input_as_handled()
 		else:
 			if not touches.has(event.index): return
 			var tap: bool = not pinching and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
@@ -536,6 +538,7 @@ func _input(event: InputEvent) -> void:
 			if point_is_reserved(event.position) or not get_global_rect().has_point(event.position): return
 			mouse_down = true
 			drag_origin = event.position
+			get_viewport().set_input_as_handled()
 		elif mouse_down:
 			var tap: bool = not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
 			if tap: _tap_at(event.position)
@@ -585,7 +588,7 @@ func screen_to_navigation(point: Vector2) -> Vector3:
 	if absf(direction.y) < 0.0001: return ship.position
 	var target: Vector3 = origin + direction * (-origin.y/direction.y)
 	var bounds: Rect2 = settings.system_bounds.abs()
-	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x),0,clampf(target.z,bounds.position.y,bounds.end.y))
+	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x-0.001),0,clampf(target.z,bounds.position.y,bounds.end.y-0.001))
 
 
 func _point_on_object(point: Vector2) -> bool:

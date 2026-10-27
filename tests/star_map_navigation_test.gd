@@ -36,20 +36,31 @@ func run() -> void:
 	check(map.markers.size()==9,"Larger system retains all destinations")
 	check(map.markers[0].objective_badge.text=="!","Objective marker is readable beside existing icon")
 	var marker = map.markers[0]
+	marker.set_objective("🔒")
+	check(marker.objective_badge.visible and marker.objective_value=="🔒" and marker.objective_badge.text.is_empty(),"Locked objective uses portable drawn lock instead of missing font glyph")
+	marker.set_objective("!")
 	var icon: Vector2 = marker.global_position+marker.icon_center
 	check(map.nearest_marker(icon)==0,"Visible icon selects itself")
 	check(marker.hit_distance(marker.icon_center+Vector2(33,0))!=INF,"Effective touch target extends beyond small graphic")
 	var original: Vector2 = map.markers[1].position
-	map.markers[1].position = marker.position
+	map.markers[1].position = marker.position+marker.icon_center-map.markers[1].icon_center
 	check(map.nearest_marker(icon)==1,"Exact overlap picks one deterministic eligible marker")
 	var claims := 0
 	for button in map.markers.values():
 		if button._has_point(icon-button.global_position): claims += 1
 	check(claims==1,"Overlap cannot activate two destinations")
 	map.markers[1].position = original
-	map.hud_regions = [Rect2(icon-Vector2(5,5),Vector2(10,10))]
+	map.hud_regions.append(Rect2(icon-Vector2(5,5),Vector2(10,10)))
 	check(map.nearest_marker(icon)==-1,"HUD region excludes overlapping marker target")
 	map.hud_regions.clear()
+	# Real viewport dispatch must agree with direct touch arbitration and never also fire Button.pressed.
+	var marker_taps := [0]
+	map.before_travel = func(_index): marker_taps[0] += 1; return false
+	for pressed in [true,false]: root.push_input(mouse(icon,pressed),true)
+	check(marker_taps[0]==1,"Native GUI mouse dispatch selects the marker once")
+	for pressed in [true,false]: root.push_input(touch(icon,pressed),true)
+	check(marker_taps[0]==2,"Native touch dispatch adds exactly one marker intent")
+	map.before_travel = Callable()
 	var free_points: Array[Vector3] = []
 	map.free_move_requested.connect(func(point): free_points.append(point))
 	var empty := Vector2.ZERO
@@ -58,6 +69,23 @@ func run() -> void:
 			var at := Vector2(x,y)
 			if map.nearest_marker(at)==-1 and not map._point_on_object(at): empty = at
 	check(empty != Vector2.ZERO,"A larger system leaves empty-space destinations")
+	var hud := Button.new()
+	hud.position = empty-Vector2(20,20)
+	hud.size = Vector2(40,40)
+	root.add_child(hud)
+	var hud_taps := [0]
+	hud.pressed.connect(func(): hud_taps[0] += 1)
+	map.hud_regions.append(hud.get_global_rect())
+	await process_frame
+	for pressed in [true,false]: root.push_input(mouse(empty,pressed),true)
+	check(hud_taps[0]==1 and free_points.is_empty(),"Reserved HUD button receives GUI input without free movement")
+	hud.free()
+	map.hud_regions.clear()
+	map.input_allowed = func(): return false
+	map._input(mouse(empty,true))
+	map._input(mouse(empty,false))
+	check(free_points.is_empty(),"Modal input blocker prevents map movement")
+	map.input_allowed = Callable()
 	map._input(mouse(empty,true))
 	map._input(mouse(empty,false))
 	check(free_points.size()==1,"Mouse tap emits one free movement intent")

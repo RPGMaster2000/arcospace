@@ -16,26 +16,29 @@ func run() -> void:
 	host.rules = host.rules.duplicate(true)
 	host.rules.debug_seed = 1042
 	host.rules.chasedown_chance = 1.0
+	host.rules.maximum_chasedown_chance = 1.0
 	host.rules.log_rolls = false
 	root.add_child(host)
 	await settle()
-	# Use two ordinary destinations so the existing deterministic Chasedown eligibility applies.
-	for index in range(2):
-		var poi: Resource = host.rules.pois[index]
-		host.state.encounters[index] = {"kind":"poi", "poi":poi, "title":poi.title, "completed":false, "charge_awarded":false}
+	# Select generated actionable PoIs without removing objective graph entries.
+	var destinations: Array[int] = []
+	for index in host.state.encounters.size():
+		if host.state.encounters[index].kind == "poi" and not host.state.objective_locked(index): destinations.append(index)
+	var origin: int = destinations[0]
+	var destination: int = destinations[1]
 	host.star_map.travel_duration = 0.06
-	host.star_map.travel(0)
+	host.star_map.travel(origin)
 	await create_timer(0.15).timeout
-	check(host.state.navigation_origin == 0, "Initial travel arrives normally")
+	check(host.state.navigation_origin == origin, "Initial travel arrives normally")
 	host.show_system()
 	await create_timer(0.9).timeout
 	host.star_map.travel_duration = 1.0
-	host.star_map.travel(1)
-	check(host.state.pending_destination == 1 and host.state.travel_destination == -1, "Chasedown cancels authoritative travel immediately")
+	host.star_map.travel(destination)
+	check(host.state.pending_destination == destination and host.state.travel_destination == -1, "Chasedown cancels authoritative travel immediately")
 	await create_timer(0.65).timeout
 	var stopped: Vector3 = host.star_map.ship.position
 	await create_timer(0.3).timeout
-	check(host.star_map.ship.position == stopped and host.state.navigation_origin == 0 and not host.state.encounters[1].completed, "Interception stops without visiting destination")
+	check(host.star_map.ship.position == stopped and host.state.navigation_origin == origin and not host.state.encounters[destination].completed, "Interception stops without visiting destination")
 	await create_timer(0.7).timeout
 	check(host.view_kind == "chasedown", "Existing interception choices open")
 	var snapshot: Dictionary = Save.encode(host.state)
@@ -51,7 +54,7 @@ func run() -> void:
 	resumed.resume_data = {"state":restored, "battle":{}}
 	root.add_child(resumed)
 	await settle()
-	check(resumed.state.player_ship == selected and resumed.state.pending_destination == 1 and resumed.view_kind == "chasedown", "Continue preserves selected ship and pending interception")
+	check(resumed.state.player_ship == selected and resumed.state.pending_destination == destination and resumed.view_kind == "chasedown", "Continue preserves selected ship and pending interception")
 	check(resumed.star_map != null and resumed.star_map.ship != null, "Resumed interception retains 3D ship presentation")
 	# Resolution still uses State, but no former command resumes.
 	var chase: int = resumed.state.chasedown_index
@@ -64,10 +67,10 @@ func run() -> void:
 	check(resumed.star_map != null and not resumed.star_map.traveling, "Resolved interception returns stationary")
 	check(resumed.star_map.ship.position.is_equal_approx(stopped), "Actual intercepted position survives save/resume")
 	await create_timer(1.6).timeout
-	check(resumed.state.navigation_origin == 0 and resumed.star_map.selected_index == -1 and resumed.view_kind == "system", "No unsolicited arrival or selection")
-	resumed.star_map.travel(1)
+	check(resumed.state.navigation_origin == origin and resumed.star_map.selected_index == -1 and resumed.view_kind == "system", "No unsolicited arrival or selection")
+	resumed.star_map.travel(destination)
 	await create_timer(1.6).timeout
-	check(resumed.state.navigation_origin == 1 and resumed.selected_encounter == 1, "Explicit reselection travels and arrives once")
+	check(resumed.state.navigation_origin == destination and resumed.selected_encounter == destination, "Explicit reselection travels and arrives once")
 	resumed.queue_free()
 	await settle()
 	print("Star system resume: %d failures" % failures)

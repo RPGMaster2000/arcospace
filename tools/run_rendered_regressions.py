@@ -22,8 +22,9 @@ COMPATIBILITY = (
     "settings_menu_test", "startup_flow_test", "unified_hud_test",
     "tactical_focus_test", "compact_poi_focus_test", "tactical_resize_test",
     "hud_ownership_test", "star_system_render_smoke_test", "layout_invalidation_test",
+    "star_map_navigation_test", "metagame_ui_test",
 )
-MOBILE = ("star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test")
+MOBILE = ("star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test", "star_map_navigation_test", "metagame_ui_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 TIMEOUTS = {"power_allocation_test": 300}
 

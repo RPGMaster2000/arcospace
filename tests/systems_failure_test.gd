@@ -455,7 +455,7 @@ func run() -> void:
 		check(
 			(
 				expedition.salvage == reward
-				and expedition.ftl_charge == profile.interstellar_ftl_reward
+				and expedition.pressure == 1
 				and expedition.upgrades_remaining > 0
 			),
 			"Existing rank rewards and upgrades apply to Systems Failure"
@@ -465,7 +465,7 @@ func run() -> void:
 		check(
 			(
 				expedition.salvage == reward
-				and expedition.ftl_charge == profile.interstellar_ftl_reward
+				and expedition.pressure == 1
 			),
 			"Expedition rewards cannot repeat"
 		)

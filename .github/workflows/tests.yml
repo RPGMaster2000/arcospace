@@ -1,7 +1,7 @@
 name: Godot regression tests
 on:
   push:
-    branches: [main, codex/unique-ship-models, codex/expedition-progression-validation, codex/music-emp-pulse]
+    branches: [main, checkpoint/pressure-exploration-v01, codex/unique-ship-models, codex/expedition-progression-validation, codex/music-emp-pulse]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -9,7 +9,7 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install Godot
@@ -34,7 +34,7 @@ jobs:
 
   rendered-ui:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:

@@ -33,6 +33,7 @@ var traveling: bool = false
 var before_travel: Callable
 var intercept_travel: Callable
 var markers: Dictionary = {}
+var encounter_count: int = 6
 var tween: Tween
 var interruption_tween: Tween
 var impact_tween: Tween
@@ -45,6 +46,7 @@ var canvas_origin: Transform2D
 func configure(entries: Array, last_destination: int, duration: float, visual_seed: int = 0) -> void:
 	_configure_sky(visual_seed)
 	travel_duration = duration
+	encounter_count = entries.filter(func(entry): return entry.index >= 0).size()
 	ship_position = destination(last_destination) if last_destination != -1 else START
 	for entry in entries:
 		var button = Button.new()
@@ -81,11 +83,11 @@ func _configure_sky(visual_seed: int) -> void:
 
 func destination(index: int) -> Vector2:
 	if index == -2: return SERVICE
-	if markers.size() - int(markers.has(-2)) <= POINTS.size(): return POINTS[index]
-	var count: int = markers.size() - int(markers.has(-2))
+	if encounter_count <= POINTS.size(): return POINTS[index]
+	var count: int = encounter_count
 	var columns: int = ceili(sqrt(float(count)))
 	var rows: int = ceili(float(count)/columns)
-	return Vector2(lerpf(.12,.78,float(index%columns)/maxi(1,columns-1)),lerpf(.18,.82,float(index/columns)/maxi(1,rows-1)))
+	return Vector2(lerpf(.12,.70,float(index%columns)/maxi(1,columns-1)),lerpf(.18,.82,float(index/columns)/maxi(1,rows-1)))
 
 
 func _layout() -> void:

@@ -593,7 +593,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.overview_hud.attach_zoom(star_map)
 		screen._sync_map_rect()
 		if new_system: star_map.fit_overview()
-	if _uses_3d_map() and state.navigation.position.size() == 3:
+	if _uses_3d_map() and state.navigation.position.size() == 3 and (new_map or state.navigation.leg_active or state.navigation_origin == state.FREE_DESTINATION or not state.intercepted_position().is_empty()):
 		var at: Array = state.navigation.position
 		star_map.apply_navigation_position(Vector3(at[0], at[1], at[2]))
 	var stopped: Array = state.intercepted_position()
@@ -610,6 +610,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	if new_map:
 		var source_map: Control = star_map
 		if _uses_3d_map():
+			star_map.free_move_requested.connect(func(point: Vector3):
+				if star_map == source_map: source_map.travel_to_position(point))
 			star_map.free_arrived.connect(func():
 				if star_map == source_map: _free_arrived())
 		star_map.travel_started.connect(func():
@@ -1350,4 +1352,4 @@ func _free_arrived() -> void:
 	state.arrive_free_destination()
 	map_destination = -1
 	phase = Phase.OVERVIEW
-	screen.clear(state, "system")
+	_clear("system")

@@ -23,14 +23,17 @@ func advance(run: Resource) -> void:
 	# Isolate station scheduling while respecting the new mandatory encounter gate.
 	for entry in run.encounters:
 		if entry.get("mandatory_boss", false): entry.completed = true
-	run.ftl_charge = run.required_ftl_charge
-	check(run.generate_system(), "Charged ship may leave an ignored station")
+	run.ftl_access = true
+	check(run.generate_system(), "FTL-ready ship may leave an ignored station")
 
 func reach_station(run: Resource) -> void:
-	while run.service.is_empty(): advance(run)
+	for attempt in range(128):
+		if not run.service.is_empty(): return
+		advance(run)
+	check(false, "Deterministic service search must terminate")
 
 func accounting(run: Resource) -> Array:
-	return [run.ftl_charge, run.required_ftl_charge, run.remaining_ftl_charge(), run.encounters.duplicate(true), run.pending_penalties.duplicate()]
+	return [run.pressure, run.ftl_access, run.system_profile, run.encounters.duplicate(true), run.pending_penalties.duplicate()]
 
 func encounter_signature(run: Resource) -> Array:
 	# Separate cloned configurations may own distinct Boss Resources with equal values.
@@ -40,44 +43,45 @@ func encounter_signature(run: Resource) -> Array:
 		if entry.kind == "battle":
 			var profile: Resource = run.enemy_profile(entry)
 			snapshot.erase("enemy_data")
-			snapshot["enemy_stats"] = [profile.ship_name, profile.enemy_rank, profile.hull_capacity, profile.shields, profile.materials, profile.energy, profile.crew, profile.synthesizer, profile.reactor, profile.quarters, profile.interstellar_ftl_reward, profile.destruction_salvage_reward]
+			snapshot["enemy_stats"] = [profile.ship_name, profile.enemy_rank, profile.hull_capacity, profile.shields, profile.materials, profile.energy, profile.crew, profile.synthesizer, profile.reactor, profile.quarters, profile.destruction_salvage_reward]
 		result.append(snapshot)
 	return result
 
 func schedule_checks() -> void:
-	var firsts: Dictionary = {}
-	var gaps: Dictionary = {}
+	var profiles_seen: Dictionary = {}
+	var stations_seen: Dictionary = {}
 	for seed_value in range(1, 201):
 		var run = fresh(seed_value % 3, seed_value)
 		var twin = fresh(seed_value % 3, seed_value)
 		var without = fresh(seed_value % 3, seed_value)
 		without.rules.trading_outpost = null
-		var previous: int = 0
-		check(run.system_number == 1 and run.service.is_empty() and run.next_outpost_system in [2,3], "No system-one station; first scheduled in two or three")
 		for system in range(1, 31):
-			check(run.system_name == twin.system_name and encounter_signature(run) == encounter_signature(twin) and run.service == twin.service and run.next_outpost_system == twin.next_outpost_system, "Debug seed reproduces station schedule and systems")
-			check(encounter_signature(run) == encounter_signature(without) and run.required_ftl_charge == without.required_ftl_charge and run.rng.state == without.rng.state, "Station stream independent of encounters and travel accounting")
-			check(run.encounters.size() == 6, "Station never replaces a progression encounter")
-			var poi_count: int = 0
-			for entry in run.encounters:
-				if entry.kind == "poi": poi_count += 1
-			check(run.required_ftl_charge == poi_count + 1, "Only non-trading PoIs set travel requirement")
+			check(run.system_name == twin.system_name and run.system_profile == twin.system_profile and encounter_signature(run) == encounter_signature(twin) and run.service == twin.service, "Debug seed reproduces profiles, services and systems")
+			check(encounter_signature(run) == encounter_signature(without) and run.ftl_access == without.ftl_access and run.rng.state == without.rng.state, "Service stream independent of encounters, access and loot RNG")
+			check(run.encounters.size() == 9, "Service never replaces a progression encounter")
+			profiles_seen[run.system_profile] = true
+			if run.system_profile == "quiet":
+				check(not run.service.is_empty(), "Quiet Frontier always contains an outpost")
 			if not run.service.is_empty():
-				if previous == 0: firsts[system] = true
-				else:
-					check(system - previous in [2,3], "Every station gap is two or three")
-					gaps[system - previous] = true
-				previous = system
-				check(run.next_outpost_system - system in [2,3], "Next station scheduled on arrival")
+				stations_seen[run.system_profile] = true
+				check(run.service.poi == run.rules.trading_outpost and not run.service.completed, "Exactly one independent service")
+			var objective_count: int = 0
+			for entry in run.encounters:
+				check(entry.get("poi") != run.rules.trading_outpost, "No duplicate outpost inside progression encounters")
+				if entry.get("objective_role", "") == "access": objective_count += 1
+			check(objective_count >= 1 and objective_count <= 2 and not run.ftl_access, "Service generation cannot grant access or replace routes")
 			advance(run)
 			advance(twin)
 			advance(without)
-	check(firsts.size() == 2 and gaps.size() == 2, "Seed sweep covers both first stations and both gaps")
-	# Spending loot RNG on cards must not move the independently scheduled stations.
+	check(profiles_seen.size() == 4 and stations_seen.size() == 4, "Seed sweep covers every profile and service probability")
+	# Shopping advances loot RNG, which can change future profiles. The independent station
+	# probability draw stream must stay aligned; identical profiles yield identical services.
 	var shopping = fresh()
 	var ignoring = fresh()
 	for system in range(1, 31):
-		check(shopping.service.is_empty() == ignoring.service.is_empty() and shopping.next_outpost_system == ignoring.next_outpost_system, "Station schedule independent of card-purchase RNG")
+		check(shopping.station_rng.state == ignoring.station_rng.state, "Shopping never advances independent station probability RNG")
+		if shopping.system_profile == ignoring.system_profile:
+			check(shopping.service.is_empty() == ignoring.service.is_empty(), "Equal profiles and station draw produce equal availability")
 		if not shopping.service.is_empty():
 			shopping.salvage = 100
 			for n in range(2):
@@ -89,21 +93,6 @@ func schedule_checks() -> void:
 						check(shopping.decline_card() and shopping.player_pool().size() == 36, "Full-deck shopping resolves by declining before travel")
 		advance(shopping)
 		advance(ignoring)
-	for interval in [2,3]:
-		var run = fresh()
-		run.rules.minimum_station_interval = interval
-		run.rules.maximum_station_interval = interval
-		# Start again to exercise Inspector configuration from expedition initialization.
-		run.start(0, run.rules, 42)
-		check(run.next_outpost_system == interval, "Fixed Inspector interval respected")
-		for n in range(20):
-			if not run.service.is_empty(): check(run.system_number % interval == 0, "Fixed station spacing")
-			advance(run)
-	var invalid = fresh()
-	invalid.rules.minimum_station_interval = 99
-	invalid.rules.maximum_station_interval = 99
-	invalid.start(0, invalid.rules, 42)
-	check(invalid.next_outpost_system == 3, "Invalid Inspector bounds cannot exceed three")
 
 func economy_checks(ship_index: int) -> void:
 	var run = fresh(ship_index)
@@ -112,7 +101,7 @@ func economy_checks(ship_index: int) -> void:
 	check(run.can_visit(State.SERVICE_INDEX) and not run.can_survey(State.SERVICE_INDEX) and not run.survey(State.SERVICE_INDEX), "Broke station entry and no survey")
 	for slot in range(4): check(not run.purchase_service(slot, run.service_revision, 1), "Zero Salvage purchase refused")
 	check(accounting(run) == before and run.can_visit(State.SERVICE_INDEX), "Declining station is free and leaves it available")
-	check(not run.resolve_approach(State.SERVICE_INDEX, 1) and not run._complete_encounter(State.SERVICE_INDEX, 99), "PoI APIs cannot complete station or grant FTL")
+	check(not run.resolve_approach(State.SERVICE_INDEX, 1) and not run._complete_encounter(State.SERVICE_INDEX), "PoI APIs cannot complete station or grant FTL")
 	run.salvage = 50
 	run.hull = run.ship().hull_capacity - 18
 	var revision: int = run.service_revision
@@ -172,7 +161,7 @@ func economy_checks(ship_index: int) -> void:
 	check(accounting(run) == before and not run.service.completed, "All station purchases leave progression/penalties/completion untouched")
 	revision = run.service_revision
 	advance(run)
-	check(run.service.is_empty() and not run.can_visit(State.SERVICE_INDEX), "Station disappears after departure")
+	check(run.service_revision != revision and not run.purchase_service(1, revision), "Departed station confirmation cannot affect the next system")
 	reach_station(run)
 	check(run.service_cost(3) == 25 and run.station_production_purchases == 0 and run.production_upgrades == upgrades, "Next station resets prices but preserves permanent production")
 	check(not run.purchase_service(1, revision), "Old station confirmation cannot apply at new station")

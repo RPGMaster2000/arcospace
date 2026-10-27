@@ -81,14 +81,14 @@ func run() -> void:
 			check(host.view_kind == "system" and not host.state.encounters[0].completed, "Return preserves encounter")
 	# Confirm is the only UI execution path; repeated presses are harmless.
 	poi_at_zero(Rules.pois[0])
-	var before: int = host.state.ftl_charge
+	var before: int = host.state.pressure
 	host.approach_buttons[0].pressed.emit()
 	check(not host.confirm_button.disabled and host.approach_buttons[0].selected, "Selection visibly enables Confirm")
 	await settle()
 	await screenshot("mining-selected")
 	host.confirm_button.pressed.emit()
 	host.confirm_button.pressed.emit()
-	check(host.state.salvage == 33 and host.state.ftl_charge == before + 1 and host.state.encounters[0].completed, "Confirm grants exactly one unchanged reward")
+	check(host.state.salvage == 33 and host.state.pressure == before + 1 and host.state.encounters[0].completed, "Confirm grants exactly one unchanged reward")
 	while host.presenting_outcome: await process_frame
 	host.show_system()
 	check(host.grid.get_child(0).disabled, "Completed tile stays disabled")
@@ -98,8 +98,8 @@ func run() -> void:
 		host.show_system()
 		await settle()
 		verify_geometry()
-		check(host.grid.columns == 3 and host.grid.get_child_count() == 6, "3 by 2 encounter grid")
-		check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "Six encounters fit without scrolling")
+		check(host.grid.columns == 3 and host.grid.get_child_count() == Rules.encounters_per_system, "Expanded three-column encounter grid")
+		check(host.scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Expanded fallback roster preserves vertical scrolling")
 		await screenshot("system-%dx%d" % [window_size.x,window_size.y])
 		for poi in Rules.pois:
 			poi_at_zero(poi)

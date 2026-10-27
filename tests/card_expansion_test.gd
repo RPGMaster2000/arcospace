@@ -281,7 +281,7 @@ func test_decks() -> void:
 		hand.free()
 		var deck_before_jump: Array=run.player_pool()
 		var weights_before_jump: Dictionary=run.acquired_draw_weights()
-		run.ftl_charge=run.required_ftl_charge
+		run.ftl_access = true
 		check(run.generate_system() and run.player_pool()==deck_before_jump and run.acquired_draw_weights()==weights_before_jump, "Ownership, upgrades and weights survive system transition")
 		# A paid station card reward uses the same fixed replacement/decline flow without refund.
 		run.service={"kind":"service","poi":Rules.trading_outpost,"completed":false}

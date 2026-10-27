@@ -59,7 +59,7 @@ func run() -> void:
 		await screenshot("choices-%d" % resolution.x)
 		var salvage: int = host.state.salvage
 		var hull: int = host.state.hull
-		var ftl: int = host.state.ftl_charge
+		var ftl: int = host.state.pressure
 		var rng_state: int = host.state.rng.state
 		host.approach_buttons[1].pressed.emit()
 		check(host.confirmation.shade.visible and host.confirmation.shade.modulate.a < 1, "Selecting begins fade-in")
@@ -81,7 +81,7 @@ func run() -> void:
 		check(host.view_kind == "poi" and host.confirmation.shade.visible, "Shade blocks underlying navigation")
 		click(host.confirmation.cancel_button.get_global_rect().get_center())
 		check(not host.confirmation.shade.visible and host.selected_approach == -1, "Cancel closes selection")
-		check(host.state.rng.state == rng_state and host.state.salvage == salvage and host.state.hull == hull and host.state.ftl_charge == ftl and not host.state.encounters[0].completed, "Cancel preserves RNG, resources and encounter")
+		check(host.state.rng.state == rng_state and host.state.salvage == salvage and host.state.hull == hull and host.state.pressure == ftl and not host.state.encounters[0].completed, "Cancel preserves RNG, resources and encounter")
 		host.approach_buttons[0].pressed.emit()
 		var escape = InputEventAction.new()
 		escape.action = "ui_cancel"
@@ -92,7 +92,7 @@ func run() -> void:
 		await settle()
 		click(host.confirm_button.get_global_rect().get_center())
 		host.confirm_button.pressed.emit()
-		check(host.state.salvage == salvage + 3 and host.state.ftl_charge == ftl + 1, "Initiate applies reward exactly once")
+		check(host.state.salvage == salvage + 3 and host.state.pressure == ftl + 1, "Initiate applies reward exactly once")
 		while host.presenting_outcome: await process_frame
 		await settle()
 		check(header_rects() == rectangles and host.title.text == title, "Outcome preserves exploration header")

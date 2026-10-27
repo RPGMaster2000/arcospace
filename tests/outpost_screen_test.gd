@@ -33,9 +33,7 @@ func run() -> void:
 	host.rules.debug_seed = 789
 	host.rules.log_rolls = false
 	root.add_child(host)
-	while host.state.service.is_empty():
-		host.state.ftl_charge = host.state.required_ftl_charge
-		host.state.generate_system()
+	host.state.service = {"kind":"service", "poi":host.rules.trading_outpost, "title":"Trading Outpost", "completed":false}
 	host.state.salvage = 100
 	host.state.hull = host.state.ship().hull_capacity - 5
 	host.show_outpost()

@@ -312,7 +312,7 @@ func _complete_encounter(index: int) -> bool:
 
 
 func can_survey(index: int) -> bool:
-	if not can_visit(index) or index == SERVICE_INDEX or encounters[index].kind != "poi":
+	if not can_visit(index) or index == SERVICE_INDEX or objective_locked(index) or encounters[index].kind != "poi":
 		return false
 	for approach in encounters[index].poi.approaches:
 		if not locked_reason(approach).is_empty():
@@ -348,7 +348,7 @@ func can_visit(index: int) -> bool:
 		return false
 	if index == SERVICE_INDEX:
 		return not service.is_empty()
-	return index >= 0 and index < encounters.size() and not encounters[index].completed and not objective_locked(index)
+	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
 
 # Roll once at actual movement initiation; arrival, menus and battle returns never call this.
@@ -544,7 +544,7 @@ func locked_reason(approach: Resource) -> String:
 # Validate/pay the approach, roll its outcome and complete the PoI before applying rewards.
 # forced_roll is a deterministic test hook; normal play uses this expedition's RNG.
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
-	if index == SERVICE_INDEX or not can_visit(index) or encounter_at(index).kind != "poi":
+	if index == SERVICE_INDEX or not can_visit(index) or objective_locked(index) or encounter_at(index).kind != "poi":
 		return false
 	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
