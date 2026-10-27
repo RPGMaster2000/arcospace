@@ -25,30 +25,51 @@ jobs:
         run: python3 -m unittest discover -s tools -p 'test_*.py' -v
       - name: Import and run all regression scripts
         run: python3 tools/run_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64
-      - name: Check rendered landscape UI
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb
-          export LIBGL_ALWAYS_SOFTWARE=1
-          GODOT=Godot_v4.7.2-stable_linux.x86_64
-          for script in tests/cinematic_visual_test.gd tests/cinematic_touch_test.gd tests/cinematic_launch_test.gd tests/expedition_resume_test.gd tests/systems_failure_test.gd tests/battle_layout_test.gd tests/shield_shatter_test.gd tests/alpha_visual_test.gd tests/power_allocation_test.gd tests/expedition_milestones_test.gd tests/star_map_test.gd tests/battlefield_environments_test.gd tests/field_repairs_ui_test.gd tests/outpost_screen_test.gd tests/repair_selection_test.gd tests/six_ship_profiles_test.gd tests/chasedown_ui_test.gd tests/deck_replacement_ui_test.gd tests/card_inspection_test.gd tests/enemy_models_visual_test.gd tests/ship_models_test.gd tests/settings_menu_test.gd tests/startup_flow_test.gd; do
-            name="$(basename "$script" .gd)"
-            limit=120
-            # Statistical sampling plus all ships/viewports is slower under llvmpipe.
-            if [ "$script" = tests/power_allocation_test.gd ]; then limit=300; fi
-            status=0
-            timeout "$limit" xvfb-run -a -s "-screen 0 1920x1080x24" "$GODOT" --display-driver x11 --rendering-method gl_compatibility --audio-driver Dummy --path . --script "$script" > "test-results/render-$name.log" 2>&1 || status=$?
-            if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures|Assertion failed' "test-results/render-$name.log"; then cat "test-results/render-$name.log"; exit 1; fi
-            cat "test-results/render-$name.log"
-          done
-          cp -r .godot/testlogs test-results/screenshots
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: godot-test-results
           path: test-results/
+
+
+  rendered-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        renderer: [gl_compatibility, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot and software renderers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip -o "$RUNNER_TEMP/godot.zip"
+          echo "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4  $RUNNER_TEMP/godot.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot-bin"
+          chmod +x "$RUNNER_TEMP/godot-bin/Godot_v4.7.2-stable_linux.x86_64"
+          echo "$RUNNER_TEMP/godot-bin" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers
+      - name: Run recurring rendered suite
+        shell: bash
+        env:
+          RENDERER: ${{ matrix.renderer }}
+        run: |
+          set -euo pipefail
+          export LIBGL_ALWAYS_SOFTWARE=1
+          if [ "$RENDERER" = mobile ]; then
+            for icd in /usr/share/vulkan/icd.d/*lvp*; do export VK_ICD_FILENAMES="$icd"; done
+          fi
+          xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/run_rendered_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --renderer "$RENDERER" --results "test-results/rendered-$RENDERER"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rendered-${{ matrix.renderer }}-results
+          path: |
+            test-results/
+            .godot/testlogs/
 
   exported-startup:
     runs-on: ubuntu-24.04
