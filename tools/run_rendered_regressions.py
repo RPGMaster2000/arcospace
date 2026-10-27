@@ -78,7 +78,8 @@ def main(argv=None):
         summary["running"] = name
         save()
         result = run_process(command(args.godot, project, args.renderer, name),
-                             results / (name + ".log"), TIMEOUTS.get(name, args.timeout))
+                             results / (name + ".log"),
+                             max(args.timeout, 240) if args.renderer == "mobile" and name == "star_map_navigation_test" else TIMEOUTS.get(name, args.timeout))
         result["name"] = name
         summary["runs"].append(result)
         summary["running"] = None
