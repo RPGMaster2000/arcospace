@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-systems_per_difficulty = 3
-hull_bonus_per_level = 2
-shields_bonus_per_level = 1
+systems_per_difficulty = 2
+hull_bonus_per_level = 3
+shields_bonus_per_level = 2
 resource_bonus_per_level = 1
-production_bonus_per_level = 0.25
+production_bonus_per_level = 0.5
 elite_probability_increase = 0.025
 maximum_elite_probability = 0.35
 boss_interval = 6
