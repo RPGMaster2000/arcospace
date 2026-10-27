@@ -19,7 +19,13 @@ func fit(context: String) -> void:
 			if not label.text.is_empty(): check(button.get_global_rect().encloses(label.get_global_rect()), "Value fully contained: " + context)
 	check(host.resource_bar.entries.size() == 7, "Only seven combined indicators")
 	check(safe.encloses(host.jump_button.get_global_rect()), "Bottom control padded")
-	check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "No unnecessary scrollbar: " + context + " viewport=%s grid=%s" % [host.scroll.size, host.grid.size])
+	var overflow: bool = host.scroll.get_v_scroll_bar().max_value > host.scroll.get_v_scroll_bar().page + 1
+	# Nine encounters intentionally exceed the fallback 2D grid at some aspect ratios.
+	# Assert the overflow is scrollable rather than requiring the former six-tile fit.
+	if context.begins_with("system ") and host.state.encounters.size() > 6:
+		check(not overflow or host.scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Expanded fallback grid remains scrollable: " + context)
+	else:
+		check(not overflow, "No unnecessary scrollbar: " + context + " viewport=%s grid=%s" % [host.scroll.size, host.grid.size])
 	check(host.scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "No horizontal scrolling")
 func screenshot(name: String) -> void:
 	if DisplayServer.get_name() != "headless":
