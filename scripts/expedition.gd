@@ -808,23 +808,18 @@ func show_poi(index: int) -> void:
 	for slot in range(poi.approaches.size()):
 		var approach: Resource = poi.approaches[slot]
 		var key: String = Presentation.approach_key(poi, slot)
+		var requirement = state.approach_requirement(approach)
 		var button = _tile(
 			options,
 			_icon(key) + "  " + approach.title,
 			approach_text(approach),
 			Presentation.COLORS[Presentation.classification(state.encounter_at(index))],
 			_select_approach.bind(slot),
-			not state.locked_reason(approach).is_empty()
+			requirement.is_locked()
 		)
-		var locked: String = state.locked_reason(approach)
-		if _uses_3d_map() and not locked.is_empty():
+		if _uses_3d_map() and requirement.is_locked():
 			button.heading.text = approach.title
-			var gate: String = locked
-			if not approach.requirement.is_empty() and state.production(approach.requirement) < approach.minimum_production:
-				gate = "%s %d required (%d)" % [state.LABELS[approach.requirement],approach.minimum_production,state.production(approach.requirement)]
-			elif state.salvage < approach.salvage_cost:
-				gate = "Salvage %d required (%d)" % [approach.salvage_cost,state.salvage]
-			button.collapse_requirement(gate)
+			button.collapse_requirement(ExpeditionText.requirement_text(requirement, state.LABELS))
 		else:
 			button.set_rich_details(highlight_outcome(approach_text(approach)))
 		approach_buttons.append(button)

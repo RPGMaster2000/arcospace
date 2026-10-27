@@ -13,6 +13,7 @@ var _recorded_results: Dictionary = {}
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
+const Requirement = preload("res://scripts/expedition/approach_requirement.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTION
@@ -572,23 +573,29 @@ func arrive_destination(index: int) -> void:
 #region Approaches and modifiers
 
 
-func locked_reason(approach: Resource) -> String:
-	if (
-		not approach.requirement.is_empty()
-		and production(approach.requirement) < approach.minimum_production
-	):
-		return (
-			"Requires %s ≥%d (you have %d)"
-			% [
-				LABELS[approach.requirement],
-				approach.minimum_production,
-				production(approach.requirement)
-			]
-		)
+# Preserve gate order: production, price, then a full Hull repair target.
+func approach_requirement(approach: Resource) -> RefCounted:
+	if not approach.requirement.is_empty():
+		var available: int = production(approach.requirement)
+		if available < approach.minimum_production:
+			return Requirement.new(Requirement.Kind.PRODUCTION, approach.requirement, approach.minimum_production, available)
 	if salvage < approach.salvage_cost:
-		return "Requires %d Salvage (you have %d)" % [approach.salvage_cost, salvage]
+		return Requirement.new(Requirement.Kind.SALVAGE, "salvage", approach.salvage_cost, salvage)
 	if approach.success.hull > 0 and hull >= ship().hull_capacity:
-		return "Hull already full"
+		return Requirement.new(Requirement.Kind.FULL_HULL, "hull", ship().hull_capacity, hull)
+	return Requirement.new()
+
+
+# Compatibility wording for existing callers. Eligibility is evaluated only above.
+func locked_reason(approach: Resource) -> String:
+	var requirement = approach_requirement(approach)
+	match requirement.kind:
+		Requirement.Kind.PRODUCTION:
+			return "Requires %s ≥%d (you have %d)" % [LABELS[requirement.attribute], requirement.required, requirement.current]
+		Requirement.Kind.SALVAGE:
+			return "Requires %d Salvage (you have %d)" % [requirement.required, requirement.current]
+		Requirement.Kind.FULL_HULL:
+			return "Hull already full"
 	return ""
 
 

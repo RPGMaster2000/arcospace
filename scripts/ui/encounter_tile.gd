@@ -12,6 +12,8 @@ var selected: bool = false
 var compact := false
 var requirement_only := false
 var minimum_height: float = 84.0
+const REQUIREMENT_FONT_SIZE := 16
+const MINIMUM_REQUIREMENT_FONT_SIZE := 14
 
 
 func configure(title: String, body: String, color: Color, centered: bool = false) -> void:
@@ -80,8 +82,12 @@ func set_rich_details(value: String) -> void:
 func _process(_delta: float) -> void:
 	if is_instance_valid(content):
 		if requirement_only and size.x > 0:
-			var width: float = heading.get_theme_font("font").get_string_size(heading.text,HORIZONTAL_ALIGNMENT_LEFT,-1,16).x
-			heading.add_theme_font_size_override("font_size",mini(16,int(16*(size.x-20)/maxf(1,width))))
+			var available: float = maxf(1, size.x - 20)
+			var width: float = heading.get_theme_font("font").get_string_size(heading.text, HORIZONTAL_ALIGNMENT_LEFT, -1, REQUIREMENT_FONT_SIZE).x
+			var font_size: int = clampi(int(REQUIREMENT_FONT_SIZE * available / maxf(1, width)), MINIMUM_REQUIREMENT_FONT_SIZE, REQUIREMENT_FONT_SIZE)
+			heading.add_theme_font_size_override("font_size", font_size)
+			# A long name/gate can wrap, but cannot make the requirement unreadable.
+			heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if width * font_size / REQUIREMENT_FONT_SIZE > available else TextServer.AUTOWRAP_OFF
 		var icon_height: float = (
 			icon_label.get_combined_minimum_size().y + 4 if is_instance_valid(icon_label) else 0
 		)

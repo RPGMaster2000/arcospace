@@ -105,3 +105,15 @@ static func effect_indicators(value: String) -> String:
 	for pair in [["Materials","materials"],["Energy","energy"],["Crew","crew"],["Shields","shields"],["Hull","hull"]]:
 		value = value.replace(pair[0],presentation.icon(pair[1],presentation.UI_FONT))
 	return value.replace("EMP Pulse charge","EMP charge").replace("EMP Pulse offline","EMP offline").replace("No starting modifiers","No modifiers").replace("minimum 1","min 1")
+
+
+static func requirement_text(requirement: RefCounted, labels: Dictionary) -> String:
+	var contract = preload("res://scripts/expedition/approach_requirement.gd")
+	match requirement.kind:
+		contract.Kind.PRODUCTION:
+			return "%s %d required (%d)" % [labels[requirement.attribute], requirement.required, requirement.current]
+		contract.Kind.SALVAGE:
+			return "Salvage %d required (%d)" % [requirement.required, requirement.current]
+		contract.Kind.FULL_HULL:
+			return "Hull already full"
+	return ""
