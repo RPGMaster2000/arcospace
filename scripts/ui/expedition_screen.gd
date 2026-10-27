@@ -21,6 +21,7 @@ signal cancel_requested
 signal confirm_requested
 signal jump_requested
 
+const EdgeHUD = preload("res://scripts/ui/star_system_hud.gd")
 var overview_hud: Control
 var focus_layout_size := Vector2(-1,-1)
 var compact_focus := false
@@ -176,9 +177,11 @@ func _build_ui() -> void:
 	charge.offset_top = -5
 	charge.offset_bottom = -2
 	jump_button.add_child(charge)
-	overview_hud = preload("res://scripts/ui/star_system_hud.gd").new()
-	overview_hud.owner_screen = self
+	overview_hud = EdgeHUD.new()
 	add_child(overview_hud)
+	var utility_actions: Array[Button] = [deck_button, legend, settings_button]
+	overview_hud.bind_controls(resource_bar, jump_button, utility_actions)
+	overview_hud.geometry_changed.connect(_sync_map_rect)
 	focus_backing = Panel.new()
 	focus_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var backing := Presentation.style(Presentation.COLORS.special)
@@ -216,8 +219,8 @@ func mount_map(map: Control) -> void:
 
 func map_layout(enabled: bool, focused: bool) -> void:
 	_set_compact_focus(enabled and focused)
-	overview_hud.set_overview(enabled and (focused or kind == "system"))
-	overview_hud.set_focus(focused)
+	overview_hud.set_mode(EdgeHUD.Mode.FOCUS if enabled and focused else (EdgeHUD.Mode.OVERVIEW if enabled and kind == "system" else EdgeHUD.Mode.HIDDEN))
+	ui.visible = not (enabled and not focused and kind == "system")
 	# Keep bright celestial bodies from washing out the existing PoI header.
 	header.get_node("TextBacking").color.a = 0.0
 	model_space.visible = enabled
@@ -318,7 +321,7 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 		combat_entry.queue_free()
 	returning_from_focus = compact_focus and kind == "system"
 	_set_compact_focus(false)
-	if not (map_enabled and kind in ["system","poi","preview","chasedown","outcome"]): overview_hud.set_overview(false)
+	if not (map_enabled and kind in ["system","poi","preview","chasedown","outcome"]): overview_hud.set_mode(EdgeHUD.Mode.HIDDEN)
 	resource_bar.edge_compact = map_enabled and kind in ["system","poi","preview","chasedown","outcome"]
 	view.alignment = BoxContainer.ALIGNMENT_END if kind == "poi" else BoxContainer.ALIGNMENT_BEGIN
 	resource_bar.overlay.dismiss()
@@ -446,7 +449,7 @@ func allows_activation() -> bool:
 
 func hide_for_battle() -> void:
 	_set_compact_focus(false)
-	overview_hud.set_overview(false)
+	overview_hud.set_mode(EdgeHUD.Mode.HIDDEN)
 	resource_bar.set_heartbeat(false)
 	resource_bar.overlay.dismiss()
 	ui.hide()
@@ -498,7 +501,6 @@ func _set_compact_focus(enabled: bool) -> void:
 	header.compact = enabled
 	header._fit()
 	heading_row.visible = not enabled
-	resource_bar.visible = not enabled
 	if enabled:
 		return_button.reparent(self)
 		return_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
