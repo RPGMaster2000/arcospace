@@ -13,7 +13,8 @@ func capture(name: String):
  if DisplayServer.get_name() == "headless": return
  await process_frame
  await RenderingServer.frame_post_draw
- root.get_texture().get_image().save_webp("res://docs/tactical_focus_screenshots/"+name+".webp")
+ DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
+ root.get_texture().get_image().save_webp("res://.godot/testlogs/tactical-focus-"+name+".webp")
 func run():
  var host = load("res://scenes/expedition.tscn").instantiate()
  host.persistence_enabled = false

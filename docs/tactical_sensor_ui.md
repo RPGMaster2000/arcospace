@@ -1,4 +1,6 @@
-# Right-side tactical sensor interface
+# Right-side tactical sensor interface (historical)
+
+Superseded by [the unified HUD](unified_hud_polish.md). The secondary preview component has been removed; the actual confrontation models remain authoritative.
 
 This follow-up applies the supplied reference exclusively to the right-side briefing. The existing left cinematic camera, player/enemy poses, pursuit arrangement, lighting and movement remain unchanged. The former map-projected targeting brackets are removed.
 

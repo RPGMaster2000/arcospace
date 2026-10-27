@@ -21,7 +21,7 @@ COMPATIBILITY = (
     "card_inspection_test", "enemy_models_visual_test", "ship_models_test",
     "settings_menu_test", "startup_flow_test", "unified_hud_test",
     "tactical_focus_test", "compact_poi_focus_test", "tactical_resize_test",
-    "hud_ownership_test", "star_system_render_smoke_test",
+    "hud_ownership_test", "star_system_render_smoke_test", "layout_invalidation_test",
 )
 MOBILE = ("star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}

@@ -24,6 +24,8 @@ signal jump_requested
 const EdgeHUD = preload("res://scripts/ui/star_system_hud.gd")
 var overview_hud: Control
 var focus_layout_size := Vector2(-1,-1)
+var _focus_safe_insets := Vector4(-1,-1,-1,-1)
+var _layout_queued := false
 var compact_focus := false
 var focus_transition := false
 var focus_motion: Tween
@@ -60,6 +62,12 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_ui()
+	resized.connect(_request_layout)
+	body.item_rect_changed.connect(_request_layout)
+	sidebar.item_rect_changed.connect(_request_layout)
+	view.resized.connect(_request_layout)
+	view.minimum_size_changed.connect(_request_layout)
+	_request_layout()
 
 
 func _build_ui() -> void:
@@ -181,7 +189,7 @@ func _build_ui() -> void:
 	add_child(overview_hud)
 	var utility_actions: Array[Button] = [deck_button, legend, settings_button]
 	overview_hud.bind_controls(resource_bar, jump_button, utility_actions)
-	overview_hud.geometry_changed.connect(_sync_map_rect)
+	overview_hud.geometry_changed.connect(_request_layout)
 	focus_backing = Panel.new()
 	focus_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var backing := Presentation.style(Presentation.COLORS.special)
@@ -214,8 +222,7 @@ func mount_map(map: Control) -> void:
 	add_child(map)
 	move_child(map, 1)
 	_sync_map_rect()
-	if not body.item_rect_changed.is_connected(_sync_map_rect):
-		body.item_rect_changed.connect(_sync_map_rect)
+	_request_layout()
 
 func map_layout(enabled: bool, focused: bool) -> void:
 	_set_compact_focus(enabled and focused)
@@ -233,7 +240,16 @@ func map_layout(enabled: bool, focused: bool) -> void:
 	returning_from_focus = false
 	_sync_map_rect()
 
-func _process(_delta: float) -> void:
+# Static geometry changes are coalesced; animated map/VFX nodes keep their own processing.
+func _request_layout() -> void:
+	if _layout_queued or not is_inside_tree(): return
+	_layout_queued = true
+	_apply_geometry.call_deferred()
+
+
+func _apply_geometry() -> void:
+	_layout_queued = false
+	if not is_inside_tree(): return
 	if ui.visible and kind == "system" and is_instance_valid(grid):
 		# Fit six tiles plus the separate service button in the existing scroll area.
 		var available_height: float = scroll.size.y - 14
@@ -242,11 +258,11 @@ func _process(_delta: float) -> void:
 				available_height -= child.size.y + view.get_theme_constant("separation")
 		for tile in grid.get_children():
 			tile.minimum_height = maxf(100, available_height / 2)
-	_sync_map_rect()
 	if compact_focus:
 		_fit_focus()
 		focus_backing.position = sidebar.global_position-global_position-Vector2(10,8)
 		focus_backing.size = sidebar.size+Vector2(20,16)
+	_sync_map_rect()
 
 func _sync_map_rect() -> void:
 	if is_instance_valid(map_layer) and is_instance_valid(body):
@@ -527,9 +543,10 @@ func _set_compact_focus(enabled: bool) -> void:
 		for edge in ["left","right","top","bottom"]: ui.add_theme_constant_override("margin_"+edge,24)
 
 func _fit_focus() -> void:
-	if focus_layout_size == size: return
-	focus_layout_size = size
 	var safe := preload("res://scripts/ui/battle_layout.gd").safe_insets(self)
+	if focus_layout_size == size and _focus_safe_insets == safe: return
+	focus_layout_size = size
+	_focus_safe_insets = safe
 	var edge: int = roundi(maxf(16,(size.x-1440)*0.5+16))
 	ui.add_theme_constant_override("margin_left",edge+roundi(safe.x))
 	ui.add_theme_constant_override("margin_right",edge+roundi(safe.z))
@@ -556,3 +573,9 @@ func _cancel_focus_motion() -> void:
 
 func _input(_event: InputEvent) -> void:
 	if focus_transition: get_viewport().set_input_as_handled()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_RESUMED and is_node_ready():
+		overview_hud.queue_layout()
+		_request_layout()

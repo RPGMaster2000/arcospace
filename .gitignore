@@ -3,3 +3,6 @@
 /android/
 /test-results/
 __pycache__/
+
+# Documentation captures are not game assets; Godot generates these on clean imports.
+/docs/**/*.import

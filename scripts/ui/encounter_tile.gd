@@ -11,7 +11,12 @@ var accent: Color = Presentation.COLORS.special
 var selected: bool = false
 var compact := false
 var requirement_only := false
-var minimum_height: float = 84.0
+var _measure_queued := false
+var minimum_height: float = 84.0:
+	set(value):
+		if is_equal_approx(minimum_height, value): return
+		minimum_height = value
+		_queue_measure()
 const REQUIREMENT_FONT_SIZE := 16
 const MINIMUM_REQUIREMENT_FONT_SIZE := 14
 
@@ -53,6 +58,7 @@ func configure(title: String, body: String, color: Color, centered: bool = false
 	column.add_child(details)
 	content.minimum_size_changed.connect(update_minimum_size)
 	refresh_style()
+	_observe_content()
 
 
 func set_rich_details(value: String) -> void:
@@ -79,13 +85,34 @@ func set_rich_details(value: String) -> void:
 	refresh_style()
 
 
-func _process(_delta: float) -> void:
-	if is_instance_valid(content):
+func _ready() -> void:
+	resized.connect(_queue_measure)
+	_observe_content()
+
+
+func _observe_content() -> void:
+	# Both configure-before-add and add-before-configure are valid Control lifecycles.
+	if not is_instance_valid(content): return
+	if not content.minimum_size_changed.is_connected(_queue_measure):
+		content.minimum_size_changed.connect(_queue_measure)
+	_queue_measure()
+
+
+func _queue_measure() -> void:
+	if _measure_queued or not is_inside_tree(): return
+	_measure_queued = true
+	_measure_content.call_deferred()
+
+
+func _measure_content() -> void:
+	_measure_queued = false
+	if is_instance_valid(content) and is_inside_tree():
 		if requirement_only and size.x > 0:
 			var available: float = maxf(1, size.x - 20)
 			var width: float = heading.get_theme_font("font").get_string_size(heading.text, HORIZONTAL_ALIGNMENT_LEFT, -1, REQUIREMENT_FONT_SIZE).x
 			var font_size: int = clampi(int(REQUIREMENT_FONT_SIZE * available / maxf(1, width)), MINIMUM_REQUIREMENT_FONT_SIZE, REQUIREMENT_FONT_SIZE)
-			heading.add_theme_font_size_override("font_size", font_size)
+			if heading.get_theme_font_size("font_size") != font_size:
+				heading.add_theme_font_size_override("font_size", font_size)
 			# A long name/gate can wrap, but cannot make the requirement unreadable.
 			heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if width * font_size / REQUIREMENT_FONT_SIZE > available else TextServer.AUTOWRAP_OFF
 		var icon_height: float = (

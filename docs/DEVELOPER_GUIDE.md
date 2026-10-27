@@ -19,6 +19,7 @@ Start with the ownership table, then follow the walkthrough for the kind of chan
 - [3D star-system map, camera tuning and fallback](star_system_3d.md)
 - [Procedural systems, planet assets, model overrides and background textures](procedural_star_system.md)
 - [Cinematic menu ownership and Inspector calibration](cinematic_menu.md)
+- [Star-system HUD ownership, requirements and responsive layout](star_system_foundations.md)
 - [Tactical preview, target analysis and Game Reference](tactical_preview.md)
 - [Architectural observations](#architectural-observations)
 

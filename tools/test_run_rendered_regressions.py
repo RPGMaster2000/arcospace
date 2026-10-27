@@ -13,7 +13,7 @@ class RenderedSelectionTests(unittest.TestCase):
 
     def test_new_foundation_checks_are_recurring(self):
         for name in ["unified_hud_test", "tactical_focus_test", "compact_poi_focus_test",
-                     "tactical_resize_test", "hud_ownership_test", "star_system_render_smoke_test"]:
+                     "tactical_resize_test", "hud_ownership_test", "star_system_render_smoke_test", "layout_invalidation_test"]:
             self.assertIn(name, COMPATIBILITY)
         self.assertIn("star_system_render_smoke_test", MOBILE)
 

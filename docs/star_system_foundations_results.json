@@ -1,0 +1,102 @@
+{
+  "base_commit": "dacdaaf45ba7168d94fbce226ceaeb5f2b5c91e9",
+  "engine": "Godot 4.7.2 stable",
+  "headless_full_run": {
+    "complete": true,
+    "scripts": 122,
+    "initial_passes": 121,
+    "initial_failures": [
+      {
+        "name": "expedition_fresh_process_test",
+        "errors": [
+          "ERROR: Fresh-process failure: ended",
+          "SCRIPT ERROR: Assertion failed.",
+          "ERROR: Fresh-process phase timed out"
+        ]
+      }
+    ],
+    "import_passed": true,
+    "all_scripts_have_passing_runs_including_reruns": true,
+    "note": "The fresh-process persistence check failed once at the ended-phase assertion during the full run. It passed five subsequent isolated executions, including three with independent test directories. No persistence logic or assertion was changed; phase/seed diagnostic logging was added. Cause remains unconfirmed."
+  },
+  "focused_checks": {
+    "tactical_live_resize": 20,
+    "hud_ownership": 42,
+    "approach_requirements": 15,
+    "layout_invalidation": 11,
+    "unified_hud": 306
+  },
+  "rendered_final": {
+    "gl_compatibility": [
+      {
+        "name": "layout_invalidation_test",
+        "status": "passed",
+        "seconds": 9.835
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "status": "passed",
+        "seconds": 3.839
+      },
+      {
+        "name": "hud_ownership_test",
+        "status": "passed",
+        "seconds": 11.896
+      },
+      {
+        "name": "tactical_resize_test",
+        "status": "passed",
+        "seconds": 5.254
+      },
+      {
+        "name": "unified_hud_test",
+        "status": "passed",
+        "seconds": 70.791
+      },
+      {
+        "name": "tactical_focus_test",
+        "status": "passed",
+        "seconds": 29.225
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "status": "passed",
+        "seconds": 36.507
+      }
+    ],
+    "mobile_vulkan": [
+      {
+        "name": "star_system_render_smoke_test",
+        "status": "passed",
+        "seconds": 6.997
+      },
+      {
+        "name": "tactical_resize_test",
+        "status": "passed",
+        "seconds": 7.843
+      },
+      {
+        "name": "hud_ownership_test",
+        "status": "passed",
+        "seconds": 14.986
+      }
+    ],
+    "software_driver": "Mesa llvmpipe/lavapipe",
+    "note": "One local GL launch failed because the virtual display could not start; subsequent completed runs above use isolated displays."
+  },
+  "python_tests": {
+    "count": 13,
+    "status": "passed"
+  },
+  "packed_startup": {
+    "checks": 72,
+    "failures": 0,
+    "method": "Exported a Web PCK and ran startup_flow_test from a directory containing no project.godot, using explicit --main-pack. The legacy test packed-label heuristic prints false and was not used as evidence."
+  },
+  "limitations": [
+    "Fresh-process persistence test had one unreproduced failure; retained explicitly above.",
+    "Physical Android hardware and Windows GPU performance were not measured.",
+    "Existing ObjectDB shutdown warnings are recorded separately by the runners.",
+    "Save format/content ID migration and release pack selection were intentionally unchanged."
+  ]
+}

@@ -31,6 +31,7 @@ func run() -> void:
 		"write":
 			store.clear_run()
 			var scene = host()
+			print("Fresh-process initial seed: ", scene.state.seed_used)
 			scene.state.salvage = 200
 			scene.state.hull = scene.state.ship().hull_capacity - 5
 			scene.state.pending_choice = "card"

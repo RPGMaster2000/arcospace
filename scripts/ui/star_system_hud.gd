@@ -29,6 +29,7 @@ var originals: Dictionary = {}
 var blocked_buttons: Dictionary = {}
 var motion: Tween
 var revision := 0
+var _layout_queued := false
 var system_name := ""
 var system_number := 1
 
@@ -45,7 +46,7 @@ func _ready() -> void:
 		panel.add_theme_stylebox_override("panel",style)
 		add_child(panel)
 		panels.append(panel)
-		panel.minimum_size_changed.connect(func(): layout.call_deferred())
+		panel.minimum_size_changed.connect(queue_layout)
 	identifier = Label.new()
 	identifier.add_theme_font_size_override("font_size",30)
 	economy = HBoxContainer.new()
@@ -83,7 +84,7 @@ func _ready() -> void:
 	subtitle.add_theme_constant_override("outline_size",3)
 	subtitle.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(subtitle)
-	resized.connect(layout)
+	resized.connect(queue_layout)
 	hide()
 
 # Screen supplies existing controls once. This component alone owns their mounting/style.
@@ -186,7 +187,18 @@ func _style_resources(font_size: int, height: int) -> void:
 
 func refresh() -> void:
 	identifier.text = "%02d | %s" % [system_number,system_name]
-	layout.call_deferred()
+	queue_layout()
+
+func queue_layout() -> void:
+	if _layout_queued or not is_inside_tree(): return
+	_layout_queued = true
+	_flush_layout.call_deferred()
+
+
+func _flush_layout() -> void:
+	_layout_queued = false
+	if is_inside_tree(): layout()
+
 
 func layout() -> void:
 	if not active: return
@@ -199,9 +211,12 @@ func layout() -> void:
 			inset += Vector4(safe.position.x*ratio.x,safe.position.y*ratio.y,(window.x-safe.end.x)*ratio.x,(window.y-safe.end.y)*ratio.y)
 	# Keep longer generated names readable inside the existing screen space.
 	var title_width: float = title.get_theme_font("font").get_string_size(title.text,HORIZONTAL_ALIGNMENT_LEFT,-1,96).x
-	title.add_theme_font_size_override("font_size",mini(96,int(96*size.x*0.9/maxf(1,title_width))))
+	var title_size := mini(96, int(96 * size.x * 0.9 / maxf(1, title_width)))
+	if title.get_theme_font_size("font_size") != title_size:
+		title.add_theme_font_size_override("font_size", title_size)
 	var identifier_width: float = identifier.get_theme_font("font").get_string_size(identifier.text,HORIZONTAL_ALIGNMENT_LEFT,-1,30).x
-	identifier.add_theme_font_size_override("font_size",20)
+	if identifier.get_theme_font_size("font_size") != 20:
+		identifier.add_theme_font_size_override("font_size",20)
 	identifier.clip_text = false
 	identifier.tooltip_text = identifier.text
 	identifier.custom_minimum_size.x = minf(identifier_width*20.0/30.0+8,size.x*0.24)
@@ -300,7 +315,7 @@ func attach_zoom(map: Control) -> void:
 	for button in map.zoom_controls.get_children():
 		_zoom_actions.append(button)
 		_borrow(button, utilities)
-	layout.call_deferred()
+	queue_layout()
 
 
 func _release_zoom() -> void:
