@@ -20,7 +20,8 @@ func run() -> void:
 			var battle = host.battle
 			battle.battle_effects.enabled = false
 			if battle.battle_effects.busy: await battle.battle_effects.finished
-			check(battle.enemy_ship_data == enemy and battle.enemy_hull == enemy.hull_capacity, "Inspector enemy profile reaches real battle")
+			var expected_enemy: Resource = host.state.enemy_profile(host.state.encounters[0])
+			check(battle.enemy_ship_data.ship_name == expected_enemy.ship_name and battle.enemy_hull == expected_enemy.hull_capacity, "Pressure-scaled Inspector enemy profile reaches real battle")
 			check(battle.ftl.charge_target == host.state.ship().ftl_turns, "Ship-specific EMP Pulse duration preserved")
 			battle.ftl.charge = battle.ftl.charge_target
 			battle.refresh_display()
@@ -30,9 +31,9 @@ func run() -> void:
 			check(not label.visible and not battle.get_node("FTLPanel/Progress").visible and button.visible and is_equal_approx(button.position.x, 0), "Charged Jump replaces the FTL display")
 			battle._warp_out()
 			check(battle.escaped_by_ftl and battle.winner == "player", "Live EMP Pulse succeeds")
-			check(host.state.ftl_charge == enemy.interstellar_ftl_reward and host.state.salvage == 0, "Live escape grants full charge and zero Salvage")
+			check(host.state.pressure == 1 and host.state.salvage == 0, "Live escape grants one pressure and zero Salvage")
 			battle.refresh_display()
-			check(host.state.ftl_charge == enemy.interstellar_ftl_reward, "Refresh does not repeat reward")
+			check(host.state.pressure == 1, "Refresh does not repeat reward")
 			battle._continue_encounter()
 			check(host.view_kind == "system" and host.state.encounters[0].completed and not host.state.can_visit(0), "Escape completes encounter through result screen")
 			host.free()

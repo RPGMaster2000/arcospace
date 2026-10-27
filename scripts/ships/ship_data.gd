@@ -26,7 +26,6 @@ class_name ShipData
 
 @export_group("Enemy expedition rewards")
 @export_enum("Standard", "Elite", "Boss") var enemy_rank: int = 0
-@export_range(1, 10, 1) var interstellar_ftl_reward: int = 1
 @export_range(0, 1000, 1) var destruction_salvage_reward: int = 10
 @export_range(0.01, 100, 0.01) var encounter_weight: float = 1.0
 

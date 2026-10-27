@@ -106,7 +106,9 @@ func _initialize() -> void:
 		var loaded: Resource = Save.new().decode(baseline.saves[kind])
 		check(loaded != null, "Existing-format %s fixture loads" % kind)
 		if loaded == null: continue
-		check(JSON.stringify(JSON.parse_string(JSON.stringify(Save.encode(loaded)))) == JSON.stringify(baseline.saves[kind]), "Old save round-trip unchanged")
+		var migrated: Dictionary = JSON.parse_string(JSON.stringify(Save.encode(loaded)))
+		for field in ["ship_id", "seed", "rng", "acquired", "removed", "upgrades", "upgraded_this_event", "offers", "pending_card", "pending_choice", "upgrades_remaining"]:
+			check(migrated[field] == baseline.saves[kind][field], "Historic %s ledger survives metagame migration: %s" % [kind, field])
 		if kind == "replacement":
 			var identity: String = loaded.player_pool()[0].identity_key()
 			check(loaded.replace_card(identity) and not loaded.replace_card(identity), "Resumed replacement consumed once")

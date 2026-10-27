@@ -73,7 +73,7 @@ func configure(state: Resource, allows_activation: Callable) -> void:
 		balance.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(balance)
 		move_child(balance,0)
-	note.text = "Service station · No travel FTL · Free to leave"
+	note.text = "Service station · No pressure · Free to leave"
 	for slot in range(state.service.poi.approaches.size()):
 		var approach: Resource = state.service.poi.approaches[slot]
 		var details: String
@@ -199,7 +199,7 @@ func confirm_purchase() -> void:
 
 
 func show_purchase_complete() -> void:
-	note.text = "Purchase complete · No travel FTL · Free to leave"
+	note.text = "Purchase complete · No pressure · Free to leave"
 
 
 func clear() -> void:

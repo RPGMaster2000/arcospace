@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SystemProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/system_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hostile"
+display_name = "Hostile Territory"
+ordinary_weight = 0.8
+hazardous_weight = 1.2
+battle_weight = 1.8
+outpost_chance = 0.04
+chasedown_multiplier = 1.5
+tolerance_min = 4
+tolerance_max = 7
+sensitive_chance = 0.35
+star_hue_bias = 0.01
+nebula_chance = 0.4
+poi_weights = {"raider_cache": 2.5, "pirate_debris_field": 2.0, "quarantined_colony": 1.5, "distress_signal": 1.4}

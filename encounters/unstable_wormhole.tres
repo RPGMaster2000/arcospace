@@ -36,9 +36,8 @@ next_battle = {
 
 [sub_resource type="Resource" id="Success1"]
 script = ExtResource("Outcome")
-blurb = "The shortcut contributes extra interstellar charge."
+blurb = "The probe returns with recoverable salvage."
 salvage = 5
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach1"]
 script = ExtResource("Approach")
@@ -57,9 +56,8 @@ next_battle = {
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
-blurb = "A stable corridor supplies one extra travel charge."
+blurb = "A stable corridor allows a safe salvage run."
 salvage = 7
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach2"]
 script = ExtResource("Approach")
@@ -82,7 +80,6 @@ next_battle = {
 script = ExtResource("Outcome")
 blurb = "The reinforced probe charts a shortcut and recovers valuable readings."
 salvage = 9
-extra_ftl_charge = 1
 
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
@@ -95,6 +92,6 @@ failure = SubResource("Failure3")
 [resource]
 script = ExtResource("Poi")
 title = "Unstable Wormhole"
-description = "Risk reserve penalties or EMP Pulse disruption for a chance at one extra travel charge."
+description = "Risk reserve penalties or EMP Pulse disruption for salvage opportunities."
 approaches = Array[ExtResource("Approach")]([SubResource("Approach0"), SubResource("Approach1"), SubResource("Approach2"), SubResource("Approach3")])
 hazardous = true

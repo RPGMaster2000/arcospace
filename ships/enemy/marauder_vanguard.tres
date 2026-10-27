@@ -18,7 +18,6 @@ synthesizer = 2
 reactor = 4
 quarters = 2
 enemy_rank = 1
-interstellar_ftl_reward = 2
 destruction_salvage_reward = 20
 encounter_weight = 0.4
 hull_color = Color(0.26, 0.23, 0.22, 1)

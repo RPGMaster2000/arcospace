@@ -105,7 +105,6 @@ func run() -> void:
 	progression.start(1, Rules, 7711)
 	while progression.system_number < 6:
 		for index in range(progression.encounters.size()): progression._complete_encounter(index)
-		progression.ftl_charge = maxi(progression.ftl_charge, progression.required_ftl_charge)
 		check(progression.generate_system(), "System travel commits")
 	check(store.save_run(progression), "Boss system saves stable enemy identities")
 	progression = store.load_run().state
@@ -125,10 +124,10 @@ func run() -> void:
 	check(store.save_run(progression), "Completed boss and pending upgrades save")
 	var won = store.load_run().state
 	var currency: int = won.salvage
-	var charge: int = won.ftl_charge
+	var pressure: int = won.pressure
 	won.active_battle = boss
 	won.record_battle(result)
-	check(won.encounters[boss].completed and not won.mandatory_boss_pending() and won.salvage == currency and won.ftl_charge == charge, "Boss completion cannot reward twice after load")
+	check(won.encounters[boss].completed and not won.mandatory_boss_pending() and won.salvage == currency and won.pressure == pressure, "Boss completion cannot reward twice after load")
 	# Outpost revisions, pending production choice and purchase counters.
 	var station = State.new()
 	station.start(0, Rules, 4411)
@@ -163,12 +162,15 @@ func run() -> void:
 	# Chasedown enemy, response and already-paid penalties are authoritative data.
 	var chase = State.new()
 	chase.start(0, Rules, 6611)
-	chase.encounters[0] = {"kind": "poi", "poi": Rules.pois[0], "title": Rules.pois[0].title, "completed": false}
-	chase.encounters[1] = chase.encounters[0].duplicate()
-	chase.arrive_destination(0)
-	check(chase.begin_travel(1, 0.0) and store.save_run(chase), "Chasedown interception saves")
+	var destinations: Array[int] = []
+	for index in chase.encounters.size():
+		if chase.encounters[index].kind == "poi" and not chase.objective_locked(index): destinations.append(index)
+	var origin: int = destinations[0]
+	var destination: int = destinations[1]
+	chase.arrive_destination(origin)
+	check(chase.begin_travel(destination, 0.0) and store.save_run(chase), "Chasedown interception saves")
 	var intercepted = store.load_run().state
-	check(intercepted.pending_destination == 1 and intercepted.chasedown_unresolved(), "Chasedown and selected destination survive")
+	check(intercepted.pending_destination == destination and intercepted.chasedown_unresolved(), "Chasedown and selected destination survive")
 	check(intercepted.choose_chasedown_response(1) and store.save_run(intercepted), "Committed response saves")
 	var response = store.load_run().state
 	check(response.encounters[response.chasedown_index].response == 1 and not response.choose_chasedown_response(1), "Response penalties cannot be applied twice")

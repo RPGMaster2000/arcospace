@@ -30,18 +30,18 @@ func run() -> void:
 	data.battles_won = 1
 	data.earned_tactical = true
 	state.record_battle(data)
-	var charge: int = state.ftl_charge
+	var charge: int = state.pressure
 	var bonuses: Dictionary = state.pending_bonuses.duplicate()
 	data.salvage = 999
 	state.record_battle(data)
-	check(state.salvage == 12 and state.hull == 23 and state.ftl_charge == charge and state.pending_bonuses == bonuses, "Node-free result is applied once, including currency and FTL")
+	check(state.salvage == 12 and state.hull == 23 and state.pressure == charge and state.pending_bonuses == bonuses, "Node-free result is applied once, including currency and FTL")
 	var replay = Result.new()
 	replay.encounter_index = setup.encounter_index
 	replay.system_number = setup.system_number
 	replay.winner = "player"
 	replay.salvage = 999
 	state.record_battle(replay)
-	check(state.salvage == 12 and state.ftl_charge == charge, "A fresh result object cannot repeat encounter rewards")
+	check(state.salvage == 12 and state.pressure == charge, "A fresh result object cannot repeat encounter rewards")
 	var stale = Result.new()
 	stale.system_number = state.system_number - 1
 	stale.encounter_index = 0

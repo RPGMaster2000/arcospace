@@ -11,7 +11,7 @@ func check(ok: bool, message: String) -> void:
 func _initialize() -> void:
  var settings = Settings.new()
  var entries: Array = []
- for i in range(6): entries.append({"index":i,"model_kind":["mining_operation","research_station","quarantined_colony","spatial_anomaly","derelict_starship","battle"][i]})
+ for i in range(9): entries.append({"index":i,"model_kind":["mining_operation","research_station","quarantined_colony","spatial_anomaly","derelict_starship","battle","fuel_depot","sensor_relay","ancient_navigation_array"][i]})
  entries.append({"index":-2,"model_kind":"trading_outpost"})
  var before: String = var_to_str(entries)
  var rng := RandomNumberGenerator.new()
@@ -24,10 +24,10 @@ func _initialize() -> void:
   var number: int = seed_value%5+1
   var sample_entries: Array = entries.duplicate(true)
   if seed_value%3!=0:
-   for index in range(6): sample_entries[index].model_kind = "battle" if seed_value%3==1 else "spatial_anomaly"
+   for index in range(9): sample_entries[index].model_kind = "battle" if seed_value%3==1 else "spatial_anomaly"
   var data: Dictionary = Data.generate(seed_value,number,sample_entries,settings)
   check(data==Data.generate(seed_value,number,sample_entries,settings),"Cosmetic placement reconstructs deterministically")
-  check(data.anchors.size()==7,"Exactly six unchanged IDs and outpost anchor")
+  check(data.anchors.size()==10,"Exactly nine encounter IDs and independent outpost anchor")
   var occupied: Array = [{"position":Vector3.ZERO,"radius":2.6,"label":false}]
   for p in data.planets: occupied.append({"position":p.position,"radius":p.radius*1.5,"label":p.encounter!=-1})
   for entry in entries:

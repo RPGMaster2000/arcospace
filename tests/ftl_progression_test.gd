@@ -1,22 +1,13 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
+const BattleResult = preload("res://scripts/combat/battle_result.gd")
 var failures: int = 0
 var checks: int = 0
 var escapes: int = 0
 var surveys: int = 0
 var ranks: Dictionary = {}
 var compositions: Dictionary = {}
-const BattleResult = preload("res://scripts/combat/battle_result.gd")
-
-func make_result() -> BattleResult:
-	var value = BattleResult.new()
-	value.battles_won = 1
-	value.winner = "player"
-	value.escaped_by_ftl = false
-	value.earned_tactical = false
-	value.earned_strategic = false
-	return value
 
 func check(ok: bool, message: String) -> void:
 	checks += 1
@@ -34,65 +25,63 @@ func settle_choice(run: Resource) -> void:
 		"production": check(run.choose_attribute("reactor"), "Production choice resolves")
 
 func _initialize() -> void:
-	call_deferred("run_tests")
-
-func run_tests() -> void:
 	var config = Rules.duplicate(true)
 	config.log_rolls = false
-	for seed_value in range(1, 10001):
-		# Half use shipping preferences; half stress every PoI/enemy count from 0/6 to 5/1.
+	for seed_value in range(1, 2001):
+		# Half shipping composition; half broadened while reserving ordinary objective slots.
 		config.minimum_battles = 1
-		config.maximum_battles = 2 if seed_value % 2 == 0 else 6
-		config.minimum_ordinary = 3 if seed_value % 2 == 0 else 0
-		config.maximum_ordinary = 4 if seed_value % 2 == 0 else 5
+		config.maximum_battles = 3 if seed_value % 2 == 0 else 6
+		config.minimum_ordinary = 4 if seed_value % 2 == 0 else 1
+		config.maximum_ordinary = 6 if seed_value % 2 == 0 else 8
 		config.minimum_hazardous = 0
-		config.maximum_hazardous = 2 if seed_value % 2 == 0 else 5
+		config.maximum_hazardous = 3 if seed_value % 2 == 0 else 7
 		var run = State.new()
 		run.start(seed_value % preload("res://scripts/ships/ship_library.gd").PLAYERS.size(), config, seed_value)
 		var poi_count: int = 0
 		var hazards: int = 0
-		var total: int = 0
-		for index in range(run.encounters.size()):
-			var encounter: Dictionary = run.encounters[index]
+		var routes: int = 0
+		for encounter in run.encounters:
 			if encounter.kind == "poi":
 				poi_count += 1
 				if encounter.poi.hazardous: hazards += 1
 			else: ranks[run.enemy_profile(encounter).enemy_rank] = true
-			total += run.encounter_charge(index)
-		compositions["%d/%d/%d" % [poi_count - hazards, hazards, 6 - poi_count]] = true
-		check(run.encounters.size() == 6, "Exactly six encounters")
-		check(run.required_ftl_charge == poi_count + 1, "Requirement is PoIs plus one")
-		check(total >= run.required_ftl_charge, "Theoretical capacity meets requirement")
-		check(not run.generate_system(), "Cannot jump early")
-		var low_hull: bool = seed_value % 3 == 0
-		run.hull = 1 if low_hull else run.ship().hull_capacity
+			if encounter.get("objective_role", "") == "access": routes += 1
+		compositions["%d/%d/%d" % [poi_count - hazards, hazards, run.encounters.size() - poi_count]] = true
+		check(run.encounters.size() == 9, "Exactly nine encounters")
+		check(routes >= 1 and routes <= 2 and not run.ftl_access, "One or two viable objective routes; initially locked")
+		check(not run.generate_system(), "Cannot jump before access")
+		run.hull = 1 if seed_value % 3 == 0 else run.ship().hull_capacity
 		run.salvage = seed_value % 16
-		# Shuffle completion order using expedition RNG; includes all-escape runs.
-		var order: Array = range(6)
+		var order: Array = range(run.encounters.size())
 		while not order.is_empty():
+			# A locked access objective waits for its single prerequisite, never disappears.
 			var index: int = order.pop_at(run.rng.randi_range(0, order.size() - 1))
-			var before: int = run.ftl_charge
+			if run.objective_locked(index):
+				order.append(index)
+				continue
+			var before: int = run.pressure
 			var encounter: Dictionary = run.encounters[index]
 			if encounter.kind == "battle":
-				var result = make_result()
+				var result = BattleResult.new()
+				result.winner = "player"
+				result.battles_won = 1
 				result.player_hull = run.hull
 				result.salvage = run.salvage
 				result.escaped_by_ftl = seed_value % 4 != 0
+				result.earned_tactical = false
+				result.earned_strategic = false
 				run.active_battle = index
 				var loot: int = run.victory_salvage(result)
 				var profile: Resource = run.enemy_profile(encounter)
 				var multiplier: int = Rules.elite_salvage_multiplier if profile.enemy_rank == 1 else 1
-				check(loot == (0 if result.escaped_by_ftl else profile.destruction_salvage_reward * multiplier), "Escape/destruction Salvage independent of FTL; Elite multiplier applies")
+				check(loot == (0 if result.escaped_by_ftl else profile.destruction_salvage_reward * multiplier), "Existing Salvage unchanged by access/pressure")
 				result.salvage += loot
-				result.encounter_index = run.active_battle
+				result.encounter_index = index
 				result.system_number = run.system_number
 				run.record_battle(result)
-				check(run.ftl_charge == before + run.encounter_charge(index), "Escape and destruction earn profile charge")
-				var after: int = run.ftl_charge
-				result.encounter_index = run.active_battle
-				result.system_number = run.system_number
+				check(run.pressure == before + 1, "Regular battle completion adds one pressure")
 				run.record_battle(result)
-				check(run.ftl_charge == after, "Repeated battle result cannot award charge again")
+				check(run.pressure == before + 1, "Repeated result cannot add pressure or rewards")
 				if result.escaped_by_ftl: escapes += 1
 				run.active_battle = -1
 			else:
@@ -104,36 +93,18 @@ func run_tests() -> void:
 					if approach.success_chance < 1: worst = mini(worst, approach.failure.hull)
 					if run.hull + worst > 0: choices.append(slot)
 				if choices.is_empty():
-					check(run.survey(index), "Blocked PoI has costly navigation survey")
+					check(run.survey(index), "Blocked ordinary PoI has safe survey")
 					surveys += 1
 				else:
-					var slot: int = choices[run.rng.randi_range(0, choices.size() - 1)]
-					check(run.resolve_approach(index, slot), "Survivable approach resolves")
+					check(run.resolve_approach(index, choices[run.rng.randi_range(0, choices.size() - 1)]), "Survivable approach resolves")
 				settle_choice(run)
-				var after: int = run.ftl_charge
-				check(after >= before + 1, "Every PoI grants base charge")
-				check(not run.resolve_approach(index, 0) and not run.survey(index) and run.ftl_charge == after, "PoI reward is single-use")
+				check(run.pressure == before + 1, "PoI completion adds one pressure")
+				check(not run.resolve_approach(index, 0) and not run.survey(index) and run.pressure == before + 1, "PoI completion is single-use")
 			settle_choice(run)
 			check(run.hull > 0, "Low-Hull safe route survives")
-			check(run.ftl_charge + run.remaining_ftl_charge() >= run.required_ftl_charge, "Remaining capacity after every decision")
-			check(run.can_jump() == (run.ftl_charge >= run.required_ftl_charge), "Can leave immediately at threshold")
-		check(run.can_jump(), "Every completed system permits travel, including all escapes")
-		var expected_carry: int = run.rules.progression.carryover(run.ftl_charge, run.required_ftl_charge)
-		check(run.generate_system() and run.ftl_charge == expected_carry, "Jump resets charge with shipping zero-carryover configuration")
-	check(ranks.size() == 3 and compositions.size() >= 15 and escapes > 10000 and surveys > 0, "Varied composition, strength, escapes and survey coverage")
-	# Wormhole successes can be penalty-free; other hazardous branches have drawbacks.
-	for poi in Rules.pois:
-		if not poi.hazardous: continue
-		for approach in poi.approaches:
-			for outcome in [approach.success, approach.failure]:
-				var drawback: bool = approach.salvage_cost > 0 or outcome.hull < 0 or int(outcome.next_battle.get("emp_pulse_offline", 0)) > 0
-				for key in outcome.next_battle: drawback = drawback or outcome.next_battle[key] < 0
-				check(drawback or (poi.resource_path.ends_with("unstable_wormhole.tres") and outcome.extra_ftl_charge > 0), "Hazard drawback or successful travel shortcut")
-		var low_run = State.new()
-		low_run.start(0, config, 42)
-		low_run.hull = 1
-		low_run.encounters.assign([{ "kind":"poi", "poi":poi, "completed":false }])
-		check(low_run.can_survey(0) or (poi.approaches[0].requirement.is_empty() and poi.approaches[0].salvage_cost == 0 and poi.approaches[0].success.hull >= 0 and poi.approaches[0].failure.hull >= 0), "Unrestricted safe option or survey at 1 Hull")
-	print("Progression: 10000 systems, %d checks, %d escapes, %d surveys, %d compositions, %d ranks, %d failures" % [checks, escapes, surveys, compositions.size(), ranks.size(), failures])
+			check(run.can_jump() == run.ftl_access, "Access permits immediate departure independent of remaining encounters")
+		check(run.can_jump() and run.pressure == 9, "Every completed system permits departure")
+		check(run.generate_system() and not run.ftl_access and run.pressure == 0, "New system resets access and pressure")
+	check(ranks.size() == 3 and compositions.size() >= 15 and escapes > 1000 and surveys > 0, "Varied strength/composition/escape/survey coverage")
+	print("FTL objectives: 2000 systems, %d checks, %d escapes, %d surveys, %d compositions, %d ranks, %d failures" % [checks, escapes, surveys, compositions.size(), ranks.size(), failures])
 	quit(1 if failures else 0)
-

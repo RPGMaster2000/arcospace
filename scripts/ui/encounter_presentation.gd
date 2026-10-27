@@ -7,6 +7,10 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
 const UI_FONT = preload("res://assets/fonts/emoji_ui.tres")
 const ICONS = {
+	"fuel_depot": ["🏪", "DEPOT"],
+	"sensor_relay": ["📡", "RELAY"],
+	"ancient_navigation_array": ["✨", "ARRAY"],
+	"raider_cache": ["☠️", "CACHE"],
 	"mining_operation": ["⛏️", "MINE"],
 	"gas_giant": ["🪐", "GAS"],
 	"derelict_starship": ["🚀", "WRECK"],
@@ -49,7 +53,7 @@ const MEANINGS = {
 	"synthesizer": "Synthesizer — Materials gained each player turn.",
 	"reactor": "Reactor — Energy gained each player turn.",
 	"quarters": "Quarters — Crew gained each player turn.",
-	"travel": "FTL Drive — interstellar charge; resets on entering a new system.",
+	"travel": "FTL Access — complete an objective to unlock the next system.",
 	"jump": "EMP Pulse — combat escape charge, separate from interstellar travel.",
 	"hazard": "Hazard / modifier — tap to inspect conditions and effects.",
 	"card": "Cards - acquired cards join your expedition pool; enemies keep the base library."

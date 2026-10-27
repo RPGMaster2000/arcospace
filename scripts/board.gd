@@ -941,16 +941,7 @@ func victory_description() -> String:
 	var bonuses: PackedStringArray = []
 	if expedition != null:
 		var result: BattleResult = battle_result()
-		lines.append(
-			(
-				"🪨 +%d Salvage · 🚀 FTL %d/%d"
-				% [
-					expedition.victory_salvage(result),
-					expedition.ftl_charge,
-					expedition.required_ftl_charge
-				]
-			)
-		)
+		lines.append("🪨 +%d Salvage" % expedition.victory_salvage(result))
 		var upgrades: int = expedition.battle_upgrade_count(result)
 		if upgrades > 0:
 			lines[0] += " · Upgrade %d cards" % upgrades

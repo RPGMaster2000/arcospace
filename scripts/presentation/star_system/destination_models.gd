@@ -73,6 +73,8 @@ static func build(entry: Dictionary, rng: RandomNumberGenerator, replacement: Pa
 		return replacement.instantiate()
 	var root = Node3D.new()
 	var key: String = entry.get("model_kind", "research_station")
+	# New prototype encounters reuse existing procedural geometry and scene effects.
+	key = {"fuel_depot":"trading_outpost","sensor_relay":"research_station","ancient_navigation_array":"spatial_anomaly","raider_cache":"pirate_debris_field"}.get(key,key)
 	var color = Color.from_hsv(rng.randf(),0.24,0.55)
 	if key == "gas_giant":
 		var sphere := SphereMesh.new()

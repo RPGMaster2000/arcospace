@@ -12,6 +12,8 @@ var _modifier := 0
 var _pending := ""
 var _pursuit := false
 var _boss := false
+var _pressure_text := ""
+var _pressure_notice: Label
 var _fonts: Array = []
 var _section_styles: Array[StyleBoxFlat] = []
 var _section_columns: Array[VBoxContainer] = []
@@ -70,13 +72,14 @@ static func modifier_summary(kind: int) -> String:
 	return "No environmental modifier."
 
 
-func configure(enemy: Resource, level: int, modifier: int, pending: String, pursuit: bool, boss: bool) -> void:
+func configure(enemy: Resource, level: int, modifier: int, pending: String, pursuit: bool, boss: bool, pressure_text: String = "") -> void:
 	_enemy = enemy
 	_level = level
 	_modifier = modifier
 	_pending = pending
 	_pursuit = pursuit
 	_boss = boss
+	_pressure_text = pressure_text
 	if _name_label == null:
 		_build()
 	_refresh_content()
@@ -88,6 +91,9 @@ func _build() -> void:
 	add_child(_name_label)
 	_contact = _label("", 16, 20, Color("ff9da9"))
 	add_child(_contact)
+	_pressure_notice = _label("", 16, 18, Color("e9b477"))
+	_pressure_notice.name = "PressureModifier"
+	add_child(_pressure_notice)
 	var systems := _section("ENEMY SYSTEMS")
 	_systems_caption = systems.get_child(0)
 	var defenses := HBoxContainer.new()
@@ -140,6 +146,10 @@ func _build() -> void:
 	_effects.scroll_active = false
 	_effects.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_effects.add_theme_font_override("normal_font", Presentation.UI_FONT)
+	var bold_font := FontVariation.new()
+	bold_font.base_font = Presentation.UI_FONT
+	bold_font.variation_embolden = 0.5
+	_effects.add_theme_font_override("bold_font", bold_font)
 	_effects.add_theme_font_size_override("normal_font_size", 18)
 	_effects.add_theme_font_size_override("bold_font_size", 18)
 	add_child(_effects)
@@ -148,8 +158,10 @@ func _build() -> void:
 
 
 func _refresh_content() -> void:
-	_name_label.text = _enemy.ship_name
-	_contact.text = ("⚠ SUBLIGHT INTERCEPTION" if _pursuit else "⚠ HOSTILE · DANGER") + " · %s · Lv %d" % [_enemy.subtitle, _level]
+	_name_label.text = _enemy.ship_name + (" · Lv %d" % _level if _pursuit else "")
+	_contact.text = ("⚠ SUBLIGHT INTERCEPTION" if _pursuit else "⚠ HOSTILE · DANGER") + (" · " + _enemy.subtitle if _pursuit else " · %s · Lv %d" % [_enemy.subtitle, _level])
+	_pressure_notice.text = _pressure_text
+	_pressure_notice.visible = not _pressure_text.is_empty()
 	for key in _defenses:
 		var value: int = _enemy.get(key)
 		_defenses[key][0].text = ("Hull" if key == "hull_capacity" else "Shields") + "  %d / %d" % [value, value]
@@ -175,13 +187,13 @@ func _apply_layout() -> void:
 	if _enemy == null or not is_inside_tree():
 		return
 	compact = _pursuit or get_viewport_rect().size.y < COMPACT_HEIGHT
-	add_theme_constant_override("separation", 2 if compact else 6)
+	add_theme_constant_override("separation", 1 if _pursuit else (2 if compact else 6))
 	for entry in _fonts:
 		entry[0].add_theme_font_size_override("font_size", entry[1] if compact else entry[2])
 	for style in _section_styles:
-		style.set_content_margin_all(4 if compact else 8)
+		style.set_content_margin_all(3 if _pursuit else (4 if compact else 8))
 	for column in _section_columns:
-		column.add_theme_constant_override("separation", 2 if compact else 4)
+		column.add_theme_constant_override("separation", 1 if _pursuit else (2 if compact else 4))
 	for defense in _defenses.values():
 		defense[1].custom_minimum_size.y = 10 if compact else 12
 	_systems_caption.visible = not compact
@@ -193,6 +205,13 @@ func _apply_layout() -> void:
 		_conditions.text += "\n" + modifier_summary(_modifier)
 	_conditions.add_theme_font_size_override("font_size", 17 if compact else 22)
 	_mechanical_summary.visible = not compact
+	if _pursuit:
+		_name_label.add_theme_font_size_override("font_size", 24)
+		_contact.add_theme_font_size_override("font_size", 14)
+		_profile.add_theme_font_size_override("font_size", 16)
+		_pressure_notice.add_theme_font_size_override("font_size", 15)
+	_effects.add_theme_font_size_override("normal_font_size", 16 if _pursuit else 18)
+	_effects.add_theme_font_size_override("bold_font_size", 16 if _pursuit else 18)
 
 
 func _show_modifier_rules() -> void:

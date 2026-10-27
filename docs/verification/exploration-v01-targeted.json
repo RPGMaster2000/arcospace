@@ -1,0 +1,217 @@
+{
+  "scope": "Reconstruction focused checks, not a complete regression run",
+  "source_branch": "checkpoint/pressure-exploration-v01",
+  "runs": [
+    {
+      "name": "system_exploration_generation",
+      "status": "passed",
+      "checks": 3327
+    },
+    {
+      "name": "system_pressure",
+      "status": "passed",
+      "checks": 121
+    },
+    {
+      "name": "ftl_progression",
+      "status": "passed",
+      "checks": 103655
+    },
+    {
+      "name": "expedition_milestones",
+      "status": "passed",
+      "checks": 3185
+    },
+    {
+      "name": "enemy_roster",
+      "status": "passed",
+      "checks": 602
+    },
+    {
+      "name": "metagame_save",
+      "status": "passed",
+      "checks": 33
+    },
+    {
+      "name": "navigation_leg",
+      "status": "passed",
+      "checks": 25
+    },
+    {
+      "name": "deck_ownership",
+      "status": "passed",
+      "checks": 63
+    },
+    {
+      "name": "deck_determinism",
+      "status": "passed",
+      "checks": 5025
+    },
+    {
+      "name": "expedition_save",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "expedition_resume",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "star_system_resume",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "fresh_process_persistence",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "metagame_ui",
+      "status": "passed",
+      "checks": 74
+    },
+    {
+      "name": "tactical_resize",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "expedition_ui",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "star_system_polish_ui",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "chasedown_ui",
+      "status": "passed",
+      "checks": 287
+    },
+    {
+      "name": "star_map_navigation",
+      "status": "passed",
+      "checks": 26
+    },
+    {
+      "name": "star_map_readability",
+      "status": "passed",
+      "checks": 71
+    },
+    {
+      "name": "star_system_composition",
+      "status": "passed",
+      "checks": 14780
+    },
+    {
+      "name": "star_map",
+      "status": "passed",
+      "checks": 452
+    },
+    {
+      "name": "chasedown_rewards",
+      "status": "passed",
+      "checks": 82
+    },
+    {
+      "name": "expedition_lifecycle",
+      "status": "passed",
+      "checks": 26
+    },
+    {
+      "name": "star_system_transition",
+      "status": "passed",
+      "checks": 148
+    },
+    {
+      "name": "star_system_3d",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "expedition",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "trading_outpost",
+      "status": "passed",
+      "checks": 99946
+    },
+    {
+      "name": "android_layout",
+      "status": "passed",
+      "checks": 4074
+    },
+    {
+      "name": "status_bar",
+      "status": "passed",
+      "checks": 10701
+    },
+    {
+      "name": "expedition_boundary",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "card_expansion",
+      "status": "passed",
+      "checks": 2163
+    },
+    {
+      "name": "systems_failure",
+      "status": "passed",
+      "checks": 834
+    },
+    {
+      "name": "poi_confirmation",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "reward_feedback",
+      "status": "passed",
+      "checks": null
+    },
+    {
+      "name": "outpost_screen",
+      "status": "passed",
+      "checks": null
+    }
+  ],
+  "python_runner_tests": {
+    "status": "passed",
+    "checks": 13
+  },
+  "pending": [
+    "full headless regression suite",
+    "full GL rendered registry",
+    "Mobile Vulkan rendered registry",
+    "exported startup",
+    "physical Windows/Android performance"
+  ],
+  "long_running": [
+    "card_progression_test",
+    "poi_reward_overhaul_test",
+    "power_allocation_test",
+    "trading_outpost_ui_test",
+    "travel_battle_test",
+    "ui_overhaul_test"
+  ],
+  "known_warnings": [
+    "Existing ObjectDB shutdown warnings on some scene tests"
+  ],
+  "historical_failures": "Initial reconstruction fixture/layout failures were corrected; earlier logs remain local. This summary records successful focused reruns. Full CI results are authoritative for the checkpoint commit.",
+  "rendered_captures": {
+    "renderer": "gl_compatibility",
+    "status": "passed",
+    "checks": 82,
+    "seconds": 65.281,
+    "path": "docs/captures/exploration_v01",
+    "description": "Seeded high-pressure layout fixtures; camera transitions settled before capture."
+  }
+}

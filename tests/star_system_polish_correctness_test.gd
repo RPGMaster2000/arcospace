@@ -40,7 +40,7 @@ func run():
  encoded.encounters[state.chasedown_index].erase("intercept_position")
  encoded.travel_destination = 1
  var legacy = Save.new().decode(encoded,state.rules)
- check(legacy != null and legacy.travel_destination == -1,"Older v1 pending travel becomes stationary")
+ check(legacy == null,"Modern save rejects contradictory travel while an interception is unresolved")
  encoded.encounters[state.chasedown_index].intercept_position = ["bad",0,0]
  check(Save.new().decode(encoded,state.rules)==null,"Malformed optional coordinates are rejected")
  state._complete_encounter(state.chasedown_index)

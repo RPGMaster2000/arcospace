@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SystemProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/system_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "quiet"
+display_name = "Quiet Frontier"
+ordinary_weight = 1.3
+hazardous_weight = 0.6
+battle_weight = 0.65
+outpost_chance = 1.0
+chasedown_multiplier = 0.65
+tolerance_min = 8
+tolerance_max = 12
+sensitive_chance = 0.15
+star_hue_bias = 0.12
+nebula_chance = 0.2
+poi_weights = {"mining_operation": 1.6, "gas_giant": 1.5, "distress_signal": 1.4, "pirate_debris_field": 0.5}

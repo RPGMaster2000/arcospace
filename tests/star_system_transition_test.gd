@@ -89,7 +89,7 @@ func run() -> void:
 	state.pending_destination = -1
 	state.travel_destination = -1
 	state.chasedown_index = -1
-	state.ftl_charge = state.required_ftl_charge
+	state.ftl_access = true
 	host.show_system()
 	var old_system: int = state.system_number
 	host._jump()
@@ -107,7 +107,7 @@ func run() -> void:
 	await create_timer(0.8).timeout
 	await capture("ftl-departure")
 	await create_timer(1.0 + host.star_system_settings.introduction_duration*1.1).timeout
-	check(not host.transitioning and state.system_number == old_system + 1 and state.ftl_charge == 0, "FTL progresses exactly once")
+	check(not host.transitioning and state.system_number == old_system + 1 and not state.ftl_access, "FTL progresses exactly once")
 	check(not host.transition.curtain.visible and host.star_map.visible, "White curtain clears onto new map")
 	check(host.star_map.orbit_index == -1 and not host.star_map.traveling, "New system restores navigation")
 	await capture("next-system")

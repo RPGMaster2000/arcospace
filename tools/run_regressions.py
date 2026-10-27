@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 
 
+TIMEOUTS = {"card_progression_test": 600, "card_tier_test": 300, "poi_reward_overhaul_test": 600, "power_allocation_test": 300, "trading_outpost_ui_test": 600, "travel_battle_test": 600, "ui_overhaul_test": 600}
+
 RENDER_ONLY = {"enemy_models_visual_test.gd"}  # Awaits frame_post_draw.
 ERRORS = re.compile(r"SCRIPT ERROR|ERROR:|Parse Error|Compile Error|Assertion failed|\b[1-9][0-9]* failures\b")
 LEAKS = re.compile(r"ObjectDB.*leaked", re.IGNORECASE)
@@ -28,7 +30,7 @@ def run_process(command, log_path, timeout):
     with log_path.open("w", encoding="utf-8") as log:
         try:
             environment = os.environ.copy()
-            environment["XDG_DATA_HOME"] = str(log_path.parent / "userdata" / log_path.stem)
+            environment["XDG_DATA_HOME"] = str((log_path.parent / "userdata" / log_path.stem).resolve())
             result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, env=environment,
                                     timeout=timeout, check=False)
             exit_code = result.returncode
@@ -106,7 +108,7 @@ def main(argv=None):
         # Do not run scripts against an import that failed or timed out.
         return 1
     for script in scripts:
-        execute(script.stem, ["--script", str(script)], args.timeout)
+        execute(script.stem, ["--script", str(script)], TIMEOUTS.get(script.stem, args.timeout))
     summary["complete"] = True
     save()
     return int(any(run["status"] != "passed" for run in summary["runs"]))

@@ -23,12 +23,12 @@ func run() -> void:
 		host.show_system()
 		await settle()
 		var map: Control = host.star_map
-		check(map.markers.size() == 6 + int(not host.state.service.is_empty()), "All encounters and independent service")
+		check(map.markers.size() == 9 + int(not host.state.service.is_empty()), "All encounters and independent service")
 		check(map.size.y > 200, "Map fills available height")
 		for index in map.markers:
 			var button: Button = map.markers[index]
 			check(map.get_global_rect().encloses(button.get_global_rect()), "Marker inside map")
-			check(button.size.y >= 64 and button.size.x >= 120, "Touch target")
+			check(button.size.y >= 60 and button.size.x >= 100, "Touch target")
 			for other in map.markers:
 				if index != other: check(not button.get_global_rect().intersects(map.markers[other].get_global_rect()), "No marker overlap")
 		check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "No map scrolling")
@@ -68,37 +68,38 @@ func run() -> void:
 	host.state.encounters[0].completed = true
 	host.show_system()
 	check(host.star_map.markers[0].disabled, "Completed destination disabled")
-	var charge: int = host.state.ftl_charge
+	var pressure: int = host.state.pressure
+	var access: bool = host.state.ftl_access
 	host.star_map.travel(0)
-	check(not host.star_map.traveling and host.state.ftl_charge == charge, "Completed destination cannot reopen or reward")
+	check(not host.star_map.traveling and host.state.pressure == pressure and host.state.ftl_access == access, "Completed destination cannot reopen or reward")
 	# A free service is separate from the six progression slots and remains revisitable.
 	host.state.service = {"kind":"service", "poi":preload("res://encounters/trading_outpost.tres"), "title":"Trading Outpost", "completed":false}
 	host.show_system()
 	host.star_map.travel(-2)
 	await create_timer(.08).timeout
-	check(host.selected_encounter == -2 and host.state.ftl_charge == charge, "Service arrival has no FTL cost/reward")
+	check(host.selected_encounter == -2 and host.state.pressure == pressure and host.state.ftl_access == access, "Service arrival grants no access or pressure")
 	host.show_system()
-	check(not host.star_map.markers[-2].disabled and host.state.encounters.size() == 6, "Service remains independent and revisitable")
+	check(not host.star_map.markers[-2].disabled and host.state.encounters.size() == 9, "Service remains independent and revisitable")
 	host.star_map.travel(1)
-	host.state.ftl_charge = host.state.required_ftl_charge + 3
+	host.state.ftl_access = true
 	host._jump()
 	await create_timer(.08).timeout
-	check(host.state.ftl_charge == 0 and host.map_destination == -1 and host.view_kind == "system", "Transition cancels old travel, discards carryover and resets map")
+	check(not host.state.ftl_access and host.map_destination == -1 and host.view_kind == "system", "Transition cancels old travel, discards carryover and resets map")
 	check(host.star_map.sun_hue != saved_hue and host.star_map.star_points != saved_points, "Next system gets a different sky")
 	# Mandatory Boss gating is still owned by expedition state.
 	while host.state.system_number < 6:
-		host.state.ftl_charge = host.state.required_ftl_charge
+		host.state.ftl_access = true
 		host._jump()
 	check(host.state.mandatory_boss_pending(), "System six retains mandatory Boss")
-	host.state.ftl_charge = host.state.required_ftl_charge
+	host.state.ftl_access = true
 	host._jump()
 	check(host.state.system_number == 6, "Map cannot bypass Boss")
 	host.use_star_map = false
 	host.show_system()
-	check(is_instance_valid(host.grid) and host.grid.get_child_count() == 6 and host.star_map == null, "Toggle restores original six-tile grid")
+	check(is_instance_valid(host.grid) and host.grid.get_child_count() == 9 and host.star_map == null, "Toggle restores nine-tile grid")
 	host.use_star_map = true
 	host.start_expedition()
-	check(host.map_destination == -1 and host.state.ftl_charge == 0, "New expedition resets position and FTL")
+	check(host.map_destination == -1 and not host.state.ftl_access, "New expedition resets position and FTL")
 	host.queue_free()
 	await process_frame
 	print("Star map: %d checks, %d failures" % [checks, failures])

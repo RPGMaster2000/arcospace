@@ -45,7 +45,7 @@ func run():
   check(map.camera.zoom_target==map.settings.minimum_zoom,"Zoom retains min calibration")
   map.camera.zoom_target = map.settings.default_zoom
   map.camera.zoom_scale = map.settings.default_zoom
-  host.state.ftl_charge = host.state.required_ftl_charge
+  host.state.ftl_access = true
   host.show_system()
   check(host.jump_button.disabled==not host.state.can_jump(),"Ready and boss states preserve eligibility")
   await create_timer(0.9).timeout

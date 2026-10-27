@@ -34,8 +34,15 @@ var player_ship: int = 0
 var hull: int = 0
 var salvage: int = 0
 var battles_won: int = 0
-var ftl_charge: int = 0
-var required_ftl_charge: int = 0
+const SystemGenerator = preload("res://scripts/expedition/system_generator.gd")
+const Profiles = preload("res://scripts/expedition/system_profile.gd")
+const Pressure = preload("res://scripts/expedition/system_pressure.gd")
+const Navigation = preload("res://scripts/expedition/navigation_state.gd")
+const FREE_DESTINATION = -3
+var pressure: int = 0
+var system_profile: String = "industrial"
+var ftl_access: bool = false
+var navigation := Navigation.new()
 var system_number: int = 0
 var system_name: String = ""
 var encounters: Array[Dictionary] = []
@@ -112,8 +119,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	salvage = 0
 	battles_won = 0
 	system_number = 0
-	ftl_charge = 0
-	required_ftl_charge = 0
+	pressure = 0
+	ftl_access = false
+	navigation = Navigation.new()
 	next_outpost_system = 0
 	station_production_purchases = 0
 	service_revision += 1
@@ -158,7 +166,7 @@ func can_jump() -> bool:
 		and active_battle < 0
 		and not chasedown_unresolved()
 		and pending_choice.is_empty()
-		and ftl_charge >= required_ftl_charge
+		and ftl_access
 		and not mandatory_boss_pending()
 	)
 
@@ -223,142 +231,9 @@ func generate_system() -> bool:
 		return false
 	if system_number > 0 and not can_jump():
 		return false
-	var carried_charge: int = (
-		rules.progression.carryover(ftl_charge, required_ftl_charge) if system_number > 0 else 0
-	)
-	var ordinary: Array = []
-	var hazardous: Array = []
-	for poi in rules.pois:
-		if poi.hazardous:
-			hazardous.append(poi)
-		else:
-			ordinary.append(poi)
-	var enemies: Array = rules.enemy_ships.duplicate()
-	if enemies.is_empty():
-		enemies.assign(Ships.ENEMIES)
-	var count: int = maxi(2, rules.encounters_per_system)
-	var compositions: Array[Dictionary] = []
-	var total_weight: float = 0.0
-	for battles in range(1, count + 1):
-		for hazards in range(count - battles + 1):
-			var normal: int = count - battles - hazards
-			if battles < rules.minimum_battles or battles > rules.maximum_battles:
-				continue
-			if normal < rules.minimum_ordinary or normal > rules.maximum_ordinary:
-				continue
-			if hazards < rules.minimum_hazardous or hazards > rules.maximum_hazardous:
-				continue
-			if (normal > 0 and ordinary.is_empty()) or (hazards > 0 and hazardous.is_empty()):
-				continue
-			var weight: float = (
-				pow(maxf(.01, rules.battle_weight), battles)
-				* pow(maxf(.01, rules.ordinary_weight), normal)
-				* pow(maxf(.01, rules.hazardous_weight), hazards)
-			)
-			total_weight += weight
-			compositions.append(
-				{"battle": battles, "ordinary": normal, "hazardous": hazards, "weight": weight}
-			)
-	var composition: Dictionary
-	if compositions.is_empty():
-		push_warning(
-			"Encounter bounds cannot fill a system. Falling back to one enemy and available PoIs (or all enemies if no PoIs exist)."
-		)
-		composition = {
-			"battle": 1,
-			"ordinary": count - 1 if not ordinary.is_empty() else 0,
-			"hazardous": count - 1 if ordinary.is_empty() and not hazardous.is_empty() else 0
-		}
-		if ordinary.is_empty() and hazardous.is_empty():
-			composition.battle = count
-	else:
-		var roll: float = rng.randf() * total_weight
-		composition = compositions.back()
-		for candidate in compositions:
-			roll -= candidate.weight
-			if roll <= 0:
-				composition = candidate
-				break
 	_recorded_results.clear()
-	system_number += 1
-	var names = ["Arco", "Kepler", "Vela", "Orion", "Lyra", "Perseus"]
-	system_name = "%s %d" % [names[rng.randi_range(0, names.size() - 1)], system_number]
-	navigation_origin = -1
-	travel_destination = -1
-	pending_destination = -1
-	chasedown_index = -1
-	chasedowns_this_system = 0
-	encounters.clear()
-	service = {}
-	if system_number >= next_outpost_system:
-		if rules.trading_outpost != null:
-			service = {
-				"kind": "service",
-				"poi": rules.trading_outpost,
-				"title": rules.trading_outpost.title,
-				"completed": false
-			}
-			station_production_purchases = 0
-		next_outpost_system = system_number + _station_interval()
-	service_revision += 1
-	ftl_charge = carried_charge
-	required_ftl_charge = int(composition.ordinary) + int(composition.hazardous) + 1
-	var boss_system: bool = rules.progression.is_boss_system(system_number)
-	var boss_added: bool = false
-	# Milestones have one Boss, replacing an existing enemy slot, never a PoI.
-	if boss_system:
-		var ordinary_enemies: Array = []
-		for profile in enemies:
-			if profile.enemy_rank != 2:
-				ordinary_enemies.append(profile)
-		if not ordinary_enemies.is_empty():
-			enemies = ordinary_enemies
-	for category in ["ordinary", "hazardous", "battle"]:
-		var library: Array = (
-			enemies if category == "battle" else (ordinary if category == "ordinary" else hazardous)
-		)
-		var available: Array = library.duplicate()
-		for slot in range(int(composition[category])):
-			if available.is_empty():
-				available = library.duplicate()
-			var mandatory: bool = category == "battle" and boss_system and not boss_added
-			var entry: Resource
-			if mandatory:
-				entry = rules.progression.mandatory_boss_profile()
-				boss_added = true
-			else:
-				entry = available.pop_at(
-					_enemy_index(available) if category == "battle" else _weighted_index(available)
-				)
-			if category == "battle":
-				encounters.append(
-					{
-						"kind": "battle",
-						"enemy": maxi(0, Ships.ENEMIES.find(entry)),
-						"enemy_data": entry,
-						"system_number": system_number,
-						"mandatory_boss": mandatory,
-						"modifier": _roll_battle_modifier(),
-						"title": entry.ship_name,
-						"completed": false,
-						"charge_awarded": false
-					}
-				)
-			else:
-				encounters.append(
-					{
-						"kind": "poi",
-						"poi": entry,
-						"title": entry.title,
-						"completed": false,
-						"charge_awarded": false
-					}
-				)
-	for index in range(encounters.size() - 1, 0, -1):
-		var other: int = rng.randi_range(0, index)
-		var swap: Dictionary = encounters[index]
-		encounters[index] = encounters[other]
-		encounters[other] = swap
+	SystemGenerator.generate(self)
+	navigation.reset_system()
 	progress_committed.emit()
 	return true
 
@@ -370,44 +245,74 @@ func _roll_battle_modifier() -> int:
 
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
-	return rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)))
+	return Pressure.scaled_enemy(rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number))), pressure)
 
 
-func encounter_charge(index: int) -> int:
-	if index == SERVICE_INDEX:
-		return 0
-	if encounters[index].get("chasedown", false):
-		return 1
-	return (
-		1
-		if encounters[index].kind == "poi"
-		else maxi(1, enemy_profile(encounters[index]).interstellar_ftl_reward)
-	)
+func profile_name() -> String:
+	return Profiles.for_id(system_profile).display_name
 
 
-# Single completion gate: award travel charge once, shared by PoI resolution and battle results.
-func _complete_encounter(index: int, extra_charge: int = 0) -> bool:
-	if index == SERVICE_INDEX:
-		return false
-	if index < 0 or index >= encounters.size() or encounters[index].get("charge_awarded", false):
-		return false
+func system_profile_data() -> Resource:
+	return Profiles.for_id(system_profile)
+
+
+func profile_chasedown_multiplier() -> float:
+	return system_profile_data().chasedown_multiplier
+
+
+func objective_locked(index: int) -> bool:
+	if index < 0 or index >= encounters.size(): return false
+	var prerequisite: int = int(encounters[index].get("objective_prerequisite", -1))
+	return prerequisite >= 0 and (prerequisite >= encounters.size() or not encounters[prerequisite].completed)
+
+
+func identify_objective(index: int) -> void:
+	if index >= 0 and index < encounters.size() and encounters[index].has("objective_role") and not encounters[index].get("objective_known", false):
+		encounters[index].objective_known = true
+		progress_committed.emit()
+
+
+func objective_marker(index: int) -> String:
+	if index < 0 or index >= encounters.size() or not encounters[index].has("objective_role"): return ""
+	if encounters[index].completed: return "✓"
+	if not encounters[index].get("objective_known", false): return "?"
+	return "🔒" if objective_locked(index) else "!"
+
+
+func ftl_status() -> String:
+	if mandatory_boss_pending(): return "BOSS LOCK"
+	if ftl_access: return "FTL READY"
+	for index in range(encounters.size()):
+		if encounters[index].get("objective_role", "") == "access" and encounters[index].get("objective_known", false) and not objective_locked(index):
+			return "FTL OBJECTIVE AVAILABLE"
+	return "FTL LOCKED"
+
+
+func encounter_pressure_risk(index: int) -> bool:
+	if index < 0 or index >= encounters.size(): return false
+	var entry: Dictionary = encounters[index]
+	return entry.get("pressure_sensitive", false) and not entry.has("objective_role") and pressure > int(entry.get("pressure_tolerance", 99999))
+
+
+func pressure_risk_description(index: int) -> String:
+	return "Pressure risk: −2 Energy next battle" if encounter_pressure_risk(index) else ""
+
+
+# Completion is the only ledger: services and Chasedowns never add system pressure.
+func _complete_encounter(index: int) -> bool:
+	if index < 0 or index >= encounters.size() or encounters[index].completed or objective_locked(index): return false
+	var risk: bool = encounter_pressure_risk(index)
 	encounters[index].completed = true
-	encounters[index].charge_awarded = true
-	ftl_charge += encounter_charge(index) + maxi(0, extra_charge)
+	if not encounters[index].get("chasedown", false): pressure += 1
+	if encounters[index].get("objective_role", "") == "access": ftl_access = true
+	for entry in encounters:
+		if int(entry.get("objective_prerequisite", -1)) == index: entry.objective_known = true
+	if risk: add_modifiers({"energy": -2})
 	return true
 
 
-## Conservative remaining charge: ignores optional wormhole bonuses.
-func remaining_ftl_charge() -> int:
-	var result: int = 0
-	for index in range(encounters.size()):
-		if not encounters[index].completed and not encounters[index].get("charge_awarded", false):
-			result += encounter_charge(index)
-	return result
-
-
 func can_survey(index: int) -> bool:
-	if not can_visit(index) or index == SERVICE_INDEX or encounters[index].kind != "poi":
+	if not can_visit(index) or index == SERVICE_INDEX or objective_locked(index) or encounters[index].kind != "poi":
 		return false
 	for approach in encounters[index].poi.approaches:
 		if not locked_reason(approach).is_empty():
@@ -427,7 +332,7 @@ func survey(index: int) -> bool:
 	_complete_encounter(index)
 	add_modifiers(rules.survey_penalty)
 	last_outcome = (
-		"Navigation survey completed. +1 FTL Drive charge. No Salvage or other rewards. Next battle: "
+		"Navigation survey completed. No Salvage or other rewards. Next battle: "
 		+ describe_modifiers(rules.survey_penalty)
 	)
 	progress_committed.emit()
@@ -435,8 +340,6 @@ func survey(index: int) -> bool:
 
 
 func can_visit(index: int) -> bool:
-	if travel_destination != -1 and pending_destination < 0 and index != travel_destination:
-		return false
 	if run_ended or hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
 		return false
 	if chasedown_unresolved() and index != chasedown_index:
@@ -450,25 +353,59 @@ func can_visit(index: int) -> bool:
 
 # Roll once at actual movement initiation; arrival, menus and battle returns never call this.
 # Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
+func can_navigate() -> bool:
+	return not run_ended and hull > 0 and active_battle < 0 and pending_choice.is_empty() and not chasedown_unresolved()
+
+
 func begin_travel(destination: int, forced_roll: float = -1.0) -> bool:
-	if not can_visit(destination): return false
-	if travel_destination == destination: return false
-	if not chasedown_unresolved(): pending_destination = -1
-	var intercepted: bool = try_chasedown(destination, forced_roll)
-	travel_destination = -1 if intercepted else destination
+	if not can_navigate() or not can_visit(destination): return false
+	return _begin_navigation(destination, [], forced_roll)
+
+
+func begin_free_travel(point: Array, forced_roll: float = -1.0) -> bool:
+	if not can_navigate() or not Navigation.valid_point(point, false): return false
+	return _begin_navigation(FREE_DESTINATION, point, forced_roll)
+
+
+func _begin_navigation(destination: int, point: Array, forced_roll: float) -> bool:
+	var new_leg: bool = navigation.begin(point)
+	pending_destination = -1
+	travel_destination = destination
+	var intercepted: bool = try_chasedown(destination, forced_roll) if new_leg else false
+	if intercepted:
+		travel_destination = -1
+		navigation.stop()
 	progress_committed.emit()
 	return intercepted
 
 
+func advance_navigation_time(seconds: float) -> void:
+	navigation.advance(seconds)
+
+
+func update_navigation_position(point: Array) -> void:
+	if Navigation.valid_point(point, false): navigation.position = point.duplicate()
+
+
+func effective_chasedown_chance() -> float:
+	return clampf((rules.chasedown_chance + pressure * rules.pressure_chasedown_increment) * profile_chasedown_multiplier(), 0.0, rules.maximum_chasedown_chance)
+
+
+func arrive_free_destination() -> void:
+	if travel_destination != FREE_DESTINATION: return
+	navigation.stop()
+	travel_destination = -1
+	navigation_origin = FREE_DESTINATION
+	pending_destination = -1
+	progress_committed.emit()
+
+
 func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
-	if not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi":
-		return false
-	if pending_destination >= 0 or navigation_origin < 0 or navigation_origin == destination:
-		return false
-	if navigation_origin >= encounters.size() or encounters[navigation_origin].kind != "poi":
-		return false
-	if chasedowns_this_system >= maxi(0, rules.chasedown_limit):
-		return false
+	if not can_navigate(): return false
+	if destination != FREE_DESTINATION and (not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi"): return false
+	if navigation_origin == destination and destination != FREE_DESTINATION: return false
+	if navigation_origin != FREE_DESTINATION and (navigation_origin < 0 or navigation_origin >= encounters.size() or encounters[navigation_origin].kind != "poi"): return false
+	if chasedowns_this_system >= maxi(0, rules.chasedown_limit): return false
 	var pool: Array = []
 	for profile in rules.enemy_ships:
 		if profile.enemy_rank == 0:
@@ -479,9 +416,10 @@ func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 				pool.append(profile)
 	if pool.is_empty():
 		return false
-	var chance: float = clampf(rules.chasedown_chance, 0.0, 1.0)
+	var chance: float = effective_chasedown_chance()
 	if chance <= 0:
 		return false
+	if not navigation.claim_roll(): return false
 	var roll: float = chasedown_rng.randf() if forced_roll < 0 else forced_roll
 	if roll >= chance:
 		return false
@@ -498,7 +436,7 @@ func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 	pending_destination = destination
 	chasedowns_this_system += 1
 	chasedown_index = encounters.size()
-	# Existing encounter/result pipeline awards exactly one unit; this entry has no map marker.
+	# Existing encounter/result pipeline; pursuit grants no FTL access or pressure.
 	encounters.append(
 		{
 			"kind": "battle",
@@ -510,8 +448,7 @@ func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 			"chasedown": true,
 			"response": -1,
 			"title": "Sublight Chasedown",
-			"completed": false,
-			"charge_awarded": false
+			"completed": false
 		}
 	)
 	return true
@@ -532,6 +469,10 @@ func stop_intercepted_travel(position: Array = []) -> void:
 	travel_destination = -1
 	if position.size() in [2,3] and not encounters[chasedown_index].has("intercept_position"):
 		encounters[chasedown_index].intercept_position = position.duplicate()
+	var stored: Array = encounters[chasedown_index].get("intercept_position", [])
+	if stored.size() == 2: stored = [stored[0], 0.0, stored[1]]
+	if Navigation.valid_point(stored, false): navigation.position = stored.duplicate()
+	navigation.stop()
 	progress_committed.emit()
 
 func intercepted_position() -> Array:
@@ -559,6 +500,7 @@ func choose_chasedown_response(choice: int) -> bool:
 
 
 func arrive_destination(index: int) -> void:
+	navigation.stop()
 	if chasedown_index >= 0:
 		encounters[chasedown_index].erase("intercept_position")
 	navigation_origin = index
@@ -602,7 +544,7 @@ func locked_reason(approach: Resource) -> String:
 # Validate/pay the approach, roll its outcome and complete the PoI before applying rewards.
 # forced_roll is a deterministic test hook; normal play uses this expedition's RNG.
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
-	if index == SERVICE_INDEX or not can_visit(index) or encounter_at(index).kind != "poi":
+	if index == SERVICE_INDEX or not can_visit(index) or objective_locked(index) or encounter_at(index).kind != "poi":
 		return false
 	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
@@ -614,7 +556,7 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	var roll: float = rng.randf() if forced_roll < 0 else forced_roll
 	var success: bool = roll < approach.success_chance
 	var outcome: Resource = approach.success if success else approach.failure
-	if not _complete_encounter(index, outcome.extra_ftl_charge):
+	if not _complete_encounter(index):
 		return false
 	last_poi_success = 1 if success else 0
 	# The roll and seed are printed for reproducing balance reports.
@@ -626,7 +568,6 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 			)
 		)
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
-	last_outcome += "\n+%d FTL Drive charge." % (1 + outcome.extra_ftl_charge)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	_apply_outcome(outcome)
@@ -700,8 +641,6 @@ func describe_modifiers(values: Dictionary) -> String:
 
 func describe_outcome(outcome: Resource) -> String:
 	var parts: Array[String] = []
-	if outcome.extra_ftl_charge > 0:
-		parts.append("+%d extra FTL Drive charge" % outcome.extra_ftl_charge)
 	if outcome.salvage != 0:
 		parts.append("%+d Salvage" % outcome.salvage)
 	if outcome.hull != 0:
@@ -1066,7 +1005,7 @@ func record_battle(result: BattleResult) -> void:
 	if (
 		active_battle >= 0
 		and active_battle < encounters.size()
-		and encounters[active_battle].get("charge_awarded", false)
+		and encounters[active_battle].completed
 	):
 		return
 	_recorded_results[result.result_id] = true

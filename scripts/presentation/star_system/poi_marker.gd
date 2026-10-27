@@ -3,6 +3,7 @@ extends Button
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
 const ICONS = {
 	"mining_operation": "⛏️", "research_station": "🔬", "quarantined_colony": "☣️",
+	"fuel_depot":"🏪", "sensor_relay":"🔬", "ancient_navigation_array":"🌀", "raider_cache":"☠️",
 	"gas_giant": "🪐", "trading_outpost": "🏪", "derelict_starship": "🚀",
 	"pirate_debris_field": "☠️", "battle": "⚔️", "spatial_anomaly": "🌀",
 	"unstable_wormhole": "🕳️", "radiation_nebula": "☢️", "distress_signal": "🆘", "unknown": "❓"
@@ -13,6 +14,10 @@ static func icon_for(kind: String) -> String:
 	var glyph: String = ICONS.get(kind,ICONS.unknown)
 	return glyph if EMOJI_FONT.has_char(glyph.unicode_at(0)) else FALLBACKS.get(kind,"◇")
 
+var hit_allowed: Callable
+var nearest_hit: Callable
+var objective_badge: Label
+var objective_value := ""
 var anchor_point := Vector2.ZERO
 var icon_center := Vector2.ZERO
 var planet_name: Label
@@ -81,6 +86,7 @@ func set_secondary(value: bool) -> void:
 	_refresh_state()
 
 func _set_hovered(value: bool) -> void:
+	if hovered == value: return
 	hovered = value
 	_refresh_state()
 
@@ -92,6 +98,7 @@ func _refresh_state() -> void:
 	var emphasis := highlighted()
 	self_modulate = Color(0.82,0.82,0.82,1.0) if completed and not selected else Color.WHITE
 	if completion_badge != null: completion_badge.visible = completed
+	if objective_badge != null: objective_badge.visible = not objective_value.is_empty() and not completed
 	for state in ["normal","hover","pressed","disabled","focus"]:
 		var box: StyleBoxFlat = get_theme_stylebox(state)
 		var bright: bool = emphasis or state in ["hover","pressed","focus"]
@@ -171,27 +178,46 @@ func _draw_completion_badge() -> void:
 	completion_badge.draw_line(center+Vector2(-1,5),center+Vector2(7,-6),Color("e6fff0"),3.0,true)
 
 
-func _hit_distance(point: Vector2) -> float:
-	var map_parent: Control = get_parent() as Control
-	if map_parent != null and map_parent.has_method("point_is_reserved") and map_parent.point_is_reserved(position+point+map_parent.global_position): return INF
-	if map_parent != null and map_parent.clip_contents and not Rect2(Vector2.ZERO,map_parent.size).has_point(position+point): return INF
-	var distance := INF
-	if Rect2(Vector2.ZERO,size).has_point(point): distance = point.distance_to(icon_center)
-	var map: Control = get_parent() as Control
-	if map != null and Rect2(Vector2.ZERO,map.size).has_point(position+point) and point.distance_to(anchor_point)<=28.0:
+# Effective targets expand the touch area without expanding the drawn icon.
+func hit_distance(point: Vector2) -> float:
+	var distance: float = INF
+	if Rect2(Vector2.ZERO,size).has_point(point) or point.distance_to(icon_center) <= 36.0:
+		distance = point.distance_to(icon_center)
+	if point.distance_to(anchor_point) <= 36.0:
 		distance = minf(distance,point.distance_to(anchor_point))
 	return distance
 
+
 func _has_point(point: Vector2) -> bool:
-	var distance: float = _hit_distance(point)
-	if distance == INF: return false
-	# Anchored tags may overlap. Give the nearest icon/model one unambiguous tap.
-	var map: Control = get_parent() as Control
-	if map == null: return true
-	var peers: Variant = map.get("markers")
-	if not peers is Dictionary: return true
-	for other in peers.values():
-		if other == self or other.disabled or not other.is_visible_in_tree(): continue
-		var other_distance: float = other._hit_distance(position+point-other.position)
-		if other_distance<distance or (is_equal_approx(other_distance,distance) and other.get_index()>get_index()): return false
-	return true
+	var global: Vector2 = global_position+point
+	if hit_allowed.is_valid() and not hit_allowed.call(global): return false
+	if hit_distance(point) == INF: return false
+	return not nearest_hit.is_valid() or nearest_hit.call(global)
+
+
+func set_objective(value: String) -> void:
+	if objective_badge == null:
+		objective_badge = Label.new()
+		objective_badge.mouse_filter = MOUSE_FILTER_IGNORE
+		objective_badge.add_theme_font_override("font",preload("res://assets/fonts/emoji_ui.tres"))
+		objective_badge.add_theme_font_size_override("font_size",23)
+		objective_badge.add_theme_color_override("font_color",Color("ffe39a"))
+		objective_badge.add_theme_color_override("font_outline_color",Color("020611"))
+		objective_badge.add_theme_constant_override("outline_size",4)
+		objective_badge.size = Vector2(28,28)
+		objective_badge.draw.connect(_draw_objective)
+		add_child(objective_badge)
+	objective_value = value
+	objective_badge.text = "" if value == "🔒" else value
+	objective_badge.queue_redraw()
+	objective_badge.visible = not value.is_empty() and not completed
+	objective_badge.position = Vector2(size.x-12,-12)
+
+
+func _draw_objective() -> void:
+	if objective_value != "🔒": return
+	var tint := Color("ffe39a")
+	objective_badge.draw_rect(Rect2(5,12,18,14),Color("142330"))
+	objective_badge.draw_rect(Rect2(5,12,18,14),tint,false,2)
+	objective_badge.draw_arc(Vector2(14,12),6,PI,TAU,16,tint,2,true)
+	objective_badge.draw_line(Vector2(14,17),Vector2(14,22),tint,2,true)

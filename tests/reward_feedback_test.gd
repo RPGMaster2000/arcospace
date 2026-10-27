@@ -59,7 +59,7 @@ func run() -> void:
 				check(state.pending_bonuses == bonuses, "No repeated bonus")
 				var resource_bonus: int = (3 if defeated_elite else 0) + (5 if tactical and mode != "loss" else 0)
 				for key in State.RESOURCES: check(state.modifier_value(key) == resource_bonus, "Elite stacks with tactical bonus for " + key)
-				check(state.ftl_charge == (0 if mode == "loss" else profile.interstellar_ftl_reward), "FTL reward unchanged")
+				check(state.pressure == (0 if mode == "loss" else 1), "Regular completion increases pressure exactly once")
 	var tuned = State.new()
 	tuned.start(0, Rules.duplicate(), 9002)
 	tuned.rules.elite_resource_bonus = 0

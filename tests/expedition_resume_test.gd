@@ -39,10 +39,15 @@ func run() -> void:
 	host.state.salvage = 99
 	host.state.hull = 23
 	host.state.add_modifiers({"energy": 5, "shields": -3})
-	host.state.encounters[0] = {"kind": "battle", "enemy_data": preload("res://scripts/ships/ship_library.gd").ENEMIES[0], "title": "Test enemy", "modifier": 4, "completed": false, "charge_awarded": false}
+	var battle_index: int = -1
+	for index in host.state.encounters.size():
+		if host.state.encounters[index].kind == "battle": battle_index = index; break
+	check(battle_index >= 0, "Generated battle is available")
+	host.state.encounters[battle_index].enemy_data = preload("res://scripts/ships/ship_library.gd").ENEMIES[0]
+	host.state.encounters[battle_index].modifier = 4
 	host._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	check(store.load_run().state.hull == 23, "Android-style suspension saves a complete checkpoint")
-	host.start_battle(0, 778899)
+	host.start_battle(battle_index, 778899)
 	check(host.battle != null, "Durable entry starts battle")
 	host.battle.enemy_timer.stop()
 	var settings = host.battle.settings_button.menu
@@ -54,7 +59,7 @@ func run() -> void:
 	settings.dismiss()
 	var expected: Dictionary = opening(host.battle)
 	var checkpoint: Dictionary = store.load_run()
-	check(checkpoint.battle.index == 0 and checkpoint.state.pending_bonuses.energy == 5, "Entry checkpoint retains exact unconsumed bonuses")
+	check(checkpoint.battle.index == battle_index and checkpoint.state.pending_bonuses.energy == 5, "Entry checkpoint retains exact unconsumed bonuses")
 	host.battle.player_hull = 1
 	host.battle.salvage = 0
 	check(host._save_and_quit(), "Save and Quit succeeds")
@@ -132,15 +137,18 @@ func run() -> void:
 	# Failed chase rolls and pending travel are not rerolled on load.
 	var state = State.new()
 	state.start(0, Rules, 8811)
-	state.encounters[0] = {"kind": "poi", "poi": Rules.pois[0], "title": Rules.pois[0].title, "completed": false}
-	state.encounters[1] = state.encounters[0].duplicate()
-	state.arrive_destination(0)
-	state.begin_travel(1, 1.0)
+	var destinations: Array[int] = []
+	for index in state.encounters.size():
+		if state.encounters[index].kind == "poi" and not state.objective_locked(index): destinations.append(index)
+	var origin: int = destinations[0]
+	var destination: int = destinations[1]
+	state.arrive_destination(origin)
+	state.begin_travel(destination, 1.0)
 	check(store.save_run(state), "Navigation decision saves")
 	var resumed = store.load_run().state
 	var rng: int = resumed.chasedown_rng.state
-	check(resumed.travel_destination == 1 and not resumed.begin_travel(1, 0.0) and resumed.chasedown_rng.state == rng, "Committed failed chase cannot be rerolled")
-	resumed.arrive_destination(1)
+	check(resumed.travel_destination == destination and not resumed.begin_travel(destination, 0.0) and resumed.chasedown_rng.state == rng, "Committed failed chase cannot be rerolled")
+	resumed.arrive_destination(destination)
 	check(resumed.travel_destination == -1, "Arrival clears committed travel")
 	store.clear_run()
 	print("Expedition resume: %d failures" % failures)

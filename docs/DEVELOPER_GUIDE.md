@@ -639,3 +639,5 @@ Full-screen overview HUD and arrival camera: [Corner HUD and introduction](star_
 Compact PoI/Outpost layout and contextual balances: [Focus Mode](compact_poi_focus.md).
 
 PoI focus and tactical encounter presentation: [ownership, controls and verification](tactical_poi_focus.md).
+
+See [star-system exploration](star_system_exploration.md) for pressure, objective, navigation and migration ownership.

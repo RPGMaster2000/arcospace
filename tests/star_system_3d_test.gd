@@ -31,20 +31,20 @@ func run() -> void:
 	map.arrived.connect(func(index): arrivals.append(index))
 	map.travel(0)
 	map.travel(1)
-	check(map.traveling, "Travel locks repeated selections")
+	check(map.traveling, "Travel permits a destination redirect")
 	await create_timer(0.15).timeout
-	check(arrivals == [0] and map.orbit_index == 0, "Single arrival starts orbit")
+	check(arrivals == [1] and map.orbit_index == 1, "Only redirected arrival starts orbit")
 	var at: Vector3 = map.ship.position
 	await create_timer(0.1).timeout
 	check(map.ship.position.distance_to(at) > 0.01, "Ship moves in orbit")
-	map.travel(1)
+	map.travel(0)
 	check(map.orbit_index == -1, "Departure cancels orbit")
 	await create_timer(0.15).timeout
-	check(arrivals == [0, 1], "Next arrival once")
+	check(arrivals == [1, 0], "Next arrival once")
 	for index in range(2, 6):
 		map.travel(index)
 		await create_timer(0.15).timeout
-	check(arrivals == [0, 1, 2, 3, 4, 5], "All six destinations reachable")
+	check(arrivals == [1, 0, 2, 3, 4, 5], "All six destinations reachable")
 	map.travel(-2)
 	await create_timer(0.15).timeout
 	check(map.orbit_index == -2 and arrivals.back() == -2, "Separate Trading Outpost arrival")
@@ -52,7 +52,7 @@ func run() -> void:
 	map.intercept_travel = func(_index): return true
 	map.travel(2)
 	await create_timer(0.6).timeout
-	check(map.orbit_index == -1 and arrivals == [0, 1, 2, 3, 4, 5], "Interception cancels arrival")
+	check(map.orbit_index == -1 and arrivals == [1, 0, 2, 3, 4, 5], "Interception cancels arrival")
 	map.queue_free()
 	await process_frame
 	var host = preload("res://scenes/expedition.tscn").instantiate()

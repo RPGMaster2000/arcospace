@@ -35,7 +35,7 @@ func write_doc(name: String, contents: String) -> void:
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://docs/balance")
 	var text: String = "# Ships\n\nGenerated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the indicated `.tres` in Godot; regenerate after balancing. M/E/C = Materials/Energy/Crew; S/R/Q = Synthesizer/Reactor/Quarters. Production identifiers: `synthesizer` / `reactor` / `quarters`.\n\n"
-	text += "| Ship | Type / special attribute | Hull / Shields | M/E/C | S/R/Q | EMP Pulse turns / resistance | Rank | FTL reward (defeat **or escape**) | Destruction Salvage | Generation weight | Edit |\n|---|---|---|---|---|---|---|---|---|---|---|\n"
+	text += "| Ship | Type / special attribute | Hull / Shields | M/E/C | S/R/Q | EMP Pulse turns / resistance | Rank | Destruction Salvage | Generation weight | Edit |\n|---|---|---|---|---|---|---|---|---|---|\n"
 	var profiles: Array = Ships.PLAYERS.duplicate()
 	profiles.append_array(Rules.enemy_ships)
 	for ship in profiles:
@@ -53,7 +53,6 @@ func _initialize() -> void:
 					else "Inactive (enemy has no jump mechanic)"
 				),
 				"Player" if player else ["Standard", "Elite", "Boss"][ship.enemy_rank],
-				"—" if player else ship.interstellar_ftl_reward,
 				(
 					"—"
 					if player
@@ -68,7 +67,7 @@ func _initialize() -> void:
 		)
 	text += "\nEnemy profiles also serialize EMP Pulse defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.\n\n"
 	text += (
-		"Escape: **0 Salvage**, full profile FTL reward once; enemy is completed and cannot be farmed. Systems Failure uses the same Salvage and FTL rewards as destruction. Elite victories additionally grant +%d Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: %d Salvage per Hull, capped at capacity. Standalone combat destruction fallback: %d Salvage. Enemy registry and reward settings: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.\n"
+		"Escape: **0 Salvage**; enemy is completed and cannot be farmed. Systems Failure uses the same Salvage rewards as destruction. Regular completed encounters increase pressure once; Chasedowns do not. Combat never grants FTL Access. Elite victories additionally grant +%d Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Victory repairs: %d Salvage per Hull, capped at capacity. Standalone combat destruction fallback: %d Salvage. Enemy registry and reward settings: `encounters/expedition_rules.tres`; repair rate: `scripts/board.gd`.\n"
 		% [
 			Rules.elite_resource_bonus,
 			Board.RESULT_SALVAGE_PER_HULL,
@@ -152,7 +151,7 @@ func _initialize() -> void:
 	text += "\n## Card presentation\n\nNormal cards use 14 px data-derived summaries and a fixed artwork rectangle. Hold or middle-click any card to inspect the original-scene copy beside full base/upgrade effects. Tuning: `resources/card_presentation.tres`; implementation and gesture/confirmation rules: [UI layout](../ui_layout.md#compact-cards-and-universal-inspection). No gameplay values are duplicated in presentation.\n"
 	write_doc("cards", text)
 	var state = State.new()
-	text = "# Points of interest and generation\n\nGenerated from `encounters/expedition_rules.tres` and all referenced PoI Resources. Each completed PoI grants **+1 FTL Drive charge once**, in addition to rewards below. Extra FTL in a row adds to this base. All next-battle values apply once; Hull/Salvage and interstellar charge apply immediately.\n\n"
+	text = "# Points of interest and generation\n\nGenerated from `encounters/expedition_rules.tres` and all referenced PoI Resources. Each completed regular PoI increases system pressure once, in addition to rewards below. FTL Access comes only from an objective. All next-battle values apply once; Hull/Salvage apply immediately.\n\n"
 	text += "| Generation category | Min / max | Weight |\n|---|---|---|\n"
 	text += row(
 		[
@@ -172,7 +171,7 @@ func _initialize() -> void:
 		["Enemy", "%d / %d" % [Rules.minimum_battles, Rules.maximum_battles], Rules.battle_weight]
 	)
 	text += (
-		"\nTotal %d progression encounters plus an independently scheduled optional Trading Outpost; requirement = actual non-trading PoI count + 1. Service visits give zero charge and do not increase the requirement. Valid count combinations are sampled with weight ordinary_weight^ordinary × hazardous_weight^hazards × battle_weight^enemies. Each category samples Resources by encounter_weight without replacement until exhausted. At least 1 enemy; reward floor 1. Invalid bounds warn and fall back to one enemy plus available PoIs (all enemies if no PoIs). No hidden reduction in travel requirement. Tune counts/weights/registry in `encounters/expedition_rules.tres`; type weights in each PoI/ship Resource.\n\n"
+		"\nTotal %d progression encounters plus an independent profile-selected Trading Outpost. Composition weights multiply profile and rule category biases; Resources sample by encounter_weight and profile PoI biases without replacement until exhausted. Objective routes replace ordinary slots: guaranteed direct Fuel Depot; optionally Sensor Relay then Ancient Navigation Array. Routes and prerequisites remain pressure-safe. See [exploration prototype](../star_system_exploration.md) for tuning.\n\n"
 		% Rules.encounters_per_system
 	)
 	for category in ["Ordinary", "Hazardous", "Services"]:
@@ -184,15 +183,7 @@ func _initialize() -> void:
 			for bought in range(7):
 				state.station_production_purchases = bought
 				prices.append(str(state.service_cost(3)))
-			text += (
-				"First station: system %d–%d; subsequent system-number intervals %d–%d, hard cap 3. The seeded station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no travel charge, requirement increase, penalties or survey. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.\n\n"
-				% [
-					Rules.minimum_station_interval,
-					Rules.maximum_station_interval,
-					Rules.minimum_station_interval,
-					Rules.maximum_station_interval
-				]
-			)
+			text += "Trading Outpost probability: Quiet Frontier 100%, Industrial 8%, Hostile 4%, Ancient 4%. Station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no pressure or FTL Access reward. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.\n\n"
 			text += (
 				"The same Hull service tile repairs damaged Hull for 1 Salvage/Hull up to capacity, then switches to Install Ablative Plating for 2 Salvage/point up to capacity +10. It selects an affordable quantity, previews total cost/result and rejects zero confirmation; at +10 it remains in place disabled. Shared quantity bounds live in `scripts/repair_rules.gd`; post-battle repairs cost 2 Salvage/Hull. Field repairs are separate, accessed through the system Hull popup at 2 Salvage/Hull and cannot create plating. Supply/card base prices and shipyard base price are editable in `encounters/trading_outpost.tres` approach Salvage Cost; supply amount/production amount remain editable outcome Resources. Shipyard cost for purchase n: base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2. Current increment %d, acceleration %d; prices %s. Counter combines all production categories and resets only when a later station appears; permanent upgrades persist. Intervals and escalation parameters: `ExpeditionRules` Inspector. The table shows initial prices; repair amount is variable.\n\n"
 				% [
@@ -242,10 +233,10 @@ func _initialize() -> void:
 				)
 			text += "\n"
 	text += (
-		"## Progression safeguard\n\nIf a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and grants only that PoI's +1 charge, with guaranteed next-battle penalty `%s`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. Unlimited affordable services and free revisits while present; ignoring a station never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.\n\n"
+		"## Progression safeguard\n\nIf a PoI has no affordable, unlocked approach whose worst possible Hull outcome leaves Hull >0, **Navigation survey** becomes available. Completing the survey forfeits all normal loot and completes the encounter with +1 pressure and guaranteed next-battle penalty `%s`. The independent Trading Outpost never needs or permits a survey. Entering and leaving it is free; only a confirmed purchase spends Salvage. Unlimited affordable services and free revisits while present; ignoring a station never blocks departure. Tune `ExpeditionRules.survey_penalty`. Full-Hull repairs are locked. Return leaves an uncompleted PoI untouched.\n\n"
 		% JSON.stringify(Rules.survey_penalty)
 	)
-	text += "All escaped enemies complete normally and award their full profile charge. Repeated result/approach calls cannot award more charge. The shipping carryover cap is zero: every normal system transition begins at zero charge. New expeditions start at 0. Mandatory Boss encounters must resolve before any transition. Pending choices must be resolved before leaving. Hull 0 ends the expedition; voluntarily lethal approaches and battle losses remain possible. The simulation guarantees charge availability for surviving players, not victory against every enemy. **Not implemented:** hostile follow-up battles from pirate debris; current pirate hazards use Hull costs.\n"
+	text += "All escaped regular enemies complete normally and increase pressure once. Repeated result/approach calls cannot duplicate pressure or rewards. FTL Access unlocks by completing any access objective and persists until Jump. Mandatory Boss encounters independently gate departure. Pending choices must resolve before leaving. Hull 0 ends the expedition. At least one free, deterministic direct access route remains viable at any pressure.\n"
 	text += progression_reference()
 	write_doc("pois", text)
 	text = "# Battle modifiers\n\nGenerated numerical constants: `scripts/combat_modifier.gd`, `ftl_drive.gd`, `board.gd`, and expedition Resources. Serialized combat names (`FTLDrive`, `ftl_turns`, `ftl_resistance`) remain for scene compatibility; they mean **EMP Pulse**, not interstellar FTL Drive.\n\n"
@@ -317,9 +308,9 @@ func _initialize() -> void:
 	)
 	text += row(
 		[
-			"Interstellar FTL Drive",
-			"Required = non-trading PoI count + 1. Independent Trading Outpost: zero charge, zero requirement increase, no survey or departure cost. PoIs +1 plus optional extra; enemy defeat/escape gives profile reward once. Shipping carryover is zero on normal system entry. Can leave at threshold after resolving any mandatory Boss. New expeditions start at zero.",
-			"ship.interstellar_ftl_reward; outcome.extra_ftl_charge; expedition_state.gd"
+			"Interstellar FTL Access",
+			"Complete any access objective to unlock Jump, after resolving any mandatory Boss and pending choices. One or two routes per system; at least one free direct route. Access and pressure reset on system entry. Combat and services never grant access.",
+			"system_generator.gd; expedition_state.gd"
 		]
 	)
 	text += row(
@@ -406,9 +397,8 @@ func _initialize() -> void:
 func progression_reference() -> String:
 	var p: Resource = Rules.progression
 	return (
-		"\n## Expedition progression\n\nInspector: encounters/expedition_rules.tres -> Progression -> resources/expedition_progression.tres.\n\nCarryover = min(cap, max(0, FTL - requirement)), cap %d, hard maximum 2; new expeditions start at zero. Shipping cap is zero, so every system starts at zero charge; the editable helper retains its hard maximum of 2. Requirements remain unchanged.\n\nLevel = 1 + floor((system - 1) / %d); steps = level - 1. Per extra level: +%d Hull, +%d Shields, +%d each starting resource; each production adds floor(steps * %s). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.\n\nElite selection retains original baseline odds in level 1, then uses min(%s, available Elite weight / total available weight + steps * %s). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.\n\nEvery %d systems, starting at system %d, one enemy slot becomes a mandatory existing Boss (six slots retained). Resolve by combat victory or existing EMP Pulse before normal FTL travel. Both grant profile FTL once; destruction/resource/escape Salvage remains distinct. Escape never transitions systems. Missing mandatory metadata blocks travel.\n"
+		"\n## Expedition progression\n\nInspector: encounters/expedition_rules.tres -> Progression -> resources/expedition_progression.tres.\n\nNew systems start with zero pressure and locked FTL Access. Completing any access objective unlocks Jump, independently of mandatory Boss restrictions.\n\nLevel = 1 + floor((system - 1) / %d); steps = level - 1. Per extra level: +%d Hull, +%d Shields, +%d each starting resource; each production adds floor(steps * %s). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.\n\nElite selection retains original baseline odds in level 1, then uses min(%s, available Elite weight / total available weight + steps * %s). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.\n\nEvery %d systems, starting at system %d, one enemy slot becomes a mandatory existing Boss (nine slots retained). Resolve by combat victory or existing EMP Pulse before normal FTL travel. Both resolve the Boss gate; FTL Access remains a separate objective. Destruction/resource/escape Salvage remains distinct. Escape never transitions systems. Missing mandatory metadata blocks travel.\n"
 		% [
-			p.ftl_carryover_cap,
 			p.systems_per_difficulty,
 			p.hull_bonus_per_level,
 			p.shields_bonus_per_level,
@@ -451,7 +441,7 @@ func pool_reference() -> String:
 
 func combat_reward_reference() -> String:
 	return (
-		"\n## Combat upgrade events and Chasedown\n\nNon-escape victories offer up to %d / %d / %d / %d upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.\n\nSublight Chasedown: %.0f%% per valid PoI-to-PoI movement, limit %d per system. Initial entry, menus, invalid/same destinations, battle return and FTL travel never roll. Uses ordinary enemies, existing scaling and battle scene, gives exactly +1 FTL once on victory or escape, then resumes the preserved destination. See [implementation and tuning](../chasedown_rewards.md).\n"
+		"\n## Combat upgrade events and Chasedown\n\nNon-escape victories offer up to %d / %d / %d / %d upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.\n\nSublight Chasedown: base %.0f%% before pressure/profile modifiers, limit %d per system. Eligible PoI and free travel share one roll per uninterrupted journey and a persisted 10-second active-gameplay cooldown. Initial entry, menus, invalid/same destinations, redirects, battle return and FTL travel never roll. Chasedowns grant no pressure or FTL Access. Interruption cancels the destination and leaves the ship at the interception position until a new movement order. See [implementation and tuning](../chasedown_rewards.md).\n"
 		% [
 			Rules.chasedown_upgrades,
 			Rules.standard_upgrades,
