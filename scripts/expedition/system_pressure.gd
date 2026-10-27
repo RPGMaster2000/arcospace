@@ -2,7 +2,7 @@ extends RefCounted
 
 # Pure starting-stat transform, after established system progression. Shared profiles stay immutable.
 static func bonus(pressure: int) -> float:
-	return 0.2 if pressure >= 10 else (0.1 if pressure >= 7 else 0.0)
+	return 0.3 if pressure >= 10 else (0.2 if pressure >= 8 else (0.1 if pressure >= 5 else 0.0))
 
 static func scaled_enemy(base: Resource, pressure: int) -> Resource:
 	var result: Resource = base.duplicate(false)
