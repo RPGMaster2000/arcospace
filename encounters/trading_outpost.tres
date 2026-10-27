@@ -68,7 +68,7 @@ production_choice = 1
 [sub_resource type="Resource" id="Approach3"]
 script = ExtResource("Approach")
 title = "Shipyard improvements"
-salvage_cost = 25
+salvage_cost = 35
 success = SubResource("Success3")
 failure = SubResource("Failure3")
 
