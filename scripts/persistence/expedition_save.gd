@@ -4,7 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const VERSION: int = 2
+const VERSION: int = 3
 const PATH: String = "user://expedition_save.json"
 const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"system_number", "next_outpost_system", "station_production_purchases", "service_revision",
@@ -56,7 +56,7 @@ static func encode(state: Resource) -> Dictionary:
 	# v1 wire shape groups these fields under navigation; ownership is now separate in memory.
 	var navigation_data: Dictionary = state.navigation.snapshot()
 	navigation_data.merge(state.chasedown_roll_policy.snapshot())
-	var data: Dictionary = {"metagame_version": 2, "game_mode": state.game_mode, "defense": state.defense.snapshot() if state.is_defense() else {}, "pressure": state.pressure,
+	var data: Dictionary = {"metagame_version": 3, "game_mode": state.game_mode, "defense": state.defense.snapshot() if state.is_defense() else {}, "pressure": state.pressure,
 		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
 		"navigation": navigation_data, "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
@@ -117,10 +117,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if legacy:
 		data = _migrate_legacy(data)
 		if data.is_empty(): return null
-	if not _integer(data.get("metagame_version"), 1, 2): return null
-	if data.metagame_version == 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
-	var mode: String = data.game_mode if data.metagame_version == 2 else "exploration"
-	if mode == "exploration" and data.metagame_version == 2 and not data.defense.is_empty(): return null
+	if not _integer(data.get("metagame_version"), 1, 3): return null
+	if data.metagame_version >= 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
+	var mode: String = data.game_mode if data.metagame_version >= 2 else "exploration"
+	if mode == "exploration" and data.metagame_version >= 2 and not data.defense.is_empty(): return null
 	if mode not in ["exploration", "defense"]: return null
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
@@ -177,10 +177,28 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data.get("navigation") is Dictionary or not state.navigation.restore(data.navigation): return null
 	if not state.chasedown_roll_policy.restore(data.navigation): return null
 	if not _valid_navigation(data, entries): return null
+	# Version 2 defense saves predate reserve identities. Reuse the existing
+	# attacker profile without consuming the saved gameplay RNG.
+	var migrated_reserves: Array = []
+	if mode == "defense" and data.metagame_version == 2 and not data.defense.get("complete", false):
+		if entries.size() < 3 or entries[0].kind != "battle": return null
+		for i in range(configuration.defense_tuning.maximum_reinforcements):
+			migrated_reserves.append(entries.size())
+			var reserve: Dictionary = entries[0].duplicate(true)
+			reserve.completed = false
+			reserve.erase("resolution")
+			entries.append(reserve)
 	state.game_mode = mode
 	if mode == "defense":
+		if data.metagame_version >= 3:
+			for key in ["reinforcement_remaining", "reinforcements_spawned", "deferred_seconds"]:
+				if not data.defense.has(key): return null
+			if not data.defense.get("units") is Array: return null
+			for unit in data.defense.units:
+				if not unit is Dictionary or not unit.has("reinforcement") or not unit.has("spawned"): return null
 		state.defense = State.Defense.new()
 		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries): return null
+		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if state.defense.contact >= 0 and state.navigation.leg_active: return null
 	state.bind_defense_movement()
@@ -338,7 +356,7 @@ func load_run() -> Dictionary:
 		found = found or FileAccess.file_exists(candidate)
 		if FileAccess.file_exists(candidate):
 			var envelope: Variant = _json(FileAccess.get_file_as_string(candidate))
-			if envelope is Dictionary and _integer(envelope.get("schema"), 0) and int(envelope.schema) not in [1, VERSION]:
+			if envelope is Dictionary and _integer(envelope.get("schema"), 0) and int(envelope.schema) not in [1, 2, VERSION]:
 				error = "This expedition save uses an unsupported version. Its files have been preserved."
 				return {}
 		var payload: Dictionary = _read(candidate)
