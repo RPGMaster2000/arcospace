@@ -38,4 +38,21 @@ Remaining debt: expedition retains its existing navigation destination indices a
 
 Focused movement (48 checks), risk policy (39), navigation (25), save (33), FTL (103,655), milestone (3,185), Chasedown reward (82), UI (74), legacy save correctness, save/resume, native map input and transition regressions were exercised. Current main had stale balance expectations; tests were aligned to its already-authored tuning without changing gameplay resources. Full headless and rendered registries remain the CI acceptance check; Mobile navigation-specific engine teardown is already excluded by the existing main workflow, while Mobile metagame/HUD/tactical coverage remains active.
 
-Additional verification: all 13 Python runner tests passed. Updated current-balance generation and trading checks passed (100,007 trading assertions), as did the expedition regression and PoI reward simulation (186,529 assertions). Existing ObjectDB shutdown leak warnings remain in several scene tests; the new navigation and policy tests produce none. Physical-device Windows/Android validation is still outside this headless/software-rendered pass.
+Additional verification: all 13 Python runner tests passed. Updated current-balance generation and trading checks passed (100,007 trading assertions), as did the expedition regression and PoI reward simulation (186,529 assertions). ObjectDB shutdown leak warnings remain in several scene tests, including the coordinator movement fixture during the full suite. The isolated policy test is clean; leak cleanup remains separate technical debt. Physical-device Windows/Android validation is still outside this headless/software-rendered pass.
+
+## Normal-chat handoff (2026-10-28)
+
+Implementation is complete and checkpointed; do not reimplement it. `main` has NOT been advanced for Step 0.5. Baseline main is `a3ecf6d1ab0e71cca69539ea0aab6829840f89a5`.
+
+Code commits, in order:
+- `52eaa6abf2c8cf3ac46d32bbe2372c2f54694a78`: navigation/policy separation, movement reporting, objective boundary, save compatibility, focused tests.
+- `012c7921d6117e41f2d2e9605a250d190049a731`: tests aligned to existing main balance, historical tuning documentation.
+- `249d8720bbc8bd19c1f240c00b11bf92d24d14f9`: validated interruption position checkpoint and verification notes.
+
+The final handoff commit on `checkpoint/starfront-step05-ready` only changes this documentation. Its executable code is identical to `249d872` on `refactor/starfront-preparation`.
+
+CI for that exact code: https://github.com/RPGMaster2000/arcospace/actions/runs/40633853989 . It was still running at handoff. The previous code checkpoint's Mobile and exported-startup jobs passed. Full headless/OpenGL completion must still be checked; do not report them as passed before reading results. Local broad run had completed 80 tests without failures and was running power allocation. The focused tests and four current-balance reruns passed; all 13 Python tests passed. Existing shutdown warnings are documented above.
+
+Local checkout, if retained: `/workspace/scratch/45c62988ff1a/starfront`. Full-run results: sibling `starfront-remaining/summary.json`; focused results: sibling `starfront-checks/summary.json`; current-balance results: sibling `starfront-balance-checks/` (the first expedition run failed its stale reward expectation; `expedition-rerun.log` records the corrected passing run). GitHub CI artifacts are the durable fallback if the local workspace disappears. Do not use the older sibling `arcospace` pressure reconstruction tree.
+
+To finish: inspect all four jobs and artifacts for the exact code CI run above, address genuine failures with bounded reruns, fetch latest main, and fast-forward main to the ready checkpoint if it still descends from current main. If main advanced independently, integrate those changes and validate conflicts before publishing; never force overwrite it. User has authorized publishing verified changes to main. Do not repeat long passing simulations solely because this handoff is a documentation-only descendant. There are no unsaved implementation changes or defense-mode gameplay hidden outside this checkpoint.
