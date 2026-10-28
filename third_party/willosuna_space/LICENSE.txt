@@ -1,0 +1,20 @@
+LICENSE - Space Skyboxes Lite
+by Willosuna
+
+WHAT YOU CAN DO
+  - Use these skyboxes and layers in personal and commercial projects, in
+    any number of projects, royalty free.
+  - Modify, recolor, scale and edit them however you like.
+  - Use them in games, apps, video, renders, prototypes and client work.
+  - Attribution is not required, though it is always appreciated.
+
+WHAT YOU CANNOT DO
+  - Resell, redistribute or give away the image files themselves, either as-is
+    or modified, as a skybox or texture pack, library or collection.
+
+HOW THE ART WAS MADE
+  Every image is generated procedurally by original code. It contains no
+  photos and no third-party art.
+
+NO WARRANTY
+  Provided "as is", without warranty of any kind.

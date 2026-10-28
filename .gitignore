@@ -6,3 +6,6 @@ __pycache__/
 
 # Documentation captures are not game assets; Godot generates these on clean imports.
 /docs/**/*.import
+
+# Local visual-test backups and captures
+.local-skybox-test/

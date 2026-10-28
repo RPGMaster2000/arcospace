@@ -1,7 +1,9 @@
 [gd_scene format=3 uid="uid://bhxa3ibfkqlma"]
 
-[ext_resource type="Shader" uid="uid://ba80a0yua6ijd" path="res://shaders/space_background.gdshader" id="BackdropShader"]
+[ext_resource type="Shader" path="res://shaders/battle_panorama.gdshader" id="BackdropShader"]
 [ext_resource type="PackedScene" uid="uid://nt8kerrhtnf2" path="res://scenes/ship_3d.tscn" id="Ship"]
+
+[ext_resource type="Texture2D" path="res://third_party/willosuna_space/black_hole_gold/black_hole_gold_panorama_4096.jpg" id="BattlePanorama"]
 
 [sub_resource type="Environment" id="Environment"]
 resource_local_to_scene = true
@@ -31,9 +33,15 @@ emission = Color(1, 0.3, 0.12, 1)
 
 [sub_resource type="ShaderMaterial" id="BackdropMaterial"]
 resource_local_to_scene = true
-resource_name = "Procedural Space Backdrop"
+resource_name = "Panorama Space Backdrop (Local Visual Test)"
 render_priority = 0
 shader = ExtResource("BackdropShader")
+shader_parameter/panorama = ExtResource("BattlePanorama")
+shader_parameter/panorama_brightness = 0.7
+shader_parameter/panorama_center = Vector2(0.47, 0.46)
+shader_parameter/panorama_tint = Color(1, 1, 1, 1)
+shader_parameter/panorama_view_width = 2.2
+shader_parameter/procedural_overlay = 0.08
 shader_parameter/space_color = Color(0.003, 0.022, 0.025, 1)
 shader_parameter/cloud_color = Color(0.13360894, 0.15288305, 0.05564625, 1)
 shader_parameter/accent_color = Color(0.30676514, 0.62510204, 0.46614617, 1)
@@ -41,7 +49,7 @@ shader_parameter/cloud_intensity = 0.662000031445
 shader_parameter/cloud_scale = 5.7770002269075
 shader_parameter/animation_speed = 0.10000000149012
 shader_parameter/star_density = 0.09
-shader_parameter/star_brightness = 0.32
+shader_parameter/star_brightness = 0.04
 shader_parameter/streak_intensity = 0.0
 shader_parameter/rift_intensity = 0.170000008075
 shader_parameter/feature_center = Vector2(0.66, 0.5)
