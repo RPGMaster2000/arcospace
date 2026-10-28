@@ -29,7 +29,6 @@ window/stretch/aspect="expand"
 
 [editor]
 
-; Avoid ShaderFile UI access from import workers in Godot 4.7.2.
 import/use_multiple_threads=false
 
 [physics]

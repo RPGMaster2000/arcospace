@@ -1,0 +1,115 @@
+{
+ "pack": "Space Skyboxes Lite",
+ "panorama_size": [
+  4096,
+  2048
+ ],
+ "cube_face": 1024,
+ "hdr_size": [
+  1024,
+  512
+ ],
+ "cube_faces": "px nx py ny pz nz (+X -X +Y -Y +Z -Z), Unity axis convention",
+ "skies": [
+  {
+   "name": "nebula_rose_blue",
+   "category": "Nebulae",
+   "view_deg": [
+    0,
+    15
+   ],
+   "panorama": "nebula_rose_blue/nebula_rose_blue_panorama_4096.jpg",
+   "cubemap": {
+    "px": "nebula_rose_blue/nebula_rose_blue_cube/px.jpg",
+    "nx": "nebula_rose_blue/nebula_rose_blue_cube/nx.jpg",
+    "py": "nebula_rose_blue/nebula_rose_blue_cube/py.jpg",
+    "ny": "nebula_rose_blue/nebula_rose_blue_cube/ny.jpg",
+    "pz": "nebula_rose_blue/nebula_rose_blue_cube/pz.jpg",
+    "nz": "nebula_rose_blue/nebula_rose_blue_cube/nz.jpg"
+   },
+   "hdr": "nebula_rose_blue/nebula_rose_blue_hdr_1024.hdr",
+   "checks": {
+    "seam_wrap": 2.296,
+    "seam_wrap_ref": 2.499,
+    "cube_edge": 2.159,
+    "cube_edge_ref": 5.466
+   }
+  },
+  {
+   "name": "galaxy_spiral_blue",
+   "category": "Galaxies",
+   "view_deg": [
+    0,
+    15
+   ],
+   "panorama": "galaxy_spiral_blue/galaxy_spiral_blue_panorama_4096.jpg",
+   "cubemap": {
+    "px": "galaxy_spiral_blue/galaxy_spiral_blue_cube/px.jpg",
+    "nx": "galaxy_spiral_blue/galaxy_spiral_blue_cube/nx.jpg",
+    "py": "galaxy_spiral_blue/galaxy_spiral_blue_cube/py.jpg",
+    "ny": "galaxy_spiral_blue/galaxy_spiral_blue_cube/ny.jpg",
+    "pz": "galaxy_spiral_blue/galaxy_spiral_blue_cube/pz.jpg",
+    "nz": "galaxy_spiral_blue/galaxy_spiral_blue_cube/nz.jpg"
+   },
+   "hdr": "galaxy_spiral_blue/galaxy_spiral_blue_hdr_1024.hdr",
+   "checks": {
+    "seam_wrap": 1.269,
+    "seam_wrap_ref": 2.98,
+    "cube_edge": 2.225,
+    "cube_edge_ref": 5.219
+   }
+  },
+  {
+   "name": "black_hole_gold",
+   "category": "Black holes",
+   "view_deg": [
+    0,
+    15
+   ],
+   "panorama": "black_hole_gold/black_hole_gold_panorama_4096.jpg",
+   "cubemap": {
+    "px": "black_hole_gold/black_hole_gold_cube/px.jpg",
+    "nx": "black_hole_gold/black_hole_gold_cube/nx.jpg",
+    "py": "black_hole_gold/black_hole_gold_cube/py.jpg",
+    "ny": "black_hole_gold/black_hole_gold_cube/ny.jpg",
+    "pz": "black_hole_gold/black_hole_gold_cube/pz.jpg",
+    "nz": "black_hole_gold/black_hole_gold_cube/nz.jpg"
+   },
+   "hdr": "black_hole_gold/black_hole_gold_hdr_1024.hdr",
+   "checks": {
+    "seam_wrap": 1.496,
+    "seam_wrap_ref": 3.117,
+    "cube_edge": 1.98,
+    "cube_edge_ref": 7.773
+   }
+  },
+  {
+   "name": "ringed_giant_amber",
+   "category": "Ringed giants",
+   "view_deg": [
+    0,
+    0
+   ],
+   "panorama": "ringed_giant_amber/ringed_giant_amber_panorama_4096.jpg",
+   "cubemap": {
+    "px": "ringed_giant_amber/ringed_giant_amber_cube/px.jpg",
+    "nx": "ringed_giant_amber/ringed_giant_amber_cube/nx.jpg",
+    "py": "ringed_giant_amber/ringed_giant_amber_cube/py.jpg",
+    "ny": "ringed_giant_amber/ringed_giant_amber_cube/ny.jpg",
+    "pz": "ringed_giant_amber/ringed_giant_amber_cube/pz.jpg",
+    "nz": "ringed_giant_amber/ringed_giant_amber_cube/nz.jpg"
+   },
+   "hdr": "ringed_giant_amber/ringed_giant_amber_hdr_1024.hdr",
+   "checks": {
+    "seam_wrap": 1.454,
+    "seam_wrap_ref": 4.17,
+    "cube_edge": 8.177,
+    "cube_edge_ref": 18.312
+   }
+  }
+ ],
+ "parallax": [
+  "parallax/stars/stars_far_white.png",
+  "parallax/stars/stars_near_white.png"
+ ]
+}
