@@ -39,6 +39,12 @@ var inspection_area: Callable
 var hold_index: int = -1
 var hold_started: int = 0
 var hold_fired: bool = false
+enum Gesture { IDLE, PRESS, HOLD, DRAG, PINCH, CONSUMED }
+var gesture: Gesture = Gesture.IDLE
+var selected_touch_index: int = -1
+var last_touch_msec: int = 0
+var double_tap_msec: int = 350
+var touch_confirmation_required: bool = false
 var hold_threshold_msec: int = 400
 const MOTHERSHIP_MODEL_SCALE: float = 2.5
 var destination_for: Callable
@@ -148,7 +154,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			if markers.has(entry.index):
 				markers[entry.index].disabled = entry.completed
 				markers[entry.index].set_state(entry.completed,false,false)
-				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index))
+				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index) or entry.get("profile") != null)
 				markers[entry.index].set_objective(entry.get("objective_marker",""))
 		if not defense_view.is_empty(): sync_defense(defense_view)
 		overview()
@@ -235,8 +241,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.contrast = not defense_view.is_empty() and entry.get("profile") != null
 		button.style_tag(entry.color)
-		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index))
+		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index) or entry.get("profile") != null)
 		button.set_objective(entry.get("objective_marker",""))
 		button.hit_allowed = func(point): return not point_is_reserved(point)
 		button.nearest_hit = func(point): return nearest_marker(point) == index
@@ -274,8 +281,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 
 
 func _process(delta: float) -> void:
-	if hold_index >= 0 and not hold_fired and not dragging and not pinching and Time.get_ticks_msec() - hold_started >= hold_threshold_msec:
+	if gesture == Gesture.PRESS and hold_index >= 0 and not hold_fired and Time.get_ticks_msec() - hold_started >= hold_threshold_msec:
 		hold_fired = true
+		gesture = Gesture.HOLD
 		inspect_requested.emit(hold_index)
 	if not defense_view.is_empty() and interactive and traveling and motion and motion.is_valid():
 		if input_allowed.is_valid() and not input_allowed.call(): motion.pause()
@@ -318,11 +326,26 @@ func _process(delta: float) -> void:
 		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
-		if hud_regions.any(func(rect): return rect.intersects(button.get_global_rect().grow(14))): button.visible = false
+		for rect in hud_regions:
+			if rect.intersects(button.get_global_rect().grow(14)):
+				if button.contrast and rect.position.y < get_viewport_rect().size.y * 0.5:
+					button.position.y = rect.end.y + 15.0
+				else:
+					button.visible = false
 		if inspection_active and inspection_area.is_valid() and inspection_area.call().intersects(button.get_global_rect().grow(14)):
 			button.visible = false
 		button.anchor_point = center-button.position
 		button.queue_redraw()
+	# Keep the two high-priority enemy names readable when their projections overlap.
+	var placed_enemies: Array[Control] = []
+	for index in markers:
+		var button = markers[index]
+		if not button.visible or not button.contrast: continue
+		for other in placed_enemies:
+			if button.get_global_rect().intersects(other.get_global_rect().grow(4)):
+				button.position.x = other.position.x + other.size.x + 5.0
+				button.anchor_point = camera.unproject_position(objects[index].position) - button.position
+		placed_enemies.append(button)
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -477,6 +500,8 @@ func focus(index: int) -> void:
 
 
 func overview() -> void:
+	selected_touch_index = -1
+	last_touch_msec = 0
 	interception_pending = false
 	_restore_tactical()
 	focus_orbit_enabled = false
@@ -537,6 +562,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var pressed: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
+	if inspection_active and pressed and (not inspection_area.is_valid() or not inspection_area.call().has_point(event.position)):
+		consume_gesture()
+		inspection_dismissed.emit()
+		get_viewport().set_input_as_handled()
+		return
+	if gesture == Gesture.CONSUMED:
+		if (event is InputEventScreenTouch or event is InputEventMouseButton) and not event.pressed:
+			gesture = Gesture.IDLE
+			get_viewport().set_input_as_handled()
+		return
 	if focused and focus_orbit_enabled and is_visible_in_tree() and (not input_allowed.is_valid() or input_allowed.call()):
 		_focus_input(event)
 		return
@@ -551,9 +587,11 @@ func _input(event: InputEvent) -> void:
 				hold_index = nearest_marker(event.position)
 				hold_started = Time.get_ticks_msec()
 				hold_fired = false
+				gesture = Gesture.PRESS
 			touches[event.index] = event.position
 			if touches.size() >= 2:
 				pinching = true
+				gesture = Gesture.PINCH
 				hold_index = -1
 				pinch_distance = _touch_distance()
 				_block_markers()
@@ -563,7 +601,7 @@ func _input(event: InputEvent) -> void:
 			if not touches.has(event.index): return
 			var tap: bool = not hold_fired and not pinching and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
 			touches.erase(event.index)
-			if tap and touches.is_empty(): _tap_at(event.position)
+			if tap and touches.is_empty(): _touch_tap(event.position)
 			if pinching or dragging: gesture_block_until = Time.get_ticks_msec() + 180
 			if touches.is_empty(): _end_pinch()
 			get_viewport().set_input_as_handled()
@@ -584,6 +622,7 @@ func _input(event: InputEvent) -> void:
 			hold_index = nearest_marker(event.position)
 			hold_started = Time.get_ticks_msec()
 			hold_fired = false
+			gesture = Gesture.PRESS
 			get_viewport().set_input_as_handled()
 		elif mouse_down:
 			var tap: bool = not hold_fired and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
@@ -613,11 +652,38 @@ func nearest_marker(point: Vector2) -> int:
 	return nearest
 
 
+# Touch selection is separate from confirmation; only a second tap on the
+# same current marker inside the interval initiates a journey.
+func _touch_tap(point: Vector2) -> void:
+	if not touch_confirmation_required:
+		_tap_at(point)
+		return
+	var index: int = nearest_marker(point)
+	if index < 0:
+		selected_touch_index = -1
+		last_touch_msec = 0
+		_select_destination(-1)
+		return
+	var now: int = Time.get_ticks_msec()
+	if selected_touch_index == index and now - last_touch_msec <= double_tap_msec:
+		selected_touch_index = -1
+		last_touch_msec = 0
+		travel(index)
+	else:
+		selected_touch_index = index
+		last_touch_msec = now
+		_select_destination(index)
+		feedback.acknowledge(objects[index].position, float(objects[index].get_meta("radius", 0.65)), markers[index].accent)
+
+func consume_gesture() -> void:
+	_end_pinch()
+	gesture = Gesture.CONSUMED
+	selected_touch_index = -1
+	last_touch_msec = 0
+
 func _tap_at(point: Vector2) -> void:
 	if inspection_active:
-		var index: int = nearest_marker(point)
 		inspection_dismissed.emit()
-		if index >= 0: travel(index)
 		return
 	if interception_pending or point_is_reserved(point) or Time.get_ticks_msec() < gesture_block_until: return
 	var index: int = nearest_marker(point)
@@ -661,6 +727,7 @@ func _drag_map(previous: Vector2, current: Vector2) -> void:
 		return
 	if not dragging:
 		hold_index = -1
+		gesture = Gesture.DRAG
 		dragging = true
 		_block_markers()
 		previous = drag_origin
@@ -682,6 +749,7 @@ func _touch_distance() -> float:
 
 
 func _end_pinch() -> void:
+	if gesture != Gesture.CONSUMED: gesture = Gesture.IDLE
 	hold_index = -1
 	hold_started = 0
 	for index in pinch_disabled:
@@ -819,12 +887,10 @@ func tactical_focus(index: int, pursuit: bool = false, profile: Resource = null)
 		world.add_child(enemy)
 		tactical_temporary = true
 		enemy.position = ship.position+Vector3(-3,0,0)
+		if pursuit: enemy.rotation = ship.rotation
 	tactical_enemy = enemy
 	tactical_snapshot = {"enemy":enemy.transform,"ship":ship.transform,"orbit":orbit_index}
 	orbit_index = -1
-	enemy.scale *= 1.45
-	ship.scale *= 0.85
-	enemy.position.y += 8.0
 	var center: Vector3 = enemy.position
 	if not is_instance_valid(tactical_light):
 		tactical_light = OmniLight3D.new()
@@ -837,11 +903,8 @@ func tactical_focus(index: int, pursuit: bool = false, profile: Resource = null)
 	tactical_light.show()
 	var enemy_radius: float = _ship_extent(enemy)
 	var player_radius: float = _ship_extent(ship)
-	var separation: float = maxf(1.35,enemy_radius+player_radius+0.3)
-	ship.position = center+Vector3(separation,0,0.5)
-	ship.basis = _facing_basis(Vector3.RIGHT if pursuit else Vector3.LEFT).scaled(ship.scale)
-	enemy.basis = _facing_basis(Vector3.RIGHT).scaled(enemy.scale)
-	var target: Vector3 = center+Vector3(separation*0.5,0,0)
+	var separation: float = maxf(ship.position.distance_to(enemy.position), enemy_radius + player_radius + 0.3)
+	var target: Vector3 = (ship.position + enemy.position) * 0.5
 	var offset: Vector3 = Vector3(2.5,3.2,7.5)*maxf(1.0,(separation+enemy_radius+player_radius)/2.7)
 	var right: Vector3 = -offset.cross(Vector3.UP).normalized()
 	var shift: Vector3 = right*offset.length()*tan(deg_to_rad(camera.fov*0.5))*viewport.size.x/viewport.size.y*0.50

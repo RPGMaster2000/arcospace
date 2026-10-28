@@ -6,7 +6,6 @@ var camera: Camera3D
 var canvas: Control
 var player_marker: Control
 var ship: Node3D
-var engines: Node3D
 var identification: MeshInstance3D
 var pulse: MeshInstance3D
 var pulse_motion: Tween
@@ -25,34 +24,11 @@ func _ready() -> void:
   player_marker.draw_arc(Vector2.ZERO,9,0,TAU,24,Color(0.3,0.85,1.0,0.65),1.2,true)
   player_marker.draw_colored_polygon(PackedVector2Array([Vector2(0,-6),Vector2(-4,4),Vector2(0,2),Vector2(4,4)]),Color("a7efff")))
  canvas.add_child(player_marker)
- engines = Node3D.new()
- add_child(engines)
  identification = Models.ring(self,0.65,Color(0.3,0.85,1.0,0.5))
  identification.material_override.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
  identification.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
  identification.material_override.no_depth_test = true
  identification.material_override.render_priority = 21
- for z in [-0.16,0.16]:
-  var mesh := CylinderMesh.new()
-  mesh.top_radius = 0.09
-  mesh.bottom_radius = 0.02
-  mesh.height = 1.0
-  mesh.radial_segments = 8
-  mesh.cap_top = false
-  mesh.cap_bottom = false
-  var jet := Models.part(engines,mesh,Color(0.25,0.8,1.0,0.7),Vector3(-0.55,0,z))
-  jet.rotation.z = -PI*0.5
-  var exhaust := ShaderMaterial.new()
-  exhaust.shader = preload("res://shaders/map_exhaust.gdshader")
-  exhaust.render_priority = 20
-  jet.material_override = exhaust
- var light := OmniLight3D.new()
- light.position.x = -0.25
- light.light_color = Color("54bfff")
- light.light_energy = 0.55
- light.omni_range = 1.5
- light.shadow_enabled = false
- engines.add_child(light)
  pulse = Models.ring(get_parent(),1.0,Color.WHITE)
  pulse.name = "SelectionPulse"
  pulse.material_override.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -104,17 +80,8 @@ func _process(delta: float) -> void:
  player_marker.position = camera.unproject_position(ship.position)
  var heading: Vector2 = camera.unproject_position(ship.position+ship.basis.x)-player_marker.position
  player_marker.rotation = heading.angle()+PI*0.5
- engines.basis = ship.basis.orthonormalized()
  identification.position.y = -0.22
  engine_level = move_toward(engine_level,(0.12 if tactical else 1.0) if moving else 0.0,delta*5.0)
- engines.visible = visible
- for node in engines.get_children():
-  if node is MeshInstance3D:
-   # Keep the nozzle fixed while extending only the tail away from the ship.
-   var length: float = lerpf(0.32,3.6,engine_level)
-   node.scale.y = length
-   node.position.x = -0.25-length*0.5
-   node.material_override.set_shader_parameter("opacity",0.28+engine_level*0.55)
  if engine_audio.playing:
   engine_audio.volume_db = lerpf(-60,engine_volume,engine_level)
   if not moving and engine_level <= 0.0: engine_audio.stop()

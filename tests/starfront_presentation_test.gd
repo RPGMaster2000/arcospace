@@ -23,10 +23,20 @@ func run() -> void:
 			DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
 			root.get_texture().get_image().save_png("res://.godot/testlogs/starfront-%s-%d.png" % [RenderingServer.get_current_rendering_method(), size.x])
 		root.size = Vector2i(1280,720)
-	check(host.state.is_defense() and map.planet_nodes.size() == 1, "Playable defense homeworld rendered")
+	check(host.state.is_defense() and map.planet_nodes.size() >= 2, "Playable defense homeworld rendered")
 	check(not map.objects[2].visible and map.objects[0].visible and map.objects[1].visible, "Hidden mothership and two visible attackers")
 	check(absf(map.objects[2].scale.x / map.objects[0].scale.x - 2.5) < 0.001 and is_equal_approx(host.state.rules.defense_tuning.interception_radius, 2.5), "Mothership is 2.5 times larger without altering collision tuning")
 	check(map.ship.position.distance_to(host.state.defense.start) < 0.001, "Ship begins at authoritative home deployment")
+	check(map.defense_effects.integrity_text.text.contains("100 / 100"), "Homeworld integrity is visible")
+	check(map.markers[0].contrast and map.markers[0].planet_name.visible, "Enemy marker has a readable name and contrast")
+	check(map.defense_effects.plumes.has(-999) and map.feedback.get("engines") == null, "New player propulsion remains without legacy engine assembly")
+	for index in [0, 2]:
+		var ship_transform: Transform3D = map.ship.global_transform
+		var enemy_transform: Transform3D = map.objects[index].global_transform
+		map.tactical_focus(index)
+		check(map.ship.global_transform == ship_transform and map.objects[index].global_transform == enemy_transform, "Tactical focus preserves both world transforms")
+		map.overview()
+	await create_timer(0.4).timeout
 	map.travel_to_position(map.ship.position + Vector3(5,0,0))
 	await create_timer(0.15).timeout
 	var enemy: Vector3 = host.state.defense.units[0].position
@@ -38,7 +48,7 @@ func run() -> void:
 	check(map.ship.position == stopped, "Menu pauses actual ship travel")
 	check(host.state.defense.units[0].position == enemy, "Menu freezes enemies")
 	host.settings_button.menu.shade.hide()
-	await create_timer(0.6).timeout
+	await create_timer(0.9).timeout
 	check(host.phase == host.Phase.OVERVIEW, "Arrival ends physical travel")
 	check(host.state.defense.units[0].position != enemy, "Moving ship advances rendered enemy")
 	enemy = host.state.defense.units[0].position
@@ -71,7 +81,13 @@ func run() -> void:
 	touch.pressed = false
 	root.push_input(touch, true)
 	await process_frame
-	check(host.state.travel_destination == chosen, "Touch selects a moving hostile target")
+	check(host.state.travel_destination == -1, "First touch selects without travel")
+	touch.pressed = true
+	root.push_input(touch, true)
+	touch.pressed = false
+	root.push_input(touch, true)
+	await process_frame
+	check(host.state.travel_destination == chosen, "Second touch travels to the hostile target")
 	for frame in range(400):
 		await create_timer(0.02).timeout
 		if host.state.defense.contact >= 0: break
@@ -194,7 +210,13 @@ func run() -> void:
 		poi_touch.pressed = false
 		root.push_input(poi_touch, true)
 		await process_frame
-		check(exploring.state.travel_destination == poi_index, "Touch selects an ordinary PoI")
+		check(exploring.state.travel_destination == -1, "First touch selects a PoI without travel")
+		poi_touch.pressed = true
+		root.push_input(poi_touch, true)
+		poi_touch.pressed = false
+		root.push_input(poi_touch, true)
+		await process_frame
+		check(exploring.state.travel_destination == poi_index, "Second touch travels to the PoI")
 		for frame in range(300):
 			await create_timer(0.02).timeout
 			if exploring.phase == exploring.Phase.DESTINATION: break

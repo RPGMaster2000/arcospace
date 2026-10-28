@@ -311,7 +311,7 @@ func _roll_battle_modifier() -> int:
 
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
-	var scaled: Resource = rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)))
+	var scaled: Resource = rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)), is_defense())
 	return scaled if is_defense() else Pressure.scaled_enemy(scaled, pressure)
 
 

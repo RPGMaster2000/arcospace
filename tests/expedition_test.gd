@@ -134,10 +134,7 @@ func run_tests() -> void:
 	board.refresh_display()
 	check(board.salvage == 11 + run.victory_salvage(board.battle_result()) and after_reward == board.salvage, "Combat Salvage once")
 	check(run.hull == run.ship().hull_capacity and run.salvage == board.salvage, "Plating stripped at result; Salvage synced")
-	board.player_hull = 20
-	board.repair_spend = 5
-	board._repair_with_salvage()
-	check(run.hull == 25 and run.salvage == after_reward - 10, "Victory repair uses same expedition currency and Hull")
+	check(board.get_node_or_null("MatchResult/Panel/Repair") == null and run.salvage == after_reward, "Victory cannot spend Salvage on repair")
 	board.free()
 	run.pending_bonuses.clear() # Isolate next encounter from earned tactical/strategic bonuses.
 	run.pending_penalties.clear()
@@ -146,7 +143,7 @@ func run_tests() -> void:
 	check(board.player_quarters == run.ship().quarters + 2, "Shipyard production persists")
 	board.ftl.charge = board.ftl.charge_target
 	board._warp_out()
-	check(board.salvage == after_reward - 10, "FTL escape grants no combat Salvage")
+	check(board.salvage == after_reward, "FTL escape grants no combat Salvage")
 	board.free()
 	run = fresh()
 	board = make_board(run)

@@ -18,8 +18,8 @@ func mouse(at: Vector2, pressed: bool) -> void:
 	event.pressed = pressed
 	root.push_input(event, true)
 func run() -> void:
-	root.content_scale_size = Vector2i(960,540)
-	root.size = Vector2i(960,540)
+	root.content_scale_size = Vector2i(1280,720)
+	root.size = Vector2i(1280,720)
 	var host = preload("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false
 	host.play_system_intro = false

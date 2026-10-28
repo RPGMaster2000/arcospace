@@ -4,7 +4,6 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Render combat HUD/results and fit generic 2D controls.
 # DOES NOT: Advance turns, record rewards, choose encounters or modify combat state.
 # EXTEND: Add display facts to Board._display_snapshot(), then update the relevant refresh method.
-const Repairs = preload("res://scripts/repair_rules.gd")
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Effects = preload("res://scripts/visual/visual_effects.gd")
 var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -37,10 +36,6 @@ func _init(board_view: Control) -> void:
 		"MatchResult/Panel/Details",
 		"MatchResult/Panel/NextEncounter",
 		"MatchResult/Panel/PlayAgain",
-		"MatchResult/Panel/Repair",
-		"MatchResult/Panel/RepairAmount",
-		"MatchResult/Panel/RepairMinus",
-		"MatchResult/Panel/RepairPlus",
 		"MatchResult/Panel/Rewards",
 		"MatchResult/Panel/Title",
 		"ModeLabel",
@@ -54,7 +49,6 @@ func _init(board_view: Control) -> void:
 	]:
 		nodes[path] = board_view.get_node(path)
 	for field in [
-		"repair_preview",
 		"allocation_button",
 		"allocation_popup",
 		"battle_effects",
@@ -122,35 +116,6 @@ func refresh_results(data: Dictionary) -> void:
 	nodes["MatchResult/Panel/BattlesWon"].visible = data.winner in ["enemy", "draw"]
 	nodes["MatchResult/Panel/BattlesWon"].text = "%d BATTLES WON" % data.battles_won
 	nodes["MatchResult/Panel/Rewards"].visible = data.winner == "player"
-	var repair_limit: int = data.repair_limit
-	for path in ["Repair", "RepairMinus", "RepairPlus", "RepairAmount"]:
-		nodes["MatchResult/Panel/" + path].visible = data.winner == "player"
-	nodes["MatchResult/Panel/Repair"].disabled = (
-		data.repair_spend <= 0 or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
-	)
-	nodes["MatchResult/Panel/RepairMinus"].disabled = (
-		data.repair_spend <= 0 or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
-	)
-	nodes["MatchResult/Panel/RepairPlus"].disabled = (
-		data.repair_spend >= repair_limit or data.resolving_card or data.effects_busy or nodes["MatchResult"].running
-	)
-	var repair_amount: int = maxi(0, data.repair_spend)
-	nodes["repair_preview"].visible = data.winner == "player"
-	nodes["repair_preview"].show_repair(
-		data.player.hull,
-		data.player.hull_capacity,
-		data.salvage,
-		repair_amount,
-		data.repair_unit_cost
-	)
-	nodes["MatchResult/Panel/RepairAmount"].text = "+%d Hull" % repair_amount
-	nodes["MatchResult/Panel/Repair"].text = (
-		"Confirm · %d Salvage" % Repairs.quantity_cost(repair_amount, data.repair_unit_cost)
-	)
-	if repair_limit == 0:
-		nodes["MatchResult/Panel/Repair"].text = (
-			"Hull full" if data.player.hull >= data.player.hull_capacity else "Need 2 Salvage"
-		)
 	nodes["allocation_button"].visible = data.winner.is_empty()
 	if not data.winner.is_empty():
 		nodes["allocation_popup"].dismiss()

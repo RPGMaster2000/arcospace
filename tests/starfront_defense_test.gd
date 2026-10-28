@@ -4,6 +4,9 @@ const Defense = preload("res://scripts/expedition/defense_state.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const Result = preload("res://scripts/combat/battle_result.gd")
+const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
+const DefenseVisual = preload("res://scripts/presentation/star_system/defense_presentation.gd")
+const VisualSettings = preload("res://resources/presentation/star_system_settings.tres")
 var checks := 0
 var failures := 0
 func _initialize() -> void: call_deferred("run")
@@ -109,11 +112,20 @@ func run() -> void:
 		state = fresh(seed_value + 1)
 		var twin = fresh(seed_value + 1)
 		check(state.defense.snapshot() == twin.defense.snapshot(), "Deterministic generation")
+		check(state.defense.anchors.size() >= 8, "Eight optional sites")
+		for encounter in state.encounters:
+			if encounter.kind == "poi": check(encounter.poi.resource_path.get_file().get_basename() != "unstable_wormhole", "Defense excludes unstable wormholes")
+		var visuals: Dictionary = VisualSystem.generate(seed_value + 1, 1, [], VisualSettings)
+		DefenseVisual.layout(visuals, state.defense.snapshot())
+		check(visuals.planets.size() >= 2 and visuals.planets[0].type == "terrestrial", "Procedural additional planets and terrestrial homeworld")
+		for planet in visuals.planets.slice(1):
+			check(planet.position.length() >= 4.999, "Planet clears the sun")
+			for anchor in state.defense.anchors.values(): check(planet.position.distance_to(anchor) >= 4, "Planet clears PoI anchors")
 		for unit in state.defense.units:
 			if unit.status == "reserve": continue
 			check(Geometry3D.get_closest_point_to_segment(Vector3.ZERO, unit.position, state.defense.home).length() > 3, "Direct approach clears sun geometry")
 			for anchor in state.defense.anchors.values(): check(unit.position.distance_to(anchor) > 5.5, "Hostile deployment clears all PoIs")
-			check(unit.position.length() <= 22 and unit.position.dot(state.defense.home) < 0, "Hostile inside bounds and opposite homeworld")
+			check(unit.position.length() <= 22.001 and unit.position.dot(state.defense.home) < 0, "Hostile inside bounds and opposite homeworld")
 		for anchor in state.defense.anchors.values():
 			check(anchor.distance_to(state.defense.home) > 4, "PoIs clear homeworld")
 	state = fresh()

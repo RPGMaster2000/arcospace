@@ -1,6 +1,9 @@
 extends Node3D
 # Presentation-only adapter: snapshots and actual rendered displacement, no rules.
 var map: Control
+var home_panel: PanelContainer
+var integrity_bar: ProgressBar
+var integrity_text: Label
 var home_label: Label3D
 var displayed_integrity: int = -1
 var hit_remaining: float = 0.0
@@ -8,6 +11,8 @@ var histories: Dictionary = {}
 var ribbons: Dictionary = {}
 var plumes: Dictionary = {}
 var ages: Dictionary = {}
+var cinematic_previous: Vector3
+var cinematic_tracking: bool = false
 const LIMIT = 96
 const SPACING = 0.16
 
@@ -16,6 +21,7 @@ static func point(value: Array) -> Vector3:
 static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 	# The gameplay layout supplies every navigable anchor. Cosmetic RNG only
 	# controls the planet surface, star and atmosphere; it cannot move the base.
+	var generated_planets: Array = data.planets.duplicate(true)
 	data.assignments.clear()
 	data.anchors.clear()
 	data.placement.clear()
@@ -32,7 +38,7 @@ static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 	home.name = "HOMEWORLD"
 	home.type = "terrestrial"
 	home.radius = 1.8
-	home.distance = 20.0
+	home.distance = point(snapshot.home).length()
 	home.position = point(snapshot.home)
 	home.encounter = -1
 	home.eccentricity = 0.0
@@ -40,10 +46,67 @@ static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 	home.orientation = 0.0
 	home.phase = atan2(home.position.z, home.position.x)
 	data.planets = [home]
+	# Keep procedural planet appearances while choosing clear cosmetic positions
+	# around the already-authoritative fleet and PoIs.
+	var obstacles: Array = [point(snapshot.home)]
+	for anchor in snapshot.anchors.values(): obstacles.append(point(anchor))
+	for unit in snapshot.units:
+		if unit.status != "reserve": obstacles.append(point(unit.position))
+	for original in generated_planets.slice(0, mini(3, generated_planets.size() - 1)):
+		var planet: Dictionary = original.duplicate(true)
+		planet.index = data.planets.size()
+		planet.encounter = -1
+		planet.radius = minf(float(planet.radius), 0.75)
+		planet.eccentricity = 0.0
+		planet.inclination = 0.0
+		planet.orientation = 0.0
+		var best: Vector3 = Vector3.ZERO
+		var best_gap: float = -INF
+		for distance in [5.0, 7.0, 9.0, 12.0]:
+			for attempt in range(72):
+				var phase: float = float(original.phase) + TAU * float(attempt) / 72.0
+				var candidate: Vector3 = Vector3(cos(phase), 0, sin(phase)) * float(distance)
+				var gap: float = INF
+				for other in obstacles: gap = minf(gap, candidate.distance_to(other))
+				if gap > best_gap:
+					best_gap = gap
+					best = candidate
+		if best_gap >= 4.0:
+			planet.position = best
+			planet.distance = best.length()
+			planet.phase = atan2(best.z, best.x)
+			planet.name = data.name + " " + str(planet.index)
+			data.planets.append(planet)
+			obstacles.append(best)
 
 func configure(source: Control) -> void:
 	map = source
 	home_label = map.planet_nodes[0].get_node("OverviewName")
+	home_label.modulate.a = 0.0
+	home_panel = PanelContainer.new()
+	home_panel.name = "HomeworldIntegrity"
+	home_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	home_panel.custom_minimum_size = Vector2(160, 38)
+	var backing := StyleBoxFlat.new()
+	backing.bg_color = Color(0.01, 0.04, 0.08, 0.9)
+	backing.set_corner_radius_all(5)
+	backing.set_content_margin_all(3)
+	home_panel.add_theme_stylebox_override("panel", backing)
+	var column := VBoxContainer.new()
+	home_panel.add_child(column)
+	integrity_text = Label.new()
+	integrity_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	integrity_text.add_theme_font_size_override("font_size", 14)
+	integrity_text.add_theme_color_override("font_color", Color("ddfaff"))
+	column.add_child(integrity_text)
+	integrity_bar = ProgressBar.new()
+	integrity_bar.custom_minimum_size = Vector2(150, 8)
+	integrity_bar.show_percentage = false
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color("64d7ad")
+	integrity_bar.add_theme_stylebox_override("fill", fill)
+	column.add_child(integrity_bar)
+	map.add_child(home_panel)
 	var identities: Array = [-999]
 	for unit in map.defense_view.units: identities.append(int(unit.encounter))
 	for index in identities:
@@ -79,13 +142,13 @@ func configure(source: Control) -> void:
 		plumes[index] = plume
 
 func refresh(snapshot: Dictionary) -> void:
-	if is_instance_valid(home_label):
-		if displayed_integrity >= 0 and snapshot.integrity < displayed_integrity:
-			hit_remaining = 1.5
-			home_label.text = "HOMEWORLD HIT −%d" % (displayed_integrity - snapshot.integrity)
-			home_label.modulate = Color("ff765e")
-		displayed_integrity = snapshot.integrity
-		if hit_remaining <= 0: home_label.text = "HOMEWORLD · %d integrity" % displayed_integrity
+	integrity_bar.max_value = float(snapshot.get("maximum_integrity", 100))
+	integrity_bar.value = snapshot.integrity
+	integrity_text.text = "HOMEWORLD  %d / %d" % [snapshot.integrity, integrity_bar.max_value]
+	if displayed_integrity >= 0 and snapshot.integrity < displayed_integrity:
+		hit_remaining = 1.5
+		integrity_text.add_theme_color_override("font_color", Color("ff765e"))
+	displayed_integrity = snapshot.integrity
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not map.objects.has(index): continue
@@ -103,19 +166,32 @@ func refresh(snapshot: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(map) or not is_instance_valid(map.ship): return
+	var home_position: Vector3 = map.planet_nodes[0].position
+	home_panel.position = map.camera.unproject_position(home_position + Vector3.UP * 3.2) - Vector2(80, 45)
+	home_panel.visible = map.visible and not map.focused and not map.introducing and not map.camera.is_position_behind(home_position)
 	var planning: bool = map.visible and map.is_processing() and map.interactive and not map.focused and map.input_allowed.is_valid() and map.input_allowed.call()
 	var eligible: bool = planning and map.traveling
 	if planning:
 		if hit_remaining > 0:
 			hit_remaining = maxf(0.0, hit_remaining - delta)
 			if hit_remaining == 0:
-				home_label.text = "HOMEWORLD · %d integrity" % displayed_integrity
-				home_label.modulate = Color(0.65, 0.78, 0.9, 0.8)
+				integrity_text.add_theme_color_override("font_color", Color("ddfaff"))
 		for index in ages:
 			ages[index] += delta
 			ribbons[index].material_override.albedo_color.a = clampf((30.0 - ages[index]) / 8.0, 0, 1)
-	if eligible: _sample(-999, map.ship.position, true)
+	if eligible:
+		cinematic_tracking = false
+		_sample(-999, map.ship.position, true)
+	elif map.visible and map.traveling and not map.interactive and map.camera.viewing == &"ftl":
+		var direction: Vector3 = map.ship.position - cinematic_previous
+		plumes[-999].visible = cinematic_tracking and direction.length_squared() > 0.000001
+		if plumes[-999].visible:
+			plumes[-999].position = map.ship.position - direction.normalized() * 0.7
+			plumes[-999].quaternion = Quaternion(Vector3.UP, direction.normalized())
+		cinematic_previous = map.ship.position
+		cinematic_tracking = true
 	else:
+		cinematic_tracking = false
 		for plume in plumes.values(): plume.visible = false
 
 func _sample(index: int, at: Vector3, active: bool) -> void:
@@ -155,3 +231,6 @@ func _release(index: int) -> void:
 		plumes.erase(index)
 	histories.erase(index)
 	ages.erase(index)
+
+func _exit_tree() -> void:
+	if is_instance_valid(home_panel): home_panel.queue_free()

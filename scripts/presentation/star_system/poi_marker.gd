@@ -28,6 +28,7 @@ var selected := false
 var hovered := false
 var secondary := false
 var accent := Color("a6e9ff")
+var contrast: bool = false
 
 
 func style_tag(color: Color) -> void:
@@ -102,7 +103,7 @@ func _refresh_state() -> void:
 	for state in ["normal","hover","pressed","disabled","focus"]:
 		var box: StyleBoxFlat = get_theme_stylebox(state)
 		var bright: bool = emphasis or state in ["hover","pressed","focus"]
-		box.bg_color = Color(0.02,0.28,0.36,0.5) if selected else Color(foreground.r*0.12,foreground.g*0.12,foreground.b*0.12,0.5)
+		box.bg_color = Color(0.02,0.28,0.36,0.85 if contrast else 0.5) if selected else Color(foreground.r*0.12,foreground.g*0.12,foreground.b*0.12,0.85 if contrast else 0.5)
 		box.border_color = foreground.lightened(0.18) if bright else foreground
 		box.border_color.a = 0.95 if bright else (0.23 if completed else 0.65)
 		if secondary and not bright: box.border_color.a *= 0.55
@@ -114,7 +115,7 @@ func _refresh_state() -> void:
 	for key in ["font_color","font_hover_color","font_pressed_color","font_focus_color","font_disabled_color"]:
 		add_theme_color_override(key,foreground.lightened(0.1) if emphasis else foreground)
 	end_bulk_theme_override()
-	if planet_name != null: planet_name.add_theme_color_override("font_color",foreground)
+	if planet_name != null: planet_name.add_theme_color_override("font_color",Color.WHITE if contrast else foreground)
 	z_index = priority()*10
 	queue_redraw()
 
@@ -137,7 +138,7 @@ func set_label(value: String, symbol: String, is_planet: bool) -> void:
 		add_child(completion_badge)
 	planet_name.text = value if is_planet else ""
 	planet_name.visible = is_planet
-	planet_name.add_theme_color_override("font_color",accent)
+	planet_name.add_theme_color_override("font_color", Color.WHITE if contrast else accent)
 	var width: float = ThemeDB.fallback_font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x+24 if is_planet else 48.0
 	custom_minimum_size = Vector2(maxf(48,width),78 if is_planet else 48)
 	size = custom_minimum_size

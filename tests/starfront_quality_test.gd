@@ -32,6 +32,15 @@ func result_for(state: Resource, index: int) -> RefCounted:
 	return result
 func run() -> void:
 	var state = fresh()
+	var progression: Resource = state.rules.progression
+	for rank in range(3):
+		var original: Resource = state.encounters[0].enemy_data.duplicate()
+		original.enemy_rank = rank
+		var baseline: Resource = progression.scaled_enemy(original, 3, false)
+		var adjusted: Resource = progression.scaled_enemy(original, 3, true)
+		check(adjusted.hull_capacity - baseline.hull_capacity == (-1 if rank == 0 else 1), "Defense hull growth follows rank")
+		check(adjusted.shields - baseline.shields == (-3 if rank == 0 else 2), "Defense shield start and growth follow rank")
+		check(adjusted.energy == baseline.energy and adjusted.reactor == baseline.reactor, "Resource and production growth stay unchanged")
 	check(is_equal_approx(state.rules.defense_tuning.player_speed, 7.0) and is_equal_approx(state.rules.defense_tuning.seconds_per_distance, 1.0/7.0), "Player and strategic rates use v1.1 calibration")
 	var index: int = -1
 	var approach_index: int = -1
@@ -64,12 +73,12 @@ func run() -> void:
 	state.consume_defense_reveal()
 	state.rules.defense_tuning.enemy_speed = 0.0
 	var away := Vector3(0,100,0)
-	state.defense.advance_time(6.9, away, away, true)
+	state.defense.advance_time(8.9, away, away, true)
 	check(state.defense.reinforcements_spawned == 0, "No reinforcement before first deadline")
 	state.defense.advance_time(0.1, away, away, true)
-	check(state.defense.reinforcements_spawned == 1 and state.defense.active_attackers() == 2, "First reinforcement after seven strategic seconds")
-	state.defense.advance_time(9, away, away, true)
-	check(state.defense.reinforcements_spawned == 2 and state.defense.active_attackers() == 3, "Subsequent reinforcement after nine seconds")
+	check(state.defense.reinforcements_spawned == 1 and state.defense.active_attackers() == 2, "First reinforcement after nine strategic seconds")
+	state.defense.advance_time(12, away, away, true)
+	check(state.defense.reinforcements_spawned == 2 and state.defense.active_attackers() == 3, "Subsequent reinforcement after twelve seconds")
 	state.defense.advance_time(20, away, away, true)
 	check(state.defense.reinforcements_spawned == 2 and state.defense.reinforcement_remaining == 0, "Fleet cap defers a single spawn without a burst")
 	var occupied: int = state.defense.units[1].encounter
@@ -77,7 +86,7 @@ func run() -> void:
 	state.defense.advance_time(0.1, away, away, true)
 	check(state.defense.reinforcements_spawned == 3 and state.defense.active_attackers() == 3, "Freeing a slot deploys only one deferred ship")
 	state.defense.neutralize(state.defense.units[3].encounter)
-	state.defense.advance_time(9.0, away, away, true)
+	state.defense.advance_time(12.0, away, away, true)
 	check(state.defense.reinforcements_spawned == 4, "Fourth reinforcement respects the configured lifetime limit")
 	state.defense.neutralize(state.defense.units[4].encounter)
 	state.defense.advance_time(100.0, away, away, true)
@@ -96,9 +105,9 @@ func run() -> void:
 	result = result_for(state, 0)
 	state.record_battle(result)
 	state.active_battle = -1
-	check(is_equal_approx(state.defense.reinforcement_remaining, 7.0), "Reinforcement clock waits for the reveal presentation")
+	check(is_equal_approx(state.defense.reinforcement_remaining, 9.0), "Reinforcement clock waits for the reveal presentation")
 	state.consume_defense_reveal()
-	state._commit_activity_time(7.0)
+	state._commit_activity_time(9.0)
 	check(state.defense.reinforcements_spawned == 1, "Committed activity time advances reinforcement scheduling")
 	var restored: Resource = Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state))))
 	check(restored != null and restored.defense.snapshot() == state.defense.snapshot(), "Spawned reinforcement, timer and unit identity survive a complete save roundtrip")
@@ -127,20 +136,19 @@ func run() -> void:
 	state = fresh()
 	var player: Vector3 = State.Defense.point(state.navigation.position)
 	var toward_home: Vector3 = (state.defense.home-player).normalized()
-	state.defense.units[0].position = player - toward_home * 4.0
-	var hostile_before: Vector3 = state.defense.units[0].position
+	state.defense.units[0].position = player - toward_home*4.0
+	var other_before: Vector3 = state.defense.units[0].position
 	state._commit_activity_time(3.0)
-	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Activity penalty never starts a new battle, even when an enemy passes the stationary player")
-	check(absf(hostile_before.distance_to(state.defense.units[0].position) - 3.6) < 0.0001, "Enemy movement still advances during a suppressed-contact activity penalty")
-	check(Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state)))) != null, "Activity penalty without contact remains saveable")
-	var other_before: Vector3 = state.defense.units[1].position
-	var resumed_result = result_for(state, 0)
-	state.record_battle(resumed_result)
-	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Battle completion penalty also suppresses immediate chain battles")
-	check(absf(other_before.distance_to(state.defense.units[1].position) - 2.5 * 1.2) < 0.0001, "Battle penalty still advances other hostile ships once")
-	other_before = state.defense.units[1].position
-	state.record_battle(resumed_result)
-	check(other_before == state.defense.units[1].position, "Replaying a battle result cannot repeat its strategic-time penalty")
+	check(state.defense.contact < 0 and state.defense.deferred_seconds == 0 and absf(other_before.distance_to(state.defense.units[0].position) - 3.6) < 0.0001, "Activity time advances enemies without chaining stationary combat")
+	check(Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state)))) != null, "Activity advancement survives save")
+	var remaining_before: Vector3 = state.defense.units[1].position
+	var completed_result = result_for(state, 0)
+	state.record_battle(completed_result)
+	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Battle completion cannot chain into another stationary interception")
+	check(absf(remaining_before.distance_to(state.defense.units[1].position) - state.rules.defense_tuning.battle_seconds * state.rules.defense_tuning.enemy_speed) < 0.0001, "Battle completion advances remaining enemy by exactly one penalty")
+	remaining_before = state.defense.units[1].position
+	state.record_battle(completed_result)
+	check(remaining_before == state.defense.units[1].position, "Duplicate result cannot repeat the battle penalty")
 	state = fresh()
 	var target: Vector3 = state.defense.intercept_point(0, state.defense.start)
 	var path: float = target.distance_to(state.defense.start)

@@ -11,6 +11,10 @@ extends Resource
 @export_range(0.0, 0.25, 0.005) var elite_probability_increase: float = 0.025
 @export_range(0.0, 1.0, 0.01) var maximum_elite_probability: float = 0.35
 @export_range(1, 100, 1) var boss_interval: int = 6
+## Defense adjustments by enemy rank: standard, elite, boss.
+@export var defense_starting_shields: PackedInt32Array = [-2, 1, 1]
+@export var defense_hull_growth_adjustment: PackedInt32Array = [-1, 1, 1]
+@export var defense_shield_growth_adjustment: PackedInt32Array = [-1, 1, 1]
 const DEFAULT_BOSS = preload("res://ships/enemy/sentinel_dreadnought.tres")
 @export var boss_ship: Resource = DEFAULT_BOSS
 
@@ -27,13 +31,20 @@ func mandatory_boss_profile() -> Resource:
 	return boss_ship if boss_ship != null and boss_ship.enemy_rank == 2 else DEFAULT_BOSS
 
 
-func scaled_enemy(base: Resource, system: int) -> Resource:
+func scaled_enemy(base: Resource, system: int, defense: bool = false) -> Resource:
 	var steps: int = difficulty_level(system) - 1
-	if steps == 0:
-		return base
+	if steps == 0 and not defense: return base
 	var result: Resource = base.duplicate(false)
-	result.hull_capacity += steps * maxi(0, hull_bonus_per_level)
-	result.shields += steps * maxi(0, shields_bonus_per_level)
+	var rank: int = clampi(int(base.enemy_rank), 0, 2)
+	var hull_growth: int = hull_bonus_per_level
+	var shield_growth: int = shields_bonus_per_level
+	var starting_shields: int = 0
+	if defense:
+		if defense_hull_growth_adjustment.size() > rank: hull_growth += defense_hull_growth_adjustment[rank]
+		if defense_shield_growth_adjustment.size() > rank: shield_growth += defense_shield_growth_adjustment[rank]
+		if defense_starting_shields.size() > rank: starting_shields = defense_starting_shields[rank]
+	result.hull_capacity += steps * maxi(0, hull_growth)
+	result.shields = maxi(0, result.shields + starting_shields + steps * maxi(0, shield_growth))
 	for key in ["materials", "energy", "crew"]:
 		result.set(key, int(base.get(key)) + steps * maxi(0, resource_bonus_per_level))
 	var production: int = floori(steps * maxf(0, production_bonus_per_level))

@@ -601,6 +601,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.defense_view = state.defense.snapshot() if state.is_defense() else {}
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
+		star_map.double_tap_msec = roundi(state.rules.defense_tuning.double_tap_seconds * 1000.0)
+		star_map.touch_confirmation_required = state.is_defense()
 		star_map.input_allowed = _map_input_allowed
 		star_map.inspection_area = func(): return screen.sidebar.get_global_rect()
 	else:
@@ -1509,13 +1511,3 @@ func _dismiss_inspection() -> void:
 	map_destination = -1
 	phase = Phase.OVERVIEW
 	show_system()
-
-func _input(event: InputEvent) -> void:
-	if not inspecting or not is_instance_valid(star_map): return
-	var pressed: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
-	if not pressed: return
-	if screen.sidebar.get_global_rect().has_point(event.position): return
-	var destination: int = star_map.nearest_marker(event.position)
-	_dismiss_inspection()
-	if destination >= 0: star_map.travel(destination)
-	get_viewport().set_input_as_handled()
