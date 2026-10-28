@@ -5,7 +5,11 @@ const Effects = preload("res://scripts/cards/card_effects.gd")
 const Outcome = preload("res://scripts/expedition/encounter_outcome.gd")
 var failures: int = 0
 var checks: int = 0
-func _initialize() -> void: call_deferred("run")
+func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
+	call_deferred("run")
 func check(ok: bool, message: String) -> void:
 	checks += 1
 	if not ok:

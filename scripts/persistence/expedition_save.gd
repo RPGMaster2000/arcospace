@@ -4,7 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const VERSION: int = 1
+const VERSION: int = 2
 const PATH: String = "user://expedition_save.json"
 const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"system_number", "next_outpost_system", "station_production_purchases", "service_revision",
@@ -56,7 +56,7 @@ static func encode(state: Resource) -> Dictionary:
 	# v1 wire shape groups these fields under navigation; ownership is now separate in memory.
 	var navigation_data: Dictionary = state.navigation.snapshot()
 	navigation_data.merge(state.chasedown_roll_policy.snapshot())
-	var data: Dictionary = {"metagame_version": 1, "pressure": state.pressure,
+	var data: Dictionary = {"metagame_version": 2, "game_mode": state.game_mode, "defense": state.defense.snapshot() if state.is_defense() else {}, "pressure": state.pressure,
 		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
 		"navigation": navigation_data, "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
@@ -117,7 +117,11 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if legacy:
 		data = _migrate_legacy(data)
 		if data.is_empty(): return null
-	if data.get("metagame_version") != 1: return null
+	if not _integer(data.get("metagame_version"), 1, 2): return null
+	if data.metagame_version == 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
+	var mode: String = data.game_mode if data.metagame_version == 2 else "exploration"
+	if mode == "exploration" and data.metagame_version == 2 and not data.defense.is_empty(): return null
+	if mode not in ["exploration", "defense"]: return null
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
 	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()])
@@ -154,7 +158,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		var entry: Dictionary = _decode_entry(value, enemies, pois)
 		if entry.is_empty() or entry.kind == "service": return null
 		entries.append(entry)
-	if not _valid_objectives(entries, data.ftl_access): return null
+	if mode == "exploration" and not _valid_objectives(entries, data.ftl_access): return null
 	if not data.get("service") is Dictionary: return null
 	var service: Dictionary = {}
 	if not data.service.is_empty():
@@ -173,6 +177,13 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data.get("navigation") is Dictionary or not state.navigation.restore(data.navigation): return null
 	if not state.chasedown_roll_policy.restore(data.navigation): return null
 	if not _valid_navigation(data, entries): return null
+	state.game_mode = mode
+	if mode == "defense":
+		state.defense = State.Defense.new()
+		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries): return null
+		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
+		if state.defense.contact >= 0 and state.navigation.leg_active: return null
+	state.bind_defense_movement()
 	state.system_profile = data.system_profile
 	state.ftl_access = data.ftl_access
 	state.rules = configuration
@@ -301,7 +312,7 @@ func _read(candidate: String) -> Dictionary:
 	var file = FileAccess.open(candidate, FileAccess.READ)
 	if file == null or file.get_length() > 2000000: return {}
 	var envelope: Variant = _json(file.get_as_text())
-	if not envelope is Dictionary or envelope.get("schema") != VERSION: return {}
+	if not envelope is Dictionary or not _integer(envelope.get("schema"), 1, VERSION): return {}
 	if not envelope.get("payload") is String or not envelope.get("sha256") is String: return {}
 	if envelope.payload.sha256_text() != envelope.sha256: return {}
 	var payload: Variant = _json(envelope.payload)
@@ -327,7 +338,7 @@ func load_run() -> Dictionary:
 		found = found or FileAccess.file_exists(candidate)
 		if FileAccess.file_exists(candidate):
 			var envelope: Variant = _json(FileAccess.get_file_as_string(candidate))
-			if envelope is Dictionary and _integer(envelope.get("schema"), 0) and envelope.schema != VERSION:
+			if envelope is Dictionary and _integer(envelope.get("schema"), 0) and int(envelope.schema) not in [1, VERSION]:
 				error = "This expedition save uses an unsupported version. Its files have been preserved."
 				return {}
 		var payload: Dictionary = _read(candidate)
@@ -353,6 +364,8 @@ func load_run() -> Dictionary:
 		return {}
 	if not best.expedition.has("metagame_version"):
 		warning += (" " if not warning.is_empty() else "") + "Updated expedition: FTL Access replaces charging; a safe access route is available. Travel interception cooldown is preserved conservatively."
+	if best.expedition.get("metagame_version", 1) == 1:
+		warning += (" " if not warning.is_empty() else "") + "Legacy expedition retained in exploration mode."
 	return {"state": decode(best.expedition), "battle": best.battle, "data": best.expedition}
 
 

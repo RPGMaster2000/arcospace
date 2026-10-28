@@ -6,7 +6,11 @@ func check(ok: bool, message: String) -> void:
  if not ok:
   failures += 1
   push_error(message)
-func _initialize(): call_deferred("run")
+func _initialize() -> void:
+ # Retained exploration-mode regression.
+ var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+ regression_rules.game_mode = "exploration"
+ call_deferred("run")
 func run():
  var host = load("res://scenes/expedition.tscn").instantiate()
  host.persistence_enabled = false

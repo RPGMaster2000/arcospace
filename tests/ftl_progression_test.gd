@@ -25,6 +25,9 @@ func settle_choice(run: Resource) -> void:
 		"production": check(run.choose_attribute("reactor"), "Production choice resolves")
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var config = Rules.duplicate(true)
 	config.log_rolls = false
 	for seed_value in range(1, 2001):

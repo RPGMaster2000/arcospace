@@ -47,6 +47,9 @@ func boss_index(run: Resource) -> int:
 	return -1
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run_tests")
 
 func capture(label: String) -> void:

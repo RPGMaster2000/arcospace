@@ -16,6 +16,9 @@ func check(ok: bool, message: String) -> void:
 		push_error(message)
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var deck = Deck.new()
 	var profile: Resource = Ships.PLAYERS[0]
 	var rules: Resource = Rules.duplicate()

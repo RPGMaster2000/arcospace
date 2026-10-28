@@ -8,6 +8,9 @@ const RELAY = preload("res://encounters/sensor_relay.tres")
 const ARRAY = preload("res://encounters/ancient_navigation_array.tres")
 
 static func generate(state: Resource) -> void:
+	if state.is_defense():
+		_generate_defense(state)
+		return
 	var rules: Resource = state.rules
 	var rng: RandomNumberGenerator = state.rng
 	state.system_profile = Profiles.IDS[rng.randi_range(0, Profiles.IDS.size() - 1)]
@@ -157,3 +160,42 @@ static func _poi_index(items: Array, profile: Resource, rng: RandomNumberGenerat
 static func _poi_weight(item: Resource, profile: Resource) -> float:
 	var key: String = item.resource_path.get_file().get_basename()
 	return maxf(0.01, item.encounter_weight * float(profile.poi_weights.get(key, 1.0)))
+
+# One concrete defense roster, preserving existing PoI/profile registries and scaling.
+static func _generate_defense(state: Resource) -> void:
+	state.system_number += 1
+	state.system_name = "Starfront %d" % state.system_number
+	state.system_profile = "industrial"
+	state.pressure = 0
+	state.ftl_access = false
+	state.navigation_origin = -1
+	state.travel_destination = -1
+	state.pending_destination = -1
+	state.chasedown_index = -1
+	state.chasedowns_this_system = 0
+	state.encounters.clear()
+	state.service = {}
+	var ordinary: Array = []
+	var enemy_pool: Array = state.rules.enemy_ships if not state.rules.enemy_ships.is_empty() else Ships.ENEMIES
+	for profile in enemy_pool:
+		if profile.enemy_rank == 0: ordinary.append(profile)
+	if ordinary.is_empty():
+		for profile in Ships.ENEMIES:
+			if profile.enemy_rank == 0: ordinary.append(profile)
+	for i in range(3):
+		var profile: Resource = state.rules.progression.mandatory_boss_profile() if i == 2 else ordinary[state._enemy_index(ordinary)]
+		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
+			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if i == 2 else profile.ship_name, "completed": false})
+	var pois: Array = state.rules.pois.duplicate()
+	var slots: Array = []
+	for i in range(mini(6, pois.size())):
+		var poi: Resource = pois.pop_at(state.rng.randi_range(0, pois.size()-1))
+		slots.append(state.encounters.size())
+		state.encounters.append(_poi(poi))
+	if state.rules.trading_outpost != null:
+		state.service = {"kind": "service", "poi": state.rules.trading_outpost, "title": state.rules.trading_outpost.title, "completed": false}
+		slots.append(state.SERVICE_INDEX)
+	state.station_production_purchases = 0
+	state.service_revision += 1
+	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
+	state.defense.deploy(state.rules.defense_tuning, state.rng.randf_range(0, TAU), [0, 1, 2], slots)

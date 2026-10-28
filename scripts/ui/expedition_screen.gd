@@ -361,8 +361,14 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	overview_hud.system_number = state.system_number
 	overview_hud.hull_bar.max_value = state.ship().hull_capacity
 	overview_hud.hull_bar.value = state.hull
-	overview_hud.set_metagame(state.profile_name(), state.pressure, state.ftl_status())
-	jump_button.text = state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
+	if state.is_defense():
+		var threats: int = 0
+		for unit in state.defense.units:
+			if state.defense.available(unit): threats += 1
+		overview_hud.metagame.text = "HOME %d/%d · %d THREATS\n%s" % [state.defense.integrity, state.rules.defense_tuning.base_integrity, threats, state.ftl_status()]
+	else:
+		overview_hud.set_metagame(state.profile_name(), state.pressure, state.ftl_status())
+	jump_button.text = ("FTL READY" if state.can_jump() else "FTL LOCKED") if state.is_defense() else state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
 	if state.mandatory_boss_pending():
 		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:

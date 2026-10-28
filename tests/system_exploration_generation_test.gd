@@ -12,6 +12,9 @@ func check(ok: bool, label: String) -> void:
 		push_error(label)
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var seen: Dictionary = {}
 	var stations: Dictionary = {}
 	var totals: Dictionary = {}

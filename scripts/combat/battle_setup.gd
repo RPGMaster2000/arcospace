@@ -19,3 +19,7 @@ var battles_won: int = 0
 var emp_charge: int = 0
 var emp_offline: int = 0
 var chasedown_charge_cap: bool = false
+
+var emp_requirement_bonus: int = 0
+
+var emp_victory_message: String = ""

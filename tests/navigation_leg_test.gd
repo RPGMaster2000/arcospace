@@ -10,6 +10,9 @@ func check(value: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var config = Rules.duplicate(true)
 	config.chasedown_chance = 1.0
 	config.maximum_chasedown_chance = 1.0

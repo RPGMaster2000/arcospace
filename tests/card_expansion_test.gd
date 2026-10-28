@@ -11,7 +11,11 @@ func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures += 1
 		push_error(message)
-func _initialize() -> void: call_deferred("run")
+func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
+	call_deferred("run")
 func state() -> Dictionary:
 	return {"hull":40,"hull_capacity":80,"shields":20,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func custom(values: Dictionary, family: String = "energy", cost: int = 0) -> Resource:

@@ -11,6 +11,9 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run")
 func run() -> void:
 	check(Ships.PLAYERS.size() == 6 and Ships.ENEMIES.size() == 6, "Six players and six regular enemies")

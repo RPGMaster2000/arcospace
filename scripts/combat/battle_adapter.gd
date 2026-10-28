@@ -19,6 +19,7 @@ static func apply_setup(board: Node, setup: Setup) -> void:
 		board.apply_ship_snapshot("enemy", setup.enemy_state.snapshot())
 	board.salvage = setup.salvage
 	board.battles_won = setup.battles_won
+	board.ftl.charge_target += setup.emp_requirement_bonus
 	board.ftl.charge = clampi(setup.emp_charge, 0, board.ftl.charge_target)
 	board.ftl.disabled_turns = setup.emp_offline
 	if setup.chasedown_charge_cap:

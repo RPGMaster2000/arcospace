@@ -3,6 +3,8 @@ extends RefCounted
 # never camera motion, elapsed UI time or an implied gameplay effect.
 signal movement_advanced(distance: float)
 var _movement_position: Array = []
+# Transient origin of the current validated sample, for swept-path consumers.
+var movement_origin: Array = []
 # Authoritative movement position, target and uninterrupted journey, shared by all destinations.
 var position: Array = []
 var target: Array = []
@@ -73,6 +75,7 @@ func report_movement(point: Array) -> float:
 		var previous := Vector3(_movement_position[0],_movement_position[1],_movement_position[2])
 		var current := Vector3(point[0],point[1],point[2])
 		distance = previous.distance_to(current)
+	movement_origin = _movement_position.duplicate()
 	checkpoint_position(point)
 	if is_finite(distance) and distance > 0.0:
 		movement_advanced.emit(distance)

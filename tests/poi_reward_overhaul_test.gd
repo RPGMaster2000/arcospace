@@ -183,6 +183,9 @@ func services_and_navigation() -> void:
 	check(run.can_jump() and run.generate_system(), "Unused station never blocks departure")
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run_tests")
 
 func run_tests() -> void:
