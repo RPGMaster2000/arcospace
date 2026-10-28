@@ -37,3 +37,5 @@ Remaining debt: expedition retains its existing navigation destination indices a
 ## Validation
 
 Focused movement (48 checks), risk policy (39), navigation (25), save (33), FTL (103,655), milestone (3,185), Chasedown reward (82), UI (74), legacy save correctness, save/resume, native map input and transition regressions were exercised. Current main had stale balance expectations; tests were aligned to its already-authored tuning without changing gameplay resources. Full headless and rendered registries remain the CI acceptance check; Mobile navigation-specific engine teardown is already excluded by the existing main workflow, while Mobile metagame/HUD/tactical coverage remains active.
+
+Additional verification: all 13 Python runner tests passed. Updated current-balance generation and trading checks passed (100,007 trading assertions), as did the expedition regression and PoI reward simulation (186,529 assertions). Existing ObjectDB shutdown leak warnings remain in several scene tests; the new navigation and policy tests produce none. Physical-device Windows/Android validation is still outside this headless/software-rendered pass.

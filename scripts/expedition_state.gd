@@ -486,7 +486,7 @@ func stop_intercepted_travel(position: Array = []) -> void:
 		encounters[chasedown_index].intercept_position = position.duplicate()
 	var stored: Array = encounters[chasedown_index].get("intercept_position", [])
 	if stored.size() == 2: stored = [stored[0], 0.0, stored[1]]
-	if Navigation.valid_point(stored, false): navigation.position = stored.duplicate()
+	navigation.checkpoint_position(stored)
 	navigation.stop()
 	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
