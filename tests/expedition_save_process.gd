@@ -58,7 +58,15 @@ func run() -> void:
 			assert(battle_index >= 0)
 			scene.state.encounters[battle_index].enemy_data = Ships.ENEMIES[0]
 			scene.state.encounters[battle_index].modifier = 1
+			if not preload("res://tests/fixtures/expedition_contact.gd").reach(scene.state, battle_index):
+				push_error("Movement did not establish the checkpoint battle contact")
+				quit(1)
+				return
 			scene.start_battle(battle_index, 998877)
+			if not is_instance_valid(scene.battle):
+				push_error("Contact battle did not start")
+				quit(1)
+				return
 			scene.battle.enemy_timer.stop()
 			var file = FileAccess.open(EXPECTED, FileAccess.WRITE)
 			file.store_string(JSON.stringify(opening(scene.battle))); file.flush(); file.close()
