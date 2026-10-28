@@ -25,6 +25,7 @@ func run() -> void:
 		root.size = Vector2i(1280,720)
 	check(host.state.is_defense() and map.planet_nodes.size() == 1, "Playable defense homeworld rendered")
 	check(not map.objects[2].visible and map.objects[0].visible and map.objects[1].visible, "Hidden mothership and two visible attackers")
+	check(absf(map.objects[2].scale.x / map.objects[0].scale.x - 2.5) < 0.001 and is_equal_approx(host.state.rules.defense_tuning.interception_radius, 2.5), "Mothership is 2.5 times larger without altering collision tuning")
 	check(map.ship.position.distance_to(host.state.defense.start) < 0.001, "Ship begins at authoritative home deployment")
 	map.travel_to_position(map.ship.position + Vector3(5,0,0))
 	await create_timer(0.15).timeout
@@ -75,6 +76,7 @@ func run() -> void:
 		await create_timer(0.02).timeout
 		if host.state.defense.contact >= 0: break
 	check(host.state.defense.contact >= 0 and host.phase == host.Phase.DESTINATION, "Moving attacker triggers existing battle preview")
+	check(not host.return_button.visible, "Committed hostile encounter has no Back button")
 	check(not map.traveling and not host.state.navigation.leg_active and host.state.travel_destination == -1, "Interception cancels journey permanently")
 	if host.state.defense.contact >= 0:
 		var index: int = host.state.defense.contact
@@ -93,6 +95,7 @@ func run() -> void:
 		board.current_actor = "player"
 		board._warp_out()
 		check(board.result_recorded and host.state.defense.revealed and host.state.salvage == 0, "Actual EMP combat result neutralizes attacker without destruction Salvage")
+		check(not map.defense_effects.histories.has(index) and not map.defense_effects.plumes.has(index), "EMP immediately releases hostile trail and exhaust")
 		board._continue_encounter()
 		await create_timer(1.4).timeout
 		check(map.objects[2].visible and not host.state.defense.reveal_pending and host.phase == host.Phase.OVERVIEW, "Post-combat mothership reveal completes once")

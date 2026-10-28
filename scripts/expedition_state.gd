@@ -25,10 +25,19 @@ func bind_defense_movement() -> void:
 
 func _advance_defense(distance: float) -> void:
 	if not is_defense() or defense == null or not can_navigate(): return
-	var events: Dictionary = defense.advance(distance, Defense.point(navigation.movement_origin), Defense.point(navigation.position))
+	_advance_strategy(distance * rules.defense_tuning.seconds_per_distance,
+		Defense.point(navigation.movement_origin), Defense.point(navigation.position), false)
+
+# Activity commits and movement share event ordering and collision handling.
+func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) -> void:
+	if not is_defense() or defense == null or defense.complete or run_ended: return
+	var events: Dictionary = defense.advance_time(seconds, from, to, carry)
 	for unit in defense.units:
 		if unit.status == "arrived": encounters[unit.encounter].completed = true
-	if events.contact >= 0 or defense.failed():
+	var target: Dictionary = defense.unit_for(travel_destination) if not carry else {}
+	var target_lost: bool = not target.is_empty() and not defense.available(target)
+	events.target_lost = target_lost
+	if events.contact >= 0 or defense.failed() or target_lost:
 		navigation.checkpoint_position(Defense.wire(events.position))
 		navigation.stop()
 		travel_destination = -1
@@ -36,7 +45,15 @@ func _advance_defense(distance: float) -> void:
 		navigation_origin = FREE_DESTINATION
 	if defense.failed(): run_ended = true
 	defense_advanced.emit(events)
-	if events.contact >= 0 or events.arrivals > 0: progress_committed.emit()
+	if not carry and (events.contact >= 0 or events.arrivals > 0 or target_lost or not events.spawned.is_empty()): progress_committed.emit()
+
+func _commit_activity_time(seconds: float) -> void:
+	if not is_defense() or defense == null or defense.complete or run_ended: return
+	if navigation.position.size() != 3: return
+	var total: float = seconds + defense.deferred_seconds
+	defense.deferred_seconds = 0.0
+	var position: Vector3 = Defense.point(navigation.position)
+	_advance_strategy(total, position, position, true)
 
 var run_ended: bool = false
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
@@ -385,6 +402,7 @@ func survey(index: int) -> bool:
 	last_poi_success = -1
 	_complete_encounter(index)
 	add_modifiers(rules.survey_penalty)
+	_commit_activity_time(rules.defense_tuning.poi_seconds)
 	last_outcome = (
 		"Navigation survey completed. No Salvage or other rewards. Next battle: "
 		+ describe_modifiers(rules.survey_penalty)
@@ -407,6 +425,21 @@ func can_visit(index: int) -> bool:
 	if index == SERVICE_INDEX:
 		return not service.is_empty()
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
+
+
+func cancel_travel() -> void:
+	navigation.stop()
+	chasedown_roll_policy.reset_leg()
+	travel_destination = -1
+	pending_destination = -1
+	navigation_origin = FREE_DESTINATION
+	progress_committed.emit()
+
+
+func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> Vector3:
+	if not is_defense(): return fallback
+	var unit: Dictionary = defense.unit_for(index)
+	return defense.intercept_point(index, player) if not unit.is_empty() and defense.available(unit) else fallback
 
 
 func can_engage(index: int) -> bool:
@@ -642,6 +675,7 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	_apply_outcome(outcome)
+	_commit_activity_time(rules.defense_tuning.poi_seconds)
 	progress_committed.emit()
 	return true
 
@@ -866,6 +900,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 			station_production_purchases += 1
 		last_outcome += describe_outcome(outcome)
 		_apply_outcome(outcome)
+	_commit_activity_time(rules.defense_tuning.poi_seconds)
 	progress_committed.emit()
 	return true
 
@@ -1100,6 +1135,7 @@ func record_battle(result: BattleResult) -> void:
 				defense.neutralize(active_battle)
 				for unit in defense.units:
 					if unit.status == "secured": encounters[unit.encounter].completed = true
+				defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})
 		else:
 			return
 	if result.winner == "player":
@@ -1121,6 +1157,7 @@ func record_battle(result: BattleResult) -> void:
 			last_outcome = "Combat victory — upgrade %d different cards." % count
 			start_upgrade_event(count)
 
+	_commit_activity_time(rules.defense_tuning.battle_seconds)
 	progress_committed.emit()
 
 

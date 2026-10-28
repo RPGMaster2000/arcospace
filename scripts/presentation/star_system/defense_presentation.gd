@@ -1,6 +1,5 @@
 extends Node3D
 # Presentation-only adapter: snapshots and actual rendered displacement, no rules.
-const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 var map: Control
 var home_label: Label3D
 var displayed_integrity: int = -1
@@ -90,6 +89,10 @@ func refresh(snapshot: Dictionary) -> void:
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not map.objects.has(index): continue
+		if unit.status in ["neutralized", "arrived", "secured"]:
+			_release(index)
+			continue
+		if unit.status == "reserve": continue
 		_sample(index, map.objects[index].position, map.objects[index].visible)
 		if not unit.mothership and map.objects[index].visible:
 			var direction: Vector3 = point(snapshot.home) - map.objects[index].position
@@ -141,3 +144,14 @@ func _sample(index: int, at: Vector3, active: bool) -> void:
 		mesh.surface_add_vertex(history[i] + Vector3(0, 0.045, 0.07 * alpha))
 		mesh.surface_add_vertex(history[i] + Vector3(0, 0.045, -0.07 * alpha))
 	mesh.surface_end()
+
+# Recycle terminal units immediately; no hidden exhaust or trail geometry remains.
+func _release(index: int) -> void:
+	if ribbons.has(index):
+		ribbons[index].queue_free()
+		ribbons.erase(index)
+	if plumes.has(index):
+		plumes[index].queue_free()
+		plumes.erase(index)
+	histories.erase(index)
+	ages.erase(index)

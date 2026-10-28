@@ -40,7 +40,7 @@ func win(state: Resource, index: int, emp: bool) -> void:
 	state.finish_upgrades()
 func run() -> void:
 	var state = fresh()
-	check(state.is_defense() and state.defense.units.size() == 3, "New defense roster")
+	check(state.is_defense() and state.defense.units.size() == 7, "New defense roster includes four inactive reserves")
 	check(not state.can_engage(0) and state.prepare_battle(0) == null, "An enemy cannot be engaged without simulation contact")
 	check(not state.system_objective_complete() and not state.try_chasedown(-3, 0), "Mothership locks FTL and random Chasedown disabled")
 	var before: Vector3 = state.defense.units[0].position
@@ -50,7 +50,7 @@ func run() -> void:
 	var next: Vector3 = state.defense.start.move_toward(Vector3.ZERO, 1.0)
 	state.begin_free_travel(Defense.wire(next))
 	state.navigation.report_movement(Defense.wire(next))
-	check(absf(before.distance_to(state.defense.units[0].position) - 0.1) < 0.00001, "Validated world distance advances enemy by tuned rate")
+	check(absf(before.distance_to(state.defense.units[0].position) - (1.2 / 7.0)) < 0.00001, "Validated world distance advances enemy by tuned rate")
 	before = state.defense.units[0].position
 	state.begin_free_travel([2,0,20])
 	check(state.defense.units[0].position == before, "Redirect intent adds no strategic distance")
@@ -65,23 +65,26 @@ func run() -> void:
 	# Same straight player path, split into 1 or 100 samples.
 	var a = fresh()
 	var b = fresh()
-	a.defense.advance(10, Vector3(0,0,20), Vector3(10,0,20))
-	for i in range(100): b.defense.advance(0.1, Vector3(i*0.1,0,20), Vector3((i+1)*0.1,0,20))
+	a.defense.advance_time(10.0/7.0, Vector3(0,0,20), Vector3(10,0,20))
+	for i in range(100): b.defense.advance_time(0.1/7.0, Vector3(i*0.1,0,20), Vector3((i+1)*0.1,0,20))
 	check(a.defense.units[0].position.distance_to(b.defense.units[0].position) < 0.0001, "Strategic motion independent of frame partition")
 	var c = fresh()
+	c.rules.defense_tuning = c.rules.defense_tuning.duplicate(true)
+	c.defense.tuning = c.rules.defense_tuning
+	c.rules.defense_tuning.enemy_speed = 0.0
 	c.defense.units[0].position = Vector3.ZERO
 	c.defense.units[1].status = "arrived"
-	var contact: Dictionary = c.defense.advance(40, Vector3(-20,0,0), Vector3(20,0,0))
+	var contact: Dictionary = c.defense.advance_time(40.0/7.0, Vector3(-20,0,0), Vector3(20,0,0))
 	check(contact.contact == 0 and contact.position.x < 0, "Swept contact stops long crossing at first interception")
-	var repeated: Dictionary = c.defense.advance(40, Vector3(-20,0,0), Vector3(20,0,0))
+	var repeated: Dictionary = c.defense.advance_time(40.0/7.0, Vector3(-20,0,0), Vector3(20,0,0))
 	check(repeated.contact == -1, "Pending contact cannot repeat interception")
 	c = fresh()
 	c.defense.units[0].position = c.defense.home
 	c.defense.units[1].position = c.defense.home
-	var arrivals: Dictionary = c.defense.advance(100, Vector3(0,100,0), Vector3(100,100,0))
+	var arrivals: Dictionary = c.defense.advance_time(100, Vector3(0,100,0), Vector3(100,100,0))
 	check(arrivals.arrivals == 2 and c.defense.integrity == 60, "Both base arrivals apply exactly once during a large step")
 	check(c.defense.failed(), "Both arrivals without a neutralization fail the otherwise unreachable objective")
-	c.defense.advance(100, Vector3(0,100,0), Vector3(100,100,0))
+	c.defense.advance_time(100, Vector3(0,100,0), Vector3(100,100,0))
 	check(c.defense.integrity == 60, "Arrivals cannot damage twice")
 	for emp in [false, true]:
 		state = fresh()
@@ -107,6 +110,7 @@ func run() -> void:
 		var twin = fresh(seed_value + 1)
 		check(state.defense.snapshot() == twin.defense.snapshot(), "Deterministic generation")
 		for unit in state.defense.units:
+			if unit.status == "reserve": continue
 			check(Geometry3D.get_closest_point_to_segment(Vector3.ZERO, unit.position, state.defense.home).length() > 3, "Direct approach clears sun geometry")
 			for anchor in state.defense.anchors.values(): check(unit.position.distance_to(anchor) > 5.5, "Hostile deployment clears all PoIs")
 			check(unit.position.length() <= 22 and unit.position.dot(state.defense.home) < 0, "Hostile inside bounds and opposite homeworld")

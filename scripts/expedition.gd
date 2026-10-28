@@ -64,6 +64,8 @@ var phase: Phase = Phase.OVERVIEW
 var _presentation_revision: int = 0
 var transitioning: bool:
 	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL, Phase.INTRO]
+var inspecting: bool = false
+var inspection_backing_color: Color
 var map_system: int = -1
 var map_destination: int = -1
 
@@ -259,8 +261,8 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			if kind == "system":
 				star_map.overview()
 			else:
-				star_map.interactive = false
-				if split:
+				star_map.interactive = inspecting
+				if split and not inspecting:
 					star_map.focus(map_destination)
 					if kind == "outcome":
 						var context: Dictionary = state.encounter_at(map_destination)
@@ -557,6 +559,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		entries.append(
 			{
 				"index": index,
+				"mothership": state.is_defense() and state.defense.unit_for(index).get("mothership", false),
 				"name": encounter.title,
 				"model_kind": key,
 				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
@@ -597,7 +600,9 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense.snapshot() if state.is_defense() else {}
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
+		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
 		star_map.input_allowed = _map_input_allowed
+		star_map.inspection_area = func(): return screen.sidebar.get_global_rect()
 	else:
 		star_map = preload("res://scripts/ui/star_map.gd").new()
 		star_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -623,6 +628,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.ship.position = Vector3(stopped[0],stopped[1],stopped[2])
 	elif stopped.size() == 2 and not _uses_3d_map():
 		star_map.ship_position = Vector2(stopped[0],stopped[1])
+	if _uses_3d_map(): star_map.destination_for = state.navigation_destination
 	star_map.before_travel = state.can_visit
 	star_map.intercept_travel = _begin_map_travel
 	if _uses_3d_map():
@@ -631,6 +637,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	if new_map:
 		var source_map: Control = star_map
 		if _uses_3d_map():
+			star_map.inspect_requested.connect(_inspect_marker)
+			star_map.inspection_dismissed.connect(_dismiss_inspection)
 			star_map.free_move_requested.connect(func(point: Vector3):
 				if star_map == source_map: source_map.travel_to_position(point))
 			star_map.free_arrived.connect(func():
@@ -801,15 +809,18 @@ func _chasedown_response(index: int) -> void:
 func show_battle_preview(index: int) -> void:
 	if transitioning or phase == Phase.EXITED:
 		return
-	if not state.can_engage(index):
+	if not (state.can_visit(index) if inspecting else state.can_engage(index)):
 		return
 	_clear("preview")
+	if state.is_defense(): return_button.hide()
 	var encounter: Dictionary = state.encounters[index]
 	var enemy: Resource = state.enemy_profile(encounter)
-	if _uses_3d_map(): star_map.tactical_focus(index)
+	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
+	if _uses_3d_map() and not inspecting: star_map.tactical_focus(index)
 	_add_tactical_briefing(encounter, enemy, false)
 	var enter = _button("Enter Combat", _enter_battle.bind(index))
 	enter.name = "CombatEntry"
+	if inspecting: enter.disabled = true
 	if screen.compact_focus:
 		enter.reparent(screen.sidebar)
 	_style_combat_entry(enter)
@@ -859,6 +870,7 @@ func show_poi(index: int) -> void:
 	approach_note.text = ""
 	confirm_button.text = "Initiate"
 	header.configure(poi)
+	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
 	if state.objective_locked(index):
 		var prerequisite: int = state.encounters[index].objective_prerequisite
 		_tile(view, "Activate " + state.encounters[prerequisite].title + " first", "", Presentation.COLORS.special, Callable(), true)
@@ -896,6 +908,11 @@ func show_poi(index: int) -> void:
 		)
 		approach_buttons.append(survey)
 
+	if inspecting:
+		return_button.hide()
+		for option in approach_buttons: option.disabled = true
+		confirm_button.disabled = true
+
 
 func show_outpost() -> void:
 	if transitioning or phase == Phase.EXITED:
@@ -918,6 +935,9 @@ func show_outpost() -> void:
 	view.add_child(outpost_screen)
 	outpost_screen.configure(state, screen.allows_activation)
 	outpost_screen.purchase_requested.connect(_purchase_outpost_service.bind(outpost_screen))
+	if inspecting:
+		for button in outpost_screen.buttons: button.disabled = true
+		if outpost_screen.selector != null: outpost_screen.selector.editable = false
 	# Preserve existing control accessors while the component owns their lifecycle.
 	if _uses_3d_map():
 		outpost_screen.options.columns = 1
@@ -935,6 +955,7 @@ func _purchase_finished() -> void:
 
 
 func _select_approach(slot: int) -> void:
+	if inspecting: return
 	if presenting_outcome:
 		return
 	if view_kind != "poi" or not state.can_visit(selected_encounter):
@@ -970,6 +991,7 @@ func _cancel_approach() -> void:
 
 
 func _confirm_approach() -> void:
+	if inspecting: return
 	if is_instance_valid(outpost_screen):
 		outpost_screen.confirm_purchase()
 		return
@@ -992,7 +1014,8 @@ func _purchase_outpost_service(
 	slot: int, amount: int, revision: int, source: OutpostScreen
 ) -> void:
 	if (
-		(presenting_outcome or transitioning or phase == Phase.EXITED)
+		inspecting
+		or (presenting_outcome or transitioning or phase == Phase.EXITED)
 		or view_kind != "poi"
 		or not is_instance_valid(source)
 		or source != outpost_screen
@@ -1416,6 +1439,8 @@ func _free_arrived() -> void:
 func _defense_updated(events: Dictionary) -> void:
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
 	star_map.sync_defense(state.defense.snapshot())
+	# Activity events are presented after results and rewards, at show_system.
+	if phase != Phase.TRAVELING: return
 	_refresh_defense_hud()
 	if events.contact >= 0 or state.run_ended:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
@@ -1424,6 +1449,11 @@ func _defense_updated(events: Dictionary) -> void:
 		else:
 			map_destination = events.contact
 			show_battle_preview(events.contact)
+	elif events.get("target_lost", false):
+		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+		map_destination = -1
+		phase = Phase.OVERVIEW
+		_clear("system")
 
 func _reveal_mothership() -> void:
 	if not state.is_defense() or not state.defense.reveal_pending or phase != Phase.OVERVIEW: return
@@ -1448,3 +1478,44 @@ func _refresh_defense_hud() -> void:
 	for unit in state.defense.units:
 		if state.defense.available(unit): threats += 1
 	screen.overview_hud.metagame.text = "HOME %d/%d · %d THREATS\n%s" % [state.defense.integrity, state.rules.defense_tuning.base_integrity, threats, state.ftl_status()]
+
+# Read-only inspection reuses the existing encounter panels and does not focus
+# or move the camera. A hold never commits a visit or encounter.
+func _inspect_marker(index: int) -> void:
+	if not state.is_defense() or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not state.can_visit(index): return
+	if phase == Phase.TRAVELING:
+		_sample_navigation_position()
+		if phase != Phase.TRAVELING: return
+		state.cancel_travel()
+		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+	inspecting = true
+	var backing: StyleBoxFlat = screen.focus_backing.get_theme_stylebox("panel")
+	inspection_backing_color = backing.bg_color
+	backing.bg_color.a = 0.97
+	star_map.inspection_active = true
+	map_destination = index
+	if state.encounter_at(index).kind == "battle": show_battle_preview(index)
+	else: show_poi(index)
+	return_button.hide()
+	for option in screen.sidebar.find_children("*", "BaseButton", true, false):
+		option.disabled = true
+
+func _dismiss_inspection() -> void:
+	if not inspecting: return
+	inspecting = false
+	var backing: StyleBoxFlat = screen.focus_backing.get_theme_stylebox("panel")
+	backing.bg_color = inspection_backing_color
+	if is_instance_valid(star_map): star_map.inspection_active = false
+	map_destination = -1
+	phase = Phase.OVERVIEW
+	show_system()
+
+func _input(event: InputEvent) -> void:
+	if not inspecting or not is_instance_valid(star_map): return
+	var pressed: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
+	if not pressed: return
+	if screen.sidebar.get_global_rect().has_point(event.position): return
+	var destination: int = star_map.nearest_marker(event.position)
+	_dismiss_inspection()
+	if destination >= 0: star_map.travel(destination)
+	get_viewport().set_input_as_handled()

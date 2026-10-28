@@ -3,6 +3,8 @@ extends Control
 signal arrived(index: int)
 signal interrupted
 signal travel_started
+signal inspect_requested(index: int)
+signal inspection_dismissed
 signal free_move_requested(point: Vector3)
 signal free_arrived
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
@@ -32,6 +34,14 @@ var ship: Node3D
 var objects: Dictionary = {}
 var markers: Dictionary = {}
 var input_allowed: Callable
+var inspection_active: bool = false
+var inspection_area: Callable
+var hold_index: int = -1
+var hold_started: int = 0
+var hold_fired: bool = false
+var hold_threshold_msec: int = 400
+const MOTHERSHIP_MODEL_SCALE: float = 2.5
+var destination_for: Callable
 var before_travel: Callable
 var intercept_travel: Callable
 var before_free_travel: Callable
@@ -212,11 +222,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			var model := Models.build(entry, VisualSystem.random_for(cosmetic_seed,system_number,"model-%d" % index), settings.destination_scenes.get(entry.get("model_kind","")))
 			var phenomenon: bool = entry.get("profile") == null and entry.get("model_kind", "") in ["radiation_nebula", "spatial_anomaly", "unstable_wormhole", "gas_giant"]
 			var size_factor: float = 1.5 if phenomenon else 0.5
+			if entry.get("mothership", false): size_factor *= MOTHERSHIP_MODEL_SCALE
 			model.scale *= size_factor
 			if model.has_meta("radius"):
 				model.set_meta("radius", float(model.get_meta("radius"))*size_factor)
 			if not model.has_meta("radius"):
-				model.set_meta("radius",visual_data.placement[index].radius)
+				model.set_meta("radius",visual_data.placement[index].radius * (MOTHERSHIP_MODEL_SCALE if entry.get("mothership", false) else 1.0))
 			model.position = visual_data.anchors[index]
 			destination_root.add_child(model)
 			objects[index] = model
@@ -263,6 +274,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 
 
 func _process(delta: float) -> void:
+	if hold_index >= 0 and not hold_fired and not dragging and not pinching and Time.get_ticks_msec() - hold_started >= hold_threshold_msec:
+		hold_fired = true
+		inspect_requested.emit(hold_index)
 	if not defense_view.is_empty() and interactive and traveling and motion and motion.is_valid():
 		if input_allowed.is_valid() and not input_allowed.call(): motion.pause()
 		elif not motion.is_running(): motion.play()
@@ -305,6 +319,8 @@ func _process(delta: float) -> void:
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
 		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
 		if hud_regions.any(func(rect): return rect.intersects(button.get_global_rect().grow(14))): button.visible = false
+		if inspection_active and inspection_area.is_valid() and inspection_area.call().intersects(button.get_global_rect().grow(14)):
+			button.visible = false
 		button.anchor_point = center-button.position
 		button.queue_redraw()
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
@@ -361,7 +377,9 @@ func travel(index: int) -> void:
 	if not interactive or focused: return
 	_select_destination(index)
 	feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
-	_start_journey(objects[index].position + (Vector3(_orbit_radius(index), 0.15, 0) if defense_view.is_empty() or not _defense_hostile(index) else Vector3.ZERO), index, intercepted)
+	var destination: Vector3 = objects[index].position + (Vector3(_orbit_radius(index), 0.15, 0) if defense_view.is_empty() or not _defense_hostile(index) else Vector3.ZERO)
+	if destination_for.is_valid(): destination = destination_for.call(index, ship.position, destination)
+	_start_journey(destination, index, intercepted)
 
 
 # Free movement uses exactly the same presentation and interception path as PoI travel.
@@ -528,17 +546,22 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if point_is_reserved(event.position) or not get_global_rect().has_point(event.position): return
-			if touches.is_empty(): drag_origin = event.position
+			if touches.is_empty():
+				drag_origin = event.position
+				hold_index = nearest_marker(event.position)
+				hold_started = Time.get_ticks_msec()
+				hold_fired = false
 			touches[event.index] = event.position
 			if touches.size() >= 2:
 				pinching = true
+				hold_index = -1
 				pinch_distance = _touch_distance()
 				_block_markers()
 			# Capture presses as well as releases so native Button activation cannot duplicate the map intent.
 			get_viewport().set_input_as_handled()
 		else:
 			if not touches.has(event.index): return
-			var tap: bool = not pinching and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
+			var tap: bool = not hold_fired and not pinching and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
 			touches.erase(event.index)
 			if tap and touches.is_empty(): _tap_at(event.position)
 			if pinching or dragging: gesture_block_until = Time.get_ticks_msec() + 180
@@ -558,9 +581,12 @@ func _input(event: InputEvent) -> void:
 			if point_is_reserved(event.position) or not get_global_rect().has_point(event.position): return
 			mouse_down = true
 			drag_origin = event.position
+			hold_index = nearest_marker(event.position)
+			hold_started = Time.get_ticks_msec()
+			hold_fired = false
 			get_viewport().set_input_as_handled()
 		elif mouse_down:
-			var tap: bool = not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
+			var tap: bool = not hold_fired and not dragging and event.position.distance_to(drag_origin) < settings.pan_drag_threshold
 			if tap: _tap_at(event.position)
 			if dragging: gesture_block_until = Time.get_ticks_msec() + 180
 			_end_pinch()
@@ -588,6 +614,11 @@ func nearest_marker(point: Vector2) -> int:
 
 
 func _tap_at(point: Vector2) -> void:
+	if inspection_active:
+		var index: int = nearest_marker(point)
+		inspection_dismissed.emit()
+		if index >= 0: travel(index)
+		return
 	if interception_pending or point_is_reserved(point) or Time.get_ticks_msec() < gesture_block_until: return
 	var index: int = nearest_marker(point)
 	if index != -1:
@@ -629,6 +660,7 @@ func _drag_map(previous: Vector2, current: Vector2) -> void:
 	if not dragging and current.distance_to(drag_origin) < settings.pan_drag_threshold:
 		return
 	if not dragging:
+		hold_index = -1
 		dragging = true
 		_block_markers()
 		previous = drag_origin
@@ -650,6 +682,8 @@ func _touch_distance() -> float:
 
 
 func _end_pinch() -> void:
+	hold_index = -1
+	hold_started = 0
 	for index in pinch_disabled:
 		if markers.has(index):
 			markers[index].disabled = pinch_disabled[index]

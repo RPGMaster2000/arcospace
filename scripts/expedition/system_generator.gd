@@ -197,5 +197,12 @@ static func _generate_defense(state: Resource) -> void:
 		slots.append(state.SERVICE_INDEX)
 	state.station_production_purchases = 0
 	state.service_revision += 1
+	var reserves: Array = []
+	for i in range(state.rules.defense_tuning.maximum_reinforcements):
+		var profile: Resource = ordinary[state._enemy_index(ordinary)]
+		reserves.append(state.encounters.size())
+		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
+			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": profile.ship_name, "completed": false})
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
 	state.defense.deploy(state.rules.defense_tuning, state.rng.randf_range(0, TAU), [0, 1, 2], slots)
+	state.defense.add_reserves(reserves)
