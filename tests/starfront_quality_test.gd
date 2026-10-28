@@ -141,6 +141,14 @@ func run() -> void:
 	state._commit_activity_time(3.0)
 	check(state.defense.contact < 0 and state.defense.deferred_seconds == 0 and absf(other_before.distance_to(state.defense.units[0].position) - 3.6) < 0.0001, "Activity time advances enemies without chaining stationary combat")
 	check(Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state)))) != null, "Activity advancement survives save")
+	var remaining_before: Vector3 = state.defense.units[1].position
+	var completed_result = result_for(state, 0)
+	state.record_battle(completed_result)
+	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Battle completion cannot chain into another stationary interception")
+	check(absf(remaining_before.distance_to(state.defense.units[1].position) - state.rules.defense_tuning.battle_seconds * state.rules.defense_tuning.enemy_speed) < 0.0001, "Battle completion advances remaining enemy by exactly one penalty")
+	remaining_before = state.defense.units[1].position
+	state.record_battle(completed_result)
+	check(remaining_before == state.defense.units[1].position, "Duplicate result cannot repeat the battle penalty")
 	state = fresh()
 	var target: Vector3 = state.defense.intercept_point(0, state.defense.start)
 	var path: float = target.distance_to(state.defense.start)
