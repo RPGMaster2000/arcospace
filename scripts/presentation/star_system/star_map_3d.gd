@@ -241,7 +241,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.contrast = entry.get("profile") != null
+		button.contrast = not defense_view.is_empty() and entry.get("profile") != null
 		button.style_tag(entry.color)
 		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index) or entry.get("profile") != null)
 		button.set_objective(entry.get("objective_marker",""))
@@ -887,6 +887,7 @@ func tactical_focus(index: int, pursuit: bool = false, profile: Resource = null)
 		world.add_child(enemy)
 		tactical_temporary = true
 		enemy.position = ship.position+Vector3(-3,0,0)
+		if pursuit: enemy.rotation = ship.rotation
 	tactical_enemy = enemy
 	tactical_snapshot = {"enemy":enemy.transform,"ship":ship.transform,"orbit":orbit_index}
 	orbit_index = -1

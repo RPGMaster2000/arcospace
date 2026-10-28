@@ -18,7 +18,7 @@ func run():
  for n in range(12): await process_frame
  var map = host.star_map
  var feedback = map.feedback
- check(feedback.identification != null and feedback.engines.get_child_count()==3,"Player has identification ring, exhaust and one local light")
+ check(feedback.identification != null and feedback.get("engines") == null,"Player retains identification without the removed legacy exhaust")
  var rng_before: int = host.state.rng.state
  var at: Vector3 = map.objects[0].position
  feedback.acknowledge(at,1.0,Color.CYAN)
@@ -31,7 +31,7 @@ func run():
  check(not feedback.pulse.visible,"Pulse fades and cleans up")
  feedback.set_travel(true)
  await create_timer(0.15).timeout
- check(feedback.engine_level>0.5 and feedback.engine_audio.playing,"Travel brightens engines and plays quiet loop")
+ check(feedback.engine_level>0.5 and feedback.engine_audio.playing,"Travel raises the engine sound level and plays the quiet loop")
  feedback.set_travel(false,true)
  await create_timer(0.3).timeout
  check(not feedback.engine_audio.playing and feedback.engine_level==0,"Arrival fades engine loop out")
