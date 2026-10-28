@@ -75,20 +75,8 @@ var result_music_started: bool = false
 var earned_tactical: bool = false
 var earned_strategic: bool = false
 var result_hull: int = 0
-## TUNE: Salvage per destroyed enemy; repair rates live in RepairRules.
+## TUNE: Salvage per destroyed enemy.
 const DESTRUCTION_SALVAGE: int = 10
-const Repairs = preload("res://scripts/repair_rules.gd")
-const RESULT_SALVAGE_PER_HULL: int = Repairs.RESULT_SALVAGE_PER_HULL
-var repair_preview: VBoxContainer
-# Legacy name; the selector now counts Hull points, not Salvage units.
-var _repair_selection: int = -1
-var repair_spend: int:
-	get:
-		if winner == "player":
-			var limit: int = _repair_spend_limit()
-			return limit if _repair_selection < 0 else clampi(_repair_selection, 0, limit)
-		return _repair_selection
-	set(value): _repair_selection = value
 var starting_player_hull: int = 0
 var player_hull_damage_taken: int = 0
 # Pending rewards belong only to this encounter, never permanent setup values.
@@ -238,11 +226,6 @@ func _ready() -> void:
 	settings_button.z_index = 110  # Keep settings accessible above the result screen's shade.
 	add_child(settings_button)
 	settings_button.main_menu_requested.connect(_return_to_setup)
-	repair_preview = preload("res://scripts/ui/repair_preview.gd").new()
-	repair_preview.name = "RepairPreview"
-	repair_preview.position = Vector2(30, 270)
-	repair_preview.size = Vector2(680, 70)
-	$MatchResult/Panel.add_child(repair_preview)
 	$MatchResult/Panel/Details.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	$MatchResult/Panel/Rewards.add_theme_font_override("font", ResultPresentation.UI_FONT)
 	_apply_ship("player", player_ship_data)
@@ -258,9 +241,6 @@ func _ready() -> void:
 	for key in MatchRules.RESOURCES:
 		set("player_" + key, get("player_" + key) + pending_resource_bonus)
 	player_shields += pending_shield_bonus
-	$MatchResult/Panel/RepairMinus.pressed.connect(_adjust_repair_spend.bind(-1))
-	$MatchResult/Panel/RepairPlus.pressed.connect(_adjust_repair_spend.bind(1))
-	$MatchResult/Panel/Repair.pressed.connect(_repair_with_salvage)
 	$MatchResult/Panel/Continue.pressed.connect(_continue_encounter)
 	ftl.charge_target = (
 		player_ship_data.ftl_turns
@@ -829,8 +809,6 @@ func _display_snapshot() -> Dictionary:
 		"effects_busy": battle_effects.busy,
 		"shields_disabled": modifier.shields_disabled(),
 		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
-		"repair_limit": _repair_spend_limit(),
-		"repair_unit_cost": RESULT_SALVAGE_PER_HULL,
 		"rewards_text": victory_description(),
 		"in_expedition": expedition != null,
 		"pending_choice": expedition.pending_choice if expedition != null else "",
@@ -840,7 +818,6 @@ func _display_snapshot() -> Dictionary:
 		"result_cause": result_cause,
 		"systems_failure": systems_failure.snapshot(_both_states()),
 		"battles_won": battles_won,
-		"repair_spend": repair_spend,
 		"resolving_card": resolving_card or not damage_timeline.pending.is_empty(),
 		"current_actor": current_actor,
 		"turn_number": turn_number,
@@ -917,7 +894,7 @@ func _update_jump_style() -> void:
 
 #endregion
 
-#region Results and repairs
+#region Results
 
 
 func tactical_victory() -> bool:
@@ -970,7 +947,7 @@ func _resource_reward_text(amount: int) -> String:
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded or checkpoint_exit:
 		return
-	# Freeze combat rewards before post-battle salvage repair changes hull.
+	# Freeze combat rewards at the authoritative result boundary.
 	earned_tactical = tactical_victory()
 	earned_strategic = strategic_victory()
 	result_hull = player_hull
@@ -994,28 +971,5 @@ func battle_result() -> BattleResult:
 func _sync_expedition_hand() -> void:
 	BattleAdapter.sync_hand(hand, expedition.player_pool(), expedition.acquired_draw_weights(), expedition.upgraded_cards)
 
-
-func _repair_spend_limit() -> int:
-	return Repairs.max_spend(player_hull, player_hull_capacity, salvage)
-
-
-func _adjust_repair_spend(change: int) -> void:
-	if winner != "player" or resolving_card or battle_effects.busy:
-		return
-	repair_spend = clampi(maxi(0, repair_spend) + change, 0, _repair_spend_limit())
-	refresh_display()
-
-
-func _repair_with_salvage() -> void:
-	if winner != "player" or repair_spend <= 0 or resolving_card or battle_effects.busy:
-		return
-	_record_result()
-	var spent: int = mini(repair_spend, _repair_spend_limit())
-	player_hull += spent
-	salvage -= Repairs.quantity_cost(spent, RESULT_SALVAGE_PER_HULL)
-	if expedition != null:
-		expedition.sync_battle(battle_result())
-	repair_spend = _repair_spend_limit()
-	refresh_display()
 
 #endregion

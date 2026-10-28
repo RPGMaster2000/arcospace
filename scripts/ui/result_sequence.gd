@@ -58,19 +58,11 @@ func play() -> void:
 			lines.add_child(line)
 	var controls: Array[Control] = []
 	var disabled_states: Dictionary = {}
-	for path in ["RepairMinus", "RepairAmount", "RepairPlus", "Repair", "RepairPreview", "NextEncounter", "Continue", "Configure"]:
+	for path in ["NextEncounter", "Continue", "Configure"]:
 		var node: Control = panel.get_node_or_null(path)
 		if node == null or not node.visible:
 			continue
-		# Keep authored horizontal grouping, center the repair row on wider displays.
-		if path == "RepairPreview":
-			node.size = Vector2(minf(680, size.x * 0.7), 56)
-			node.position = Vector2((size.x - node.size.x) * 0.5, size.y * 0.64)
-		elif path.begins_with("Repair"):
-			node.position.x += (size.x - 740) * 0.5
-			node.position.y = size.y * 0.74
-		else:
-			node.position = Vector2((size.x - node.size.x) * 0.5, size.y * (0.83 if path == "NextEncounter" else 0.88))
+		node.position = Vector2((size.x - node.size.x) * 0.5, size.y * (0.83 if path == "NextEncounter" else 0.88))
 		controls.append(node)
 		if node is BaseButton:
 			disabled_states[node] = node.disabled

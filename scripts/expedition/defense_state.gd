@@ -18,18 +18,24 @@ static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 static func wire(value: Vector3) -> Array:
 	return [value.x, value.y, value.z]
-func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: Array) -> void:
+func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: Array, hostile_offset: float = 0.7, poi_phase: float = 0.35) -> void:
 	tuning = configuration
 	integrity = tuning.base_integrity
-	home = Vector3(cos(angle), 0, sin(angle)) * 20.0
+	home = Vector3(cos(angle), 0, sin(angle)) * 22.0
 	start = home * 0.78
 	for i in range(3):
-		var heading: float = angle + PI + 0.7 + (i - 1) * 0.26
+		var heading: float = angle + PI + hostile_offset + (i - 1) * 0.26
 		units.append({"encounter": indices[i], "position": Vector3(cos(heading), 0, sin(heading)) * tuning.hostile_spawn_distance,
 			"status": "active", "mothership": i == 2, "reinforcement": false, "spawned": false})
 	for i in poi_indices.size():
-		var heading: float = angle + TAU * float(i) / maxi(1, poi_indices.size()) + 0.35
-		anchors[poi_indices[i]] = Vector3(cos(heading), 0, sin(heading)) * (10.0 if i % 2 == 0 else 14.0)
+		var heading: float = angle + TAU * float(i) / maxi(1, poi_indices.size()) + poi_phase
+		var radial: float = [19.0, 10.0, 16.0, 7.0, 16.0, 10.0, 19.0, 13.0][i % 8]
+		var anchor: Vector3 = Vector3(cos(heading), 0, sin(heading)) * radial
+		for unit in units:
+			if unit.position.distance_to(anchor) <= 5.5:
+				anchor = Vector3(cos(heading), 0, sin(heading)) * 10.0
+				break
+		anchors[poi_indices[i]] = anchor
 # Reserve units have stable encounter IDs and existing profiles, but no active
 # simulation or rendered presence until the scheduler deploys them.
 func add_reserves(indices: Array) -> void:
@@ -108,9 +114,11 @@ static func hit_time(relative: Vector3, velocity: Vector3, radius: float, limit:
 	if discriminant < 0: return INF
 	var t: float = (-b - sqrt(discriminant)) / (2*a)
 	return t if t >= 0 and t <= limit else INF
-# Both player movement and committed activity costs use this same clock. A
-# contact interrupts the clock; unused activity seconds remain persisted until
-# that encounter has resolved, so rewards never get interrupted.
+# Both player movement and committed activity costs use this same clock.
+# Activity time advances the fleet without initiating chained stationary battles.
+func target_for(_unit: Dictionary) -> Vector3:
+	return home
+
 func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false) -> Dictionary:
 	var result: Dictionary = {"position": to, "contact": -1, "arrivals": 0, "spawned": []}
 	if complete or contact >= 0 or integrity <= 0 or seconds <= 0 or not is_finite(seconds): return result
@@ -128,9 +136,10 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			event_kind = "spawn"
 		for unit in units:
 			if not available(unit): continue
-			var velocity: Vector3 = Vector3.ZERO if unit.mothership else (home - unit.position).normalized() * tuning.enemy_speed
-			var arrival: float = INF if unit.mothership or tuning.enemy_speed <= 0 else unit.position.distance_to(home) / tuning.enemy_speed
-			var hit: float = hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
+			var target: Vector3 = target_for(unit)
+			var velocity: Vector3 = Vector3.ZERO if unit.mothership else (target - unit.position).normalized() * tuning.enemy_speed
+			var arrival: float = INF if unit.mothership or tuning.enemy_speed <= 0 else unit.position.distance_to(target) / tuning.enemy_speed
+			var hit: float = INF if carry else hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
 			if hit <= event_time:
 				event_time = hit
 				event_unit = unit
@@ -141,7 +150,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				event_kind = "arrival"
 		for unit in units:
 			if available(unit) and not unit.mothership:
-				unit.position = unit.position.move_toward(home, tuning.enemy_speed * event_time)
+				unit.position = unit.position.move_toward(target_for(unit), tuning.enemy_speed * event_time)
 		if revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements:
 			reinforcement_remaining = maxf(0.0, reinforcement_remaining - event_time)
 		elapsed += event_time
@@ -184,7 +193,8 @@ func intercept_point(index: int, player: Vector3) -> Vector3:
 	if unit.is_empty() or not available(unit): return player
 	if unit.mothership: return unit.position
 	var relative: Vector3 = unit.position - player
-	var velocity: Vector3 = (home - unit.position).normalized() * tuning.enemy_speed * tuning.seconds_per_distance
+	var target: Vector3 = target_for(unit)
+	var velocity: Vector3 = (target - unit.position).normalized() * tuning.enemy_speed * tuning.seconds_per_distance
 	var a: float = velocity.length_squared() - 1.0
 	var b: float = 2.0 * relative.dot(velocity)
 	var c: float = relative.length_squared()
@@ -198,12 +208,12 @@ func intercept_point(index: int, player: Vector3) -> Vector3:
 			var second: float = (-b + sqrt(discriminant)) / (2*a)
 			if first >= 0: root = first
 			if second >= 0: root = minf(root, second)
-	var until_arrival: float = unit.position.distance_to(home) / maxf(velocity.length(), 0.000001)
-	if not is_finite(root) or root > until_arrival: return home
+	var until_arrival: float = unit.position.distance_to(target) / maxf(velocity.length(), 0.000001)
+	if not is_finite(root) or root > until_arrival: return target
 	return unit.position + velocity * root
 
 func snapshot() -> Dictionary:
-	var data: Dictionary = {"home": wire(home), "start": wire(start), "integrity": integrity,
+	var data: Dictionary = {"home": wire(home), "start": wire(start), "integrity": integrity, "maximum_integrity": tuning.base_integrity,
 		"revealed": revealed, "reveal_pending": reveal_pending, "complete": complete, "contact": contact,
 		"reinforcement_remaining": reinforcement_remaining, "reinforcements_spawned": reinforcements_spawned, "deferred_seconds": deferred_seconds, "units": [], "anchors": {}}
 	for unit in units:

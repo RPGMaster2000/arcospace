@@ -186,9 +186,9 @@ static func _generate_defense(state: Resource) -> void:
 		var profile: Resource = state.rules.progression.mandatory_boss_profile() if i == 2 else ordinary[state._enemy_index(ordinary)]
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if i == 2 else profile.ship_name, "completed": false})
-	var pois: Array = state.rules.pois.duplicate()
+	var pois: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() != "unstable_wormhole")
 	var slots: Array = []
-	for i in range(mini(6, pois.size())):
+	for i in range(mini(8, pois.size())):
 		var poi: Resource = pois.pop_at(state.rng.randi_range(0, pois.size()-1))
 		slots.append(state.encounters.size())
 		state.encounters.append(_poi(poi))
@@ -204,5 +204,7 @@ static func _generate_defense(state: Resource) -> void:
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": profile.ship_name, "completed": false})
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
-	state.defense.deploy(state.rules.defense_tuning, state.rng.randf_range(0, TAU), [0, 1, 2], slots)
+	var facing: float = state.rng.randf_range(0, TAU)
+	var flank: float = state.rng.randf_range(0.65, 1.0) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
+	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5))
 	state.defense.add_reserves(reserves)

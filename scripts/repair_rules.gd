@@ -1,15 +1,6 @@
 extends RefCounted
 
-# RESPONSIBILITY: Share quantity and cost bounds across victory, field and station repairs.
-# Shared quantity/cost bounds for result repairs, field repairs and the station Hull/plating service.
-const RESULT_SALVAGE_PER_HULL: int = 2
-
-
-static func max_spend(hull: int, capacity: int, salvage: int) -> int:
-	# The result selector counts Hull points, just like field/station quantity controls.
-	return max_quantity(hull, capacity, salvage, RESULT_SALVAGE_PER_HULL)
-
-
+# Shared quantity and cost bounds for field and station repairs.
 const FIELD_SALVAGE_PER_HULL: int = 2
 const PLATING_SALVAGE_PER_POINT: int = 2
 const STATION_PLATING_LIMIT: int = 10
