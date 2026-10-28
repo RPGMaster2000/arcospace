@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/battlefield_ion_storm.tscn" id="1"]
-[ext_resource type="Shader" path="res://shaders/space_background.gdshader" id="2"]
+[ext_resource type="Shader" path="res://shaders/battle_panorama.gdshader" id="2"]
+
+[ext_resource type="Texture2D" path="res://third_party/willosuna_space/nebula_rose_blue/nebula_rose_blue_panorama_4096.jpg" id="3"]
 
 [sub_resource type="Environment" id="Environment"]
 resource_local_to_scene = true
@@ -14,6 +16,12 @@ ambient_light_energy = 0.60
 [sub_resource type="ShaderMaterial" id="Backdrop"]
 resource_local_to_scene = true
 shader = ExtResource("2")
+shader_parameter/panorama = ExtResource("3")
+shader_parameter/panorama_brightness = 0.5
+shader_parameter/panorama_tint = Color(0.68, 0.74, 1.0, 1)
+shader_parameter/panorama_center = Vector2(0.63, 0.47)
+shader_parameter/panorama_view_width = 1.5
+shader_parameter/procedural_overlay = 0.08
 shader_parameter/space_color = Color(0.008, 0.012, 0.035, 1)
 shader_parameter/cloud_color = Color(0.12, 0.10, 0.34, 1)
 shader_parameter/accent_color = Color(0.32, 0.46, 0.78, 1)
