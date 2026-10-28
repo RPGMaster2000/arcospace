@@ -30,7 +30,12 @@ func run() -> void:
 			check(field.scene_file_path == preload("res://scripts/board_3d.gd").BATTLEFIELDS[kind].resource_path,"Both storms select their explicit Ion variant, never a normal/planetary arena")
 			var ion = preload("res://scenes/battlefield_ion_storm.tscn").instantiate()
 			check(field.get_node("Camera3D").transform == ion.get_node("Camera3D").transform,"Inherited Ion camera/framing preserved")
-			check(field.get_node("MeshInstance3D").material_override.shader == ion.get_node("MeshInstance3D").material_override.shader,"Same Ion space shader")
+			var backdrop: ShaderMaterial = field.get_node("MeshInstance3D").material_override
+			var ion_backdrop: ShaderMaterial = ion.get_node("MeshInstance3D").material_override
+			check(backdrop.shader == ion_backdrop.shader, "Both storm variants retain the Ion panorama shader")
+			check(backdrop.shader.resource_path == "res://shaders/battle_panorama.gdshader", "Storm scenes use the panorama shader, not legacy procedural space")
+			check(backdrop.get_shader_parameter("panorama") != null, "Storm panorama texture is assigned")
+			check(backdrop.get_shader_parameter("panorama_tint") != ion_backdrop.get_shader_parameter("panorama_tint"), "Storm variant preserves distinct atmosphere tint")
 			check(not field.has_node("BackgroundObjects/Planet"),"No planetary decoration in either storm")
 			check(board.get_node("BattleView").preset.resource_path.ends_with("metal_storm.tres" if kind == 6 else "psionic_storm.tres"),"Matching storm grade, never normal or Temporal")
 			ion.free()
