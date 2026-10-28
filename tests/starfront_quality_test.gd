@@ -127,18 +127,20 @@ func run() -> void:
 	state = fresh()
 	var player: Vector3 = State.Defense.point(state.navigation.position)
 	var toward_home: Vector3 = (state.defense.home-player).normalized()
-	state.defense.units[0].position = player - toward_home*4.0
+	state.defense.units[0].position = player - toward_home * 4.0
+	var hostile_before: Vector3 = state.defense.units[0].position
 	state._commit_activity_time(3.0)
-	check(state.defense.contact == 0 and state.defense.deferred_seconds > 0, "Activity contact preserves unused penalty until combat resolves")
-	check(Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state)))) != null, "Deferred penalty survives save before combat")
-	var remainder: float = state.defense.deferred_seconds
+	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Activity penalty never starts a new battle, even when an enemy passes the stationary player")
+	check(absf(hostile_before.distance_to(state.defense.units[0].position) - 3.6) < 0.0001, "Enemy movement still advances during a suppressed-contact activity penalty")
+	check(Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state)))) != null, "Activity penalty without contact remains saveable")
 	var other_before: Vector3 = state.defense.units[1].position
 	var resumed_result = result_for(state, 0)
 	state.record_battle(resumed_result)
-	check(state.defense.deferred_seconds == 0 and absf(other_before.distance_to(state.defense.units[1].position) - (remainder + 2.5) * 1.2) < 0.0001, "After combat, the remaining activity cost and battle cost advance exactly once")
+	check(state.defense.contact == -1 and is_zero_approx(state.defense.deferred_seconds), "Battle completion penalty also suppresses immediate chain battles")
+	check(absf(other_before.distance_to(state.defense.units[1].position) - 2.5 * 1.2) < 0.0001, "Battle penalty still advances other hostile ships once")
 	other_before = state.defense.units[1].position
 	state.record_battle(resumed_result)
-	check(other_before == state.defense.units[1].position, "Replaying the result cannot repeat deferred activity time")
+	check(other_before == state.defense.units[1].position, "Replaying a battle result cannot repeat its strategic-time penalty")
 	state = fresh()
 	var target: Vector3 = state.defense.intercept_point(0, state.defense.start)
 	var path: float = target.distance_to(state.defense.start)
