@@ -53,7 +53,7 @@ func _initialize() -> void:
 					var relay: Dictionary = state.encounters[prereq]
 					check(relay.get("objective_role", "") == "prerequisite" and relay.get("objective_prerequisite", -1) < 0, "Exactly one-step non-circular chain")
 					check(not relay.get("pressure_sensitive", false), "Prerequisites immune to pressure expiry")
-		check(battles >= 1 and battles <= 3 and hazards <= 3 and ordinary >= 4 and ordinary <= 6, "Valid category composition")
+		check(battles >= Rules.minimum_battles and battles <= Rules.maximum_battles and hazards >= Rules.minimum_hazardous and hazards <= Rules.maximum_hazardous and ordinary >= Rules.minimum_ordinary and ordinary <= Rules.maximum_ordinary, "Valid category composition")
 		check(routes >= 1 and routes <= 2 and direct >= 1, "One or two access routes with unconditional safe fallback")
 	check(seen.size() == 4, "All four profiles generated")
 	# Generous deterministic sample bounds catch accidental old station cadence or duplicates.

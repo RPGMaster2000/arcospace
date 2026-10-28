@@ -15,7 +15,9 @@ Enter a system, explore encounters, acquire FTL Access from either a direct Fuel
 
 `ExpeditionState.system_objective_complete()` is the persistent departure-objective boundary: FTL Access plus mandatory Boss completion. `can_jump()` adds transient readiness (alive, no active battle/interception or pending reward). Future objective modes replace that one condition without requiring UI or coordinator mode checks.
 
-## Initial tuning
+## Original prototype tuning (historical)
+
+The values below describe the original prototype. Current authored resources and `SystemPressure` are authoritative; later balance changes are intentionally preserved by Step 0.5.
 
 Nine regular encounters (previously six). Category bounds: enemies 1–3, ordinary PoIs 4–6, hazards 0–3. The direct objective replaces one ordinary slot; the optional second route replaces two others. Additional service stations remain outside the regular count. Layout bounds increase from 48 to 56 units, with existing travel presentation duration preserved.
 
@@ -30,7 +32,7 @@ Composition, individual PoI weights, hue bias and nebula chance live in `resourc
 
 Pressure starts at zero and increases once per completed regular encounter, including a resolved failure or navigation survey that actually completes it. Inspecting, rejected approaches, movement, services and Chasedowns add none. Sensitive optional PoIs above their tolerance queue a disclosed −2 Energy next battle. Objectives and prerequisites are exempt. No ordinary progression encounter expires.
 
-Chasedown probability is `min(maximum_chasedown_chance, (chasedown_chance + pressure × pressure_chasedown_increment) × profile_multiplier)`. Initial values: base 0.05, increment 0.015, cap 0.35. Existing origin/destination eligibility and one-interception-per-system cap remain. Free destinations share eligible travel rules.
+Chasedown probability is `min(maximum_chasedown_chance, (chasedown_chance + pressure × pressure_chasedown_increment) × profile_multiplier)`. Original prototype values (superseded by the authored configuration): base 0.05, increment 0.015, cap 0.35. Existing origin/destination eligibility and one-interception-per-system cap remain. Free destinations share eligible travel rules.
 
 The shared cooldown is ten seconds of active exploration gameplay. Menus, pause and offline time do not reduce it. A new journey may attempt a roll only at its start. Redirects retain the leg guard; a journey skipped during cooldown does not retry later. An interception cancels its target and retains its first actual interception position until a new command. Loading restores remaining cooldown and guard, never wall-clock elapsed time.
 

@@ -159,11 +159,11 @@ func services_and_navigation() -> void:
 	for slot in range(4): check(not run.purchase_service(slot, run.service_revision, 1), "Zero Salvage cannot buy")
 	check(run.pressure == 0 and run.ftl_access == access_before and run.encounters == encounters_before and run.pending_penalties.is_empty(), "Declining service changes no accounting")
 	for slot in range(4):
-		run.salvage = 30
+		run.salvage = 40
 		run.hull = run.ship().hull_capacity - 5
-		var price: int = [5,7,15,25][slot]
+		var price: int = [5,7,15,35][slot]
 		check(run.purchase_service(slot, run.service_revision, 5), "Purchase service")
-		check(run.salvage == 30 - price and run.pressure == 0 and run.ftl_access == access_before and run.encounters == encounters_before, "Service exact price; zero pressure/access change")
+		check(run.salvage == 40 - price and run.pressure == 0 and run.ftl_access == access_before and run.encounters == encounters_before, "Service exact price; zero pressure/access change")
 		if slot == 0: check(run.hull == run.ship().hull_capacity, "Repair five")
 		if slot == 1:
 			check(run.choose_attribute("materials") and not run.choose_attribute("materials") and run.modifier_value("materials") == 5, "Supply choice once")

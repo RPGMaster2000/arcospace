@@ -145,7 +145,7 @@ func economy_checks(ship_index: int) -> void:
 	check(not run.purchase_service(2, run.service_revision) and run.salvage == 14, "Card affordability verified before spending")
 	run.salvage = 1000
 	for n in range(7):
-		var price: int = [25,40,60,85,115,150,190][n]
+		var price: int = [35,50,70,95,125,160,200][n]
 		check(run.service_cost(3) == price, "Intended production price progression")
 		var balance: int = run.salvage
 		revision = run.service_revision
@@ -163,7 +163,7 @@ func economy_checks(ship_index: int) -> void:
 	advance(run)
 	check(run.service_revision != revision and not run.purchase_service(1, revision), "Departed station confirmation cannot affect the next system")
 	reach_station(run)
-	check(run.service_cost(3) == 25 and run.station_production_purchases == 0 and run.production_upgrades == upgrades, "Next station resets prices but preserves permanent production")
+	check(run.service_cost(3) == 35 and run.station_production_purchases == 0 and run.production_upgrades == upgrades, "Next station resets prices but preserves permanent production")
 	check(not run.purchase_service(1, revision), "Old station confirmation cannot apply at new station")
 	# Inspector base price and both escalating parameters stay data-driven.
 	var tuned_poi: Resource = run.service.poi.duplicate()
@@ -192,7 +192,7 @@ func _initialize() -> void:
 func run_tests() -> void:
 	schedule_checks()
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()): economy_checks(ship_index)
-	check(Rules.trading_outpost.approaches[3].salvage_cost == 25 and Rules.production_price_increment == 15 and Rules.production_price_acceleration == 5, "Purchases and test tuning never mutate shared authored prices")
+	check(Rules.trading_outpost.approaches[3].salvage_cost == 35 and Rules.production_price_increment == 15 and Rules.production_price_acceleration == 5, "Purchases and test tuning never mutate shared authored prices")
 	print("Trading Outpost: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
 

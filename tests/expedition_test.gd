@@ -42,7 +42,7 @@ func run_tests() -> void:
 		for encounter in run.encounters:
 			if encounter.kind == "battle": battles += 1
 			else: pois += 1
-		check(run.encounters.size() == 9 and battles >= 1 and battles <= 3 and pois >= 6, "Every system has nine encounters and accessible battles/PoIs")
+		check(run.encounters.size() == Rules.encounters_per_system and battles >= Rules.minimum_battles and battles <= Rules.maximum_battles and pois == Rules.encounters_per_system - battles, "Every system has nine encounters and accessible battles/PoIs")
 		check(not run.generate_system(), "Locked access blocks travel")
 		# This long-run generation fixture simulates completing each mandatory battle.
 		for entry in run.encounters:
@@ -153,7 +153,7 @@ func run_tests() -> void:
 	board.systems_failure.remaining.enemy = 0
 	board._check_winner()
 	board.refresh_display()
-	check(run.salvage == Rules.destruction_salvage, "Systems Failure uses destruction Salvage")
+	check(run.salvage == run.victory_salvage(board.battle_result()), "Systems Failure uses the selected enemy destruction reward")
 	board.free()
 	# Pool weights and upgraded identities still enforce two identical cards per hand.
 	run = fresh()
