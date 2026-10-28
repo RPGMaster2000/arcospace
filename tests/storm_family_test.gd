@@ -20,6 +20,9 @@ func ship() -> Dictionary:
 	for key in Ship.RESOURCES: value[key] = 40
 	return value
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	check(Mod.NAMES.slice(0,6) == ["None","Asteroid belt","Ion storm","Solar flare","Nebula","Temporal Rift"],"Original IDs unchanged")
 	check(Mod.NAMES.size() == 8 and Mod.storm_family(6) == "materials" and Mod.storm_family(7) == "crew","Appended IDs and families")
 	for seed_value in range(32):

@@ -9,7 +9,11 @@ func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures += 1
 		push_error(message)
-func _initialize() -> void: call_deferred("run")
+func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
+	call_deferred("run")
 func settle() -> void:
 	for n in range(16): await process_frame
 func capture(label: String) -> void:

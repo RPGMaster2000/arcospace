@@ -3,6 +3,9 @@ var host: Control
 var checks = 0
 var failures = 0
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run")
 func check(ok: bool, message: String) -> void:
 	checks += 1

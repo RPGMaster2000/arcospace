@@ -240,7 +240,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			star_map.queue_free()
 			screen.map_layer = null
 		star_map = null
-	screen.reset_view(kind, state, use_star_map, _icon)
+	screen.reset_view(kind, state, use_star_map or state.is_defense(), _icon)
 	if _uses_3d_map() and kind == "outcome" and not is_instance_valid(star_map) and state.navigation_origin != -1:
 		_show_star_map(false)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
@@ -355,6 +355,7 @@ func start_expedition() -> bool:
 
 
 func _bind_progress() -> void:
+	if not state.defense_advanced.is_connected(_defense_updated): state.defense_advanced.connect(_defense_updated)
 	if not state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.connect(_progress_committed)
 
@@ -441,11 +442,23 @@ func show_system(preserve_transition: bool = false) -> void:
 	get_node("/root/Music").play_starmap()
 	return_to_outpost = false
 	_clear("system", preserve_transition)
-	if state.hull <= 0:
-		view.add_child(_label("Expedition ended — your ship was lost.", 26))
+	if state.hull <= 0 or state.run_ended:
+		var defeat_message: String = "Expedition ended — your ship was lost."
+		if state.is_defense() and state.defense.integrity <= 0:
+			defeat_message = "Expedition ended — homeworld lost."
+		elif state.is_defense() and state.defense.failed():
+			defeat_message = "Expedition ended — all attackers reached the homeworld before the mothership could be located."
+		if _uses_3d_map():
+			screen.map_layout(false, false)
+			if is_instance_valid(star_map): star_map.set_active(false)
+		view.add_child(_label(defeat_message, 26))
 		_button("Main Menu", _exit)
 		return
-	if use_star_map:
+	if state.is_defense() and state.defense.contact >= 0:
+		_show_star_map(false)
+		show_battle_preview(state.defense.contact)
+		return
+	if use_star_map or state.is_defense():
 		_show_star_map()
 		return
 	var cards = _grid(3)
@@ -515,7 +528,7 @@ func _map_input_allowed() -> bool:
 
 
 func _uses_3d_map() -> bool:
-	return use_star_map and use_3d_star_map
+	return (state != null and state.is_defense()) or (use_star_map and use_3d_star_map)
 
 
 func _show_star_map(resume_travel: bool = true) -> void:
@@ -534,7 +547,9 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		var detail: String = "FTL Access" if encounter.get("objective_role", "") == "access" else ("Objective prerequisite" if encounter.has("objective_role") else "Explore")
 		if encounter.kind == "battle":
 			key = ["battle", "elite", "boss"][state.enemy_profile(encounter).enemy_rank]
-			if encounter.get("mandatory_boss", false):
+			if state.is_defense():
+				detail = "Mothership · FTL objective" if state.defense.unit_for(index).get("mothership", false) else "Incoming · HOMEWORLD"
+			elif encounter.get("mandatory_boss", false):
 				detail = "Mandatory Boss · " + detail
 		var tooltip: String = detail
 		if encounter.kind == "battle":
@@ -580,6 +595,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_number = state.system_number
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
+		star_map.defense_view = state.defense.snapshot() if state.is_defense() else {}
+		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.input_allowed = _map_input_allowed
 	else:
 		star_map = preload("res://scripts/ui/star_map.gd").new()
@@ -597,7 +614,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.overview_hud.attach_zoom(star_map)
 		screen._sync_map_rect()
 		if new_system: star_map.fit_overview()
-	if _uses_3d_map() and state.navigation.position.size() == 3 and (new_map or state.navigation.leg_active or state.navigation_origin == state.FREE_DESTINATION or not state.intercepted_position().is_empty()):
+	if _uses_3d_map() and state.navigation.position.size() == 3 and (state.is_defense() or new_map or state.navigation.leg_active or state.navigation_origin == state.FREE_DESTINATION or not state.intercepted_position().is_empty()):
 		var at: Array = state.navigation.position
 		star_map.apply_navigation_position(Vector3(at[0], at[1], at[2]))
 	var stopped: Array = state.intercepted_position()
@@ -624,16 +641,30 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			if star_map == source_map and phase == Phase.TRAVELING: _show_chasedown())
 		star_map.arrived.connect(func(index: int):
 			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
+	if state.is_defense():
+		screen.set_system_name(star_map.visual_data.name)
+		_refresh_defense_hud()
+		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
 	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
 		_resume_navigation.call_deferred(destination, _presentation_revision, state, weakref(star_map))
 
 
 func visit(index: int) -> void:
-	if phase == Phase.EXITED or transitioning or (not state.can_visit(index) and not state.objective_locked(index)):
+	if phase == Phase.EXITED or transitioning:
 		return
+	var moving_hostile: bool = state.is_defense() and not state.defense.unit_for(index).is_empty()
+	if not moving_hostile and not state.can_visit(index) and not state.objective_locked(index): return
 	_sample_navigation_position(true)
+	if phase != Phase.TRAVELING and state.is_defense(): return
 	_checkpoint_navigation_position()
+	if moving_hostile:
+		# The target has moved or arrived. Only a swept contact opens combat.
+		state.arrive_destination(index)
+		map_destination = -1
+		phase = Phase.OVERVIEW
+		_clear("system")
+		return
 	map_destination = index
 	state.arrive_destination(index)
 	state.identify_objective(index)
@@ -770,7 +801,7 @@ func _chasedown_response(index: int) -> void:
 func show_battle_preview(index: int) -> void:
 	if transitioning or phase == Phase.EXITED:
 		return
-	if not state.can_visit(index):
+	if not state.can_engage(index):
 		return
 	_clear("preview")
 	var encounter: Dictionary = state.encounters[index]
@@ -1148,7 +1179,7 @@ func _decline_card() -> void:
 
 # Presentation wrapper; checkpointing and combat setup remain in start_battle.
 func _enter_battle(index: int) -> void:
-	if transitioning or presenting_outcome or not state.can_visit(index):
+	if transitioning or presenting_outcome or not state.can_engage(index):
 		return
 	if not _uses_3d_map() or not is_instance_valid(star_map):
 		start_battle(index)
@@ -1169,7 +1200,7 @@ func _enter_battle(index: int) -> void:
 func start_battle(index: int, battle_seed: int = -1) -> void:
 	if is_instance_valid(battle) or presenting_outcome or phase in [Phase.FTL, Phase.EXITED]:
 		return
-	if not state.can_visit(index) or state.encounters[index].kind != "battle":
+	if not state.can_engage(index) or state.encounters[index].kind != "battle":
 		return
 	var checkpoint: Dictionary = Save.encode(state)
 	if battle_seed < 0:
@@ -1374,8 +1405,46 @@ func _begin_free_travel(point: Vector3) -> bool:
 func _free_arrived() -> void:
 	if phase != Phase.TRAVELING: return
 	_sample_navigation_position(true)
+	if phase != Phase.TRAVELING: return
 	_checkpoint_navigation_position()
 	state.arrive_free_destination()
 	map_destination = -1
 	phase = Phase.OVERVIEW
 	_clear("system")
+
+# Simulation decides events; coordinator cancels presentation and routes existing UI.
+func _defense_updated(events: Dictionary) -> void:
+	if not _uses_3d_map() or not is_instance_valid(star_map): return
+	star_map.sync_defense(state.defense.snapshot())
+	_refresh_defense_hud()
+	if events.contact >= 0 or state.run_ended:
+		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+		phase = Phase.OVERVIEW
+		if state.run_ended: show_system()
+		else:
+			map_destination = events.contact
+			show_battle_preview(events.contact)
+
+func _reveal_mothership() -> void:
+	if not state.is_defense() or not state.defense.reveal_pending or phase != Phase.OVERVIEW: return
+	# Commit once before animation: restoration never replays the reveal or rewards.
+	state.consume_defense_reveal()
+	var revision: int = _begin_presentation(Phase.INTRO)
+	var owner: Resource = state
+	screen.overview_hud.metagame.text = "WARNING · Mothership detected\nNeutralize it to unlock FTL"
+	if is_instance_valid(star_map):
+		var model: Node3D = star_map.objects[state.defense.mothership_index()]
+		var original: Vector3 = model.scale
+		model.scale = original * 0.05
+		star_map.create_tween().tween_property(model, "scale", original, 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await get_tree().create_timer(1.2).timeout
+	if _presentation_current(revision, owner):
+		phase = Phase.OVERVIEW
+		screen.set_system_name(star_map.visual_data.name)
+		_refresh_defense_hud()
+
+func _refresh_defense_hud() -> void:
+	var threats: int = 0
+	for unit in state.defense.units:
+		if state.defense.available(unit): threats += 1
+	screen.overview_hud.metagame.text = "HOME %d/%d · %d THREATS\n%s" % [state.defense.integrity, state.rules.defense_tuning.base_integrity, threats, state.ftl_status()]

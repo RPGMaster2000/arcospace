@@ -21,6 +21,9 @@ func mark(state: Resource, trace: Array, label: String) -> void:
 	trace.append({"step": label, "hash": JSON.stringify(data).sha256_text()})
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var baseline: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/deck_ownership_baseline.json"))
 	check(not baseline.trace.is_empty(), "Historical pre-refactor trace remains available")
 	for kind in ["replacement", "upgrade"]:

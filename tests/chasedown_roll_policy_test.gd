@@ -13,6 +13,9 @@ func check(ok: bool, message: String) -> void:
 		push_error(message)
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	var policy = Policy.new()
 	check(not policy.claim_roll(false) and not policy.rolled_this_leg and policy.cooldown_remaining == 0.0, "Inactive navigation cannot consume a roll or cooldown")
 	check(policy.claim_roll(true) and policy.cooldown_remaining == 10.0, "First active journey claims its single roll")

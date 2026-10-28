@@ -6,7 +6,11 @@ func check(ok: bool, message: String):
  if not ok:
   failures += 1
   push_error(message)
-func _initialize(): call_deferred("run")
+func _initialize() -> void:
+ # Retained exploration-mode regression.
+ var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+ regression_rules.game_mode = "exploration"
+ call_deferred("run")
 func capture(name: String):
  if DisplayServer.get_name()=="headless": return
  await RenderingServer.frame_post_draw

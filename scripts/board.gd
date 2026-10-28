@@ -750,7 +750,7 @@ func _warp_out() -> void:
 	escaped_by_ftl = true
 	_record_result()
 	enemy_timer.stop()
-	$LastActionLabel.text = "EMP Pulse complete — escaped!"
+	$LastActionLabel.text = battle_setup.emp_victory_message if battle_setup != null and not battle_setup.emp_victory_message.is_empty() else "EMP Pulse complete — escaped!"
 	refresh_display()
 	$MatchResult/Panel/Title.text = "EMP PULSE SUCCESS"
 

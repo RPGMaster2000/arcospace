@@ -14,7 +14,11 @@ class Map extends Control:
 	var hud_regions: Array[Rect2] = []
 var checks := 0
 var failures := 0
-func _initialize(): call_deferred("run")
+func _initialize() -> void:
+	# Retained exploration-mode regression.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
+	call_deferred("run")
 func check(ok: bool, message: String):
 	checks += 1
 	if not ok:

@@ -79,6 +79,10 @@ func run() -> void:
 				break
 		check(encounter >= 0, "A battle is available in the generated system")
 		if encounter >= 0:
+			if expedition.state.is_defense():
+				expedition.start_battle(encounter)
+				check(not is_instance_valid(expedition.battle), "Remote defense battle is rejected before contact")
+			check(preload("res://tests/fixtures/expedition_contact.gd").reach(expedition.state, encounter), "Movement establishes eligible battle contact")
 			expedition.start_battle(encounter)
 			var board = expedition.battle
 			check(is_instance_valid(board), "Actual expedition battle is instantiated")

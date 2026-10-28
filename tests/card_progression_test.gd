@@ -13,6 +13,9 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run")
 func snapshot() -> Dictionary:
 	return {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}

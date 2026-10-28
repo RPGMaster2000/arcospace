@@ -5,6 +5,7 @@ The renderer must be selected explicitly in CI; Mobile uses Vulkan, never GL fal
 """
 import argparse
 import json
+import os
 from pathlib import Path
 
 from run_regressions import positive_seconds, run_process
@@ -12,6 +13,7 @@ from run_regressions import positive_seconds, run_process
 # One selection shared by local verification and CI. These are presentation checks,
 # rather than all rule simulations running a second time through a renderer.
 COMPATIBILITY = (
+    "starfront_presentation_test",
     "cinematic_visual_test", "cinematic_touch_test", "cinematic_launch_test",
     "expedition_resume_test", "systems_failure_test", "battle_layout_test",
     "shield_shatter_test", "alpha_visual_test", "power_allocation_test",
@@ -27,13 +29,13 @@ COMPATIBILITY = (
 # Navigation assertions run headless and in rendered GL. Under Mesa software Vulkan the
 # navigation script reports 26/26 passes but can hang during engine teardown.
 # Mobile still tests actual Vulkan initialization, tactical resize, HUD and metagame.
-MOBILE = ("star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
+MOBILE = ("starfront_presentation_test", "star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 TIMEOUTS = {"power_allocation_test": 300}
 
 
 def command(godot, project, renderer, name):
-    return [godot, "--display-driver", "x11", "--rendering-method", renderer,
+    return [godot, "--display-driver", "windows" if os.name == "nt" else "x11", "--rendering-method", renderer,
             "--audio-driver", "Dummy", "--path", str(project),
             "--script", "res://tests/" + name + ".gd", "--", renderer]
 

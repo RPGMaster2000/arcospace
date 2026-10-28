@@ -1,6 +1,10 @@
 extends Resource
 class_name ExpeditionRules
 
+## Central mode selection; old saves explicitly restore exploration.
+@export_enum("exploration", "defense") var game_mode: String = "defense"
+@export var defense_tuning: Resource = preload("res://resources/starfront_defense_tuning.tres")
+
 # RESPONSIBILITY: Store Inspector-editable encounter, service, reward and deck configuration.
 
 ## Optional repeatable services, independent of regular progression encounters.

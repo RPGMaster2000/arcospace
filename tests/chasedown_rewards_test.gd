@@ -9,7 +9,11 @@ func check(value: bool, message: String) -> void:
 	if not value:
 		failures += 1
 		if failures < 25: push_error(message)
-func _initialize() -> void: call_deferred("run")
+func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
+	call_deferred("run")
 func fresh() -> Resource:
 	var state = State.new()
 	var config = Rules.duplicate(true)

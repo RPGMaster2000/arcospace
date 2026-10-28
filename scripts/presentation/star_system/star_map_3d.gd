@@ -39,6 +39,9 @@ var intercept_free_travel: Callable
 var interception_pending := false
 var traveling := false
 var travel_duration := 1.4
+var defense_view: Dictionary = {}
+var physical_speed: float = 0.0
+var defense_effects: Node3D
 var motion: Tween
 var impact_motion: Tween
 var impact_layer: CanvasLayer
@@ -137,6 +140,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 				markers[entry.index].set_state(entry.completed,false,false)
 				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index))
 				markers[entry.index].set_objective(entry.get("objective_marker",""))
+		if not defense_view.is_empty(): sync_defense(defense_view)
 		overview()
 		return
 	if motion and motion.is_valid():
@@ -147,6 +151,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	travel_duration = duration
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings, system_profile)
+	if not defense_view.is_empty():
+		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(visual_data, defense_view)
 	for layer in [visual_root,destination_root,background]:
 		if is_instance_valid(layer):
 			world.remove_child(layer)
@@ -240,15 +246,26 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	feedback.camera = camera
 	feedback.ship = ship
 	world.add_child(feedback)
-	ship.position = _initial_ship_position()
+	ship.position = _initial_ship_position() if defense_view.is_empty() else _defense_point(defense_view.start)
 	orbit_index = last_destination if objects.has(last_destination) else -1
 	if orbit_index != -1:
 		ship.position = objects[orbit_index].position + Vector3(_orbit_radius(orbit_index), 0, 0)
+	if not defense_view.is_empty():
+		if is_instance_valid(defense_effects):
+			world.remove_child(defense_effects)
+			defense_effects.queue_free()
+		defense_effects = preload("res://scripts/presentation/star_system/defense_presentation.gd").new()
+		world.add_child(defense_effects)
+		defense_effects.configure(self)
+		sync_defense(defense_view)
 	focused = false
 	interactive = true
 
 
 func _process(delta: float) -> void:
+	if not defense_view.is_empty() and interactive and traveling and motion and motion.is_valid():
+		if input_allowed.is_valid() and not input_allowed.call(): motion.pause()
+		elif not motion.is_running(): motion.play()
 	if focus_orbit_enabled and camera.viewing == &"destination" and not (camera.motion and camera.motion.is_running()):
 		if orbit_velocity.length_squared() > 0.000001:
 			var offset: Vector3 = focus_offset
@@ -271,7 +288,7 @@ func _process(delta: float) -> void:
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
 		_face(travel_direction, delta * 7.0)
-	if orbit_index != -1 and not traveling:
+	if orbit_index != -1 and not traveling and defense_view.is_empty():
 		orbit_angle += delta * settings.orbit_speed
 		var center: Vector3 = objects[orbit_index].position
 		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * _orbit_radius(orbit_index)
@@ -281,7 +298,7 @@ func _process(delta: float) -> void:
 		var button = markers[index]
 		var point: Vector3 = objects[index].position
 		var center: Vector2 = camera.unproject_position(point)
-		button.visible = not focused and not introducing and not camera.is_position_behind(point)
+		button.visible = not focused and not introducing and not camera.is_position_behind(point) and objects[index].visible
 		var blocked: bool = not interactive or interception_pending or pinching or dragging or Time.get_ticks_msec()<gesture_block_until
 		button.set_state(button.completed,blocked,index==selected_index)
 		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
@@ -341,9 +358,10 @@ func travel(index: int) -> void:
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
+	if not interactive or focused: return
 	_select_destination(index)
 	feedback.acknowledge(objects[index].position,float(objects[index].get_meta("radius",0.65)),markers[index].accent)
-	_start_journey(objects[index].position + Vector3(_orbit_radius(index), 0.15, 0), index, intercepted)
+	_start_journey(objects[index].position + (Vector3(_orbit_radius(index), 0.15, 0) if defense_view.is_empty() or not _defense_hostile(index) else Vector3.ZERO), index, intercepted)
 
 
 # Free movement uses exactly the same presentation and interception path as PoI travel.
@@ -354,6 +372,7 @@ func travel_to_position(point: Vector3, check_eligibility: bool = true) -> void:
 	if check_eligibility and before_free_travel.is_valid() and not before_free_travel.call(point):
 		return
 	var intercepted: bool = check_eligibility and intercept_free_travel.is_valid() and intercept_free_travel.call(point)
+	if not interactive or focused: return
 	_select_destination(-1)
 	feedback.acknowledge(point,0.45,Color("8de8ff"))
 	_start_journey(point, -3, intercepted)
@@ -368,7 +387,8 @@ func _start_journey(destination: Vector3, index: int, intercepted: bool) -> void
 	orbit_index = -1
 	var origin: Vector3 = ship.position
 	travel_direction = destination - origin
-	motion = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var seconds: float = origin.distance_to(destination) / physical_speed if physical_speed > 0 else travel_duration
+	motion = create_tween().set_trans(Tween.TRANS_LINEAR if physical_speed > 0 else Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	if intercepted:
 		var fraction := minf(0.5 / maxf(travel_duration, 0.6), 0.8)
 		motion.tween_property(ship, "position", origin.lerp(destination, fraction), 0.5)
@@ -376,7 +396,7 @@ func _start_journey(destination: Vector3, index: int, intercepted: bool) -> void
 		motion.tween_interval(1.0)
 		motion.tween_callback(func(): traveling = false; interrupted.emit())
 	else:
-		motion.tween_property(ship, "position", destination, travel_duration)
+		motion.tween_property(ship, "position", destination, maxf(0.001, seconds))
 		motion.tween_callback(func():
 			traveling = false
 			feedback.set_travel(false,true)
@@ -596,6 +616,7 @@ func _point_on_object(point: Vector2) -> bool:
 	var models: Array = objects.values()
 	models.append(ship)
 	for model in models:
+		if not model.visible: continue
 		var at: Vector3 = model.position
 		if camera.is_position_behind(at): continue
 		var center: Vector2 = camera.unproject_position(at)
@@ -839,3 +860,22 @@ func _ship_extent(model: Node3D) -> float:
 		for i in range(8):
 			extent = maxf(extent,(mesh.to_global(bounds.get_endpoint(i))-model.global_position).length())
 	return extent
+
+static func _defense_point(value: Array) -> Vector3:
+	return Vector3(value[0], value[1], value[2])
+func _defense_hostile(index: int) -> bool:
+	for unit in defense_view.get("units", []):
+		if int(unit.encounter) == index: return true
+	return false
+func sync_defense(snapshot: Dictionary) -> void:
+	defense_view = snapshot
+	for unit in snapshot.units:
+		var index: int = int(unit.encounter)
+		if not objects.has(index): continue
+		objects[index].position = _defense_point(unit.position)
+		var active: bool = unit.status == "active" and (not unit.mothership or snapshot.revealed) and not snapshot.complete
+		objects[index].visible = active
+		markers[index].disabled = not active
+		markers[index].tooltip_text = "Mothership · Neutralize to unlock FTL" if unit.mothership else "Incoming attacker → HOMEWORLD"
+		visual_data.anchors[index] = objects[index].position
+	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)

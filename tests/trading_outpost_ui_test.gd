@@ -28,6 +28,9 @@ func geometry() -> void:
 		check(not host.repair_selector.get_global_rect().intersects(host.confirm_button.get_global_rect()), "Repair selector does not overlap confirmation")
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run_tests")
 
 func run_tests() -> void:

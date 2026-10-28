@@ -7,6 +7,9 @@ var assertions: int = 0
 var host: Control
 
 func _initialize() -> void:
+	# This regression exercises the retained exploration mode.
+	var regression_rules: Resource = preload("res://encounters/expedition_rules.tres")
+	regression_rules.game_mode = "exploration"
 	call_deferred("run")
 func check(ok: bool, message: String) -> void:
 	assertions += 1

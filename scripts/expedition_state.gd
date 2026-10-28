@@ -5,6 +5,39 @@ extends Resource
 class_name ExpeditionState
 signal deck_changed
 signal progress_committed
+signal defense_advanced(events: Dictionary)
+const Defense = preload("res://scripts/expedition/defense_state.gd")
+var game_mode: String = "exploration"
+var defense: RefCounted
+
+func is_defense() -> bool:
+	return game_mode == "defense"
+
+func consume_defense_reveal() -> bool:
+	if not is_defense() or not defense.reveal_pending: return false
+	defense.reveal_pending = false
+	progress_committed.emit()
+	return true
+
+func bind_defense_movement() -> void:
+	if not navigation.movement_advanced.is_connected(_advance_defense):
+		navigation.movement_advanced.connect(_advance_defense)
+
+func _advance_defense(distance: float) -> void:
+	if not is_defense() or defense == null or not can_navigate(): return
+	var events: Dictionary = defense.advance(distance, Defense.point(navigation.movement_origin), Defense.point(navigation.position))
+	for unit in defense.units:
+		if unit.status == "arrived": encounters[unit.encounter].completed = true
+	if events.contact >= 0 or defense.failed():
+		navigation.checkpoint_position(Defense.wire(events.position))
+		navigation.stop()
+		travel_destination = -1
+		pending_destination = -1
+		navigation_origin = FREE_DESTINATION
+	if defense.failed(): run_ended = true
+	defense_advanced.emit(events)
+	if events.contact >= 0 or events.arrivals > 0: progress_committed.emit()
+
 var run_ended: bool = false
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
 const BattleResult = preload("res://scripts/combat/battle_result.gd")
@@ -116,6 +149,7 @@ func encounter_at(index: int) -> Dictionary:
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	run_ended = false
 	rules = configuration
+	game_mode = rules.game_mode
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
 	hull = ship().hull_capacity
 	salvage = 0
@@ -124,6 +158,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	pressure = 0
 	ftl_access = false
 	navigation = Navigation.new()
+	bind_defense_movement()
 	chasedown_roll_policy = ChasedownRollPolicy.new()
 	next_outpost_system = 0
 	station_production_purchases = 0
@@ -178,10 +213,11 @@ func can_jump() -> bool:
 # Persistent system objective boundary, independent of transient UI/battle readiness.
 # Future objective modes change this condition, while every Jump caller keeps can_jump().
 func system_objective_complete() -> bool:
-	return ftl_access and not mandatory_boss_pending()
+	return defense != null and defense.complete if is_defense() else ftl_access and not mandatory_boss_pending()
 
 
 func mandatory_boss_pending() -> bool:
+	if is_defense(): return false
 	var found: bool = false
 	for encounter in encounters:
 		if encounter.get("mandatory_boss", false):
@@ -244,6 +280,7 @@ func generate_system() -> bool:
 	_recorded_results.clear()
 	SystemGenerator.generate(self)
 	navigation.reset_system()
+	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.
 	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
@@ -257,7 +294,8 @@ func _roll_battle_modifier() -> int:
 
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
-	return Pressure.scaled_enemy(rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number))), pressure)
+	var scaled: Resource = rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)))
+	return scaled if is_defense() else Pressure.scaled_enemy(scaled, pressure)
 
 
 func profile_name() -> String:
@@ -292,6 +330,9 @@ func objective_marker(index: int) -> String:
 
 
 func ftl_status() -> String:
+	if is_defense():
+		if defense.complete: return "FTL READY"
+		return "MOTHERSHIP ACTIVE" if defense.revealed else "INTERCEPT TO LOCATE MOTHERSHIP"
 	if mandatory_boss_pending(): return "BOSS LOCK"
 	if ftl_access: return "FTL READY"
 	for index in range(encounters.size()):
@@ -301,6 +342,7 @@ func ftl_status() -> String:
 
 
 func encounter_pressure_risk(index: int) -> bool:
+	if is_defense(): return false
 	if index < 0 or index >= encounters.size(): return false
 	var entry: Dictionary = encounters[index]
 	return entry.get("pressure_sensitive", false) and not entry.has("objective_role") and pressure > int(entry.get("pressure_tolerance", 99999))
@@ -315,7 +357,7 @@ func _complete_encounter(index: int) -> bool:
 	if index < 0 or index >= encounters.size() or encounters[index].completed or objective_locked(index): return false
 	var risk: bool = encounter_pressure_risk(index)
 	encounters[index].completed = true
-	if not encounters[index].get("chasedown", false): pressure += 1
+	if not is_defense() and not encounters[index].get("chasedown", false): pressure += 1
 	if encounters[index].get("objective_role", "") == "access": ftl_access = true
 	for entry in encounters:
 		if int(entry.get("objective_prerequisite", -1)) == index: entry.objective_known = true
@@ -352,6 +394,10 @@ func survey(index: int) -> bool:
 
 
 func can_visit(index: int) -> bool:
+	if is_defense() and defense != null:
+		var unit: Dictionary = defense.unit_for(index)
+		if not unit.is_empty() and not defense.available(unit): return false
+		if defense.contact >= 0 and index != defense.contact: return false
 	if run_ended or hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
 		return false
 	if chasedown_unresolved() and index != chasedown_index:
@@ -363,10 +409,17 @@ func can_visit(index: int) -> bool:
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
 
+func can_engage(index: int) -> bool:
+	if not can_visit(index): return false
+	if not is_defense(): return true
+	var unit: Dictionary = defense.unit_for(index)
+	return unit.is_empty() or defense.contact == index
+
+
 # Roll once at actual movement initiation; arrival, menus and battle returns never call this.
 # Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
 func can_navigate() -> bool:
-	return not run_ended and hull > 0 and active_battle < 0 and pending_choice.is_empty() and not chasedown_unresolved()
+	return (not is_defense() or defense == null or defense.contact < 0) and not run_ended and hull > 0 and active_battle < 0 and pending_choice.is_empty() and not chasedown_unresolved()
 
 
 func begin_travel(destination: int, forced_roll: float = -1.0) -> bool:
@@ -416,6 +469,7 @@ func arrive_free_destination() -> void:
 
 
 func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
+	if is_defense(): return false
 	if not can_navigate(): return false
 	if destination != FREE_DESTINATION and (not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi"): return false
 	if navigation_origin == destination and destination != FREE_DESTINATION: return false
@@ -939,6 +993,8 @@ func finish_upgrades() -> void:
 
 # Produce one encounter's data, consuming temporary bonuses once at entry.
 func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup:
+	if is_defense() and not defense.unit_for(index).is_empty() and not can_engage(index):
+		return null
 	last_poi_success = -1
 	active_battle = index
 	field_repairs_open = false
@@ -954,6 +1010,8 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup
 			setup.enemy_ship = int(encounter.get("enemy", 0))
 			if enemy_data == null:
 				setup.enemy_profile = enemy_profile(encounter)
+		if is_defense() and defense.unit_for(index).get("mothership", false):
+			setup.emp_requirement_bonus = rules.defense_tuning.mothership_emp_bonus
 		setup.modifier = encounter.get("modifier", 0)
 		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
 	setup.player_state = ShipState.new()
@@ -968,6 +1026,7 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup
 		setup.enemy_state.configure_profile(setup.enemy_profile)
 	setup.salvage = salvage
 	setup.battles_won = battles_won
+	if is_defense(): setup.emp_victory_message = "Enemy systems disabled. Allied recovery forces have secured the vessel."
 	setup.emp_charge = modifier_value("emp_pulse_charge")
 	setup.emp_offline = maxi(0, modifier_value("emp_pulse_offline"))
 	setup.player_cards = player_pool()
@@ -1037,6 +1096,10 @@ func record_battle(result: BattleResult) -> void:
 			if not _complete_encounter(active_battle):
 				return
 			encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
+			if is_defense():
+				defense.neutralize(active_battle)
+				for unit in defense.units:
+					if unit.status == "secured": encounters[unit.encounter].completed = true
 		else:
 			return
 	if result.winner == "player":
