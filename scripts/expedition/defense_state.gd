@@ -130,7 +130,9 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			if not available(unit): continue
 			var velocity: Vector3 = Vector3.ZERO if unit.mothership else (home - unit.position).normalized() * tuning.enemy_speed
 			var arrival: float = INF if unit.mothership or tuning.enemy_speed <= 0 else unit.position.distance_to(home) / tuning.enemy_speed
-			var hit: float = hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
+			# Activity penalties advance hostile movement but cannot initiate a new
+			# battle against a stationary player. Only actual travel can intercept.
+			var hit: float = INF if carry else hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
 			if hit <= event_time:
 				event_time = hit
 				event_unit = unit
