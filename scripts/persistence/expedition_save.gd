@@ -53,9 +53,12 @@ static func _entry(value: Dictionary) -> Dictionary:
 
 static func encode(state: Resource) -> Dictionary:
 	var deck: Dictionary = state.deck_snapshot()
+	# v1 wire shape groups these fields under navigation; ownership is now separate in memory.
+	var navigation_data: Dictionary = state.navigation.snapshot()
+	navigation_data.merge(state.chasedown_roll_policy.snapshot())
 	var data: Dictionary = {"metagame_version": 1, "pressure": state.pressure,
 		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
-		"navigation": state.navigation.snapshot(), "ship_id": state.ship().resource_path,
+		"navigation": navigation_data, "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
 		"pending_choice": state.pending_choice, "last_outcome": state.last_outcome,
 		"production_upgrades": state.production_upgrades.duplicate(),
@@ -168,6 +171,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			if not generator.get(field) is String or not generator[field].is_valid_int(): return null
 	var state = State.new()
 	if not data.get("navigation") is Dictionary or not state.navigation.restore(data.navigation): return null
+	if not state.chasedown_roll_policy.restore(data.navigation): return null
 	if not _valid_navigation(data, entries): return null
 	state.system_profile = data.system_profile
 	state.ftl_access = data.ftl_access
@@ -280,7 +284,7 @@ static func _valid_navigation(data: Dictionary, entries: Array[Dictionary]) -> b
 		if destination == -1: return false
 		if destination == -3 and (nav.target.size() != 3 or nav.position.size() != 3): return false
 	elif destination != -1: return false
-	if not nav.leg_active and not nav.target.is_empty(): return false
+	if not nav.leg_active and (not nav.target.is_empty() or nav.rolled_this_leg): return false
 	if int(data.chasedown_index) >= 0:
 		var encounter: Dictionary = entries[int(data.chasedown_index)]
 		if not encounter.completed and nav.leg_active: return false

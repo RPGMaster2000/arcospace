@@ -23,7 +23,7 @@ func fresh() -> Resource:
 # Every forced sample represents a completed prior journey and expired shared cooldown.
 func roll(state: Resource, destination: int, value: float) -> bool:
 	state.navigation.stop()
-	state.advance_navigation_time(10.0)
+	state.advance_chasedown_cooldown(10.0)
 	return state.begin_travel(destination,value)
 func board_for(state: Resource, index: int) -> Node:
 	var board = load("res://scenes/board_3d.tscn").instantiate()
@@ -38,7 +38,7 @@ func board_for(state: Resource, index: int) -> Node:
 	return board
 func run() -> void:
 	var state = fresh()
-	check(is_equal_approx(state.rules.chasedown_chance, 0.05) and state.rules.chasedown_limit == 1, "Shipping probability and limit")
+	check(is_equal_approx(state.rules.chasedown_chance, Rules.chasedown_chance) and state.rules.chasedown_limit == Rules.chasedown_limit, "Cloned configuration retains authored probability and limit")
 	check(not roll(state,1,0), "No interception on initial system entry")
 	state.arrive_destination(state.SERVICE_INDEX)
 	check(not roll(state,1,0), "No interception leaving a service station")

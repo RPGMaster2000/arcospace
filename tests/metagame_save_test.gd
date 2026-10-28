@@ -22,7 +22,7 @@ func run() -> void:
 	state.start(0, Rules, 77321)
 	state.pressure = 8
 	state.navigation.position = [2.0, 0.0, -5.0]
-	state.navigation.cooldown_remaining = 6.25
+	state.chasedown_roll_policy.cooldown_remaining = 6.25
 	var data: Dictionary = Save.encode(state)
 	check(not data.has("ftl_charge") and not data.has("required_ftl_charge"), "Obsolete charge fields are not serialized")
 	var restored: Resource = store.decode(data)
@@ -32,7 +32,7 @@ func run() -> void:
 		return
 	check(JSON.stringify(Save.encode(restored)) == JSON.stringify(data), "Full current payload round trips exactly")
 	check(restored.pressure == 8 and restored.system_profile == state.system_profile and not restored.ftl_access, "Pressure, profile and access survive")
-	check(restored.navigation.snapshot() == state.navigation.snapshot(), "Position and remaining cooldown survive")
+	check(restored.navigation.snapshot() == state.navigation.snapshot() and restored.chasedown_roll_policy.snapshot() == state.chasedown_roll_policy.snapshot(), "Position and exploration risk state survive under separate owners")
 	check(restored.rng.state == state.rng.state and restored.chasedown_rng.state == state.chasedown_rng.state and restored.station_rng.state == state.station_rng.state, "All RNG streams survive without draws")
 	var access_index: int = -1
 	for index in state.encounters.size():
@@ -48,13 +48,11 @@ func run() -> void:
 	# Free travel and stopped free positions use the same navigation codec as PoI travel.
 	state.travel_destination = -3
 	state.navigation.leg_active = true
-	state.navigation.rolled_this_leg = true
+	state.chasedown_roll_policy.rolled_this_leg = true
 	state.navigation.target = [6.0, 0.0, 3.0]
 	restored = store.decode(Save.encode(state))
 	check(restored != null and restored.travel_destination == -3 and restored.navigation.target == state.navigation.target, "Pending free journey survives")
-	state.travel_destination = -1
-	state.navigation.stop()
-	state.navigation_origin = -3
+	state.arrive_free_destination()
 	restored = store.decode(Save.encode(state))
 	check(restored != null and restored.navigation.position == state.navigation.position, "Stopped free position survives")
 	# Generate historic payloads by removing only the newly introduced metadata.
@@ -76,7 +74,7 @@ func run() -> void:
 		check(restored.pressure == old_count and restored.system_profile == "industrial", "Legacy pressure and profile use documented deterministic fallback")
 		check(restored.encounters.size() == old_count + 1 and not restored.ftl_access, "Unready legacy run receives one additional safe access route")
 		check(restored.encounters.back().poi.approaches[0].salvage_cost == 0 and restored.encounters.back().poi.approaches[0].success_chance == 1.0, "Migration route is free and deterministic")
-		check(restored.navigation.cooldown_remaining == 10.0, "Legacy cooldown begins conservatively")
+		check(restored.chasedown_roll_policy.cooldown_remaining == 10.0, "Legacy cooldown begins conservatively")
 		check(Save.encode(restored).rng == old_rng and restored.salvage == int(legacy.salvage), "Migration preserves exact RNG and currency")
 		var last: int = restored.encounters.size() - 1
 		check(restored.resolve_approach(last, 0) and restored.ftl_access and restored.can_jump(), "Exhausted historic roster cannot softlock progression")

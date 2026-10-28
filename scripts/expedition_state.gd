@@ -38,15 +38,17 @@ const SystemGenerator = preload("res://scripts/expedition/system_generator.gd")
 const Profiles = preload("res://scripts/expedition/system_profile.gd")
 const Pressure = preload("res://scripts/expedition/system_pressure.gd")
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
+const ChasedownRollPolicy = preload("res://scripts/expedition/chasedown_roll_policy.gd")
 const FREE_DESTINATION = -3
 var pressure: int = 0
 var system_profile: String = "industrial"
 var ftl_access: bool = false
 var navigation := Navigation.new()
+var chasedown_roll_policy := ChasedownRollPolicy.new()
 var system_number: int = 0
 var system_name: String = ""
 var encounters: Array[Dictionary] = []
-# Independent service visit, deliberately outside the six progression encounters.
+# Independent service visit, deliberately outside the regular progression encounters.
 const SERVICE_INDEX = -2
 var service: Dictionary = {}
 var next_outpost_system: int = 0
@@ -92,7 +94,7 @@ var choice_amount: int = 0
 var last_outcome: String = ""
 # -1 = no rolled PoI result (station/survey/battle); 0 = worse branch; 1 = success branch.
 var last_poi_success: int = -1
-# In-memory travel interruption; no separate combat or persistence system.
+# Travel interruption counters; the codec persists unresolved encounters and cancellation state.
 var navigation_origin: int = -1
 var travel_destination: int = -1
 var pending_destination: int = -1
@@ -122,6 +124,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	pressure = 0
 	ftl_access = false
 	navigation = Navigation.new()
+	chasedown_roll_policy = ChasedownRollPolicy.new()
 	next_outpost_system = 0
 	station_production_purchases = 0
 	service_revision += 1
@@ -139,9 +142,11 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	else:
 		rng.seed = chosen_seed
 	seed_used = rng.seed
-	# Separate stream: station frequency cannot change six-encounter generation or loot rolls.
+	# Separate stream: station probability draws cannot change encounter generation or loot rolls.
 	station_rng.seed = seed_used ^ 0x53544154494F4E
 	chasedown_rng.seed = seed_used ^ 0x4348415345
+	# Retain this legacy station-stream draw: removing it changes seeded profile outposts.
+	# The saved counter is compatibility data; profile probabilities now choose actual stations.
 	next_outpost_system = _station_interval()
 	generate_system()
 
@@ -166,9 +171,14 @@ func can_jump() -> bool:
 		and active_battle < 0
 		and not chasedown_unresolved()
 		and pending_choice.is_empty()
-		and ftl_access
-		and not mandatory_boss_pending()
+		and system_objective_complete()
 	)
+
+
+# Persistent system objective boundary, independent of transient UI/battle readiness.
+# Future objective modes change this condition, while every Jump caller keeps can_jump().
+func system_objective_complete() -> bool:
+	return ftl_access and not mandatory_boss_pending()
 
 
 func mandatory_boss_pending() -> bool:
@@ -225,7 +235,7 @@ func _station_interval() -> int:
 
 
 # Generate encounters from one rules registry; both map and grid read this same array.
-# Carryover and mandatory Boss replacement happen here, independently of presentation.
+# Transition eligibility stays here; the generator replaces mandatory Boss slots independently of presentation.
 func generate_system() -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
@@ -234,6 +244,8 @@ func generate_system() -> bool:
 	_recorded_results.clear()
 	SystemGenerator.generate(self)
 	navigation.reset_system()
+	# A new system ends the leg but preserves the exploration risk cooldown.
+	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
 	return true
 
@@ -369,22 +381,24 @@ func begin_free_travel(point: Array, forced_roll: float = -1.0) -> bool:
 
 func _begin_navigation(destination: int, point: Array, forced_roll: float) -> bool:
 	var new_leg: bool = navigation.begin(point)
+	if new_leg: chasedown_roll_policy.reset_leg()
 	pending_destination = -1
 	travel_destination = destination
 	var intercepted: bool = try_chasedown(destination, forced_roll) if new_leg else false
 	if intercepted:
 		travel_destination = -1
 		navigation.stop()
+		chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
 	return intercepted
 
 
-func advance_navigation_time(seconds: float) -> void:
-	navigation.advance(seconds)
+func advance_chasedown_cooldown(seconds: float) -> void:
+	chasedown_roll_policy.advance(seconds)
 
 
 func update_navigation_position(point: Array) -> void:
-	if Navigation.valid_point(point, false): navigation.position = point.duplicate()
+	navigation.checkpoint_position(point)
 
 
 func effective_chasedown_chance() -> float:
@@ -394,6 +408,7 @@ func effective_chasedown_chance() -> float:
 func arrive_free_destination() -> void:
 	if travel_destination != FREE_DESTINATION: return
 	navigation.stop()
+	chasedown_roll_policy.reset_leg()
 	travel_destination = -1
 	navigation_origin = FREE_DESTINATION
 	pending_destination = -1
@@ -419,7 +434,7 @@ func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 	var chance: float = effective_chasedown_chance()
 	if chance <= 0:
 		return false
-	if not navigation.claim_roll(): return false
+	if not chasedown_roll_policy.claim_roll(navigation.leg_active): return false
 	var roll: float = chasedown_rng.randf() if forced_roll < 0 else forced_roll
 	if roll >= chance:
 		return false
@@ -473,6 +488,7 @@ func stop_intercepted_travel(position: Array = []) -> void:
 	if stored.size() == 2: stored = [stored[0], 0.0, stored[1]]
 	if Navigation.valid_point(stored, false): navigation.position = stored.duplicate()
 	navigation.stop()
+	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
 
 func intercepted_position() -> Array:
@@ -501,6 +517,7 @@ func choose_chasedown_response(choice: int) -> bool:
 
 func arrive_destination(index: int) -> void:
 	navigation.stop()
+	chasedown_roll_policy.reset_leg()
 	if chasedown_index >= 0:
 		encounters[chasedown_index].erase("intercept_position")
 	navigation_origin = index

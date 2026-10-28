@@ -1,6 +1,6 @@
 extends Resource
 
-# RESPONSIBILITY: Configure interstellar carryover, enemy scaling and mandatory Boss milestones.
+# RESPONSIBILITY: Configure enemy scaling and mandatory Boss milestones.
 # Expedition-only progression. Never mutates a shared ShipData or combat card Resource.
 @export_range(1, 100, 1) var systems_per_difficulty: int = 3
 @export_range(0, 20, 1) var hull_bonus_per_level: int = 2

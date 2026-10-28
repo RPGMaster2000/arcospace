@@ -1,7 +1,7 @@
 name: Godot regression tests
 on:
   push:
-    branches: [main, checkpoint/pressure-exploration-v01, codex/unique-ship-models, codex/expedition-progression-validation, codex/music-emp-pulse]
+    branches: [main, refactor/starfront-preparation, checkpoint/pressure-exploration-v01, codex/unique-ship-models, codex/expedition-progression-validation, codex/music-emp-pulse]
   pull_request:
   workflow_dispatch:
 permissions:

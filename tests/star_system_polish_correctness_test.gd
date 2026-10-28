@@ -23,12 +23,14 @@ func run():
  check(giant.get_node("Surface").material_override.shader == preload("res://third_party/naejimer_planets/materials/gaseous.tres").shader,"Gas giant uses shared gaseous material")
  giant.free()
  var state = host.state
- state.encounters[0] = {"kind":"poi","poi":host.rules.pois[0],"title":"Origin","completed":false,"charge_awarded":false}
- state.encounters[1] = {"kind":"poi","poi":host.rules.pois[1],"title":"Destination","completed":false,"charge_awarded":false}
- state.navigation_origin = 0
+ var origin: int = state.encounters.size()
+ state.encounters.append({"kind":"poi","poi":host.rules.pois[0],"title":"Origin","completed":false,"charge_awarded":false})
+ var destination: int = state.encounters.size()
+ state.encounters.append({"kind":"poi","poi":host.rules.pois[1],"title":"Destination","completed":false,"charge_awarded":false})
+ state.navigation_origin = origin
  state.rules = state.rules.duplicate()
  state.rules.chasedown_chance = 1.0
- check(state.begin_travel(1,0.0) and state.travel_destination == -1,"Interception immediately cancels authoritative command")
+ check(state.begin_travel(destination,0.0) and state.travel_destination == -1,"Interception immediately cancels authoritative command")
  state.stop_intercepted_travel([1.25,0.0,-2.75])
  var Save = load("res://scripts/persistence/expedition_save.gd")
  var encoded = Save.encode(state)
@@ -38,13 +40,13 @@ func run():
  var restored = Save.new().decode(encoded,state.rules)
  check(restored != null and restored.intercepted_position()==[1.25,0.0,-2.75],"Version 1 round-trip preserves actual stop")
  encoded.encounters[state.chasedown_index].erase("intercept_position")
- encoded.travel_destination = 1
+ encoded.travel_destination = destination
  var legacy = Save.new().decode(encoded,state.rules)
  check(legacy == null,"Modern save rejects contradictory travel while an interception is unresolved")
  encoded.encounters[state.chasedown_index].intercept_position = ["bad",0,0]
  check(Save.new().decode(encoded,state.rules)==null,"Malformed optional coordinates are rejected")
  state._complete_encounter(state.chasedown_index)
- check(state.travel_destination == -1 and state.can_visit(1),"Completion unlocks fresh explicit travel")
+ check(state.travel_destination == -1 and state.can_visit(destination),"Completion unlocks fresh explicit travel")
  host.free()
  paused = true
  var entering = load("res://scenes/expedition.tscn").instantiate()

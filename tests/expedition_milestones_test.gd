@@ -72,14 +72,14 @@ func run_tests() -> void:
 		run.start(restart_ship, run.rules, 2041)
 		check(run.system_number == 1 and not run.ftl_access and run.pressure == 0, "New expeditions start with locked access and zero pressure")
 	for system in [1,2,3,4,6,7,9,10,12,13,18,24,99]:
-		var steps: int = int((system-1)/3)
+		var steps: int = int((system-1)/Progression.systems_per_difficulty)
 		check(Progression.difficulty_level(system) == steps+1, "Difficulty follows systems, not battles")
 		for base in Rules.enemy_ships:
 			var before: Array = [base.hull_capacity,base.shields,base.materials,base.energy,base.crew,base.synthesizer,base.reactor,base.quarters]
 			var scaled: Resource = Progression.scaled_enemy(base,system)
-			check(scaled.hull_capacity == base.hull_capacity + steps*2 and scaled.shields == base.shields + steps, "Hull and Shields additive scaling")
-			for key in State.RESOURCES: check(scaled.get(key) == base.get(key)+steps, "Starting resources scaling")
-			for key in State.PRODUCTION: check(scaled.get(key) == base.get(key)+floori(steps*0.25), "Production scales conservatively")
+			check(scaled.hull_capacity == base.hull_capacity + steps*Progression.hull_bonus_per_level and scaled.shields == base.shields + steps*Progression.shields_bonus_per_level, "Hull and Shields additive scaling")
+			for key in State.RESOURCES: check(scaled.get(key) == base.get(key)+steps*Progression.resource_bonus_per_level, "Starting resources scaling")
+			for key in State.PRODUCTION: check(scaled.get(key) == base.get(key)+floori(steps*Progression.production_bonus_per_level), "Production scales conservatively")
 			check(before == [base.hull_capacity,base.shields,base.materials,base.energy,base.crew,base.synthesizer,base.reactor,base.quarters], "Shared ShipData never mutated")
 			check(scaled.destruction_salvage_reward == base.destruction_salvage_reward and scaled.card_effect_weights == base.card_effect_weights, "Rewards and enemy preferences unmodified")
 	var custom_progression: Resource = Progression.duplicate(true)

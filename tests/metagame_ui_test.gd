@@ -33,7 +33,7 @@ func verify_navigation(host: Control) -> void:
 	map.travel_duration = 0.12
 	host.state.system_profile = "industrial"
 	host.state.navigation_origin = host.state.FREE_DESTINATION
-	host.state.navigation.cooldown_remaining = 0.0
+	host.state.chasedown_roll_policy.cooldown_remaining = 0.0
 	var old_chance: float = host.rules.chasedown_chance
 	var old_increment: float = host.rules.pressure_chasedown_increment
 	host.rules.chasedown_chance = 0.000001
@@ -68,20 +68,20 @@ func verify_navigation(host: Control) -> void:
 	map.free_move_requested.emit(Vector3(11,0,8))
 	check(host.state.chasedown_rng.state == expected.state, "Immediate next leg moves normally without a cooldown roll")
 	await create_timer(0.2).timeout
-	var cooldown: float = host.state.navigation.cooldown_remaining
+	var cooldown: float = host.state.chasedown_roll_policy.cooldown_remaining
 	paused = true
 	await create_timer(0.08, true).timeout
 	paused = false
-	check(is_equal_approx(host.state.navigation.cooldown_remaining, cooldown), "Paused gameplay does not advance Chasedown cooldown")
+	check(is_equal_approx(host.state.chasedown_roll_policy.cooldown_remaining, cooldown), "Paused gameplay does not advance Chasedown cooldown")
 	host.resource_bar.overlay.show_text("Navigation clock test")
-	cooldown = host.state.navigation.cooldown_remaining
+	cooldown = host.state.chasedown_roll_policy.cooldown_remaining
 	await create_timer(0.08).timeout
-	check(is_equal_approx(host.state.navigation.cooldown_remaining, cooldown), "Open modal does not advance Chasedown cooldown")
+	check(is_equal_approx(host.state.chasedown_roll_policy.cooldown_remaining, cooldown), "Open modal does not advance Chasedown cooldown")
 	host.resource_bar.overlay.dismiss()
 	var codec = preload("res://scripts/persistence/expedition_save.gd").new()
 	var restored = codec.decode(codec.encode(host.state), host.rules)
-	check(restored != null and is_equal_approx(restored.navigation.cooldown_remaining, host.state.navigation.cooldown_remaining), "Save/resume preserves the remaining shared cooldown")
-	host.state.advance_navigation_time(10.0)
+	check(restored != null and is_equal_approx(restored.chasedown_roll_policy.cooldown_remaining, host.state.chasedown_roll_policy.cooldown_remaining), "Save/resume preserves the remaining shared cooldown")
+	host.state.advance_chasedown_cooldown(10.0)
 	expected.randf()
 	map.free_move_requested.emit(Vector3(12,0,8))
 	check(host.state.chasedown_rng.state == expected.state, "Next completed-leg journey permits one new draw after cooldown")
@@ -133,7 +133,7 @@ func run() -> void:
 		host.show_battle_preview(battle)
 		await settle()
 		var notice = host.view.find_child("PressureModifier", true, false)
-		check(notice != null and notice.visible and notice.text.contains("20%"), "Tactical briefing discloses actual high-pressure scaling")
+		check(notice != null and notice.visible and notice.text == host.state.Pressure.description(host.state.pressure), "Tactical briefing discloses actual high-pressure scaling")
 		check(host.scroll.get_v_scroll_bar().max_value <= host.scroll.get_v_scroll_bar().page + 1, "Pressure tactical panel fits without scrolling")
 		check(not hud.panels[2].get_global_rect().intersects(host.screen.sidebar.get_global_rect()), "Persistent ship panel clears combat briefing")
 		if dimensions.x == 960: await capture("combat-960", host.star_map)

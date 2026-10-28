@@ -272,6 +272,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 
 
 func _begin_presentation(next: Phase) -> int:
+	if state != null: state.navigation.rebase_movement()
 	card_management.dismiss(true)
 	_presentation_revision += 1
 	phase = next
@@ -283,6 +284,7 @@ func _presentation_current(revision: int, owner: Resource) -> bool:
 
 
 func _cancel_presentation() -> void:
+	if state != null: state.navigation.rebase_movement()
 	# Invalidate first: cancellation wakes waiters synchronously.
 	_presentation_revision += 1
 	if is_instance_valid(screen):
@@ -365,7 +367,7 @@ func _progress_committed() -> void:
 
 
 func _save_progress() -> bool:
-	_sample_navigation_position()
+	_checkpoint_navigation_position()
 	if not persistence_enabled: return true
 	if state == null: return false
 	if state.run_ended or state.hull <= 0:
@@ -395,7 +397,9 @@ func _save_and_quit() -> bool:
 
 
 func _notification(what: int) -> void:
-	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_RESUMED]: _navigation_clock = Time.get_ticks_msec()
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
+		_navigation_clock = Time.get_ticks_msec()
+		if state != null: state.navigation.rebase_movement()
 	if not persistence_enabled or state == null: return
 	if phase == Phase.INTRO and what in [NOTIFICATION_WM_GO_BACK_REQUEST,NOTIFICATION_APPLICATION_PAUSED]:
 		_cancel_presentation()
@@ -628,7 +632,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 func visit(index: int) -> void:
 	if phase == Phase.EXITED or transitioning or (not state.can_visit(index) and not state.objective_locked(index)):
 		return
-	_sample_navigation_position()
+	_sample_navigation_position(true)
+	_checkpoint_navigation_position()
 	map_destination = index
 	state.arrive_destination(index)
 	state.identify_objective(index)
@@ -1316,39 +1321,60 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 #endregion
 
 
-# Navigation owns rules; the coordinator supplies elapsed active gameplay and actual positions.
+# The legacy roll policy receives active gameplay time; navigation receives actual movement.
 var _navigation_clock: int = 0
 
 func _process(_delta: float) -> void:
 	var now: int = Time.get_ticks_msec()
 	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
 	_navigation_clock = now
-	if state == null or not is_instance_valid(screen) or get_tree().paused: return
+	if state == null: return
+	if not is_instance_valid(screen) or get_tree().paused:
+		state.navigation.rebase_movement()
+		return
 	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
-		state.advance_navigation_time(elapsed)
-	if state.navigation.leg_active: _sample_navigation_position()
+		state.advance_chasedown_cooldown(elapsed)
+	_sample_navigation_position()
 
-func _sample_navigation_position() -> void:
-	if state == null or not is_instance_valid(star_map) or not _uses_3d_map(): return
-	# Cosmetic idle orbit is presentation-only and must never change serialized gameplay state.
-	if not state.navigation.leg_active: return
+func _sample_navigation_position(arriving: bool = false) -> void:
+	if state == null: return
+	var eligible: bool = (
+		state.navigation.leg_active and phase == Phase.TRAVELING and not get_tree().paused
+		and _uses_3d_map() and is_instance_valid(star_map) and is_instance_valid(star_map.ship)
+		and not star_map.focused and (star_map.traveling or arriving) and _map_input_allowed()
+	)
+	if not eligible:
+		# Clear the sampling baseline, not the save position. Cosmetic tactical transforms
+		# and movement hidden behind a modal must not catch up on the next active frame.
+		state.navigation.rebase_movement()
+		return
+	var at: Vector3 = star_map.ship.position
+	state.navigation.report_movement([at.x,at.y,at.z])
+
+
+func _checkpoint_navigation_position() -> void:
+	if state == null or not state.navigation.leg_active or phase != Phase.TRAVELING: return
+	if not _uses_3d_map() or not is_instance_valid(star_map) or not is_instance_valid(star_map.ship) or star_map.focused: return
 	var at: Vector3 = star_map.ship.position
 	state.update_navigation_position([at.x,at.y,at.z])
 
 func _begin_map_travel(index: int) -> bool:
+	_sample_navigation_position()
 	if _uses_3d_map():
 		var at: Vector3 = star_map.ship.position
 		state.update_navigation_position([at.x,at.y,at.z])
 	return state.begin_travel(index)
 
 func _begin_free_travel(point: Vector3) -> bool:
+	_sample_navigation_position()
 	var at: Vector3 = star_map.ship.position
 	state.update_navigation_position([at.x,at.y,at.z])
 	return state.begin_free_travel([point.x,point.y,point.z])
 
 func _free_arrived() -> void:
 	if phase != Phase.TRAVELING: return
-	_sample_navigation_position()
+	_sample_navigation_position(true)
+	_checkpoint_navigation_position()
 	state.arrive_free_destination()
 	map_destination = -1
 	phase = Phase.OVERVIEW

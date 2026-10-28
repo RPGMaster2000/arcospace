@@ -7,10 +7,13 @@ Enter a system, explore encounters, acquire FTL Access from either a direct Fuel
 - `ExpeditionState`: authoritative pressure, profile, access, completion ledger and eligibility; exactly-once encounter completion. No UI state determines rewards.
 - `SystemGenerator`: existing weighted category/encounter generation extracted into one deterministic generator. Profiles are data resources, not separate generators.
 - `SystemPressure`: detached starting-stat transform after existing progression scaling. Shared ShipData and battles already in progress remain unchanged.
-- `NavigationState`: one uninterrupted journey, saved position/target and shared probability-roll cooldown. PoI and free movement use the same ownership and presentation path.
+- `NavigationState`: one uninterrupted journey and saved position/target. PoI and free movement use the same ownership and presentation path. It does not own exploration risk.
+- `ChasedownRollPolicy`: the single per-journey probability-check guard and active-gameplay cooldown, owned alongside navigation by expedition state. It receives whether navigation is active and never changes movement.
 - Expedition coordinator: validates intents, supplies actual positions and active gameplay elapsed time, orchestrates saves/transitions.
 - Map: projects markers and clicks, arbitrates nearest eligible marker before empty-space movement, animates the existing ship. It never awards pressure, access or loot.
-- Save codec: validates catalog references, one-step objective graph and navigation consistency. Envelope schema remains v1; payload adds `metagame_version: 1`.
+- Save codec: validates catalog references, one-step objective graph and navigation consistency. Envelope schema remains v1; payload retains `metagame_version: 1`. The existing `navigation` wire dictionary combines movement and risk-policy fields for compatibility, while in-memory ownership is separate. No second cooldown or serialization version is introduced.
+
+`ExpeditionState.system_objective_complete()` is the persistent departure-objective boundary: FTL Access plus mandatory Boss completion. `can_jump()` adds transient readiness (alive, no active battle/interception or pending reward). Future objective modes replace that one condition without requiring UI or coordinator mode checks.
 
 ## Initial tuning
 
