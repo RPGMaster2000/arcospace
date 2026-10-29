@@ -1,0 +1,33 @@
+name: Temporary isolated UI overhaul test
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  ui-overhaul-isolated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.7.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip -o "$RUNNER_TEMP/godot.zip"
+          echo "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4  $RUNNER_TEMP/godot.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot-bin"
+          chmod +x "$RUNNER_TEMP/godot-bin/Godot_v4.7.2-stable_linux.x86_64"
+          echo "$RUNNER_TEMP/godot-bin" >> "$GITHUB_PATH"
+      - name: Import project
+        run: Godot_v4.7.2-stable_linux.x86_64 --headless --audio-driver Dummy --path . --editor --import --quit
+      - name: Run only ui_overhaul_test.gd
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 600 Godot_v4.7.2-stable_linux.x86_64 --headless --audio-driver Dummy --path . --script res://tests/ui_overhaul_test.gd 2>&1 | tee ui-overhaul-isolated.log
+          if grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' ui-overhaul-isolated.log; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-overhaul-isolated-log
+          path: ui-overhaul-isolated.log
