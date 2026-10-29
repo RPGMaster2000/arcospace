@@ -14,6 +14,8 @@ const PRODUCTION = preload("res://scripts/combat/ship_combat_state.gd").PRODUCTI
 const COLORS = [Color(1, 0.35, 0.2), Color(0.25, 0.8, 1), Color(0.5, 1, 0.3)]
 ## TUNE: Set false to skip stat-change animations.
 @export var enabled: bool = true
+## Experimental imported hull-hit flash; disable for a direct performance comparison.
+@export var imported_hits_enabled: bool = true
 # Optional presentation targets; defaults preserve the original 2D board.
 @export var player_ship_path: NodePath = NodePath("PlayerShip")
 @export var enemy_ship_path: NodePath = NodePath("EnemyShip")
@@ -243,6 +245,11 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 				visual_settings.shield_screen_shake_duration
 			)
 	if ship.has_method("animate_hit"):
+		if hull_hit and imported_hits_enabled and ship is Node3D:
+			var effect: Node3D = preload("res://scripts/effects/imported_combat_vfx.gd").hull_hit(ship, hit_seconds)
+			temporary_nodes.append(effect)
+			_job().tween_interval(hit_seconds).finished.connect(func():
+				if is_instance_valid(effect): _remove(effect))
 		ship.animate_hit(_job(), hull_hit, hit_seconds)
 		if shield_hit:
 			_pulse_shield(ship, false)
