@@ -8,6 +8,7 @@ class Resolution extends RefCounted:
 	var announcement: String = ""
 	var hull_damage: Dictionary = {"actor": 0, "target": 0}
 	var extra_action: bool = false
+	var direct_damage: int = 0
 
 
 static func can_play(card: Resource, discard: bool, actor: Dictionary) -> bool:
@@ -29,6 +30,7 @@ static func resolve(
 		result.hull_damage = modifier.last_hull_damage.duplicate(true)
 	else:
 		Effects.play(card, actor, target, generator, false, result.hull_damage)
+	result.direct_damage = int(result.hull_damage.get("direct_damage", 0))
 	result.extra_action = not discard and card.play_again
 	return result
 

@@ -9,6 +9,14 @@ const Text = preload("res://scripts/ui/card_effect_text.gd")
 const AI = preload("res://scripts/enemy_ai.gd")
 const Ship = preload("res://scripts/combat/ship_combat_state.gd")
 const FIXTURE = "res://tests/card_effect_baseline.json"
+
+# The frozen fixture predates VFX provenance. Preserve every existing report field;
+# combat_beam_test separately checks the new presentation-only metadata.
+func baseline_report(report: Dictionary) -> Dictionary:
+	var result := report.duplicate(true)
+	result.erase("direct_damage")
+	return result
+
 func _initialize() -> void:
 	var hashes: Array = []
 	for base in Cards.CARDS:
@@ -46,7 +54,7 @@ func _initialize() -> void:
 					var resolved = Execution.resolve(card, false, direct_actor, direct_enemy, null, generator)
 					assert(resolved != null, "Every fixture can afford its card")
 					var notice: String = modifier.play(card, actor, enemy)
-					var record: Array = [actor,enemy,modifier.last_hull_damage,modifier.rng.state,notice,simulated,simulated_enemy,preview,choice,ai.rng.state,card.describe_effects(card.effects),Text.comparison(card,base),card.play_again,direct_actor,direct_enemy,resolved.hull_damage,resolved.extra_action,generator.state]
+					var record: Array = [actor,enemy,baseline_report(modifier.last_hull_damage),modifier.rng.state,notice,simulated,simulated_enemy,preview,choice,ai.rng.state,card.describe_effects(card.effects),Text.comparison(card,base),card.play_again,direct_actor,direct_enemy,baseline_report(resolved.hull_damage),resolved.extra_action,generator.state]
 					hashes.append(JSON.stringify(record).sha256_text())
 					modifier.free()
 					ai.free()

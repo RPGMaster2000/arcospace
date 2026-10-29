@@ -1,5 +1,11 @@
 extends Node
 
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
+const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
+const BEAM_SECONDS: float = 0.45
+var imported_nodes: Array[Node] = []
+var active_beam: Node3D
+
 const Sound = preload("res://scripts/audio/sfx.gd")
 
 # RESPONSIBILITY: Animate actual stat changes without modifying game state.
@@ -55,6 +61,46 @@ var counters: Dictionary = {}
 var tweens: Array[Tween] = []
 var restorations: Array[Callable] = []
 var temporary_nodes: Array[Node] = []
+
+func _ready() -> void:
+	Preferences.events.battle_vfx_changed.connect(_battle_vfx_changed)
+
+
+func _battle_vfx_changed(value: bool) -> void:
+	if value: return
+	for node in imported_nodes.duplicate():
+		if is_instance_valid(node):
+			node.hide()
+			_remove(node)
+	# Keep registered jobs alive: toggling presentation must not change turn timing.
+
+
+func play_direct_damage(side: String) -> void:
+	if not enabled or cancelling: return
+	var actor = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
+	var target = get_parent().get_node(enemy_ship_path if side == "player" else player_ship_path)
+	if not actor is Node3D or not target is Node3D: return
+	# Same timeline with VFX on/off; normally shorter than existing hit feedback.
+	var timeline := _job()
+	if not Preferences.battle_vfx():
+		timeline.tween_interval(BEAM_SECONDS)
+		return
+	if is_instance_valid(active_beam):
+		active_beam.hide()
+		_remove(active_beam)
+	var beam: Node3D = ImportedVFX.beam(actor, target)
+	active_beam = beam
+	temporary_nodes.append(beam)
+	imported_nodes.append(beam)
+	var reference: WeakRef = weakref(beam)
+	timeline.tween_method(func(progress: float):
+		var current = reference.get_ref()
+		if current != null and not current.is_queued_for_deletion():
+			ImportedVFX.update_beam(current, actor, target, progress), 0.0, 1.0, BEAM_SECONDS)
+	timeline.tween_callback(func():
+		var current = reference.get_ref()
+		if current != null: _remove(current))
+
 
 #region Delta dispatch
 
@@ -245,11 +291,14 @@ func _hit(ship: Node, hull_hit: bool, shield_hit: bool, side: String) -> void:
 				visual_settings.shield_screen_shake_duration
 			)
 	if ship.has_method("animate_hit"):
-		if hull_hit and imported_hits_enabled and ship is Node3D:
+		if hull_hit and imported_hits_enabled and Preferences.battle_vfx() and ship is Node3D:
 			var effect: Node3D = preload("res://scripts/effects/imported_combat_vfx.gd").hull_hit(ship, hit_seconds)
 			temporary_nodes.append(effect)
+			imported_nodes.append(effect)
+			var reference: WeakRef = weakref(effect)
 			_job().tween_interval(hit_seconds).finished.connect(func():
-				if is_instance_valid(effect): _remove(effect))
+				var current = reference.get_ref()
+				if current != null: _remove(current))
 		ship.animate_hit(_job(), hull_hit, hit_seconds)
 		if shield_hit:
 			_pulse_shield(ship, false)
@@ -412,6 +461,7 @@ func _bounds(points: PackedVector2Array) -> Rect2:
 
 func _remove(node: Node) -> void:
 	temporary_nodes.erase(node)
+	imported_nodes.erase(node)
 	node.queue_free()
 
 
