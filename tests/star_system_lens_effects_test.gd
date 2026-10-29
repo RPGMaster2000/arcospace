@@ -31,6 +31,7 @@ func run() -> void:
 	else:
 		check(effect != null and effect.enabled, "Visible map enables compositor")
 		check(effect.get("SampleCount") == 20, "Conservative sample count")
+		check(is_equal_approx(effect.get("Anamorphic_Brightness"), 0.36) and is_equal_approx(effect.get("Weight"), 0.095), "Higher contrast uses scalar tuning without changing samples")
 		check(map.viewport.world_3d != root.world_3d, "Effect world is isolated from other scenes")
 		var uv: Vector2 = map.camera.unproject_position(map.objects[-100].global_position) / Vector2(map.viewport.size)
 		check(effect.get("sun_position").is_equal_approx(uv), "Sun projection uses SubViewport dimensions")
