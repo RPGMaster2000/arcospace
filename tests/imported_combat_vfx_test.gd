@@ -24,6 +24,9 @@ func run() -> void:
 	board.get_node("BattleEffects").enabled = false
 	root.add_child(board)
 	board.enemy_timer.stop()
+	# This presentation test does not exercise music; release its playback before exit.
+	root.get_node("Music").player.stop()
+	root.get_node("Music").player.stream = null
 	for frame in range(8): await process_frame
 	var effects = board.battle_effects
 	var ship = board.get_node("BattleView/Viewport/Battlefield/PlayerShip")
