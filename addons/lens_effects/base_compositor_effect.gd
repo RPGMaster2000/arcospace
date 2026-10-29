@@ -40,7 +40,10 @@ var _rids_to_free := {} # {rid : label}
 
 func _notification(what):
 	if what == NOTIFICATION_PREDELETE:
-		for rid in _rids_to_free:
+		# Pipelines depend on shaders; release dependents before their owners.
+		var owned_rids: Array = _rids_to_free.keys()
+		owned_rids.reverse()
+		for rid in owned_rids:
 			if rid.is_valid():
 				if print_freed_rids:
 					print("freeing RID: %s : %s" % [rid.get_id(), _rids_to_free[rid]])
@@ -186,6 +189,7 @@ func create_simple_texture(
 			TEXTURE_LAYER_COUNT,
 			TEXTURE_MIPMAP_COUNT,
 			TEXTURE_IS_UNIQUE,
+			false, # Retain the computed light for the composite pass (Godot 4.7).
 	)
 
 	var texture_image : RID = render_scene_buffers.get_texture_slice(

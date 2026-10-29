@@ -34,6 +34,7 @@ func disable() -> void:
 func update(active: bool, viewport: SubViewport, camera: Camera3D, sun: Node3D, color: Color) -> void:
 	if effect == null: return
 	disable()
+	if effect.get("initialization_failed"): return
 	if not active or not requested or not is_instance_valid(sun) or not sun.is_visible_in_tree(): return
 	if viewport.render_target_update_mode == SubViewport.UPDATE_DISABLED or camera.is_position_behind(sun.global_position): return
 	var dimensions := Vector2(viewport.size)

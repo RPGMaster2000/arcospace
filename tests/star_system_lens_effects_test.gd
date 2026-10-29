@@ -10,6 +10,12 @@ func check(ok: bool, message: String) -> void:
 func settle() -> void:
 	for i in range(8): await process_frame
 func run() -> void:
+	# A headless import can report success while a GLSL include failed. Check
+	# the imported resource itself before any renderer-specific assertions.
+	var shader := load("res://addons/lens_effects/lens_flares.glsl") as RDShaderFile
+	check(shader != null and shader.base_error.is_empty() and shader.get_version_list().has(&""), "Lens shader imported a default SPIR-V version")
+	if shader != null and shader.get_version_list().has(&""):
+		check(shader.get_spirv().get_stage_compile_error(RenderingDevice.SHADER_STAGE_COMPUTE).is_empty(), "Lens compute shader compiles")
 	root.size = Vector2i(961, 541) # Non-workgroup-aligned size exercises shader bounds.
 	if DisplayServer.get_name() != "headless" and not OS.get_cmdline_user_args().is_empty():
 		check(RenderingServer.get_current_rendering_method() == OS.get_cmdline_user_args()[0], "Requested renderer did not fall back")
@@ -30,6 +36,7 @@ func run() -> void:
 		check(effect.get("sun_position").is_equal_approx(uv), "Sun projection uses SubViewport dimensions")
 		var pipeline: RID = effect.get("shader_pipeline")
 		check(pipeline.is_valid(), "Rendered frames created the shader pipeline")
+		check(effect.get("composite_pipeline").is_valid(), "Mobile-safe additive composite pipeline exists")
 		map.camera.position.x += 1.0
 		await settle()
 		check(effect.get("shader_pipeline") == pipeline, "Camera movement reuses the GPU pipeline")

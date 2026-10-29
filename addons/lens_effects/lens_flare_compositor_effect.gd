@@ -91,6 +91,10 @@ var effect_data_ubo : RID
 var effect_data_ubo_uniform : RDUniform
 
 var settings_dirty := false
+var initialization_failed := false
+var composite_shader: RID
+var composite_pipeline: RID
+var composite_format: int = -1
 
 
 # Called from _init().
@@ -104,15 +108,18 @@ func _initialize_resource() -> void:
 # Called on render thread after _init().
 func _initialize_render() -> void:
 	var shader_file := load(ShaderPath) as RDShaderFile
-	if shader_file == null:
+	if shader_file == null or not shader_file.get_version_list().has(&""):
+		initialization_failed = true
 		enabled = false
 		return
 	var spirv := shader_file.get_spirv()
 	if spirv == null or not spirv.get_stage_compile_error(RenderingDevice.SHADER_STAGE_COMPUTE).is_empty():
+		initialization_failed = true
 		enabled = false
 		return
 	shader = rd.shader_create_from_spirv(spirv)
 	add_rid_to_free(shader, "lens shader")
+	composite_shader = create_shader("res://addons/lens_effects/lens_composite.glsl")
 
 
 # Called at beginning of _render_callback(), after updating render variables
@@ -129,9 +136,11 @@ func _render_setup() -> void:
 # Called for each view. Run the compute shaders from here.
 func _render_view(p_view : int) -> void:
 	if not shader.is_valid() or not rd.compute_pipeline_is_valid(shader_pipeline): return
+	# Mobile's packed-HDR color attachment is not a storage image. Compute only
+	# the additive light into RGBA16F, then blend it through a raster attachment.
+	var light_image: RID = create_simple_texture(context, &"lens_light", RenderingDevice.DATA_FORMAT_R16G16B16A16_SFLOAT)
 	var scene_uniform_set : Array[RDUniform] = [
-		get_scene_data_ubo(),
-		get_color_image_uniform(p_view),
+		get_image_uniform(light_image, COLOR_IMAGE_BINDING),
 		get_depth_sampler_uniform(p_view, nearest_sampler),
 		# if we bind this, then the color image is used both as image and sampler which Godot doesnt like
 		# in dev builds.
@@ -150,6 +159,7 @@ func _render_view(p_view : int) -> void:
 	 	shader_pipeline,
 	 	uniform_sets,
 	 )
+	_composite_light(p_view, light_image)
 
 
 # Called before _render_setup() if `render_size` has changed.
@@ -225,3 +235,29 @@ func create_shader_pipeline():
 		free_rid(shader_pipeline)
 	shader_pipeline = create_pipeline(shader)
 	add_rid_to_free(shader_pipeline, "lens pipeline")
+
+# A single additive triangle preserves the Mobile color format and scene alpha.
+func _composite_light(view: int, light_image: RID) -> void:
+	var pass_info := RDFramebufferPass.new()
+	pass_info.color_attachments = PackedInt32Array([0])
+	var framebuffer: RID = FramebufferCacheRD.get_cache_multipass([render_scene_buffers.get_color_layer(view)], [pass_info], 1)
+	var format: int = rd.framebuffer_get_format(framebuffer)
+	if format != composite_format or not rd.render_pipeline_is_valid(composite_pipeline):
+		if rd.render_pipeline_is_valid(composite_pipeline): free_rid(composite_pipeline)
+		var blend := RDPipelineColorBlendState.new()
+		var attachment := RDPipelineColorBlendStateAttachment.new()
+		attachment.enable_blend = true
+		attachment.src_color_blend_factor = RenderingDevice.BLEND_FACTOR_ONE
+		attachment.dst_color_blend_factor = RenderingDevice.BLEND_FACTOR_ONE
+		attachment.src_alpha_blend_factor = RenderingDevice.BLEND_FACTOR_ZERO
+		attachment.dst_alpha_blend_factor = RenderingDevice.BLEND_FACTOR_ONE
+		blend.attachments = [attachment]
+		composite_pipeline = rd.render_pipeline_create(composite_shader, format, -1, RenderingDevice.RENDER_PRIMITIVE_TRIANGLES, RDPipelineRasterizationState.new(), RDPipelineMultisampleState.new(), RDPipelineDepthStencilState.new(), blend)
+		add_rid_to_free(composite_pipeline, "lens composite pipeline")
+		composite_format = format
+	var uniform_set: RID = UniformSetCacheRD.get_cache(composite_shader, 0, [get_sampler_uniform(light_image, nearest_sampler, 0)])
+	var draw_list: int = rd.draw_list_begin(framebuffer)
+	rd.draw_list_bind_render_pipeline(draw_list, composite_pipeline)
+	rd.draw_list_bind_uniform_set(draw_list, uniform_set, 0)
+	rd.draw_list_draw(draw_list, false, 1, 3)
+	rd.draw_list_end()

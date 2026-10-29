@@ -10,19 +10,8 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 // Skips 2 "smoothstep" calls
 // #define CHEAP_FLARE
 
-// dont change this
-#define MAX_VIEWS 2
-// ARez: Uncomment the next line if you build the engine using double precision
-//#define USE_DOUBLE_PRECISION
-#include "godot/scene_data_inc.glsl"
-
-// Set 0: Scene
-// For layout, see: https://github.com/godotengine/godot/blob/master/servers/rendering/renderer_rd/shaders/scene_data_inc.glsl
-layout(set = 0, binding = 0, std140) uniform SceneDataBlock {
-    SceneData data;
-    SceneData prev_data;
-} scene;
-
+// The addon only needs image dimensions and raw depth, not Godot's private
+// SceneData layout/include (which is unavailable to imported project shaders).
 // Color image uniform (binding = 1) should be defined separately with restrict
 // writeonly/readonly params.
 layout(set = 0, binding = 2) uniform sampler2D depth_sampler;
@@ -31,25 +20,8 @@ highp float length_squared(vec2 v) {
     return pow(v.x, 2.0) + pow(v.y, 2.0);
 }
 
-// Converts coord obtained from gl_GlobalInvocationID
-// to normalize [0.0-1.0] for use in texture() sampling functions.
-highp vec2 coord_to_uv(ivec2 p_coord) {
-    return (vec2(p_coord) + 0.5) / scene.data.viewport_size;
-}
-
 highp float get_raw_depth(ivec2 p_coord) {
     return texelFetch(depth_sampler, clamp(p_coord, ivec2(0), textureSize(depth_sampler, 0) - 1), 0).r;
-}
-
-highp float raw_to_linear_depth(ivec2 p_coord, highp float p_raw_depth) {
-    highp vec2 uv = coord_to_uv(p_coord);
-    highp vec3 ndc = vec3((uv * 2.0) - 1.0, p_raw_depth);
-    highp vec4 view = scene.data.inv_projection_matrix * vec4(ndc, 1.0);
-    return -(view.xyz / view.w).z;
-}
-
-highp float get_linear_depth(ivec2 p_coord) {
-    return raw_to_linear_depth(p_coord, get_raw_depth(p_coord));
 }
 
 highp float random(vec2 uv) {
@@ -177,33 +149,11 @@ vec3 anflares2(vec2 uv, float intensity, float stretch, float brightness) {
     return vec3(smoothstep(0.009, 0.0, length(uv))) * brightness;
 }
 
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// Depth and normal-roughness buffers are available to use.
-
-// For a simple way to get the normal-roughness, use:
-// vec4 normal_roughness_color = get_normal_roughness_color(image_coord);
-
-// And, for the linear depth value, use:
-// float depth = get_linear_depth(image_coord);
-
-// Transform matrices are also available, along with other helpful
-// variables like viewport_size, time, and camera_visible_layers.
-// They come from Godot's built-in SceneData uniform buffer object (UBO).
-// See scene_data.glsl for the full list.
-
-// Access SceneData variables like this:
-// highp mat4 inv_proj_matrix = scene.data.inv_projection_matrix;
-
-// (To see how the buffers and SceneData were implemented, see
-// scene_data_helpers.glsl and base_compositor_effect.gd.)
-// ---------------------------------------------------------------------------
 void main() {
     ivec2 image_coord = ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(image_coord, imageSize(color_image)))) return;
-    vec4 previous_color = imageLoad(color_image, image_coord);
 
-    vec2 resolution = floor(scene.data.viewport_size);
+    vec2 resolution = vec2(imageSize(color_image));
     vec2 uv = image_coord / resolution - 0.5;
     vec2 sun_pos_norm = vec2(datablock.data.sun_position_x, datablock.data.sun_position_y);
     vec2 sun_position = sun_pos_norm * resolution;
@@ -233,7 +183,7 @@ void main() {
 
     vec2 ray_uv_pos = godot_uv;
     // Jitter the initial position a bit to blend the radial blur steps from the loop
-    ray_uv_pos += ray_step * (hash(godot_uv + fract(scene.data.time)) * 2.0 - 1.0);
+    ray_uv_pos += ray_step * (hash(godot_uv) * 2.0 - 1.0);
     float ray_sum = 0.0;
     for (int i = 0; i < int(sample_count); i++) {
         ray_uv_pos -= ray_step;
@@ -312,6 +262,6 @@ void main() {
     // apply godray mask
     col *= godrays;
 
-    vec4 new_color = vec4(previous_color.rgb + col, previous_color.a);
+    vec4 new_color = vec4(col, 0.0);
     imageStore(color_image, image_coord, new_color);
 }
