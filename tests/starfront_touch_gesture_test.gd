@@ -43,6 +43,24 @@ func run() -> void:
 		check(host.state.travel_destination == -1, "Expired first tap cannot confirm travel")
 		await tap(map.markers[second].get_global_rect().get_center())
 		check(host.state.travel_destination == second and host.state.navigation.leg_active, "Second same-target touch confirms travel")
+	# Empty-space touch must navigate on one tap, unlike PoI/enemy markers.
+	var free_point := Vector2(-1, -1)
+	var rect: Rect2 = map.get_global_rect()
+	for row in range(4, 13):
+		if free_point.x >= 0: break
+		for col in range(4, 19):
+			var candidate: Vector2 = rect.position + rect.size * Vector2(float(col) / 20.0, float(row) / 16.0)
+			if map.point_is_reserved(candidate) or map.nearest_marker(candidate) >= 0 or map._point_on_object(candidate): continue
+			var blocked: bool = false
+			for marker in map.markers.values():
+				if marker.visible and marker.hit_distance(candidate - marker.global_position) != INF: blocked = true
+			if not blocked:
+				free_point = candidate
+				break
+	check(free_point.x >= 0, "Find empty navigable space for touch regression")
+	if free_point.x >= 0:
+		await tap(free_point)
+		check(host.state.travel_destination == host.state.FREE_DESTINATION and host.state.navigation.leg_active, "Single empty-space touch initiates free travel")
 	host.queue_free()
 	await process_frame
 	print("Starfront touch gestures: %d failures" % failures)
