@@ -24,7 +24,9 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 	home = Vector3(cos(angle), 0, sin(angle)) * 22.0
 	start = home * 0.78
 	for i in range(3):
-		var heading: float = angle + PI + hostile_offset + [-0.65, 0.0, 0.26][i]
+		# Keep all three routes on the same safe flank of the sun and opposite home.
+		var flank_sign: float = 1.0 if hostile_offset >= 0.0 else -1.0
+		var heading: float = angle + PI + hostile_offset + flank_sign * [-0.45, 0.0, 0.35][i]
 		units.append({"encounter": indices[i], "position": Vector3(cos(heading), 0, sin(heading)) * tuning.hostile_spawn_distance,
 			"status": "active", "mothership": i == 2, "reinforcement": false, "spawned": false})
 	for i in poi_indices.size():
