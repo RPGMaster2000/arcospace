@@ -1,7 +1,7 @@
 # Experimental star-map lens effects
 
 The map uses the existing `addons/lens_effects` compositor with 20 radial samples,
-0.35 maximum multiplier and restrained anamorphic brightness. The procedural sun
+0.55 maximum multiplier, 0.36 anamorphic brightness and 0.075 god-ray weight. The procedural sun
 remains the light-position source. Its projection uses the map camera and
 SubViewport dimensions, not the main window. Only the map WorldEnvironment owns
 this compositor. Compatibility/headless paths retain the procedural sun without

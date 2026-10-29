@@ -17,12 +17,12 @@ func attach(target: WorldEnvironment) -> void:
 	effect.access_resolved_color = true
 	effect.access_resolved_depth = true
 	effect.set("SampleCount", 20)
-	effect.set("Effect_Multiplier", 0.35)
+	effect.set("Effect_Multiplier", 0.55)
 	effect.set("Effect_Easing", 0.5)
-	effect.set("Anamorphic_Intensity", 12.0)
+	effect.set("Anamorphic_Intensity", 15.0)
 	effect.set("Anamorphic_Stretch", 0.25)
-	effect.set("Anamorphic_Brightness", 0.25)
-	effect.set("Weight", 0.06)
+	effect.set("Anamorphic_Brightness", 0.36)
+	effect.set("Weight", 0.075)
 	effect.set("Decay", 0.95)
 	effect.set("Density", 0.85)
 	environment.compositor = Compositor.new()
@@ -47,5 +47,5 @@ func update(active: bool, viewport: SubViewport, camera: Camera3D, sun: Node3D, 
 	effect.set("sun_position", uv)
 	effect.set("sun_dir_sign", 1.0)
 	effect.set("sun_color", color)
-	effect.set("Effect_Multiplier", 0.35 * fade)
+	effect.set("Effect_Multiplier", 0.55 * fade)
 	effect.enabled = true
