@@ -663,6 +663,9 @@ func _touch_tap(point: Vector2) -> void:
 		selected_touch_index = -1
 		last_touch_msec = 0
 		_select_destination(-1)
+		# Marker confirmation must not swallow single-tap free travel.
+		# Reuse _tap_at to preserve HUD, object and inspection guards.
+		_tap_at(point)
 		return
 	var now: int = Time.get_ticks_msec()
 	if selected_touch_index == index and now - last_touch_msec <= double_tap_msec:
