@@ -63,6 +63,22 @@ jobs:
             for icd in /usr/share/vulkan/icd.d/*lvp*; do export VK_ICD_FILENAMES="$icd"; done
           fi
           xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/run_rendered_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --renderer "$RENDERER" --results "test-results/rendered-$RENDERER"
+      - name: Check lens effects from exported pack
+        shell: bash
+        env:
+          RENDERER: ${{ matrix.renderer }}
+        run: |
+          set -euo pipefail
+          export LIBGL_ALWAYS_SOFTWARE=1
+          if [ "$RENDERER" = mobile ]; then
+            for icd in /usr/share/vulkan/icd.d/*lvp*; do export VK_ICD_FILENAMES="$icd"; done
+          fi
+          GODOT=Godot_v4.7.2-stable_linux.x86_64
+          "$GODOT" --headless --path . --export-pack Web "$RUNNER_TEMP/lens.pck" > test-results/lens-export.log 2>&1
+          status=0
+          timeout 120 xvfb-run -a -s "-screen 0 1920x1080x24" "$GODOT" --display-driver x11 --rendering-method "$RENDERER" --audio-driver Dummy --main-pack "$RUNNER_TEMP/lens.pck" --script res://tests/star_system_lens_effects_test.gd -- "$RENDERER" > test-results/lens-packed.log 2>&1 || status=$?
+          cat test-results/lens-packed.log
+          if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' test-results/lens-export.log test-results/lens-packed.log; then exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

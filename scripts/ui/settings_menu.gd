@@ -4,6 +4,7 @@ extends CanvasLayer
 # DOES NOT: Reset an expedition; the owning screen handles main_menu_requested.
 signal cinematics_changed(enabled: bool)
 signal main_menu_requested
+const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 var is_main_menu: bool = false
@@ -97,6 +98,15 @@ func _ready() -> void:
 			add_child(notice)
 			notice.confirmed.connect(notice.queue_free)
 			notice.popup_centered(Vector2i(460, 160)))
+	var lens_toggle := CheckButton.new()
+	lens_toggle.text = "Star-map lens effects (experimental)"
+	lens_toggle.custom_minimum_size.y = 52
+	lens_toggle.add_theme_font_size_override("font_size", 22)
+	lens_toggle.disabled = not SunLensEffects.supported()
+	lens_toggle.set_pressed_no_signal(SunLensEffects.requested and not lens_toggle.disabled)
+	lens_toggle.tooltip_text = "Session only; disable to compare performance." if not lens_toggle.disabled else "Unavailable with this renderer; the sun remains visible."
+	lens_toggle.toggled.connect(func(value: bool): SunLensEffects.requested = value)
+	extra_settings.add_child(lens_toggle)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	column.add_child(actions)

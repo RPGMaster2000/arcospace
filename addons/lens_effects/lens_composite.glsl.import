@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cabnuynf2aep"
+path="res://.godot/imported/lens_composite.glsl-e5f843879a16d51d2138b5bb0a7db3ce.res"
+
+[deps]
+
+source_file="res://addons/lens_effects/lens_composite.glsl"
+dest_files=["res://.godot/imported/lens_composite.glsl-e5f843879a16d51d2138b5bb0a7db3ce.res"]
+
+[params]
+
