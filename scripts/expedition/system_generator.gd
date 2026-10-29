@@ -205,6 +205,6 @@ static func _generate_defense(state: Resource) -> void:
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": profile.ship_name, "completed": false})
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
 	var facing: float = state.rng.randf_range(0, TAU)
-	var flank: float = state.rng.randf_range(0.65, 1.0) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
+	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
 	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5))
 	state.defense.add_reserves(reserves)
