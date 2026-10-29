@@ -12,6 +12,8 @@ const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
+const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
+var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
 var system_number: int = 1
 var system_profile: String = "industrial"
@@ -117,6 +119,9 @@ func _ready() -> void:
 	environment.environment.ambient_light_color = Color("92afcf")
 	environment.environment.ambient_light_energy = settings.ambient_light_energy
 	world.add_child(environment)
+	sun_lens.attach(environment)
+	visibility_changed.connect(func():
+		if not is_visible_in_tree(): sun_lens.disable())
 	var light := OmniLight3D.new()
 	light.name = "SunLight"
 	light.light_color = Color(1.0,0.88,0.70)
@@ -302,6 +307,7 @@ func _process(delta: float) -> void:
 			camera.position = focus_target+offset+shift
 			camera.look_at(focus_target+shift,Vector3.UP)
 			orbit_velocity *= exp(-7.0*delta)
+	sun_lens.update(is_visible_in_tree(), viewport, camera, objects.get(-100), visual_data.get("star_color", Color.WHITE))
 	if not is_instance_valid(ship):
 		return
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
@@ -518,6 +524,7 @@ func overview() -> void:
 
 
 func set_active(active: bool) -> void:
+	if not active: sun_lens.disable()
 	if is_instance_valid(background): background.set_active(active)
 	if not active:
 		_end_pinch()

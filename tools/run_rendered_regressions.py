@@ -23,13 +23,13 @@ COMPATIBILITY = (
     "card_inspection_test", "enemy_models_visual_test", "ship_models_test",
     "settings_menu_test", "startup_flow_test", "unified_hud_test",
     "tactical_focus_test", "compact_poi_focus_test", "tactical_resize_test",
-    "hud_ownership_test", "star_system_render_smoke_test", "layout_invalidation_test",
+    "hud_ownership_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "layout_invalidation_test",
     "star_map_navigation_test", "metagame_ui_test",
 )
 # Navigation assertions run headless and in rendered GL. Under Mesa software Vulkan the
 # navigation script reports 26/26 passes but can hang during engine teardown.
 # Mobile still tests actual Vulkan initialization, tactical resize, HUD and metagame.
-MOBILE = ("starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
+MOBILE = ("starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 TIMEOUTS = {"power_allocation_test": 300}
 

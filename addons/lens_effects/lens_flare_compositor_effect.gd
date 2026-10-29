@@ -103,22 +103,32 @@ func _initialize_resource() -> void:
 
 # Called on render thread after _init().
 func _initialize_render() -> void:
-	shader = create_shader(ShaderPath)
+	var shader_file := load(ShaderPath) as RDShaderFile
+	if shader_file == null:
+		enabled = false
+		return
+	var spirv := shader_file.get_spirv()
+	if spirv == null or not spirv.get_stage_compile_error(RenderingDevice.SHADER_STAGE_COMPUTE).is_empty():
+		enabled = false
+		return
+	shader = rd.shader_create_from_spirv(spirv)
+	add_rid_to_free(shader, "lens shader")
 
 
 # Called at beginning of _render_callback(), after updating render variables
 # and after _render_size_changed().
 # Use this function to setup textures or uniforms.
 func _render_setup() -> void:
+	if not shader.is_valid(): return
 	if not effect_data_ubo.is_valid() or settings_dirty:
 		update_or_recreate_global_uniform_buffer()
-		create_shader_pipeline()
 	if not rd.compute_pipeline_is_valid(shader_pipeline):
 		create_shader_pipeline()
 
 
 # Called for each view. Run the compute shaders from here.
 func _render_view(p_view : int) -> void:
+	if not shader.is_valid() or not rd.compute_pipeline_is_valid(shader_pipeline): return
 	var scene_uniform_set : Array[RDUniform] = [
 		get_scene_data_ubo(),
 		get_color_image_uniform(p_view),
@@ -212,5 +222,6 @@ func update_or_recreate_global_uniform_buffer():
 
 func create_shader_pipeline():
 	if rd.compute_pipeline_is_valid(shader_pipeline):
-		rd.free_rid(shader_pipeline)
+		free_rid(shader_pipeline)
 	shader_pipeline = create_pipeline(shader)
+	add_rid_to_free(shader_pipeline, "lens pipeline")

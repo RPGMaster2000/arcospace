@@ -38,7 +38,7 @@ highp vec2 coord_to_uv(ivec2 p_coord) {
 }
 
 highp float get_raw_depth(ivec2 p_coord) {
-    return texelFetch(depth_sampler, p_coord, 0).r;
+    return texelFetch(depth_sampler, clamp(p_coord, ivec2(0), textureSize(depth_sampler, 0) - 1), 0).r;
 }
 
 highp float raw_to_linear_depth(ivec2 p_coord, highp float p_raw_depth) {
@@ -200,6 +200,7 @@ vec3 anflares2(vec2 uv, float intensity, float stretch, float brightness) {
 // ---------------------------------------------------------------------------
 void main() {
     ivec2 image_coord = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(image_coord, imageSize(color_image)))) return;
     vec4 previous_color = imageLoad(color_image, image_coord);
 
     vec2 resolution = floor(scene.data.viewport_size);
