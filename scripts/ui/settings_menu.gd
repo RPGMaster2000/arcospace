@@ -18,6 +18,7 @@ var music_volume: HSlider
 var sfx_volume: HSlider
 var music_toggle: CheckButton
 var cinematics_toggle: CheckButton
+var battle_vfx_toggle: CheckButton
 var main_menu_button: Button
 var quit_button: Button
 # Future settings belong here; the body already scrolls on compact displays.
@@ -98,6 +99,21 @@ func _ready() -> void:
 			add_child(notice)
 			notice.confirmed.connect(notice.queue_free)
 			notice.popup_centered(Vector2i(460, 160)))
+	battle_vfx_toggle = CheckButton.new()
+	battle_vfx_toggle.text = "Battle VFX"
+	battle_vfx_toggle.custom_minimum_size.y = 52
+	battle_vfx_toggle.add_theme_font_size_override("font_size", 22)
+	battle_vfx_toggle.set_pressed_no_signal(Preferences.battle_vfx())
+	extra_settings.add_child(battle_vfx_toggle)
+	battle_vfx_toggle.toggled.connect(func(value: bool):
+		if Preferences.set_battle_vfx(value) != OK:
+			battle_vfx_toggle.set_pressed_no_signal(Preferences.battle_vfx())
+			var notice := AcceptDialog.new()
+			notice.dialog_text = "Could not save the Battle VFX preference."
+			notice.process_mode = Node.PROCESS_MODE_ALWAYS
+			add_child(notice)
+			notice.confirmed.connect(notice.queue_free)
+			notice.popup_centered(Vector2i(460, 160)))
 	var lens_toggle := CheckButton.new()
 	lens_toggle.text = "Star-map lens effects (experimental)"
 	lens_toggle.custom_minimum_size.y = 52
@@ -173,6 +189,7 @@ func present() -> void:
 	get_tree().paused = true
 	_sync_music(_music.enabled)
 	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
+	battle_vfx_toggle.set_pressed_no_signal(Preferences.battle_vfx())
 	music_volume.set_value_no_signal(_music.volume)
 	sfx_volume.set_value_no_signal(_sfx.volume)
 	shade.show()

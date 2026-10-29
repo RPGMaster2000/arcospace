@@ -120,6 +120,9 @@ static func _apply_effects(
 	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
+	# Presentation only: count ordinary opposing damage at the actual resolution site.
+	# Includes shield absorption, selected conditional branches and modified/upgraded effects.
+	damage_report["direct_damage"] = int(damage_report.get("direct_damage", 0)) + maxi(0, blocked) + mini(enemy.hull, maxi(0, damage - blocked))
 	if not damage_report.has("target_before"):
 		damage_report.target_before = enemy.hull
 	damage_report.target += mini(enemy.hull, maxi(0, damage - blocked))

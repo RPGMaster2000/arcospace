@@ -27,3 +27,25 @@ static func mark_preview_hint_seen() -> Error:
 	settings.load(PATH)
 	settings.set_value("presentation", "preview_hint_seen", true)
 	return settings.save(PATH)
+
+
+# Shared presentation notification, without an autoload or save-game fields.
+class Events extends RefCounted:
+	signal battle_vfx_changed(enabled: bool)
+static var events := Events.new()
+
+
+static func battle_vfx() -> bool:
+	var settings := ConfigFile.new()
+	settings.load(PATH)
+	return bool(settings.get_value("presentation", "battle_vfx", true))
+
+
+static func set_battle_vfx(enabled: bool) -> Error:
+	var settings := ConfigFile.new()
+	settings.load(PATH)
+	settings.set_value("presentation", "battle_vfx", enabled)
+	var error: Error = settings.save(PATH)
+	if error == OK:
+		events.battle_vfx_changed.emit(enabled)
+	return error

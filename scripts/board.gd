@@ -575,6 +575,9 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		),
 		not pending.is_empty()
 	)
+	# Resolved provenance excludes misses, discards, self-hits and modifier-only damage.
+	if resolution.direct_damage > 0:
+		battle_effects.play_direct_damage(side)
 	if not pending.is_empty():
 		_arm_pending_damage(pending, report, side)
 	_check_winner()
