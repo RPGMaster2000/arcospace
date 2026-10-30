@@ -74,7 +74,7 @@ func run() -> void:
 		var motion = board.get_node("CardMotion")
 		board._act("player", 0, entry[1])
 		await motion.step_finished
-		check(board.enemy_shields == 20, "Non-beam actions do not resolve before activation")
+		check(board.current_actor == "player" and board.resolving_card, "Turn stays locked during non-beam activation")
 		await board.action_finished
 		check(board.battle_effects.imported_nodes.is_empty(), "No lingering imported VFX")
 		await cleanup(board)
