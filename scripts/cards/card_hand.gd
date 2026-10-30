@@ -61,22 +61,15 @@ func deal_player_opening() -> void:
 	cards.clear()
 	cards.resize(6)
 	var remaining: Dictionary = {"materials": 2, "energy": 2, "crew": 2}
+	# Place the ship signature before other opening slots; keep the family quota intact.
+	if signature_card != null and signature_card in card_pool and _eligible(signature_card, -1):
+		cards[0] = signature_card
+		remaining[signature_card.family] -= 1
 	for slot in range(6):
 		var initial: Resource = starting_hand[slot] if slot < starting_hand.size() else null
-		if initial != null and remaining.get(initial.family, 0) > 0 and _eligible(initial, -1):
+		if cards[slot] == null and initial != null and remaining.get(initial.family, 0) > 0 and _eligible(initial, -1):
 			cards[slot] = initial
 			remaining[initial.family] -= 1
-	# Reserve one family quota for the active ship signature, without displacing fixed test cards.
-	if signature_card != null and signature_card in card_pool and remaining.get(signature_card.family, 0) > 0 and _eligible(signature_card, -1):
-		var already_held: bool = false
-		for held in cards:
-			if held != null and held.identity_key() == signature_card.identity_key(): already_held = true
-		if not already_held:
-			for slot in range(cards.size()):
-				if cards[slot] == null:
-					cards[slot] = signature_card
-					remaining[signature_card.family] -= 1
-					break
 	var families: Array[String] = []
 	for family in remaining:
 		for n in range(remaining[family]):
