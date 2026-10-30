@@ -57,6 +57,8 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int) -
 		brains[side].rng.seed = seed_value * 109 + side
 		brains[side].hull_capacity = states[side].hull_capacity
 	hands[0].configure_player_allocation(2.0)
+	# Historical trace fixtures explicitly opt out of the new soft draw preference.
+	if player.has_meta("legacy_draws"): hands[0].anti_repeat_enabled = false
 	hands[1].family_weights = enemy.card_family_weights
 	hands[1].effect_weights = enemy.card_effect_weights
 	brains[1].tactical_weights = enemy.tactical_weights
