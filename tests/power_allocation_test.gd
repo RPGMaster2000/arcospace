@@ -21,7 +21,7 @@ func legacy_draw(hand: Node) -> Resource:
 	var buckets: Dictionary = {1:[], 2:[], 3:[]}
 	var pool: Array = hand.card_pool if not hand.card_pool.is_empty() else Cards.CARDS
 	for card in pool:
-		if card != null and hand._eligible(card, -1): buckets[card.tier].append(card)
+		if card != null and hand._eligible(card, -1) and (not hand.card_pool.is_empty() or card.signature_ship < 0): buckets[card.tier].append(card)
 	var roll: float = hand.rng.randf()
 	var tier: int = 1
 	if roll < hand.tier_three_chance: tier = 3
@@ -138,7 +138,7 @@ func run() -> void:
 		hand.identity_weights = {Cards.CARDS[0].identity_key():3.0}
 		check(is_equal_approx(hand._draw_weight(Cards.CARDS[0]), 6.0 if mode == "defense" else 3.0), "Allocation combines with acquired-card weight")
 		for card in Cards.CARDS:
-			if card.tier == 1: expected[card.allocation_category] += hand._draw_weight(card)
+			if card.tier == 1 and card.signature_ship < 0: expected[card.allocation_category] += hand._draw_weight(card)
 		var total: float = expected.offense + expected.defense + expected.systems
 		for n in range(12000): hits[hand.draw_card().allocation_category] += 1
 		observed[mode] = hits

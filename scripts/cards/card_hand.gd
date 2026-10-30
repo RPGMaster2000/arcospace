@@ -7,6 +7,8 @@ const CardLibrary = preload("res://scripts/cards/card_library.gd")
 @export var card_pool: Array[Resource] = []
 # An empty starting hand draws randomly. Assign cards for a fixed test hand.
 @export var starting_hand: Array[Resource] = []
+## For standard player openings only; the signature still uses its ordinary pool draw weight later.
+var signature_card: Resource
 @export_range(1, 6, 1) var max_copies: int = 2
 ## TUNE: Tier 2 chance when the hand has room: 0.15 = 15%.
 @export_range(0.0, 1.0, 0.01) var tier_two_chance: float = 0.15
@@ -59,9 +61,13 @@ func deal_player_opening() -> void:
 	cards.clear()
 	cards.resize(6)
 	var remaining: Dictionary = {"materials": 2, "energy": 2, "crew": 2}
+	# Place the ship signature before other opening slots; keep the family quota intact.
+	if signature_card != null and signature_card in card_pool and _eligible(signature_card, -1):
+		cards[0] = signature_card
+		remaining[signature_card.family] -= 1
 	for slot in range(6):
 		var initial: Resource = starting_hand[slot] if slot < starting_hand.size() else null
-		if initial != null and remaining.get(initial.family, 0) > 0 and _eligible(initial, -1):
+		if cards[slot] == null and initial != null and remaining.get(initial.family, 0) > 0 and _eligible(initial, -1):
 			cards[slot] = initial
 			remaining[initial.family] -= 1
 	var families: Array[String] = []
@@ -95,6 +101,7 @@ func draw_card(excluded_slot: int = -1, required_family: String = "") -> Resourc
 			card != null
 			and (required_family.is_empty() or card.family == required_family)
 			and _eligible(card, excluded_slot)
+			and (not card_pool.is_empty() or card.signature_ship < 0)
 		):
 			buckets[card.tier].append(card)
 	var roll: float = rng.randf()

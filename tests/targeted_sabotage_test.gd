@@ -54,7 +54,7 @@ func snapshot() -> Dictionary:
 
 
 func run() -> void:
-	check(Library.CARDS.size() == 74, "74 registered identities")
+	check(Library.CARDS.size() == 80, "80 registered identities")
 	var occurrences: Dictionary = {}
 	for index in range(6):
 		var base: Resource = Library.CARDS[68 + index]
@@ -170,7 +170,7 @@ func run() -> void:
 			ai.free()
 	for ship_index in range(6):
 		var pool: Array = Ships.PLAYERS[ship_index].starting_cards
-		check(pool.size() == 28, "28 starting identities")
+		check(pool.size() == 29, "29 starting identities")
 		var found: Array = []
 		var families: Dictionary = {}
 		var identities: Dictionary = {}
@@ -183,7 +183,7 @@ func run() -> void:
 					Library.CARDS.find(card) < 44 and card.tier == 1,
 					"Original 25 identities remain first"
 				)
-			if Library.CARDS.find(card) >= 68:
+			if Library.CARDS.find(card) >= 68 and Library.CARDS.find(card) < 74:
 				found.append(Library.CARDS.find(card))
 				families[card.family] = true
 				occurrences[card.identity_key()] += 1
@@ -210,12 +210,12 @@ func run() -> void:
 		check(
 			(
 				run_state.deck_limit() == 36
-				and run_state.deck_limit() - run_state.player_pool().size() == 8
+				and run_state.deck_limit() - run_state.player_pool().size() == 7
 			),
-			"Eight acquisition slots"
+			"Seven acquisition slots"
 		)
 		# Each identity is either owned or available for acquisition; both paths support two upgrades.
-		for card in Library.CARDS.slice(68):
+		for card in Library.CARDS.slice(68, 74):
 			if card not in pool:
 				check(
 					card in run_state.available_reward_cards(),
@@ -271,7 +271,7 @@ func test_presentation() -> void:
 			"Gallery fits landscape viewport"
 		)
 		await capture("gallery-%d" % dimensions.x)
-		for base in Library.CARDS.slice(68):
+		for base in Library.CARDS.slice(68, 74):
 			for level in [1, 2]:
 				inspector.present(base.with_upgrade(level - 1), base.with_upgrade(level))
 				await settle()

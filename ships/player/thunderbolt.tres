@@ -33,12 +33,15 @@
 [ext_resource type="Resource" path="res://cards/72_core_destabilization.tres" id="SabotageEnergy"]
 [ext_resource type="Resource" path="res://cards/74_command_infiltration.tres" id="SabotageCrew"]
 
+[ext_resource type="Resource" path="res://cards/76_relentless_barrage.tres" id="ShipSignature"]
+
 [resource]
 script = ExtResource("1_n0hhp")
+signature_card = ExtResource("ShipSignature")
 ship_name = "Thunderbolt"
 subtitle = "Fast and Tactical"
-role = "Energy / Disruption"
-summary = "Fast, resistant EMP Pulse; strong Shields and Energy production, weaker Hull."
+role = "Aggression"
+summary = "Fast attacker: high early damage and shield-breaking pressure, but limited recovery. Relentless Barrage rewards finishing exposed enemies."
 hull_capacity = 28
 shields = 17
 materials = 14
@@ -48,5 +51,5 @@ reactor = 3
 ftl_turns = 11
 ftl_resistance = 0.3500000000000001
 hull_color = Color(0.18, 0.21, 0.26, 1)
-starting_cards = Array[Resource]([ExtResource("2_aatw3"), ExtResource("3_tctpy"), ExtResource("4_lgigk"), ExtResource("5_hww14"), ExtResource("6_ybiyd"), ExtResource("7_ble08"), ExtResource("8_ye2ms"), ExtResource("9_0j2cm"), ExtResource("10_kdhgj"), ExtResource("11_u8lf3"), ExtResource("12_x5nny"), ExtResource("13_gtyr8"), ExtResource("14_i55sv"), ExtResource("15_bc7p7"), ExtResource("16_xldkf"), ExtResource("17_ggqfk"), ExtResource("18_g7ymb"), ExtResource("19_4vqgn"), ExtResource("20_py7wb"), ExtResource("21_38811"), ExtResource("22_0ig5j"), ExtResource("23_or6qd"), ExtResource("24_ui3nu"), ExtResource("25_x36o5"), ExtResource("26_nl1rv"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
+starting_cards = Array[Resource]([ExtResource("2_aatw3"), ExtResource("3_tctpy"), ExtResource("4_lgigk"), ExtResource("5_hww14"), ExtResource("6_ybiyd"), ExtResource("7_ble08"), ExtResource("8_ye2ms"), ExtResource("9_0j2cm"), ExtResource("10_kdhgj"), ExtResource("11_u8lf3"), ExtResource("12_x5nny"), ExtResource("13_gtyr8"), ExtResource("14_i55sv"), ExtResource("15_bc7p7"), ExtResource("16_xldkf"), ExtResource("17_ggqfk"), ExtResource("18_g7ymb"), ExtResource("19_4vqgn"), ExtResource("20_py7wb"), ExtResource("21_38811"), ExtResource("22_0ig5j"), ExtResource("23_or6qd"), ExtResource("24_ui3nu"), ExtResource("25_x36o5"), ExtResource("26_nl1rv"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew"), ExtResource("ShipSignature")])
 model_scene = ExtResource("VisualModel")

@@ -20,7 +20,7 @@ func _initialize() -> void:
 func snapshot() -> Dictionary:
 	return {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func run() -> void:
-	check(Cards.CARDS.size() == 74, "Expanded library has 74 identities")
+	check(Cards.CARDS.size() == 80, "Expanded library has 74 identities")
 	for card in Cards.CARDS:
 		var original: Dictionary = card.effects.duplicate(true)
 		check(card.upgrade_effects.size() == 2 and card.upgrade_level == 0, "Two upgrade definitions: " + card.card_name)
@@ -41,7 +41,7 @@ func run() -> void:
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		var state = State.new()
 		state.start(ship_index, Rules, 65537)
-		check(state.player_pool().size() == 28, "28 starting identities: " + state.ship().ship_name)
+		check(state.player_pool().size() == 29, "29 starting identities: " + state.ship().ship_name)
 		var identities: Dictionary = {}
 		var production: Dictionary = {}
 		for card in state.player_pool():
@@ -51,10 +51,10 @@ func run() -> void:
 				if card.effects.has(key): production[key] = true
 			if card.effects.has("production_other"): production[card.effects.production_other.type] = true
 		check(production.size() == 3, "Each ship can improve every production type")
-		check(identities.size() == 28, "No duplicate starting identities")
+		check(identities.size() == 29, "No duplicate starting identities")
 		var excluded: Dictionary = {}
 		for card in Cards.CARDS:
-			if not identities.has(card.identity_key()): excluded[card.identity_key()] = false
+			if card.signature_ship < 0 and not identities.has(card.identity_key()): excluded[card.identity_key()] = false
 		for trial in range(1000):
 			var offers: Array[Resource] = state.random_card_offers()
 			check(offers.size() == 3 and offers[0] != offers[1] and offers[1] != offers[2] and offers[0] != offers[2], "Three distinct rewards")
@@ -68,7 +68,7 @@ func run() -> void:
 		state.pending_choice = "card"
 		state.card_offers = state.random_card_offers()
 		check(state.choose_card(0) and not state.choose_card(0), "Acquisition single use")
-		check(state.player_pool().size() == 29 and state.shared_pool() == enemy_before, "Separate pools")
+		check(state.player_pool().size() == 30 and state.shared_pool() == enemy_before, "Separate pools")
 		var acquired: Resource = state.acquired_cards[0]
 		var hand = Hand.new()
 		hand.card_pool = state.player_pool()
@@ -93,7 +93,7 @@ func run() -> void:
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
 			board.enemy_timer.stop()
-			check(board.hand.card_pool.size() == 29 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 74), "Real battle uses separate pools")
+			check(board.hand.card_pool.size() == 30 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 80), "Real battle uses separate pools")
 			for pooled in board.hand.card_pool:
 				if pooled.identity_key() == acquired.identity_key(): check(pooled.upgrade_level == 2, "Upgrades persist into successive battles")
 			for pooled in board.enemy_hand.card_pool: check(pooled.upgrade_level == 0, "Real enemy pool remains base")

@@ -33,12 +33,15 @@
 [ext_resource type="Resource" path="res://cards/71_reactor_interference.tres" id="SabotageEnergy"]
 [ext_resource type="Resource" path="res://cards/73_personnel_disruption.tres" id="SabotageCrew"]
 
+[ext_resource type="Resource" path="res://cards/77_reactive_armor.tres" id="ShipSignature"]
+
 [resource]
 script = ExtResource("1_8bt07")
+signature_card = ExtResource("ShipSignature")
 ship_name = "Titania"
 subtitle = "Mobile Stronghold"
-role = "Industrial / Crew"
-summary = "Heavy reserves and Materials/Crew production; weaker Shields and slow, vulnerable EMP Pulse."
+role = "Attrition"
+summary = "Armored survivor: repair Hull, absorb pressure and outlast enemies. Reactive Armor becomes stronger when badly damaged."
 hull_capacity = 40
 shields = 6
 materials = 16
@@ -49,5 +52,5 @@ quarters = 3
 ftl_turns = 17
 ftl_resistance = -0.1
 hull_color = Color(0.28, 0.31, 0.34, 1)
-starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card27"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("Card44"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card6"), ExtResource("Card7"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card20"), ExtResource("Card23"), ExtResource("Card24"), ExtResource("Card27"), ExtResource("Card28"), ExtResource("Card36"), ExtResource("Card40"), ExtResource("Card42"), ExtResource("Card44"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew"), ExtResource("ShipSignature")])
 model_scene = ExtResource("VisualModel")

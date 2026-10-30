@@ -83,7 +83,10 @@ func outcome(states: Array, clock: RefCounted) -> String:
 
 func run() -> void:
 	var index: int = 0
-	for player in Ships.PLAYERS:
+	for current_ship in Ships.PLAYERS:
+		# Frozen pre-signature baseline: compare the original 28-card configurations.
+		var player: Resource = current_ship.duplicate(false)
+		player.starting_cards = current_ship.starting_cards.filter(func(card: Resource): return card.signature_ship < 0)
 		for kind in range(6):
 			for seed_value in [1, 7]:
 				trace = []

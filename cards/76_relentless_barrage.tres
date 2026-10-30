@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 1
+allocation_category = "offense"
+card_name = "Relentless Barrage"
+family = "energy"
+cost = 7
+description = "Strike hard; follow through when enemy Shields fall."
+effects = {"damage": 7, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 4}}}
+upgrade_effects = [{"damage": 9, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 5}}}, {"damage": 11, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 6}}}]

@@ -4,6 +4,8 @@ extends RefCounted
 # Context and the authoritative reward RNG are supplied by ExpeditionState per operation.
 const Cards = preload("res://scripts/cards/card_library.gd")
 var acquired_cards: Array[Resource] = []
+## Old saves retain their historical starting pool without newly authored signatures.
+var signatures_enabled: bool = true
 var upgraded_cards: Dictionary = {}
 var removed_starting_cards: Dictionary = {}
 var pending_card: Resource
@@ -14,6 +16,7 @@ var pending_choice: String = ""
 
 
 func reset() -> void:
+	signatures_enabled = true
 	acquired_cards.clear()
 	upgraded_cards.clear()
 	removed_starting_cards.clear()
@@ -28,7 +31,7 @@ func reset() -> void:
 func snapshot() -> Dictionary:
 	var levels: Dictionary = {}
 	for key in upgraded_cards: levels[key] = upgraded_cards[key].upgrade_level
-	return {"acquired": _ids(acquired_cards), "removed": removed_starting_cards.keys(),
+	return {"signatures_enabled": signatures_enabled, "acquired": _ids(acquired_cards), "removed": removed_starting_cards.keys(),
 		"upgrades": levels, "pending_choice": pending_choice, "offers": _ids(card_offers),
 		"pending_card": pending_card.identity_key() if pending_card != null else "",
 		"upgrades_remaining": upgrades_remaining, "upgraded_this_event": upgraded_this_event.keys()}
@@ -58,7 +61,7 @@ func player_pool(profile: Resource) -> Array[Resource]:
 	var seen: Dictionary = {}
 	var retained: Array = []
 	for card in starting:
-		if not removed_starting_cards.has(card.identity_key()):
+		if not removed_starting_cards.has(card.identity_key()) and (signatures_enabled or card.signature_ship < 0):
 			retained.append(card)
 	for card in retained + acquired_cards:
 		var key: String = card.identity_key()
@@ -82,7 +85,7 @@ func available_reward_cards(profile: Resource, minimum_tier: int = 1) -> Array[R
 		owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
 	for card in Cards.CARDS:
-		if card.tier >= minimum_tier and not owned.has(card.identity_key()):
+		if card.tier >= minimum_tier and card.signature_ship < 0 and not owned.has(card.identity_key()):
 			candidates.append(card)
 	return candidates
 
@@ -228,6 +231,7 @@ func finish_upgrades(profile: Resource) -> bool:
 # No rolls, rewards, signals or currency changes occur while restoring a checkpoint.
 func restore(data: Dictionary, cards: Dictionary) -> void:
 	reset()
+	signatures_enabled = bool(data.get("signatures_enabled", false))
 	pending_choice = data.pending_choice
 	upgrades_remaining = int(data.upgrades_remaining)
 	for id in data.acquired: acquired_cards.append(cards[id])

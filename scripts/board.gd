@@ -256,6 +256,8 @@ func _ready() -> void:
 		and not player_ship_data.starting_cards.is_empty()
 	):
 		hand.card_pool.assign(player_ship_data.starting_cards)
+	if player_ship_data != null:
+		hand.signature_card = player_ship_data.signature_card
 	if enemy_ship_data != null:
 		if not enemy_ship_data.starting_cards.is_empty():
 			enemy_hand.card_pool.assign(enemy_ship_data.starting_cards)

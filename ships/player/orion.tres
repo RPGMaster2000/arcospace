@@ -33,17 +33,20 @@
 [ext_resource type="Resource" path="res://cards/71_reactor_interference.tres" id="SabotageEnergy"]
 [ext_resource type="Resource" path="res://cards/74_command_infiltration.tres" id="SabotageCrew"]
 
+[ext_resource type="Resource" path="res://cards/80_boarding_operations.tres" id="ShipSignature"]
+
 [resource]
 script = ExtResource("1_s4cye")
+signature_card = ExtResource("ShipSignature")
 ship_name = "Orion"
 subtitle = "Boarding Cruiser"
-role = "Crew / Boarding"
-summary = "Crew specialist; extra Energy reserves support boarding, theft and disruption."
+role = "Boarding and Theft"
+summary = "Boarding cruiser: pierce defenses, raid reserves and disrupt enemy plans. Boarding Operations offers a reliable opening assault."
 shields = 12
 materials = 8
 energy = 12
 synthesizer = 1
 quarters = 3
 hull_color = Color(0.85, 0.88, 0.91, 1)
-starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card19"), ExtResource("Card20"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card27"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card44"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card8"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card16"), ExtResource("Card17"), ExtResource("Card18"), ExtResource("Card19"), ExtResource("Card20"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card27"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card44"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew"), ExtResource("ShipSignature")])
 model_scene = ExtResource("VisualModel")
