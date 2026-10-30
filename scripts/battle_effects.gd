@@ -123,16 +123,23 @@ func play_direct_damage(side: String) -> void:
 	if _defer_presentation(_play_direct_damage.bind(side)): return
 	_play_direct_damage(side)
 
-func _play_direct_damage(side: String) -> void:
-	if not enabled or cancelling: return
+func fire_before_impact(side: String) -> void:
+	# Await the single weapon cue; the caller commits combat state at contact.
+	var shot: Tween = _play_direct_damage(side)
+	if shot != null:
+		await shot.finished
+
+
+func _play_direct_damage(side: String) -> Tween:
+	if not enabled or cancelling: return null
 	var actor = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 	var target = get_parent().get_node(enemy_ship_path if side == "player" else player_ship_path)
-	if not actor is Node3D or not target is Node3D: return
+	if not actor is Node3D or not target is Node3D: return null
 	# Same timeline with VFX on/off; normally shorter than existing hit feedback.
 	var timeline := _job()
 	if not Preferences.battle_vfx():
 		timeline.tween_interval(BEAM_SECONDS)
-		return
+		return timeline
 	if is_instance_valid(active_beam):
 		active_beam.hide()
 		_remove(active_beam)
