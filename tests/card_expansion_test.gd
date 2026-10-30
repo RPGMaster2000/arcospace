@@ -27,7 +27,7 @@ func custom(values: Dictionary, family: String = "energy", cost: int = 0) -> Res
 func expect(actual: Dictionary, wanted: Dictionary, context: String) -> void:
 	for key in wanted: check(actual[key] == wanted[key], context + " " + key + " expected " + str(wanted[key]) + " got " + str(actual[key]))
 func run() -> void:
-	check(Library.CARDS.size() == 74, "74 distinct resources")
+	check(Library.CARDS.size() == 80, "74 distinct resources")
 	var identities: Dictionary = {}
 	var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 	# Per-level outcomes from the prototype specification, with the same public combat state.
@@ -240,7 +240,7 @@ func test_decks() -> void:
 	for ship in range(6):
 		var run = State.new()
 		run.start(ship,Rules,1707)
-		check(run.player_pool().size() == 28 and run.deck_limit() == 36, "Expanded starting pool and capacity")
+		check(run.player_pool().size() == 29 and run.deck_limit() == 36, "Expanded starting pool and capacity")
 		for card in run.player_pool().slice(0,25): check(Library.CARDS.find(card)<44, "Original identities preserved")
 		for n in range(8):
 			run.pending_choice = "card"; run.card_offers = run.random_card_offers()
@@ -272,7 +272,7 @@ func test_decks() -> void:
 		pool_before = run.player_pool()
 		run.pending_choice = "card"; run.card_offers = run.random_card_offers(); run.choose_card(0)
 		check(run.decline_card() and not run.decline_card() and run.player_pool() == pool_before, "Decline single use, no mutation")
-		check(run.shared_pool().size()==74, "Enemy pool unaffected by capacity")
+		check(run.shared_pool().size()==80, "Enemy pool unaffected by capacity")
 		var hand = preload("res://scripts/cards/card_hand.gd").new()
 		hand.card_pool=run.player_pool()
 		var evicted: Resource = run.player_pool()[0]
@@ -295,7 +295,7 @@ func test_decks() -> void:
 		run.choose_card(0)
 		check(run.pending_choice=="replace" and run.decline_card() and run.salvage==100-price and run.player_pool()==deck_before_jump, "Declining paid card keeps deck and spent Salvage")
 		var config: Resource = Rules.duplicate(true)
-		config.max_deck_identities = 28
+		config.max_deck_identities = 29
 		run.start(ship,config,1708)
 		run.pending_choice = "card"; run.card_offers = run.random_card_offers(); run.choose_card(0)
-		check(run.pending_choice == "replace" and run.deck_limit()==28, "Inspector capacity honored")
+		check(run.pending_choice == "replace" and run.deck_limit()==29, "Inspector capacity honored")
