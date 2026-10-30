@@ -17,7 +17,7 @@ var original_modulate: Color = Color.WHITE
 
 # Invoke the supplied resolution callback once at the visual cue; Board owns the callback and turn lock.
 func animate_action(
-	card: Resource, source: Control, side: String, discard: bool, resolve: Callable
+	card: Resource, source: Control, side: String, discard: bool, resolve: Callable, present: Callable = Callable()
 ) -> void:
 	if not settings.enabled:
 		Sound.play(&"card_discard" if discard else &"card_play", self)
@@ -33,6 +33,7 @@ func animate_action(
 		# Retain the hand slot; only its moving visual leaves the board.
 		source.modulate.a = 0.0
 	var clipper := Control.new()
+	clipper.name = "PlayedCard"
 	clipper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clipper.position = start
 	clipper.size = card_size
@@ -91,9 +92,10 @@ func animate_action(
 			return
 		# Resolve once the card has arrived, while the player can read its text.
 		Sound.play(&"card_play", self)
-		resolve.call()
+		var delayed_damage: bool = resolve.call() == true
+		var exit_seconds: float = settings.damage_exit_seconds if delayed_damage else settings.exit_seconds
 		active_tween = _new_tween()
-		active_tween.tween_interval(settings.hold_seconds)
+		active_tween.tween_interval(settings.damage_hold_seconds if delayed_damage else settings.hold_seconds)
 		await step_finished
 		if cancelling:
 			return
@@ -101,17 +103,19 @@ func animate_action(
 		(
 			active_tween
 			. tween_property(
-				clipper, "position", $ExitAnchor.position - card_size * 0.5, settings.exit_seconds
+				clipper, "position", $ExitAnchor.position - card_size * 0.5, exit_seconds
 			)
 			. set_trans(Tween.TRANS_CUBIC)
 			. set_ease(Tween.EASE_IN)
 		)
-		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.exit_seconds)
-		active_tween.tween_property(clipper, "scale", Vector2.ONE * 0.85, settings.exit_seconds)
+		active_tween.tween_property(clipper, "modulate:a", 0.0, exit_seconds)
+		active_tween.tween_property(clipper, "scale", Vector2.ONE * 0.85, exit_seconds)
 		await step_finished
 		if cancelling:
 			return
+	clipper.hide()
 	clipper.queue_free()
+	if present.is_valid(): present.call()
 	if is_instance_valid(source_view):
 		# The replacement is already dealt, but is revealed only after the old card leaves.
 		active_tween = _new_tween()

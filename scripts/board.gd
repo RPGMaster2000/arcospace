@@ -462,7 +462,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	var source: Control = get_node(card_slots[slot]) if side == "player" else null
 	var motion = $CardMotion
 	await motion.animate_action(
-		modifier.preview(card), source, side, discard, _resolve_card.bind(side, slot, discard, card)
+		modifier.preview(card), source, side, discard, _resolve_card.bind(side, slot, discard, card, motion.settings.enabled),
+		battle_effects.reveal_card_presentation
 	)
 	if storm_card:
 		await $ModifierDisplay.hold_result()
@@ -474,6 +475,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		await battle_effects.finished
 	if battle_effects.cancelling or is_queued_for_deletion():
 		return false
+	battle_effects.end_card_presentation()
 	resolving_card = false
 	if _check_winner():
 		refresh_display()
@@ -524,10 +526,10 @@ func _finish_turn(side: String) -> void:
 
 # Determine once, stage shield-break Hull loss, replace the slot, then present deltas.
 # CombatModifier.play delegates cost/effects to CardEffects; discard uses its own refund path.
-func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> void:
+func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_visible: bool = false) -> bool:
 	damage_timeline.finish_now()
 	if not winner.is_empty():
-		return
+		return false
 	var before: Dictionary = _both_states()
 	var active_hand = hand if side == "player" else enemy_hand
 	var other: String = "enemy" if side == "player" else "player"
@@ -535,10 +537,12 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 	var target: Dictionary = ship_snapshot(other)
 	var resolution = Execution.resolve(card, discard, actor, target, modifier)
 	if resolution == null:
-		return
+		return false
 	$ModifierDisplay.announce(resolution.announcement, modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE)
 	if not discard and modifier.affects_card(card):
 		$ModifierDisplay.impact(modifier.kind)
+	var delay_visuals: bool = card_visible and resolution.direct_damage > 0 and battle_effects.enabled and battle_effects.Preferences.battle_vfx()
+	if delay_visuals: battle_effects.defer_card_presentation()
 	var report: Dictionary = resolution.hull_damage
 	var determined: Dictionary = {side: actor, other: target}
 	var pending: Array[Dictionary] = _stage_overflow(before, determined, report, side)
@@ -582,6 +586,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource) -> vo
 		_arm_pending_damage(pending, report, side)
 	_check_winner()
 	refresh_display()
+
+	return delay_visuals
 
 
 # EnemyAI returns a slot/discard decision; _act still enforces the same real action rules.
