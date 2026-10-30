@@ -57,15 +57,10 @@ func run() -> void:
 			var other: String = "enemy" if side == "player" else "player"
 			var motion = board.get_node("CardMotion")
 			board._act(side, 0, false)
-			await motion.step_finished # Raised activation.
-			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage during activation")
-			check(board.battle_effects.imported_nodes.is_empty(), "No weapon during charge")
-			await motion.step_finished # Hold ends.
-			check(board.get(other + "_shields") == shields, "No damage during hold")
-			await motion.step_finished # Dissolve completes and weapon starts.
+			await motion.step_finished # Fully raised: beam and dissolve now begin together.
 			await process_frame
-			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage during beam travel")
-			check(is_instance_valid(board.battle_effects.active_beam), "Binbun beam starts after card dissolves")
+			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage before weapon contact")
+			check(is_instance_valid(board.battle_effects.active_beam), "Beam begins when raised card starts dissolving")
 			check(board.current_actor == side and board.resolving_card, "Turn stays locked")
 			await board.action_finished
 			check(board.get(other + "_shields") == maxi(0, shields - 6), "Shields resolve at contact exactly once")
@@ -79,7 +74,7 @@ func run() -> void:
 		var motion = board.get_node("CardMotion")
 		board._act("player", 0, entry[1])
 		await motion.step_finished
-		check(board.enemy_shields == 20, "Non-beam actions do not resolve before activation")
+		check(board.current_actor == "player" and board.resolving_card, "Turn stays locked during non-beam activation")
 		await board.action_finished
 		check(board.battle_effects.imported_nodes.is_empty(), "No lingering imported VFX")
 		await cleanup(board)

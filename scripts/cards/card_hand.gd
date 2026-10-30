@@ -9,6 +9,11 @@ const CardLibrary = preload("res://scripts/cards/card_library.gd")
 @export var starting_hand: Array[Resource] = []
 ## For standard player openings only; the signature still uses its ordinary pool draw weight later.
 var signature_card: Resource
+## Player-only soft preference: other identities remain eligible, including small pools.
+var anti_repeat_enabled: bool = false
+var last_replaced_identity: String = ""
+@export_range(0.0, 1.0, 0.05) var held_duplicate_weight: float = 0.25
+@export_range(0.0, 1.0, 0.05) var immediate_repeat_weight: float = 0.10
 @export_range(1, 6, 1) var max_copies: int = 2
 ## TUNE: Tier 2 chance when the hand has room: 0.15 = 15%.
 @export_range(0.0, 1.0, 0.01) var tier_two_chance: float = 0.15
@@ -34,6 +39,7 @@ var _allocation_multiplier: float = 1.0
 # Only Board's player hand opts in. No RNG or current-hand changes on mode selection.
 func configure_player_allocation(multiplier: float) -> void:
 	_allocation_enabled = true
+	anti_repeat_enabled = true
 	_allocation_multiplier = maxf(1.0, multiplier) if is_finite(multiplier) else 1.0
 	allocation_mode = "balanced"
 
@@ -46,6 +52,7 @@ func select_allocation(mode: String) -> bool:
 
 
 func deal(size: int) -> void:
+	last_replaced_identity = ""
 	cards.clear()
 	for slot in range(size):
 		var initial: Resource = starting_hand[slot] if slot < starting_hand.size() else null
@@ -56,6 +63,7 @@ func deal(size: int) -> void:
 
 
 func deal_player_opening() -> void:
+	last_replaced_identity = ""
 	# Opening only: two costs from each family, without changing replacement draws.
 	# Fixed Inspector/test cards keep their slots when they satisfy quota and eligibility.
 	cards.clear()
@@ -141,7 +149,13 @@ func _draw_weight(card: Resource) -> float:
 		and card.allocation_category == allocation_mode
 	):
 		weight *= _allocation_multiplier
-	return weight
+	if anti_repeat_enabled:
+		var held: int = 0
+		for item in cards:
+			if item != null and item.identity_key() == card.identity_key(): held += 1
+		if held > 0: weight *= pow(held_duplicate_weight, held)
+		if card.identity_key() == last_replaced_identity: weight *= immediate_repeat_weight
+	return maxf(weight, 0.0001)
 
 
 # Count identities excluding the replaced slot; upgrades keep original rarity and duplicate identity.
@@ -176,6 +190,7 @@ func replace_card(slot: int) -> void:
 	if slot < 0 or slot >= cards.size():
 		return
 	# Exclude the used card when counting copies for its replacement.
+	last_replaced_identity = cards[slot].identity_key() if cards[slot] != null else ""
 	cards[slot] = draw_card(slot)
 
 #endregion

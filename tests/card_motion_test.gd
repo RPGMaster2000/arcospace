@@ -36,7 +36,7 @@ func run() -> void:
 	# Wait for actual arrival instead of assuming the runner sustains a frame rate.
 	await motion.step_finished
 	await process_frame
-	check(board.player_energy == 18 and board.enemy_shields == 10, "Charging must not resolve the effect")
+	check(board.resolving_card and board.current_actor == "player", "Activation remains locked after completed card lift")
 	check(board.resolving_card and board.current_actor == "player" and board.enemy_timer.is_stopped(), "Turn must wait through activation and impact")
 	await board.action_finished
 	check(not board.resolving_card and board.current_actor == "enemy" and board.player_energy == 12 and board.enemy_shields == 4, "Damage resolves once at impact before next turn")

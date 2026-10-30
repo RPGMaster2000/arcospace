@@ -102,19 +102,18 @@ func animate_action(
 		await step_finished
 		if cancelling: return
 		Sound.play(&"card_play", self)
-		active_tween = _new_tween()
-		active_tween.tween_interval(settings.damage_hold_seconds)
-		await step_finished
-		if cancelling: return
-		# Dissolve/fade before invoking the gameplay callback: impact is the cue.
+		# Impact starts as soon as the lift is finished. The card exits while
+		# Board resolves gameplay and cues VFX; no additional hold is needed.
 		active_tween = _new_tween().set_parallel(true)
 		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
 		active_tween.tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
-		await step_finished
-		if cancelling: return
-		clipper.hide()
+		# Invoke immediately; the replacement becomes available during the exit.
 		await resolve.call()
 		if cancelling: return
+		if active_tween != null and active_tween.is_running():
+			await active_tween.finished
+		if cancelling: return
+		clipper.hide()
 	clipper.hide()
 	clipper.queue_free()
 	if present.is_valid(): present.call()

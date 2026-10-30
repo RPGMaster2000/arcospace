@@ -250,14 +250,17 @@ func _play_changes(
 			if delta > 0 or (delta < 0 and effect_delta < 0):
 				_count(icon.get_node(key), old[key], current[key])
 			if delta > 0:
+				_stat_delta_popup(icon, delta, false)
 				Sound.play([&"materials_gain", &"energy_gain", &"crew_gain"][index], self)
 				_resource_burst(icon, COLORS[index], false)
 			if effect_delta < 0:
+				_stat_delta_popup(icon, effect_delta, false)
 				Sound.play(&"resource_drain", self)
 				_pulse_icon(icon, COLORS[index], false)
 			var production_delta: int = current[PRODUCTION[index]] - old[PRODUCTION[index]]
-			if production_delta > 0:
-				_resource_burst(icon, COLORS[index], true)
+			if production_delta != 0:
+				_resource_burst(icon, COLORS[index] if production_delta > 0 else Color(1.0, 0.25, 0.35), true)
+				_stat_delta_popup(icon, production_delta, true)
 			if production_delta != 0:
 				Sound.play(&"production_gain" if production_delta > 0 else &"production_loss", self)
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
@@ -289,6 +292,27 @@ func _play_changes(
 
 
 # Draw behind the icon/badge; the effect owns no input or game state.
+func _stat_delta_popup(icon: Control, delta: int, production: bool) -> void:
+	# Lightweight readable gain/loss feedback alongside the existing shader burst.
+	var popup := Label.new()
+	popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.text = ("%+d" % delta) + (" PROD" if production else "")
+	popup.add_theme_font_size_override("font_size", 27 if production else 23)
+	popup.add_theme_color_override("font_color", Color(0.55, 1.0, 0.6) if delta > 0 else Color(1.0, 0.34, 0.37))
+	popup.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	popup.add_theme_constant_override("shadow_offset_x", 2)
+	popup.add_theme_constant_override("shadow_offset_y", 2)
+	popup.position = Vector2(24, 8) if production else Vector2(30, 43)
+	popup.z_index = 10
+	icon.add_child(popup)
+	var tween := _job()
+	tween.set_parallel(true)
+	tween.tween_property(popup, "position:y", popup.position.y - 39, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 0.0, 0.58)
+	tween.chain().tween_callback(func():
+		if is_instance_valid(popup): popup.queue_free())
+
+
 func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
 	var burst := ColorRect.new()
 	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
