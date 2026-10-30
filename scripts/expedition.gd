@@ -820,12 +820,13 @@ func show_battle_preview(index: int) -> void:
 	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
 	if _uses_3d_map() and not inspecting: star_map.tactical_focus(index)
 	_add_tactical_briefing(encounter, enemy, false)
-	var enter = _button("Enter Combat", _enter_battle.bind(index))
-	enter.name = "CombatEntry"
-	if inspecting: enter.disabled = true
-	if screen.compact_focus:
-		enter.reparent(screen.sidebar)
-	_style_combat_entry(enter)
+	# Inspection only shows enemy information; entering combat requires arrival.
+	if not inspecting:
+		var enter = _button("Enter Combat", _enter_battle.bind(index))
+		enter.name = "CombatEntry"
+		if screen.compact_focus:
+			enter.reparent(screen.sidebar)
+		_style_combat_entry(enter)
 	if not _uses_3d_map(): _button("Return", show_system)
 
 
