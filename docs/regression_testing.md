@@ -1,5 +1,29 @@
 # Running regression tests
 
+## Required test review for every behavior change
+
+Treat test impact analysis as part of implementation, **before the first push/CI run**.
+For each gameplay, animation, UI, save, or system change:
+
+1. Search `tests/` and rendered test scripts for affected assertions, fixtures,
+   timing assumptions, deterministic hashes, and hard-coded counts.
+2. Define the new behavioral contract and which existing guarantees remain.
+3. Update affected tests **in the same change as the implementation**. Add focused
+   positive and negative coverage for the new behavior; preserve unaffected checks.
+4. Prefer observable event/state boundaries to brittle fixed step counts or sleeps.
+   For intended timing changes, explicitly test the new sequence and durations.
+5. Before opening/updating a PR, review the implementation diff and test diff together;
+   identify any tests not run locally and use CI to validate them.
+6. Do not weaken/delete a failing assertion just to make CI green. Establish whether
+   it checks an obsolete expectation or exposes a real regression, and document why
+   any assertion is revised.
+7. Merge only after required checks pass. If a failing test is unrelated, investigate
+   it separately rather than silently changing its expectations.
+
+This is a default development requirement, including narrow one-line changes.
+A docs-only change does not require new behavioral tests.
+
+
 The headless runner is shared by local development and GitHub Actions. It requires
 Python 3.9+ (standard library only) and the project's pinned Godot 4.7.2 executable.
 From the repository root:
