@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 0
+allocation_category = "systems"
+card_name = "Adaptive Command"
+family = "crew"
+cost = 5
+description = "Stabilize Shields and replenish supplies."
+effects = {"shields": 4, "materials": 3}
+upgrade_effects = [{"shields": 6, "materials": 4, "energy": 2}, {"shields": 8, "materials": 5, "energy": 3}]
