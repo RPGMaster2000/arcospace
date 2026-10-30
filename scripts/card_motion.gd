@@ -21,7 +21,7 @@ func animate_action(
 ) -> void:
 	if not settings.enabled:
 		Sound.play(&"card_discard" if discard else &"card_play", self)
-		resolve.call()
+		await resolve.call()
 		return
 	source_view = source
 	var card_size := Vector2(198, 294)
