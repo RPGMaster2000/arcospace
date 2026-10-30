@@ -64,6 +64,7 @@ static func encode(state: Resource) -> Dictionary:
 		"production_upgrades": state.production_upgrades.duplicate(),
 		"bonuses": state.pending_bonuses.duplicate(), "penalties": state.pending_penalties.duplicate(),
 		"acquired": deck.acquired, "removed": deck.removed,
+		"signatures_enabled": deck.signatures_enabled,
 		"upgrades": {}, "upgraded_this_event": deck.upgraded_this_event,
 		"offers": deck.offers,
 		"pending_card": deck.pending_card,
