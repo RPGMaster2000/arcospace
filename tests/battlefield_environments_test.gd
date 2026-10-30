@@ -44,8 +44,8 @@ func run() -> void:
 			check(not first is CollisionObject3D and first.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "Decoration only; no shadow/collision")
 			var camera: Camera3D = a.get_node("Camera3D")
 			check(camera.to_local(first.global_position).z < camera.to_local(a.get_node("PlayerShip").global_position).z - 5, "Rocks are behind combat geometry")
-		if a.has_node("BackgroundObjects/Planet"):
-			check(a.get_node("BackgroundObjects/Planet").mesh is SphereMesh, "Planet uses editable primitive")
+		if scene == Planet:
+			check(not a.has_node("BackgroundObjects/Planet"), "Planetary skybox contains the planet without a duplicate mesh")
 		a.queue_free(); b.queue_free()
 		await process_frame
 	var ui_snapshot: Dictionary = {}
