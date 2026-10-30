@@ -155,6 +155,7 @@ func _play_direct_damage(side: String) -> Tween:
 	timeline.tween_callback(func():
 		var current = reference.get_ref()
 		if current != null: _remove(current))
+	return timeline
 
 
 #region Delta dispatch
