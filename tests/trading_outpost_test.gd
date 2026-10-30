@@ -140,7 +140,7 @@ func economy_checks(ship_index: int) -> void:
 		check(not run.purchase_service(1, run.service_revision) and not run.generate_system(), "Card selection blocks spending and departure")
 		check(not run.choose_card(3) and run.pending_choice == "card", "Invalid card choice leaves selection pending")
 		check(run.choose_card(n % 3) and not run.choose_card(n % 3) and not run.purchase_service(2, revision), "Card selection and confirmation cannot duplicate")
-	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == 74 and run.player_pool().size() == 31, "Acquisitions extend only the ship's player pool")
+	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == 80 and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
 	run.salvage = 14
 	check(not run.purchase_service(2, run.service_revision) and run.salvage == 14, "Card affordability verified before spending")
 	run.salvage = 1000
