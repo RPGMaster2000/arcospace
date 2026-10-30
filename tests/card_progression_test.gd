@@ -41,7 +41,7 @@ func run() -> void:
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		var state = State.new()
 		state.start(ship_index, Rules, 65537)
-		check(state.player_pool().size() == 29, "28 starting identities: " + state.ship().ship_name)
+		check(state.player_pool().size() == 29, "29 starting identities: " + state.ship().ship_name)
 		var identities: Dictionary = {}
 		var production: Dictionary = {}
 		for card in state.player_pool():
@@ -54,7 +54,7 @@ func run() -> void:
 		check(identities.size() == 29, "No duplicate starting identities")
 		var excluded: Dictionary = {}
 		for card in Cards.CARDS:
-			if not identities.has(card.identity_key()): excluded[card.identity_key()] = false
+			if card.signature_ship < 0 and not identities.has(card.identity_key()): excluded[card.identity_key()] = false
 		for trial in range(1000):
 			var offers: Array[Resource] = state.random_card_offers()
 			check(offers.size() == 3 and offers[0] != offers[1] and offers[1] != offers[2] and offers[0] != offers[2], "Three distinct rewards")
@@ -68,7 +68,7 @@ func run() -> void:
 		state.pending_choice = "card"
 		state.card_offers = state.random_card_offers()
 		check(state.choose_card(0) and not state.choose_card(0), "Acquisition single use")
-		check(state.player_pool().size() == 29 and state.shared_pool() == enemy_before, "Separate pools")
+		check(state.player_pool().size() == 30 and state.shared_pool() == enemy_before, "Separate pools")
 		var acquired: Resource = state.acquired_cards[0]
 		var hand = Hand.new()
 		hand.card_pool = state.player_pool()
