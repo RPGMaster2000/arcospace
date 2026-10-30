@@ -31,12 +31,15 @@
 [ext_resource type="Resource" path="res://cards/69_industrial_interference.tres" id="SabotageMaterials"]
 [ext_resource type="PackedScene" uid="uid://cyfpb7me4ron6" path="res://scenes/ships/callisto.tscn" id="VisualModel"]
 
+[ext_resource type="Resource" path="res://cards/79_shield_capacitor.tres" id="ShipSignature"]
+
 [resource]
 script = ExtResource("1_s4cye")
+signature_card = ExtResource("ShipSignature")
 ship_name = "Callisto"
 subtitle = "Shield Cruiser"
-role = "Energy / Shields"
-summary = "Energy specialist; extra Materials reserves support Shields and Reactor development."
+role = "Energy Control"
+summary = "Energy-control cruiser: manipulate Shields and reserves to win efficient exchanges. Shield Capacitor rewards maintaining superior defenses."
 shields = 12
 energy = 8
 crew = 12
@@ -44,4 +47,4 @@ reactor = 3
 quarters = 1
 hull_color = Color(0.65, 0.74, 0.8, 1)
 model_scene = ExtResource("VisualModel")
-starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card8"), ExtResource("Card9"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card18"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card25"), ExtResource("Card26"), ExtResource("Card29"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card41"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew")])
+starting_cards = Array[Resource]([ExtResource("Card1"), ExtResource("Card2"), ExtResource("Card3"), ExtResource("Card4"), ExtResource("Card5"), ExtResource("Card8"), ExtResource("Card9"), ExtResource("Card10"), ExtResource("Card11"), ExtResource("Card12"), ExtResource("Card13"), ExtResource("Card14"), ExtResource("Card15"), ExtResource("Card18"), ExtResource("Card21"), ExtResource("Card22"), ExtResource("Card23"), ExtResource("Card25"), ExtResource("Card26"), ExtResource("Card29"), ExtResource("Card36"), ExtResource("Card37"), ExtResource("Card39"), ExtResource("Card40"), ExtResource("Card41"), ExtResource("SabotageMaterials"), ExtResource("SabotageEnergy"), ExtResource("SabotageCrew"), ExtResource("ShipSignature")])
