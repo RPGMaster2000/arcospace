@@ -9,7 +9,7 @@ const EXPECTED = [
 	[35,12,10,10,10,2,2,2,14,0.0], [28,17,14,10,8,1,3,2,11,0.35],
 	[40,6,16,17,16,3,2,3,17,-0.1], [35,12,8,12,10,3,1,2,14,0.0],
 	[35,12,10,8,12,2,3,1,14,0.0], [35,12,8,12,10,1,2,3,14,0.0]]
-const COUNTS = [[10,10,8],[5,14,9],[12,6,10],[13,7,8],[8,14,6],[7,9,12]]
+const COUNTS = [[10,10,9],[5,15,9],[13,6,10],[14,7,8],[8,15,6],[7,9,13]]
 const PREMIUM = ["Deploy boarding teams","Deep-core mining","Advanced fabrication","Reinforce EMP Pulse systems","Deep atmospheric dive","Board pirate flagship","Evacuate scientists","Shielded expedition","Stabilize corridor"]
 var failures: int = 0
 var checks: int = 0
@@ -36,12 +36,13 @@ func run() -> void:
 		var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 		var affordable: Dictionary = counts.duplicate()
 		for card in profile.starting_cards:
-			check(card in Cards.CARDS and (card.tier == 1 or Cards.CARDS.find(card) >= 68) and ResourceLoader.exists(card.resource_path), "Valid original or added sabotage resource")
+			check(card in Cards.CARDS and card.tier == 1 and ResourceLoader.exists(card.resource_path), "Valid original or added sabotage resource")
 			check(not identities.has(card.identity_key()), "Distinct pool identities")
+			if card.signature_ship >= 0: check(card == profile.signature_card and card.signature_ship == index, "Signature belongs only to this ship")
 			identities[card.identity_key()] = true
 			counts[card.family] += 1
 			if card.cost <= profile.get(card.family): affordable[card.family] += 1
-		check(identities.size() == 28 and counts.values() == COUNTS[index], "Exact 28-card family distribution")
+		check(identities.size() == 29 and counts.values() == COUNTS[index], "Exact 29-card family distribution")
 		for count in affordable.values(): check(count >= 2, "At least two immediately affordable cards per family")
 		var signature: Array = identities.keys()
 		signature.sort()
@@ -53,11 +54,13 @@ func run() -> void:
 		var hand = Hand.new()
 		hand.card_pool.assign(profile.starting_cards)
 		hand.configure_player_allocation(2.0)
+		hand.signature_card = profile.signature_card
 		for seed_value in range(100):
 			hand.rng.seed = seed_value + 1
 			hand.deal_player_opening()
 			var opening: Dictionary = {"materials":0,"energy":0,"crew":0}
 			for card in hand.cards: opening[card.family] += 1
+			check(profile.signature_card in hand.cards, "Signature is guaranteed in ordinary opening")
 			check(opening.values() == [2,2,2], "Seeded 2/2/2 opening")
 		var snapshot: Array = hand.cards.duplicate()
 		var rng_before: int = hand.rng.state
