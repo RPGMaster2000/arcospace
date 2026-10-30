@@ -74,8 +74,12 @@ func animate_action(
 		resolve.call()
 	else:
 		# Cards activate in place rather than covering the battlefield.
-		# Player: lift by 20% of the card height. Enemy: compact top-right cue.
-		var destination: Vector2 = start + Vector2(0, -card_size.y * (0.20 if side == "player" else 0.12))
+		# Player: lift in the hand. Enemy: place the compact activation between
+		# the ship (left), title (above), and resource stack (right).
+		if side == "enemy":
+			start = Vector2(size.x * 0.51, maxf(155.0, size.y * 0.29))
+			clipper.position = start
+		var destination: Vector2 = start + Vector2(0, -card_size.y * (0.20 if side == "player" else 0.04))
 		if side == "enemy":
 			clipper.scale = Vector2.ONE * 0.72
 			clipper.modulate.a = 0.0
