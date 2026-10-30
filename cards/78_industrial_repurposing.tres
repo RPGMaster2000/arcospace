@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 3
+allocation_category = "systems"
+card_name = "Industrial Repurposing"
+family = "materials"
+cost = 6
+description = "Convert Materials into Energy and Crew."
+effects = {"energy": 5, "crew": 5}
+upgrade_effects = [{"energy": 7, "crew": 6}, {"energy": 9, "crew": 7}]
