@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 4
+allocation_category = "defense"
+card_name = "Shield Capacitor"
+family = "energy"
+cost = 6
+description = "Build a Shield advantage to recharge Energy."
+effects = {"shields": 7, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 4}}}
+upgrade_effects = [{"shields": 10, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 5}}}, {"shields": 13, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 6}}}]
