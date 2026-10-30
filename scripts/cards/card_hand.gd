@@ -66,6 +66,17 @@ func deal_player_opening() -> void:
 		if initial != null and remaining.get(initial.family, 0) > 0 and _eligible(initial, -1):
 			cards[slot] = initial
 			remaining[initial.family] -= 1
+	# Reserve one family quota for the active ship signature, without displacing fixed test cards.
+	if signature_card != null and signature_card in card_pool and remaining.get(signature_card.family, 0) > 0 and _eligible(signature_card, -1):
+		var already_held: bool = false
+		for held in cards:
+			if held != null and held.identity_key() == signature_card.identity_key(): already_held = true
+		if not already_held:
+			for slot in range(cards.size()):
+				if cards[slot] == null:
+					cards[slot] = signature_card
+					remaining[signature_card.family] -= 1
+					break
 	var families: Array[String] = []
 	for family in remaining:
 		for n in range(remaining[family]):
@@ -97,6 +108,7 @@ func draw_card(excluded_slot: int = -1, required_family: String = "") -> Resourc
 			card != null
 			and (required_family.is_empty() or card.family == required_family)
 			and _eligible(card, excluded_slot)
+			and (not card_pool.is_empty() or card.signature_ship < 0)
 		):
 			buckets[card.tier].append(card)
 	var roll: float = rng.randf()
