@@ -296,12 +296,12 @@ func run() -> void:
 	check(not heard(&"card_select"), "Repeated card emphasis is silent")
 	card_view.set_interaction_emphasis(false, false)
 	var resolved: Array = []
-	motion.animate_action(card, null, "player", false, func(): resolved.append(true))
-	check(not heard(&"card_play"), "Card play waits for arrival")
-	await motion.step_finished
-	await process_frame
-	check(heard(&"card_play") and resolved.size() == 1, "Card play cue resolves once at arrival")
-	await create_timer(0.15).timeout
+	# Card activation now completes before the resolution/impact callback.
+	# Await the entire action, not its first animation step, so the next
+	# discard cannot interrupt an unfinished activation tween.
+	check(not heard(&"card_play"), "Card play waits for activation")
+	await motion.animate_action(card, null, "player", false, func(): resolved.append(true))
+	check(heard(&"card_play") and resolved.size() == 1, "Card activation plays cue and resolves once")
 	reset_audio()
 	await motion.animate_action(card, null, "player", true, func(): resolved.append(true))
 	check(heard(&"card_discard") and resolved.size() == 2, "Card scanner discard cue")

@@ -28,7 +28,7 @@ func run() -> void:
 	var view = board.get_node(board.card_slots[0])
 	board._on_card_pressed(0)
 	check(board.resolving_card and view.modulate.a == 0, "Played card must hide and lock immediately")
-	check(board.player_energy == 18 and board.enemy_shields == 10, "No resolution before centre arrival")
+	check(board.player_energy == 18 and board.enemy_shields == 10, "No resolution before activation")
 	var hand_before: Array = board.hand.cards.duplicate()
 	board._on_card_pressed(0)
 	board._discard_card(1)
@@ -36,10 +36,10 @@ func run() -> void:
 	# Wait for actual arrival instead of assuming the runner sustains a frame rate.
 	await motion.step_finished
 	await process_frame
-	check(board.player_energy == 12 and board.enemy_shields == 4, "Arrival must resolve the effect exactly once")
-	check(board.resolving_card and board.current_actor == "player" and board.enemy_timer.is_stopped(), "Turn must wait through the centre hold")
+	check(board.player_energy == 18 and board.enemy_shields == 10, "Charging must not resolve the effect")
+	check(board.resolving_card and board.current_actor == "player" and board.enemy_timer.is_stopped(), "Turn must wait through activation and impact")
 	await board.action_finished
-	check(not board.resolving_card and board.current_actor == "enemy", "Turn must advance only after exit/refill")
+	check(not board.resolving_card and board.current_actor == "enemy" and board.player_energy == 12 and board.enemy_shields == 4, "Damage resolves once at impact before next turn")
 	check(view.modulate.a == 1 and view.card_data == board.hand.cards[0], "Replacement must be visible")
 	check(not board.enemy_timer.is_stopped(), "AI delay must begin after animation")
 	board.enemy_timer.stop()

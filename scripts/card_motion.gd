@@ -21,7 +21,7 @@ func animate_action(
 ) -> void:
 	if not settings.enabled:
 		Sound.play(&"card_discard" if discard else &"card_play", self)
-		resolve.call()
+		await resolve.call()
 		return
 	source_view = source
 	var card_size := Vector2(198, 294)
@@ -73,46 +73,44 @@ func animate_action(
 		$Scanner.hide()
 		resolve.call()
 	else:
-		var centre: Vector2 = $StageAnchor.position - card_size * settings.stage_scale * 0.5
+		# Cards activate in place rather than covering the battlefield.
+		# Player: lift by 20% of the card height. Enemy: compact top-right cue.
+		var destination: Vector2 = start + Vector2(0, -card_size.y * (0.20 if side == "player" else 0.12))
 		if side == "enemy":
+			clipper.scale = Vector2.ONE * 0.72
 			clipper.modulate.a = 0.0
+		var glow := Panel.new()
+		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var glow_style := StyleBoxFlat.new()
+		glow_style.bg_color = Color(0.08, 0.54, 0.95, 0.10)
+		glow_style.border_color = Color(0.26, 0.83, 1.0, 0.90)
+		glow_style.set_border_width_all(3)
+		glow_style.set_corner_radius_all(8)
+		glow_style.shadow_color = Color(0.12, 0.65, 1.0, 0.65)
+		glow_style.shadow_size = 12
+		glow.add_theme_stylebox_override("panel", glow_style)
+		clipper.add_child(glow)
+		clipper.move_child(glow, 0)
 		active_tween = _new_tween().set_parallel(true)
-		(
-			active_tween
-			. tween_property(clipper, "position", centre, settings.travel_seconds)
-			. set_trans(Tween.TRANS_CUBIC)
-			. set_ease(Tween.EASE_OUT)
-		)
-		active_tween.tween_property(
-			clipper, "scale", Vector2.ONE * settings.stage_scale, settings.travel_seconds
-		)
+		active_tween.tween_property(clipper, "position", destination, settings.travel_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		active_tween.tween_property(clipper, "modulate:a", 1.0, settings.travel_seconds)
 		await step_finished
-		if cancelling:
-			return
-		# Resolve once the card has arrived, while the player can read its text.
+		if cancelling: return
 		Sound.play(&"card_play", self)
-		var delayed_damage: bool = resolve.call() == true
-		var exit_seconds: float = settings.damage_exit_seconds if delayed_damage else settings.exit_seconds
 		active_tween = _new_tween()
-		active_tween.tween_interval(settings.damage_hold_seconds if delayed_damage else settings.hold_seconds)
+		active_tween.tween_interval(settings.damage_hold_seconds)
 		await step_finished
-		if cancelling:
-			return
+		if cancelling: return
+		# Dissolve/fade before invoking the gameplay callback: impact is the cue.
 		active_tween = _new_tween().set_parallel(true)
-		(
-			active_tween
-			. tween_property(
-				clipper, "position", $ExitAnchor.position - card_size * 0.5, exit_seconds
-			)
-			. set_trans(Tween.TRANS_CUBIC)
-			. set_ease(Tween.EASE_IN)
-		)
-		active_tween.tween_property(clipper, "modulate:a", 0.0, exit_seconds)
-		active_tween.tween_property(clipper, "scale", Vector2.ONE * 0.85, exit_seconds)
+		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
+		active_tween.tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
 		await step_finished
-		if cancelling:
-			return
+		if cancelling: return
+		clipper.hide()
+		await resolve.call()
+		if cancelling: return
 	clipper.hide()
 	clipper.queue_free()
 	if present.is_valid(): present.call()
