@@ -462,8 +462,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	var source: Control = get_node(card_slots[slot]) if side == "player" else null
 	var motion = $CardMotion
 	await motion.animate_action(
-		modifier.preview(card), source, side, discard, _resolve_card.bind(side, slot, discard, card, motion.settings.enabled),
-		battle_effects.reveal_card_presentation
+		modifier.preview(card), source, side, discard,
+		_resolve_after_activation.bind(side, slot, discard, card)
 	)
 	if storm_card:
 		await $ModifierDisplay.hold_result()
@@ -524,9 +524,31 @@ func _finish_turn(side: String) -> void:
 	await _begin_turn(next.side)
 
 
+# Resolve only at weapon contact. No gameplay calculations or stat commits
+# occur while the card is charging or while the beam travels.
+static func _may_fire_beam(effects: Dictionary) -> bool:
+	if int(effects.get("damage", 0)) > 0: return true
+	var conditional: Dictionary = effects.get("conditional", {})
+	if not conditional.is_empty():
+		return _may_fire_beam(conditional.get("then", {})) or _may_fire_beam(conditional.get("else", {}))
+	return false
+
+
+func _resolve_after_activation(side: String, slot: int, discard: bool, card: Resource) -> void:
+	var shot: bool = (
+		not discard and battle_effects.enabled
+		and battle_effects.Preferences.battle_vfx()
+		and _may_fire_beam(card.effects)
+	)
+	if shot:
+		await battle_effects.fire_before_impact(side)
+		if is_queued_for_deletion() or battle_effects.cancelling: return
+	_resolve_card(side, slot, discard, card, false, shot)
+
+
 # Determine once, stage shield-break Hull loss, replace the slot, then present deltas.
 # CombatModifier.play delegates cost/effects to CardEffects; discard uses its own refund path.
-func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_visible: bool = false) -> bool:
+func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_visible: bool = false, beam_fired: bool = false) -> bool:
 	damage_timeline.finish_now()
 	if not winner.is_empty():
 		return false
@@ -580,7 +602,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 		not pending.is_empty()
 	)
 	# Resolved provenance excludes misses, discards, self-hits and modifier-only damage.
-	if resolution.direct_damage > 0:
+	if resolution.direct_damage > 0 and not beam_fired:
 		battle_effects.play_direct_damage(side)
 	if not pending.is_empty():
 		_arm_pending_damage(pending, report, side)
