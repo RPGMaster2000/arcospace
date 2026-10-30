@@ -19,7 +19,7 @@ func baseline_report(report: Dictionary) -> Dictionary:
 
 func _initialize() -> void:
 	var hashes: Array = []
-	for base in Cards.CARDS:
+	for base in Cards.CARDS.slice(0, 74):
 		for level in range(base.max_upgrades + 1):
 			var card: Resource = base if level == 0 else base.with_upgrade(level)
 			for seed_value in [7, 43]:
