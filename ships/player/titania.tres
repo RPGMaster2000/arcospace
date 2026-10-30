@@ -37,6 +37,7 @@
 
 [resource]
 script = ExtResource("1_8bt07")
+signature_card = ExtResource("ShipSignature")
 ship_name = "Titania"
 subtitle = "Mobile Stronghold"
 role = "Attrition"
