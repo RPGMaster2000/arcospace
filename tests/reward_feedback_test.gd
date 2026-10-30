@@ -117,7 +117,7 @@ func run() -> void:
 	host.deck_button.pressed.emit()
 	await settle()
 	var viewer = host.current_deck_viewer
-	check(viewer.gallery.cards == host.state.player_pool() and viewer.gallery.cards.size() == 29, "Current deck includes acquisition")
+	check(viewer.gallery.cards == host.state.player_pool() and viewer.gallery.cards.size() == 30, "Current deck includes acquisition")
 	var found: bool = false
 	for card in viewer.gallery.cards:
 		if card.identity_key() == acquired.identity_key(): found = card.upgrade_level == 1
