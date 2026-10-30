@@ -309,7 +309,8 @@ func _stat_delta_popup(icon: Control, delta: int, production: bool) -> void:
 	tween.set_parallel(true)
 	tween.tween_property(popup, "position:y", popup.position.y - 39, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(popup, "modulate:a", 0.0, 0.58)
-	tween.chain().tween_callback(func(): if is_instance_valid(popup): popup.queue_free())
+	tween.chain().tween_callback(func():
+		if is_instance_valid(popup): popup.queue_free())
 
 
 func _resource_burst(icon: Control, tint: Color, production: bool) -> void:
