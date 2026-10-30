@@ -47,6 +47,8 @@ func run() -> void:
 	board.enemy_hand.cards.assign([Library.CARDS[11]])
 	hand_before = board.hand.cards.duplicate()
 	board._on_enemy_timeout()
+	var enemy_cue: Control = motion.get_node("PlayedCard")
+	check(enemy_cue.position.x > motion.size.x * 0.49 and enemy_cue.position.x < motion.size.x * 0.54 and enemy_cue.position.y >= 150.0, "Enemy card activates in open space below title and left of resources")
 	check(board.resolving_card and board.player_shields == 10, "Enemy effect must wait for its animation")
 	await board.action_finished
 	check(board.current_actor == "player" and board.player_shields == 4, "Enemy animation must resolve then return control")
