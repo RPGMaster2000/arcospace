@@ -7,6 +7,8 @@ const CardLibrary = preload("res://scripts/cards/card_library.gd")
 @export var card_pool: Array[Resource] = []
 # An empty starting hand draws randomly. Assign cards for a fixed test hand.
 @export var starting_hand: Array[Resource] = []
+## For standard player openings only; the signature still uses its ordinary pool draw weight later.
+var signature_card: Resource
 @export_range(1, 6, 1) var max_copies: int = 2
 ## TUNE: Tier 2 chance when the hand has room: 0.15 = 15%.
 @export_range(0.0, 1.0, 0.01) var tier_two_chance: float = 0.15
