@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 2
+allocation_category = "defense"
+card_name = "Reactive Armor"
+family = "materials"
+cost = 6
+description = "Repair Hull and restore Shields; stronger while damaged."
+effects = {"hull": 3, "shields": 6, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 4}}}
+upgrade_effects = [{"hull": 4, "shields": 8, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 5}}}, {"hull": 5, "shields": 10, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 6}}}]
