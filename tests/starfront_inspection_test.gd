@@ -96,7 +96,7 @@ func run() -> void:
 	await create_timer(0.55).timeout
 	check(host.inspecting and host.view_kind == "preview", "Mouse hold opens enemy inspection without contact")
 	var enter: Node = host.screen.find_child("CombatEntry", true, false)
-	check(enter != null and enter.disabled and not host.return_button.visible, "Enemy inspection disables combat and hides Back")
+	check(enter == null and not host.return_button.visible, "Enemy inspection omits combat action and hides Back")
 	check(map.ship.position == pos and map.camera.position == camera, "Enemy inspection does not change camera or ship")
 	mouse(at, false)
 	await create_timer(0.7).timeout

@@ -158,11 +158,5 @@ shadow_enabled = false
 [node name="BackgroundObjects" type="Node3D" parent="."]
 transform = Transform3D(0.72473, 0, -0.689033, 0, 1, 0, 0.689033, 0, 0.72473, 10.7391, -0.367728, -11.78178)
 
-[node name="Planet" type="MeshInstance3D" parent="BackgroundObjects"]
-position = Vector3(11, 4.2, -4)
-cast_shadow = 0
-material_override = SubResource("PlanetMaterial")
-mesh = SubResource("PlanetMesh")
-
 [editable path="PlayerShip"]
 [editable path="EnemyShip"]
