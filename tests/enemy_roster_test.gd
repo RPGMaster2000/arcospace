@@ -52,7 +52,7 @@ func run() -> void:
 			board.get_node("CardMotion").settings.enabled = false
 			root.add_child(board)
 			check(board.enemy_hull == Ships.ENEMIES[enemy].hull_capacity and board.enemy_shields == Ships.ENEMIES[enemy].shields, "Enemy stats loaded")
-			check(board.hand.card_pool.size() == 28 and board.hand.cards.size() == 6, "Player pool and hand unchanged")
+			check(board.hand.card_pool.size() == 29 and board.hand.cards.size() == 6, "Player pool and hand unchanged")
 			var pool: Array = Ships.ENEMIES[enemy].starting_cards if enemy >= 3 else Cards.CARDS
 			check(board.enemy_hand.card_pool == pool, "Expedition respects optional enemy deck and full-library fallback")
 			check(board.enemy_ai.tactical_weights == Ships.ENEMIES[enemy].tactical_weights, "AI preferences loaded")
