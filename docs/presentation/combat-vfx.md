@@ -99,3 +99,23 @@ Scene exit clears buffered callbacks and cancels registered tweens.
 overflow commit timing, card visibility, turn locking, non-damage cards, discards,
 Battle VFX Off and scene cancellation. Existing card-motion, shield-shatter,
 beam and frozen combat-parity tests remain applicable.
+
+
+## Raised card activation and beam contact (experimental)
+
+Played cards now activate near the original hand slot, rather than expanding over
+both ships. Player cards lift roughly 20% of their height with a cyan rim glow;
+enemy cards use a smaller upper-right cue. The card fades before its action is
+committed. For cards containing direct-damage effects, the Binbun BeamFX weapon
+plays first and the existing CombatExecution.resolve() callback runs once at
+beam contact. Shield/hull reactions are dispatched by the committed delta, not
+by the beam itself. Discards retain their scanner behavior.
+
+The BeamFX adapter retains the vendor core **and** animated outer shader, plus a
+small muzzle glow. Vendor particles, extra flares, audio and dynamic lights stay
+disabled for mobile. The player-facing Battle VFX preference continues to gate
+imported combat effects; mechanics remain independent of the visual setting.
+
+Conditional damage detection is conservative: if either conditional branch
+contains direct damage, the beam cue may fire even if that particular branch
+ultimately does not deal damage. Verify this visually before a release.
