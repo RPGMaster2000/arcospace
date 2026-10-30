@@ -57,40 +57,31 @@ func run() -> void:
 			var other: String = "enemy" if side == "player" else "player"
 			var motion = board.get_node("CardMotion")
 			board._act(side, 0, false)
-			await motion.step_finished # Arrival: calculations must already run.
-			check(board.get(other + "_shields") == maxi(0, shields - 6), "Shield calculations at arrival")
-			check(board.battle_effects.card_covers_ships, "Damage presentation held while card visible")
-			check(board.battle_effects.imported_nodes.is_empty() and not board.battle_effects.busy, "No beam/hit jobs at arrival")
-			if shields == 2:
-				check(board.get(other + "_hull") == 30, "Overflow retains original staging")
-				await board.damage_timeline.damage_applied
-				check(board.get(other + "_hull") == 26, "Overflow applies on original cue before card exits")
-				check(motion.get_node("PlayedCard").visible and board.battle_effects.imported_nodes.is_empty(), "Overflow impact still hidden behind card")
-			else:
-				check(board.get(other + "_hull") == (24 if shields == 0 else 30), "Hull calculation unchanged")
+			await motion.step_finished # Raised activation.
+			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage during activation")
+			check(board.battle_effects.imported_nodes.is_empty(), "No weapon during charge")
 			await motion.step_finished # Hold ends.
-			check(board.battle_effects.imported_nodes.is_empty(), "No effects during hold")
-			await motion.step_finished # Exit ends; presentation begins before refill.
-			check(not board.battle_effects.card_covers_ships, "Card exit releases presentation")
-			var visual = motion.get_node_or_null("PlayedCard")
-			check(visual == null or not visual.visible, "Card is hidden before weapons begin")
-			check(is_instance_valid(board.battle_effects.active_beam), "Beam starts after exit for " + side)
-			check(board.current_actor == side and board.resolving_card, "Turn remains locked for VFX")
+			check(board.get(other + "_shields") == shields, "No damage during hold")
+			await motion.step_finished # Dissolve completes and weapon starts.
+			await process_frame
+			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage during beam travel")
+			check(is_instance_valid(board.battle_effects.active_beam), "Binbun beam starts after card dissolves")
+			check(board.current_actor == side and board.resolving_card, "Turn stays locked")
 			await board.action_finished
-			check(not board.battle_effects.busy and board.battle_effects.card_presentations.is_empty(), "Action waits for all delayed VFX")
-			check(board.get(other + "_hull") == (30 if shields == 20 else (24 if shields == 0 else 26)), "Damage applied exactly once")
+			check(board.get(other + "_shields") == maxi(0, shields - 6), "Shields resolve at contact exactly once")
+			check(board.get(other + "_hull") == (30 if shields == 20 else (24 if shields == 0 else 26)), "Hull resolves at contact exactly once")
+			check(board.battle_effects.imported_nodes.is_empty(), "VFX cleaned up")
 			await cleanup(board)
+	# Non-damage, discard and disabled VFX never create beam instances.
 	for entry in [[{"shields": 3}, false, true], [{"damage": 6}, true, true], [{"damage": 6}, false, false]]:
 		Preferences.set_battle_vfx(entry[2])
 		var board = make_board("player", entry[0])
 		var motion = board.get_node("CardMotion")
 		board._act("player", 0, entry[1])
 		await motion.step_finished
-		check(not board.battle_effects.card_covers_ships and board.battle_effects.card_presentations.is_empty(), "Non-damage/discard/disabled bypass presentation delay")
-		if not entry[2]:
-			check(board.enemy_shields == 14 and board.battle_effects.busy, "Disabled VFX keeps immediate essential feedback")
-			check(board.battle_effects.imported_nodes.is_empty(), "Disabled VFX has no imported nodes")
+		check(board.enemy_shields == 20, "Non-beam actions do not resolve before activation")
 		await board.action_finished
+		check(board.battle_effects.imported_nodes.is_empty(), "No lingering imported VFX")
 		await cleanup(board)
 	Preferences.set_battle_vfx(true)
 	var closing = make_board("player", {"damage": 6}, 2)
