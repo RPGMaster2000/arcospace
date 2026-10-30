@@ -146,7 +146,8 @@ func _select(index: int) -> void:
 	var column: HBoxContainer = $Selection/Information/Margin/Scroll/Column
 	column.get_node("Identity/Name").text = data.ship_name.to_upper()
 	column.get_node("Identity/Role").text = data.subtitle + " · " + data.role
-	column.get_node("Description").text = data.summary
+	var signature: Resource = data.signature_card
+	column.get_node("Description").text = data.summary + ("\n\nSIGNATURE CARD · %s\n%s · Cost %d %s\n%s" % [signature.card_name, signature.allocation_category.capitalize(), signature.cost, signature.family.capitalize(), signature.description] if signature != null else "")
 	column.get_node("Identity/Stats").text = "[b]❤️ Hull %d   🛡️ Shields %d[/b]\n[color=#ef9da8]🛠️ Materials [b]%d[/b] · Synthesizer [b]%d[/b][/color]\n[color=#8fc5ff]⚡ Energy [b]%d[/b] · Reactor [b]%d[/b][/color]\n[color=#98ddb0]👥 Crew [b]%d[/b] · Quarters [b]%d[/b][/color]\n[b]EMP[/b] %dt · %+.0f%% resistance" % [data.hull_capacity, data.shields, data.materials, data.synthesizer, data.energy, data.reactor, data.crew, data.quarters, data.ftl_turns, data.ftl_resistance * 100]
 	deck_button.tooltip_text = data.ship_name + " · Starting card pool"
 	previous_ship.disabled = selected_ship == 0
