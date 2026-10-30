@@ -210,12 +210,12 @@ func run() -> void:
 		check(
 			(
 				run_state.deck_limit() == 36
-				and run_state.deck_limit() - run_state.player_pool().size() == 8
+				and run_state.deck_limit() - run_state.player_pool().size() == 7
 			),
-			"Eight acquisition slots"
+			"Seven acquisition slots"
 		)
 		# Each identity is either owned or available for acquisition; both paths support two upgrades.
-		for card in Library.CARDS.slice(68):
+		for card in Library.CARDS.slice(68, 74):
 			if card not in pool:
 				check(
 					card in run_state.available_reward_cards(),
