@@ -87,6 +87,7 @@ func run() -> void:
 		# Frozen pre-signature baseline: compare the original 28-card configurations.
 		var player: Resource = current_ship.duplicate(false)
 		player.starting_cards = current_ship.starting_cards.filter(func(card: Resource): return card.signature_ship < 0)
+		player.set_meta("legacy_draws", true)
 		for kind in range(6):
 			for seed_value in [1, 7]:
 				trace = []
