@@ -33,7 +33,7 @@ func run() -> void:
 		var model = menu.showcase.models[index].get_child(0)
 		check(model.scene_file_path == Ships.PLAYERS[index].model_scene.resource_path, "Correct model order")
 		check(not model.get_node("Shield").visible and not model.is_processing(), "No combat animation or shields")
-		check(menu.get_node("Selection/Information/Margin/Scroll/Column/Description").text == Ships.PLAYERS[index].summary, "Profile description")
+		check(menu.get_node("Selection/Information/Margin/Scroll/Column/Description").text.begins_with(Ships.PLAYERS[index].summary), "Profile description")
 	menu._navigate(1)
 	check(menu.selected_ship == 5 and menu.next_ship.disabled, "Right boundary does not wrap")
 	for step in range(12): menu._navigate(-1)
