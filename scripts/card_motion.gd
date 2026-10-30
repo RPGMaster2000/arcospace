@@ -107,8 +107,7 @@ func animate_action(
 		active_tween.tween_interval(1.0)
 		await step_finished
 		if cancelling: return
-		# Impact starts as soon as the lift is finished. The card exits while
-		# Board resolves gameplay and cues VFX; no additional hold is needed.
+		# After the extra hold, the card exits while Board resolves gameplay and cues VFX.
 		active_tween = _new_tween().set_parallel(true)
 		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
 		active_tween.tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
