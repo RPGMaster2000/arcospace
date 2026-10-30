@@ -32,6 +32,8 @@ class_name ShipData
 @export_group("Card pools and enemy preferences")
 ## TUNE: Starting identities for either side. Empty uses the original library for enemies/custom ships.
 @export var starting_cards: Array[Resource] = []
+## The signature is included in starting_cards and guaranteed in an ordinary new battle opening.
+@export var signature_card: Resource
 ## TUNE: Positive soft multipliers; omitted families/effects retain weight 1.
 @export var card_family_weights: Dictionary = {}
 @export var card_effect_weights: Dictionary = {}
