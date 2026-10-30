@@ -77,3 +77,25 @@ and upgraded resolution, misses/exclusions, state invariance, paused toggling,
 persistence/subsequent battles, cleanup and scene exit. It runs headlessly and
 in both rendered CI suites. Physical Android GPU cost, thermals, touch usability
 and device-specific shader behavior remain unverified without device testing.
+
+## Card/VFX sequence
+
+For resolved opposing damage with Battle VFX enabled, CardMotion keeps the
+normal 0.28-second arrival, then uses `damage_hold_seconds` (0.35) and
+`damage_exit_seconds` (0.25) from CardMotionSettings. It hides the departing card
+before releasing BattleEffects presentation; hand refill can overlap the VFX.
+Non-damage cards, discards, disabled card motion and Battle VFX Off keep their
+existing flow, with no added presentation wait.
+
+Costs, card effects and replacement still resolve at arrival. Shield overflow
+still commits on its existing PendingHullDamage burst cue. BattleEffects buffers
+copies of the committed visual snapshots and their relative offsets, then uses
+its existing registered tweens to present beam, shield shatter and hull impact
+after exit. It does not rerun calculations or move the damage commit. Board's
+existing turn lock waits for all of those jobs, including late overflow visuals.
+Scene exit clears buffered callbacks and cancels registered tweens.
+
+`card_vfx_timing_test.gd` exercises both sides, shield absorption, hull hits,
+overflow commit timing, card visibility, turn locking, non-damage cards, discards,
+Battle VFX Off and scene cancellation. Existing card-motion, shield-shatter,
+beam and frozen combat-parity tests remain applicable.

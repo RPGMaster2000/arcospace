@@ -5,6 +5,50 @@ const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
 const BEAM_SECONDS: float = 0.45
 var imported_nodes: Array[Node] = []
 var active_beam: Node3D
+# Buffer presentation while the card covers the ships. Gameplay callbacks run normally.
+var card_covers_ships: bool = false
+var card_presentation_elapsed: float = 0.0
+var card_presentation_delay: float = 0.0
+var card_presentations: Array[Dictionary] = []
+
+func defer_card_presentation() -> void:
+	card_covers_ships = true
+	card_presentation_elapsed = 0.0
+	card_presentation_delay = 0.0
+
+func _process(delta: float) -> void:
+	if card_covers_ships: card_presentation_elapsed += delta
+
+func reveal_card_presentation() -> void:
+	if not card_covers_ships: return
+	card_covers_ships = false
+	card_presentation_delay = card_presentation_elapsed
+	for event in card_presentations:
+		_schedule_presentation(event.action, event.offset)
+	card_presentations.clear()
+
+func end_card_presentation() -> void:
+	card_covers_ships = false
+	card_presentation_delay = 0.0
+	card_presentations.clear()
+
+func _schedule_presentation(action: Callable, delay: float) -> void:
+	if delay <= 0.0:
+		action.call()
+	else:
+		var timeline := _job()
+		timeline.tween_interval(delay)
+		timeline.tween_callback(action)
+
+func _defer_presentation(action: Callable) -> bool:
+	if card_covers_ships:
+		card_presentations.append({"action": action, "offset": card_presentation_elapsed})
+		return true
+	if card_presentation_delay > 0.0:
+		# Overflow arriving after a very short card exit gets the same visual shift.
+		_schedule_presentation(action, card_presentation_delay)
+		return true
+	return false
 
 const Sound = preload("res://scripts/audio/sfx.gd")
 
@@ -76,6 +120,10 @@ func _battle_vfx_changed(value: bool) -> void:
 
 
 func play_direct_damage(side: String) -> void:
+	if _defer_presentation(_play_direct_damage.bind(side)): return
+	_play_direct_damage(side)
+
+func _play_direct_damage(side: String) -> void:
 	if not enabled or cancelling: return
 	var actor = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 	var target = get_parent().get_node(enemy_ship_path if side == "player" else player_ship_path)
@@ -119,6 +167,18 @@ func play_changes(
 	paid_cost: int = 0,
 	impact: bool = false,
 	external_timeline: bool = false
+) -> void:
+	# Capture committed snapshots now, never read a later state when the card leaves.
+	if _defer_presentation(_play_changes.bind(before.duplicate(true), after.duplicate(true), paid_side, paid_family, paid_cost, impact, false)):
+		# The existing damage timeline continues committing overflow on its original cue.
+		# Buffered shatter visuals use their own existing BattleEffects tween afterwards.
+		shatter_updates = []
+		return
+	_play_changes(before, after, paid_side, paid_family, paid_cost, impact, external_timeline)
+
+func _play_changes(
+	before: Dictionary, after: Dictionary, paid_side: String, paid_family: String,
+	paid_cost: int, impact: bool, external_timeline: bool
 ) -> void:
 	shatter_updates = []
 	if not enabled:
@@ -467,6 +527,7 @@ func _remove(node: Node) -> void:
 
 func _exit_tree() -> void:
 	cancelling = true
+	end_card_presentation()
 	for tween in tweens:
 		tween.kill()
 	for restore in restorations:
