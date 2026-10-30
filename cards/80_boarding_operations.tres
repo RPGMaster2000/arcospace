@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signature_ship = 5
+allocation_category = "offense"
+card_name = "Boarding Operations"
+family = "crew"
+cost = 7
+description = "Bypass Shields and seize enemy Crew."
+effects = {"damage": 4, "pierce": 1, "steal": {"crew": 4}}
+upgrade_effects = [{"damage": 6, "pierce": 1, "steal": {"crew": 5}}, {"damage": 8, "pierce": 1, "steal": {"crew": 6}}]
