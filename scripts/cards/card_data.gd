@@ -11,6 +11,8 @@ class_name CardData
 @export_enum("offense", "defense", "systems") var allocation_category: String = "systems"
 ## TUNE: Complete replacement effects for Upgrade I and II. Base effects/cost stay unchanged.
 @export var upgrade_effects: Array[Dictionary] = []
+## -1 is a regular card; 0..5 designate the sole owning starting ship.
+@export_range(-1, 5, 1) var signature_ship: int = -1
 @export_range(0, 2, 1) var max_upgrades: int = 2
 @export_range(0, 2, 1) var upgrade_level: int = 0
 
