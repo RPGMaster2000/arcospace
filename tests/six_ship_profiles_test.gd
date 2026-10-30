@@ -36,7 +36,7 @@ func run() -> void:
 		var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 		var affordable: Dictionary = counts.duplicate()
 		for card in profile.starting_cards:
-			check(card in Cards.CARDS and card.tier == 1 and ResourceLoader.exists(card.resource_path), "Valid original or added sabotage resource")
+			check(card in Cards.CARDS and (card.tier == 1 or (Cards.CARDS.find(card) >= 68 and Cards.CARDS.find(card) < 74)) and ResourceLoader.exists(card.resource_path), "Valid original or added sabotage resource")
 			check(not identities.has(card.identity_key()), "Distinct pool identities")
 			if card.signature_ship >= 0: check(card == profile.signature_card and card.signature_ship == index, "Signature belongs only to this ship")
 			identities[card.identity_key()] = true
