@@ -82,7 +82,7 @@ func available_reward_cards(profile: Resource, minimum_tier: int = 1) -> Array[R
 		owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
 	for card in Cards.CARDS:
-		if card.tier >= minimum_tier and not owned.has(card.identity_key()):
+		if card.tier >= minimum_tier and card.signature_ship < 0 and not owned.has(card.identity_key()):
 			candidates.append(card)
 	return candidates
 
