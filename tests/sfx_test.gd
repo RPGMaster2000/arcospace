@@ -299,9 +299,8 @@ func run() -> void:
 	# Card activation now completes before the resolution/impact callback.
 	# Await the entire action, not its first animation step, so the next
 	# discard cannot interrupt an unfinished activation tween.
-	var action = motion.animate_action(card, null, "player", false, func(): resolved.append(true))
 	check(not heard(&"card_play"), "Card play waits for activation")
-	await action
+	await motion.animate_action(card, null, "player", false, func(): resolved.append(true))
 	check(heard(&"card_play") and resolved.size() == 1, "Card activation plays cue and resolves once")
 	reset_audio()
 	await motion.animate_action(card, null, "player", true, func(): resolved.append(true))
