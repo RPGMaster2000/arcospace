@@ -102,6 +102,11 @@ func animate_action(
 		await step_finished
 		if cancelling: return
 		Sound.play(&"card_play", self)
+		# Keep both player and enemy played cards fully visible one extra second.
+		active_tween = _new_tween()
+		active_tween.tween_interval(1.0)
+		await step_finished
+		if cancelling: return
 		# Impact starts as soon as the lift is finished. The card exits while
 		# Board resolves gameplay and cues VFX; no additional hold is needed.
 		active_tween = _new_tween().set_parallel(true)
