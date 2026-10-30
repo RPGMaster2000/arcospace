@@ -45,9 +45,13 @@ static func beam(actor: Node3D, target: Node3D) -> Node3D:
 	# Vendor geometry/shaders are reused; particles, flares, impact ball and audio
 	# are unnecessary here because BattleEffects already owns impact feedback.
 	effect.set_physics_process(false)
-	effect.set("emission", 0.8)
-	effect.set("beam_radius", 0.045)
-	effect.set("pulse_strength", 0.005)
+	# Keep Binbun core and animated outer shader: disable only costly extras.
+	effect.set("primary_color", Color(0.78, 0.96, 1.0))
+	effect.set("secondary_color", Color(0.17, 0.64, 1.0))
+	effect.set("tertiary_color", Color(0.08, 0.32, 0.92))
+	effect.set("emission", 1.7)
+	effect.set("beam_radius", 0.075)
+	effect.set("pulse_strength", 0.025)
 	var core: CylinderMesh = effect.get_node("BeamPivot/BeamScalor/BeamCore").mesh
 	core.radial_segments = 12
 	core.rings = 1
@@ -62,8 +66,11 @@ static func beam(actor: Node3D, target: Node3D) -> Node3D:
 			node.process_mode = Node.PROCESS_MODE_DISABLED
 		if node is GeometryInstance3D:
 			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	for path in ["BeamPivot/BeamScalor/BeamOuter", "BeamStart", "BeamPivot/BeamFlare1", "BeamPivot/BeamFlare2", "BeamEndPivot"]:
+	# Small muzzle flash and animated outer shell add visual identity while
+	# vendor flares, particles, audio and impact remain disabled on mobile.
+	for path in ["BeamPivot/BeamFlare1", "BeamPivot/BeamFlare2", "BeamEndPivot"]:
 		effect.get_node(path).hide()
+	effect.get_node("BeamStart").scale = Vector3.ONE * 0.42
 	update_beam(effect, actor, target, 0.0)
 	return effect
 
