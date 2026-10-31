@@ -68,7 +68,7 @@ func run() -> void:
 		var left: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Identity")
 		var right: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Description")
 		var info_scroll: ScrollContainer = menu.get_node("Selection/Information/Margin/Scroll")
-		check(info_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Ship selection does not scroll")
+		check(info_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER, "Ship selection does not scroll")
 		check(info_scroll.scroll_vertical == 0, "Ship selection remains positioned at top")
 		var card_column: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Signature")
 		check(left.get_global_rect().end.x <= right.get_global_rect().position.x, "Stats and description do not overlap")
