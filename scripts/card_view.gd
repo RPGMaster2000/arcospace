@@ -8,6 +8,8 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 
 signal discard_requested
 const Summary = preload("res://scripts/ui/card_summary.gd")
+const EffectBadge = preload("res://scripts/ui/card_effect_badge.gd")
+var effect_badges: Array[Control] = []
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -16,7 +18,7 @@ var interaction_hovered: bool = false
 var interaction_selected: bool = false
 var inspection_enabled: bool = true
 var hold_input: Node
-var discard_target_height: float = 44.0
+var discard_target_height: float = 33.0
 
 @export var card_data: Resource:
 	set(value):
@@ -127,6 +129,7 @@ func refresh_card() -> void:
 		$DescriptionLabel.text = ""
 		$EffectCue.text = ""
 		$CategoryLabel.text = ""
+		clear_effect_badges()
 		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
@@ -134,12 +137,13 @@ func refresh_card() -> void:
 		return
 	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
 	# Keep full names prominent; only an unusually long title needs a small font fallback.
-	for reduction in range(3):
-		var font_size: int = presentation_settings.card_title_font_size - reduction
+	for reduction in range(6):
+		var font_size: int = mini(16, presentation_settings.card_title_font_size) - reduction
 		$TitleLabel.add_theme_font_size_override("font_size", font_size)
 		if $TitleLabel.get_line_count() <= 2:
 			break
 	$TitleLabel.max_lines_visible = 2
+	$TitleLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	$TitleLabel.clip_text = true
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	$TierLabel.text = (
@@ -148,7 +152,7 @@ func refresh_card() -> void:
 	)
 	$CostLabel.text = str(card_data.cost)
 	$EffectCue.text = effect_cue(card_data)
-	$CategoryLabel.text = card_data.allocation_category.to_upper() + " · " + card_data.family.to_upper()
+	$CategoryLabel.text = card_data.allocation_category.to_upper()
 	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
 	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
@@ -157,26 +161,25 @@ func refresh_card() -> void:
 	$DescriptionLabel.text = Summary.card_text(
 		card_data, presentation_settings.description_shorthand_threshold
 	)
-	$DescriptionLabel.add_theme_font_size_override(
-		"font_size", presentation_settings.compact_description_font_size
-	)
+	var description_size: int = mini(12, presentation_settings.compact_description_font_size)
+	$DescriptionLabel.add_theme_font_size_override("font_size", description_size)
 	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
 	$DiscardButton.add_theme_font_size_override(
-		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
+		"font_size", roundi(mini(13, presentation_settings.discard_button_font_size) / maxf(scale.y, 0.01))
 	)
-	$TitleLabel.offset_bottom = 66.0
+	$TitleLabel.offset_bottom = 53.0
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 203.0
+	$DescriptionLabel.offset_top = 225.0
 	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
 	$DescriptionLabel.clip_text = true
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(
-		presentation_settings.compact_description_font_size
+		description_size
 	)
 	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 203.0) / line_height)
+		1, floori(($DescriptionLabel.offset_bottom - 225.0) / line_height)
 	)
 	# Exception to the length threshold: abbreviate short text only when it cannot fit.
 	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
@@ -185,6 +188,7 @@ func refresh_card() -> void:
 	$ArtPlaceholder.offset_bottom = 177.0
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
+	update_effect_badges()
 	var colors = {
 		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
 	}
@@ -213,6 +217,42 @@ func refresh_card() -> void:
 		% [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
 	)
 
+
+
+func clear_effect_badges() -> void:
+	for badge in effect_badges:
+		if is_instance_valid(badge):
+			badge.queue_free()
+	effect_badges.clear()
+
+
+func update_effect_badges() -> void:
+	clear_effect_badges()
+	if card_data == null:
+		return
+	var effects: Dictionary = card_data.effects
+	var conditional_effects: Dictionary = {}
+	if effects.get("conditional") is Dictionary:
+		conditional_effects = effects["conditional"].get("then", {})
+	var entries: Array[Dictionary] = []
+	for kind in ["materials", "crew", "energy"]:
+		var amount: int = int(effects.get(kind, 0))
+		var extra: int = int(conditional_effects.get(kind, 0))
+		if amount != 0:
+			entries.append({"kind": kind, "amount": amount, "conditional": false})
+		if extra != 0:
+			entries.append({"kind": kind, "amount": extra, "conditional": true})
+	# Keep the full written effect for non-resource cards; icon badges supplement it.
+	var width: float = minf(55.0, 174.0 / maxf(1.0, float(entries.size())))
+	for index in range(entries.size()):
+		var entry: Dictionary = entries[index]
+		var badge: Control = EffectBadge.new()
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.position = Vector2(13.0 + index * width, 201.0)
+		badge.size = Vector2(width - 4.0, 21.0)
+		add_child(badge)
+		badge.configure(entry.kind, entry.amount, entry.conditional)
+		effect_badges.append(badge)
 
 func set_playable(playable: bool, affordable: int = -1) -> void:
 	disabled = not playable
