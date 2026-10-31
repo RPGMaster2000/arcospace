@@ -164,7 +164,7 @@ func refresh_card() -> void:
 	$DiscardButton.add_theme_font_size_override(
 		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
 	)
-	$TitleLabel.offset_bottom = 50.0
+	$TitleLabel.offset_bottom = 66.0
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
