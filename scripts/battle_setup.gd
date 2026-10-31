@@ -7,6 +7,8 @@ const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
+const CardPortrait = preload("res://scripts/ui/card_portrait.gd")
+const CardInspector = preload("res://scripts/ui/card_inspector.gd")
 @export_group("Gameplay transition")
 @export_range(0.05, 3) var white_fade_duration: float = 0.35
 @export_range(0.05, 3) var map_reveal_duration: float = 1.0
@@ -19,6 +21,8 @@ var initial_settings: Dictionary = {}
 var selected_ship: int = 0
 var overwrite_confirmation: ConfirmationDialog
 var save_notice: AcceptDialog
+var signature_inspector: CanvasLayer
+var signature_portrait
 var deck_viewer: CanvasLayer
 var info_overlay: CanvasLayer
 var settings_button: Button
@@ -45,6 +49,8 @@ func _ready() -> void:
 	info_overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(info_overlay)
 	$Legend.pressed.connect(info_overlay.show_legend)
+	signature_inspector = CardInspector.new()
+	add_child(signature_inspector)
 	deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(deck_viewer)
 	deck_button.pressed.connect(func(): deck_viewer.show_ship(Ships.PLAYERS[selected_ship]))
@@ -103,7 +109,7 @@ func _selection_ready() -> void:
 
 func _layout() -> void:
 	var compact: bool = size.y < 600
-	$Selection/Information.anchor_top = 0.50 if compact else 0.55
+	$Selection/Information.anchor_top = (0.30 if size.y < 430 else 0.43) if compact else 0.55
 	var info_width: float = minf(size.x * 0.92, size.y * 16.0 / 9.0 * 0.92)
 	$Selection/Information.anchor_left = 0.5
 	$Selection/Information.anchor_right = 0.5
@@ -112,11 +118,23 @@ func _layout() -> void:
 	$Selection/Actions.anchor_left = 0.04 if size.x < 1000 else 0.12
 	$Selection/Actions.anchor_right = 0.96 if size.x < 1000 else 0.88
 	$Selection/Heading.add_theme_font_size_override("font_size", 22 if compact else 30)
-	$Selection/Information/Margin/Scroll/Column/Identity/Name.add_theme_font_size_override("font_size", 25 if compact else 34)
+	var columns: HBoxContainer = $Selection/Information/Margin/Scroll/Column
+	columns.add_theme_constant_override("separation", 8 if compact else 16)
+	var identity: Control = columns.get_node("Identity")
+	var summary: Control = columns.get_node("Description")
+	var signature: Control = columns.get_node("Signature")
+	identity.size_flags_stretch_ratio = 1.35
+	summary.size_flags_stretch_ratio = 1.30
+	signature.size_flags_stretch_ratio = 0.85
+	identity.get_node("Name").add_theme_font_size_override("font_size", (19 if size.x < 800 else 23) if compact else 34)
 	for label in [$Selection/Information/Margin/Scroll/Column/Identity/Role, $Selection/Information/Margin/Scroll/Column/Description]:
-		label.add_theme_font_size_override("font_size", 16 if compact else 21)
+		label.add_theme_font_size_override("font_size", (12 if size.x < 800 else 15) if compact else 21)
+	$Selection/Information/Margin/Scroll/Column/Signature/SignatureHeading.add_theme_font_size_override("font_size", 12 if compact else 16)
+	var available_height: float = size.y * (1.0 - $Selection/Information.anchor_top) - 90.0 - 16.0 - (22.0 if compact else 26.0)
+	if is_instance_valid(signature_portrait):
+		signature_portrait.set_card_scale(clampf(available_height / 294.0, 0.20, 0.70))
 	var stats: RichTextLabel = $Selection/Information/Margin/Scroll/Column/Identity/Stats
-	for font in ["normal_font_size", "bold_font_size"]: stats.add_theme_font_size_override(font, 15 if compact else 18)
+	for font in ["normal_font_size", "bold_font_size"]: stats.add_theme_font_size_override(font, (12 if size.x < 800 else 14) if compact else 18)
 	for button in [deck_button, begin_button, start_button]: button.add_theme_font_size_override("font_size", (14 if size.x < 800 else 16) if compact else 21)
 	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	settings_button.offset_left = -62
@@ -147,7 +165,18 @@ func _select(index: int) -> void:
 	column.get_node("Identity/Name").text = data.ship_name.to_upper()
 	column.get_node("Identity/Role").text = data.subtitle + " · " + data.role
 	var signature: Resource = data.signature_card
-	column.get_node("Description").text = data.summary + ("\n\nSIGNATURE CARD · %s\n%s · Cost %d %s\n%s" % [signature.card_name, signature.allocation_category.capitalize(), signature.cost, signature.family.capitalize(), signature.description] if signature != null else "")
+	column.get_node("Description").text = data.summary
+	if is_instance_valid(signature_portrait):
+		signature_portrait.queue_free()
+		signature_portrait = null
+	if signature != null:
+		signature_portrait = CardPortrait.new()
+		signature_portrait.name = "ExclusiveCard"
+		signature_portrait.card_data = signature
+		signature_portrait.inspection_enabled = false
+		column.get_node("Signature/PortraitHost").add_child(signature_portrait)
+		signature_portrait.pressed.connect(func(): signature_inspector.present(signature, null, true))
+		_layout()
 	column.get_node("Identity/Stats").text = "[b]❤️ Hull %d   🛡️ Shields %d[/b]\n[color=#ef9da8]🛠️ Materials [b]%d[/b] · Synthesizer [b]%d[/b][/color]\n[color=#8fc5ff]⚡ Energy [b]%d[/b] · Reactor [b]%d[/b][/color]\n[color=#98ddb0]👥 Crew [b]%d[/b] · Quarters [b]%d[/b][/color]\n[b]EMP[/b] %dt · %+.0f%% resistance" % [data.hull_capacity, data.shields, data.materials, data.synthesizer, data.energy, data.reactor, data.crew, data.quarters, data.ftl_turns, data.ftl_resistance * 100]
 	deck_button.tooltip_text = data.ship_name + " · Starting card pool"
 	previous_ship.disabled = selected_ship == 0
@@ -166,7 +195,7 @@ func _navigate(direction: int) -> void:
 
 func _input(event: InputEvent) -> void:
 	if showcase.phase != showcase.Phase.SHIP_SELECTION: return
-	if get_tree().paused or deck_viewer.shade.visible or info_overlay.shade.visible or overwrite_confirmation.visible or save_notice.visible: return
+	if get_tree().paused or deck_viewer.shade.visible or signature_inspector.shade.visible or info_overlay.shade.visible or overwrite_confirmation.visible or save_notice.visible: return
 	if event is InputEventKey and event.echo: return
 	if event is InputEventJoypadMotion and not Input.is_action_just_pressed("ui_left") and not Input.is_action_just_pressed("ui_right"): return
 	if event.is_action_pressed("ui_left"): _navigate(-1)
