@@ -23,6 +23,8 @@ static func sections(font: Font) -> Dictionary:
 			"Choose a destination on the 3D map and fly there. You can visit places for supplies, repairs or rewards, or meet hostile ships. Some destinations offer different ways to approach them. Read the choices before continuing.\n\nIn defense missions, enemy ships move while your ship travels. Stopping to plan or entering an encounter pauses that movement."],
 		"battle": ["3. Take turns playing cards",
 			"Battles are turn-based. On your turn, choose a card from your hand. Its cost is shown on the card, and playing it uses the matching resource. Cards can attack, repair, protect or improve your supplies. After your action, the enemy gets a turn.\n\nYou can discard a card instead of playing it to recover one third of its cost, rounded down. Cards marked Play again give another action immediately."],
+		"cards": ["Playing and discarding cards",
+			"Every card has a cost and an effect. Spend its matching resource to play it, or discard it to get one third of its cost back (rounded down). A card marked Play again lets you take another action. Upgrade cards after encounters to improve their effects without increasing their cost."],
 		"resources": ["4. Keep your supplies coming",
 			"%s [color=#ef9da8]Materials[/color] pay for red cards.\n%s [color=#8fc5ff]Energy[/color] pays for blue cards.\n%s [color=#98ddb0]Crew[/color] pays for green cards.\n\nEach has a production system: Synthesizer makes Materials, Reactor makes Energy, and Quarters makes Crew at the start of your turns. Cards can improve these systems, giving you more to spend later." % [materials, energy, crew]],
 		"defenses": ["5. Protect your ship",
