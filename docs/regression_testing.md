@@ -29,7 +29,7 @@ Python 3.9+ (standard library only) and the project's pinned Godot 4.7.2 executa
 From the repository root:
 
 ```sh
-python3 tools/run_regressions.py --godot /path/to/godot
+python3 tools/run_regressions.py --godot /path/to/godot --workers 3
 python3 -m unittest discover -s tools -p 'test_*.py' -v
 ```
 
@@ -37,6 +37,12 @@ On Windows, use `python` and a path to the console Godot executable. Quote paths
 containing spaces. `--project` can point to another checkout; `--results` selects
 the output directory (default: `test-results` relative to the working directory).
 Use a separate results directory for concurrent runs.
+
+Use `--workers 1` for the original sequential behavior (the local default). CI runs
+three independent Godot processes concurrently, retaining separate logs, user-data
+paths, test timeouts and all assertions. The import remains serialized. Completed
+results are saved as tests finish, and the final summary follows discovery order.
+Newer commits cancel older runs of the same pull request or branch to save CI time.
 
 The runner imports the project first (180-second timeout), then runs each
 `tests/*_test.gd` in its own headless process with Dummy audio and a 120-second
