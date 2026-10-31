@@ -128,6 +128,7 @@ func refresh_card() -> void:
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		$EffectCue.text = ""
+		$EffectCue.visible = false
 		clear_effect_badges()
 		$FullCardArt.visible = false
 		tooltip_text = ""
@@ -258,6 +259,7 @@ func update_effect_badges() -> void:
 		add_child(badge)
 		badge.configure(entry.kind, entry.amount, entry.conditional)
 		effect_badges.append(badge)
+	$EffectCue.visible = entries.is_empty()
 
 func set_playable(playable: bool, affordable: int = -1) -> void:
 	disabled = not playable
