@@ -58,8 +58,8 @@ func run() -> void:
 			await process_frame
 			var art: Control=view.get_node("ArtPlaceholder")
 			var description: Label=view.get_node("DescriptionLabel")
-			check(art.position==Vector2(12,101) and art.size==Vector2(174,74) and art.visible,"Fixed artwork "+view.card_data.card_name)
-			check(description.get_theme_font_size("font_size")==14 and description.position.y==180,"Compact font and fixed description")
+			check(art.position==Vector2(12,67) and art.size==Vector2(174,110) and art.visible,"Expanded artwork "+view.card_data.card_name)
+			check(description.get_theme_font_size("font_size")==14 and description.position.y==203,"Compact font and redesigned description position")
 			check(description.get_minimum_size().y<=view.get_node("DiscardButton").position.y-description.position.y,"Description clears footer")
 			check(view.get_node("TitleLabel").position.y+view.get_node("TitleLabel").get_minimum_size().y<=101 and view.get_node("TitleLabel").get_line_count()<=2,"Full title clears artwork")
 	view.card_data=Cards.CARDS[52]
