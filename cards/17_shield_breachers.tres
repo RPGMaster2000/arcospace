@@ -8,7 +8,7 @@ allocation_category = "offense"
 card_name = "Shield Breachers"
 family = "crew"
 cost = 7
-description = "Enemy -8 Shields; If Enemy Shields =0: +4 Materials"
+description = "Enemy −8 Shields. If Shields reach 0, gain 4 Materials"
 effects = {"break_shields": 8, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"materials": 4}}}
 play_again = false
 upgrade_effects = [{"break_shields": 11, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"materials": 5}}}, {"break_shields": 14, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"materials": 6}}}]
