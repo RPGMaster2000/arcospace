@@ -84,6 +84,7 @@ mouse_filter = 2
 [node name="Scroll" type="ScrollContainer" parent="Selection/Information/Margin"]
 layout_mode = 2
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
 
 [node name="Column" type="HBoxContainer" parent="Selection/Information/Margin/Scroll"]
 size_flags_horizontal = 3
@@ -110,14 +111,14 @@ mouse_filter = 2
 [node name="Description" type="Label" parent="Selection/Information/Margin/Scroll/Column"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 4
+size_flags_vertical = 0
 autowrap_mode = 2
 mouse_filter = 2
 
 [node name="Signature" type="VBoxContainer" parent="Selection/Information/Margin/Scroll/Column"]
 layout_mode = 2
 size_flags_horizontal = 3
-alignment = 1
+alignment = 0
 theme_override_constants/separation = 4
 mouse_filter = 2
 
@@ -129,7 +130,7 @@ mouse_filter = 2
 
 [node name="PortraitHost" type="CenterContainer" parent="Selection/Information/Margin/Scroll/Column/Signature"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 mouse_filter = 2
 
 [node name="Stats" type="RichTextLabel" parent="Selection/Information/Margin/Scroll/Column/Identity"]

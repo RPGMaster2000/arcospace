@@ -67,6 +67,9 @@ func run() -> void:
 		check(info.size.x <= menu.size.y * 16.0 / 9.0, "Information capped to 16:9 " + str(dimensions))
 		var left: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Identity")
 		var right: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Description")
+		var info_scroll: ScrollContainer = menu.get_node("Selection/Information/Margin/Scroll")
+		check(info_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER, "Ship selection does not scroll")
+		check(info_scroll.scroll_vertical == 0, "Ship selection remains positioned at top")
 		var card_column: Control = menu.get_node("Selection/Information/Margin/Scroll/Column/Signature")
 		check(left.get_global_rect().end.x <= right.get_global_rect().position.x, "Stats and description do not overlap")
 		check(right.get_global_rect().end.x <= card_column.get_global_rect().position.x, "Description and signature card do not overlap")
@@ -74,6 +77,7 @@ func run() -> void:
 		check(menu.signature_portrait.size.y <= card_column.size.y + 1.0, "Card fits its column vertically")
 	menu._select(1)
 	await process_frame
+	check(menu.get_node("Selection/Information/Margin/Scroll").scroll_vertical == 0, "Changing ships preserves top alignment")
 	check(menu.signature_portrait.card_data == preload("res://scripts/ships/ship_library.gd").PLAYERS[1].signature_card, "Changing ships updates signature card")
 	menu.signature_portrait.pressed.emit()
 	await process_frame
