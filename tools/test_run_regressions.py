@@ -89,6 +89,29 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(summary["complete"])
         self.assertEqual(len(summary["runs"]), 2)
 
+    def test_parallel_suite_retains_every_result_and_failure(self):
+        self.project()
+        def run(command, log, timeout):
+            import time
+            if "a_test" in str(log):
+                time.sleep(0.02)
+            log.write_text("fixture output")
+            return {"status": "failed" if "a_test" in str(log) else "passed",
+                    "seconds": 0, "shutdown_warning_lines": [], "log": str(log)}
+        with patch.object(runner, "run_process", side_effect=run):
+            self.assertEqual(self.invoke("--skip-import", "--workers", "3"), 1)
+        summary = json.loads((self.root / "results/summary.json").read_text())
+        self.assertTrue(summary["complete"])
+        self.assertEqual([r["name"] for r in summary["runs"]],
+                         ["expedition_milestones_test", "a_test"])
+        self.assertEqual([r["status"] for r in summary["runs"]], ["passed", "failed"])
+
+    def test_rejects_zero_workers(self):
+        self.project()
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+            self.invoke("--workers", "0")
+        self.assertEqual(error.exception.code, 2)
+
     def test_empty_suite_is_an_error(self):
         (self.root / "project.godot").touch()
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
