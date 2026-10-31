@@ -71,22 +71,40 @@ expand_mode = 1
 stretch_mode = 6
 visible = false
 
+[node name="HeaderPanel" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = 191.0
+offset_bottom = 52.0
+mouse_filter = 2
+color = Color(0.025, 0.055, 0.105, 0.82)
+
+[node name="CostBadge" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 145.0
+offset_top = 12.0
+offset_right = 189.0
+offset_bottom = 46.0
+mouse_filter = 2
+color = Color(0.14, 0.3, 0.46, 0.94)
+
 [node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 10.0
-offset_right = 42.0
-offset_bottom = 39.0
+offset_left = 149.0
+offset_top = 19.0
+offset_right = 165.0
+offset_bottom = 35.0
 mouse_filter = 2
 
 
 [node name="Materials" type="Polygon2D" parent="ResourceIcon"]
-polygon = PackedVector2Array(0, 0, 28, 0, 28, 28, 0, 28)
+polygon = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
 color = Color(1, 0.42, 0.32, 1)
 
 
 [node name="Energy" type="Polygon2D" parent="ResourceIcon"]
-polygon = PackedVector2Array(0, 14, 14, 3, 28, 14, 14, 25)
+polygon = PackedVector2Array(0, 8, 8, 1, 16, 8, 8, 15)
 color = Color(0.45, 0.83, 0.96, 1)
 
 
@@ -97,27 +115,27 @@ color = Color(0.67, 0.85, 0.42, 1)
 
 [node name="CostLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 52.0
-offset_top = 1.0
-offset_right = 184.0
-offset_bottom = 44.0
+offset_left = 166.0
+offset_top = 12.0
+offset_right = 189.0
+offset_bottom = 46.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 20
 text = "3"
 
 
 [node name="TierLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 132.0
-offset_top = 12.0
-offset_right = 187.0
-offset_bottom = 36.0
+offset_left = 112.0
+offset_top = 48.0
+offset_right = 186.0
+offset_bottom = 68.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
 
 [node name="CostRule" type="Line2D" parent="."]
-points = PackedVector2Array(9, 44, 189, 44)
+points = PackedVector2Array(9, 53, 189, 53)
 width = 1.0
 default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
@@ -125,10 +143,10 @@ antialiased = true
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 47.0
-offset_right = 187.0
-offset_bottom = 99.0
+offset_left = 13.0
+offset_top = 12.0
+offset_right = 141.0
+offset_bottom = 50.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 18
 text = "SHIELD\nPLATING"
@@ -138,9 +156,9 @@ autowrap_mode = 2
 [node name="ArtPlaceholder" type="Control" parent="."]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 101.0
+offset_top = 67.0
 offset_right = 186.0
-offset_bottom = 175.0
+offset_bottom = 177.0
 mouse_filter = 2
 
 
@@ -194,12 +212,31 @@ default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 
+[node name="InfoPanel" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 177.0
+offset_right = 191.0
+offset_bottom = 250.0
+mouse_filter = 2
+color = Color(0.025, 0.055, 0.105, 0.91)
+
+[node name="CategoryLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 182.0
+offset_right = 166.0
+offset_bottom = 201.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "ATTACK · ENERGY"
+
 [node name="EffectCue" type="Label" parent="."]
 layout_mode = 0
-offset_left = 141.0
-offset_top = 162.0
-offset_right = 185.0
-offset_bottom = 180.0
+offset_left = 164.0
+offset_top = 181.0
+offset_right = 186.0
+offset_bottom = 202.0
 mouse_filter = 2
 horizontal_alignment = 2
 theme_override_font_sizes/font_size = 15
@@ -207,9 +244,9 @@ theme_override_font_sizes/font_size = 15
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 180.0
+offset_top = 203.0
 offset_right = 186.0
-offset_bottom = 244.0
+offset_bottom = 245.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 text = "+4 Shields"
