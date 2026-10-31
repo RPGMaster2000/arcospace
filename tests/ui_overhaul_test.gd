@@ -51,7 +51,7 @@ func run() -> void:
 			root.add_child(portrait)
 			await process_frame
 			await process_frame
-			check(portrait.rendering.get_node("ArtPlaceholder").get_rect()==Rect2(12,101,174,74), "Comparison portrait keeps fixed artwork: " + portrait.card_data.card_name)
+			check(portrait.rendering.get_node("ArtPlaceholder").get_rect() == Rect2(12, 67, 174, 110), "Comparison portrait uses expanded artwork: " + portrait.card_data.card_name)
 			check(portrait.rendering.get_node("DescriptionLabel").get_rect().end.y <= portrait.badge.position.y, "Compact comparison portrait clears upgrade badge")
 			check(portrait.rendering.get_node("CostLabel").text == str(base.cost), "Comparison preserves actual cost")
 			portrait.free()

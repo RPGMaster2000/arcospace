@@ -76,7 +76,7 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration
 	)
 	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
-	interaction_tween.tween_property(art, "position:y", 101.0 - elevation, duration)
+	interaction_tween.tween_property(art, "position:y", 67.0 - elevation, duration)
 	queue_redraw()
 
 
@@ -126,6 +126,7 @@ func refresh_card() -> void:
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		$EffectCue.text = ""
+		$CategoryLabel.text = ""
 		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
@@ -147,6 +148,7 @@ func refresh_card() -> void:
 	)
 	$CostLabel.text = str(card_data.cost)
 	$EffectCue.text = effect_cue(card_data)
+	$CategoryLabel.text = card_data.allocation_category.to_upper() + " · " + card_data.family.to_upper()
 	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
 	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
@@ -162,25 +164,25 @@ func refresh_card() -> void:
 	$DiscardButton.add_theme_font_size_override(
 		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
 	)
-	$TitleLabel.offset_bottom = 99.0
+	$TitleLabel.offset_bottom = 66.0
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 180.0
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
+	$DescriptionLabel.offset_top = 203.0
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
 	$DescriptionLabel.clip_text = true
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(
 		presentation_settings.compact_description_font_size
 	)
 	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 180.0) / line_height)
+		1, floori(($DescriptionLabel.offset_bottom - 203.0) / line_height)
 	)
 	# Exception to the length threshold: abbreviate short text only when it cannot fit.
 	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
 		$DescriptionLabel.text = Summary.card_text(card_data, -1)
-	$ArtPlaceholder.offset_top = 101.0
-	$ArtPlaceholder.offset_bottom = 175.0
+	$ArtPlaceholder.offset_top = 67.0
+	$ArtPlaceholder.offset_bottom = 177.0
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
 	var colors = {
@@ -189,6 +191,8 @@ func refresh_card() -> void:
 	var color: Color = colors.get(card_data.family, Color.WHITE)
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
+	$CostBadge.color = Color(color.r * 0.28, color.g * 0.28, color.b * 0.28, 0.96)
+	$CategoryLabel.add_theme_color_override("font_color", color)
 	var normal: StyleBoxFlat = get_theme_stylebox("normal").duplicate()
 	normal.bg_color = Color(color.r * 0.16, color.g * 0.16, color.b * 0.16, 1)
 	normal.border_color = color.lerp(Color(0.97, 0.89, 0.69), 0.5)
@@ -225,7 +229,8 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 		"ResourceIcon",
 		"ArtPlaceholder",
 		"CostRule",
-		"EffectCue"
+		"EffectCue",
+		"CategoryLabel"
 	]:
 		get_node(path).modulate = tint
 
