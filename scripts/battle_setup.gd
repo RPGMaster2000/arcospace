@@ -22,7 +22,7 @@ var selected_ship: int = 0
 var overwrite_confirmation: ConfirmationDialog
 var save_notice: AcceptDialog
 var signature_inspector: CanvasLayer
-var signature_portrait: Button
+var signature_portrait
 var deck_viewer: CanvasLayer
 var info_overlay: CanvasLayer
 var settings_button: Button
