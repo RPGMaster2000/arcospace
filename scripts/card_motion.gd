@@ -105,7 +105,7 @@ func animate_action(
 		# Presentation is independent of gameplay: the raised card remains visible
 		# while resolution, weapon VFX and the turn continue without a hold.
 		var exit_tween := create_tween()
-		exit_tween.tween_interval(1.0)
+		exit_tween.tween_interval(1.12)
 		exit_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
 		exit_tween.parallel().tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
 		exit_tween.tween_callback(clipper.queue_free)
