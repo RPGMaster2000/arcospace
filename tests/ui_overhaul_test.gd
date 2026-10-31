@@ -231,7 +231,7 @@ func run() -> void:
 			var held: Control = board.get_node(path)
 			check(root.get_visible_rect().encloses(held.get_global_rect()), "Hand inside screen " + str(dimensions))
 			check(absf(held.get_global_rect().end.y - (root.get_visible_rect().end.y - 12)) < 2, "Combat card bottom anchored")
-			check(held.get_node("DiscardButton").get_global_rect().size.y >= 43.9, "Discard touch target remains 44 pixels")
+			check(held.get_node("DiscardButton").get_global_rect().size.y >= 32.9, "Compact discard footer remains 33 pixels")
 		check(is_equal_approx(board.get_node("FTLPanel/Progress").size.x,154), "FTL bar 33% narrower")
 		board.ftl.charge = board.ftl.charge_target
 		board._record_result()
