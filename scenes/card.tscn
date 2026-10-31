@@ -91,10 +91,10 @@ color = Color(0.14, 0.3, 0.46, 0.94)
 
 [node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
-offset_left = 149.0
-offset_top = 19.0
-offset_right = 165.0
-offset_bottom = 35.0
+offset_left = 151.0
+offset_top = 21.0
+offset_right = 167.0
+offset_bottom = 37.0
 mouse_filter = 2
 
 
@@ -116,12 +116,12 @@ color = Color(0.67, 0.85, 0.42, 1)
 
 [node name="CostLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 166.0
-offset_top = 12.0
-offset_right = 189.0
-offset_bottom = 46.0
+offset_left = 169.0
+offset_top = 17.0
+offset_right = 188.0
+offset_bottom = 41.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "3"
 
 
@@ -145,11 +145,11 @@ antialiased = true
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 12.0
+offset_top = 13.0
 offset_right = 141.0
-offset_bottom = 66.0
+offset_bottom = 53.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "SHIELD\nPLATING"
 autowrap_mode = 2
 
@@ -218,7 +218,7 @@ layout_mode = 0
 offset_left = 7.0
 offset_top = 177.0
 offset_right = 191.0
-offset_bottom = 250.0
+offset_bottom = 261.0
 mouse_filter = 2
 color = Color(0.025, 0.055, 0.105, 0.91)
 
@@ -227,9 +227,9 @@ layout_mode = 0
 offset_left = 13.0
 offset_top = 182.0
 offset_right = 166.0
-offset_bottom = 201.0
+offset_bottom = 198.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "ATTACK · ENERGY"
 
 [node name="EffectCue" type="Label" parent="."]
@@ -237,7 +237,7 @@ layout_mode = 0
 offset_left = 164.0
 offset_top = 181.0
 offset_right = 186.0
-offset_bottom = 202.0
+offset_bottom = 199.0
 mouse_filter = 2
 horizontal_alignment = 2
 theme_override_font_sizes/font_size = 15
@@ -245,11 +245,11 @@ theme_override_font_sizes/font_size = 15
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 203.0
+offset_top = 225.0
 offset_right = 186.0
-offset_bottom = 245.0
+offset_bottom = 260.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 12
 text = "+4 Shields"
 autowrap_mode = 2
 vertical_alignment = 1
@@ -258,11 +258,11 @@ vertical_alignment = 1
 [node name="DiscardButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 7.0
-offset_top = 250.0
+offset_top = 261.0
 offset_right = 191.0
 offset_bottom = 294.0
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("Footer")
 theme_override_styles/hover = SubResource("Hover")
 theme_override_styles/pressed = SubResource("Hover")
