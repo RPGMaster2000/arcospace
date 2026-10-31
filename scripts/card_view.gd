@@ -126,7 +126,7 @@ func refresh_card() -> void:
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		$EffectCue.text = ""
-	$CategoryLabel.text = ""
+		$CategoryLabel.text = ""
 		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
