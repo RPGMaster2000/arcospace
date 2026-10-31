@@ -178,7 +178,9 @@ func run() -> void:
 		wheel.global_position = wheel.position
 		wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
 		wheel.pressed = true
-		root.push_input(wheel, true)
+		# Feed the wheel to the scroll control directly: SceneTree routing can
+		# target overlays or a previous focus owner in headless CI.
+		scroll._gui_input(wheel)
 		await settle()
 		check(scroll.scroll_vertical > 0, "Mouse wheel moves card gallery")
 		var touch = InputEventScreenTouch.new()
