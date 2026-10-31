@@ -178,9 +178,9 @@ func run() -> void:
 		wheel.global_position = wheel.position
 		wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
 		wheel.pressed = true
-		# Feed the wheel to the scroll control directly: SceneTree routing can
-		# target overlays or a previous focus owner in headless CI.
-		scroll._gui_input(wheel)
+		# Route the wheel through the viewport; native ScrollContainer GUI input
+		# is handled by the engine and cannot be called as _gui_input from GDScript.
+		scroll.get_viewport().push_input(wheel, true)
 		await settle()
 		check(scroll.scroll_vertical > 0, "Mouse wheel moves card gallery")
 		var touch = InputEventScreenTouch.new()
