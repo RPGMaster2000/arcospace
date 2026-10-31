@@ -47,7 +47,8 @@ func run() -> void:
 	board.enemy_hand.cards.assign([Library.CARDS[11]])
 	hand_before = board.hand.cards.duplicate()
 	board._on_enemy_timeout()
-	var enemy_cue: Control = motion.get_node("PlayedCard")
+	var enemy_cue: Control = motion.get_child(motion.get_child_count() - 1) as Control
+	# Earlier visual-only cards may still exist; the newest child is the current cue.
 	check(enemy_cue.position.x > motion.size.x * 0.49 and enemy_cue.position.x < motion.size.x * 0.54 and enemy_cue.position.y >= 150.0, "Enemy card activates in open space below title and left of resources")
 	check(board.resolving_card and board.player_shields == 10, "Enemy effect must wait for its animation")
 	await board.action_finished
@@ -83,7 +84,7 @@ func run() -> void:
 	check(not board.resolving_card and view.modulate.a == 1, "Winning animation must clean up")
 	await process_frame
 	# The played-card visual has an independent one-second lifetime after gameplay resolves.
-	await create_timer(1.2).timeout
+	await create_timer(1.6).timeout
 	check(motion.get_child_count() == 4, "Temporary animation nodes must be removed after their visual hold")
 	board.free()
 	# Closing/restarting during motion must safely destroy its running tween.
