@@ -128,7 +128,6 @@ func refresh_card() -> void:
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		$EffectCue.text = ""
-		$CategoryLabel.text = ""
 		clear_effect_badges()
 		$FullCardArt.visible = false
 		tooltip_text = ""
@@ -136,11 +135,19 @@ func refresh_card() -> void:
 		$DiscardButton.text = "Discard"
 		return
 	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
-	# Keep full names prominent; only an unusually long title needs a small font fallback.
-	for reduction in range(6):
-		var font_size: int = mini(16, presentation_settings.card_title_font_size) - reduction
+	# Fit actual rendered text, not just its line count: a two-line label can
+	# still exceed the header height or contain a clipped long word.
+	$TitleLabel.max_lines_visible = -1
+	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	for font_size in range(mini(16, presentation_settings.card_title_font_size), 7, -1):
 		$TitleLabel.add_theme_font_size_override("font_size", font_size)
-		if $TitleLabel.get_line_count() <= 2:
+		var title_font: Font = $TitleLabel.get_theme_font("font")
+		var longest_word: float = 0.0
+		for word in $TitleLabel.text.replace("\\n", " ").split(" ", false):
+			longest_word = maxf(longest_word, title_font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+		if ($TitleLabel.get_line_count() <= 2
+			and $TitleLabel.get_minimum_size().y <= 40.0
+			and longest_word <= 128.0):
 			break
 	$TitleLabel.max_lines_visible = 2
 	$TitleLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -152,7 +159,6 @@ func refresh_card() -> void:
 	)
 	$CostLabel.text = str(card_data.cost)
 	$EffectCue.text = effect_cue(card_data)
-	$CategoryLabel.text = card_data.allocation_category.to_upper()
 	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
 	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
@@ -171,7 +177,7 @@ func refresh_card() -> void:
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 225.0
+	$DescriptionLabel.offset_top = 204.0
 	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
 	$DescriptionLabel.clip_text = true
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -179,7 +185,7 @@ func refresh_card() -> void:
 		description_size
 	)
 	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 225.0) / line_height)
+		1, floori(($DescriptionLabel.offset_bottom - 204.0) / line_height)
 	)
 	# Exception to the length threshold: abbreviate short text only when it cannot fit.
 	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
@@ -196,7 +202,6 @@ func refresh_card() -> void:
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
 	$CostBadge.color = Color(color.r * 0.28, color.g * 0.28, color.b * 0.28, 0.96)
-	$CategoryLabel.add_theme_color_override("font_color", color)
 	var normal: StyleBoxFlat = get_theme_stylebox("normal").duplicate()
 	normal.bg_color = Color(color.r * 0.16, color.g * 0.16, color.b * 0.16, 1)
 	normal.border_color = color.lerp(Color(0.97, 0.89, 0.69), 0.5)
@@ -248,7 +253,7 @@ func update_effect_badges() -> void:
 		var entry: Dictionary = entries[index]
 		var badge: Control = EffectBadge.new()
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.position = Vector2(13.0 + index * width, 201.0)
+		badge.position = Vector2(13.0 + index * width, 181.0)
 		badge.size = Vector2(width - 4.0, 21.0)
 		add_child(badge)
 		badge.configure(entry.kind, entry.amount, entry.conditional)
@@ -270,7 +275,6 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 		"ArtPlaceholder",
 		"CostRule",
 		"EffectCue",
-		"CategoryLabel"
 	]:
 		get_node(path).modulate = tint
 
