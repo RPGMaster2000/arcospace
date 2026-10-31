@@ -28,7 +28,7 @@ static func sections(font: Font) -> Dictionary:
 		"defenses": ["5. Protect your ship",
 			"%s Shields take most incoming damage first. Restore them with defensive cards.\n%s Hull is your ship's health. When Shields run out, ordinary damage hits Hull. Some attacks go directly through Shields. If your Hull reaches zero, you lose the fight.\n\nHull damage can carry into later encounters. Repair when you have the chance." % [shields, hull]],
 		"victory": ["6. Win the encounter",
-			"Reduce the enemy's Hull to zero to win. You can also win by reaching the battle's tower or resource victory targets, or by escaping with a fully charged EMP Pulse when available. Watch the enemy's Shields and Hull as you attack."],
+			"Reduce the enemy's Hull to zero to win. You also win if the enemy loses too many production systems and cannot repair them before the countdown ends. A fully charged EMP Pulse can end the encounter in your favor when available. Watch the enemy's Shields and Hull as you attack."],
 		"rewards": ["7. Improve your ship and move on",
 			"After encounters, you may gain cards, upgrade cards or collect rewards. Choose upgrades that help your ship's strengths. %s Salvage is kept between battles and can pay for repairs and services.\n\nFinish the current system's objective to unlock faster-than-light (FTL) travel to the next system. Then explore, fight and upgrade again." % salvage],
 		"emp": ["EMP Pulse: an alternative way out",
