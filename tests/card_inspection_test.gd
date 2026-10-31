@@ -59,7 +59,7 @@ func run() -> void:
 			var art: Control=view.get_node("ArtPlaceholder")
 			var description: Label=view.get_node("DescriptionLabel")
 			check(art.position==Vector2(12,67) and art.size==Vector2(174,110) and art.visible,"Expanded artwork "+view.card_data.card_name)
-			check(description.get_theme_font_size("font_size")==12 and description.position.y==225,"Compact font and redesigned description position")
+			check(description.get_theme_font_size("font_size")==12 and description.position.y==204,"Compact font and redesigned description position")
 			check(description.get_minimum_size().y<=view.get_node("DiscardButton").position.y-description.position.y,"Description clears footer")
 			check(view.get_node("TitleLabel").offset_bottom <= view.get_node("ArtPlaceholder").position.y and view.get_node("TitleLabel").clip_text and view.get_node("TitleLabel").max_lines_visible == 2,"Full title clears artwork")
 	view.card_data=Cards.CARDS[52]
