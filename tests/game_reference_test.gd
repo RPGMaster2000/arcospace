@@ -8,6 +8,16 @@ func check(ok: bool, message: String) -> void:
 		push_error(message)
 func _initialize() -> void: call_deferred("run")
 func run() -> void:
+	var guide = preload("res://scripts/ui/game_reference.gd")
+	var chapters: Dictionary = guide.sections(ThemeDB.fallback_font)
+	var beginner: String = guide.text(ThemeDB.fallback_font)
+	check(beginner.find("1. Choose your ship") < beginner.find("2. Explore the star system"), "Beginner reference follows expedition order")
+	check(beginner.find("2. Explore the star system") < beginner.find("3. Take turns playing cards"), "Map comes before battle explanation")
+	check(beginner.find("3. Take turns playing cards") < beginner.find("7. Improve your ship and move on"), "Core loop finishes with rewards and travel")
+	check(beginner.contains("Synthesizer") and beginner.contains("Reactor") and beginner.contains("Quarters"), "Reference explains all three production systems")
+	check(beginner.contains("Shields") and beginner.contains("Hull") and beginner.contains("Salvage"), "Reference explains protection and persistent currency")
+	check(beginner.contains("[url=emp]") and beginner.contains("[url=preview]"), "Existing contextual help sections remain reachable")
+	check(chapters.has("modifiers") and chapters.has("icons"), "Battlefield help and icon legend retained")
 	for dimensions in [Vector2i(1280,720), Vector2i(960,540)]:
 		root.size = dimensions
 		var board = load("res://scenes/board_3d.tscn").instantiate()
