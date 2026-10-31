@@ -57,11 +57,11 @@ func run() -> void:
 			var other: String = "enemy" if side == "player" else "player"
 			var motion = board.get_node("CardMotion")
 			board._act(side, 0, false)
-			await motion.step_finished # Fully raised; the new one-second presentation hold begins.
-			await motion.step_finished # Hold finishes; beam and dissolve now begin together.
+			await motion.step_finished # Fully raised: beam begins while the visible card holds independently.
 			await process_frame
 			check(board.get(other + "_shields") == shields and board.get(other + "_hull") == 30, "No damage before weapon contact")
-			check(is_instance_valid(board.battle_effects.active_beam), "Beam begins when raised card starts dissolving")
+			check(is_instance_valid(board.battle_effects.active_beam), "Beam begins while raised card remains visible")
+			check(motion.has_node("PlayedCard") and motion.get_node("PlayedCard").modulate.a > 0.9, "Raised card remains visible during beam")
 			check(board.current_actor == side and board.resolving_card, "Turn stays locked")
 			await board.action_finished
 			check(board.get(other + "_shields") == maxi(0, shields - 6), "Shields resolve at contact exactly once")

@@ -102,22 +102,24 @@ func animate_action(
 		await step_finished
 		if cancelling: return
 		Sound.play(&"card_play", self)
-		# Keep both player and enemy played cards fully visible one extra second.
-		active_tween = _new_tween()
-		active_tween.tween_interval(1.0)
-		await step_finished
-		if cancelling: return
-		# After the extra hold, the card exits while Board resolves gameplay and cues VFX.
-		active_tween = _new_tween().set_parallel(true)
-		active_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
-		active_tween.tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
-		# Invoke immediately; the replacement becomes available during the exit.
+		# Presentation is independent of gameplay: the raised card remains visible
+		# while resolution, weapon VFX and the turn continue without a hold.
+		var exit_tween := create_tween()
+		exit_tween.tween_interval(1.0)
+		exit_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
+		exit_tween.parallel().tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
+		exit_tween.tween_callback(clipper.queue_free)
 		await resolve.call()
 		if cancelling: return
-		if active_tween != null and active_tween.is_running():
-			await active_tween.finished
-		if cancelling: return
-		clipper.hide()
+		# The exit tween owns the card visual independently of the hand refill.
+		if present.is_valid(): present.call()
+		if is_instance_valid(source_view):
+			active_tween = _new_tween()
+			active_tween.tween_property(source_view, "modulate", original_modulate, settings.refill_seconds)
+			await step_finished
+			if cancelling: return
+		source_view = null
+		return
 	clipper.hide()
 	clipper.queue_free()
 	if present.is_valid(): present.call()
