@@ -97,6 +97,26 @@ func _gui_input(event: InputEvent) -> void:
 		discard_requested.emit()
 
 
+# Small visual aid only; card text and Inspector remain authoritative.
+static func effect_cue(card: Resource) -> String:
+	if card.play_again:
+		return "↻"
+	if card.effects.has("conditional"):
+		return "◇?"
+	if card.effects.has("damage") or card.effects.has("break_shields"):
+		return "✦"
+	if card.effects.has("shields") or card.effects.has("hull"):
+		return "✚"
+	if card.effects.has("sabotage") or card.effects.has("enemy_production"):
+		return "↓"
+	if card.effects.has("steal") or card.effects.has("drain"):
+		return "⇄"
+	match card.allocation_category:
+		"offense": return "✦"
+		"defense": return "✚"
+		_: return "⚙"
+
+
 func refresh_card() -> void:
 	queue_redraw()
 	set_process(card_data != null and card_data.tier > 1)
@@ -105,6 +125,8 @@ func refresh_card() -> void:
 		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
+		$EffectCue.text = ""
+		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
@@ -124,6 +146,12 @@ func refresh_card() -> void:
 		+ "+".repeat(card_data.upgrade_level)
 	)
 	$CostLabel.text = str(card_data.cost)
+	$EffectCue.text = effect_cue(card_data)
+	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
+	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
+	$FullCardArt.texture = artwork if artwork is Texture2D else null
+	$FullCardArt.visible = $FullCardArt.texture != null
+	$ArtPlaceholder.visible = not $FullCardArt.visible
 	$DescriptionLabel.text = Summary.card_text(
 		card_data, presentation_settings.description_shorthand_threshold
 	)
@@ -153,7 +181,7 @@ func refresh_card() -> void:
 		$DescriptionLabel.text = Summary.card_text(card_data, -1)
 	$ArtPlaceholder.offset_top = 101.0
 	$ArtPlaceholder.offset_bottom = 175.0
-	$ArtPlaceholder.visible = true
+	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
 	var colors = {
 		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
@@ -196,7 +224,8 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 		"DescriptionLabel",
 		"ResourceIcon",
 		"ArtPlaceholder",
-		"CostRule"
+		"CostRule",
+		"EffectCue"
 	]:
 		get_node(path).modulate = tint
 
