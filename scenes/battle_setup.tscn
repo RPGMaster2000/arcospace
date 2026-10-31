@@ -84,7 +84,7 @@ mouse_filter = 2
 [node name="Scroll" type="ScrollContainer" parent="Selection/Information/Margin"]
 layout_mode = 2
 horizontal_scroll_mode = 0
-vertical_scroll_mode = 0
+vertical_scroll_mode = 3
 
 [node name="Column" type="HBoxContainer" parent="Selection/Information/Margin/Scroll"]
 size_flags_horizontal = 3
