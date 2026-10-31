@@ -148,7 +148,7 @@ func refresh_card() -> void:
 	$CostLabel.text = str(card_data.cost)
 	$EffectCue.text = effect_cue(card_data)
 	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
-	var artwork: Variant = card_data.get_meta("card_art", null)
+	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
