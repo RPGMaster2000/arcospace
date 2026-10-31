@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
@@ -69,7 +70,10 @@ def main(argv=None):
     parser.add_argument("--timeout", type=positive_seconds, default=120)
     parser.add_argument("--import-timeout", type=positive_seconds, default=180)
     parser.add_argument("--skip-import", action="store_true", help="use an already imported checkout")
+    parser.add_argument("--workers", type=int, default=1, help="concurrent isolated test processes (default: 1)")
     args = parser.parse_args(argv)
+    if args.workers < 1:
+        parser.error("--workers must be at least 1")
     project = args.project.resolve()
     if not (project / "project.godot").is_file():
         parser.error("--project must contain project.godot")
@@ -86,33 +90,64 @@ def main(argv=None):
         temporary.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
         temporary.replace(results / "summary.json")
 
-    def execute(name, extra, timeout):
-        # Absolute engine log path also works in restricted local environments.
+    def process(name, extra, timeout):
+        # Every test has a unique engine log and XDG user-data directory.
         command = [args.godot, "--headless", "--audio-driver", "Dummy", "--path", str(project),
                    "--log-file", str(results / (name + ".engine.log"))] + extra
-        summary["running"] = name
-        save()
         result = run_process(command, results / (name + ".log"), timeout)
         result["name"] = name
+        return result
+
+    def record(result):
         summary["runs"].append(result)
         summary["running"] = None
         save()
-        print(f"{result['status'].upper()} {name} ({result['seconds']}s, "
+        print(f"{result['status'].upper()} {result['name']} ({result['seconds']}s, "
               f"shutdown warnings: {len(result['shutdown_warning_lines'])})", flush=True)
         if result["status"] == "failed":
             print(Path(result["log"]).read_text(encoding="utf-8", errors="replace"), flush=True)
-        return result["status"] == "passed"
 
     save()
-    if not args.skip_import and not execute("import", ["--editor", "--import", "--quit"], args.import_timeout):
-        # Do not run scripts against an import that failed or timed out.
-        return 1
-    for script in scripts:
-        execute(script.stem, ["--script", str(script)], TIMEOUTS.get(script.stem, args.timeout))
+    if not args.skip_import:
+        summary["running"] = "import"
+        save()
+        imported = process("import", ["--editor", "--import", "--quit"], args.import_timeout)
+        record(imported)
+        if imported["status"] != "passed":
+            return 1
+
+    # Import must finish before parallel readers start. Preserve the progression-first
+    # order in the final summary regardless of worker completion order.
+    def run_test(script):
+        return process(script.stem, ["--script", str(script)],
+                       TIMEOUTS.get(script.stem, args.timeout))
+
+    summary["running"] = [script.stem for script in scripts]
+    save()
+    if args.workers == 1:
+        for script in scripts:
+            record(run_test(script))
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            futures = {pool.submit(run_test, script): script.stem for script in scripts}
+            ordered = {}
+            for future in as_completed(futures):
+                result = future.result()
+                ordered[result["name"]] = result
+                summary["running"] = [name for name in (script.stem for script in scripts)
+                                      if name not in ordered]
+                # Persist finished runs even if cancelled later, in discovery order.
+                summary["runs"] = [ordered[script.stem] for script in scripts
+                                   if script.stem in ordered]
+                save()
+                print(f"{result['status'].upper()} {result['name']} ({result['seconds']}s, "
+                      f"shutdown warnings: {len(result['shutdown_warning_lines'])})", flush=True)
+                if result["status"] == "failed":
+                    print(Path(result["log"]).read_text(encoding="utf-8", errors="replace"), flush=True)
     summary["complete"] = True
+    summary["running"] = None
     save()
     return int(any(run["status"] != "passed" for run in summary["runs"]))
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
