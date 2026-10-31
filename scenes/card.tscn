@@ -222,16 +222,6 @@ offset_bottom = 261.0
 mouse_filter = 2
 color = Color(0.025, 0.055, 0.105, 0.91)
 
-[node name="CategoryLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 13.0
-offset_top = 182.0
-offset_right = 166.0
-offset_bottom = 198.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 11
-text = "ATTACK · ENERGY"
-
 [node name="EffectCue" type="Label" parent="."]
 layout_mode = 0
 offset_left = 164.0
@@ -245,7 +235,7 @@ theme_override_font_sizes/font_size = 15
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 225.0
+offset_top = 204.0
 offset_right = 186.0
 offset_bottom = 260.0
 mouse_filter = 2
