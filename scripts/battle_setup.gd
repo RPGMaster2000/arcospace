@@ -118,15 +118,23 @@ func _layout() -> void:
 	$Selection/Actions.anchor_left = 0.04 if size.x < 1000 else 0.12
 	$Selection/Actions.anchor_right = 0.96 if size.x < 1000 else 0.88
 	$Selection/Heading.add_theme_font_size_override("font_size", 22 if compact else 30)
-	$Selection/Information/Margin/Scroll/Column/Identity/Name.add_theme_font_size_override("font_size", 25 if compact else 34)
+	var columns: HBoxContainer = $Selection/Information/Margin/Scroll/Column
+	columns.add_theme_constant_override("separation", 8 if compact else 16)
+	var identity: Control = columns.get_node("Identity")
+	var summary: Control = columns.get_node("Description")
+	var signature: Control = columns.get_node("Signature")
+	identity.size_flags_stretch_ratio = 1.35
+	summary.size_flags_stretch_ratio = 1.30
+	signature.size_flags_stretch_ratio = 0.85
+	identity.get_node("Name").add_theme_font_size_override("font_size", (19 if size.x < 800 else 23) if compact else 34)
 	for label in [$Selection/Information/Margin/Scroll/Column/Identity/Role, $Selection/Information/Margin/Scroll/Column/Description]:
-		label.add_theme_font_size_override("font_size", 16 if compact else 21)
+		label.add_theme_font_size_override("font_size", (12 if size.x < 800 else 15) if compact else 21)
 	$Selection/Information/Margin/Scroll/Column/Signature/SignatureHeading.add_theme_font_size_override("font_size", 12 if compact else 16)
 	var available_height: float = size.y * (1.0 - $Selection/Information.anchor_top) - 90.0 - 16.0 - (22.0 if compact else 26.0)
 	if is_instance_valid(signature_portrait):
 		signature_portrait.set_card_scale(clampf(available_height / 294.0, 0.20, 0.70))
 	var stats: RichTextLabel = $Selection/Information/Margin/Scroll/Column/Identity/Stats
-	for font in ["normal_font_size", "bold_font_size"]: stats.add_theme_font_size_override(font, 15 if compact else 18)
+	for font in ["normal_font_size", "bold_font_size"]: stats.add_theme_font_size_override(font, (12 if size.x < 800 else 14) if compact else 18)
 	for button in [deck_button, begin_button, start_button]: button.add_theme_font_size_override("font_size", (14 if size.x < 800 else 16) if compact else 21)
 	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	settings_button.offset_left = -62
