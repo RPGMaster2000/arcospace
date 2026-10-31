@@ -9,6 +9,6 @@ allocation_category = "offense"
 card_name = "Relentless Barrage"
 family = "energy"
 cost = 7
-description = "Strike hard; follow through when enemy Shields fall."
+description = "7 damage. +4 if enemy Shields are 0"
 effects = {"damage": 7, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 4}}}
 upgrade_effects = [{"damage": 9, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 5}}}, {"damage": 11, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 6}}}]
