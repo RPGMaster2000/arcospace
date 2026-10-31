@@ -9,6 +9,6 @@ allocation_category = "systems"
 card_name = "Adaptive Command"
 family = "crew"
 cost = 5
-description = "Stabilize Shields and replenish supplies."
+description = "+4 Shields, +3 Materials"
 effects = {"shields": 4, "materials": 3}
 upgrade_effects = [{"shields": 6, "materials": 4, "energy": 2}, {"shields": 8, "materials": 5, "energy": 3}]

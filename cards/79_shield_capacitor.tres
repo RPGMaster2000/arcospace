@@ -9,6 +9,6 @@ allocation_category = "defense"
 card_name = "Shield Capacitor"
 family = "energy"
 cost = 6
-description = "Build a Shield advantage to recharge Energy."
+description = "+7 Shields. If yours exceed enemy Shields, +4 Energy"
 effects = {"shields": 7, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 4}}}
 upgrade_effects = [{"shields": 10, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 5}}}, {"shields": 13, "conditional": {"target": "self", "attribute": "shields", "comparison": "above", "compare_target": "enemy", "compare_attribute": "shields", "then": {"energy": 6}}}]

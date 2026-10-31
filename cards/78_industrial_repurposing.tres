@@ -9,6 +9,6 @@ allocation_category = "systems"
 card_name = "Industrial Repurposing"
 family = "materials"
 cost = 6
-description = "Convert Materials into Energy and Crew."
+description = "+5 Energy, +5 Crew"
 effects = {"energy": 5, "crew": 5}
 upgrade_effects = [{"energy": 7, "crew": 6}, {"energy": 9, "crew": 7}]

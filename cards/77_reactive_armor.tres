@@ -9,6 +9,6 @@ allocation_category = "defense"
 card_name = "Reactive Armor"
 family = "materials"
 cost = 6
-description = "Repair Hull and restore Shields; stronger while damaged."
+description = "+3 Hull, +6 Shields. Another +4 Hull if below 50%"
 effects = {"hull": 3, "shields": 6, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 4}}}
 upgrade_effects = [{"hull": 4, "shields": 8, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 5}}}, {"hull": 5, "shields": 10, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "fraction_of": "hull_capacity", "threshold": 0.5, "then": {"hull": 6}}}]
