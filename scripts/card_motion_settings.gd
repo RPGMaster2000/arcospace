@@ -16,8 +16,8 @@ class_name CardMotionSettings
 @export_range(0.01, 3.0, 0.01) var damage_hold_seconds: float = 0.35
 @export_range(0.01, 3.0, 0.01) var damage_exit_seconds: float = 0.25
 ## TUNE: Seconds for the discard scanner to dissolve the card.
-@export_range(0.01, 3.0, 0.01) var discard_seconds: float = 0.44
+@export_range(0.01, 3.0, 0.01) var discard_seconds: float = 0.52
 ## TUNE: Seconds for a replacement card to appear.
-@export_range(0.01, 3.0, 0.01) var refill_seconds: float = 0.18
+@export_range(0.01, 3.0, 0.01) var refill_seconds: float = 0.24
 ## TUNE: Size of the presented card; 1.0 = original, 1.2 = 20% larger.
 @export_range(0.5, 1.5, 0.05) var stage_scale: float = 1.1
