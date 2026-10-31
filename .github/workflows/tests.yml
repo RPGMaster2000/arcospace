@@ -4,6 +4,9 @@ on:
     branches: [main, refactor/starfront-preparation, checkpoint/pressure-exploration-v01, codex/unique-ship-models, codex/expedition-progression-validation, codex/music-emp-pulse]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: godot-tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -24,7 +27,7 @@ jobs:
       - name: Test regression runner
         run: python3 -m unittest discover -s tools -p 'test_*.py' -v
       - name: Import and run all regression scripts
-        run: python3 tools/run_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64
+        run: python3 tools/run_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --workers 3
       - uses: actions/upload-artifact@v4
         if: always()
         with:
