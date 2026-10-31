@@ -9,7 +9,7 @@ family = "materials"
 cost = 11
 tier = 1
 allocation_category = "offense"
-description = "Enemy -8 Shields; If Enemy Shields =0: Enemy -5 Crew"
+description = "Enemy −8 Shields. If Shields reach 0, drain 5 Crew"
 effects = {"break_shields": 8, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"drain": {"crew": 5}}}}
 upgrade_effects = [{"break_shields": 10, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"drain": {"crew": 6}}}}, {"break_shields": 12, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"drain": {"crew": 7}}}}]
 play_again = false
