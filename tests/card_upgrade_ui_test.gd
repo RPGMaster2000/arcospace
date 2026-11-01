@@ -16,7 +16,7 @@ func run() -> void:
 				var enhanced: Resource = card.with_upgrade(level)
 				view.card_data = enhanced if factor == 0 else modifier.preview(enhanced)
 				await process_frame
-				var label: RichTextLabel = view.get_node("DescriptionLabel")
+				var label: Label = view.get_node("DescriptionLabel")
 				var title: Label = view.get_node("TitleLabel")
 				if title.position.y + title.get_minimum_size().y > view.get_node("ArtPlaceholder").position.y + 1:
 					failures += 1
