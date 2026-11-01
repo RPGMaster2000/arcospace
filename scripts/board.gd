@@ -848,12 +848,14 @@ func _delay_replacement_reveal(slot: int) -> void:
 	cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	view.add_child(cover)
 	replacement_covers[slot] = cover
-	get_tree().create_timer(1.0, false).timeout.connect(func():
-		if not is_inside_tree() or is_queued_for_deletion(): return
-		if replacement_covers.get(slot) != cover: return
-		replacement_covers.erase(slot)
-		if is_instance_valid(cover): cover.queue_free()
-	)
+	get_tree().create_timer(1.0, false).timeout.connect(_finish_replacement_cover.bind(slot, weakref(cover)))
+
+
+func _finish_replacement_cover(slot: int, cover_ref: WeakRef) -> void:
+	var cover: Control = cover_ref.get_ref()
+	if cover == null or replacement_covers.get(slot) != cover: return
+	replacement_covers.erase(slot)
+	cover.queue_free()
 
 
 func _display_snapshot() -> Dictionary:
