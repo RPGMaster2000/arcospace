@@ -62,6 +62,15 @@ theme_override_styles/disabled = SubResource("Normal")
 script = ExtResource("1_view")
 
 
+[node name="FullCardArt" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 198.0
+offset_bottom = 294.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+visible = false
+
 [node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
 offset_left = 12.0
