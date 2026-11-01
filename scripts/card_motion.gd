@@ -115,9 +115,13 @@ func animate_action(
 		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.12)
 		exit_tween.tween_callback(_finish_lingering_card.bind(weakref(clipper)))
 		if present.is_valid(): present.call()
-		# Restore the now-empty hand slot; its replacement is dealt at transition.
+		# Preserve the existing refill tween completion boundary. Tests and
+		# callers await this action signal; the visual hold remains independent.
 		if is_instance_valid(source_view):
-			source_view.modulate = original_modulate
+			active_tween = _new_tween()
+			active_tween.tween_property(source_view, "modulate", original_modulate, settings.refill_seconds)
+			await step_finished
+			if cancelling: return
 		source_view = null
 		return
 	clipper.hide()
