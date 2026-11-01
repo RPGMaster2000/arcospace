@@ -83,8 +83,9 @@ func run() -> void:
 	check(board.winner == "player" and board.enemy_timer.is_stopped(), "Winning animation must not schedule another turn")
 	check(not board.resolving_card and view.modulate.a == 1, "Winning animation must clean up")
 	await process_frame
-	# The played-card visual has an independent one-second lifetime after gameplay resolves.
-	await create_timer(1.6).timeout
+	# Played-card visuals have independent lifetimes: enemy 1.8s and player 0.48s,
+	# followed by a 0.28s directional fade. Allow for the last cue to finish.
+	await create_timer(2.3).timeout
 	check(motion.get_child_count() == 4, "Temporary animation nodes must be removed after their visual hold")
 	board.free()
 	# Closing/restarting during motion must safely destroy its running tween.
