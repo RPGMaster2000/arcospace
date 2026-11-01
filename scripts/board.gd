@@ -484,7 +484,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	if _check_winner():
 		refresh_display()
 	elif extra_action_requested:
-		# Refill after the old card animation ends, before the extra action.
+		# Clear outgoing visuals before refilling; no change to turn timing.
+		$CardMotion.clear_lingering_cards()
 		var extra_hand = hand if side == "player" else enemy_hand
 		for pending_slot in pending_card_draws[side]:
 			extra_hand.replace_card(pending_slot)
@@ -531,6 +532,7 @@ func _finish_turn(side: String) -> void:
 	turn_number = next.round
 	# At the turn transition, refill the outgoing actor\'s emptied slots.
 	# This runs after the played-card presentation has completely finished.
+	$CardMotion.clear_lingering_cards()
 	var outgoing_hand = hand if side == "player" else enemy_hand
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
