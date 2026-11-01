@@ -102,16 +102,16 @@ func animate_action(
 		await step_finished
 		if cancelling: return
 		Sound.play(&"card_play", self)
-		# Presentation is independent of gameplay: the raised card remains visible
-		# while resolution, weapon VFX and the turn continue without a hold.
-		var exit_tween := create_tween()
-		exit_tween.tween_interval(1.12)
-		exit_tween.tween_property(clipper, "modulate:a", 0.0, settings.damage_exit_seconds)
-		exit_tween.parallel().tween_property(clipper, "scale", clipper.scale * 0.93, settings.damage_exit_seconds)
-		exit_tween.tween_callback(clipper.queue_free)
+		# Keep the activated card visible while its effects resolve, but remove
+		# it BEFORE the outgoing hand slot can be revealed at turn transition.
 		await resolve.call()
 		if cancelling: return
-		# The exit tween owns the card visual independently of the hand refill.
+		var exit_tween := create_tween().set_parallel(true)
+		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.14)
+		exit_tween.tween_property(clipper, "scale", clipper.scale * 0.93, 0.14)
+		await exit_tween.finished
+		if cancelling: return
+		clipper.queue_free()
 		if present.is_valid(): present.call()
 		if is_instance_valid(source_view):
 			active_tween = _new_tween()
