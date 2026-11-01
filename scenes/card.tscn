@@ -71,72 +71,53 @@ expand_mode = 1
 stretch_mode = 6
 visible = false
 
-[node name="HeaderPanel" type="ColorRect" parent="."]
-layout_mode = 0
-offset_left = 7.0
-offset_top = 7.0
-offset_right = 191.0
-offset_bottom = 52.0
-mouse_filter = 2
-color = Color(0.025, 0.055, 0.105, 0.82)
-
-[node name="CostBadge" type="ColorRect" parent="."]
-layout_mode = 0
-offset_left = 147.0
-offset_top = 13.0
-offset_right = 187.0
-offset_bottom = 45.0
-mouse_filter = 2
-color = Color(0.14, 0.3, 0.46, 0.94)
-
 [node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
-offset_left = 152.0
-offset_top = 21.0
-offset_right = 168.0
-offset_bottom = 37.0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 42.0
+offset_bottom = 39.0
 mouse_filter = 2
 
 
 [node name="Materials" type="Polygon2D" parent="ResourceIcon"]
-polygon = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
+polygon = PackedVector2Array(0, 0, 28, 0, 28, 28, 0, 28)
 color = Color(1, 0.42, 0.32, 1)
 
 
 [node name="Energy" type="Polygon2D" parent="ResourceIcon"]
-polygon = PackedVector2Array(0, 8, 8, 1, 16, 8, 8, 15)
+polygon = PackedVector2Array(0, 14, 14, 3, 28, 14, 14, 25)
 color = Color(0.45, 0.83, 0.96, 1)
 
 
 [node name="Crew" type="Polygon2D" parent="ResourceIcon"]
-scale = Vector2(0.57, 0.57)
 polygon = PackedVector2Array(28.0, 14.0, 27.88, 15.827, 27.523, 17.623, 26.934, 19.358, 26.124, 21.0, 25.107, 22.523, 23.899, 23.899, 22.523, 25.107, 21.0, 26.124, 19.358, 26.934, 17.623, 27.523, 15.827, 27.88, 14.0, 28.0, 12.173, 27.88, 10.377, 27.523, 8.642, 26.934, 7.0, 26.124, 5.477, 25.107, 4.101, 23.899, 2.893, 22.523, 1.876, 21.0, 1.066, 19.358, 0.477, 17.623, 0.12, 15.827, 0.0, 14.0, 0.12, 12.173, 0.477, 10.377, 1.066, 8.642, 1.876, 7.0, 2.893, 5.477, 4.101, 4.101, 5.477, 2.893, 7.0, 1.876, 8.642, 1.066, 10.377, 0.477, 12.173, 0.12, 14.0, 0.0, 15.827, 0.12, 17.623, 0.477, 19.358, 1.066, 21.0, 1.876, 22.523, 2.893, 23.899, 4.101, 25.107, 5.477, 26.124, 7.0, 26.934, 8.642, 27.523, 10.377, 27.88, 12.173)
 color = Color(0.67, 0.85, 0.42, 1)
 
 
 [node name="CostLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 170.0
-offset_top = 17.0
-offset_right = 186.0
-offset_bottom = 41.0
+offset_left = 52.0
+offset_top = 1.0
+offset_right = 184.0
+offset_bottom = 44.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 35
 text = "3"
 
 
 [node name="TierLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 112.0
-offset_top = 48.0
-offset_right = 186.0
-offset_bottom = 68.0
+offset_left = 132.0
+offset_top = 12.0
+offset_right = 187.0
+offset_bottom = 36.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
 
 [node name="CostRule" type="Line2D" parent="."]
-points = PackedVector2Array(9, 53, 189, 53)
+points = PackedVector2Array(9, 44, 189, 44)
 width = 1.0
 default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
@@ -144,12 +125,12 @@ antialiased = true
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 13.0
-offset_top = 13.0
-offset_right = 141.0
-offset_bottom = 53.0
+offset_left = 12.0
+offset_top = 47.0
+offset_right = 187.0
+offset_bottom = 99.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "SHIELD\nPLATING"
 autowrap_mode = 2
 
@@ -157,9 +138,9 @@ autowrap_mode = 2
 [node name="ArtPlaceholder" type="Control" parent="."]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 67.0
+offset_top = 101.0
 offset_right = 186.0
-offset_bottom = 177.0
+offset_bottom = 175.0
 mouse_filter = 2
 
 
@@ -213,47 +194,27 @@ default_color = Color(0.97, 0.89, 0.69, 1)
 antialiased = true
 
 
-[node name="InfoPanel" type="ColorRect" parent="."]
-layout_mode = 0
-offset_left = 7.0
-offset_top = 177.0
-offset_right = 191.0
-offset_bottom = 261.0
-mouse_filter = 2
-color = Color(0.025, 0.055, 0.105, 0.91)
-
-[node name="EffectCue" type="Label" parent="."]
-layout_mode = 0
-offset_left = 164.0
-offset_top = 181.0
-offset_right = 186.0
-offset_bottom = 199.0
-mouse_filter = 2
-horizontal_alignment = 2
-theme_override_font_sizes/font_size = 15
-
-[node name="DescriptionLabel" type="RichTextLabel" parent="."]
+[node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 184.0
-offset_right = 185.0
-offset_bottom = 256.0
+offset_top = 180.0
+offset_right = 186.0
+offset_bottom = 244.0
 mouse_filter = 2
-bbcode_enabled = true
-scroll_active = false
-fit_content = false
-theme_override_font_sizes/normal_font_size = 10
+theme_override_font_sizes/font_size = 14
 text = "+4 Shields"
+autowrap_mode = 2
+vertical_alignment = 1
 
 
 [node name="DiscardButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 7.0
-offset_top = 261.0
+offset_top = 250.0
 offset_right = 191.0
 offset_bottom = 294.0
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Footer")
 theme_override_styles/hover = SubResource("Hover")
 theme_override_styles/pressed = SubResource("Hover")

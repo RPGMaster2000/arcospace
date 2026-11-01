@@ -7,9 +7,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Apply effects or draw cards.
 
 signal discard_requested
-const EffectRows = preload("res://scripts/ui/card_effect_rows.gd")
-const EffectBadge = preload("res://scripts/ui/card_effect_badge.gd")
-var effect_badges: Array[Control] = []
+const Summary = preload("res://scripts/ui/card_summary.gd")
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -18,7 +16,7 @@ var interaction_hovered: bool = false
 var interaction_selected: bool = false
 var inspection_enabled: bool = true
 var hold_input: Node
-var discard_target_height: float = 33.0
+var discard_target_height: float = 44.0
 
 @export var card_data: Resource:
 	set(value):
@@ -78,7 +76,7 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration
 	)
 	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
-	interaction_tween.tween_property(art, "position:y", 67.0 - elevation, duration)
+	interaction_tween.tween_property(art, "position:y", 101.0 - elevation, duration)
 	queue_redraw()
 
 
@@ -99,26 +97,6 @@ func _gui_input(event: InputEvent) -> void:
 		discard_requested.emit()
 
 
-# Small visual aid only; card text and Inspector remain authoritative.
-static func effect_cue(card: Resource) -> String:
-	if card.play_again:
-		return "↻"
-	if card.effects.has("conditional"):
-		return "◇?"
-	if card.effects.has("damage") or card.effects.has("break_shields"):
-		return "✦"
-	if card.effects.has("shields") or card.effects.has("hull"):
-		return "✚"
-	if card.effects.has("sabotage") or card.effects.has("enemy_production"):
-		return "↓"
-	if card.effects.has("steal") or card.effects.has("drain"):
-		return "⇄"
-	match card.allocation_category:
-		"offense": return "✦"
-		"defense": return "✚"
-		_: return "⚙"
-
-
 func refresh_card() -> void:
 	queue_redraw()
 	set_process(card_data != null and card_data.tier > 1)
@@ -127,31 +105,19 @@ func refresh_card() -> void:
 		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
-		$EffectCue.text = ""
-		$EffectCue.visible = false
-		clear_effect_badges()
 		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
 		return
 	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
-	# Fit actual rendered text, not just its line count: a two-line label can
-	# still exceed the header height or contain a clipped long word.
-	$TitleLabel.max_lines_visible = -1
-	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-	for font_size in range(mini(16, presentation_settings.card_title_font_size), 7, -1):
+	# Keep full names prominent; only an unusually long title needs a small font fallback.
+	for reduction in range(3):
+		var font_size: int = presentation_settings.card_title_font_size - reduction
 		$TitleLabel.add_theme_font_size_override("font_size", font_size)
-		var title_font: Font = $TitleLabel.get_theme_font("font")
-		var longest_word: float = 0.0
-		for word in $TitleLabel.text.replace("\\n", " ").split(" ", false):
-			longest_word = maxf(longest_word, title_font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
-		if ($TitleLabel.get_line_count() <= 2
-			and $TitleLabel.get_minimum_size().y <= 40.0
-			and longest_word <= 128.0):
+		if $TitleLabel.get_line_count() <= 2:
 			break
 	$TitleLabel.max_lines_visible = 2
-	$TitleLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	$TitleLabel.clip_text = true
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	$TierLabel.text = (
@@ -159,41 +125,46 @@ func refresh_card() -> void:
 		+ "+".repeat(card_data.upgrade_level)
 	)
 	$CostLabel.text = str(card_data.cost)
-	$EffectCue.text = effect_cue(card_data)
-	$EffectCue.tooltip_text = card_data.allocation_category.capitalize() + " · full details in Inspector"
+	$DescriptionLabel.text = Summary.card_text(
+		card_data, presentation_settings.description_shorthand_threshold
+	)
+	$DescriptionLabel.add_theme_font_size_override(
+		"font_size", presentation_settings.compact_description_font_size
+	)
+	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
+	$DiscardButton.add_theme_font_size_override(
+		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
+	)
+	$TitleLabel.offset_bottom = 99.0
+	$DiscardButton.offset_top = 294.0 - discard_target_height
+	$DiscardButton.offset_bottom = 294.0
+	$DiscardButton.custom_minimum_size.y = discard_target_height
+	$DescriptionLabel.offset_top = 180.0
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
+	$DescriptionLabel.clip_text = true
+	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(
+		presentation_settings.compact_description_font_size
+	)
+	$DescriptionLabel.max_lines_visible = maxi(
+		1, floori(($DescriptionLabel.offset_bottom - 180.0) / line_height)
+	)
+	# Exception to the length threshold: abbreviate short text only when it cannot fit.
+	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
+		$DescriptionLabel.text = Summary.card_text(card_data, -1)
+	$ArtPlaceholder.offset_top = 101.0
+	$ArtPlaceholder.offset_bottom = 175.0
 	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
-	# A single compact description, with resource/stat icons inline rather than a second badge row.
-	$DescriptionLabel.text = EffectRows.render(card_data)
-	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 12)
-	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 12)
-	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 12)
-	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 12)
-	$DescriptionLabel.scroll_active = false
-	$DiscardButton.add_theme_font_size_override(
-		"font_size", roundi(mini(13, presentation_settings.discard_button_font_size) / maxf(scale.y, 0.01))
-	)
-	$TitleLabel.offset_bottom = 53.0
-	$DiscardButton.offset_top = 294.0 - discard_target_height
-	$DiscardButton.offset_bottom = 294.0
-	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 184.0
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
-	$ArtPlaceholder.offset_top = 67.0
-	$ArtPlaceholder.offset_bottom = 177.0
-	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
-	clear_effect_badges()
-	$EffectCue.visible = false
 	var colors = {
 		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
 	}
 	var color: Color = colors.get(card_data.family, Color.WHITE)
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
-	$CostBadge.color = Color(color.r * 0.28, color.g * 0.28, color.b * 0.28, 0.96)
 	var normal: StyleBoxFlat = get_theme_stylebox("normal").duplicate()
 	normal.bg_color = Color(color.r * 0.16, color.g * 0.16, color.b * 0.16, 1)
 	normal.border_color = color.lerp(Color(0.97, 0.89, 0.69), 0.5)
@@ -215,43 +186,6 @@ func refresh_card() -> void:
 	)
 
 
-
-func clear_effect_badges() -> void:
-	for badge in effect_badges:
-		if is_instance_valid(badge):
-			badge.queue_free()
-	effect_badges.clear()
-
-
-func update_effect_badges() -> void:
-	clear_effect_badges()
-	if card_data == null:
-		return
-	var effects: Dictionary = card_data.effects
-	var conditional_effects: Dictionary = {}
-	if effects.get("conditional") is Dictionary:
-		conditional_effects = effects["conditional"].get("then", {})
-	var entries: Array[Dictionary] = []
-	for kind in ["materials", "crew", "energy"]:
-		var amount: int = int(effects.get(kind, 0))
-		var extra: int = int(conditional_effects.get(kind, 0))
-		if amount != 0:
-			entries.append({"kind": kind, "amount": amount, "conditional": false})
-		if extra != 0:
-			entries.append({"kind": kind, "amount": extra, "conditional": true})
-	# Keep the full written effect for non-resource cards; icon badges supplement it.
-	var width: float = minf(55.0, 174.0 / maxf(1.0, float(entries.size())))
-	for index in range(entries.size()):
-		var entry: Dictionary = entries[index]
-		var badge: Control = EffectBadge.new()
-		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.position = Vector2(13.0 + index * width, 181.0)
-		badge.size = Vector2(width - 4.0, 21.0)
-		add_child(badge)
-		badge.configure(entry.kind, entry.amount, entry.conditional)
-		effect_badges.append(badge)
-	$EffectCue.visible = entries.is_empty()
-
 func set_playable(playable: bool, affordable: int = -1) -> void:
 	disabled = not playable
 	if affordable < 0:
@@ -266,8 +200,7 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 		"DescriptionLabel",
 		"ResourceIcon",
 		"ArtPlaceholder",
-		"CostRule",
-		"EffectCue",
+		"CostRule"
 	]:
 		get_node(path).modulate = tint
 
