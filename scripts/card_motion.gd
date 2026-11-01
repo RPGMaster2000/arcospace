@@ -94,7 +94,7 @@ func animate_action(
 		glow_style.set_border_width_all(3)
 		glow_style.set_corner_radius_all(8)
 		glow_style.shadow_color = Color(0.12, 0.65, 1.0, 0.65)
-		glow_style.shadow_size = 12
+		glow_style.shadow_size = 0 if OS.has_feature("mobile") else 12
 		glow.add_theme_stylebox_override("panel", glow_style)
 		clipper.add_child(glow)
 		clipper.move_child(glow, 0)
@@ -108,7 +108,7 @@ func animate_action(
 		await resolve.call()
 		if cancelling: return
 		lingering_cards.append(clipper)
-		var linger_seconds: float = 1.35 if side == "enemy" else 0.48
+		var linger_seconds: float = 2.2 if side == "enemy" else 0.48
 		var exit_tween := create_tween()
 		lingering_tweens[clipper] = exit_tween
 		exit_tween.tween_interval(linger_seconds)
