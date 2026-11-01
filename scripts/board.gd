@@ -89,6 +89,8 @@ const STRATEGIC_SHIELDS: int = preload("res://scripts/combat/battle_result.gd").
 var setup_settings: Dictionary = {}
 @onready var modifier = $CombatModifier
 var extra_action_requested: bool = false
+# Card replacement is delayed until its owner begins the next turn.
+var pending_card_draws: Dictionary = {"player": [], "enemy": []}
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -347,6 +349,11 @@ func _discard_card(slot: int) -> void:
 
 # Apply round events and player escape charging, then income; wait for presentation before AI input.
 func _begin_turn(side: String) -> void:
+	# Fill only the active side\'s emptied slots at turn entry, never mid-opponent turn.
+	var active_hand = hand if side == "player" else enemy_hand
+	for slot in pending_card_draws[side]:
+		active_hand.replace_card(slot)
+	pending_card_draws[side].clear()
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
 	current_actor = side
@@ -482,7 +489,11 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	if _check_winner():
 		refresh_display()
 	elif extra_action_requested:
-		# Another action in the same turn: no additional production income.
+		# Refill after the old card animation ends, before the extra action.
+		var extra_hand = hand if side == "player" else enemy_hand
+		for pending_slot in pending_card_draws[side]:
+			extra_hand.replace_card(pending_slot)
+		pending_card_draws[side].clear()
 		refresh_display()
 		if side == "enemy":
 			enemy_timer.start()
@@ -575,7 +586,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	_sync_systems_failure()
 	if pending.is_empty():
 		_apply_hull_report(report, side, true)
-	active_hand.replace_card(slot)
+	active_hand.cards[slot] = null
+	pending_card_draws[side].append(slot)
 	extra_action_requested = resolution.extra_action
 	var who: String = "You" if side == "player" else "Enemy"
 	var action: String = "discarded" if discard else "played"
