@@ -105,6 +105,7 @@ func refresh_card() -> void:
 		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
+		$FullCardArt.visible = false
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
@@ -153,7 +154,10 @@ func refresh_card() -> void:
 		$DescriptionLabel.text = Summary.card_text(card_data, -1)
 	$ArtPlaceholder.offset_top = 101.0
 	$ArtPlaceholder.offset_bottom = 175.0
-	$ArtPlaceholder.visible = true
+	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
+	$FullCardArt.texture = artwork if artwork is Texture2D else null
+	$FullCardArt.visible = $FullCardArt.texture != null
+	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
 	var colors = {
 		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
