@@ -847,7 +847,9 @@ func _finish_replacement_reveal(slot: int, token: int) -> void:
 	if replacement_covers.get(slot) != token: return
 	replacement_covers.erase(slot)
 	var view: Control = get_node_or_null(card_slots[slot])
-	if is_instance_valid(view): view.self_modulate.a = 1.0
+	if is_instance_valid(view):
+		view.modulate.a = 1.0
+		view.self_modulate.a = 1.0
 
 
 func _display_snapshot() -> Dictionary:
