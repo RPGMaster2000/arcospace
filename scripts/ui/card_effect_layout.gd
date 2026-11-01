@@ -52,7 +52,32 @@ func _panel(treatment: String) -> PanelContainer:
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
 
-func _row(text: String) -> Control:
+func _row(text: String, kind: String = "") -> Control:
+	var container := HBoxContainer.new()
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_theme_constant_override("separation", 4)
+	if not kind.is_empty():
+		var icons: Dictionary = {
+			"damage": "attack", "pierce": "pierce", "break_shields": "shield",
+			"shields": "shield", "hull": "hull", "self_damage": "risk",
+			"self_damage_regular": "risk", "materials": "materials",
+			"energy": "energy", "crew": "resource_store", "synthesizer": "production",
+			"reactor": "production", "quarters": "production",
+			"enemy_production": "sabotage", "sabotage": "sabotage",
+			"random_sabotage": "sabotage", "steal": "swap", "drain": "sabotage",
+			"swap_resource": "swap", "swap_shields": "swap",
+			"production_other": "production", "shield_collapse": "shield",
+			"shield_collapse_below": "shield"
+		}
+		var asset: String = "res://assets/ui/card_effects/%s.png" % icons.get(kind, "energy")
+		if ResourceLoader.exists(asset):
+			var picture := TextureRect.new()
+			picture.texture = load(asset)
+			picture.custom_minimum_size = Vector2(13, 13)
+			picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			container.add_child(picture)
 	var label := RichTextLabel.new()
 	label.bbcode_enabled = true
 	label.fit_content = true
@@ -63,7 +88,8 @@ func _row(text: String) -> Control:
 	label.add_theme_font_size_override("bold_font_size", 10)
 	label.add_theme_color_override("default_color", INK)
 	label.text = text
-	return label
+	container.add_child(label)
+	return container
 
 func _plain_markup(markup: String) -> String:
 	# The structured data already carries the effect identity; strip its old fake
@@ -103,11 +129,11 @@ func _add_effect_rows(effects: Dictionary, target: VBoxContainer, conditional: b
 			elif key == "shield_collapse_below":
 				treatment = "conditional"
 			if treatment.is_empty():
-				target.add_child(_row(_plain_markup(markup)))
+				target.add_child(_row(_plain_markup(markup), key))
 			else:
 				var panel := _panel(treatment)
 				target.add_child(panel)
-				panel.add_child(_row(_plain_markup(markup)))
+				panel.add_child(_row(_plain_markup(markup), key))
 
 func configure(card: Resource) -> void:
 	if not is_node_ready():
