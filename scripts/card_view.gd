@@ -7,7 +7,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Apply effects or draw cards.
 
 signal discard_requested
-const InlineEffects = preload("res://scripts/ui/card_inline_effects.gd")
+const EffectRows = preload("res://scripts/ui/card_effect_rows.gd")
 const EffectBadge = preload("res://scripts/ui/card_effect_badge.gd")
 var effect_badges: Array[Control] = []
 ## TUNE: Shared normal-card text and read-only inspection settings.
@@ -166,11 +166,11 @@ func refresh_card() -> void:
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	# A single compact description, with resource/stat icons inline rather than a second badge row.
-	$DescriptionLabel.text = InlineEffects.render(card_data)
-	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 11)
-	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 11)
-	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 11)
-	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 11)
+	$DescriptionLabel.text = EffectRows.render(card_data)
+	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 10)
+	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 10)
+	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 10)
+	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 10)
 	$DescriptionLabel.scroll_active = false
 	$DiscardButton.add_theme_font_size_override(
 		"font_size", roundi(mini(13, presentation_settings.discard_button_font_size) / maxf(scale.y, 0.01))
