@@ -111,6 +111,7 @@ func animate_action(
 		var linger_seconds: float = 1.8 if side == "enemy" else 0.48
 		var exit_tween := create_tween()
 		lingering_tweens[clipper] = exit_tween
+		# A parallel tween starts all tracks together; hold must be a prior step.
 		exit_tween.tween_interval(linger_seconds)
 		exit_tween.set_parallel(true)
 		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.28)
@@ -122,7 +123,7 @@ func animate_action(
 		# callers await this action signal; the visual hold remains independent.
 		if is_instance_valid(source_view):
 			active_tween = _new_tween()
-			active_tween.tween_property(source_view, "modulate", original_modulate, settings.refill_seconds)
+			active_tween.tween_interval(settings.refill_seconds)
 			await step_finished
 			if cancelling: return
 		source_view = null
