@@ -91,6 +91,8 @@ var setup_settings: Dictionary = {}
 var extra_action_requested: bool = false
 # Card replacement is delayed until its owner begins the next turn.
 var pending_card_draws: Dictionary = {"player": [], "enemy": []}
+# Only the visual presentation is deferred; hand cards are drawn on schedule.
+var hidden_replacement_slots: Dictionary = {}
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -489,6 +491,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		var extra_hand = hand if side == "player" else enemy_hand
 		for pending_slot in pending_card_draws[side]:
 			extra_hand.replace_card(pending_slot)
+			if side == "player": _delay_replacement_reveal(pending_slot)
 		pending_card_draws[side].clear()
 		refresh_display()
 		if side == "enemy":
@@ -539,6 +542,7 @@ func _finish_turn(side: String) -> void:
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
 		outgoing_hand.replace_card(pending_slot)
+		if side == "player": _delay_replacement_reveal(pending_slot)
 	pending_card_draws[side].clear()
 	await _begin_turn(next.side)
 
@@ -831,14 +835,28 @@ func refresh_display() -> void:
 		get_node("/root/Music").play_result(winner == "player", enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
 
 
+func _delay_replacement_reveal(slot: int) -> void:
+	# No await: this timer never holds combat, AI, or the turn transition.
+	var token: int = int(hidden_replacement_slots.get(slot, 0)) + 1
+	hidden_replacement_slots[slot] = token
+	get_tree().create_timer(1.0, false).timeout.connect(func():
+		if not is_inside_tree() or is_queued_for_deletion(): return
+		if hidden_replacement_slots.get(slot) != token: return
+		hidden_replacement_slots.erase(slot)
+		refresh_display()
+	)
+
+
 func _display_snapshot() -> Dictionary:
 	var shown_cards: Array[Dictionary] = []
-	for card in hand.cards:
+	for slot in hand.cards.size():
+		var card = hand.cards[slot]
+		var hidden: bool = hidden_replacement_slots.has(slot)
 		shown_cards.append(
 			{
-				"preview": modifier.preview(card),
-				"present": card != null,
-				"affordable": card != null and get("player_" + card.family) >= card.cost,
+				"preview": modifier.preview(card) if not hidden else null,
+				"present": card != null and not hidden,
+				"affordable": card != null and not hidden and get("player_" + card.family) >= card.cost,
 				"ion_glow":
 				modifier.affects_card(card),
 				"storm_color": modifier.storm_color(modifier.kind,true)
