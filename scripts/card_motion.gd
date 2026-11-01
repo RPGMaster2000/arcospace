@@ -13,6 +13,7 @@ var cancelling: bool = false
 var active_tween: Tween
 var source_view: Control
 var original_modulate: Color = Color.WHITE
+var lingering_cards: Array[Control] = []
 
 
 # Invoke the supplied resolution callback once at the visual cue; Board owns the callback and turn lock.
@@ -102,22 +103,20 @@ func animate_action(
 		await step_finished
 		if cancelling: return
 		Sound.play(&"card_play", self)
-		# Keep the activated card visible while its effects resolve, but remove
-		# it BEFORE the outgoing hand slot can be revealed at turn transition.
+		# Purely visual hold: the gameplay resolution and turn flow never await it.
 		await resolve.call()
 		if cancelling: return
-		var exit_tween := create_tween().set_parallel(true)
-		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.14)
-		exit_tween.tween_property(clipper, "scale", clipper.scale * 0.93, 0.14)
-		await exit_tween.finished
-		if cancelling: return
-		clipper.queue_free()
+		lingering_cards.append(clipper)
+		var linger_seconds: float = 1.35 if side == "enemy" else 0.48
+		var exit_tween := create_tween()
+		exit_tween.tween_interval(linger_seconds)
+		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.12)
+		exit_tween.tween_callback(func():
+			lingering_cards.erase(clipper)
+			if is_instance_valid(clipper): clipper.queue_free()
+		)
 		if present.is_valid(): present.call()
-		if is_instance_valid(source_view):
-			active_tween = _new_tween()
-			active_tween.tween_property(source_view, "modulate", original_modulate, settings.refill_seconds)
-			await step_finished
-			if cancelling: return
+		# The source slot remains hidden until Board refills it.
 		source_view = null
 		return
 	clipper.hide()
@@ -133,6 +132,17 @@ func animate_action(
 		if cancelling:
 			return
 	source_view = null
+
+
+func clear_lingering_cards() -> void:
+	# Called immediately before a replacement is drawn; never awaited.
+	for card in lingering_cards:
+		if is_instance_valid(card):
+			card.hide()
+			card.queue_free()
+	lingering_cards.clear()
+	if is_instance_valid(source_view):
+		source_view.modulate = original_modulate
 
 
 func _ignore_input(node: Node) -> void:
@@ -151,6 +161,7 @@ func _new_tween() -> Tween:
 
 func _exit_tree() -> void:
 	cancelling = true
+	clear_lingering_cards()
 	if active_tween != null and active_tween.is_valid():
 		active_tween.kill()
 	if is_instance_valid(source_view):
