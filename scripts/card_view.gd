@@ -7,7 +7,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Apply effects or draw cards.
 
 signal discard_requested
-const Summary = preload("res://scripts/ui/card_summary.gd")
+const InlineEffects = preload("res://scripts/ui/card_inline_effects.gd")
 const EffectBadge = preload("res://scripts/ui/card_effect_badge.gd")
 var effect_badges: Array[Control] = []
 ## TUNE: Shared normal-card text and read-only inspection settings.
@@ -165,12 +165,13 @@ func refresh_card() -> void:
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
-	$DescriptionLabel.text = Summary.card_text(
-		card_data, presentation_settings.description_shorthand_threshold
-	)
-	var description_size: int = mini(12, presentation_settings.compact_description_font_size)
-	$DescriptionLabel.add_theme_font_size_override("font_size", description_size)
-	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
+	# A single compact description, with resource/stat icons inline rather than a second badge row.
+	$DescriptionLabel.text = InlineEffects.render(card_data)
+	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 11)
+	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 11)
+	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 11)
+	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 11)
+	$DescriptionLabel.scroll_active = false
 	$DiscardButton.add_theme_font_size_override(
 		"font_size", roundi(mini(13, presentation_settings.discard_button_font_size) / maxf(scale.y, 0.01))
 	)
@@ -178,24 +179,14 @@ func refresh_card() -> void:
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 204.0
+	$DescriptionLabel.offset_top = 184.0
 	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
-	$DescriptionLabel.clip_text = true
-	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(
-		description_size
-	)
-	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 204.0) / line_height)
-	)
-	# Exception to the length threshold: abbreviate short text only when it cannot fit.
-	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
-		$DescriptionLabel.text = Summary.card_text(card_data, -1)
 	$ArtPlaceholder.offset_top = 67.0
 	$ArtPlaceholder.offset_bottom = 177.0
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	fit_placeholder_art()
-	update_effect_badges()
+	clear_effect_badges()
+	$EffectCue.visible = false
 	var colors = {
 		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
 	}
