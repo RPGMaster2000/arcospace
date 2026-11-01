@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/card_view.gd" id="1_view"]
+[ext_resource type="Script" path="res://scripts/ui/card_effect_layout.gd" id="2_effect_layout"]
 
 [sub_resource type="SystemFont" id="BoldFont"]
 font_names = PackedStringArray("DejaVu Sans", "Arial")
@@ -244,7 +245,17 @@ scroll_active = false
 fit_content = false
 theme_override_font_sizes/normal_font_size = 10
 text = "+4 Shields"
+visible = false
 
+
+[node name="EffectLayout" type="Control" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 183.0
+offset_right = 186.0
+offset_bottom = 258.0
+mouse_filter = 2
+script = ExtResource("2_effect_layout")
 
 [node name="DiscardButton" type="Button" parent="."]
 layout_mode = 0
