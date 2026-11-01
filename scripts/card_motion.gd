@@ -114,7 +114,7 @@ func animate_action(
 		# A parallel tween starts all tracks together; hold must be a prior step.
 		exit_tween.tween_interval(linger_seconds)
 		exit_tween.set_parallel(true)
-		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.28)
+		exit_tween.chain().tween_property(clipper, "modulate:a", 0.0, 0.28)
 		exit_tween.tween_property(clipper, "position", clipper.position + (Vector2(-card_size.x * 0.65, 0) if side == "enemy" else Vector2(0, -card_size.y * 0.65)), 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		exit_tween.set_parallel(false)
 		exit_tween.tween_callback(_finish_lingering_card.bind(weakref(clipper)))
