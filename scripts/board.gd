@@ -531,8 +531,10 @@ func _finish_turn(side: String) -> void:
 	var next: Dictionary = Execution.next_turn(side, turn_number)
 	turn_number = next.round
 	# At the turn transition, refill the outgoing actor\'s emptied slots.
-	# This runs after the played-card presentation has completely finished.
-	$CardMotion.clear_lingering_cards()
+	# Player visuals must disappear before the visible hand refills.
+	# Enemy visuals may persist into the player's turn: their hand is hidden.
+	if side == "player":
+		$CardMotion.clear_lingering_cards()
 	var outgoing_hand = hand if side == "player" else enemy_hand
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
