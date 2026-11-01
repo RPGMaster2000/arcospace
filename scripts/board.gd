@@ -487,7 +487,6 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		refresh_display()
 	elif extra_action_requested:
 		# Clear outgoing visuals before refilling; no change to turn timing.
-		$CardMotion.clear_lingering_cards()
 		var extra_hand = hand if side == "player" else enemy_hand
 		for pending_slot in pending_card_draws[side]:
 			extra_hand.replace_card(pending_slot)
@@ -536,8 +535,6 @@ func _finish_turn(side: String) -> void:
 	# At the turn transition, refill the outgoing actor\'s emptied slots.
 	# Player visuals must disappear before the visible hand refills.
 	# Enemy visuals may persist into the player's turn: their hand is hidden.
-	if side == "player":
-		$CardMotion.clear_lingering_cards()
 	var outgoing_hand = hand if side == "player" else enemy_hand
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
@@ -836,26 +833,21 @@ func refresh_display() -> void:
 
 
 func _delay_replacement_reveal(slot: int) -> void:
-	# Cover only the new card artwork; hand state, interaction and combat are unchanged.
+	# Hide the entire card face (including the empty-slot placeholder), not a cover.
+	# Hand state and combat progression remain untouched.
 	var view: Control = get_node(card_slots[slot])
-	if replacement_covers.has(slot):
-		var previous: Control = replacement_covers[slot]
-		if is_instance_valid(previous): previous.queue_free()
-	var cover := ColorRect.new()
-	cover.name = "ReplacementRevealCover"
-	cover.color = Color(0.035, 0.055, 0.09, 1.0)
-	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	view.add_child(cover)
-	replacement_covers[slot] = cover
-	get_tree().create_timer(1.0, false).timeout.connect(_finish_replacement_cover.bind(slot, weakref(cover)))
+	var token: int = int(replacement_covers.get(slot, 0)) + 1
+	replacement_covers[slot] = token
+	view.self_modulate.a = 0.0
+	get_tree().create_timer(1.0, false).timeout.connect(_finish_replacement_reveal.bind(slot, token))
 
 
-func _finish_replacement_cover(slot: int, cover_ref: WeakRef) -> void:
-	var cover: Control = cover_ref.get_ref()
-	if cover == null or replacement_covers.get(slot) != cover: return
+func _finish_replacement_reveal(slot: int, token: int) -> void:
+	if not is_inside_tree() or is_queued_for_deletion(): return
+	if replacement_covers.get(slot) != token: return
 	replacement_covers.erase(slot)
-	cover.queue_free()
+	var view: Control = get_node_or_null(card_slots[slot])
+	if is_instance_valid(view): view.self_modulate.a = 1.0
 
 
 func _display_snapshot() -> Dictionary:
