@@ -92,4 +92,19 @@ static func render(card: Resource) -> String:
 	var rows: Array[String] = describe(card.effects)
 	if card.play_again:
 		rows.append(line("↻", "#76dfd6", "Play again"))
+	# Combine short, simple effect rows to preserve space at the larger font size.
+	# Keep conditional, piercing and risk blocks on their own lines.
+	if rows.size() > 3:
+		var compact: Array[String] = []
+		var tags := RegEx.new()
+		tags.compile("\\[[^\\]]*\\]")
+		for row in rows:
+			var plain: String = tags.sub(row, "", true)
+			if not compact.is_empty():
+				var prior: String = tags.sub(compact.back(), "", true)
+				if prior.length() + plain.length() <= 26 and not row.contains("[bgcolor=") and not compact.back().contains("[bgcolor="):
+					compact[compact.size() - 1] += " · " + row
+					continue
+			compact.append(row)
+		rows = compact
 	return "\n".join(rows)

@@ -167,10 +167,10 @@ func refresh_card() -> void:
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	# A single compact description, with resource/stat icons inline rather than a second badge row.
 	$DescriptionLabel.text = EffectRows.render(card_data)
-	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 10)
-	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 10)
-	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 10)
-	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 10)
+	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 12)
+	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 12)
+	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 12)
+	$DescriptionLabel.add_theme_font_size_override("bold_italics_font_size", 12)
 	$DescriptionLabel.scroll_active = false
 	$DiscardButton.add_theme_font_size_override(
 		"font_size", roundi(mini(13, presentation_settings.discard_button_font_size) / maxf(scale.y, 0.01))
