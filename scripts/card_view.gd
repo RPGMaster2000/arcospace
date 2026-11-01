@@ -127,6 +127,7 @@ func refresh_card() -> void:
 		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
+	$EffectLayout.configure(null)
 		$EffectCue.text = ""
 		$EffectCue.visible = false
 		clear_effect_badges()
@@ -167,6 +168,7 @@ func refresh_card() -> void:
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	# A single compact description, with resource/stat icons inline rather than a second badge row.
 	$DescriptionLabel.text = EffectRows.render(card_data)
+	$EffectLayout.configure(card_data)
 	$DescriptionLabel.add_theme_font_size_override("normal_font_size", 10)
 	$DescriptionLabel.add_theme_font_size_override("bold_font_size", 10)
 	$DescriptionLabel.add_theme_font_size_override("italics_font_size", 10)
@@ -181,6 +183,8 @@ func refresh_card() -> void:
 	$DiscardButton.custom_minimum_size.y = discard_target_height
 	$DescriptionLabel.offset_top = 184.0
 	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 5
+	$EffectLayout.offset_top = $DescriptionLabel.offset_top
+	$EffectLayout.offset_bottom = $DescriptionLabel.offset_bottom
 	$ArtPlaceholder.offset_top = 67.0
 	$ArtPlaceholder.offset_bottom = 177.0
 	$ArtPlaceholder.visible = not $FullCardArt.visible
@@ -264,6 +268,7 @@ func set_playable(playable: bool, affordable: int = -1) -> void:
 		"CostLabel",
 		"TierLabel",
 		"DescriptionLabel",
+		"EffectLayout",
 		"ResourceIcon",
 		"ArtPlaceholder",
 		"CostRule",
