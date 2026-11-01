@@ -108,7 +108,7 @@ func animate_action(
 		await resolve.call()
 		if cancelling: return
 		lingering_cards.append(clipper)
-		var linger_seconds: float = 2.2 if side == "enemy" else 0.48
+		var linger_seconds: float = 1.8 if side == "enemy" else 0.48
 		var exit_tween := create_tween()
 		lingering_tweens[clipper] = exit_tween
 		exit_tween.tween_interval(linger_seconds)

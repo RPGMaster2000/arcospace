@@ -91,6 +91,8 @@ var setup_settings: Dictionary = {}
 var extra_action_requested: bool = false
 # Card replacement is delayed until its owner begins the next turn.
 var pending_card_draws: Dictionary = {"player": [], "enemy": []}
+# Only the visual presentation is deferred; hand cards are drawn on schedule.
+var replacement_covers: Dictionary = {}
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -489,6 +491,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		var extra_hand = hand if side == "player" else enemy_hand
 		for pending_slot in pending_card_draws[side]:
 			extra_hand.replace_card(pending_slot)
+			if side == "player": _delay_replacement_reveal(pending_slot)
 		pending_card_draws[side].clear()
 		refresh_display()
 		if side == "enemy":
@@ -539,6 +542,7 @@ func _finish_turn(side: String) -> void:
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
 		outgoing_hand.replace_card(pending_slot)
+		if side == "player": _delay_replacement_reveal(pending_slot)
 	pending_card_draws[side].clear()
 	await _begin_turn(next.side)
 
@@ -829,6 +833,29 @@ func refresh_display() -> void:
 		result_music_started = true
 		# Start music only when the result is revealed, after combat presentation.
 		get_node("/root/Music").play_result(winner == "player", enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
+
+
+func _delay_replacement_reveal(slot: int) -> void:
+	# Cover only the new card artwork; hand state, interaction and combat are unchanged.
+	var view: Control = get_node(card_slots[slot])
+	if replacement_covers.has(slot):
+		var previous: Control = replacement_covers[slot]
+		if is_instance_valid(previous): previous.queue_free()
+	var cover := ColorRect.new()
+	cover.name = "ReplacementRevealCover"
+	cover.color = Color(0.035, 0.055, 0.09, 1.0)
+	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	view.add_child(cover)
+	replacement_covers[slot] = cover
+	get_tree().create_timer(1.0, false).timeout.connect(_finish_replacement_cover.bind(slot, weakref(cover)))
+
+
+func _finish_replacement_cover(slot: int, cover_ref: WeakRef) -> void:
+	var cover: Control = cover_ref.get_ref()
+	if cover == null or replacement_covers.get(slot) != cover: return
+	replacement_covers.erase(slot)
+	cover.queue_free()
 
 
 func _display_snapshot() -> Dictionary:
