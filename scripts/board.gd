@@ -826,6 +826,14 @@ func _continue_encounter() -> void:
 func refresh_display() -> void:
 	$ModifierDisplay.refresh(modifier, turn_number)
 	hud.refresh(_display_snapshot())
+	# HUD affordability refresh resets self_modulate; hide unfilled slots after it.
+	# Preserve the one-second delayed reveal for newly drawn replacement cards.
+	for slot in range(card_slots.size()):
+		var view: Control = get_node(card_slots[slot])
+		if hand.cards[slot] == null or replacement_covers.has(slot):
+			view.self_modulate.a = 0.0
+		else:
+			view.self_modulate.a = 1.0
 	if $MatchResult.visible and not result_music_started:
 		result_music_started = true
 		# Start music only when the result is revealed, after combat presentation.
