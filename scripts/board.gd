@@ -349,11 +349,6 @@ func _discard_card(slot: int) -> void:
 
 # Apply round events and player escape charging, then income; wait for presentation before AI input.
 func _begin_turn(side: String) -> void:
-	# Fill only the active side\'s emptied slots at turn entry, never mid-opponent turn.
-	var active_hand = hand if side == "player" else enemy_hand
-	for slot in pending_card_draws[side]:
-		active_hand.replace_card(slot)
-	pending_card_draws[side].clear()
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
 	current_actor = side
@@ -534,6 +529,13 @@ func _finish_turn(side: String) -> void:
 		return
 	var next: Dictionary = Execution.next_turn(side, turn_number)
 	turn_number = next.round
+	# At the turn transition, refill the outgoing actor\'s emptied slots.
+	# This runs after the played-card presentation has completely finished.
+	var outgoing_hand = hand if side == "player" else enemy_hand
+	outgoing_hand.current_round = turn_number
+	for pending_slot in pending_card_draws[side]:
+		outgoing_hand.replace_card(pending_slot)
+	pending_card_draws[side].clear()
 	await _begin_turn(next.side)
 
 
