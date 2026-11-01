@@ -92,7 +92,7 @@ var extra_action_requested: bool = false
 # Card replacement is delayed until its owner begins the next turn.
 var pending_card_draws: Dictionary = {"player": [], "enemy": []}
 # Only the visual presentation is deferred; hand cards are drawn on schedule.
-var hidden_replacement_slots: Dictionary = {}
+var replacement_covers: Dictionary = {}
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -836,27 +836,34 @@ func refresh_display() -> void:
 
 
 func _delay_replacement_reveal(slot: int) -> void:
-	# No await: this timer never holds combat, AI, or the turn transition.
-	var token: int = int(hidden_replacement_slots.get(slot, 0)) + 1
-	hidden_replacement_slots[slot] = token
+	# Cover only the new card artwork; hand state, interaction and combat are unchanged.
+	var view: Control = get_node(card_slots[slot])
+	if replacement_covers.has(slot):
+		var previous: Control = replacement_covers[slot]
+		if is_instance_valid(previous): previous.queue_free()
+	var cover := ColorRect.new()
+	cover.name = "ReplacementRevealCover"
+	cover.color = Color(0.035, 0.055, 0.09, 1.0)
+	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	view.add_child(cover)
+	replacement_covers[slot] = cover
 	get_tree().create_timer(1.0, false).timeout.connect(func():
 		if not is_inside_tree() or is_queued_for_deletion(): return
-		if hidden_replacement_slots.get(slot) != token: return
-		hidden_replacement_slots.erase(slot)
-		refresh_display()
+		if replacement_covers.get(slot) != cover: return
+		replacement_covers.erase(slot)
+		if is_instance_valid(cover): cover.queue_free()
 	)
 
 
 func _display_snapshot() -> Dictionary:
 	var shown_cards: Array[Dictionary] = []
-	for slot in hand.cards.size():
-		var card = hand.cards[slot]
-		var hidden: bool = hidden_replacement_slots.has(slot)
+	for card in hand.cards:
 		shown_cards.append(
 			{
-				"preview": modifier.preview(card) if not hidden else null,
-				"present": card != null and not hidden,
-				"affordable": card != null and not hidden and get("player_" + card.family) >= card.cost,
+				"preview": modifier.preview(card),
+				"present": card != null,
+				"affordable": card != null and get("player_" + card.family) >= card.cost,
 				"ion_glow":
 				modifier.affects_card(card),
 				"storm_color": modifier.storm_color(modifier.kind,true)
