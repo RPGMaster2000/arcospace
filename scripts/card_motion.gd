@@ -116,7 +116,9 @@ func animate_action(
 			if is_instance_valid(clipper): clipper.queue_free()
 		)
 		if present.is_valid(): present.call()
-		# The source slot remains hidden until Board refills it.
+		# Restore the now-empty hand slot; its replacement is dealt at transition.
+		if is_instance_valid(source_view):
+			source_view.modulate = original_modulate
 		source_view = null
 		return
 	clipper.hide()
