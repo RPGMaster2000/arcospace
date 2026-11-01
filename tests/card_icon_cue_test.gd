@@ -23,8 +23,9 @@ func run() -> void:
 	sample.allocation_category = "offense"
 	card.card_data = sample
 	await process_frame
-	check(card.get_node("EffectCue").text == "✦", "Attack icon cue reflects card effect")
-	check(card.get_node("DescriptionLabel").text.contains("9"), "Written effect remains visible")
+	check(card.get_node("TitleLabel").text == "TEST ATTACK", "Classic card title is visible")
+	check(card.get_node("CostLabel").text == "6", "Classic cost label is visible")
+	check(card.get_node("DescriptionLabel").text == "Deal 9 damage.", "Original written effect remains visible")
 	check(not card.get_node("FullCardArt").visible, "Placeholder art remains when no artwork assigned")
 	var artwork = GradientTexture2D.new()
 	artwork.width = 64
