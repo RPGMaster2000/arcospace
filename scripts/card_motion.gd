@@ -14,6 +14,7 @@ var active_tween: Tween
 var source_view: Control
 var original_modulate: Color = Color.WHITE
 var lingering_cards: Array[Control] = []
+var lingering_tweens: Dictionary = {}
 
 
 # Invoke the supplied resolution callback once at the visual cue; Board owns the callback and turn lock.
@@ -109,12 +110,10 @@ func animate_action(
 		lingering_cards.append(clipper)
 		var linger_seconds: float = 1.35 if side == "enemy" else 0.48
 		var exit_tween := create_tween()
+		lingering_tweens[clipper] = exit_tween
 		exit_tween.tween_interval(linger_seconds)
 		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.12)
-		exit_tween.tween_callback(func():
-			lingering_cards.erase(clipper)
-			if is_instance_valid(clipper): clipper.queue_free()
-		)
+		exit_tween.tween_callback(_finish_lingering_card.bind(weakref(clipper)))
 		if present.is_valid(): present.call()
 		# Restore the now-empty hand slot; its replacement is dealt at transition.
 		if is_instance_valid(source_view):
@@ -136,13 +135,26 @@ func animate_action(
 	source_view = null
 
 
+func _finish_lingering_card(card_ref: WeakRef) -> void:
+	var card: Control = card_ref.get_ref()
+	if card == null:
+		return
+	lingering_cards.erase(card)
+	lingering_tweens.erase(card)
+	card.queue_free()
+
+
 func clear_lingering_cards() -> void:
 	# Called immediately before a replacement is drawn; never awaited.
 	for card in lingering_cards:
+		if lingering_tweens.has(card):
+			var tween: Tween = lingering_tweens[card]
+			if tween.is_valid(): tween.kill()
 		if is_instance_valid(card):
 			card.hide()
 			card.queue_free()
 	lingering_cards.clear()
+	lingering_tweens.clear()
 	if is_instance_valid(source_view):
 		source_view.modulate = original_modulate
 
