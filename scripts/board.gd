@@ -89,6 +89,8 @@ const STRATEGIC_SHIELDS: int = preload("res://scripts/combat/battle_result.gd").
 var setup_settings: Dictionary = {}
 @onready var modifier = $CombatModifier
 var extra_action_requested: bool = false
+# Card replacement is delayed until its owner begins the next turn.
+var pending_card_draws: Dictionary = {"player": [], "enemy": []}
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -482,7 +484,11 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	if _check_winner():
 		refresh_display()
 	elif extra_action_requested:
-		# Another action in the same turn: no additional production income.
+		# Refill after the old card animation ends, before the extra action.
+		var extra_hand = hand if side == "player" else enemy_hand
+		for pending_slot in pending_card_draws[side]:
+			extra_hand.replace_card(pending_slot)
+		pending_card_draws[side].clear()
 		refresh_display()
 		if side == "enemy":
 			enemy_timer.start()
@@ -523,6 +529,13 @@ func _finish_turn(side: String) -> void:
 		return
 	var next: Dictionary = Execution.next_turn(side, turn_number)
 	turn_number = next.round
+	# At the turn transition, refill the outgoing actor\'s emptied slots.
+	# This runs after the played-card presentation has completely finished.
+	var outgoing_hand = hand if side == "player" else enemy_hand
+	outgoing_hand.current_round = turn_number
+	for pending_slot in pending_card_draws[side]:
+		outgoing_hand.replace_card(pending_slot)
+	pending_card_draws[side].clear()
 	await _begin_turn(next.side)
 
 
@@ -575,7 +588,8 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	_sync_systems_failure()
 	if pending.is_empty():
 		_apply_hull_report(report, side, true)
-	active_hand.replace_card(slot)
+	active_hand.cards[slot] = null
+	pending_card_draws[side].append(slot)
 	extra_action_requested = resolution.extra_action
 	var who: String = "You" if side == "player" else "Enemy"
 	var action: String = "discarded" if discard else "played"
