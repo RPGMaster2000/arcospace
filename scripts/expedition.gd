@@ -5,12 +5,25 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 # EXTEND: Route choices to State; _clear resets UI only, never the expedition ledger.
 const Save = preload("res://scripts/persistence/expedition_save.gd")
-var save_store = Save.new()
-var persistence_enabled: bool = true
+const Persistence = preload("res://scripts/expedition/expedition_persistence.gd")
+const BattleSession = preload("res://scripts/expedition/expedition_battle.gd")
+var persistence = Persistence.new()
+var battle_session = BattleSession.new()
+# Compatibility properties forward to the component's single owner.
+var save_store:
+	get: return persistence.store
+	set(value): persistence.store = value
+var persistence_enabled: bool:
+	get: return persistence.enabled
+	set(value): persistence.enabled = value
 var resume_data: Dictionary = {}
 var save_error: AcceptDialog
-var _battle_checkpoint: Dictionary = {}
-var _battle_marker: Dictionary = {}
+var _battle_checkpoint: Dictionary:
+	get: return persistence.battle_checkpoint
+	set(value): persistence.battle_checkpoint = value
+var _battle_marker: Dictionary:
+	get: return persistence.battle_marker
+	set(value): persistence.battle_marker = value
 var _previous_auto_quit: bool = true
 var _previous_back_quit: bool = true
 const State = preload("res://scripts/expedition_state.gd")
@@ -83,7 +96,9 @@ var return_to_outpost: bool = false
 var play_system_intro := false
 var selected_ship: int = 0
 var state: Resource
-var battle: Node
+var battle: Node:
+	get: return battle_session.current
+	set(value): battle_session.current = value
 var view: VBoxContainer:
 	get: return screen.view if is_instance_valid(screen) else null
 var resource_bar: HFlowContainer:
@@ -333,7 +348,7 @@ func _travel_started() -> void:
 func start_expedition() -> bool:
 	var candidate = State.new()
 	candidate.start(selected_ship, rules)
-	if persistence_enabled and not save_store.save_run(candidate):
+	if not persistence.save_candidate(candidate):
 		_show_save_error()
 		return false
 	_cancel_presentation()
@@ -348,8 +363,7 @@ func start_expedition() -> bool:
 	if state != null and state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.disconnect(_progress_committed)
 	state = candidate
-	_battle_checkpoint = {}
-	_battle_marker = {}
+	persistence.reset_battle()
 	_bind_progress()
 	show_system()
 	if play_system_intro and _uses_3d_map(): _introduce_system()
@@ -371,14 +385,7 @@ func _progress_committed() -> void:
 
 func _save_progress() -> bool:
 	_checkpoint_navigation_position()
-	if not persistence_enabled: return true
-	if state == null: return false
-	if state.run_ended or state.hull <= 0:
-		return save_store.clear_run()
-	if is_instance_valid(battle) and not battle.result_recorded:
-		return save_store.save_data(_battle_checkpoint, _battle_marker)
-	return save_store.save_run(state)
-
+	return persistence.save_progress(state, battle)
 
 func _show_save_error() -> void:
 	if not is_instance_valid(save_error):
@@ -1228,35 +1235,23 @@ func start_battle(index: int, battle_seed: int = -1) -> void:
 		return
 	if not state.can_engage(index) or state.encounters[index].kind != "battle":
 		return
-	var checkpoint: Dictionary = Save.encode(state)
-	if battle_seed < 0:
-		var generator := RandomNumberGenerator.new()
-		generator.randomize()
-		battle_seed = generator.randi()
-	var marker: Dictionary = {"index": index, "seed": str(battle_seed)}
-	if persistence_enabled and not save_store.save_data(checkpoint, marker):
+	var checkpoint: Dictionary = persistence.checkpoint_battle(state, index, battle_seed)
+	battle_seed = checkpoint.seed
+	if not checkpoint.saved:
 		_show_save_error()
 		if view_kind.is_empty():
 			_clear("save_error")
 			view.add_child(_label("The battle could not be resumed until its checkpoint can be saved."))
 			_button("Retry Battle", start_battle.bind(index, battle_seed))
 		return
-	_battle_checkpoint = checkpoint
-	_battle_marker = marker
 	state.field_repairs_open = false
 	screen.hide_for_battle()
 	if not transitioning:
 		phase = Phase.BATTLE
 	if _uses_3d_map() and is_instance_valid(star_map):
 		star_map.set_active(false)
-	battle = BOARD.instantiate()
-	battle.expedition = state
-	var setup = state.prepare_battle(index)
-	setup.battle_seed = battle_seed
-	preload("res://scripts/combat/battle_adapter.gd").configure(battle, setup)
-	battle.expedition_continue.connect(_battle_finished.bind(battle))
-	battle.expedition_restart.connect(_restart_from_battle.bind(battle))
-	battle.expedition_exit.connect(_exit_from_battle.bind(battle))
+	battle_session.create(BOARD, state, index, battle_seed,
+		_battle_finished, _restart_from_battle, _exit_from_battle)
 	add_child(battle)
 	if persistence_enabled:
 		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)
@@ -1276,14 +1271,7 @@ func _battle_finished(source: Node = null) -> void:
 
 
 func _remove_battle() -> void:
-	var previous: Node = battle
-	battle = null
-	if is_instance_valid(previous):
-		if not previous.result_recorded:
-			previous.checkpoint_exit = true
-		remove_child(previous)
-		previous.queue_free()
-
+	battle_session.remove(self)
 
 func _restart_from_battle(source: Node) -> void:
 	if source == battle and phase != Phase.EXITED:
