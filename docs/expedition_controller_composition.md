@@ -73,7 +73,7 @@ flowchart TD
 
 Keep checkpoint and autosave calls at their existing positions, including navigation
 checkpointing before saving, pre-entry encoding/seed selection before board setup,
-and terminal cleanup precedence. Preserve all RNG call sites and sequence. Do not
+and terminal cleanup precedence. Preserve RNG calls and their sequence. Do not
 change save schema, migration, resource paths, generation, gameplay rules or fixtures.
 Panel extraction must preserve text, styles, control hierarchy, callbacks, signal
 guards and construction order. Retain public controller methods and property adapters.
@@ -97,3 +97,40 @@ This work is performed via the GitHub connector because local clone access faile
 No local Godot execution is claimed. CI results and outstanding device checks must be
 reported in the PR. Windows and physical Android validation remain manual unless
 actually executed.
+
+## Implemented boundaries and review
+
+The implementation follows the proposed boundaries. Only ten controller method bodies
+change: start_expedition, _save_progress, show_system, _show_star_map,
+_style_combat_entry, _add_tactical_briefing, show_poi, show_outcome, start_battle and
+_remove_battle. All controller method signatures remain present. Existing state and
+UI accessors continue to work; save_store, persistence_enabled, battle and checkpoint
+properties now forward to their component owner.
+
+The controller remains deliberately responsible for navigation integration. Movement
+sampling can synchronously emit defense/progress events and change the current route;
+retaining those guards together avoids adding a controller-dependent navigation manager.
+Likewise, async animation revisions stay together rather than being split across owners.
+This is a responsibility extraction, not a complete rewrite into a minimal shell.
+
+The controller drops from 1,515 to approximately 1,327 lines. The existing screen grows
+to contain its encounter presentation. Combined code grows for explicit boundaries and
+focused tests; line count is not the primary success measure.
+
+Static review through the GitHub API confirmed:
+- No removed controller methods.
+- No missing literal preload/load targets in changed scripts.
+- No trailing whitespace in changed scripts.
+- No edits to State, Deck, navigation/defense, system generation, progression tuning,
+  save codec, scenes, audio, gesture handlers or baseline fixtures.
+- Existing method bodies for movement, travel, FTL, intro, result presentation,
+  rewards, Android notifications and departure guards remain unchanged.
+
+The new persistence regression checks candidate activation, explicit battle seed and
+unconsumed state, unfinished versus recorded battle saving, failed checkpoint replacement,
+write-error propagation, terminal cleanup priority, disabled saves and reset.
+The new presentation regression checks exploration/defense map identity, serialized-state
+and RNG purity, callback-only reward selection and stale control rejection.
+
+The PR records the actual CI run and its outcome; this document does not claim local
+engine execution or physical-device validation.

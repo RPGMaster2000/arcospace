@@ -1,5 +1,6 @@
 extends Control
-# RESPONSIBILITY: Own exploration screen controls; emits user intent without accessing expedition state.
+# RESPONSIBILITY: Own exploration controls and query-only encounter presentation.
+# State inputs are borrowed for display; callbacks emit intent without mutating gameplay.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Tile = preload("res://scripts/ui/encounter_tile.gd")
 const Text = preload("res://scripts/ui/expedition_text.gd")

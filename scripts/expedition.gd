@@ -387,6 +387,7 @@ func _save_progress() -> bool:
 	_checkpoint_navigation_position()
 	return persistence.save_progress(state, battle)
 
+
 func _show_save_error() -> void:
 	if not is_instance_valid(save_error):
 		save_error = AcceptDialog.new()
@@ -742,8 +743,10 @@ func show_battle_preview(index: int) -> void:
 func _style_combat_entry(button: Button) -> void:
 	screen.style_combat_entry(button)
 
+
 func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
 	screen.add_tactical_briefing(state, encounter, enemy, pursuit)
+
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.
 func compact_text(value: String) -> String:
@@ -1092,6 +1095,7 @@ func _battle_finished(source: Node = null) -> void:
 
 func _remove_battle() -> void:
 	battle_session.remove(self)
+
 
 func _restart_from_battle(source: Node) -> void:
 	if source == battle and phase != Phase.EXITED:
