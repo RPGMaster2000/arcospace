@@ -572,3 +572,210 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_RESUMED and is_node_ready():
 		overview_hud.queue_layout()
 		_request_layout()
+
+
+# Query-only encounter presentation. State is never retained or mutated here;
+# actions use the existing guarded control factories and controller callbacks.
+func present_system_grid(state: Resource, icon: Callable, travel: Callable) -> void:
+	var cards = add_grid(3)
+	for index in range(state.encounters.size()):
+		var encounter: Dictionary = state.encounters[index]
+		var category: String = Presentation.classification(encounter)
+		var key: String = (
+			"battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
+		)
+		var descriptor: String = {
+			"ordinary": "Ordinary PoI",
+			"hazard": "Hazardous PoI",
+			"battle": "Enemy",
+			"special": "Anomalous PoI"
+		}[category]
+		if encounter.kind == "battle":
+			var rank: int = state.enemy_profile(encounter).enemy_rank
+			descriptor = (
+				"Mandatory Boss"
+				if encounter.get("mandatory_boss", false)
+				else ["Enemy", "Elite enemy", "Boss enemy"][rank]
+			)
+			key = ["battle", "elite", "boss"][rank]
+		var status: String = (
+			"Completed"
+			if encounter.completed
+			else descriptor + (" · FTL Access" if state.encounters[index].get("objective_role", "") == "access" else "")
+		)
+		if encounter.kind == "battle" and not encounter.completed:
+			status += (
+				"\n"
+				+ icon.call(Presentation.modifier_key(encounter.modifier))
+				+ " "
+				+ state.Modifiers.NAMES[encounter.modifier]
+			)
+		if encounter.get("chasedown", false):
+			continue
+		add_tile(
+			cards,
+			icon.call(key) + "\n" + encounter.title,
+			status,
+			Presentation.COLORS[category],
+			travel.bind(index),
+			encounter.completed,
+			true
+		)
+
+	if not state.service.is_empty():
+		add_action(
+			"Trading Outpost · Service station · No pressure · Free to return",
+			travel.bind(state.SERVICE_INDEX)
+		)
+
+
+static func map_entries(state: Resource, icon: Callable) -> Array:
+	var entries: Array = []
+	for index in range(state.encounters.size()):
+		var encounter: Dictionary = state.encounters[index]
+		if encounter.get("chasedown", false):
+			continue
+		var key: String = (
+			"battle" if encounter.kind == "battle" else Presentation.poi_key(encounter.poi)
+		)
+		var detail: String = "FTL Access" if encounter.get("objective_role", "") == "access" else ("Objective prerequisite" if encounter.has("objective_role") else "Explore")
+		if encounter.kind == "battle":
+			key = ["battle", "elite", "boss"][state.enemy_profile(encounter).enemy_rank]
+			if state.is_defense():
+				detail = "Mothership · FTL objective" if state.defense.unit_for(index).get("mothership", false) else "Incoming · HOMEWORLD"
+			elif encounter.get("mandatory_boss", false):
+				detail = "Mandatory Boss · " + detail
+		var tooltip: String = detail
+		if encounter.kind == "battle":
+			tooltip += "\n" + state.Modifiers.NAMES[encounter.modifier]
+		entries.append(
+			{
+				"index": index,
+				"mothership": state.is_defense() and state.defense.unit_for(index).get("mothership", false),
+				"name": encounter.title,
+				"model_kind": key,
+				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
+				"text":
+				(
+					("✓ " if encounter.completed else icon.call(key) + " ")
+					+ encounter.title
+					+ "\n"
+					+ ("Completed" if encounter.completed else detail)
+				),
+				"tooltip": tooltip,
+				"color": Presentation.COLORS[Presentation.classification(encounter)],
+				"completed": encounter.completed,
+				"objective_marker": state.objective_marker(index)
+			}
+		)
+	if not state.service.is_empty():
+		entries.append(
+			{
+				"index": state.SERVICE_INDEX,
+				"name": "Trading Outpost",
+				"model_kind": "trading_outpost",
+				"text": icon.call("trading_outpost") + " Trading Outpost\nFree return · No pressure",
+				"tooltip": "Independent service station",
+				"color": Color("8fcab7"),
+				"completed": false
+			}
+		)
+	return entries
+
+
+func style_combat_entry(button: Button) -> void:
+	for key in ["normal","hover","pressed"]:
+		var style = Presentation.style(Color("ed7777"),key != "normal")
+		style.bg_color = Color("893846") if key == "normal" else Color("ac4c5d")
+		button.add_theme_stylebox_override(key,style)
+	button.add_theme_color_override("font_color",Color("ffbaba"))
+
+
+func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
+	var briefing = preload("res://scripts/ui/tactical_briefing.gd").new()
+	view.add_child(briefing)
+	briefing.configure(enemy,state.difficulty_level(),encounter.modifier,state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
+
+
+func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
+		icon: Callable, select_approach: Callable) -> void:
+	var poi: Resource = state.encounter_at(index).poi
+	approach_note.text = ""
+	confirm_button.text = "Initiate"
+	header.configure(poi)
+	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
+	if state.objective_locked(index):
+		var prerequisite: int = state.encounters[index].objective_prerequisite
+		add_tile(view, "Activate " + state.encounters[prerequisite].title + " first", "", Presentation.COLORS.special, Callable(), true)
+		return
+	var risk: String = state.pressure_risk_description(index)
+	if not risk.is_empty(): view.add_child(_label(risk, 16))
+	if map_3d:
+		view.add_child(_label(poi.description, 18))
+	var options = add_grid(1 if map_3d else 2)
+	for slot in range(poi.approaches.size()):
+		var approach: Resource = poi.approaches[slot]
+		var key: String = Presentation.approach_key(poi, slot)
+		var requirement = state.approach_requirement(approach)
+		var button = add_tile(
+			options,
+			icon.call(key) + "  " + approach.title,
+			Text.approach_text(state, approach, map_3d),
+			Presentation.COLORS[Presentation.classification(state.encounter_at(index))],
+			select_approach.bind(slot),
+			requirement.is_locked()
+		)
+		if map_3d and requirement.is_locked():
+			button.heading.text = approach.title
+			button.collapse_requirement(Text.requirement_text(requirement, state.LABELS))
+		else:
+			button.set_rich_details(Text.highlight_outcome(Text.approach_text(state, approach, map_3d)))
+		approach_buttons.append(button)
+	if state.can_survey(index):
+		var survey = add_tile(
+			options,
+			icon.call("approach") + "  Navigation survey",
+			"No loot · " + state.describe_modifiers(state.rules.survey_penalty),
+			Presentation.COLORS.special,
+			select_approach.bind(-2)
+		)
+		approach_buttons.append(survey)
+
+	if inspecting:
+		return_button.hide()
+		for option in approach_buttons: option.disabled = true
+		confirm_button.disabled = true
+
+
+func present_rewards(state: Resource, visual_settings: Resource, map_3d: bool,
+		attribute: Callable, continue_requested: Callable) -> void:
+	if compact_focus:
+		return_button.disabled = not state.pending_choice.is_empty()
+		return_button.tooltip_text = "Complete the reward selection first" if return_button.disabled else "Return to system overview"
+	present_result(state, visual_settings, map_3d)
+	match state.pending_choice:
+		"resource", "production":
+			var choices = add_grid(3)
+			var keys: Array = (
+				state.RESOURCES if state.pending_choice == "resource" else state.PRODUCTION
+			)
+			for key in keys:
+				var detail: String = "+%d" % state.choice_amount
+				if compact_focus:
+					if state.pending_choice == "production":
+						detail += " · Current: %d" % state.production(key)
+					else:
+						detail += " · Next-battle start: %d" % state.starting_value(state.ship(),key)
+				add_tile(
+					choices,
+					state.LABELS[key],
+					detail,
+					Presentation.COLORS.special,
+					attribute.bind(key)
+				)
+		_:
+			if state.hull <= 0:
+				view.add_child(
+					_label("The damage destroyed your ship. This expedition is over.", 22)
+				)
+			add_action("Continue", continue_requested)
