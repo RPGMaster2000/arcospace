@@ -1,6 +1,6 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
-const Environment = preload("res://scripts/expedition/battle_environment.gd")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Screen = preload("res://scripts/ui/expedition_screen.gd")
@@ -44,7 +44,7 @@ func run() -> void:
 						check(current.encounters[index].modifier == 0, "Every generated enemy, boss and reserve is neutral")
 						var before: Dictionary = Save.encode(current)
 						var snapshot: Dictionary = current.battle_environment(index)
-						check(Environment.valid_snapshot(snapshot) and snapshot.type == Environment.NONE and snapshot.legacy_modifier == 0, "Valid NONE snapshot")
+						check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type == EnvironmentData.NONE and snapshot.legacy_modifier == 0, "Valid NONE snapshot")
 						check(snapshot == current.battle_environment(index) and Save.encode(current) == before, "Evaluation repeats deterministically without gameplay RNG/state changes")
 					# Exercise consecutive systems including boss milestones, without combat randomness.
 					for state in [current, historical]:
@@ -62,11 +62,11 @@ func run() -> void:
 	for i in state.encounters.size():
 		if state.encounters[i].kind == "battle": index = i; break
 	state.navigation.checkpoint_position([1, 0, 2])
-	var item: Dictionary = Environment.instance("reserved-one", Environment.SPACE_STORM, [1, 0, 2])
+	var item: Dictionary = EnvironmentData.instance("reserved-one", EnvironmentData.SPACE_STORM, [1, 0, 2])
 	item.visual = {"palette": [1, 2, 3]}
 	item.generation = {"seed": "123", "version": 1}
 	state.environmental_instances.append(item)
-	check(Environment.valid_instances(state.environmental_instances), "Shared model accepts planned phenomenon data without implementing it")
+	check(EnvironmentData.valid_instances(state.environmental_instances), "Shared model accepts planned phenomenon data without implementing it")
 	var view: Array = state.environment_view()
 	var snapshot: Dictionary = state.battle_environment(index)
 	check(view.is_read_only() and view[0].visual.palette.is_read_only(), "Map view recursively read-only")
@@ -74,7 +74,7 @@ func run() -> void:
 	state.navigation.checkpoint_position([5, 0, 6])
 	item.visual.palette[0] = 99
 	check(view[0].visual.palette[0] == 1 and snapshot.location == [1, 0, 2], "World mutations cannot change detached map/battle snapshots")
-	check(snapshot.type == Environment.NONE, "No spatial/overlap behavior implemented")
+	check(snapshot.type == EnvironmentData.NONE, "No spatial/overlap behavior implemented")
 	var data: Dictionary = Save.encode(state)
 	var restored = Save.new().decode(JSON.parse_string(JSON.stringify(data)), rules)
 	check(restored != null and restored.environmental_instances == state.environmental_instances, "Optional instance records survive JSON")

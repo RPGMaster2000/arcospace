@@ -62,20 +62,10 @@ const ShipState = preload("res://scripts/combat/ship_combat_state.gd")
 var _recorded_results: Dictionary = {}
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
-const Environment = preload("res://scripts/expedition/battle_environment.gd")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 # Sole mutable owner. The map and battles receive detached views, never this array.
 var environmental_instances: Array = []
 
-
-func environment_view() -> Array:
-	return Environment.frozen(environmental_instances)
-
-
-func battle_environment(index: int) -> Dictionary:
-	# Committed world coordinates survive tactical/camera transforms and resume.
-	# Empty means no known physical location (e.g. direct/grid entry).
-	return Environment.evaluate(self, navigation.position, environmental_instances,
-		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
 
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Requirement = preload("res://scripts/expedition/approach_requirement.gd")
@@ -172,6 +162,18 @@ var rng := RandomNumberGenerator.new()
 var seed_used: int = 0
 
 #region Run setup
+
+
+
+func environment_view() -> Array:
+	return EnvironmentData.frozen(environmental_instances)
+
+
+func battle_environment(index: int) -> Dictionary:
+	# Committed world coordinates survive tactical/camera transforms and resume.
+	# Empty means no known physical location (e.g. direct/grid entry).
+	return EnvironmentData.evaluate(self, navigation.position, environmental_instances,
+		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
 
 
 func encounter_at(index: int) -> Dictionary:
@@ -1066,9 +1068,8 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 				setup.enemy_profile = enemy_profile(encounter)
 		if is_defense() and defense.unit_for(index).get("mothership", false):
 			setup.emp_requirement_bonus = rules.defense_tuning.mothership_emp_bonus
-		setup.modifier = encounter.get("modifier", 0)
 		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
-	setup.environment = battle_environment(index) if environment.is_empty() else Environment.frozen(environment)
+	setup.environment = battle_environment(index) if environment.is_empty() else EnvironmentData.frozen(environment)
 	setup.modifier = int(setup.environment.legacy_modifier)
 	setup.player_state = ShipState.new()
 	setup.player_state.configure_profile(ship())

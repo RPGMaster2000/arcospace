@@ -4,7 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
-const Environment = preload("res://scripts/expedition/battle_environment.gd")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const VERSION: int = 3
 const PATH: String = "user://expedition_save.json"
 const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
@@ -116,7 +116,7 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 # Returns null on any invalid reference/shape; never loads a path supplied by a save.
 func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data is Dictionary: return null
-	if not Environment.valid_instances(data.get("environmental_instances", [])): return null
+	if not EnvironmentData.valid_instances(data.get("environmental_instances", [])): return null
 	var legacy: bool = not data.has("metagame_version")
 	if legacy:
 		data = _migrate_legacy(data)
@@ -356,7 +356,7 @@ func _read(candidate: String) -> Dictionary:
 static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> bool:
 	if not battle.has("environment"): return true
 	var snapshot: Variant = battle.environment
-	if not Environment.valid_snapshot(snapshot): return false
+	if not EnvironmentData.valid_snapshot(snapshot): return false
 	var index: int = int(battle.get("index", -1))
 	if index < 0 or index >= data.encounters.size(): return false
 	return snapshot.run_seed == data.seed and snapshot.system_number == data.system_number \

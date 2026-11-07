@@ -118,10 +118,10 @@ func _ready() -> void:
 	world.add_child(camera)
 	camera.overview(settings, true)
 	var environment := WorldEnvironment.new()
-	environment.environment = Environment.new()
-	environment.environment.background_mode = Environment.BG_COLOR
+	environment.environment = EnvironmentData.new()
+	environment.environment.background_mode = EnvironmentData.BG_COLOR
 	environment.environment.background_color = Color("020611")
-	environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.environment.ambient_light_source = EnvironmentData.AMBIENT_SOURCE_COLOR
 	environment.environment.ambient_light_color = Color("92afcf")
 	environment.environment.ambient_light_energy = settings.ambient_light_energy
 	world.add_child(environment)

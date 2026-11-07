@@ -1,7 +1,7 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
-const Environment = preload("res://scripts/expedition/battle_environment.gd")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const Persistence = preload("res://scripts/expedition/expedition_persistence.gd")
 var failures := 0
 var checks := 0
@@ -51,13 +51,13 @@ func run() -> void:
 		return
 	node.battle.enemy_timer.stop()
 	var snapshot: Dictionary = node.battle.battle_environment
-	check(Environment.valid_snapshot(snapshot) and snapshot.legacy_modifier == 0 and state.rng.state == rng, "Entry snapshot is neutral and gameplay RNG is untouched")
+	check(EnvironmentData.valid_snapshot(snapshot) and snapshot.legacy_modifier == 0 and state.rng.state == rng, "Entry snapshot is neutral and gameplay RNG is untouched")
 	check(node.battle.modifier.kind == 0 and node.battle.hand.drop_multiplier == 1.0, "Neutral combat has normal draw rules")
 	var panel = node.battle.get_node("ModifierDisplay/Meter")
 	check(not panel.visible and panel.get_node("Text").text.is_empty(), "Neutral combat has no environmental label")
 	check(store.load_run().battle.environment == snapshot, "Marker saves exact entry snapshot before combat")
 	state.navigation.checkpoint_position([8, 0, 9])
-	state.environmental_instances.append(Environment.instance("future", Environment.TEMPORAL_RIFT))
+	state.environmental_instances.append(EnvironmentData.instance("future", EnvironmentData.TEMPORAL_RIFT))
 	check(node.battle.battle_environment == snapshot, "Live movement/world changes never replace active snapshot")
 	check(node._save_and_quit(), "Real Save and Quit succeeds")
 	await process_frame
