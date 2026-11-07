@@ -47,7 +47,9 @@ static func evaluate(state: Resource, location: Array, _instances: Array,
 # Canonical typed snapshot fields make JSON restoration identical to live entry.
 # Seeds stay decimal strings; arbitrary configuration/visual records use JSON types.
 static func snapshot(value: Dictionary) -> Dictionary:
-	var copy: Dictionary = value.duplicate(true)
+	# Match the single-slot codec's JSON precision before freezing, including
+	# optional visual values and non-integral positions.
+	var copy: Dictionary = JSON.parse_string(JSON.stringify(value))
 	for key in ["version", "system_number", "encounter_index", "legacy_modifier"]:
 		copy[key] = int(copy[key])
 	copy.intensity = float(copy.intensity)
@@ -110,4 +112,5 @@ static func _wire(value: Variant, depth: int = 0) -> bool:
 		return true
 	if value is String: return value.length() <= 4096
 	if value is float: return is_finite(value)
-	return value == null or value is bool or value is int
+	if value is int: return value >= -9007199254740991 and value <= 9007199254740991
+	return value == null or value is bool
