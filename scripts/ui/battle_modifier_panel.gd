@@ -30,6 +30,7 @@ func _ready() -> void:
 
 # Only the centered, rendered text accepts input; the decorative strip passes through.
 func _has_point(point: Vector2) -> bool:
+	if not visible: return false
 	var label: Label = $Text
 	var font: Font = label.get_theme_font("font")
 	var text_width: float = minf(font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, panel_font_size).x, label.size.x)
@@ -47,7 +48,13 @@ func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414
 
 
 func refresh(modifier: Node, round_number: int) -> void:
-	self.visible = true
+	self.visible = modifier.kind != 0
+	if modifier.kind == 0:
+		$Text.text = ""
+		self.tooltip_text = ""
+		current_rules = ""
+		details.dismiss()
+		return
 	$Text.text = compact_status(modifier, round_number)
 	$Text.modulate = modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE
 	self.tooltip_text = "Battle modifier · Tap for full rules"
@@ -96,7 +103,7 @@ static func compact_status(modifier: Node, round_number: int) -> String:
 	var wait_rounds: int = maxi(0, modifier.next_round - round_number)
 	match modifier.kind:
 		0:
-			return "◇  DEEP SPACE · No environmental modifier"
+			return ""
 		1:
 			return "◆  %s · Asteroid impact in %d rounds" % [name, wait_rounds]
 		2, 6, 7:
@@ -132,4 +139,5 @@ static func compact_status(modifier: Node, round_number: int) -> String:
 
 
 func show_details() -> void:
+	if current_rules.is_empty(): return
 	details.show_text(current_rules)

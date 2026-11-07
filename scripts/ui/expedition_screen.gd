@@ -604,7 +604,7 @@ func present_system_grid(state: Resource, icon: Callable, travel: Callable) -> v
 			if encounter.completed
 			else descriptor + (" · FTL Access" if state.encounters[index].get("objective_role", "") == "access" else "")
 		)
-		if encounter.kind == "battle" and not encounter.completed:
+		if encounter.kind == "battle" and not encounter.completed and encounter.modifier != 0:
 			status += (
 				"\n"
 				+ icon.call(Presentation.modifier_key(encounter.modifier))
@@ -647,7 +647,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 			elif encounter.get("mandatory_boss", false):
 				detail = "Mandatory Boss · " + detail
 		var tooltip: String = detail
-		if encounter.kind == "battle":
+		if encounter.kind == "battle" and encounter.modifier != 0:
 			tooltip += "\n" + state.Modifiers.NAMES[encounter.modifier]
 		entries.append(
 			{

@@ -200,11 +200,12 @@ func _apply_layout() -> void:
 	_profile_caption.visible = not (_pursuit and compact)
 	_profile_caption.text = "TACTICAL · " + _enemy.role if compact else "TACTICAL PROFILE"
 	_role.visible = not compact
-	_conditions.text = Presentation.icon(Presentation.modifier_key(_modifier), Presentation.UI_FONT) + "  " + Modifiers.NAMES[_modifier]
-	if compact:
+	_conditions.visible = _modifier != 0
+	_conditions.text = "" if _modifier == 0 else Presentation.icon(Presentation.modifier_key(_modifier), Presentation.UI_FONT) + "  " + Modifiers.NAMES[_modifier]
+	if compact and _modifier != 0:
 		_conditions.text += "\n" + modifier_summary(_modifier)
 	_conditions.add_theme_font_size_override("font_size", 17 if compact else 22)
-	_mechanical_summary.visible = not compact
+	_mechanical_summary.visible = not compact and _modifier != 0
 	if _pursuit:
 		_name_label.add_theme_font_size_override("font_size", 24)
 		_contact.add_theme_font_size_override("font_size", 14)
@@ -215,4 +216,5 @@ func _apply_layout() -> void:
 
 
 func _show_modifier_rules() -> void:
+	if _modifier == 0: return
 	_overlay.show_text("[b]%s[/b]\n\n%s" % [Modifiers.NAMES[_modifier], Modifiers.description(_modifier)])

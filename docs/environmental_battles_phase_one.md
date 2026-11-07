@@ -90,7 +90,8 @@ snapshot semantics before enabling them. Do not generate a fresh environment on 
 
 ## Validation plan
 
-Compare generated states with a frozen pre-change SystemGenerator in tests, excluding
+Compare generated states using the unchanged SystemGenerator with the historical
+modifier-assignment hook in tests, excluding
 only encounter modifier IDs; include exploration/defense, reserves and boss systems.
 Test neutral behavior, snapshot purity/immutability, RNG preservation, write failure,
 Quit/Resume, legacy markers and invalid save data. Run the unchanged headless,

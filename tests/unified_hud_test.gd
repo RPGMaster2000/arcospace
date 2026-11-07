@@ -95,6 +95,9 @@ func run():
    await settle()
    check(host.scroll.get_v_scroll_bar().max_value<=host.scroll.get_v_scroll_bar().page+1,"Fits: %s modifier %d"%[enemy.ship_name,modifier])
    var button=host.view.find_child("ModifierDetails",true,false)
+   if modifier == 0:
+    check(not button.visible,"Neutral preview has no environmental label")
+    continue
    button.pressed.emit()
    var overlay=button.get_parent().find_children("*","CanvasLayer",true,false)[0]
    check(overlay.shade.visible and overlay.body.text.contains(host.state.Modifiers.description(modifier)),"Full modifier description opens")
