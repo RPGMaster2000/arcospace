@@ -73,11 +73,11 @@ func run() -> void:
 	check(snapshot.is_read_only() and snapshot.visual.is_read_only() and snapshot.location.is_read_only(), "Snapshot recursively read-only")
 	state.navigation.checkpoint_position([5, 0, 6])
 	item.visual.palette[0] = 99
-	check(view[0].visual.palette[0] == 1 and snapshot.location == [1, 0, 2], "World mutations cannot change detached map/battle snapshots")
+	check(view[0].visual.palette[0] == 1 and snapshot.location == [1.0, 0.0, 2.0], "World mutations cannot change detached map/battle snapshots")
 	check(snapshot.type == EnvironmentData.NONE, "No spatial/overlap behavior implemented")
 	var data: Dictionary = Save.encode(state)
 	var restored = Save.new().decode(JSON.parse_string(JSON.stringify(data)), rules)
-	check(restored != null and restored.environmental_instances == state.environmental_instances, "Optional instance records survive JSON")
+	check(restored != null and restored.environmental_instances == JSON.parse_string(JSON.stringify(state.environmental_instances)), "Optional instance records survive JSON")
 	if restored != null:
 		restored.environmental_instances[0].visual.palette[0] = 88
 		check(state.environmental_instances[0].visual.palette[0] == 99, "Restored mutable world has no aliases")

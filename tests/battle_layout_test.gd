@@ -199,15 +199,18 @@ func run() -> void:
 						display.get_node("Meter/Text").text.contains("halved"),
 						"Ion HUD follows announced half multiplier"
 					)
-			await activate(panel.get_node("Text"), true)
-			check(
-				(
-					panel.details.shade.visible
-					and panel.details.body.text.contains(board.modifier.description(kind))
-				),
-				"Expanded modifier shows original full rules"
-			)
-			panel.details.dismiss()
+			if kind == 0:
+				check(not panel.visible and text.is_empty(), "Neutral battle has no modifier label or details target")
+			else:
+				await activate(panel.get_node("Text"), true)
+				check(
+					(
+						panel.details.shade.visible
+						and panel.details.body.text.contains(board.modifier.description(kind))
+					),
+					"Expanded modifier shows original full rules"
+				)
+				panel.details.dismiss()
 			check(
 				board._both_states() == before and board.modifier.rng.state == rng_state,
 				"HUD cannot change combat state or random sequence"

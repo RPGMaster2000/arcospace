@@ -3,6 +3,12 @@ const State = preload("res://scripts/expedition_state.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const Persistence = preload("res://scripts/expedition/expedition_persistence.gd")
+class ObservedState extends "res://scripts/expedition_state.gd":
+	var evaluations: int = 0
+	func battle_environment(index: int) -> Dictionary:
+		evaluations += 1
+		return super.battle_environment(index)
+
 var failures := 0
 var checks := 0
 
@@ -28,7 +34,7 @@ func run() -> void:
 	var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
 	rules.game_mode = "exploration"
 	rules.log_rolls = false
-	var state = State.new()
+	var state = ObservedState.new()
 	state.start(0, rules, 1042)
 	state.navigation.checkpoint_position([3, 0, 4])
 	var index := -1
@@ -50,6 +56,8 @@ func run() -> void:
 		quit(1)
 		return
 	node.battle.enemy_timer.stop()
+	node.start_battle(index, 778899)
+	check(state.evaluations == 1, "Entry evaluates exactly once; duplicate start is ignored")
 	var snapshot: Dictionary = node.battle.battle_environment
 	check(EnvironmentData.valid_snapshot(snapshot) and snapshot.legacy_modifier == 0 and state.rng.state == rng, "Entry snapshot is neutral and gameplay RNG is untouched")
 	check(node.battle.modifier.kind == 0 and node.battle.hand.drop_multiplier == 1.0, "Neutral combat has normal draw rules")

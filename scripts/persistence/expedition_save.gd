@@ -401,7 +401,10 @@ func load_run() -> Dictionary:
 		warning += (" " if not warning.is_empty() else "") + "Updated expedition: FTL Access replaces charging; a safe access route is available. Travel interception cooldown is preserved conservatively."
 	if best.expedition.get("metagame_version", 1) == 1:
 		warning += (" " if not warning.is_empty() else "") + "Legacy expedition retained in exploration mode."
-	return {"state": decode(best.expedition), "battle": best.battle, "data": best.expedition}
+	var battle: Dictionary = best.battle.duplicate(true)
+	if battle.has("environment"):
+		battle.environment = EnvironmentData.snapshot(battle.environment)
+	return {"state": decode(best.expedition), "battle": battle, "data": best.expedition}
 
 
 func save_run(state: Resource, battle: Dictionary = {}) -> bool:

@@ -1069,7 +1069,7 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 		if is_defense() and defense.unit_for(index).get("mothership", false):
 			setup.emp_requirement_bonus = rules.defense_tuning.mothership_emp_bonus
 		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
-	setup.environment = battle_environment(index) if environment.is_empty() else EnvironmentData.frozen(environment)
+	setup.environment = battle_environment(index) if environment.is_empty() else EnvironmentData.snapshot(environment)
 	setup.modifier = int(setup.environment.legacy_modifier)
 	setup.player_state = ShipState.new()
 	setup.player_state.configure_profile(ship())

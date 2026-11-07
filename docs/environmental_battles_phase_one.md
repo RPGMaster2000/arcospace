@@ -97,3 +97,13 @@ Test neutral behavior, snapshot purity/immutability, RNG preservation, write fai
 Quit/Resume, legacy markers and invalid save data. Run the unchanged headless,
 GL/Mobile rendered and exported-startup CI jobs. No local Godot or physical-device
 execution is claimed; this work is performed through GitHub.
+
+## Snapshot wire normalization
+
+Godot JSON parses numbers as floats. On creation and restore, snapshot identity fields
+are normalized to integers, intensity and world coordinates to floats, and the result
+is recursively read-only. Thus the restored snapshot compares exactly to live entry,
+not merely approximately. Optional instance configuration is JSON-valued data; store
+64-bit generation seeds as decimal strings, as with existing expedition RNG seeds.
+No mutable world instances are retained by a battle. The entry regression also counts
+evaluations and rejects duplicate-start reevaluation.

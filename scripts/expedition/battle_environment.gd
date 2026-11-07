@@ -37,11 +37,24 @@ static func valid_instances(value: Variant) -> bool:
 # here, using a dedicated generation stream; never consume State or combat RNG.
 static func evaluate(state: Resource, location: Array, _instances: Array,
 		encounter_index: int = -1, legacy_modifier: int = 0) -> Dictionary:
-	return frozen({"version": 1, "type": NONE, "instance_id": "",
+	return snapshot({"version": 1, "type": NONE, "instance_id": "",
 		"intensity": 0.0, "configuration": {}, "visual": {},
 		"location": location, "run_seed": str(state.seed_used),
 		"system_number": state.system_number, "encounter_index": encounter_index,
 		"legacy_modifier": legacy_modifier})
+
+
+# Canonical typed snapshot fields make JSON restoration identical to live entry.
+# Seeds stay decimal strings; arbitrary configuration/visual records use JSON types.
+static func snapshot(value: Dictionary) -> Dictionary:
+	var copy: Dictionary = value.duplicate(true)
+	for key in ["version", "system_number", "encounter_index", "legacy_modifier"]:
+		copy[key] = int(copy[key])
+	copy.intensity = float(copy.intensity)
+	var location: Array = []
+	for coordinate in copy.location: location.append(float(coordinate))
+	copy.location = location
+	return frozen(copy)
 
 
 static func valid_snapshot(value: Variant) -> bool:

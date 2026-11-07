@@ -37,6 +37,7 @@ func checkpoint_battle(state: Resource, index: int, battle_seed: int, environmen
 	if not EnvironmentData.valid_snapshot(snapshot):
 		store.error = "The battle environment is invalid. Progress has not been overwritten."
 		return {"saved": false, "seed": battle_seed, "environment": snapshot}
+	snapshot = EnvironmentData.snapshot(snapshot)
 	var checkpoint: Dictionary = Save.encode(state)
 	if battle_seed < 0:
 		var generator := RandomNumberGenerator.new()
