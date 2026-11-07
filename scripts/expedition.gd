@@ -186,7 +186,7 @@ func _ready() -> void:
 		if marker.is_empty():
 			show_system()
 		else:
-			start_battle(int(marker.index), int(marker.seed))
+			start_battle(int(marker.index), int(marker.seed), marker.get("environment", {}))
 
 	if play_system_intro and not resume_data.is_empty() and view_kind == "system" and _uses_3d_map(): _introduce_system()
 
@@ -504,6 +504,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			star_map = preload("res://scenes/star_system_3d.tscn").instantiate()
 			star_map.settings = star_system_settings
 			screen.mount_map(star_map)
+		star_map.environment_source = state.environment_view
 		star_map.run_seed = state.seed_used
 		star_map.system_number = state.system_number
 		star_map.system_profile = state.system_profile
@@ -1053,19 +1054,19 @@ func _enter_battle(index: int) -> void:
 	await _reveal_presentation(revision, entering_state, Phase.BATTLE if is_instance_valid(battle) else Phase.DESTINATION)
 
 
-func start_battle(index: int, battle_seed: int = -1) -> void:
+func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {}) -> void:
 	if is_instance_valid(battle) or presenting_outcome or phase in [Phase.FTL, Phase.EXITED]:
 		return
 	if not state.can_engage(index) or state.encounters[index].kind != "battle":
 		return
-	var checkpoint: Dictionary = persistence.checkpoint_battle(state, index, battle_seed)
+	var checkpoint: Dictionary = persistence.checkpoint_battle(state, index, battle_seed, environment)
 	battle_seed = checkpoint.seed
 	if not checkpoint.saved:
 		_show_save_error()
 		if view_kind.is_empty():
 			_clear("save_error")
 			view.add_child(_label("The battle could not be resumed until its checkpoint can be saved."))
-			_button("Retry Battle", start_battle.bind(index, battle_seed))
+			_button("Retry Battle", start_battle.bind(index, battle_seed, checkpoint.environment))
 		return
 	state.field_repairs_open = false
 	screen.hide_for_battle()
@@ -1074,7 +1075,7 @@ func start_battle(index: int, battle_seed: int = -1) -> void:
 	if _uses_3d_map() and is_instance_valid(star_map):
 		star_map.set_active(false)
 	battle_session.create(BOARD, state, index, battle_seed,
-		_battle_finished, _restart_from_battle, _exit_from_battle)
+		_battle_finished, _restart_from_battle, _exit_from_battle, checkpoint.environment)
 	add_child(battle)
 	if persistence_enabled:
 		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)

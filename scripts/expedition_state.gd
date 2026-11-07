@@ -62,6 +62,21 @@ const ShipState = preload("res://scripts/combat/ship_combat_state.gd")
 var _recorded_results: Dictionary = {}
 
 const Modifiers = preload("res://scripts/combat_modifier.gd")
+const Environment = preload("res://scripts/expedition/battle_environment.gd")
+# Sole mutable owner. The map and battles receive detached views, never this array.
+var environmental_instances: Array = []
+
+
+func environment_view() -> Array:
+	return Environment.frozen(environmental_instances)
+
+
+func battle_environment(index: int) -> Dictionary:
+	# Committed world coordinates survive tactical/camera transforms and resume.
+	# Empty means no known physical location (e.g. direct/grid entry).
+	return Environment.evaluate(self, navigation.position, environmental_instances,
+		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
+
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Requirement = preload("res://scripts/expedition/approach_requirement.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
@@ -295,6 +310,7 @@ func generate_system() -> bool:
 	if system_number > 0 and not can_jump():
 		return false
 	_recorded_results.clear()
+	environmental_instances.clear()
 	SystemGenerator.generate(self)
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
@@ -304,9 +320,12 @@ func generate_system() -> bool:
 	return true
 
 
-# One authoritative uniform roll; overridable only for historical-distribution trace fixtures.
+# Preserve the historical draw exactly: deleting it shifts enemies, objectives,
+# pressure and loot. New encounters are neutral until physical phenomena exist.
+# The override remains useful for historical-distribution regression comparisons.
 func _roll_battle_modifier() -> int:
-	return Modifiers.roll_encounter(rng)
+	Modifiers.roll_encounter(rng)
+	return 0
 
 
 func enemy_profile(encounter: Dictionary) -> Resource:
@@ -1027,7 +1046,7 @@ func finish_upgrades() -> void:
 
 
 # Produce one encounter's data, consuming temporary bonuses once at entry.
-func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup:
+func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: Dictionary = {}) -> BattleSetup:
 	if is_defense() and not defense.unit_for(index).is_empty() and not can_engage(index):
 		return null
 	last_poi_success = -1
@@ -1049,6 +1068,8 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null) -> BattleSetup
 			setup.emp_requirement_bonus = rules.defense_tuning.mothership_emp_bonus
 		setup.modifier = encounter.get("modifier", 0)
 		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
+	setup.environment = battle_environment(index) if environment.is_empty() else Environment.frozen(environment)
+	setup.modifier = int(setup.environment.legacy_modifier)
 	setup.player_state = ShipState.new()
 	setup.player_state.configure_profile(ship())
 	setup.player_state.hull = hull

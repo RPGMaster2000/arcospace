@@ -17,6 +17,12 @@ var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
 var system_number: int = 1
 var system_profile: String = "industrial"
+# Query-only world environment interface. No cached mutable copy or placeholder VFX.
+var environment_source: Callable
+
+func environment_instances() -> Array:
+	return environment_source.call() if environment_source.is_valid() else []
+
 var visual_data: Dictionary = {}
 var visual_root: Node3D
 var destination_root: Node3D

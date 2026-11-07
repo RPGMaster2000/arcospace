@@ -2,6 +2,7 @@ extends RefCounted
 ## Coordinates the single active run's saves. Owns only the store and battle checkpoint,
 ## never a second live gameplay state. The existing codec owns format and disk recovery.
 const Save = preload("res://scripts/persistence/expedition_save.gd")
+const Environment = preload("res://scripts/expedition/battle_environment.gd")
 var store = Save.new()
 var enabled: bool = true
 var battle_checkpoint: Dictionary = {}
@@ -30,15 +31,20 @@ func save_progress(state: Resource, battle: Node) -> bool:
 
 # Encode and select the seed before setup consumes bonuses. Failed writes retain the
 # previous checkpoint, while returning the attempted seed for the existing retry UI.
-func checkpoint_battle(state: Resource, index: int, battle_seed: int) -> Dictionary:
+func checkpoint_battle(state: Resource, index: int, battle_seed: int, environment: Dictionary = {}) -> Dictionary:
+	# A restored/retried marker is authoritative: do not evaluate the world again.
+	var snapshot: Dictionary = state.battle_environment(index) if environment.is_empty() else Environment.frozen(environment)
+	if not Environment.valid_snapshot(snapshot):
+		store.error = "The battle environment is invalid. Progress has not been overwritten."
+		return {"saved": false, "seed": battle_seed, "environment": snapshot}
 	var checkpoint: Dictionary = Save.encode(state)
 	if battle_seed < 0:
 		var generator := RandomNumberGenerator.new()
 		generator.randomize()
 		battle_seed = generator.randi()
-	var marker: Dictionary = {"index": index, "seed": str(battle_seed)}
+	var marker: Dictionary = {"index": index, "seed": str(battle_seed), "environment": snapshot}
 	if enabled and not store.save_data(checkpoint, marker):
-		return {"saved": false, "seed": battle_seed}
+		return {"saved": false, "seed": battle_seed, "environment": snapshot}
 	battle_checkpoint = checkpoint
 	battle_marker = marker
-	return {"saved": true, "seed": battle_seed}
+	return {"saved": true, "seed": battle_seed, "environment": snapshot}
