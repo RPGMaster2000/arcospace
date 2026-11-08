@@ -604,12 +604,13 @@ func present_system_grid(state: Resource, icon: Callable, travel: Callable) -> v
 			if encounter.completed
 			else descriptor + (" · FTL Access" if state.encounters[index].get("objective_role", "") == "access" else "")
 		)
-		if encounter.kind == "battle" and not encounter.completed and encounter.modifier != 0:
+		var modifier: int = state.preview_modifier(index) if encounter.kind == "battle" else 0
+		if encounter.kind == "battle" and not encounter.completed and modifier != 0:
 			status += (
 				"\n"
-				+ icon.call(Presentation.modifier_key(encounter.modifier))
+				+ icon.call(Presentation.modifier_key(modifier))
 				+ " "
-				+ state.Modifiers.NAMES[encounter.modifier]
+				+ state.Modifiers.NAMES[modifier]
 			)
 		if encounter.get("chasedown", false):
 			continue
@@ -647,8 +648,9 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 			elif encounter.get("mandatory_boss", false):
 				detail = "Mandatory Boss · " + detail
 		var tooltip: String = detail
-		if encounter.kind == "battle" and encounter.modifier != 0:
-			tooltip += "\n" + state.Modifiers.NAMES[encounter.modifier]
+		var modifier: int = state.preview_modifier(index) if encounter.kind == "battle" else 0
+		if encounter.kind == "battle" and modifier != 0:
+			tooltip += "\n" + state.Modifiers.NAMES[modifier]
 		entries.append(
 			{
 				"index": index,
@@ -656,6 +658,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 				"name": encounter.title,
 				"model_kind": key,
 				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
+				"world_position": state.battle_location(index),
 				"text":
 				(
 					("✓ " if encounter.completed else icon.call(key) + " ")
@@ -692,10 +695,10 @@ func style_combat_entry(button: Button) -> void:
 	button.add_theme_color_override("font_color",Color("ffbaba"))
 
 
-func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
+func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resource, pursuit: bool, index: int = -1) -> void:
 	var briefing = preload("res://scripts/ui/tactical_briefing.gd").new()
 	view.add_child(briefing)
-	briefing.configure(enemy,state.difficulty_level(),encounter.modifier,state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
+	briefing.configure(enemy,state.difficulty_level(),state.preview_modifier(index) if index >= 0 else int(encounter.get("modifier", 0)),state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
 
 
 func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,

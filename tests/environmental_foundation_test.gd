@@ -38,13 +38,13 @@ func run() -> void:
 					for entry in expected.encounters:
 						if entry.kind == "battle": entry.modifier = 0
 					check(Save.encode(current) == expected, "Only assigned modifier differs from main, including RNG/enemies/pressure/defense/reserves/objectives")
-					check(current.environmental_instances.is_empty(), "Phase 1 generates no phenomena")
+					check(current.environmental_instances.size() >= 1 and current.environmental_instances.size() <= 3, "Physical regions generated separately from encounter RNG")
 					for index in current.encounters.size():
 						if current.encounters[index].kind != "battle": continue
 						check(current.encounters[index].modifier == 0, "Every generated enemy, boss and reserve is neutral")
 						var before: Dictionary = Save.encode(current)
 						var snapshot: Dictionary = current.battle_environment(index)
-						check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type == EnvironmentData.NONE and snapshot.legacy_modifier == 0, "Valid NONE snapshot")
+						check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type in [EnvironmentData.NONE, EnvironmentData.ASTEROID_FIELD] and snapshot.legacy_modifier == 0, "Valid physical snapshot without random legacy assignment")
 						check(snapshot == current.battle_environment(index) and Save.encode(current) == before, "Evaluation repeats deterministically without gameplay RNG/state changes")
 					# Exercise consecutive systems including boss milestones, without combat randomness.
 					for state in [current, historical]:
@@ -61,6 +61,8 @@ func run() -> void:
 	var index := -1
 	for i in state.encounters.size():
 		if state.encounters[i].kind == "battle": index = i; break
+	state.environmental_instances.clear()
+	state.encounter_positions[str(index)] = [1, 0, 2]
 	state.navigation.checkpoint_position([1, 0, 2])
 	var item: Dictionary = EnvironmentData.instance("reserved-one", EnvironmentData.SPACE_STORM, [1, 0, 2])
 	item.visual = {"palette": [1, 2, 3]}
@@ -74,7 +76,7 @@ func run() -> void:
 	state.navigation.checkpoint_position([5, 0, 6])
 	item.visual.palette[0] = 99
 	check(view[0].visual.palette[0] == 1 and snapshot.location == [1.0, 0.0, 2.0], "World mutations cannot change detached map/battle snapshots")
-	check(snapshot.type == EnvironmentData.NONE, "No spatial/overlap behavior implemented")
+	check(snapshot.type == EnvironmentData.NONE, "Reserved future phenomena remain neutral")
 	var data: Dictionary = Save.encode(state)
 	var restored = Save.new().decode(JSON.parse_string(JSON.stringify(data)), rules)
 	check(restored != null and restored.environmental_instances == JSON.parse_string(JSON.stringify(state.environmental_instances)), "Optional instance records survive JSON")

@@ -65,6 +65,8 @@ const Modifiers = preload("res://scripts/combat_modifier.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 # Sole mutable owner. The map and battles receive detached views, never this array.
 var environmental_instances: Array = []
+# Static exploration battle anchors only; DefenseState remains the moving authority.
+var encounter_positions: Dictionary = {}
 
 
 const Ships = preload("res://scripts/ships/ship_library.gd")
@@ -169,11 +171,30 @@ func environment_view() -> Array:
 	return EnvironmentData.frozen(environmental_instances)
 
 
+func battle_location(index: int) -> Array:
+	if index < 0 or index >= encounters.size() or encounters[index].kind != "battle": return []
+	if is_defense():
+		var unit: Dictionary = defense.unit_for(index)
+		# Battle is located at the visible hostile, including at swept contact.
+		# Player/hostile centers can differ by interception radius.
+		if not unit.is_empty() and unit.status == "active": return Defense.wire(unit.position)
+		return []
+	if encounters[index].get("chasedown", false):
+		var at: Array = encounters[index].get("intercept_position", [])
+		return at.duplicate() if at.size() == 3 else []
+	return encounter_positions.get(str(index), []).duplicate()
+
+
 func battle_environment(index: int) -> Dictionary:
-	# Committed world coordinates survive tactical/camera transforms and resume.
-	# Empty means no known physical location (e.g. direct/grid entry).
-	return EnvironmentData.evaluate(self, navigation.position, environmental_instances,
+	return EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
+
+
+# Preview is a pure query; only Persistence captures the authoritative entry snapshot.
+func preview_modifier(index: int) -> int:
+	if index < 0 or index >= encounters.size(): return 0
+	return EnvironmentData.modifier_id(EnvironmentData.evaluate(self, battle_location(index),
+		environmental_instances, index, int(encounters[index].get("modifier", 0))))
 
 
 func encounter_at(index: int) -> Dictionary:
@@ -314,6 +335,8 @@ func generate_system() -> bool:
 	_recorded_results.clear()
 	environmental_instances.clear()
 	SystemGenerator.generate(self)
+	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
+	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values())
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.
@@ -1070,7 +1093,7 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 			setup.emp_requirement_bonus = rules.defense_tuning.mothership_emp_bonus
 		setup.chasedown_charge_cap = encounter.get("chasedown", false) and encounter.get("response", -1) == 1
 	setup.environment = battle_environment(index) if environment.is_empty() else EnvironmentData.snapshot(environment)
-	setup.modifier = int(setup.environment.legacy_modifier)
+	setup.modifier = EnvironmentData.modifier_id(setup.environment)
 	setup.player_state = ShipState.new()
 	setup.player_state.configure_profile(ship())
 	setup.player_state.hull = hull

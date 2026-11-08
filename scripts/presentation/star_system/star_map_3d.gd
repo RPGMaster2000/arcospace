@@ -17,8 +17,9 @@ var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
 var system_number: int = 1
 var system_profile: String = "industrial"
-# Query-only world environment interface. No cached mutable copy or placeholder VFX.
+# Query-only world environment interface. Meshes are rebuilt from compact saved records.
 var environment_source: Callable
+var modifier_source: Callable
 
 func environment_instances() -> Array:
 	return environment_source.call() if environment_source.is_valid() else []
@@ -180,6 +181,13 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings, system_profile)
 	if not defense_view.is_empty():
 		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(visual_data, defense_view)
+	# New exploration runs use State's committed static battle anchors. Old saves
+	# without anchors keep the historical cosmetic layout and neutral environment.
+	if defense_view.is_empty():
+		for entry in entries:
+			var at: Array = entry.get("world_position", [])
+			if at.size() == 3 and entry.get("profile") != null:
+				visual_data.anchors[entry.index] = Vector3(at[0], at[1], at[2])
 	for layer in [visual_root,destination_root,background]:
 		if is_instance_valid(layer):
 			world.remove_child(layer)
@@ -192,6 +200,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	visual_root = Node3D.new()
 	visual_root.name = "GeneratedSystem"
 	world.add_child(visual_root)
+	visual_root.add_child(preload("res://scripts/presentation/star_system/asteroid_fields.gd").build(environment_instances()))
 	destination_root = Node3D.new()
 	destination_root.name = "EncounterRepresentations"
 	world.add_child(destination_root)
@@ -990,5 +999,8 @@ func sync_defense(snapshot: Dictionary) -> void:
 		objects[index].visible = active
 		markers[index].disabled = not active
 		markers[index].tooltip_text = "Mothership · Neutralize to unlock FTL" if unit.mothership else "Incoming attacker → HOMEWORLD"
+		if modifier_source.is_valid():
+			var modifier: int = modifier_source.call(index)
+			if modifier != 0: markers[index].tooltip_text += "\n" + preload("res://scripts/combat_modifier.gd").NAMES[modifier]
 		visual_data.anchors[index] = objects[index].position
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)

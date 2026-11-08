@@ -57,6 +57,8 @@ func run() -> void:
 	host.rules.debug_seed = 789
 	root.add_child(host)
 	current_scene = host
+	# Test every explicit legacy ID including neutral, independently of physical fields.
+	host.state.environmental_instances.clear()
 	var enemy_index: int = -1
 	var poi_index: int = -1
 	for index in range(host.state.encounters.size()):
