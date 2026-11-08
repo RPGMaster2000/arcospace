@@ -40,25 +40,39 @@ func run() -> void:
 			var state = State.new()
 			var baseline = PhaseOneState.new()
 			state.start(0, rules, seed_value)
-			baseline.start(0, rules, seed_value)
+			# Zero requests randomization, not a literal deterministic seed. Replay
+			# the resolved seed so both architectures receive identical inputs.
+			baseline.start(0, rules, state.seed_used)
+			var context: String = "%s requested=%d resolved=%d" % [mode, seed_value, state.seed_used]
+			check(state.seed_used == baseline.seed_used, "Same resolved run seed: " + context)
+			for stream in ["rng", "station_rng", "chasedown_rng"]:
+				var actual_rng: RandomNumberGenerator = state.get(stream)
+				var baseline_rng: RandomNumberGenerator = baseline.get(stream)
+				check(actual_rng.seed == baseline_rng.seed and actual_rng.state == baseline_rng.state,
+					"Phase 1 RNG seed/state unchanged (%s): %s" % [stream, context])
 			var current: Dictionary = Save.encode(state)
 			var expected: Dictionary = Save.encode(baseline)
 			for data in [current, expected]:
 				data.erase("environmental_instances")
 				data.erase("encounter_positions")
-			check(current == expected, "Phase 1 gameplay generation, all RNG streams, encounters, difficulty and objectives unchanged")
+			check(current == expected, "Phase 1 gameplay generation, all RNG streams, encounters, difficulty and objectives unchanged: " + context)
 			check(EnvironmentData.valid_instances(state.environmental_instances), "Generated records are valid save data")
 			var encoded: Dictionary = Save.encode(state)
 			var restored = Save.new().decode(JSON.parse_string(JSON.stringify(encoded)), rules)
 			check(restored != null and restored.environmental_instances == state.environmental_instances and restored.encounter_positions == state.encounter_positions, "Save round trip preserves exact definitions and coordinates")
 			if mode == "exploration":
 				var entries: Array = Screen.map_entries(state, func(key): return key)
-				var layout_seed: int = seed_value if seed_value != 0 else hash("%d:%d:sky" % [seed_value, state.system_number])
+				var layout_seed: int = state.seed_used if state.seed_used != 0 else hash("%d:%d:sky" % [state.seed_used, state.system_number])
 				var layout: Dictionary = VisualSystem.generate(layout_seed, state.system_number, entries, preload("res://resources/presentation/star_system_settings.tres"), state.system_profile)
 				for entry in entries:
 					if entry.get("profile") == null: continue
 					var at: Array = state.battle_location(entry.index)
-					check(Vector3(at[0],at[1],at[2]).is_equal_approx(layout.anchors[entry.index]), "Committed battle position matches original visible anchor")
+					var original: Vector3 = layout.anchors[entry.index]
+					check(Vector3(at[0],at[1],at[2]) == original,
+						"Committed battle position exactly matches original visible anchor %d: %s" % [entry.index, context])
+					var original_wire: Array = JSON.parse_string(JSON.stringify([original.x, original.y, original.z]))
+					check(at == original_wire,
+						"Committed coordinates exactly match original anchor at save precision %d: %s" % [entry.index, context])
 					check(entry.world_position == at, "Map receives committed coordinates even for grid entry")
 			else:
 				var unit: Dictionary = state.defense.unit_for(0)
