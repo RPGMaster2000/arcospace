@@ -695,10 +695,10 @@ func style_combat_entry(button: Button) -> void:
 	button.add_theme_color_override("font_color",Color("ffbaba"))
 
 
-func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
+func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resource, pursuit: bool, index: int = -1) -> void:
 	var briefing = preload("res://scripts/ui/tactical_briefing.gd").new()
 	view.add_child(briefing)
-	briefing.configure(enemy,state.difficulty_level(),state.preview_modifier(state.encounters.find(encounter)),state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
+	briefing.configure(enemy,state.difficulty_level(),state.preview_modifier(index) if index >= 0 else int(encounter.get("modifier", 0)),state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
 
 
 func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,

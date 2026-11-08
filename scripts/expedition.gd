@@ -684,7 +684,7 @@ func _show_chasedown() -> void:
 	title.text = "Sublight Chasedown"
 	var encounter: Dictionary = state.encounters[state.chasedown_index]
 	if _uses_3d_map(): star_map.tactical_focus(state.chasedown_index,true,state.enemy_profile(encounter))
-	_add_tactical_briefing(encounter,state.enemy_profile(encounter),true)
+	_add_tactical_briefing(encounter,state.enemy_profile(encounter),true,state.chasedown_index)
 	var choices = _grid(2)
 	if screen.compact_focus: choices.add_theme_constant_override("v_separation",4)
 	for index in range(state.rules.chasedown_responses.size()):
@@ -731,7 +731,7 @@ func show_battle_preview(index: int) -> void:
 	var enemy: Resource = state.enemy_profile(encounter)
 	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
 	if _uses_3d_map() and not inspecting: star_map.tactical_focus(index)
-	_add_tactical_briefing(encounter, enemy, false)
+	_add_tactical_briefing(encounter, enemy, false, index)
 	# Inspection only shows enemy information; entering combat requires arrival.
 	if not inspecting:
 		var enter = _button("Enter Combat", _enter_battle.bind(index))
@@ -746,8 +746,8 @@ func _style_combat_entry(button: Button) -> void:
 	screen.style_combat_entry(button)
 
 
-func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool) -> void:
-	screen.add_tactical_briefing(state, encounter, enemy, pursuit)
+func _add_tactical_briefing(encounter: Dictionary, enemy: Resource, pursuit: bool, index: int = -1) -> void:
+	screen.add_tactical_briefing(state, encounter, enemy, pursuit, index)
 
 
 # Keep balance/state descriptions intact; compact only the exploration presentation.

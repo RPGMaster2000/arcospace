@@ -36,6 +36,8 @@ func run() -> void:
 	rules.log_rolls = false
 	var state = ObservedState.new()
 	state.start(0, rules, 1042)
+	# Explicit neutral-world fixture; Phase 2 asteroid entry is covered separately.
+	state.environmental_instances.clear()
 	state.navigation.checkpoint_position([3.0123456789012345, 0.0, 4.987654321012345])
 	var index := -1
 	for i in state.encounters.size():

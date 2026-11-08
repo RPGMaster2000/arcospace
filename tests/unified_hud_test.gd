@@ -77,6 +77,8 @@ func run():
   host.show_system()
   await settle()
   check(hud.panels[3].visible and hud.panels[4].visible,"Overview restores utilities")
+ # Explicit neutral physical world for the legacy modifier presentation matrix.
+ host.state.environmental_instances.clear()
  # All modifiers and authored enemy profiles, including larger elite hulls.
  root.content_scale_size=Vector2i(960,540)
  root.size=Vector2i(960,540)
