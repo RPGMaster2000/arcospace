@@ -88,6 +88,8 @@ func run():
 	check(host.screen.overview_hud.focused,"Essential HUD remains active during input")
 	await frame("poi")
 	host.map_destination = battle
+	# Keep real touch routing coverage for a stored legacy modifier.
+	host.state.encounters[battle].modifier = 2
 	host.show_battle_preview(battle)
 	await settle()
 	var modifier = host.view.find_child("ModifierDetails",true,false)

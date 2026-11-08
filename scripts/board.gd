@@ -1,5 +1,9 @@
 extends Control
 
+# Combat renderers share the frozen entry configuration; no independent phenomenon roll.
+var battle_environment: Dictionary:
+	get: return battle_setup.environment if battle_setup != null else {}
+
 # RESPONSIBILITY: Coordinate both hands, turns, effects and board display.
 # DOES NOT: Choose AI moves, implement card effects or render HUD controls.
 

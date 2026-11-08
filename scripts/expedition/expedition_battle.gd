@@ -7,10 +7,10 @@ var current: Node
 
 # Configure before the controller adds the board to the tree, as required by Board._ready.
 func create(scene: PackedScene, state: Resource, index: int, battle_seed: int,
-		finished: Callable, restarted: Callable, exited: Callable) -> Node:
+		finished: Callable, restarted: Callable, exited: Callable, environment: Dictionary = {}) -> Node:
 	current = scene.instantiate()
 	current.expedition = state
-	var setup = state.prepare_battle(index)
+	var setup = state.prepare_battle(index, null, environment)
 	setup.battle_seed = battle_seed
 	Adapter.configure(current, setup)
 	current.expedition_continue.connect(finished.bind(current))

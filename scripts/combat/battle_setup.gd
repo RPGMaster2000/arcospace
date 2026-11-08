@@ -11,6 +11,8 @@ var enemy_profile: Resource
 var player_state: ShipState
 var enemy_state: ShipState
 var modifier: int = 0
+# Detached read-only battle-entry snapshot; never follows world movement/simulation.
+var environment: Dictionary = {}
 var player_cards: Array[Resource] = []
 var enemy_cards: Array[Resource] = []
 var identity_weights: Dictionary = {}

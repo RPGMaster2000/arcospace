@@ -62,6 +62,9 @@ func run() -> void:
 	for index in range(host.state.encounters.size()):
 		if host.state.encounters[index].kind == "battle": enemy_index = index
 		else: poi_index = index
+	# Explicit legacy encounter keeps description/tap coverage after neutral generation.
+	check(host.state.encounters[enemy_index].modifier == 0, "New encounter is neutral")
+	host.state.encounters[enemy_index].modifier = 2
 	var assigned: int = host.state.encounters[enemy_index].modifier
 	for n in range(5):
 		host.visit(enemy_index)

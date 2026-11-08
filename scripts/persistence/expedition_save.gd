@@ -4,6 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const VERSION: int = 3
 const PATH: String = "user://expedition_save.json"
 const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
@@ -58,6 +59,7 @@ static func encode(state: Resource) -> Dictionary:
 	navigation_data.merge(state.chasedown_roll_policy.snapshot())
 	var data: Dictionary = {"metagame_version": 3, "game_mode": state.game_mode, "defense": state.defense.snapshot() if state.is_defense() else {}, "pressure": state.pressure,
 		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
+		"environmental_instances": state.environmental_instances.duplicate(true),
 		"navigation": navigation_data, "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
 		"pending_choice": state.pending_choice, "last_outcome": state.last_outcome,
@@ -114,6 +116,7 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 # Returns null on any invalid reference/shape; never loads a path supplied by a save.
 func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data is Dictionary: return null
+	if not EnvironmentData.valid_instances(data.get("environmental_instances", [])): return null
 	var legacy: bool = not data.has("metagame_version")
 	if legacy:
 		data = _migrate_legacy(data)
@@ -220,6 +223,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	# Older v1 checkpoints may still contain the superseded continuation command.
 	if state.pending_destination >= 0 and state.chasedown_index >= 0:
 		state.travel_destination = -1
+	state.environmental_instances = data.get("environmental_instances", []).duplicate(true)
 	state.encounters = entries
 	state.service = service
 	state.restore_deck(data, cards)
@@ -344,7 +348,19 @@ func _read(candidate: String) -> Dictionary:
 			var entry: Dictionary = payload.expedition.encounters[int(payload.battle.index)]
 			if entry.kind != "battle" or entry.completed: return {}
 			if not payload.battle.get("seed") is String or not payload.battle.seed.is_valid_int(): return {}
+			if not _valid_environment_marker(payload.battle, payload.expedition): return {}
 	return payload
+
+
+# Optional additive marker data; old markers use their saved encounter modifier.
+static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> bool:
+	if not battle.has("environment"): return true
+	var snapshot: Variant = battle.environment
+	if not EnvironmentData.valid_snapshot(snapshot): return false
+	var index: int = int(battle.get("index", -1))
+	if index < 0 or index >= data.encounters.size(): return false
+	return snapshot.run_seed == data.seed and snapshot.system_number == data.system_number \
+		and snapshot.encounter_index == index and snapshot.legacy_modifier == data.encounters[index].get("modifier", 0)
 
 
 func load_run() -> Dictionary:
@@ -385,7 +401,10 @@ func load_run() -> Dictionary:
 		warning += (" " if not warning.is_empty() else "") + "Updated expedition: FTL Access replaces charging; a safe access route is available. Travel interception cooldown is preserved conservatively."
 	if best.expedition.get("metagame_version", 1) == 1:
 		warning += (" " if not warning.is_empty() else "") + "Legacy expedition retained in exploration mode."
-	return {"state": decode(best.expedition), "battle": best.battle, "data": best.expedition}
+	var battle: Dictionary = best.battle.duplicate(true)
+	if battle.has("environment"):
+		battle.environment = EnvironmentData.snapshot(battle.environment)
+	return {"state": decode(best.expedition), "battle": battle, "data": best.expedition}
 
 
 func save_run(state: Resource, battle: Dictionary = {}) -> bool:
@@ -396,6 +415,9 @@ func save_run(state: Resource, battle: Dictionary = {}) -> bool:
 func save_data(data: Dictionary, battle: Dictionary = {}) -> bool:
 	if decode(data) == null:
 		error = "The expedition could not be validated. Progress has not been overwritten."
+		return false
+	if not _valid_environment_marker(battle, data):
+		error = "The battle environment could not be validated. Progress has not been overwritten."
 		return false
 	return _write({"expedition": data, "battle": battle, "ended": false})
 
