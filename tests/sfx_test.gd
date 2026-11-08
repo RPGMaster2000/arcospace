@@ -26,6 +26,9 @@ func _initialize() -> void:
 
 func check(ok: bool, message: String) -> void:
 	checks += 1
+	# Native engine crashes bypass GDScript errors; retain the last completed
+	# operation in CI logs without changing assertions or accepting a crash.
+	print("SFX check %d: %s" % [checks, message])
 	if not ok:
 		failures += 1
 		push_error(message)
