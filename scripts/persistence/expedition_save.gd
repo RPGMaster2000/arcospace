@@ -60,6 +60,7 @@ static func encode(state: Resource) -> Dictionary:
 	var data: Dictionary = {"metagame_version": 3, "game_mode": state.game_mode, "defense": state.defense.snapshot() if state.is_defense() else {}, "pressure": state.pressure,
 		"system_profile": state.system_profile, "ftl_access": state.ftl_access,
 		"environmental_instances": state.environmental_instances.duplicate(true),
+		"encounter_positions": state.encounter_positions.duplicate(true),
 		"navigation": navigation_data, "ship_id": state.ship().resource_path,
 		"seed": str(state.seed_used), "system_name": state.system_name,
 		"pending_choice": state.pending_choice, "last_outcome": state.last_outcome,
@@ -117,6 +118,7 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data is Dictionary: return null
 	if not EnvironmentData.valid_instances(data.get("environmental_instances", [])): return null
+	if not _valid_encounter_positions(data): return null
 	var legacy: bool = not data.has("metagame_version")
 	if legacy:
 		data = _migrate_legacy(data)
@@ -224,6 +226,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if state.pending_destination >= 0 and state.chasedown_index >= 0:
 		state.travel_destination = -1
 	state.environmental_instances = data.get("environmental_instances", []).duplicate(true)
+	state.encounter_positions = data.get("encounter_positions", {}).duplicate(true)
 	state.encounters = entries
 	state.service = service
 	state.restore_deck(data, cards)
@@ -465,3 +468,18 @@ func _remove_files() -> void:
 	for candidate in [path + ".tmp", path + ".previous"]:
 		if FileAccess.file_exists(candidate) and DirAccess.remove_absolute(candidate) != OK: return
 	if FileAccess.file_exists(path): DirAccess.remove_absolute(path)
+
+
+# Optional v3 addition. Old runs stay location-unknown rather than generating a map.
+static func _valid_encounter_positions(data: Dictionary) -> bool:
+	var positions: Variant = data.get("encounter_positions", {})
+	if not positions is Dictionary or positions.size() > 100: return false
+	var entries: Variant = data.get("encounters")
+	if not entries is Array: return false
+	for key in positions:
+		if not key is String or not key.is_valid_int() or str(int(key)) != key: return false
+		var index: int = int(key)
+		if index < 0 or index >= entries.size(): return false
+		if not entries[index] is Dictionary or entries[index].get("kind") != "battle": return false
+		if not preload("res://scripts/expedition/navigation_state.gd").valid_point(positions[key], false): return false
+	return true

@@ -505,6 +505,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			star_map.settings = star_system_settings
 			screen.mount_map(star_map)
 		star_map.environment_source = state.environment_view
+		star_map.modifier_source = state.preview_modifier
 		star_map.run_seed = state.seed_used
 		star_map.system_number = state.system_number
 		star_map.system_profile = state.system_profile

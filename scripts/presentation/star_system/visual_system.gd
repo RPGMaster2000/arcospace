@@ -1,5 +1,6 @@
 extends RefCounted
-# Pure cosmetic data. Never reads State, rolls an encounter or persists camera data.
+# Deterministic layout and cosmetic data. Never consumes gameplay RNG.
+# New exploration systems commit battle anchors once; rendering obeys those anchors.
 const Names = preload("res://scripts/presentation/star_system/astronomical_names.gd")
 const TYPES = ["rocky", "terrestrial", "desert", "frozen", "volcanic", "gas_giant", "barren"]
 const PLANETARY = {"mining_operation": "rocky", "gas_giant": "gas_giant", "research_station": "frozen", "quarantined_colony": "terrestrial"}
@@ -177,3 +178,26 @@ static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, pla
 	# Default 48x48 bounds and seven encounters leave ample fallback space. An
 	# impossible manual calibration is reported explicitly rather than looping.
 	return {"position":best,"radius":radius,"region":region,"fallback":fallback,"valid":found}
+
+
+# Reuse the existing placement algorithm and default calibration at system creation.
+# Only battle anchors become gameplay state. Moving/cosmetic PoIs stay presentation.
+static func battle_positions(state: Resource) -> Dictionary:
+	var entries: Array = []
+	for index in range(state.encounters.size()):
+		var encounter: Dictionary = state.encounters[index]
+		if encounter.get("chasedown", false): continue
+		var profile: Resource = state.enemy_profile(encounter) if encounter.kind == "battle" else null
+		var key: String = ["battle", "elite", "boss"][profile.enemy_rank] if profile != null else encounter.poi.resource_path.get_file().get_basename()
+		entries.append({"index": index, "model_kind": key, "profile": profile})
+	if not state.service.is_empty():
+		entries.append({"index": state.SERVICE_INDEX, "model_kind": "trading_outpost"})
+	var layout_seed: int = state.seed_used if state.seed_used != 0 else hash("%d:%d:sky" % [state.seed_used, state.system_number])
+	var data: Dictionary = generate(layout_seed, state.system_number, entries,
+		preload("res://resources/presentation/star_system_settings.tres"), state.system_profile)
+	var result: Dictionary = {}
+	for entry in entries:
+		if entry.get("profile") == null: continue
+		var at: Vector3 = data.anchors[entry.index]
+		result[str(entry.index)] = [at.x, at.y, at.z]
+	return JSON.parse_string(JSON.stringify(result))
