@@ -12,10 +12,11 @@ class RenderedSelectionTests(unittest.TestCase):
                 self.assertTrue((project / "tests" / (name + ".gd")).is_file(), name)
 
     def test_new_foundation_checks_are_recurring(self):
-        for name in ["unified_hud_test", "tactical_focus_test", "compact_poi_focus_test",
+        for name in ["solar_render_test", "solar_entry_test", "unified_hud_test", "tactical_focus_test", "compact_poi_focus_test",
                      "tactical_resize_test", "hud_ownership_test", "star_system_render_smoke_test", "layout_invalidation_test"]:
             self.assertIn(name, COMPATIBILITY)
         self.assertIn("star_system_render_smoke_test", MOBILE)
+        self.assertIn("solar_render_test", MOBILE)
 
     def test_mobile_command_requests_mobile_not_compatibility(self):
         args = command("godot", Path("project"), "mobile", "star_system_render_smoke_test")

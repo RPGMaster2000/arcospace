@@ -8,12 +8,13 @@ const SPACE_STORM = "SPACE_STORM"
 const TEMPORAL_RIFT = "TEMPORAL_RIFT"
 const TYPES = [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE, SPACE_STORM, TEMPORAL_RIFT]
 const Asteroids = preload("res://scripts/expedition/asteroid_regions.gd")
+const Solar = preload("res://scripts/expedition/solar_regions.gd")
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 
 
 # JSON-shaped records keep visuals and future simulation on the same instance ID.
-# Asteroid geometry is validated below; other types retain reserved wire data.
+# Physical geometry is validated below; future types retain reserved wire data.
 static func instance(id: String, type: String, position: Array = []) -> Dictionary:
 	return {"id": id, "type": type, "position": position.duplicate(),
 		"region": {}, "intensity": 1.0, "configuration": {}, "visual": {},
@@ -33,11 +34,12 @@ static func valid_instances(value: Variant) -> bool:
 			if not item.get(key) is Dictionary or not _wire(item[key]): return false
 		# Empty Phase 1 reserved records remain valid but cannot select an effect.
 		if item.type == ASTEROID_FIELD and not item.region.is_empty() and (not Asteroids.valid(item) or not Asteroids.valid_visual(item.visual)): return false
+		if item.type == SOLAR_INTERFERENCE and not item.region.is_empty() and (not Solar.valid(item) or not Solar.valid_visual(item.visual)): return false
 	return true
 
 
-# Explicit legacy effects win. Otherwise choose the lexically smallest containing
-# asteroid ID, independent of array order. Other phenomenon types remain reserved.
+# Explicit legacy > physical solar > physical asteroid. Lexical ID breaks ties
+# within each type, independent of record order. Future types remain neutral.
 static func evaluate(state: Resource, location: Array, instances: Array,
 		encounter_index: int = -1, legacy_modifier: int = 0) -> Dictionary:
 	var result: Dictionary = {"version": 1, "type": NONE, "instance_id": "",
@@ -47,12 +49,16 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 		"legacy_modifier": legacy_modifier}
 	if legacy_modifier == 0:
 		var selected: Dictionary = {}
+		var selected_priority := 0
 		for item in instances:
-			if not item is Dictionary or item.get("type") != ASTEROID_FIELD: continue
-			if not item.get("id") is String or not Asteroids.valid_visual(item.get("visual")) or not Asteroids.contains(item, location): continue
-			if selected.is_empty() or item.id < selected.id: selected = item
+			if not item is Dictionary or not item.get("id") is String: continue
+			var priority: int = _priority(item, location)
+			if priority == 0: continue
+			if selected.is_empty() or priority > selected_priority or (priority == selected_priority and item.id < selected.id):
+				selected = item
+				selected_priority = priority
 		if not selected.is_empty():
-			result.type = ASTEROID_FIELD
+			result.type = selected.type
 			result.instance_id = selected.id
 			result.intensity = selected.intensity
 			result.configuration = selected.configuration.duplicate(true)
@@ -66,7 +72,10 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 static func modifier_id(value: Dictionary) -> int:
 	var legacy: int = int(value.get("legacy_modifier", 0))
 	if legacy != 0: return legacy
-	return 1 if value.get("type") == ASTEROID_FIELD else 0
+	match value.get("type"):
+		SOLAR_INTERFERENCE: return 3
+		ASTEROID_FIELD: return 1
+	return 0
 
 
 # Canonical typed snapshot fields make JSON restoration identical to live entry.
@@ -86,7 +95,7 @@ static func snapshot(value: Dictionary) -> Dictionary:
 
 static func valid_snapshot(value: Variant) -> bool:
 	if not value is Dictionary: return false
-	if value.get("version") != 1 or value.get("type") not in [NONE, ASTEROID_FIELD]: return false
+	if value.get("version") != 1 or value.get("type") not in [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE]: return false
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
 	if value.type == NONE and (value.instance_id != "" or value.intensity != 0): return false
@@ -99,7 +108,16 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.type == ASTEROID_FIELD:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Asteroids.valid_visual(value.visual): return false
 		if not Asteroids.valid({"position": value.configuration.get("position"), "region": value.configuration.get("region")}): return false
+	if value.type == SOLAR_INTERFERENCE:
+		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Solar.valid_visual(value.visual): return false
+		if not Solar.valid({"position": value.configuration.get("position"), "region": value.configuration.get("region"), "configuration": value.configuration}): return false
 	return true
+
+
+static func _priority(item: Dictionary, location: Array) -> int:
+	if item.get("type") == SOLAR_INTERFERENCE and Solar.valid_visual(item.get("visual")) and Solar.contains(item, location): return 2
+	if item.get("type") == ASTEROID_FIELD and Asteroids.valid_visual(item.get("visual")) and Asteroids.contains(item, location): return 1
+	return 0
 
 
 static func frozen(value: Variant) -> Variant:

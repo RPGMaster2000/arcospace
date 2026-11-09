@@ -44,7 +44,7 @@ func run() -> void:
 						check(current.encounters[index].modifier == 0, "Every generated enemy, boss and reserve is neutral")
 						var before: Dictionary = Save.encode(current)
 						var snapshot: Dictionary = current.battle_environment(index)
-						check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type in [EnvironmentData.NONE, EnvironmentData.ASTEROID_FIELD] and snapshot.legacy_modifier == 0, "Valid physical snapshot without random legacy assignment")
+						check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type in [EnvironmentData.NONE, EnvironmentData.ASTEROID_FIELD, EnvironmentData.SOLAR_INTERFERENCE] and snapshot.legacy_modifier == 0, "Valid physical snapshot without random legacy assignment")
 						check(snapshot == current.battle_environment(index) and Save.encode(current) == before, "Evaluation repeats deterministically without gameplay RNG/state changes")
 					# Exercise consecutive systems including boss milestones, without combat randomness.
 					for state in [current, historical]:

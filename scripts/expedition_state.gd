@@ -337,6 +337,10 @@ func generate_system() -> bool:
 	SystemGenerator.generate(self)
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
 	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values())
+	var solar = preload("res://scripts/expedition/solar_regions.gd")
+	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
+	environmental_instances.append(solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
+		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range))
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.
