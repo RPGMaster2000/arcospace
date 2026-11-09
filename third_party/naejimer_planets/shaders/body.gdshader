@@ -1,6 +1,7 @@
 // Based on: https://www.reddit.com/r/godot/comments/gqhy3g/procedural_planet_generator_based_on_planetarium/
 shader_type spatial;
 render_mode cull_back;
+#include "res://shaders/star_system_lighting.gdshaderinc"
 
 uniform float emit : hint_range(0, 16) = 0.0;
 uniform vec4 color_1 : source_color = vec4(0.17, 0.55, 1.0, 1.0);
@@ -86,5 +87,14 @@ void fragment() {
 	ALBEDO = color.rgb;
 	ROUGHNESS = max(roughness,minimum_roughness);
 	SPECULAR = specular_strength;
-	EMISSION += vec3(0.06,0.11,0.17)*pow(1.0-max(dot(normalize(NORMAL),normalize(VIEW)),0.0),3.0)*rim_fill;
+	if (stellar_lighting_enabled) {
+		vec2 response = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX);
+		ALBEDO *= mix(1.0 / stellar_contrast, 1.0, response.x);
+		AO = mix(stellar_dark_fill, 1.0, response.x);
+		AO_LIGHT_AFFECT = 0.0;
+		RIM = stellar_rim_intensity * response.y;
+		RIM_TINT = 0.65;
+	} else {
+		EMISSION += vec3(0.06,0.11,0.17)*pow(1.0-max(dot(normalize(NORMAL),normalize(VIEW)),0.0),3.0)*rim_fill;
+	}
 }

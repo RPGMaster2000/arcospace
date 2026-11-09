@@ -1,6 +1,7 @@
 // Based on: https://godotshaders.com/snippet/fresnel/
 shader_type spatial;
 render_mode cull_back;
+#include "res://shaders/star_system_lighting.gdshaderinc"
 
 uniform vec3 color_1 : source_color = vec3(0, 0.12, 0.27);
 uniform vec3 color_2 : source_color = vec3(0.63, 0.78, 1);
@@ -15,9 +16,14 @@ vec3 fresnel_glow(vec3 normal, vec3 view) {
 
 void fragment() {
 	vec3 fresnel = fresnel_glow(NORMAL, VIEW);
+	float sunward = 1.0;
+	if (stellar_lighting_enabled) {
+		sunward = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX).x;
+		fresnel *= sunward;
+	}
 	if(emit) {
 		EMISSION = fresnel.rgb;
 	}
 	ALBEDO = color_1 + fresnel;
-	ALPHA = alpha;
+	ALPHA = alpha * mix(0.12, 1.0, sunward);
 }
