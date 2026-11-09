@@ -25,7 +25,7 @@ func run() -> void:
 	for frame in range(12): await process_frame
 	var map = host.star_map
 	var fields: Node3D = map.visual_root.get_node("AsteroidFields")
-	check(fields.get_child_count() == host.state.environmental_instances.size() and fields.get_child_count() == 1, "Map renders exactly one formation")
+	check(fields.get_child_count() == host.state.environmental_instances.filter(func(item): return item.type == Regions.TYPE).size() and fields.get_child_count() == 1, "Map renders exactly one formation")
 	check(map.selection_rings.size() == map.markers.size(), "Every selectable PoI has one world-plane ring")
 	for i in map.selection_rings:
 		var ring = map.selection_rings[i]

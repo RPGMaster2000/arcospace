@@ -1,5 +1,8 @@
 # Environmental battles — Phase 2: physical asteroid fields
 
+[Phase 3](environmental_battles_phase_three.md) adds solar interference and defines
+legacy > solar > asteroid overlap priority.
+
 Generation and rendering refinements in [Phase 2.1](asteroid_poi_polish.md) supersede
 the original formation counts and mesh scale described below.
 

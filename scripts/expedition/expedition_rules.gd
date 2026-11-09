@@ -78,3 +78,8 @@ class_name ExpeditionRules
 @export_range(0, 10, 1) var standard_upgrades: int = 2
 @export_range(0, 10, 1) var elite_upgrades: int = 3
 @export_range(0, 10, 1) var boss_upgrades: int = 3
+
+
+@export_group("Physical solar interference")
+## Center-to-boundary distance in world units; saved on new-system generation only.
+@export var solar_influence_radius_range := Vector2(8.0, 13.0)

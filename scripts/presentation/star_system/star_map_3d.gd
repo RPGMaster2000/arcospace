@@ -12,6 +12,7 @@ const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
+const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -239,7 +240,14 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/menu_sun.gdshader")
 	material.set_shader_parameter("sun_color", visual_data.star_color)
-	material.set_shader_parameter("core_scale",settings.sun_core_scale)
+	var solar: Dictionary = SolarVisual.primary(environment_instances())
+	var core_scale: float = settings.sun_core_scale
+	if not solar.is_empty():
+		disc.position = Vector3(solar.position[0], solar.position[1], solar.position[2])
+		core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
+	world.get_node("SunLight").position = disc.position
+	material.set_shader_parameter("core_scale", core_scale)
+	visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
 	material.render_priority = 10
 	disc.material_override = material
 	objects[-100] = disc
@@ -279,7 +287,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		ring.configure(float(objects[index].get_meta("radius", 0.65)), button.accent)
 		selection_rings[index] = ring
 	# Build scenery after final physical positions/scales (including defense layout).
-	var exclusions: Array = [{"position": Vector3.ZERO, "radius": 1.26 * settings.sun_core_scale}]
+	var exclusions: Array = [{"position": disc.position, "radius": SolarVisual.Solar.CORE_RADIUS_PER_SCALE * core_scale}]
 	for planet in planet_nodes.values():
 		exclusions.append({"position": planet.position, "radius": float(planet.get_meta("radius")) * 1.035})
 	for index in markers:
