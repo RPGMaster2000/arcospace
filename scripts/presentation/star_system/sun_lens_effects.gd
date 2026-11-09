@@ -3,13 +3,13 @@ extends RefCounted
 static var requested: bool = true
 var effect: CompositorEffect
 var environment: WorldEnvironment
-var calibration: Resource = preload("res://resources/presentation/star_system_settings.tres")
+var calibration: Resource
 
 static func supported() -> bool:
 	return DisplayServer.get_name() != "headless" and RenderingServer.get_current_rendering_method() != "gl_compatibility" and RenderingServer.get_rendering_device() != null
 
 func attach(target: WorldEnvironment, settings: Resource = null) -> void:
-	if settings != null: calibration = settings
+	calibration = settings if settings != null else load("res://resources/presentation/star_system_settings.tres")
 	environment = target
 	if not supported(): return
 	# Load only on RenderingDevice backends; Compatibility keeps the procedural sun.
