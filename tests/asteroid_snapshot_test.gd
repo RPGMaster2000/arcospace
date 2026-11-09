@@ -23,8 +23,9 @@ func _initialize() -> void:
 	check(selected == EnvironmentData.evaluate(state, [12.0,0.0,0.0], records, 2), "Pure repeated selection")
 	check(EnvironmentData.snapshot(JSON.parse_string(JSON.stringify(selected))) == selected, "Snapshot restores exactly at wire precision")
 	check(selected.is_read_only() and selected.configuration.region.is_read_only() and selected.visual.is_read_only(), "Snapshot recursively frozen")
+	var original_position: Array = records[0].position.duplicate()
 	records[0].position = [100,0,100]
-	check(selected.configuration.position == [0.0,0.0,0.0], "Snapshot has no mutable world aliases")
+	check(selected.configuration.position == original_position, "Snapshot has no mutable world aliases")
 	check(EnvironmentData.modifier_id(EnvironmentData.evaluate(state, [], records, 2)) == 0, "Unknown location is neutral")
 	for legacy in range(8):
 		var snapshot: Dictionary = EnvironmentData.evaluate(state, [], records, 2, legacy)

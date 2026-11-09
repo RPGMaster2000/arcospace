@@ -42,6 +42,7 @@ var feedback: Node3D
 var ship: Node3D
 var objects: Dictionary = {}
 var markers: Dictionary = {}
+var selection_rings: Dictionary = {}
 var input_allowed: Callable
 var inspection_active: bool = false
 var inspection_area: Callable
@@ -195,12 +196,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	for button in markers.values(): button.queue_free()
 	objects.clear()
 	markers.clear()
+	selection_rings.clear()
 	planet_nodes.clear()
 	orbit_nodes.clear()
 	visual_root = Node3D.new()
 	visual_root.name = "GeneratedSystem"
 	world.add_child(visual_root)
-	visual_root.add_child(preload("res://scripts/presentation/star_system/asteroid_fields.gd").build(environment_instances()))
 	destination_root = Node3D.new()
 	destination_root.name = "EncounterRepresentations"
 	world.add_child(destination_root)
@@ -273,6 +274,18 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.pressed.connect(travel.bind(index))
 		add_child(button)
 		markers[index] = button
+		var ring := preload("res://scripts/presentation/star_system/selectable_ring.gd").new()
+		visual_root.add_child(ring)
+		ring.configure(float(objects[index].get_meta("radius", 0.65)), button.accent)
+		selection_rings[index] = ring
+	# Build scenery after final physical positions/scales (including defense layout).
+	var exclusions: Array = [{"position": Vector3.ZERO, "radius": 1.26 * settings.sun_core_scale}]
+	for planet in planet_nodes.values():
+		exclusions.append({"position": planet.position, "radius": float(planet.get_meta("radius")) * 1.035})
+	for index in markers:
+		var body: Node3D = objects[index]
+		exclusions.append({"position": body.position, "radius": float(body.get_meta("radius", 0.65))})
+	visual_root.add_child(preload("res://scripts/presentation/star_system/asteroid_fields.gd").build(environment_instances(), OS.has_feature("android"), exclusions))
 	if is_instance_valid(ship):
 		ship.queue_free()
 	ship = Models.ship(player_profile)
@@ -355,6 +368,7 @@ func _process(delta: float) -> void:
 					button.visible = false
 		if inspection_active and inspection_area.is_valid() and inspection_area.call().intersects(button.get_global_rect().grow(14)):
 			button.visible = false
+		selection_rings[index].sync(button, objects[index])
 		button.anchor_point = center-button.position
 		button.queue_redraw()
 	# Keep the two high-priority enemy names readable when their projections overlap.
