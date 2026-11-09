@@ -12,6 +12,7 @@ const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
+const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
@@ -128,7 +129,7 @@ func _ready() -> void:
 	environment.environment.ambient_light_color = Color("92afcf")
 	environment.environment.ambient_light_energy = settings.ambient_light_energy
 	world.add_child(environment)
-	sun_lens.attach(environment)
+	sun_lens.attach(environment, settings)
 	visibility_changed.connect(func():
 		if not is_visible_in_tree(): sun_lens.disable())
 	var light := OmniLight3D.new()
@@ -299,6 +300,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	ship = Models.ship(player_profile)
 	ship.scale = Vector3.ONE * 0.175
 	world.add_child(ship)
+	for model_root in [visual_root,destination_root,ship]:
+		Lighting.calibrate(model_root,settings,disc.position)
 	if is_instance_valid(feedback): feedback.queue_free()
 	feedback = preload("res://scripts/presentation/star_system/map_feedback.gd").new()
 	feedback.canvas = self
@@ -932,6 +935,7 @@ func tactical_focus(index: int, pursuit: bool = false, profile: Resource = null)
 		enemy = Models.ship(profile)
 		enemy.scale = Vector3.ONE*0.275
 		world.add_child(enemy)
+		Lighting.calibrate(enemy,settings,objects[-100].position)
 		tactical_temporary = true
 		enemy.position = ship.position+Vector3(-3,0,0)
 		if pursuit: enemy.rotation = ship.rotation

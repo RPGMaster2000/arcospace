@@ -1,4 +1,5 @@
 shader_type spatial;
+#include "res://shaders/star_system_lighting.gdshaderinc"
 // Low-frequency bands and continents on an opaque, normally lit sphere.
 uniform vec4 ocean_color : source_color = vec4(0.025, 0.07, 0.12, 1.0);
 uniform vec4 land_color : source_color = vec4(0.10, 0.17, 0.20, 1.0);
@@ -13,5 +14,13 @@ void fragment() {
 	AO_LIGHT_AFFECT = 0.0;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
-	EMISSION = rim_color.rgb * pow(1.0 - max(dot(NORMAL, VIEW), 0.0), 3.0) * rim_intensity;
+	if (stellar_lighting_enabled) {
+		vec2 response = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX);
+		ALBEDO *= mix(1.0 / stellar_contrast, 1.0, response.x);
+		AO *= mix(stellar_dark_fill, 1.0, response.x);
+		RIM = stellar_rim_intensity * response.y;
+		RIM_TINT = 0.65;
+	} else {
+		EMISSION = rim_color.rgb * pow(1.0 - max(dot(NORMAL, VIEW), 0.0), 3.0) * rim_intensity;
+	}
 }

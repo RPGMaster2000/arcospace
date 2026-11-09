@@ -3,11 +3,13 @@ extends RefCounted
 static var requested: bool = true
 var effect: CompositorEffect
 var environment: WorldEnvironment
+var calibration: Resource = preload("res://resources/presentation/star_system_settings.tres")
 
 static func supported() -> bool:
 	return DisplayServer.get_name() != "headless" and RenderingServer.get_current_rendering_method() != "gl_compatibility" and RenderingServer.get_rendering_device() != null
 
-func attach(target: WorldEnvironment) -> void:
+func attach(target: WorldEnvironment, settings: Resource = null) -> void:
+	if settings != null: calibration = settings
 	environment = target
 	if not supported(): return
 	# Load only on RenderingDevice backends; Compatibility keeps the procedural sun.
@@ -17,7 +19,7 @@ func attach(target: WorldEnvironment) -> void:
 	effect.access_resolved_color = true
 	effect.access_resolved_depth = true
 	effect.set("SampleCount", 20)
-	effect.set("Effect_Multiplier", 0.32)
+	effect.set("Effect_Multiplier", calibration.lens_flare_multiplier)
 	effect.set("Effect_Easing", 0.5)
 	effect.set("Anamorphic_Intensity", 7.0)
 	effect.set("Anamorphic_Stretch", 0.25)
@@ -40,12 +42,20 @@ func update(active: bool, viewport: SubViewport, camera: Camera3D, sun: Node3D, 
 	var dimensions := Vector2(viewport.size)
 	if dimensions.x <= 0 or dimensions.y <= 0: return
 	var uv: Vector2 = camera.unproject_position(sun.global_position) / dimensions
-	# Fade before the edge; the addon samples depth around the projected sun.
+	# Addon depth taps and radial sampler clamp at the border. Fade only within
+	# the final viewport sliver, and never dispatch with an offscreen source.
 	var edge: float = minf(minf(uv.x, 1.0 - uv.x), minf(uv.y, 1.0 - uv.y))
-	var fade: float = smoothstep(0.02, 0.10, edge)
+	var fade: float = edge_weight(edge, calibration.lens_edge_fade_range)
 	if fade <= 0: return
 	effect.set("sun_position", uv)
 	effect.set("sun_dir_sign", 1.0)
 	effect.set("sun_color", color)
-	effect.set("Effect_Multiplier", 0.32 * fade)
+	effect.set("Effect_Multiplier", calibration.lens_flare_multiplier * fade)
 	effect.enabled = true
+
+
+static func edge_weight(distance: float, attenuation: Vector2) -> float:
+	if distance <= 0.0: return 0.0
+	var low: float = maxf(0.0, minf(attenuation.x, attenuation.y))
+	var high: float = maxf(low + 0.0001, maxf(attenuation.x, attenuation.y))
+	return smoothstep(low, high, distance)

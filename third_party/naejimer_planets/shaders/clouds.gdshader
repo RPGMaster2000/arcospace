@@ -1,6 +1,7 @@
 // Based on: https://www.reddit.com/r/godot/comments/gxqsaj/comment/ft49hkn/?utm_source=share&utm_medium=web2x&context=3
 shader_type spatial;
 render_mode cull_back;
+#include "res://shaders/star_system_lighting.gdshaderinc"
 
 uniform sampler2D noise_texture : repeat_enable;
 uniform float speed : hint_range(0.0, 1.0) = 0.005;
@@ -13,6 +14,12 @@ void fragment() {
 	vec4 noise_2 = texture(noise_texture, fract(UV + TIME * (2.5 + fluffiness * 3.0) * speed / 10.0));
 	vec4 combined_noise = noise_1 + noise_2;
 	ALBEDO = combined_noise.rgb * brightness;
+	if (stellar_lighting_enabled) {
+		vec2 response = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX);
+		ALBEDO *= mix(1.0 / stellar_contrast, 1.0, response.x);
+		AO = mix(stellar_dark_fill, 1.0, response.x);
+		AO_LIGHT_AFFECT = 0.0;
+	}
 	ALPHA = 1.0;
 	if (combined_noise.r < threshold) {
 		ALPHA = 0.0;

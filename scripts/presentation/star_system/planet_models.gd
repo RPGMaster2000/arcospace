@@ -1,5 +1,6 @@
 extends RefCounted
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
+const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const Data = preload("res://scripts/presentation/star_system/visual_system.gd")
 const PRESETS = {
 	"rocky": preload("res://third_party/naejimer_planets/materials/no_atmosphere.tres"),
@@ -45,6 +46,7 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 		material = ShaderMaterial.new()
 		material.shader = preload("res://shaders/planet_surface.gdshader")
 		material.set_shader_parameter("land_color", Color.from_hsv(fposmod(data.material_seed*0.001,1), 0.35, 0.65))
+	Lighting.shader(material,settings)
 	body.material_override = material
 	if settings.imported_planets and settings.clouds_enabled and data.type in ["terrestrial", "frozen"]:
 		var cloud = Models.part(body, sphere(data.radius*1.015), Color.WHITE)
@@ -53,6 +55,7 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 		clouds.set_shader_parameter("noise_texture", material.get_shader_parameter("noise"))
 		clouds.set_shader_parameter("brightness", 0.65)
 		clouds.set_shader_parameter("threshold", 1.3)
+		Lighting.shader(clouds,settings)
 		cloud.material_override = clouds
 	if settings.imported_planets and settings.atmospheres_enabled and data.type not in ["rocky", "barren"]:
 		var air = Models.part(root, sphere(data.radius*1.035), Color.WHITE)
@@ -61,6 +64,7 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 		atmosphere.set_shader_parameter("alpha", 0.12)
 		atmosphere.set_shader_parameter("intensity", 1.3)
 		atmosphere.set_shader_parameter("emit", true)
+		Lighting.shader(atmosphere,settings)
 		air.material_override = atmosphere
 	return root
 
