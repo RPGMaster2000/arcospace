@@ -248,6 +248,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
 	world.get_node("SunLight").position = disc.position
 	material.set_shader_parameter("core_scale", core_scale)
+	material.set_shader_parameter("corona_spread", settings.sun_corona_spread)
+	material.set_shader_parameter("corona_strength", settings.sun_corona_strength)
+	material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
 	visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
 	material.render_priority = 10
 	disc.material_override = material

@@ -13,3 +13,9 @@ vec2 stellar_response(vec3 normal, vec3 view, vec3 vertex, mat4 view_matrix) {
 	float edge = pow(1.0 - max(dot(normalize(normal), normalize(view)), 0.0), 2.0);
 	return vec2(sunward, edge * sunward);
 }
+
+// Preserve hue/texture variation. The existing point light still determines
+// irradiance; this modest response lift is restricted to sun-facing surfaces.
+float stellar_surface_gain(float sunward, float softness) {
+	return mix(1.0 / stellar_contrast, mix(1.10, 1.06, softness), sunward);
+}

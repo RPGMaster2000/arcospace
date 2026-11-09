@@ -6,11 +6,15 @@ extends Resource
 @export_group("System lighting")
 @export_range(0.0, 1.0, 0.01) var ambient_light_energy: float = 0.28
 @export_range(1.0, 2.0, 0.1) var sun_core_scale: float = 2.0
+## Corona falloff is separate from the physical core and the lens compositor.
+@export_range(0.5, 1.0, 0.01) var sun_corona_spread: float = 0.75
+@export_range(0.0, 1.0, 0.01) var sun_corona_strength: float = 0.72
+@export_range(0.0, 1.0, 0.01) var sun_core_whitening: float = 0.38
 @export_range(0.0, 8.0, 0.1) var sunlight_energy: float = 3.2
 @export_range(32.0, 96.0, 1.0) var sunlight_range: float = 64.0
 ## Material ambient response on the hemisphere facing away from the star.
 @export_range(0.2, 1.0, 0.01) var dark_side_fill: float = 0.72
-@export_range(1.0, 2.0, 0.01) var day_night_contrast: float = 1.18
+@export_range(1.0, 2.0, 0.01) var day_night_contrast: float = 1.28
 @export_range(0.0, 0.3, 0.01) var directional_rim_intensity: float = 0.12
 @export_group("Sun lens effects")
 @export_range(0.0, 1.0, 0.01) var lens_flare_multiplier: float = 0.32

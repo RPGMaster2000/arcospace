@@ -30,8 +30,8 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 	var material: ShaderMaterial
 	if settings.imported_planets:
 		material = PRESETS[data.type].duplicate()
-		material.set_shader_parameter("minimum_roughness",0.55)
-		material.set_shader_parameter("specular_strength",0.22)
+		material.set_shader_parameter("minimum_roughness",0.72 if data.type == "gas_giant" else 0.55)
+		material.set_shader_parameter("specular_strength",0.18 if data.type == "gas_giant" else 0.26)
 		material.set_shader_parameter("rim_fill",0.12)
 		var rng = Data.random_for(data.material_seed, 0, "material")
 		material.set_shader_parameter("noise_scale", rng.randf_range(0.8, 2.3) / data.radius)
@@ -61,8 +61,10 @@ static func build(data: Dictionary, settings: Resource) -> Node3D:
 		var air = Models.part(root, sphere(data.radius*1.035), Color.WHITE)
 		var atmosphere = ShaderMaterial.new()
 		atmosphere.shader = preload("res://third_party/naejimer_planets/shaders/atmosphere.gdshader")
-		atmosphere.set_shader_parameter("alpha", 0.12)
-		atmosphere.set_shader_parameter("intensity", 1.3)
+		var dense_air: bool = data.type in ["terrestrial", "frozen", "gas_giant"]
+		atmosphere.set_shader_parameter("alpha", 0.16 if dense_air else 0.08)
+		atmosphere.set_shader_parameter("intensity", 1.55 if dense_air else 0.9)
+		atmosphere.set_shader_parameter("amount", 3.8 if data.type == "gas_giant" else 4.5)
 		atmosphere.set_shader_parameter("emit", true)
 		Lighting.shader(atmosphere,settings)
 		air.material_override = atmosphere

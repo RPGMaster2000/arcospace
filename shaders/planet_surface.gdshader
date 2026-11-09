@@ -16,7 +16,7 @@ void fragment() {
 	SPECULAR = 0.0;
 	if (stellar_lighting_enabled) {
 		vec2 response = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX);
-		ALBEDO *= mix(1.0 / stellar_contrast, 1.0, response.x);
+		ALBEDO *= stellar_surface_gain(response.x, 0.0);
 		AO *= mix(stellar_dark_fill, 1.0, response.x);
 		RIM = stellar_rim_intensity * response.y;
 		RIM_TINT = 0.65;

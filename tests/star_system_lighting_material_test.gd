@@ -26,6 +26,14 @@ func run() -> void:
 		check(surface.get_shader_parameter("stellar_position") == star,"Translated star is used by the shader")
 		check(surface.get_shader_parameter("noise") == preset.get_shader_parameter("noise"),"Existing noise and planetary variety are retained")
 		check(preset.get_shader_parameter("stellar_lighting_enabled") != true,"Other scenes' shared presets are not opted into map lighting")
+		check(surface.get_shader_parameter("minimum_roughness") == (0.72 if kind == "gas_giant" else 0.55),"Gas layers retain softer material response than rocky surfaces")
+		var atmosphere_count := 0
+		for mesh in planet.find_children("*","MeshInstance3D",true,false):
+			var air: ShaderMaterial = mesh.material_override as ShaderMaterial
+			if air == null or not air.shader.resource_path.ends_with("atmosphere.gdshader"): continue
+			atmosphere_count += 1
+			check(is_equal_approx(float(air.get_shader_parameter("alpha")),0.16 if kind in ["terrestrial","frozen","gas_giant"] else 0.08),"Existing material families retain distinct atmosphere strengths")
+		check(atmosphere_count == (0 if kind in ["rocky","barren"] else 1),"No new atmosphere shells or rocky-planet halos")
 		for index in range(1,6): check(colors[index-1] == preset.get_shader_parameter("color_%d" % index),"Preset colors are never mutated")
 		planet.free()
 	var original = load("res://scenes/ship_3d.tscn").instantiate()

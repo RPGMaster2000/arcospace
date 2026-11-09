@@ -45,6 +45,7 @@ func run() -> void:
 	for frame in range(16): await process_frame
 	map = host.star_map
 	var saved: Dictionary = Save.encode(host.state)
+	host.process_mode = Node.PROCESS_MODE_DISABLED
 	map.set_process(false)
 	map.camera.set_process(false)
 	if map.camera.motion and map.camera.motion.is_running(): map.camera.motion.kill()
@@ -98,6 +99,27 @@ func run() -> void:
 		await settle()
 		for button in map.markers.values(): button.hide()
 		await capture(fixture.label)
+	# Existing production material factory, fixed specimen and framing on both refs.
+	# Keep the star outside the close-up so night readability is judged against sky.
+	map.ship.hide()
+	frame_at(planet.position + (-toward_star * 0.55 + tangent + Vector3.UP * 0.25).normalized() * radius * 8.0,planet.position)
+	await settle()
+	for button in map.markers.values(): button.hide()
+	await capture("dark-nebula")
+	var gas_data: Dictionary = map.visual_data.planets[0].duplicate(true)
+	gas_data.type = "gas_giant"
+	gas_data.rotation = 0.0
+	var gas: Node3D = Planets.build(gas_data,map.settings)
+	gas.position = planet.position
+	map.world.add_child(gas)
+	planet.hide()
+	frame_at(gas.position + (toward_star * 0.3 + tangent + Vector3.UP * 0.35).normalized() * radius * 8.0,gas.position)
+	await settle()
+	for button in map.markers.values(): button.hide()
+	await capture("gas-giant")
+	gas.free()
+	planet.show()
+	map.ship.show()
 	map.feedback.show()
 	map.feedback.set_process(true)
 	for orbit in map.orbit_nodes.values(): orbit.show()

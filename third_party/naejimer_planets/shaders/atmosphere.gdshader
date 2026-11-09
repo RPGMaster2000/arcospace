@@ -19,11 +19,18 @@ void fragment() {
 	float sunward = 1.0;
 	if (stellar_lighting_enabled) {
 		sunward = stellar_response(NORMAL, VIEW, VERTEX, VIEW_MATRIX).x;
-		fresnel *= sunward;
+		// Existing shell only: thin directional scattering, not an opaque haze
+		// over the entire disk. A faint reflected rim retains the night silhouette.
+		float limb = pow(1.0 - max(dot(normalize(NORMAL), normalize(VIEW)), 0.0), 3.0);
+		fresnel *= mix(0.035, 1.35, sunward);
+		ALBEDO = color_1 + fresnel;
+		EMISSION = emit ? fresnel : vec3(0.0);
+		ALPHA = alpha * mix(0.18, 1.0, sunward) * mix(0.08, 1.0, limb);
+	} else {
+		if(emit) {
+			EMISSION = fresnel.rgb;
+		}
+		ALBEDO = color_1 + fresnel;
+		ALPHA = alpha;
 	}
-	if(emit) {
-		EMISSION = fresnel.rgb;
-	}
-	ALBEDO = color_1 + fresnel;
-	ALPHA = alpha * mix(0.12, 1.0, sunward);
 }
