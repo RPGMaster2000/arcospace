@@ -22,20 +22,19 @@ func run() -> void:
 	host.rules.debug_seed = 1042
 	host.rules.log_rolls = false
 	root.add_child(host)
-	# Include a generated localized field in this visual fixture even when the
-	# chosen system naturally rolls zero. Production counts remain unchanged.
-	if host.state.environmental_instances.size() == 1:
-		for seed_value in range(64):
-			var candidate: Array = Regions.generate(seed_value, 1, [])
-			if candidate.size() > 1:
-				host.state.environmental_instances.append(candidate[1])
-				break
-		host.star_map.configured_seed = -1
-		host.show_system()
 	for frame in range(12): await process_frame
 	var map = host.star_map
 	var fields: Node3D = map.visual_root.get_node("AsteroidFields")
-	check(fields.get_child_count() == host.state.environmental_instances.size() and fields.get_child_count() > 1, "Map renders belt and localized field")
+	check(fields.get_child_count() == host.state.environmental_instances.size() and fields.get_child_count() == 1, "Map renders exactly one formation")
+	check(map.selection_rings.size() == map.markers.size(), "Every selectable PoI has one world-plane ring")
+	for i in map.selection_rings:
+		var ring = map.selection_rings[i]
+		var marker = map.markers[i]
+		check(ring.rotation == Vector3.ZERO and ring.position.y < map.objects[i].position.y, "Ring lies beneath PoI on system plane")
+		marker._set_hovered(true)
+		ring.sync(marker, map.objects[i])
+		check(ring.emphasized, "Ring reuses existing hover state")
+		marker._set_hovered(false)
 	check(fields.find_children("*","CollisionObject3D",true,false).is_empty(), "Scenery has no raycast blockers")
 	var index := -1
 	for i in range(host.state.encounters.size()):
@@ -44,11 +43,40 @@ func run() -> void:
 		check(map.objects[i].position.is_equal_approx(Vector3(at[0],at[1],at[2])), "Visible marker equals authoritative evaluator location")
 		if host.state.preview_modifier(i) == 1: index = i
 	check(index >= 0, "Generated belt intersects an actual battle")
-	if DisplayServer.get_name() != "headless":
-		await RenderingServer.frame_post_draw
-		DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
-		var renderer: String = RenderingServer.get_current_rendering_method()
-		check(root.get_texture().get_image().save_png("res://.godot/testlogs/asteroid-fields-" + renderer + ".png") == OK, "Generated field screenshot captured")
+	# Rebuild the production map for each formation without combining fixtures.
+	var seen := {}
+	var anchors: Array = host.state.encounter_positions.values()
+	for seed_value in range(64):
+		var candidate: Array = Regions.generate(seed_value, 1, anchors)
+		var kind: String = candidate[0].configuration.subtype
+		if seen.has(kind): continue
+		seen[kind] = true
+		host.state.environmental_instances = candidate
+		map.configured_seed = -1
+		host.show_system()
+		for frame in range(4): await process_frame
+		var exclusions: Array = [{"position": Vector3.ZERO, "radius": 1.26 * map.settings.sun_core_scale}]
+		for planet in map.planet_nodes.values():
+			exclusions.append({"position": planet.position, "radius": float(planet.get_meta("radius")) * 1.035})
+		for i in map.markers:
+			exclusions.append({"position": map.objects[i].position, "radius": float(map.objects[i].get_meta("radius",0.65))})
+		var scenery: MultiMesh = map.visual_root.get_node("AsteroidFields").get_child(0).multimesh
+		check(scenery.instance_count > 50, "Celestial clearance retains visible " + kind)
+		if DisplayServer.get_name() != "headless":
+			for rock in range(scenery.instance_count):
+				var transform: Transform3D = scenery.get_instance_transform(rock)
+				var scale: Vector3 = transform.basis.get_scale()
+				check(preload("res://scripts/presentation/star_system/asteroid_fields.gd").clear_position(transform.origin,maxf(scale.x,maxf(scale.y,scale.z))-0.00001,exclusions), "Rendered mesh clears every celestial body: " + kind)
+			await RenderingServer.frame_post_draw
+			DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
+			var renderer: String = RenderingServer.get_current_rendering_method()
+			check(root.get_texture().get_image().save_png("res://.godot/testlogs/asteroid-" + kind + "-" + renderer + ".png") == OK, "Formation and PoI marker screenshot captured")
+		if seen.size() == 3: break
+	check(seen.size() == 3, "Production map renders all three formation types")
+	# Choose an actual contained battle in the final fixture for arena entry.
+	index = -1
+	for i in range(host.state.encounters.size()):
+		if host.state.encounters[i].kind == "battle" and host.state.preview_modifier(i) == 1: index = i
 	if index >= 0:
 		host.map_destination = index
 		host.show_battle_preview(index)

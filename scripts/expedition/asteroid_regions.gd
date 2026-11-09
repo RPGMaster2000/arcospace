@@ -2,7 +2,6 @@ extends RefCounted
 ## Scene-free generation and geometry. ExpeditionState owns the returned records.
 ## These constants affect new systems only; saves retain their compact definitions.
 const TYPE = "ASTEROID_FIELD"
-const MAX_LOCAL_FIELDS = 2
 const BELT_WIDTH = Vector2(2.6, 4.4)
 const BELT_RADIUS = Vector2(7.0, 21.0)
 const SYSTEM_RADIUS = 27.0
@@ -11,56 +10,47 @@ const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 static func generate(run_seed: int, number: int, battle_positions: Array) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d:%d:asteroid-regions:v1" % [run_seed, number])
-	var result: Array = []
+	var item: Dictionary = _record(run_seed, number, 0, rng)
+	var kind: int = rng.randi_range(0, 2)
 	var angle: float = rng.randf_range(0, TAU)
-	var ratio: float = rng.randf_range(0.84, 1.0)
-	var radius: float = rng.randf_range(BELT_RADIUS.x, BELT_RADIUS.y)
-	# Use an existing physical anchor, never move/create an encounter to obtain an effect.
-	# Defense attackers cross the belt while approaching home; exploration gets a
-	# belt intersecting one of its static battle locations whenever within bounds.
+	var anchor := Vector2.RIGHT * rng.randf_range(8.0, 18.0)
 	if not battle_positions.is_empty():
 		var at: Array = battle_positions[rng.randi_range(0, battle_positions.size() - 1)]
-		var local := Vector2(float(at[0]), float(at[2])).rotated(-angle)
-		radius = clampf(Vector2(local.x, local.y / ratio).length(), BELT_RADIUS.x, BELT_RADIUS.y)
-	var width: float = rng.randf_range(BELT_WIDTH.x, BELT_WIDTH.y)
-	var belt: Dictionary = _record(run_seed, number, 0, rng)
-	belt.region = {"shape": "belt", "inner": radius - width * 0.5,
-		"outer": radius + width * 0.5, "ratio": ratio, "angle": angle,
-		"half_height": rng.randf_range(1.0, 1.6)}
-	result.append(belt)
-	var count: int = rng.randi_range(0, MAX_LOCAL_FIELDS)
-	for index in range(count):
-		var item: Dictionary = _record(run_seed, number, index + 1, rng)
-		var extent: float = rng.randf_range(2.3, 3.8)
-		var center := Vector2.ZERO
-		var placed := false
-		for attempt in range(32):
-			var heading: float = rng.randf_range(0, TAU)
-			var distance: float = rng.randf_range(4.5, SYSTEM_RADIUS - extent * 1.8)
-			center = Vector2(cos(heading), sin(heading)) * distance
-			var local := center.rotated(-angle)
-			var radial: float = Vector2(local.x, local.y / ratio).length()
-			if radial > float(belt.region.inner) - extent * 1.6 and radial < float(belt.region.outer) + extent * 1.6: continue
-			var clear := true
-			for other in result.slice(1):
-				if center.distance_to(Vector2(other.position[0], other.position[2])) < extent * 3.3: clear = false
-			if clear:
-				placed = true
-				break
-		if not placed: continue
-		item.position = [center.x, 0.0, center.y]
+		anchor = Vector2(float(at[0]), float(at[2]))
+	else:
+		anchor = anchor.rotated(rng.randf_range(0, TAU))
+	if kind == 0:
+		var ratio: float = rng.randf_range(0.84, 1.0)
+		var local := anchor.rotated(-angle)
+		var radius: float = clampf(Vector2(local.x, local.y / ratio).length(), BELT_RADIUS.x, BELT_RADIUS.y)
+		var width: float = rng.randf_range(BELT_WIDTH.x, BELT_WIDTH.y)
+		item.region = {"shape": "belt", "inner": radius - width * 0.5,
+			"outer": radius + width * 0.5, "ratio": ratio, "angle": angle,
+			"half_height": rng.randf_range(0.45, 0.9)}
+		item.configuration.subtype = "belt"
+		# Orbital arcs are visual thinning only; authoritative annulus stays intact.
+		item.visual["arc_fraction"] = rng.randf_range(0.55, 1.0) if rng.randf() < 0.6 else 1.0
+	else:
+		item.configuration.subtype = "concentration" if kind == 1 else "extended"
+		item.position = [anchor.x, 0.0, anchor.y]
+		# Tangential collision remnants, curved along the local orbital direction.
+		angle = anchor.angle() + PI * 0.5 + rng.randf_range(-0.35, 0.35)
+		var extent: float = rng.randf_range(1.8, 3.0) if kind == 1 else rng.randf_range(3.6, 5.2)
+		# Bound the debris at outer anchors without relocating the formation.
+		extent = minf(extent, maxf(1.4, (SYSTEM_RADIUS - anchor.length()) / 2.0))
 		var pockets: Array = []
-		for pocket in range(3):
-			# Overlapping offset ellipses make an elongated/curved concentration,
-			# not a miniature annulus. Same union drives containment and rendering.
-			pockets.append({"offset": [(pocket - 1) * extent * 0.65, rng.randf_range(-0.5, 0.5) * extent],
-				"axes": [extent * rng.randf_range(0.65, 1.0), extent * rng.randf_range(0.35, 0.65)],
-				"angle": rng.randf_range(-0.5, 0.5)})
-		item.region = {"shape": "pockets", "angle": rng.randf_range(0, TAU),
-			"half_height": rng.randf_range(0.9, 1.5), "pockets": pockets}
-		result.append(item)
+		var count: int = 3 if kind == 1 else 7
+		var curve: float = rng.randf_range(0.15, 0.4)
+		for pocket in range(count):
+			var t: float = (float(pocket) / (count - 1) - 0.5) * 2.0
+			pockets.append({"offset": [t * extent * 1.4, t * t * extent * curve],
+				"axes": [extent * rng.randf_range(0.6, 0.85), extent * rng.randf_range(0.25, 0.45)],
+				"angle": t * curve})
+		item.region = {"shape": "pockets", "angle": angle,
+			"half_height": rng.randf_range(0.4, 0.85), "pockets": pockets}
+	item.generation.version = 2
 	# Match persisted precision before first use, not only after resuming.
-	return JSON.parse_string(JSON.stringify(result))
+	return JSON.parse_string(JSON.stringify([item]))
 
 static func _record(run_seed: int, number: int, index: int, rng: RandomNumberGenerator) -> Dictionary:
 	return {"id": "asteroids-%d-%d" % [number, index], "type": TYPE,
@@ -112,12 +102,14 @@ static func sample(item: Dictionary, rng: RandomNumberGenerator) -> Vector3:
 	var region: Dictionary = item.region
 	var point := Vector2.ZERO
 	if region.shape == "belt":
-		var angle: float = rng.randf_range(0, TAU)
+		var fraction: float = float(item.visual.get("arc_fraction", 1.0))
+		var start: float = float(item.visual.get("gap_angle", 0.0))
+		var angle: float = start + rng.randf_range(0, TAU * fraction)
 		# Sparse sectors, never an invisible gameplay hole.
 		for attempt in range(8):
 			var density: float = 0.18 + 0.82 * pow(absf(sin((angle - float(item.visual.get("gap_angle", 0.0))) * 1.5)), 0.6)
 			if rng.randf() <= density: break
-			angle = rng.randf_range(0, TAU)
+			angle = start + rng.randf_range(0, TAU * fraction)
 		var radius: float = sqrt(rng.randf_range(pow(float(region.inner), 2), pow(float(region.outer), 2)))
 		point = Vector2(cos(angle), sin(angle) * float(region.ratio)) * radius
 	else:
@@ -133,6 +125,7 @@ static func sample(item: Dictionary, rng: RandomNumberGenerator) -> Vector3:
 static func valid_visual(value: Variant) -> bool:
 	if not value is Dictionary or not value.get("seed") is String or not value.seed.is_valid_int(): return false
 	if not _number(value.get("density"), 0.5, 1.5) or not _number(value.get("gap_angle"), -TAU, TAU): return false
+	if value.has("arc_fraction") and not _number(value.arc_fraction, 0.5, 1.0): return false
 	if not value.get("tint") is Array or value.tint.size() != 3: return false
 	for channel in value.tint:
 		if not _number(channel, 0.0, 1.0): return false

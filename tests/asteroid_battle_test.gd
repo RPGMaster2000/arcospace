@@ -81,6 +81,7 @@ func run() -> void:
 				check(state.battle_location(0) == state.Defense.wire(unit.position), "Defense coordinate follows authoritative simulation")
 			var item: Dictionary = Regions.generate(11, 1, [])[0]
 			item.region = {"shape": "belt", "inner": 8.0, "outer": 12.0, "ratio": 1.0, "angle": 0.0, "half_height": 1.0}
+			item.position = [0.0, 0.0, 0.0]
 			item.id = "b"
 			var other: Dictionary = item.duplicate(true)
 			other.id = "a"
@@ -95,8 +96,20 @@ func run() -> void:
 				var snapshot: Dictionary = EnvironmentData.evaluate(state, [10,0,0], [item], 0, legacy)
 				check(snapshot.type == EnvironmentData.NONE and EnvironmentData.modifier_id(snapshot) == legacy, "Explicit legacy effect takes precedence without stacking")
 			var invalid: Dictionary = encoded.duplicate(true)
-			invalid.environmental_instances[0].region.inner = -1.0
+			invalid.environmental_instances[0].region.half_height = -1.0
 			check(Save.new().decode(invalid, rules) == null, "Invalid region geometry rejected at save boundary")
+			var phase_two: Dictionary = encoded.duplicate(true)
+			var old_belt: Dictionary = item.duplicate(true)
+			old_belt.generation.version = 1
+			old_belt.visual.erase("arc_fraction")
+			var old_cluster: Dictionary = old_belt.duplicate(true)
+			old_cluster.id = "legacy-cluster"
+			old_cluster.position = [5.0,0.0,6.0]
+			old_cluster.region = {"shape":"pockets", "angle":0.0, "half_height":1.0,
+				"pockets":[{"offset":[0.0,0.0], "axes":[2.0,1.0], "angle":0.0}]}
+			phase_two.environmental_instances = [old_belt,old_cluster]
+			var phase_two_state = Save.new().decode(JSON.parse_string(JSON.stringify(phase_two)), rules)
+			check(phase_two_state != null and phase_two_state.environmental_instances == phase_two.environmental_instances, "Existing version-1 multiple formations restore unchanged without arc coverage")
 			var old: Dictionary = encoded.duplicate(true)
 			old.erase("environmental_instances")
 			old.erase("encounter_positions")
