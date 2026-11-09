@@ -1,5 +1,8 @@
 # Environmental battles — Phase 2: physical asteroid fields
 
+Generation and rendering refinements in [Phase 2.1](asteroid_poi_polish.md) supersede
+the original formation counts and mesh scale described below.
+
 ## Baseline and architectural assessment
 
 Inspected main `f7ca94cc7a10402cc6c58dd5e09dc07b0be1a585` (merged PR #48),

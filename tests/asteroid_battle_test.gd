@@ -108,7 +108,8 @@ func run() -> void:
 			old_cluster.region = {"shape":"pockets", "angle":0.0, "half_height":1.0,
 				"pockets":[{"offset":[0.0,0.0], "axes":[2.0,1.0], "angle":0.0}]}
 			phase_two.environmental_instances = [old_belt,old_cluster]
-			var phase_two_state = Save.new().decode(JSON.parse_string(JSON.stringify(phase_two)), rules)
+			phase_two = JSON.parse_string(JSON.stringify(phase_two))
+			var phase_two_state = Save.new().decode(phase_two, rules)
 			check(phase_two_state != null and phase_two_state.environmental_instances == phase_two.environmental_instances, "Existing version-1 multiple formations restore unchanged without arc coverage")
 			var old: Dictionary = encoded.duplicate(true)
 			old.erase("environmental_instances")
