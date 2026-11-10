@@ -215,6 +215,8 @@ def main(argv=None):
     save()
     if args.workers == 1:
         for script in scripts:
+            summary["running"] = script.stem
+            save()
             record(run_test(script))
     else:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:

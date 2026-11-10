@@ -106,6 +106,14 @@ class RunnerTests(unittest.TestCase):
                          ["expedition_milestones_test", "a_test"])
         self.assertEqual([r["status"] for r in summary["runs"]], ["passed", "failed"])
 
+    def test_rejects_unknown_duplicate_and_invalid_shards(self):
+        self.project()
+        for arguments in [("--script", "missing"), ("--script", "a_test", "--script", "a_test"),
+                          ("--shard-index", "0"), ("--shard-count", "0")]:
+            with self.subTest(arguments=arguments), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+                self.invoke(*arguments)
+            self.assertEqual(error.exception.code, 2)
+
     def test_rejects_zero_workers(self):
         self.project()
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:

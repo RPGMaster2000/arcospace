@@ -37,6 +37,27 @@ class IntegrityTests(unittest.TestCase):
         for changed in bad:
             with self.subTest(changed=changed), self.assertRaises(ValueError): validate(changed, 'headless', names)
 
+    def test_atomic_partial_summary_reports_incomplete(self):
+        import json
+        import time
+        from regression_support import write_summary
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/"summary.json"
+            summary = dict(complete=False, runs=[dict(name="finished", status="passed")], running="next")
+            write_summary(path, summary, time.monotonic())
+            restored = json.loads(path.read_text())
+            self.assertFalse(restored['complete'])
+            self.assertEqual(restored['running'], 'next')
+            self.assertEqual(len(restored['runs']), 1)
+            self.assertFalse(path.with_suffix('.json.tmp').exists())
+
+    def test_headless_skip_messages_are_not_rendered_completion(self):
+        import re
+        for name, message in [("orbit_visibility_test", "Orbit visibility: skipped without rendering device"),
+                              ("space_parallax_test", "Space parallax pixel checks: skipped without a rendering device")]:
+            self.assertIsNotNone(re.search(completion_for(name, headless=True), message))
+            self.assertIsNone(re.search(completion_for(name), message))
+
     def test_completion_required_and_crash_after_completion_fails(self):
         with tempfile.TemporaryDirectory() as directory:
             for code, status in [("pass", 'failed'), ("print('Godot Engine')", 'failed'),

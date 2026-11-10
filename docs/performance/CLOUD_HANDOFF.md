@@ -1,3 +1,16 @@
+# Active Cloud implementation
+
+The user authorized resuming this checkpoint. PR #56 is now open from
+`codex/regression-suite-performance`; do not merge automatically.
+
+The checkpoint below is retained as historical context, not current status.
+Current implementation adds two-host sharding per suite, aggregate exact-coverage
+validation, strict completion evidence, timing summaries, a docs import exclusion
+and a pure signature-cache optimization. Runner contracts pass locally. Full CI
+and before/after timing measurements remain required; see the PR and audit.
+
+---
+
 # Regression performance audit — paused checkpoint
 
 Paused at the user's explicit request on 2026-11-10 (Europe/Stockholm).

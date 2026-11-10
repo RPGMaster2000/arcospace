@@ -11,14 +11,24 @@ func check(ok: bool, message: String):
  if not ok:
   failures+=1
   push_error(message)
+var fixture: Node
+var initial_layout := true
+const Wait = preload("res://tests/regression_wait.gd")
 func settle():
- for i in range(24): await process_frame
+ # Preserve initial scene/shader warmup; optimize repeated layout-only refreshes.
+ if initial_layout:
+  for i in range(24): await process_frame
+  initial_layout=false
+ var controls: Array = [fixture.screen.sidebar, fixture.scroll]
+ controls.append_array(fixture.screen.overview_hud.panels)
+ check(await Wait.layout(self, controls), "HUD layout reaches stable geometry")
 func run():
  var host=load("res://scenes/expedition.tscn").instantiate()
  host.persistence_enabled=false
  host.rules=host.rules.duplicate()
  host.rules.debug_seed=1042
  host.rules.log_rolls=false
+ fixture=host
  root.add_child(host)
  var battle := -1
  var poi := -1
@@ -133,5 +143,6 @@ func run():
   check(hud.panels[0].get_global_rect().end.x<hud.panels[3].global_position.x,"Stacked economy modifiers clear FTL")
  check(host.state.rng.state==rng,"HUD and camera leave gameplay RNG unchanged")
  host.free()
+ Wait.report()
  print("Unified HUD: %d checks, %d failures"%[checks,failures])
  quit(1 if failures else 0)
