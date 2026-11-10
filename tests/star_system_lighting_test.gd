@@ -129,6 +129,7 @@ func run() -> void:
 	await settle()
 	await capture("asteroids-pois")
 	check(map.visual_root.get_node("AsteroidFields").get_child_count() == 1 and map.selection_rings.size() == map.markers.size(),"Asteroid formation and PoI rings survive calibration")
+	check(map.objects[-100].material_override.get_shader_parameter("map_corona_visibility") == true,"Map corona is gated by its real projected source")
 	check(not map.world.get_node("SunLight").shadow_enabled,"No star shadow maps")
 	if not baseline:
 		check(map.sun_lens.effect == null or map.sun_lens.effect.get("SampleCount") == 20,"Android lens sample budget stays at twenty")
