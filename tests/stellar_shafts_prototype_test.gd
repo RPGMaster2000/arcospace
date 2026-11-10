@@ -32,7 +32,7 @@ func run() -> void:
 	var shafts = Shafts.new()
 	map.world.add_child(shafts)
 	shafts.configure(map.objects[-100],2.52,[planet],Color(0.8,0.85,1.0))
-	var views := [{"name":"centered","at":Vector3(4,15,26),"target":Vector3(4,0,0)},
+	var views := [{"name":"centered","at":Vector3(0,15,26),"target":Vector3.ZERO},
 		{"name":"offscreen","at":Vector3(8,3,7),"target":Vector3(8,0,0)},
 		{"name":"oblique","at":Vector3(18,12,5),"target":Vector3(12,0,0)},
 		{"name":"backlit","at":Vector3(22,3,2),"target":Vector3(10,0,0)}]
@@ -41,6 +41,8 @@ func run() -> void:
 		map.camera.frame(view.at,view.target,0.0,&"prototype")
 		map.sun_lens.update(true,map.viewport,map.camera,map.objects[-100],map.visual_data.star_color)
 		check(shafts.records[0].volume.global_transform == initial,"Camera motion does not rotate world-space shafts")
+		if view.name == "centered":
+			check(map.camera.unproject_position(map.objects[-100].position).distance_to(Vector2(map.viewport.size)*0.5) < 1.0,"Prototype source is exactly centered")
 		if view.name == "offscreen":
 			var sun_right: Vector2 = map.camera.unproject_position(map.objects[-100].position + map.camera.basis.x*2.52)
 			check(sun_right.x < 0.0,"Physical sun disc is completely offscreen in the planet fixture")
