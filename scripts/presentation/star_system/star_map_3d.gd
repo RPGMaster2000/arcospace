@@ -299,6 +299,19 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var body: Node3D = objects[index]
 		exclusions.append({"position": body.position, "radius": float(body.get_meta("radius", 0.65))})
 	visual_root.add_child(preload("res://scripts/presentation/star_system/asteroid_fields.gd").build(environment_instances(), OS.has_feature("android"), exclusions))
+	if settings.stellar_shafts_enabled:
+		var shafts := preload("res://scripts/presentation/star_system/stellar_shafts.gd").new()
+		visual_root.add_child(shafts)
+		shafts.strength = settings.stellar_dust_density
+		var major: Array = planet_nodes.values()
+		for entry in entries:
+			if entry.get("model_kind", "") == "gas_giant" and objects.has(entry.index) and not major.has(objects[entry.index]):
+				objects[entry.index].set_meta("stellar_medium","gas_giant")
+				major.append(objects[entry.index])
+		major.sort_custom(func(a,b): return float(a.get_meta("radius")) > float(b.get_meta("radius")))
+		for p in visual_data.planets:
+			planet_nodes[p.index].set_meta("stellar_medium",p.type)
+		shafts.configure(disc,SolarVisual.Solar.CORE_RADIUS_PER_SCALE * core_scale,major,visual_data.star_color)
 	if is_instance_valid(ship):
 		ship.queue_free()
 	ship = Models.ship(player_profile)

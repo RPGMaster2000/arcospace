@@ -80,3 +80,8 @@ extends Resource
 @export_group("System introduction")
 @export_range(4.0, 6.0, 0.1) var introduction_duration: float = 5.0
 @export_range(1.05, 1.4, 0.01) var introduction_margin: float = 1.18
+
+
+@export_group("World-space stellar dust")
+@export var stellar_shafts_enabled := true
+@export_range(0.0,0.08,0.005) var stellar_dust_density := 0.035
