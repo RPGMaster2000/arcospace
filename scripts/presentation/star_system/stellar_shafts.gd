@@ -7,7 +7,7 @@ var material: ShaderMaterial
 var shared_mesh := BoxMesh.new()
 var records: Array = []
 var strength := 0.007
-var field_radius := 66.0
+var field_radius := 56.0
 var half_height := 14.0
 var field: MeshInstance3D
 var last_star := Vector3.INF
@@ -64,7 +64,7 @@ func _update_geometry() -> void:
 		record.axis = relative.normalized()
 		table.append(Vector4(relative.x,relative.y,relative.z,record.radius))
 		axes.append(Vector4(record.axis.x,record.axis.y,record.axis.z,(record.radius-source_radius)/distance))
-		reach = maxf(reach,(distance+record.radius)*1.65)
+		reach = maxf(reach,(distance+record.radius)*1.40)
 	var count: int = table.size()
 	while table.size()<6:
 		table.append(Vector4.ZERO)

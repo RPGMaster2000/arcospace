@@ -1,5 +1,6 @@
 extends SceneTree
 ## Identical camera fixtures capture the baseline and the calibrated map.
+const Fixture = preload("res://tests/stellar_scattering_fixture.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 var failures := 0
@@ -24,10 +25,10 @@ func capture(label: String) -> void:
 	var folder := "res://.godot/testlogs/stellar-shafts"
 	DirAccess.make_dir_recursive_absolute(folder)
 	for enabled in [false,true]:
-		shafts.visible = enabled
+		Fixture.apply(shafts,enabled)
 		for frame in range(8): await process_frame
 		await RenderingServer.frame_post_draw
-		check(root.get_texture().get_image().save_png(folder + "/" + label + ("-after-" if enabled else "-before-") + RenderingServer.get_current_rendering_method() + ".png") == OK,"Matched production volume capture saved")
+		check(root.get_texture().get_image().save_png(folder + "/" + label + ("-after-" if enabled else "-before-") + RenderingServer.get_current_rendering_method() + ".png") == OK,"Matched PR54/revised tuning capture saved")
 	shafts.show()
 func frame_at(at: Vector3, target: Vector3) -> void:
 	map.camera.frame(at,target,0.0,&"lighting_fixture")
@@ -134,6 +135,17 @@ func run() -> void:
 	map.camera.fov = map.settings.field_of_view
 	await settle()
 	await capture("asteroids-pois")
+	# A real selectable outer PoI, with the same geometry for PR54/revised tuning.
+	var outer_poi: Node3D
+	var scattering = map.visual_root.get_node("StellarShafts")
+	for index in map.markers:
+		if not scattering.bodies.has(map.objects[index]): continue
+		if outer_poi == null or map.objects[index].position.length() > outer_poi.position.length(): outer_poi = map.objects[index]
+	check(outer_poi != null,"Outer-PoI fixture contains a selectable celestial shadow caster")
+	var away: Vector3 = (outer_poi.position-map.objects[-100].position).normalized()
+	frame_at(outer_poi.position-away*6.0+Vector3.UP.cross(away)*16.0+Vector3.UP*10.0,outer_poi.position+away*3.0)
+	await settle()
+	await capture("outer-poi")
 	check(map.visual_root.get_node("AsteroidFields").get_child_count() == 1 and map.selection_rings.size() == map.markers.size(),"Asteroid formation and PoI rings survive calibration")
 	if not baseline: check(map.objects[-100].material_override.get_shader_parameter("map_corona_visibility") == true,"Map corona is gated by its real projected source")
 	check(not map.world.get_node("SunLight").shadow_enabled,"No star shadow maps")

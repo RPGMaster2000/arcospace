@@ -307,7 +307,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var navigation_radius := 0.0
 		for corner in [bounds.position,bounds.end,Vector2(bounds.position.x,bounds.end.y),Vector2(bounds.end.x,bounds.position.y)]:
 			navigation_radius = maxf(navigation_radius,corner.length())
-		shafts.field_radius = maxf(50.0,navigation_radius*1.65)
+		shafts.field_radius = maxf(44.0,navigation_radius*1.40)
 		var major: Array = planet_nodes.values()
 		for entry in entries:
 			if entry.get("model_kind", "") == "gas_giant" and objects.has(entry.index) and not major.has(objects[entry.index]):
