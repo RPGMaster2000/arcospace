@@ -1,13 +1,15 @@
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never, depth_test_disabled, fog_disabled;
 uniform sampler2D scene_depth : hint_depth_texture, repeat_disable, filter_nearest;
-uniform vec3 field_extent = vec3(66.0,14.0,66.0);
+uniform vec3 field_extent = vec3(56.0,14.0,56.0);
 uniform vec4 dust_color : source_color = vec4(0.32,0.41,0.50,1.0);
 uniform float density = 0.007;
 uniform int body_count = 0;
 uniform vec4 bodies[6]; // xyz: star-relative center; w: physical radius
 uniform vec4 axes[6]; // xyz: direction away from star; w: umbra slope
 uniform float star_radius = 2.52;
+// Umbra, penumbra and maximum removed fraction; retain illuminated dust in shadows.
+uniform vec3 shadow_strength = vec3(0.95,1.20,0.90);
 varying vec3 camera_local;
 varying vec3 surface_local;
 varying mat4 world_to_field;
@@ -90,7 +92,7 @@ void fragment() {
 		float soft=shadow(o,d,bodies[i],axes[i].xyz,penumbra_slope,radius,reach,lo,hi);
 		float z=max(0.0,dot(o+d*(lo+hi)*0.5-bodies[i].xyz,axes[i].xyz));
 		float coverage=radius/max(radius+penumbra_slope*z,radius);
-		blocked=max(blocked,min(illuminated,core*0.78+soft*0.50*coverage));
+		blocked=max(blocked,min(illuminated*shadow_strength.z,core*shadow_strength.x+soft*shadow_strength.y*coverage));
 	}
 	vec3 p=o+d*(lo+hi)*0.5;
 	// Stable low-frequency WORLD structure, not a camera-relative sky overlay.

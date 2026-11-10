@@ -1,4 +1,5 @@
 extends SceneTree
+const Fixture = preload("res://tests/stellar_scattering_fixture.gd")
 const Shafts = preload("res://scripts/presentation/star_system/stellar_shafts.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 var failures := 0
@@ -56,29 +57,55 @@ func run() -> void:
 			var sun_right: Vector2 = map.camera.unproject_position(map.objects[-100].position + map.camera.basis.x*2.52)
 			check(sun_right.x < 0.0,"Physical sun disc is completely offscreen in the planet fixture")
 		for enabled in [false,true]:
-			shafts.visible = enabled
+			Fixture.apply(shafts,enabled)
 			for frame in range(8): await process_frame
 			if DisplayServer.get_name() != "headless":
 				await RenderingServer.frame_post_draw
 				DirAccess.make_dir_recursive_absolute("res://.godot/testlogs/shafts-prototype")
 				root.get_texture().get_image().save_png("res://.godot/testlogs/shafts-prototype/"+view.name+("-after-" if enabled else "-before-")+RenderingServer.get_current_rendering_method()+".png")
 	if DisplayServer.get_name() != "headless":
-		# Compare exactly the same outer-field pixels with and without occluders.
-		var shadowed: Image = map.viewport.get_texture().get_image()
-		shafts.material.set_shader_parameter("body_count",0)
+		var metrics := []
+		for revised in [false,true]:
+			Fixture.apply(shafts,revised)
+			shafts.material.set_shader_parameter("body_count",2)
+			for frame in range(8): await process_frame
+			await RenderingServer.frame_post_draw
+			var shadowed: Image = map.viewport.get_texture().get_image()
+			shafts.material.set_shader_parameter("body_count",0)
+			for frame in range(8): await process_frame
+			await RenderingServer.frame_post_draw
+			var clear: Image = map.viewport.get_texture().get_image()
+			var point := Vector3(34,0,0)
+			var lit: float = Fixture.patch(map,clear,point)
+			var blocked: float = Fixture.patch(map,shadowed,point)
+			metrics.append({"lit":lit,"shadow":blocked,"contrast":(lit-blocked)/lit})
+			check(lit > 0.02 and blocked < lit-0.001,"Outermost offscreen-sun corridor remains illuminated and visibly shadowed")
+			check(blocked > lit*0.35,"Corridor retains scattered light rather than becoming an opaque cutout")
+		print("Outer-field PR54/revised metrics: "+JSON.stringify(metrics))
+		check(metrics[1].contrast > metrics[0].contrast*1.3,"Revised outer corridor has materially stronger relative contrast than PR54")
+		check(metrics[1].lit < metrics[0].lit*0.98 and metrics[1].lit > metrics[0].lit*0.65,"Outer medium gently dims without collapsing into darkness")
+		Fixture.apply(shafts,true)
+		# Identical translated cameras compare inner and outer unoccluded medium.
+		map.camera.frame(Vector3(9,10,18),Vector3(10,0,0),0.0,&"inner_falloff")
+		var inner_values := []
+		for revised in [false,true]:
+			Fixture.apply(shafts,revised)
+			for frame in range(8): await process_frame
+			await RenderingServer.frame_post_draw
+			inner_values.append(Fixture.patch(map,map.viewport.get_texture().get_image(),Vector3(14,0,0)))
+		var inner: float = inner_values[1]
+		print("PR54/revised inner medium: "+JSON.stringify(inner_values))
+		check(metrics[1].lit/inner < metrics[0].lit/inner_values[0]*0.99,"Revised radial falloff dims outer light more than inner light")
+		check(metrics[1].lit < inner*0.95 and metrics[1].lit > inner*0.45,"Outer system is dimmer than inner system while retaining readable light")
+		print("Inner/outer medium luminance: %f / %f" % [inner,metrics[1].lit])
+		map.camera.frame(Vector3(45,10,18),Vector3(46,0,0),0.0,&"beyond_playable_rim")
 		for frame in range(8): await process_frame
 		await RenderingServer.frame_post_draw
-		var clear: Image = map.viewport.get_texture().get_image()
-		var point: Vector2i = Vector2i(map.camera.unproject_position(Vector3(34,0,0)))
-		var blocked := 0.0
-		var lit := 0.0
-		for y in range(-4,5):
-			for x in range(-4,5):
-				blocked += shadowed.get_pixelv(point+Vector2i(x,y)).get_luminance()/81.0
-				lit += clear.get_pixelv(point+Vector2i(x,y)).get_luminance()/81.0
-		print("Outer-field luminance: illuminated=%f shadowed=%f" % [lit,blocked])
-		check(lit > 0.02 and blocked < lit-0.001,"Outermost offscreen-sun corridor darkens a persistently illuminated medium")
+		var beyond: float = Fixture.patch(map,map.viewport.get_texture().get_image(),Vector3(50,0,0))
+		check(beyond < metrics[1].lit*0.75,"Scattering becomes less prominent beyond meaningful gameplay space")
+		print("Beyond-rim medium luminance: %f" % beyond)
 		shafts.material.set_shader_parameter("body_count",2)
+
 	var mesh: Mesh = shafts.records[0].volume.mesh
 	map.camera.frame(Vector3(13,10,11),Vector3(10,0,0),0.2,&"prototype_motion")
 	for frame in range(40):
