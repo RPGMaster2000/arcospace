@@ -6,9 +6,11 @@ The renderer must be selected explicitly in CI; Mobile uses Vulkan, never GL fal
 import argparse
 import json
 import os
+import time
 from pathlib import Path
 
 from run_regressions import positive_seconds, run_process
+from regression_support import completion_for, markdown, select_shard, write_summary
 
 # One selection shared by local verification and CI. These are presentation checks,
 # rather than all rule simulations running a second time through a renderer.
@@ -55,21 +57,31 @@ def main(argv=None):
     parser.add_argument("--skip-import", action="store_true", help="Use an already imported checkout")
     parser.add_argument("--script", action="append", choices=COMPATIBILITY,
                         help="Optional focused subset of the same registered suite")
+    parser.add_argument("--shard-index", type=int, default=1)
+    parser.add_argument("--shard-count", type=int, default=1)
     args = parser.parse_args(argv)
     project = args.project.resolve()
-    names = args.script or SUITES[args.renderer]
+    if args.script and set(args.script) - set(SUITES[args.renderer]):
+        parser.error("focused tests must belong to the selected renderer")
+    try:
+        names = select_shard(args.script or SUITES[args.renderer], args.renderer, args.shard_index, args.shard_count)
+    except ValueError as error:
+        parser.error(str(error))
     for name in names:
         if not (project / "tests" / (name + ".gd")).is_file():
             parser.error("Missing rendered test: " + name)
     results = args.results.resolve()
     results.mkdir(parents=True, exist_ok=True)
     (project / ".godot" / "testlogs").mkdir(parents=True, exist_ok=True)
-    summary = {"renderer": args.renderer, "complete": False, "runs": [], "running": None}
+    started = time.monotonic()
+    summary = {"suite": args.renderer, "renderer": args.renderer, "complete": False,
+               "selected": names, "focused": bool(args.script), "shard_index": args.shard_index,
+               "shard_count": args.shard_count, "setup_seconds": float(os.environ.get("REGRESSION_SETUP_SECONDS", 0)),
+               "runs": [], "running": None}
 
     def save():
-        temporary = results / "summary.json.tmp"
-        temporary.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-        temporary.replace(results / "summary.json")
+        write_summary(results / "summary.json", summary, started)
+        (results / "timing.md").write_text(markdown(summary), encoding="utf-8")
 
     save()
     if not args.skip_import:
@@ -89,7 +101,7 @@ def main(argv=None):
         save()
         result = run_process(command(args.godot, project, args.renderer, name),
                              results / (name + ".log"),
-                             TIMEOUTS.get(name, args.timeout))
+                             TIMEOUTS.get(name, args.timeout), completion_pattern=completion_for(name))
         result["name"] = name
         summary["runs"].append(result)
         summary["running"] = None

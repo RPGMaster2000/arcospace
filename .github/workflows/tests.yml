@@ -10,7 +10,11 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  tests:
+  headless-shard:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -27,21 +31,25 @@ jobs:
       - name: Test regression runner
         run: python3 -m unittest discover -s tools -p 'test_*.py' -v
       - name: Import and run all regression scripts
-        run: python3 tools/run_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --workers 3
+        run: python3 tools/run_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --workers 2 --shard-index ${{ matrix.shard }} --shard-count 2
+      - name: Publish shard timings
+        if: always()
+        run: find test-results -name timing.md -exec cat {} \; >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: godot-test-results
+          name: headless-shard-${{ matrix.shard }}
           path: test-results/
 
 
-  rendered-ui:
+  rendered-shard:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         renderer: [gl_compatibility, mobile]
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v4
       - name: Install Godot and software renderers
@@ -65,8 +73,9 @@ jobs:
           if [ "$RENDERER" = mobile ]; then
             for icd in /usr/share/vulkan/icd.d/*lvp*; do export VK_ICD_FILENAMES="$icd"; done
           fi
-          xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/run_rendered_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --renderer "$RENDERER" --results "test-results/rendered-$RENDERER"
+          xvfb-run -a -s "-screen 0 1920x1080x24" python3 tools/run_rendered_regressions.py --godot Godot_v4.7.2-stable_linux.x86_64 --renderer "$RENDERER" --results "test-results/rendered-$RENDERER" --shard-index ${{ matrix.shard }} --shard-count 2
       - name: Check lens effects from exported pack
+        if: matrix.shard == 1
         shell: bash
         env:
           RENDERER: ${{ matrix.renderer }}
@@ -82,13 +91,52 @@ jobs:
           timeout 120 xvfb-run -a -s "-screen 0 1920x1080x24" "$GODOT" --display-driver x11 --rendering-method "$RENDERER" --audio-driver Dummy --main-pack "$RUNNER_TEMP/lens.pck" --script res://tests/star_system_lens_effects_test.gd -- "$RENDERER" > test-results/lens-packed.log 2>&1 || status=$?
           cat test-results/lens-packed.log
           if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' test-results/lens-export.log test-results/lens-packed.log; then exit 1; fi
+      - name: Publish shard timings
+        if: always()
+        run: find test-results -name timing.md -exec cat {} \; >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: rendered-${{ matrix.renderer }}-results
+          name: rendered-${{ matrix.renderer }}-shard-${{ matrix.shard }}
           path: |
             test-results/
             .godot/testlogs/
+
+  tests:
+    if: always()
+    needs: headless-shard
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: headless-shard-*
+          path: shard-results
+      - name: Validate complete headless coverage
+        run: |
+          python3 tools/check_regression_matrix.py --suite headless --results shard-results > timing.md
+          cat timing.md >> "$GITHUB_STEP_SUMMARY"
+          test '${{ needs.headless-shard.result }}' = success
+
+  rendered-ui:
+    if: always()
+    needs: rendered-shard
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        renderer: [gl_compatibility, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rendered-${{ matrix.renderer }}-shard-*
+          path: shard-results
+      - name: Validate complete rendered coverage
+        run: |
+          python3 tools/check_regression_matrix.py --suite ${{ matrix.renderer }} --results shard-results > timing.md
+          cat timing.md >> "$GITHUB_STEP_SUMMARY"
+          test '${{ needs.rendered-shard.result }}' = success
 
   exported-startup:
     runs-on: ubuntu-24.04
@@ -140,6 +188,9 @@ jobs:
             if [ "$status" -ne 0 ] || grep -Eq 'SCRIPT ERROR|ERROR:|[1-9][0-9]* failures' "test-results/models-$mode.log"; then exit 1; fi
           done
           cp -r .godot/testlogs test-results/ship-model-screenshots
+      - name: Publish shard timings
+        if: always()
+        run: find test-results -name timing.md -exec cat {} \; >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

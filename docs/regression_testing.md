@@ -77,3 +77,36 @@ bounds, except Power Allocation (300 seconds for its statistical sampling and
 all-ship/viewport UI matrix on software rendering). The combined regression job
 has a 20-minute bound. Exported-startup validation remains a separate job. Lifecycle ownership
 investigation and splitting headless/rendered jobs remain future work.
+
+
+## Performance runner and CI shards
+
+The full CI matrix uses two independent hosts for each of headless, GL Compatibility
+and Mobile Vulkan. Headless uses two isolated processes per host; each renderer
+remains sequential on its own host. Every shard imports once. The static historical
+cost table balances work deterministically and only affects order/membership of
+shards; it cannot remove a discovered test. Update estimates from measured runs,
+not by changing assertions or dropping expensive cases.
+
+Use `--script <test_stem>` (repeatable) for focused validation. Both runners accept
+`--shard-index 1 --shard-count 2`; run every index for a complete suite. Focused
+runs cannot satisfy the full CI aggregate validator. `tools/check_regression_matrix.py`
+requires complete, disjoint selections matching source discovery, successful runs
+and completion messages for every script. Existing aggregate check names remain.
+Exported-pack lens checks run once per renderer; source/export startup remains an
+independent required job. CI retains per-shard logs and screenshot artifacts.
+
+Every suite records `summary.json` atomically and writes `timing.md`, published to
+Actions summaries. Times distinguish import, test-process sum, wall time, first
+output, completion and post-completion overhead. The first output includes launch
+and early initialization; it is not a precise engine-startup measurement. HUD
+layout metrics are aggregate nested timings, not additional disjoint CPU costs.
+Missing completion messages, diagnostics, crashes, timeouts and inherited open
+stdout fail the run. POSIX timeout cleanup kills the whole process group. Windows
+uses taskkill `/T`; an already-exited parent whose descendant retains stdout remains
+a cleanup limitation, but lingering stdout is always a failed run. Windows cleanup
+has not been exercised in this Linux environment.
+
+`docs/.gdignore` excludes documentation screenshots from resource import. Source
+FileAccess reports/JSON baselines remain on disk; export/startup tests verify packed
+runtime resources. Documentation images remain committed and readable in GitHub.

@@ -1,0 +1,5652 @@
+[
+  {
+    "run": 42509083295,
+    "job": "rendered-ui (gl_compatibility)",
+    "id": 128818000737,
+    "start": 1794161735977,
+    "end": 1794162601104,
+    "job_seconds": 865.127,
+    "test_sum": 806.9710000000001,
+    "test_wall": 807.189,
+    "tests": [
+      {
+        "name": "asteroid_render_test",
+        "seconds": 11.441,
+        "end": 1794161785796
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 4.926,
+        "end": 1794161790722
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 5.236,
+        "end": 1794161795959
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 9.609,
+        "end": 1794161805583
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 27.234,
+        "end": 1794161832818
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 16.345,
+        "end": 1794161849164
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 4.734,
+        "end": 1794161853905
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 4.736,
+        "end": 1794161858642
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 3.631,
+        "end": 1794161862273
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 4.58,
+        "end": 1794161866854
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 35.016,
+        "end": 1794161901871
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 6.636,
+        "end": 1794161908508
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 9.101,
+        "end": 1794161917610
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 198.851,
+        "end": 1794162116463
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 8.192,
+        "end": 1794162124655
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 3.174,
+        "end": 1794162127831
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 44.79,
+        "end": 1794162172622
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 37.475,
+        "end": 1794162210098
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 5.689,
+        "end": 1794162215788
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.468,
+        "end": 1794162217404
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 12.629,
+        "end": 1794162230035
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 15.497,
+        "end": 1794162245533
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 20.071,
+        "end": 1794162265605
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 14.378,
+        "end": 1794162279984
+      },
+      {
+        "name": "enemy_models_visual_test",
+        "seconds": 3.275,
+        "end": 1794162283260
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 19.88,
+        "end": 1794162303141
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 26.222,
+        "end": 1794162329365
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 10.354,
+        "end": 1794162339720
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 83.672,
+        "end": 1794162423393
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 28.861,
+        "end": 1794162452259
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 42.501,
+        "end": 1794162494761
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 8.705,
+        "end": 1794162503468
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 16.736,
+        "end": 1794162520205
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 5.132,
+        "end": 1794162525339
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 1.318,
+        "end": 1794162526659
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.825,
+        "end": 1794162531485
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 10.617,
+        "end": 1794162542104
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 17.286,
+        "end": 1794162559392
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 8.208,
+        "end": 1794162567601
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.668,
+        "end": 1794162569271
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 12.272,
+        "end": 1794162581544
+      }
+    ]
+  },
+  {
+    "run": 42509083295,
+    "job": "exported-startup",
+    "id": 128818000995,
+    "start": 1794161735687,
+    "end": 1794161852025,
+    "job_seconds": 116.338,
+    "test_sum": 0,
+    "test_wall": 0,
+    "tests": []
+  },
+  {
+    "run": 42509083295,
+    "job": "tests",
+    "id": 128818001049,
+    "start": 1794161735831,
+    "end": 1794162199191,
+    "job_seconds": 463.36,
+    "test_sum": 1208.37,
+    "test_wall": 455.607,
+    "import": 26.741,
+    "tests": [
+      {
+        "name": "import",
+        "seconds": 26.741,
+        "end": 1794161768618
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "seconds": 0.47,
+        "end": 1794161769091
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "seconds": 0.972,
+        "end": 1794161769593
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "seconds": 1.519,
+        "end": 1794161770612
+      },
+      {
+        "name": "ai_turn_test",
+        "seconds": 1.42,
+        "end": 1794161771013
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 7.94,
+        "end": 1794161778550
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 9.995,
+        "end": 1794161778616
+      },
+      {
+        "name": "approach_requirement_test",
+        "seconds": 0.767,
+        "end": 1794161779317
+      },
+      {
+        "name": "asteroid_battle_test",
+        "seconds": 0.817,
+        "end": 1794161779433
+      },
+      {
+        "name": "asteroid_regions_test",
+        "seconds": 0.467,
+        "end": 1794161779900
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 2.421,
+        "end": 1794161781738
+      },
+      {
+        "name": "asteroid_snapshot_test",
+        "seconds": 0.316,
+        "end": 1794161782054
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 2.371,
+        "end": 1794161782271
+      },
+      {
+        "name": "battle_effects_test",
+        "seconds": 6.28,
+        "end": 1794161788334
+      },
+      {
+        "name": "battle_hud_test",
+        "seconds": 1.619,
+        "end": 1794161789953
+      },
+      {
+        "name": "android_layout_test",
+        "seconds": 20.668,
+        "end": 1794161791681
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 4.782,
+        "end": 1794161794735
+      },
+      {
+        "name": "board_3d_test",
+        "seconds": 5.579,
+        "end": 1794161800314
+      },
+      {
+        "name": "card_balance_test",
+        "seconds": 0.316,
+        "end": 1794161800629
+      },
+      {
+        "name": "card_description_copy_test",
+        "seconds": 0.266,
+        "end": 1794161800897
+      },
+      {
+        "name": "card_effect_contract_test",
+        "seconds": 0.368,
+        "end": 1794161801264
+      },
+      {
+        "name": "card_effect_parity_test",
+        "seconds": 1.22,
+        "end": 1794161802484
+      },
+      {
+        "name": "card_expansion_test",
+        "seconds": 1.771,
+        "end": 1794161804256
+      },
+      {
+        "name": "card_icon_cue_test",
+        "seconds": 0.266,
+        "end": 1794161804521
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 13.697,
+        "end": 1794161805377
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "seconds": 23.271,
+        "end": 1794161805543
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "seconds": 3.024,
+        "end": 1794161808403
+      },
+      {
+        "name": "card_motion_test",
+        "seconds": 3.576,
+        "end": 1794161811978
+      },
+      {
+        "name": "card_management_test",
+        "seconds": 7.035,
+        "end": 1794161812578
+      },
+      {
+        "name": "card_targets_test",
+        "seconds": 0.366,
+        "end": 1794161812944
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.8,
+        "end": 1794161817322
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "seconds": 3.775,
+        "end": 1794161821097
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 16.804,
+        "end": 1794161837901
+      },
+      {
+        "name": "card_tier_test",
+        "seconds": 26.628,
+        "end": 1794161839572
+      },
+      {
+        "name": "chasedown_roll_policy_test",
+        "seconds": 0.767,
+        "end": 1794161840340
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "seconds": 3.125,
+        "end": 1794161841026
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "seconds": 1.72,
+        "end": 1794161842746
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 3.826,
+        "end": 1794161846572
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "seconds": 2.472,
+        "end": 1794161849044
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "seconds": 1.119,
+        "end": 1794161850163
+      },
+      {
+        "name": "cinematic_title_test",
+        "seconds": 1.069,
+        "end": 1794161851232
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 2.27,
+        "end": 1794161853503
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 14.5,
+        "end": 1794161854840
+      },
+      {
+        "name": "color_grading_test",
+        "seconds": 2.724,
+        "end": 1794161857565
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 7.284,
+        "end": 1794161860786
+      },
+      {
+        "name": "combat_execution_test",
+        "seconds": 1.068,
+        "end": 1794161861854
+      },
+      {
+        "name": "combat_forecast_test",
+        "seconds": 1.119,
+        "end": 1794161862974
+      },
+      {
+        "name": "combat_modifier_test",
+        "seconds": 2.823,
+        "end": 1794161865796
+      },
+      {
+        "name": "combat_state_test",
+        "seconds": 0.467,
+        "end": 1794161866264
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 9.439,
+        "end": 1794161867004
+      },
+      {
+        "name": "combat_trace_test",
+        "seconds": 4.775,
+        "end": 1794161871039
+      },
+      {
+        "name": "deck_determinism_test",
+        "seconds": 6.985,
+        "end": 1794161878024
+      },
+      {
+        "name": "deck_ownership_test",
+        "seconds": 0.667,
+        "end": 1794161878691
+      },
+      {
+        "name": "card_progression_test",
+        "seconds": 69.025,
+        "end": 1794161881003
+      },
+      {
+        "name": "discard_test",
+        "seconds": 2.271,
+        "end": 1794161883276
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 5.228,
+        "end": 1794161883920
+      },
+      {
+        "name": "encounter_continue_test",
+        "seconds": 2.172,
+        "end": 1794161885446
+      },
+      {
+        "name": "environmental_entry_test",
+        "seconds": 2.472,
+        "end": 1794161887918
+      },
+      {
+        "name": "enemy_roster_test",
+        "seconds": 6.334,
+        "end": 1794161890254
+      },
+      {
+        "name": "expedition_boundary_test",
+        "seconds": 0.968,
+        "end": 1794161891223
+      },
+      {
+        "name": "environmental_foundation_test",
+        "seconds": 4.377,
+        "end": 1794161892295
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "seconds": 7.084,
+        "end": 1794161898306
+      },
+      {
+        "name": "expedition_persistence_session_test",
+        "seconds": 0.567,
+        "end": 1794161898874
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 31.91,
+        "end": 1794161898914
+      },
+      {
+        "name": "expedition_presentation_composition_test",
+        "seconds": 0.768,
+        "end": 1794161899643
+      },
+      {
+        "name": "expedition_save_test",
+        "seconds": 0.768,
+        "end": 1794161900411
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 2.722,
+        "end": 1794161901636
+      },
+      {
+        "name": "expedition_ui_test",
+        "seconds": 3.173,
+        "end": 1794161904809
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "seconds": 12.9,
+        "end": 1794161905195
+      },
+      {
+        "name": "expedition_test",
+        "seconds": 5.429,
+        "end": 1794161905840
+      },
+      {
+        "name": "field_repairs_test",
+        "seconds": 3.176,
+        "end": 1794161907986
+      },
+      {
+        "name": "ftl_test",
+        "seconds": 1.62,
+        "end": 1794161909607
+      },
+      {
+        "name": "ftl_visual_test",
+        "seconds": 1.621,
+        "end": 1794161911230
+      },
+      {
+        "name": "game_reference_test",
+        "seconds": 3.878,
+        "end": 1794161915104
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 15.863,
+        "end": 1794161921058
+      },
+      {
+        "name": "hull_capacity_test",
+        "seconds": 1.62,
+        "end": 1794161922678
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 7.685,
+        "end": 1794161922790
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.578,
+        "end": 1794161927257
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.987,
+        "end": 1794161928778
+      },
+      {
+        "name": "metagame_save_test",
+        "seconds": 0.671,
+        "end": 1794161929449
+      },
+      {
+        "name": "ftl_progression_test",
+        "seconds": 23.94,
+        "end": 1794161929780
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "seconds": 3.125,
+        "end": 1794161930382
+      },
+      {
+        "name": "music_test",
+        "seconds": 1.27,
+        "end": 1794161931652
+      },
+      {
+        "name": "navigation_leg_test",
+        "seconds": 0.568,
+        "end": 1794161932220
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "seconds": 2.575,
+        "end": 1794161932355
+      },
+      {
+        "name": "opening_balance_test",
+        "seconds": 1.57,
+        "end": 1794161933926
+      },
+      {
+        "name": "navigation_movement_test",
+        "seconds": 2.073,
+        "end": 1794161934293
+      },
+      {
+        "name": "orbit_visibility_test",
+        "seconds": 0.468,
+        "end": 1794161934393
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 2.422,
+        "end": 1794161936715
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 9.039,
+        "end": 1794161938488
+      },
+      {
+        "name": "player_hand_test",
+        "seconds": 5.678,
+        "end": 1794161942393
+      },
+      {
+        "name": "poi_iconography_test",
+        "seconds": 0.668,
+        "end": 1794161943061
+      },
+      {
+        "name": "planet_presentation_test",
+        "seconds": 9.387,
+        "end": 1794161943780
+      },
+      {
+        "name": "poi_confirmation_test",
+        "seconds": 8.834,
+        "end": 1794161947324
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 2.02,
+        "end": 1794161949343
+      },
+      {
+        "name": "reward_feedback_test",
+        "seconds": 5.378,
+        "end": 1794161954722
+      },
+      {
+        "name": "salvage_test",
+        "seconds": 3.228,
+        "end": 1794161957950
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 12.098,
+        "end": 1794161970048
+      },
+      {
+        "name": "sfx_test",
+        "seconds": 6.936,
+        "end": 1794161976984
+      },
+      {
+        "name": "shield_fit_test",
+        "seconds": 15.546,
+        "end": 1794161992530
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 5.177,
+        "end": 1794161997708
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 9.085,
+        "end": 1794162006794
+      },
+      {
+        "name": "ship_variants_test",
+        "seconds": 12.494,
+        "end": 1794162019287
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "seconds": 0.567,
+        "end": 1794162019855
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 77.646,
+        "end": 1794162021427
+      },
+      {
+        "name": "space_parallax_test",
+        "seconds": 0.418,
+        "end": 1794162021844
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 0.969,
+        "end": 1794162022817
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 4.432,
+        "end": 1794162024286
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.822,
+        "end": 1794162027109
+      },
+      {
+        "name": "star_map_readability_test",
+        "seconds": 4.53,
+        "end": 1794162027345
+      },
+      {
+        "name": "star_system_composition_test",
+        "seconds": 4.027,
+        "end": 1794162031370
+      },
+      {
+        "name": "star_system_feedback_test",
+        "seconds": 3.272,
+        "end": 1794162034644
+      },
+      {
+        "name": "star_system_3d_test",
+        "seconds": 8.538,
+        "end": 1794162035648
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 0.87,
+        "end": 1794162036518
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "seconds": 2.272,
+        "end": 1794162038789
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "seconds": 8.388,
+        "end": 1794162043032
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 3.372,
+        "end": 1794162046404
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "seconds": 8.033,
+        "end": 1794162046824
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "seconds": 111.644,
+        "end": 1794162054706
+      },
+      {
+        "name": "star_system_resume_test",
+        "seconds": 9.037,
+        "end": 1794162055442
+      },
+      {
+        "name": "starfront_defense_test",
+        "seconds": 0.769,
+        "end": 1794162055475
+      },
+      {
+        "name": "starfront_interception_test",
+        "seconds": 2.176,
+        "end": 1794162057650
+      },
+      {
+        "name": "starfront_persistence_test",
+        "seconds": 2.071,
+        "end": 1794162059722
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 8.941,
+        "end": 1794162064383
+      },
+      {
+        "name": "starfront_quality_test",
+        "seconds": 0.568,
+        "end": 1794162064951
+      },
+      {
+        "name": "star_system_transition_test",
+        "seconds": 18.967,
+        "end": 1794162065790
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 3.579,
+        "end": 1794162068529
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 5.079,
+        "end": 1794162070870
+      },
+      {
+        "name": "status_bar_test",
+        "seconds": 7.835,
+        "end": 1794162078705
+      },
+      {
+        "name": "status_presentation_test",
+        "seconds": 2.723,
+        "end": 1794162081428
+      },
+      {
+        "name": "storm_family_test",
+        "seconds": 1.019,
+        "end": 1794162082446
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "seconds": 0.367,
+        "end": 1794162082814
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 24.541,
+        "end": 1794162084263
+      },
+      {
+        "name": "storm_presentation_test",
+        "seconds": 1.821,
+        "end": 1794162084635
+      },
+      {
+        "name": "system_pressure_test",
+        "seconds": 0.267,
+        "end": 1794162084902
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 3.174,
+        "end": 1794162088078
+      },
+      {
+        "name": "tactical_cards_test",
+        "seconds": 0.468,
+        "end": 1794162088545
+      },
+      {
+        "name": "system_exploration_generation_test",
+        "seconds": 4.778,
+        "end": 1794162089042
+      },
+      {
+        "name": "status_bar_stress_test",
+        "seconds": 27.19,
+        "end": 1794162095720
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 2.973,
+        "end": 1794162098693
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "seconds": 2.622,
+        "end": 1794162101315
+      },
+      {
+        "name": "tactical_preview_test",
+        "seconds": 16.909,
+        "end": 1794162105951
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 26.435,
+        "end": 1794162114982
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "seconds": 19.166,
+        "end": 1794162125117
+      },
+      {
+        "name": "ui_feedback_test",
+        "seconds": 2.172,
+        "end": 1794162127289
+      },
+      {
+        "name": "ui_overhaul_test",
+        "seconds": 15.859,
+        "end": 1794162143147
+      },
+      {
+        "name": "travel_battle_test",
+        "seconds": 31.798,
+        "end": 1794162146779
+      },
+      {
+        "name": "victory_music_test",
+        "seconds": 3.074,
+        "end": 1794162149853
+      },
+      {
+        "name": "victory_rewards_test",
+        "seconds": 2.622,
+        "end": 1794162152475
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "seconds": 2.723,
+        "end": 1794162155198
+      },
+      {
+        "name": "visual_system_test",
+        "seconds": 1.521,
+        "end": 1794162156719
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 16.907,
+        "end": 1794162160054
+      },
+      {
+        "name": "trading_outpost_test",
+        "seconds": 96.168,
+        "end": 1794162197484
+      }
+    ]
+  },
+  {
+    "run": 42509083295,
+    "job": "rendered-ui (mobile)",
+    "id": 128818001169,
+    "start": 1794161735526,
+    "end": 1794162082566,
+    "job_seconds": 347.04,
+    "test_sum": 286.71700000000004,
+    "test_wall": 286.728,
+    "tests": [
+      {
+        "name": "asteroid_render_test",
+        "seconds": 27.703,
+        "end": 1794161802261
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 18.736,
+        "end": 1794161820998
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 17.854,
+        "end": 1794161838853
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 43.184,
+        "end": 1794161882038
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 17.097,
+        "end": 1794161899136
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 11.304,
+        "end": 1794161910441
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 16.829,
+        "end": 1794161927271
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 19.049,
+        "end": 1794161946321
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 25.491,
+        "end": 1794161971813
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 24.619,
+        "end": 1794161996433
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 39.097,
+        "end": 1794162035531
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 25.754,
+        "end": 1794162061286
+      }
+    ]
+  },
+  {
+    "run": 42631736701,
+    "job": "exported-startup",
+    "id": 129209759134,
+    "start": 1794233340541,
+    "end": 1794233472185,
+    "job_seconds": 131.644,
+    "test_sum": 0,
+    "test_wall": 0,
+    "tests": []
+  },
+  {
+    "run": 42631736701,
+    "job": "rendered-ui (mobile)",
+    "id": 129209759468,
+    "start": 1794233339549,
+    "end": 1794233701974,
+    "job_seconds": 362.425,
+    "test_sum": 298.74199999999996,
+    "test_wall": 298.755,
+    "tests": [
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 41.664,
+        "end": 1794233425453
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 35.357,
+        "end": 1794233460811
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 10.817,
+        "end": 1794233471629
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 11.214,
+        "end": 1794233482844
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 16.192,
+        "end": 1794233499036
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 39.891,
+        "end": 1794233538929
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 12.929,
+        "end": 1794233551859
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 8.902,
+        "end": 1794233560762
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 13.087,
+        "end": 1794233573850
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 15.588,
+        "end": 1794233589438
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 21.017,
+        "end": 1794233610456
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 17.853,
+        "end": 1794233628310
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 32.067,
+        "end": 1794233660379
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 22.164,
+        "end": 1794233682544
+      }
+    ]
+  },
+  {
+    "run": 42631736701,
+    "job": "rendered-ui (gl_compatibility)",
+    "id": 129209759540,
+    "start": 1794233340706,
+    "end": 1794234420334,
+    "job_seconds": 1079.628,
+    "test_sum": 991.0290000000001,
+    "test_wall": 991.094,
+    "tests": [
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 21.036,
+        "end": 1794233422891
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 5.138,
+        "end": 1794233428031
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 5.678,
+        "end": 1794233433710
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 13.072,
+        "end": 1794233446783
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 3.374,
+        "end": 1794233450159
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 5.037,
+        "end": 1794233455199
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 10.107,
+        "end": 1794233465307
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 28.519,
+        "end": 1794233493827
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 19.803,
+        "end": 1794233513632
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 5.536,
+        "end": 1794233519169
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 5.537,
+        "end": 1794233524707
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 4.328,
+        "end": 1794233529036
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 5.633,
+        "end": 1794233534670
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 44.775,
+        "end": 1794233579446
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 7.735,
+        "end": 1794233587182
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 10.002,
+        "end": 1794233597186
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 259.487,
+        "end": 1794233856674
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 10.254,
+        "end": 1794233866930
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 3.628,
+        "end": 1794233870560
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 48.22,
+        "end": 1794233918781
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 42.3,
+        "end": 1794233961082
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 6.69,
+        "end": 1794233967773
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.668,
+        "end": 1794233969443
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 16.045,
+        "end": 1794233985489
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 17.021,
+        "end": 1794234002511
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 25.596,
+        "end": 1794234028108
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 15.741,
+        "end": 1794234043851
+      },
+      {
+        "name": "enemy_models_visual_test",
+        "seconds": 3.827,
+        "end": 1794234047680
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 24.795,
+        "end": 1794234072476
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 32.037,
+        "end": 1794234104515
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 13.974,
+        "end": 1794234118490
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 98.967,
+        "end": 1794234217458
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 30.045,
+        "end": 1794234247506
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 47.077,
+        "end": 1794234294585
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 10.317,
+        "end": 1794234304904
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 19.408,
+        "end": 1794234324314
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 5.89,
+        "end": 1794234330206
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 1.518,
+        "end": 1794234331725
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 5.432,
+        "end": 1794234337159
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 11.614,
+        "end": 1794234348775
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 18.144,
+        "end": 1794234366920
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 10.427,
+        "end": 1794234377349
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.969,
+        "end": 1794234379320
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 13.628,
+        "end": 1794234392949
+      }
+    ]
+  },
+  {
+    "run": 42631736701,
+    "job": "tests",
+    "id": 129209759722,
+    "start": 1794233339803,
+    "end": 1794233794707,
+    "job_seconds": 454.904,
+    "test_sum": 1153.0229999999997,
+    "test_wall": 447.09,
+    "import": 33.85,
+    "tests": [
+      {
+        "name": "import",
+        "seconds": 33.85,
+        "end": 1794233379709
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "seconds": 0.77,
+        "end": 1794233380483
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "seconds": 0.77,
+        "end": 1794233380484
+      },
+      {
+        "name": "ai_turn_test",
+        "seconds": 0.87,
+        "end": 1794233381352
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "seconds": 1.522,
+        "end": 1794233382004
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 7.832,
+        "end": 1794233389184
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 9.686,
+        "end": 1794233389398
+      },
+      {
+        "name": "approach_requirement_test",
+        "seconds": 0.666,
+        "end": 1794233389851
+      },
+      {
+        "name": "asteroid_battle_test",
+        "seconds": 0.666,
+        "end": 1794233390065
+      },
+      {
+        "name": "asteroid_regions_test",
+        "seconds": 0.466,
+        "end": 1794233390531
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 2.371,
+        "end": 1794233392221
+      },
+      {
+        "name": "asteroid_snapshot_test",
+        "seconds": 0.266,
+        "end": 1794233392487
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 2.271,
+        "end": 1794233392802
+      },
+      {
+        "name": "battle_effects_test",
+        "seconds": 6.178,
+        "end": 1794233398665
+      },
+      {
+        "name": "battle_hud_test",
+        "seconds": 1.418,
+        "end": 1794233400083
+      },
+      {
+        "name": "android_layout_test",
+        "seconds": 19.258,
+        "end": 1794233401262
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 4.273,
+        "end": 1794233404356
+      },
+      {
+        "name": "board_3d_test",
+        "seconds": 5.426,
+        "end": 1794233409782
+      },
+      {
+        "name": "card_balance_test",
+        "seconds": 0.266,
+        "end": 1794233410048
+      },
+      {
+        "name": "card_description_copy_test",
+        "seconds": 0.265,
+        "end": 1794233410314
+      },
+      {
+        "name": "card_effect_contract_test",
+        "seconds": 0.366,
+        "end": 1794233410680
+      },
+      {
+        "name": "card_effect_parity_test",
+        "seconds": 1.218,
+        "end": 1794233411898
+      },
+      {
+        "name": "card_expansion_test",
+        "seconds": 1.568,
+        "end": 1794233413466
+      },
+      {
+        "name": "card_icon_cue_test",
+        "seconds": 0.316,
+        "end": 1794233413782
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 13.54,
+        "end": 1794233414801
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "seconds": 23.157,
+        "end": 1794233415959
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "seconds": 2.621,
+        "end": 1794233417422
+      },
+      {
+        "name": "card_motion_test",
+        "seconds": 3.472,
+        "end": 1794233420894
+      },
+      {
+        "name": "card_management_test",
+        "seconds": 6.529,
+        "end": 1794233422488
+      },
+      {
+        "name": "card_targets_test",
+        "seconds": 0.417,
+        "end": 1794233422905
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.49,
+        "end": 1794233426273
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "seconds": 3.775,
+        "end": 1794233430048
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 16.6,
+        "end": 1794233446648
+      },
+      {
+        "name": "card_tier_test",
+        "seconds": 24.366,
+        "end": 1794233447270
+      },
+      {
+        "name": "chasedown_roll_policy_test",
+        "seconds": 0.667,
+        "end": 1794233447938
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "seconds": 3.123,
+        "end": 1794233449771
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "seconds": 1.419,
+        "end": 1794233451190
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 3.473,
+        "end": 1794233454663
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "seconds": 2.17,
+        "end": 1794233456834
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "seconds": 1.018,
+        "end": 1794233457851
+      },
+      {
+        "name": "cinematic_title_test",
+        "seconds": 1.018,
+        "end": 1794233458870
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 1.97,
+        "end": 1794233460839
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 14.503,
+        "end": 1794233462441
+      },
+      {
+        "name": "color_grading_test",
+        "seconds": 2.421,
+        "end": 1794233464862
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 6.979,
+        "end": 1794233467819
+      },
+      {
+        "name": "combat_execution_test",
+        "seconds": 0.967,
+        "end": 1794233468786
+      },
+      {
+        "name": "combat_forecast_test",
+        "seconds": 1.018,
+        "end": 1794233469805
+      },
+      {
+        "name": "combat_modifier_test",
+        "seconds": 2.52,
+        "end": 1794233472325
+      },
+      {
+        "name": "combat_state_test",
+        "seconds": 0.467,
+        "end": 1794233472793
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 9.235,
+        "end": 1794233474097
+      },
+      {
+        "name": "combat_trace_test",
+        "seconds": 4.374,
+        "end": 1794233477167
+      },
+      {
+        "name": "deck_determinism_test",
+        "seconds": 6.327,
+        "end": 1794233483494
+      },
+      {
+        "name": "deck_ownership_test",
+        "seconds": 0.567,
+        "end": 1794233484061
+      },
+      {
+        "name": "card_progression_test",
+        "seconds": 63.401,
+        "end": 1794233484296
+      },
+      {
+        "name": "discard_test",
+        "seconds": 1.77,
+        "end": 1794233486066
+      },
+      {
+        "name": "encounter_continue_test",
+        "seconds": 1.87,
+        "end": 1794233487936
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 4.877,
+        "end": 1794233488938
+      },
+      {
+        "name": "environmental_entry_test",
+        "seconds": 2.171,
+        "end": 1794233491108
+      },
+      {
+        "name": "enemy_roster_test",
+        "seconds": 5.479,
+        "end": 1794233493414
+      },
+      {
+        "name": "expedition_boundary_test",
+        "seconds": 0.868,
+        "end": 1794233494283
+      },
+      {
+        "name": "environmental_foundation_test",
+        "seconds": 4.175,
+        "end": 1794233495283
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "seconds": 6.229,
+        "end": 1794233500512
+      },
+      {
+        "name": "expedition_persistence_session_test",
+        "seconds": 0.467,
+        "end": 1794233500978
+      },
+      {
+        "name": "expedition_presentation_composition_test",
+        "seconds": 0.667,
+        "end": 1794233501645
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 2.321,
+        "end": 1794233503967
+      },
+      {
+        "name": "expedition_save_test",
+        "seconds": 0.768,
+        "end": 1794233504735
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 31.83,
+        "end": 1794233505927
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "seconds": 12.545,
+        "end": 1794233507828
+      },
+      {
+        "name": "expedition_ui_test",
+        "seconds": 3.024,
+        "end": 1794233508951
+      },
+      {
+        "name": "expedition_test",
+        "seconds": 5.128,
+        "end": 1794233509863
+      },
+      {
+        "name": "field_repairs_test",
+        "seconds": 3.024,
+        "end": 1794233510852
+      },
+      {
+        "name": "ftl_test",
+        "seconds": 1.42,
+        "end": 1794233512273
+      },
+      {
+        "name": "ftl_visual_test",
+        "seconds": 1.419,
+        "end": 1794233513691
+      },
+      {
+        "name": "game_reference_test",
+        "seconds": 3.473,
+        "end": 1794233517165
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 15.296,
+        "end": 1794233524247
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 7.481,
+        "end": 1794233524646
+      },
+      {
+        "name": "hull_capacity_test",
+        "seconds": 1.869,
+        "end": 1794233526117
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.526,
+        "end": 1794233529173
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "seconds": 2.621,
+        "end": 1794233531794
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.679,
+        "end": 1794233531796
+      },
+      {
+        "name": "metagame_save_test",
+        "seconds": 0.573,
+        "end": 1794233532367
+      },
+      {
+        "name": "ftl_progression_test",
+        "seconds": 23.015,
+        "end": 1794233532879
+      },
+      {
+        "name": "music_test",
+        "seconds": 1.32,
+        "end": 1794233534199
+      },
+      {
+        "name": "navigation_leg_test",
+        "seconds": 0.467,
+        "end": 1794233534665
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "seconds": 2.473,
+        "end": 1794233534839
+      },
+      {
+        "name": "opening_balance_test",
+        "seconds": 1.419,
+        "end": 1794233536259
+      },
+      {
+        "name": "navigation_movement_test",
+        "seconds": 1.869,
+        "end": 1794233536535
+      },
+      {
+        "name": "orbit_visibility_test",
+        "seconds": 0.467,
+        "end": 1794233536725
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 2.17,
+        "end": 1794233538705
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 9.186,
+        "end": 1794233540982
+      },
+      {
+        "name": "player_hand_test",
+        "seconds": 4.925,
+        "end": 1794233543631
+      },
+      {
+        "name": "poi_iconography_test",
+        "seconds": 0.667,
+        "end": 1794233544298
+      },
+      {
+        "name": "planet_presentation_test",
+        "seconds": 9.333,
+        "end": 1794233546059
+      },
+      {
+        "name": "poi_confirmation_test",
+        "seconds": 8.432,
+        "end": 1794233549416
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.92,
+        "end": 1794233551336
+      },
+      {
+        "name": "reward_feedback_test",
+        "seconds": 5.077,
+        "end": 1794233556413
+      },
+      {
+        "name": "salvage_test",
+        "seconds": 3.123,
+        "end": 1794233559537
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 11.692,
+        "end": 1794233571229
+      },
+      {
+        "name": "sfx_test",
+        "seconds": 6.583,
+        "end": 1794233577812
+      },
+      {
+        "name": "shield_fit_test",
+        "seconds": 14.204,
+        "end": 1794233592016
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 4.625,
+        "end": 1794233596642
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 6.481,
+        "end": 1794233603122
+      },
+      {
+        "name": "ship_variants_test",
+        "seconds": 10.089,
+        "end": 1794233613212
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "seconds": 0.467,
+        "end": 1794233613679
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 69.659,
+        "end": 1794233615719
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 4.125,
+        "end": 1794233617805
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 3.026,
+        "end": 1794233618744
+      },
+      {
+        "name": "solar_regions_test",
+        "seconds": 1.069,
+        "end": 1794233618874
+      },
+      {
+        "name": "space_parallax_test",
+        "seconds": 0.418,
+        "end": 1794233619293
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.27,
+        "end": 1794233620562
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 3.578,
+        "end": 1794233622322
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.621,
+        "end": 1794233624943
+      },
+      {
+        "name": "star_map_readability_test",
+        "seconds": 4.476,
+        "end": 1794233625039
+      },
+      {
+        "name": "star_system_composition_test",
+        "seconds": 3.727,
+        "end": 1794233628766
+      },
+      {
+        "name": "star_system_feedback_test",
+        "seconds": 3.173,
+        "end": 1794233631939
+      },
+      {
+        "name": "star_system_3d_test",
+        "seconds": 7.682,
+        "end": 1794233632626
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 0.769,
+        "end": 1794233633395
+      },
+      {
+        "name": "star_system_lighting_material_test",
+        "seconds": 0.469,
+        "end": 1794233633863
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 2.521,
+        "end": 1794233636385
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "seconds": 1.971,
+        "end": 1794233638356
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "seconds": 8.036,
+        "end": 1794233639975
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 3.227,
+        "end": 1794233643202
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "seconds": 7.934,
+        "end": 1794233646289
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "seconds": 102.792,
+        "end": 1794233647091
+      },
+      {
+        "name": "starfront_defense_test",
+        "seconds": 0.769,
+        "end": 1794233647860
+      },
+      {
+        "name": "star_system_resume_test",
+        "seconds": 8.232,
+        "end": 1794233651434
+      },
+      {
+        "name": "starfront_interception_test",
+        "seconds": 1.87,
+        "end": 1794233653305
+      },
+      {
+        "name": "starfront_persistence_test",
+        "seconds": 1.87,
+        "end": 1794233655175
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 8.784,
+        "end": 1794233656644
+      },
+      {
+        "name": "starfront_quality_test",
+        "seconds": 0.468,
+        "end": 1794233657112
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 3.273,
+        "end": 1794233660385
+      },
+      {
+        "name": "star_system_transition_test",
+        "seconds": 18.105,
+        "end": 1794233664395
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 4.377,
+        "end": 1794233664762
+      },
+      {
+        "name": "status_bar_test",
+        "seconds": 7.381,
+        "end": 1794233672143
+      },
+      {
+        "name": "status_presentation_test",
+        "seconds": 2.422,
+        "end": 1794233674565
+      },
+      {
+        "name": "storm_family_test",
+        "seconds": 1.019,
+        "end": 1794233675584
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "seconds": 0.267,
+        "end": 1794233675852
+      },
+      {
+        "name": "storm_presentation_test",
+        "seconds": 1.571,
+        "end": 1794233677422
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 24.371,
+        "end": 1794233679546
+      },
+      {
+        "name": "system_pressure_test",
+        "seconds": 0.317,
+        "end": 1794233679863
+      },
+      {
+        "name": "system_exploration_generation_test",
+        "seconds": 4.677,
+        "end": 1794233682099
+      },
+      {
+        "name": "tactical_cards_test",
+        "seconds": 0.418,
+        "end": 1794233682516
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 2.824,
+        "end": 1794233682688
+      },
+      {
+        "name": "status_bar_stress_test",
+        "seconds": 25.579,
+        "end": 1794233689973
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 2.822,
+        "end": 1794233692796
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "seconds": 2.522,
+        "end": 1794233695318
+      },
+      {
+        "name": "tactical_preview_test",
+        "seconds": 16.701,
+        "end": 1794233699388
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 26.121,
+        "end": 1794233708638
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "seconds": 17.859,
+        "end": 1794233717247
+      },
+      {
+        "name": "ui_feedback_test",
+        "seconds": 2.172,
+        "end": 1794233719419
+      },
+      {
+        "name": "ui_overhaul_test",
+        "seconds": 14.848,
+        "end": 1794233734268
+      },
+      {
+        "name": "travel_battle_test",
+        "seconds": 30.937,
+        "end": 1794233739576
+      },
+      {
+        "name": "victory_music_test",
+        "seconds": 2.823,
+        "end": 1794233742398
+      },
+      {
+        "name": "victory_rewards_test",
+        "seconds": 2.421,
+        "end": 1794233744820
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "seconds": 2.372,
+        "end": 1794233747193
+      },
+      {
+        "name": "visual_system_test",
+        "seconds": 1.52,
+        "end": 1794233748712
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 16.251,
+        "end": 1794233750518
+      },
+      {
+        "name": "trading_outpost_test",
+        "seconds": 97.631,
+        "end": 1794233792949
+      }
+    ]
+  },
+  {
+    "run": 42779059404,
+    "job": "rendered-ui (mobile)",
+    "id": 129704594994,
+    "start": 1794297543053,
+    "end": 1794297968523,
+    "job_seconds": 425.47,
+    "test_sum": 343.743,
+    "test_wall": 343.758,
+    "tests": [
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 52.097,
+        "end": 1794297655584
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 39.063,
+        "end": 1794297694648
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 12.021,
+        "end": 1794297706670
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 12.474,
+        "end": 1794297719145
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 17.45,
+        "end": 1794297736597
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 44.153,
+        "end": 1794297780751
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 16.031,
+        "end": 1794297796783
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 10.353,
+        "end": 1794297807137
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 17.478,
+        "end": 1794297824616
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 17.465,
+        "end": 1794297842082
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 22.576,
+        "end": 1794297864660
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 21.768,
+        "end": 1794297886429
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 36.538,
+        "end": 1794297922968
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 24.276,
+        "end": 1794297947245
+      }
+    ]
+  },
+  {
+    "run": 42779059404,
+    "job": "exported-startup",
+    "id": 129704595204,
+    "start": 1794297543801,
+    "end": 1794297687447,
+    "job_seconds": 143.646,
+    "test_sum": 0,
+    "test_wall": 0,
+    "tests": []
+  },
+  {
+    "run": 42779059404,
+    "job": "tests",
+    "id": 129704595250,
+    "start": 1794297543290,
+    "end": 1794298012737,
+    "job_seconds": 469.447,
+    "test_sum": 1156.5940000000003,
+    "test_wall": 460.517,
+    "import": 47.235,
+    "tests": [
+      {
+        "name": "import",
+        "seconds": 47.235,
+        "end": 1794297597573
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "seconds": 0.468,
+        "end": 1794297598043
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "seconds": 1.072,
+        "end": 1794297598647
+      },
+      {
+        "name": "ai_turn_test",
+        "seconds": 1.319,
+        "end": 1794297599966
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "seconds": 1.969,
+        "end": 1794297600013
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 9.237,
+        "end": 1794297606812
+      },
+      {
+        "name": "approach_requirement_test",
+        "seconds": 0.667,
+        "end": 1794297607479
+      },
+      {
+        "name": "asteroid_battle_test",
+        "seconds": 0.667,
+        "end": 1794297608145
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 8.182,
+        "end": 1794297608148
+      },
+      {
+        "name": "asteroid_regions_test",
+        "seconds": 0.466,
+        "end": 1794297608615
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 2.372,
+        "end": 1794297610518
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 2.071,
+        "end": 1794297610685
+      },
+      {
+        "name": "asteroid_snapshot_test",
+        "seconds": 0.317,
+        "end": 1794297610835
+      },
+      {
+        "name": "battle_effects_test",
+        "seconds": 6.178,
+        "end": 1794297616864
+      },
+      {
+        "name": "battle_hud_test",
+        "seconds": 1.418,
+        "end": 1794297618281
+      },
+      {
+        "name": "android_layout_test",
+        "seconds": 19.057,
+        "end": 1794297619070
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 4.273,
+        "end": 1794297622555
+      },
+      {
+        "name": "board_3d_test",
+        "seconds": 5.426,
+        "end": 1794297627982
+      },
+      {
+        "name": "card_balance_test",
+        "seconds": 0.265,
+        "end": 1794297628246
+      },
+      {
+        "name": "card_description_copy_test",
+        "seconds": 0.265,
+        "end": 1794297628511
+      },
+      {
+        "name": "card_effect_contract_test",
+        "seconds": 0.366,
+        "end": 1794297628877
+      },
+      {
+        "name": "card_effect_parity_test",
+        "seconds": 1.217,
+        "end": 1794297630095
+      },
+      {
+        "name": "card_expansion_test",
+        "seconds": 1.568,
+        "end": 1794297631663
+      },
+      {
+        "name": "card_icon_cue_test",
+        "seconds": 0.266,
+        "end": 1794297631929
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 13.64,
+        "end": 1794297632710
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "seconds": 23.011,
+        "end": 1794297633846
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "seconds": 2.621,
+        "end": 1794297635331
+      },
+      {
+        "name": "card_motion_test",
+        "seconds": 3.473,
+        "end": 1794297638804
+      },
+      {
+        "name": "card_management_test",
+        "seconds": 6.528,
+        "end": 1794297640374
+      },
+      {
+        "name": "card_targets_test",
+        "seconds": 0.316,
+        "end": 1794297640690
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.339,
+        "end": 1794297644268
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "seconds": 3.773,
+        "end": 1794297648041
+      },
+      {
+        "name": "card_tier_test",
+        "seconds": 23.915,
+        "end": 1794297664606
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 16.603,
+        "end": 1794297664644
+      },
+      {
+        "name": "chasedown_roll_policy_test",
+        "seconds": 0.768,
+        "end": 1794297665412
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "seconds": 2.17,
+        "end": 1794297666777
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "seconds": 1.62,
+        "end": 1794297668397
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 3.573,
+        "end": 1794297671970
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "seconds": 2.173,
+        "end": 1794297674144
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "seconds": 0.918,
+        "end": 1794297675062
+      },
+      {
+        "name": "cinematic_title_test",
+        "seconds": 0.917,
+        "end": 1794297675979
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 1.97,
+        "end": 1794297677949
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 14.394,
+        "end": 1794297679806
+      },
+      {
+        "name": "color_grading_test",
+        "seconds": 2.32,
+        "end": 1794297682126
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 7.08,
+        "end": 1794297685030
+      },
+      {
+        "name": "combat_execution_test",
+        "seconds": 0.87,
+        "end": 1794297685900
+      },
+      {
+        "name": "combat_forecast_test",
+        "seconds": 1.018,
+        "end": 1794297686918
+      },
+      {
+        "name": "combat_modifier_test",
+        "seconds": 2.421,
+        "end": 1794297689339
+      },
+      {
+        "name": "combat_state_test",
+        "seconds": 0.366,
+        "end": 1794297689705
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 9.234,
+        "end": 1794297691361
+      },
+      {
+        "name": "combat_trace_test",
+        "seconds": 4.276,
+        "end": 1794297693981
+      },
+      {
+        "name": "deck_determinism_test",
+        "seconds": 6.228,
+        "end": 1794297700209
+      },
+      {
+        "name": "deck_ownership_test",
+        "seconds": 0.467,
+        "end": 1794297700677
+      },
+      {
+        "name": "card_progression_test",
+        "seconds": 64.601,
+        "end": 1794297703405
+      },
+      {
+        "name": "discard_test",
+        "seconds": 1.769,
+        "end": 1794297705176
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 4.876,
+        "end": 1794297705555
+      },
+      {
+        "name": "encounter_continue_test",
+        "seconds": 1.87,
+        "end": 1794297707045
+      },
+      {
+        "name": "environmental_entry_test",
+        "seconds": 2.171,
+        "end": 1794297709217
+      },
+      {
+        "name": "enemy_roster_test",
+        "seconds": 5.427,
+        "end": 1794297710980
+      },
+      {
+        "name": "expedition_boundary_test",
+        "seconds": 0.767,
+        "end": 1794297711748
+      },
+      {
+        "name": "environmental_foundation_test",
+        "seconds": 4.276,
+        "end": 1794297713493
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "seconds": 6.23,
+        "end": 1794297717977
+      },
+      {
+        "name": "expedition_persistence_session_test",
+        "seconds": 0.466,
+        "end": 1794297718444
+      },
+      {
+        "name": "expedition_presentation_composition_test",
+        "seconds": 0.667,
+        "end": 1794297719111
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 2.219,
+        "end": 1794297721330
+      },
+      {
+        "name": "expedition_save_test",
+        "seconds": 0.767,
+        "end": 1794297722097
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 31.835,
+        "end": 1794297723196
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "seconds": 12.592,
+        "end": 1794297726085
+      },
+      {
+        "name": "expedition_ui_test",
+        "seconds": 3.023,
+        "end": 1794297726219
+      },
+      {
+        "name": "expedition_test",
+        "seconds": 5.028,
+        "end": 1794297727126
+      },
+      {
+        "name": "field_repairs_test",
+        "seconds": 3.073,
+        "end": 1794297729157
+      },
+      {
+        "name": "ftl_test",
+        "seconds": 1.42,
+        "end": 1794297730578
+      },
+      {
+        "name": "ftl_visual_test",
+        "seconds": 1.419,
+        "end": 1794297731998
+      },
+      {
+        "name": "game_reference_test",
+        "seconds": 3.373,
+        "end": 1794297735371
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 15.05,
+        "end": 1794297741270
+      },
+      {
+        "name": "hull_capacity_test",
+        "seconds": 1.42,
+        "end": 1794297742690
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 7.583,
+        "end": 1794297742954
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.025,
+        "end": 1794297746714
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.879,
+        "end": 1794297748833
+      },
+      {
+        "name": "metagame_save_test",
+        "seconds": 0.467,
+        "end": 1794297749300
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "seconds": 2.621,
+        "end": 1794297749336
+      },
+      {
+        "name": "ftl_progression_test",
+        "seconds": 23.465,
+        "end": 1794297750591
+      },
+      {
+        "name": "music_test",
+        "seconds": 1.17,
+        "end": 1794297751761
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "seconds": 2.724,
+        "end": 1794297752059
+      },
+      {
+        "name": "navigation_leg_test",
+        "seconds": 0.567,
+        "end": 1794297752328
+      },
+      {
+        "name": "opening_balance_test",
+        "seconds": 1.419,
+        "end": 1794297753746
+      },
+      {
+        "name": "navigation_movement_test",
+        "seconds": 1.769,
+        "end": 1794297753828
+      },
+      {
+        "name": "orbit_visibility_test",
+        "seconds": 0.467,
+        "end": 1794297754214
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 2.221,
+        "end": 1794297756050
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 8.786,
+        "end": 1794297758086
+      },
+      {
+        "name": "player_hand_test",
+        "seconds": 4.976,
+        "end": 1794297761025
+      },
+      {
+        "name": "poi_iconography_test",
+        "seconds": 0.667,
+        "end": 1794297761693
+      },
+      {
+        "name": "planet_presentation_test",
+        "seconds": 9.235,
+        "end": 1794297763448
+      },
+      {
+        "name": "poi_confirmation_test",
+        "seconds": 8.434,
+        "end": 1794297766521
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.922,
+        "end": 1794297768442
+      },
+      {
+        "name": "reward_feedback_test",
+        "seconds": 4.977,
+        "end": 1794297773420
+      },
+      {
+        "name": "salvage_test",
+        "seconds": 3.124,
+        "end": 1794297776544
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 11.79,
+        "end": 1794297788334
+      },
+      {
+        "name": "sfx_test",
+        "seconds": 6.581,
+        "end": 1794297794915
+      },
+      {
+        "name": "shield_fit_test",
+        "seconds": 14.098,
+        "end": 1794297809013
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 4.627,
+        "end": 1794297813640
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 8.538,
+        "end": 1794297822179
+      },
+      {
+        "name": "ship_variants_test",
+        "seconds": 12.345,
+        "end": 1794297834523
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "seconds": 0.467,
+        "end": 1794297834990
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 3.576,
+        "end": 1794297838566
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 2.173,
+        "end": 1794297840739
+      },
+      {
+        "name": "solar_regions_test",
+        "seconds": 0.767,
+        "end": 1794297841506
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 3.374,
+        "end": 1794297844880
+      },
+      {
+        "name": "space_parallax_test",
+        "seconds": 0.317,
+        "end": 1794297845197
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 0.918,
+        "end": 1794297846114
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 82.853,
+        "end": 1794297846302
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.823,
+        "end": 1794297849125
+      },
+      {
+        "name": "star_map_readability_test",
+        "seconds": 4.776,
+        "end": 1794297850890
+      },
+      {
+        "name": "star_system_composition_test",
+        "seconds": 3.172,
+        "end": 1794297854063
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "seconds": 94.125,
+        "end": 1794297855819
+      },
+      {
+        "name": "star_system_3d_test",
+        "seconds": 7.632,
+        "end": 1794297856757
+      },
+      {
+        "name": "star_system_feedback_test",
+        "seconds": 3.124,
+        "end": 1794297857187
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 0.567,
+        "end": 1794297857326
+      },
+      {
+        "name": "star_system_lighting_material_test",
+        "seconds": 0.368,
+        "end": 1794297857556
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "seconds": 1.971,
+        "end": 1794297859526
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 2.622,
+        "end": 1794297859947
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 3.072,
+        "end": 1794297863019
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "seconds": 8.033,
+        "end": 1794297863851
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "seconds": 7.831,
+        "end": 1794297867358
+      },
+      {
+        "name": "starfront_defense_test",
+        "seconds": 0.768,
+        "end": 1794297868126
+      },
+      {
+        "name": "star_system_resume_test",
+        "seconds": 8.232,
+        "end": 1794297871251
+      },
+      {
+        "name": "starfront_interception_test",
+        "seconds": 1.87,
+        "end": 1794297873121
+      },
+      {
+        "name": "starfront_persistence_test",
+        "seconds": 1.871,
+        "end": 1794297874992
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 8.682,
+        "end": 1794297876808
+      },
+      {
+        "name": "starfront_quality_test",
+        "seconds": 0.467,
+        "end": 1794297877276
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 3.273,
+        "end": 1794297880548
+      },
+      {
+        "name": "star_system_transition_test",
+        "seconds": 18.104,
+        "end": 1794297881956
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 4.376,
+        "end": 1794297884924
+      },
+      {
+        "name": "status_bar_test",
+        "seconds": 7.38,
+        "end": 1794297892305
+      },
+      {
+        "name": "status_presentation_test",
+        "seconds": 2.422,
+        "end": 1794297894726
+      },
+      {
+        "name": "storm_family_test",
+        "seconds": 0.918,
+        "end": 1794297895644
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "seconds": 0.266,
+        "end": 1794297895911
+      },
+      {
+        "name": "storm_presentation_test",
+        "seconds": 1.52,
+        "end": 1794297897430
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 24.263,
+        "end": 1794297899256
+      },
+      {
+        "name": "system_pressure_test",
+        "seconds": 0.267,
+        "end": 1794297899524
+      },
+      {
+        "name": "system_exploration_generation_test",
+        "seconds": 4.476,
+        "end": 1794297901907
+      },
+      {
+        "name": "tactical_cards_test",
+        "seconds": 0.367,
+        "end": 1794297902274
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 2.873,
+        "end": 1794297902397
+      },
+      {
+        "name": "status_bar_stress_test",
+        "seconds": 25.466,
+        "end": 1794297907422
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 2.822,
+        "end": 1794297910244
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "seconds": 2.521,
+        "end": 1794297912765
+      },
+      {
+        "name": "tactical_preview_test",
+        "seconds": 16.797,
+        "end": 1794297919194
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 26.018,
+        "end": 1794297928293
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "seconds": 17.604,
+        "end": 1794297936798
+      },
+      {
+        "name": "ui_feedback_test",
+        "seconds": 2.172,
+        "end": 1794297938971
+      },
+      {
+        "name": "ui_overhaul_test",
+        "seconds": 14.948,
+        "end": 1794297953919
+      },
+      {
+        "name": "travel_battle_test",
+        "seconds": 30.888,
+        "end": 1794297959181
+      },
+      {
+        "name": "victory_music_test",
+        "seconds": 2.721,
+        "end": 1794297961904
+      },
+      {
+        "name": "victory_rewards_test",
+        "seconds": 2.422,
+        "end": 1794297964325
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "seconds": 2.372,
+        "end": 1794297966698
+      },
+      {
+        "name": "visual_system_test",
+        "seconds": 1.472,
+        "end": 1794297968169
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 16.401,
+        "end": 1794297970319
+      },
+      {
+        "name": "trading_outpost_test",
+        "seconds": 98.09,
+        "end": 1794298010855
+      }
+    ]
+  },
+  {
+    "run": 42779059404,
+    "job": "rendered-ui (gl_compatibility)",
+    "id": 129704595299,
+    "start": 1794297543091,
+    "end": 1794298451761,
+    "job_seconds": 908.67,
+    "test_sum": 831.7319999999999,
+    "test_wall": 831.782,
+    "tests": [
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 16.082,
+        "end": 1794297614972
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 4.278,
+        "end": 1794297619251
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 4.826,
+        "end": 1794297624078
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 10.706,
+        "end": 1794297634784
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 2.97,
+        "end": 1794297637756
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 4.582,
+        "end": 1794297642338
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 10.854,
+        "end": 1794297653194
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 27.268,
+        "end": 1794297680462
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 16.325,
+        "end": 1794297696788
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 4.635,
+        "end": 1794297701424
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 4.929,
+        "end": 1794297706354
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 3.929,
+        "end": 1794297710284
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 4.68,
+        "end": 1794297714966
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 35.728,
+        "end": 1794297750695
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 6.335,
+        "end": 1794297757031
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 9.348,
+        "end": 1794297766380
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 206.102,
+        "end": 1794297972483
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 8.493,
+        "end": 1794297980978
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 3.077,
+        "end": 1794297984056
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 44.996,
+        "end": 1794298029053
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 36.104,
+        "end": 1794298065158
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 5.638,
+        "end": 1794298070797
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.467,
+        "end": 1794298072265
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 12.876,
+        "end": 1794298085142
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 15.408,
+        "end": 1794298100551
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 20.254,
+        "end": 1794298120807
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 14.129,
+        "end": 1794298134938
+      },
+      {
+        "name": "enemy_models_visual_test",
+        "seconds": 3.176,
+        "end": 1794298138115
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 19.912,
+        "end": 1794298158028
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 26.286,
+        "end": 1794298184315
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 11.316,
+        "end": 1794298195632
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 77.525,
+        "end": 1794298273158
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 28.684,
+        "end": 1794298301843
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 42.854,
+        "end": 1794298344699
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 8.203,
+        "end": 1794298352903
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 16.281,
+        "end": 1794298369185
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 5.034,
+        "end": 1794298374220
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 1.37,
+        "end": 1794298375591
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.929,
+        "end": 1794298380522
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 10.81,
+        "end": 1794298391334
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 17.233,
+        "end": 1794298408568
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 8.115,
+        "end": 1794298416684
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.771,
+        "end": 1794298418456
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 12.214,
+        "end": 1794298430672
+      }
+    ]
+  },
+  {
+    "run": 42796171697,
+    "job": "rendered-ui (mobile)",
+    "id": 129761795652,
+    "start": 1794305134993,
+    "end": 1794305677559,
+    "job_seconds": 542.566,
+    "test_sum": 412.437,
+    "test_wall": 412.457,
+    "tests": [
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 66.602,
+        "end": 1794305309784
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 19.436,
+        "end": 1794305329221
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 25.373,
+        "end": 1794305354595
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 38.177,
+        "end": 1794305392773
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 13.018,
+        "end": 1794305405793
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 12.915,
+        "end": 1794305418709
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 17.908,
+        "end": 1794305436619
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 41.244,
+        "end": 1794305477864
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 14.628,
+        "end": 1794305492493
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 10.611,
+        "end": 1794305503105
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 19.24,
+        "end": 1794305522346
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 17.799,
+        "end": 1794305540146
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 25.841,
+        "end": 1794305565989
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 24.618,
+        "end": 1794305590610
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 39.697,
+        "end": 1794305630307
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 25.33,
+        "end": 1794305655639
+      }
+    ]
+  },
+  {
+    "run": 42796171697,
+    "job": "rendered-ui (gl_compatibility)",
+    "id": 129761795733,
+    "start": 1794305135279,
+    "end": 1794306318600,
+    "job_seconds": 1183.321,
+    "test_sum": 1067.643,
+    "test_wall": 1067.886,
+    "tests": [
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 34.699,
+        "end": 1794305258655
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 7.502,
+        "end": 1794305266158
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 14.286,
+        "end": 1794305280445
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 5.836,
+        "end": 1794305286282
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 5.833,
+        "end": 1794305292116
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 14.277,
+        "end": 1794305306394
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 3.524,
+        "end": 1794305309918
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 5.585,
+        "end": 1794305315505
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 10.612,
+        "end": 1794305326117
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 29.058,
+        "end": 1794305355177
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 20.105,
+        "end": 1794305375357
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 5.592,
+        "end": 1794305380951
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 5.936,
+        "end": 1794305386888
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 4.579,
+        "end": 1794305391469
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 5.784,
+        "end": 1794305397255
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 44.215,
+        "end": 1794305441471
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 7.734,
+        "end": 1794305449207
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 10.059,
+        "end": 1794305459267
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 246.397,
+        "end": 1794305705665
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 9.599,
+        "end": 1794305715266
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 3.78,
+        "end": 1794305719046
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 48.48,
+        "end": 1794305767528
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 49.715,
+        "end": 1794305817244
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 7.848,
+        "end": 1794305825094
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.919,
+        "end": 1794305827014
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 16.099,
+        "end": 1794305843115
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 17.166,
+        "end": 1794305860282
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 30.166,
+        "end": 1794305890450
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 16.408,
+        "end": 1794305906859
+      },
+      {
+        "name": "enemy_models_visual_test",
+        "seconds": 3.978,
+        "end": 1794305910838
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 24.544,
+        "end": 1794305935384
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 32.35,
+        "end": 1794305967735
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 14.571,
+        "end": 1794305982308
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 118.993,
+        "end": 1794306101304
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 31.631,
+        "end": 1794306132936
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 52.62,
+        "end": 1794306185558
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 12.576,
+        "end": 1794306198135
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 22.633,
+        "end": 1794306220770
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 6.689,
+        "end": 1794306227461
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 1.822,
+        "end": 1794306229284
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 5.584,
+        "end": 1794306234869
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 11.526,
+        "end": 1794306246502
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 18.191,
+        "end": 1794306264695
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 10.375,
+        "end": 1794306275072
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 2.124,
+        "end": 1794306277198
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 14.643,
+        "end": 1794306291842
+      }
+    ]
+  },
+  {
+    "run": 42796171697,
+    "job": "tests",
+    "id": 129761795816,
+    "start": 1794305135610,
+    "end": 1794305532501,
+    "job_seconds": 396.891,
+    "test_sum": 988.9469999999995,
+    "test_wall": 387.217,
+    "import": 46.259,
+    "tests": [
+      {
+        "name": "import",
+        "seconds": 46.259,
+        "end": 1794305189656
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "seconds": 0.568,
+        "end": 1794305190226
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "seconds": 0.77,
+        "end": 1794305190430
+      },
+      {
+        "name": "ai_turn_test",
+        "seconds": 0.969,
+        "end": 1794305191397
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "seconds": 1.318,
+        "end": 1794305191544
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 7.285,
+        "end": 1794305196944
+      },
+      {
+        "name": "approach_requirement_test",
+        "seconds": 0.566,
+        "end": 1794305197509
+      },
+      {
+        "name": "asteroid_battle_test",
+        "seconds": 0.566,
+        "end": 1794305198074
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 7.427,
+        "end": 1794305198825
+      },
+      {
+        "name": "asteroid_regions_test",
+        "seconds": 0.366,
+        "end": 1794305199191
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 1.868,
+        "end": 1794305199943
+      },
+      {
+        "name": "asteroid_snapshot_test",
+        "seconds": 0.265,
+        "end": 1794305200208
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 1.768,
+        "end": 1794305200959
+      },
+      {
+        "name": "battle_effects_test",
+        "seconds": 6.077,
+        "end": 1794305206285
+      },
+      {
+        "name": "battle_hud_test",
+        "seconds": 1.217,
+        "end": 1794305207502
+      },
+      {
+        "name": "android_layout_test",
+        "seconds": 18.298,
+        "end": 1794305209843
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 4.122,
+        "end": 1794305211645
+      },
+      {
+        "name": "board_3d_test",
+        "seconds": 5.324,
+        "end": 1794305216949
+      },
+      {
+        "name": "card_balance_test",
+        "seconds": 0.265,
+        "end": 1794305217214
+      },
+      {
+        "name": "card_description_copy_test",
+        "seconds": 0.267,
+        "end": 1794305217481
+      },
+      {
+        "name": "card_effect_contract_test",
+        "seconds": 0.265,
+        "end": 1794305217746
+      },
+      {
+        "name": "card_effect_parity_test",
+        "seconds": 0.816,
+        "end": 1794305218563
+      },
+      {
+        "name": "card_expansion_test",
+        "seconds": 1.317,
+        "end": 1794305219880
+      },
+      {
+        "name": "card_icon_cue_test",
+        "seconds": 0.265,
+        "end": 1794305220145
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 13.237,
+        "end": 1794305223080
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "seconds": 22.808,
+        "end": 1794305223767
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "seconds": 2.619,
+        "end": 1794305225700
+      },
+      {
+        "name": "card_motion_test",
+        "seconds": 3.371,
+        "end": 1794305229071
+      },
+      {
+        "name": "card_management_test",
+        "seconds": 5.975,
+        "end": 1794305229742
+      },
+      {
+        "name": "card_targets_test",
+        "seconds": 0.266,
+        "end": 1794305230009
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.038,
+        "end": 1794305232185
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "seconds": 3.622,
+        "end": 1794305235806
+      },
+      {
+        "name": "card_tier_test",
+        "seconds": 17.948,
+        "end": 1794305247957
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "seconds": 1.768,
+        "end": 1794305249725
+      },
+      {
+        "name": "chasedown_roll_policy_test",
+        "seconds": 0.466,
+        "end": 1794305250191
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 15.947,
+        "end": 1794305251753
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "seconds": 1.217,
+        "end": 1794305252970
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 3.17,
+        "end": 1794305256140
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "seconds": 1.969,
+        "end": 1794305258109
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "seconds": 0.766,
+        "end": 1794305258876
+      },
+      {
+        "name": "cinematic_title_test",
+        "seconds": 0.917,
+        "end": 1794305259793
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 1.869,
+        "end": 1794305261661
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 13.141,
+        "end": 1794305263332
+      },
+      {
+        "name": "color_grading_test",
+        "seconds": 1.971,
+        "end": 1794305265303
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 6.629,
+        "end": 1794305268326
+      },
+      {
+        "name": "combat_execution_test",
+        "seconds": 0.767,
+        "end": 1794305269058
+      },
+      {
+        "name": "combat_forecast_test",
+        "seconds": 0.717,
+        "end": 1794305269774
+      },
+      {
+        "name": "combat_modifier_test",
+        "seconds": 2.069,
+        "end": 1794305271843
+      },
+      {
+        "name": "combat_state_test",
+        "seconds": 0.366,
+        "end": 1794305272210
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 9.133,
+        "end": 1794305274437
+      },
+      {
+        "name": "card_progression_test",
+        "seconds": 45.559,
+        "end": 1794305274630
+      },
+      {
+        "name": "combat_trace_test",
+        "seconds": 2.422,
+        "end": 1794305274631
+      },
+      {
+        "name": "deck_ownership_test",
+        "seconds": 0.568,
+        "end": 1794305275200
+      },
+      {
+        "name": "deck_determinism_test",
+        "seconds": 5.131,
+        "end": 1794305279761
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 4.675,
+        "end": 1794305279875
+      },
+      {
+        "name": "discard_test",
+        "seconds": 1.418,
+        "end": 1794305281179
+      },
+      {
+        "name": "encounter_continue_test",
+        "seconds": 1.669,
+        "end": 1794305281544
+      },
+      {
+        "name": "environmental_entry_test",
+        "seconds": 1.869,
+        "end": 1794305283414
+      },
+      {
+        "name": "enemy_roster_test",
+        "seconds": 4.174,
+        "end": 1794305285354
+      },
+      {
+        "name": "expedition_boundary_test",
+        "seconds": 0.667,
+        "end": 1794305286021
+      },
+      {
+        "name": "environmental_foundation_test",
+        "seconds": 3.072,
+        "end": 1794305286485
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "seconds": 5.124,
+        "end": 1794305291145
+      },
+      {
+        "name": "expedition_persistence_session_test",
+        "seconds": 0.466,
+        "end": 1794305291611
+      },
+      {
+        "name": "expedition_presentation_composition_test",
+        "seconds": 0.566,
+        "end": 1794305292177
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 1.869,
+        "end": 1794305294046
+      },
+      {
+        "name": "expedition_save_test",
+        "seconds": 0.566,
+        "end": 1794305294612
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "seconds": 12.038,
+        "end": 1794305298523
+      },
+      {
+        "name": "expedition_test",
+        "seconds": 4.074,
+        "end": 1794305298686
+      },
+      {
+        "name": "field_repairs_test",
+        "seconds": 2.221,
+        "end": 1794305300907
+      },
+      {
+        "name": "expedition_ui_test",
+        "seconds": 2.421,
+        "end": 1794305300944
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 30.883,
+        "end": 1794305305320
+      },
+      {
+        "name": "ftl_test",
+        "seconds": 1.219,
+        "end": 1794305306538
+      },
+      {
+        "name": "ftl_visual_test",
+        "seconds": 1.218,
+        "end": 1794305307756
+      },
+      {
+        "name": "game_reference_test",
+        "seconds": 3.173,
+        "end": 1794305310929
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 14.748,
+        "end": 1794305315655
+      },
+      {
+        "name": "hull_capacity_test",
+        "seconds": 1.218,
+        "end": 1794305316873
+      },
+      {
+        "name": "ftl_progression_test",
+        "seconds": 17.004,
+        "end": 1794305317948
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 7.181,
+        "end": 1794305318111
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "seconds": 2.471,
+        "end": 1794305320582
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 3.924,
+        "end": 1794305320798
+      },
+      {
+        "name": "metagame_save_test",
+        "seconds": 0.467,
+        "end": 1794305321050
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "seconds": 2.169,
+        "end": 1794305323219
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.476,
+        "end": 1794305323424
+      },
+      {
+        "name": "navigation_leg_test",
+        "seconds": 0.466,
+        "end": 1794305323890
+      },
+      {
+        "name": "music_test",
+        "seconds": 0.867,
+        "end": 1794305324086
+      },
+      {
+        "name": "opening_balance_test",
+        "seconds": 1.218,
+        "end": 1794305325304
+      },
+      {
+        "name": "navigation_movement_test",
+        "seconds": 1.669,
+        "end": 1794305325559
+      },
+      {
+        "name": "orbit_visibility_test",
+        "seconds": 0.466,
+        "end": 1794305325771
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 1.97,
+        "end": 1794305327583
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 8.385,
+        "end": 1794305329182
+      },
+      {
+        "name": "player_hand_test",
+        "seconds": 3.621,
+        "end": 1794305331150
+      },
+      {
+        "name": "poi_iconography_test",
+        "seconds": 0.666,
+        "end": 1794305331816
+      },
+      {
+        "name": "planet_presentation_test",
+        "seconds": 8.583,
+        "end": 1794305334354
+      },
+      {
+        "name": "poi_confirmation_test",
+        "seconds": 8.13,
+        "end": 1794305337313
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.52,
+        "end": 1794305338833
+      },
+      {
+        "name": "reward_feedback_test",
+        "seconds": 4.325,
+        "end": 1794305343158
+      },
+      {
+        "name": "salvage_test",
+        "seconds": 2.726,
+        "end": 1794305345885
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 11.042,
+        "end": 1794305356927
+      },
+      {
+        "name": "sfx_test",
+        "seconds": 6.03,
+        "end": 1794305362957
+      },
+      {
+        "name": "shield_fit_test",
+        "seconds": 11.951,
+        "end": 1794305374908
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 3.675,
+        "end": 1794305378582
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 5.128,
+        "end": 1794305383711
+      },
+      {
+        "name": "ship_variants_test",
+        "seconds": 7.936,
+        "end": 1794305391647
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "seconds": 0.466,
+        "end": 1794305392113
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 2.972,
+        "end": 1794305395085
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 62.159,
+        "end": 1794305396514
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 1.971,
+        "end": 1794305397056
+      },
+      {
+        "name": "solar_regions_test",
+        "seconds": 0.869,
+        "end": 1794305397382
+      },
+      {
+        "name": "space_parallax_test",
+        "seconds": 0.317,
+        "end": 1794305397699
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.02,
+        "end": 1794305398719
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "seconds": 67.966,
+        "end": 1794305399783
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 3.275,
+        "end": 1794305400331
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.221,
+        "end": 1794305402004
+      },
+      {
+        "name": "star_map_readability_test",
+        "seconds": 4.174,
+        "end": 1794305402893
+      },
+      {
+        "name": "star_system_composition_test",
+        "seconds": 2.321,
+        "end": 1794305404324
+      },
+      {
+        "name": "star_system_feedback_test",
+        "seconds": 2.821,
+        "end": 1794305405714
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 0.567,
+        "end": 1794305406281
+      },
+      {
+        "name": "star_system_lighting_material_test",
+        "seconds": 0.366,
+        "end": 1794305406647
+      },
+      {
+        "name": "star_system_3d_test",
+        "seconds": 7.284,
+        "end": 1794305407615
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 2.321,
+        "end": 1794305408968
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "seconds": 1.769,
+        "end": 1794305409385
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "seconds": 7.531,
+        "end": 1794305411855
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 2.772,
+        "end": 1794305412157
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "seconds": 7.632,
+        "end": 1794305416600
+      },
+      {
+        "name": "starfront_defense_test",
+        "seconds": 0.567,
+        "end": 1794305417167
+      },
+      {
+        "name": "star_system_resume_test",
+        "seconds": 7.933,
+        "end": 1794305419789
+      },
+      {
+        "name": "starfront_interception_test",
+        "seconds": 1.468,
+        "end": 1794305421257
+      },
+      {
+        "name": "starfront_persistence_test",
+        "seconds": 1.569,
+        "end": 1794305422827
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 8.383,
+        "end": 1794305425550
+      },
+      {
+        "name": "starfront_quality_test",
+        "seconds": 0.467,
+        "end": 1794305426018
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 3.073,
+        "end": 1794305429092
+      },
+      {
+        "name": "star_system_transition_test",
+        "seconds": 17.902,
+        "end": 1794305430059
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 3.723,
+        "end": 1794305432813
+      },
+      {
+        "name": "status_bar_test",
+        "seconds": 6.98,
+        "end": 1794305439793
+      },
+      {
+        "name": "status_presentation_test",
+        "seconds": 2.069,
+        "end": 1794305441862
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 1.318,
+        "end": 1794305443180
+      },
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 2.119,
+        "end": 1794305445299
+      },
+      {
+        "name": "storm_family_test",
+        "seconds": 0.767,
+        "end": 1794305446066
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "seconds": 0.266,
+        "end": 1794305446332
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 24.015,
+        "end": 1794305446842
+      },
+      {
+        "name": "storm_presentation_test",
+        "seconds": 1.318,
+        "end": 1794305447651
+      },
+      {
+        "name": "system_pressure_test",
+        "seconds": 0.266,
+        "end": 1794305447917
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 2.17,
+        "end": 1794305450088
+      },
+      {
+        "name": "system_exploration_generation_test",
+        "seconds": 3.471,
+        "end": 1794305450314
+      },
+      {
+        "name": "tactical_cards_test",
+        "seconds": 0.367,
+        "end": 1794305450455
+      },
+      {
+        "name": "status_bar_stress_test",
+        "seconds": 24.963,
+        "end": 1794305455022
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 2.52,
+        "end": 1794305457542
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "seconds": 2.219,
+        "end": 1794305459762
+      },
+      {
+        "name": "tactical_preview_test",
+        "seconds": 16.495,
+        "end": 1794305466950
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 25.91,
+        "end": 1794305476224
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "seconds": 15.593,
+        "end": 1794305482544
+      },
+      {
+        "name": "ui_feedback_test",
+        "seconds": 1.769,
+        "end": 1794305484313
+      },
+      {
+        "name": "ui_overhaul_test",
+        "seconds": 13.34,
+        "end": 1794305497654
+      },
+      {
+        "name": "travel_battle_test",
+        "seconds": 29.823,
+        "end": 1794305506048
+      },
+      {
+        "name": "victory_music_test",
+        "seconds": 2.42,
+        "end": 1794305508468
+      },
+      {
+        "name": "victory_rewards_test",
+        "seconds": 2.17,
+        "end": 1794305510638
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "seconds": 1.97,
+        "end": 1794305512608
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 15.949,
+        "end": 1794305513603
+      },
+      {
+        "name": "visual_system_test",
+        "seconds": 1.119,
+        "end": 1794305513726
+      },
+      {
+        "name": "trading_outpost_test",
+        "seconds": 70.853,
+        "end": 1794305530614
+      }
+    ]
+  },
+  {
+    "run": 42796171697,
+    "job": "exported-startup",
+    "id": 129761796825,
+    "start": 1794305135722,
+    "end": 1794305295535,
+    "job_seconds": 159.813,
+    "test_sum": 0,
+    "test_wall": 0,
+    "tests": []
+  },
+  {
+    "run": 42819905218,
+    "job": "tests",
+    "id": 129850048542,
+    "start": 1794316247742,
+    "end": 1794316646567,
+    "job_seconds": 398.825,
+    "test_sum": 984.4030000000005,
+    "test_wall": 390.314,
+    "import": 49.482,
+    "tests": [
+      {
+        "name": "import",
+        "seconds": 49.482,
+        "end": 1794316303667
+      },
+      {
+        "name": "ai_forecast_compatibility_test",
+        "seconds": 0.368,
+        "end": 1794316304037
+      },
+      {
+        "name": "ai_forecast_scene_test",
+        "seconds": 0.669,
+        "end": 1794316304339
+      },
+      {
+        "name": "ai_modifier_forecast_test",
+        "seconds": 1.017,
+        "end": 1794316305054
+      },
+      {
+        "name": "ai_turn_test",
+        "seconds": 0.968,
+        "end": 1794316305307
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 7.632,
+        "end": 1794316311301
+      },
+      {
+        "name": "approach_requirement_test",
+        "seconds": 0.566,
+        "end": 1794316311867
+      },
+      {
+        "name": "asteroid_battle_test",
+        "seconds": 0.566,
+        "end": 1794316312432
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 7.479,
+        "end": 1794316312534
+      },
+      {
+        "name": "asteroid_regions_test",
+        "seconds": 0.365,
+        "end": 1794316312899
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 1.968,
+        "end": 1794316314401
+      },
+      {
+        "name": "asteroid_snapshot_test",
+        "seconds": 0.265,
+        "end": 1794316314666
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 1.768,
+        "end": 1794316314667
+      },
+      {
+        "name": "battle_effects_test",
+        "seconds": 6.028,
+        "end": 1794316320695
+      },
+      {
+        "name": "battle_hud_test",
+        "seconds": 1.217,
+        "end": 1794316321912
+      },
+      {
+        "name": "android_layout_test",
+        "seconds": 18.299,
+        "end": 1794316323606
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 4.022,
+        "end": 1794316325933
+      },
+      {
+        "name": "board_3d_test",
+        "seconds": 5.324,
+        "end": 1794316331257
+      },
+      {
+        "name": "card_balance_test",
+        "seconds": 0.265,
+        "end": 1794316331523
+      },
+      {
+        "name": "card_description_copy_test",
+        "seconds": 0.265,
+        "end": 1794316331788
+      },
+      {
+        "name": "card_effect_contract_test",
+        "seconds": 0.265,
+        "end": 1794316332053
+      },
+      {
+        "name": "card_effect_parity_test",
+        "seconds": 0.816,
+        "end": 1794316332869
+      },
+      {
+        "name": "card_expansion_test",
+        "seconds": 1.317,
+        "end": 1794316334186
+      },
+      {
+        "name": "card_icon_cue_test",
+        "seconds": 0.265,
+        "end": 1794316334452
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 13.389,
+        "end": 1794316336995
+      },
+      {
+        "name": "battle_ending_sequence_test",
+        "seconds": 22.905,
+        "end": 1794316337573
+      },
+      {
+        "name": "card_management_lifecycle_test",
+        "seconds": 2.119,
+        "end": 1794316339114
+      },
+      {
+        "name": "card_motion_test",
+        "seconds": 3.37,
+        "end": 1794316342484
+      },
+      {
+        "name": "card_management_test",
+        "seconds": 6.076,
+        "end": 1794316343649
+      },
+      {
+        "name": "card_targets_test",
+        "seconds": 0.266,
+        "end": 1794316343915
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.039,
+        "end": 1794316346491
+      },
+      {
+        "name": "card_upgrade_ui_test",
+        "seconds": 3.673,
+        "end": 1794316350164
+      },
+      {
+        "name": "card_tier_test",
+        "seconds": 17.395,
+        "end": 1794316361311
+      },
+      {
+        "name": "chasedown_rewards_test",
+        "seconds": 1.669,
+        "end": 1794316362979
+      },
+      {
+        "name": "chasedown_roll_policy_test",
+        "seconds": 0.466,
+        "end": 1794316363447
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 15.946,
+        "end": 1794316366110
+      },
+      {
+        "name": "cinematic_fleet_test",
+        "seconds": 1.217,
+        "end": 1794316367327
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 3.172,
+        "end": 1794316370499
+      },
+      {
+        "name": "cinematic_lifecycle_test",
+        "seconds": 1.768,
+        "end": 1794316372269
+      },
+      {
+        "name": "cinematic_preferences_test",
+        "seconds": 0.767,
+        "end": 1794316373034
+      },
+      {
+        "name": "cinematic_title_test",
+        "seconds": 0.917,
+        "end": 1794316373951
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 1.868,
+        "end": 1794316375819
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 13.24,
+        "end": 1794316376685
+      },
+      {
+        "name": "color_grading_test",
+        "seconds": 1.868,
+        "end": 1794316378553
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 6.527,
+        "end": 1794316382347
+      },
+      {
+        "name": "combat_execution_test",
+        "seconds": 0.666,
+        "end": 1794316383013
+      },
+      {
+        "name": "combat_forecast_test",
+        "seconds": 0.716,
+        "end": 1794316383730
+      },
+      {
+        "name": "combat_modifier_test",
+        "seconds": 1.968,
+        "end": 1794316385698
+      },
+      {
+        "name": "combat_state_test",
+        "seconds": 0.366,
+        "end": 1794316386064
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 9.033,
+        "end": 1794316387587
+      },
+      {
+        "name": "combat_trace_test",
+        "seconds": 2.419,
+        "end": 1794316388484
+      },
+      {
+        "name": "card_progression_test",
+        "seconds": 46.953,
+        "end": 1794316389437
+      },
+      {
+        "name": "deck_ownership_test",
+        "seconds": 0.466,
+        "end": 1794316389903
+      },
+      {
+        "name": "deck_determinism_test",
+        "seconds": 4.926,
+        "end": 1794316393410
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 4.273,
+        "end": 1794316394176
+      },
+      {
+        "name": "discard_test",
+        "seconds": 1.318,
+        "end": 1794316394727
+      },
+      {
+        "name": "encounter_continue_test",
+        "seconds": 1.668,
+        "end": 1794316395844
+      },
+      {
+        "name": "environmental_entry_test",
+        "seconds": 1.768,
+        "end": 1794316397613
+      },
+      {
+        "name": "enemy_roster_test",
+        "seconds": 3.975,
+        "end": 1794316398702
+      },
+      {
+        "name": "expedition_boundary_test",
+        "seconds": 0.667,
+        "end": 1794316399369
+      },
+      {
+        "name": "environmental_foundation_test",
+        "seconds": 3.07,
+        "end": 1794316400683
+      },
+      {
+        "name": "expedition_fresh_process_test",
+        "seconds": 5.123,
+        "end": 1794316404492
+      },
+      {
+        "name": "expedition_persistence_session_test",
+        "seconds": 0.466,
+        "end": 1794316404958
+      },
+      {
+        "name": "expedition_presentation_composition_test",
+        "seconds": 0.566,
+        "end": 1794316405524
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 1.869,
+        "end": 1794316407393
+      },
+      {
+        "name": "expedition_save_test",
+        "seconds": 0.566,
+        "end": 1794316407959
+      },
+      {
+        "name": "expedition_test",
+        "seconds": 4.073,
+        "end": 1794316412032
+      },
+      {
+        "name": "expedition_lifecycle_test",
+        "seconds": 11.935,
+        "end": 1794316412619
+      },
+      {
+        "name": "expedition_ui_test",
+        "seconds": 2.22,
+        "end": 1794316414252
+      },
+      {
+        "name": "field_repairs_test",
+        "seconds": 2.12,
+        "end": 1794316414738
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 30.923,
+        "end": 1794316418510
+      },
+      {
+        "name": "ftl_test",
+        "seconds": 1.117,
+        "end": 1794316419627
+      },
+      {
+        "name": "ftl_visual_test",
+        "seconds": 1.117,
+        "end": 1794316420744
+      },
+      {
+        "name": "game_reference_test",
+        "seconds": 3.172,
+        "end": 1794316423916
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 14.639,
+        "end": 1794316428892
+      },
+      {
+        "name": "hull_capacity_test",
+        "seconds": 1.217,
+        "end": 1794316430109
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 7.178,
+        "end": 1794316431095
+      },
+      {
+        "name": "ftl_progression_test",
+        "seconds": 16.444,
+        "end": 1794316431183
+      },
+      {
+        "name": "map_zoom_fade_test",
+        "seconds": 2.42,
+        "end": 1794316433603
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 3.822,
+        "end": 1794316433931
+      },
+      {
+        "name": "metagame_save_test",
+        "seconds": 0.466,
+        "end": 1794316434069
+      },
+      {
+        "name": "modifier_cinematic_test",
+        "seconds": 2.119,
+        "end": 1794316436188
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.476,
+        "end": 1794316436571
+      },
+      {
+        "name": "navigation_leg_test",
+        "seconds": 0.468,
+        "end": 1794316437039
+      },
+      {
+        "name": "music_test",
+        "seconds": 0.867,
+        "end": 1794316437054
+      },
+      {
+        "name": "opening_balance_test",
+        "seconds": 1.218,
+        "end": 1794316438272
+      },
+      {
+        "name": "navigation_movement_test",
+        "seconds": 1.568,
+        "end": 1794316438607
+      },
+      {
+        "name": "orbit_visibility_test",
+        "seconds": 0.367,
+        "end": 1794316438639
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 1.869,
+        "end": 1794316440476
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 8.281,
+        "end": 1794316442213
+      },
+      {
+        "name": "player_hand_test",
+        "seconds": 3.622,
+        "end": 1794316444098
+      },
+      {
+        "name": "poi_iconography_test",
+        "seconds": 0.666,
+        "end": 1794316444764
+      },
+      {
+        "name": "planet_presentation_test",
+        "seconds": 8.486,
+        "end": 1794316447124
+      },
+      {
+        "name": "poi_confirmation_test",
+        "seconds": 8.132,
+        "end": 1794316450345
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.518,
+        "end": 1794316451864
+      },
+      {
+        "name": "reward_feedback_test",
+        "seconds": 4.123,
+        "end": 1794316455987
+      },
+      {
+        "name": "salvage_test",
+        "seconds": 2.621,
+        "end": 1794316458609
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 10.835,
+        "end": 1794316469443
+      },
+      {
+        "name": "sfx_test",
+        "seconds": 5.827,
+        "end": 1794316475270
+      },
+      {
+        "name": "shield_fit_test",
+        "seconds": 11.495,
+        "end": 1794316486766
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 3.173,
+        "end": 1794316489939
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 5.628,
+        "end": 1794316495566
+      },
+      {
+        "name": "ship_variants_test",
+        "seconds": 7.381,
+        "end": 1794316502947
+      },
+      {
+        "name": "simulation_failure_setup_test",
+        "seconds": 0.466,
+        "end": 1794316503414
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 2.871,
+        "end": 1794316506285
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 1.872,
+        "end": 1794316508157
+      },
+      {
+        "name": "solar_regions_test",
+        "seconds": 0.566,
+        "end": 1794316508724
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 63.086,
+        "end": 1794316510211
+      },
+      {
+        "name": "space_parallax_test",
+        "seconds": 0.266,
+        "end": 1794316510477
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 0.917,
+        "end": 1794316511395
+      },
+      {
+        "name": "poi_reward_overhaul_test",
+        "seconds": 66.857,
+        "end": 1794316511622
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 2.97,
+        "end": 1794316511694
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.32,
+        "end": 1794316513942
+      },
+      {
+        "name": "star_map_readability_test",
+        "seconds": 4.373,
+        "end": 1794316515767
+      },
+      {
+        "name": "star_system_composition_test",
+        "seconds": 2.32,
+        "end": 1794316516262
+      },
+      {
+        "name": "star_system_feedback_test",
+        "seconds": 2.82,
+        "end": 1794316518587
+      },
+      {
+        "name": "star_system_3d_test",
+        "seconds": 7.279,
+        "end": 1794316518973
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 0.566,
+        "end": 1794316519154
+      },
+      {
+        "name": "star_system_lighting_material_test",
+        "seconds": 0.366,
+        "end": 1794316519340
+      },
+      {
+        "name": "star_system_polish_correctness_test",
+        "seconds": 1.669,
+        "end": 1794316521008
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 2.32,
+        "end": 1794316521474
+      },
+      {
+        "name": "star_system_hud_intro_test",
+        "seconds": 7.528,
+        "end": 1794316523790
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 2.82,
+        "end": 1794316524294
+      },
+      {
+        "name": "star_system_polish_ui_test",
+        "seconds": 7.53,
+        "end": 1794316528538
+      },
+      {
+        "name": "starfront_defense_test",
+        "seconds": 0.567,
+        "end": 1794316529105
+      },
+      {
+        "name": "star_system_resume_test",
+        "seconds": 7.83,
+        "end": 1794316531620
+      },
+      {
+        "name": "starfront_interception_test",
+        "seconds": 1.568,
+        "end": 1794316533189
+      },
+      {
+        "name": "starfront_persistence_test",
+        "seconds": 1.669,
+        "end": 1794316534857
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 8.379,
+        "end": 1794316537484
+      },
+      {
+        "name": "starfront_quality_test",
+        "seconds": 0.466,
+        "end": 1794316537950
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 2.971,
+        "end": 1794316540922
+      },
+      {
+        "name": "star_system_transition_test",
+        "seconds": 17.794,
+        "end": 1794316542089
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 3.722,
+        "end": 1794316544644
+      },
+      {
+        "name": "status_bar_test",
+        "seconds": 6.977,
+        "end": 1794316551622
+      },
+      {
+        "name": "status_presentation_test",
+        "seconds": 2.119,
+        "end": 1794316553741
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 1.318,
+        "end": 1794316555059
+      },
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 2.22,
+        "end": 1794316557279
+      },
+      {
+        "name": "storm_family_test",
+        "seconds": 0.717,
+        "end": 1794316557995
+      },
+      {
+        "name": "storm_ion_parity_test",
+        "seconds": 0.266,
+        "end": 1794316558261
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 23.96,
+        "end": 1794316558818
+      },
+      {
+        "name": "storm_presentation_test",
+        "seconds": 1.318,
+        "end": 1794316559580
+      },
+      {
+        "name": "system_pressure_test",
+        "seconds": 0.267,
+        "end": 1794316559847
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 2.17,
+        "end": 1794316562017
+      },
+      {
+        "name": "system_exploration_generation_test",
+        "seconds": 3.472,
+        "end": 1794316562290
+      },
+      {
+        "name": "tactical_cards_test",
+        "seconds": 0.367,
+        "end": 1794316562384
+      },
+      {
+        "name": "status_bar_stress_test",
+        "seconds": 24.962,
+        "end": 1794316567051
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 2.419,
+        "end": 1794316569470
+      },
+      {
+        "name": "targeted_sabotage_test",
+        "seconds": 2.219,
+        "end": 1794316571690
+      },
+      {
+        "name": "tactical_preview_test",
+        "seconds": 16.494,
+        "end": 1794316578879
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 25.81,
+        "end": 1794316588100
+      },
+      {
+        "name": "trading_outpost_ui_test",
+        "seconds": 15.699,
+        "end": 1794316594578
+      },
+      {
+        "name": "ui_feedback_test",
+        "seconds": 1.67,
+        "end": 1794316596248
+      },
+      {
+        "name": "ui_overhaul_test",
+        "seconds": 13.44,
+        "end": 1794316609688
+      },
+      {
+        "name": "travel_battle_test",
+        "seconds": 29.671,
+        "end": 1794316617772
+      },
+      {
+        "name": "victory_music_test",
+        "seconds": 2.32,
+        "end": 1794316620092
+      },
+      {
+        "name": "victory_rewards_test",
+        "seconds": 2.119,
+        "end": 1794316622212
+      },
+      {
+        "name": "victory_upgrade_music_test",
+        "seconds": 1.97,
+        "end": 1794316624182
+      },
+      {
+        "name": "visual_system_test",
+        "seconds": 1.119,
+        "end": 1794316625300
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 15.946,
+        "end": 1794316625634
+      },
+      {
+        "name": "trading_outpost_test",
+        "seconds": 72.81,
+        "end": 1794316644499
+      }
+    ]
+  },
+  {
+    "run": 42819905218,
+    "job": "exported-startup",
+    "id": 129850050996,
+    "start": 1794315341445,
+    "end": 1794315467346,
+    "job_seconds": 125.901,
+    "test_sum": 0,
+    "test_wall": 0,
+    "tests": []
+  },
+  {
+    "run": 42819905218,
+    "job": "rendered-ui (gl_compatibility)",
+    "id": 129850052492,
+    "start": 1794315341633,
+    "end": 1794316175338,
+    "job_seconds": 833.705,
+    "test_sum": 733.553,
+    "test_wall": 733.61,
+    "tests": [
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 24.594,
+        "end": 1794315447727
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 5.985,
+        "end": 1794315453712
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 8.443,
+        "end": 1794315462156
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 3.63,
+        "end": 1794315465787
+      },
+      {
+        "name": "asteroid_entry_test",
+        "seconds": 3.571,
+        "end": 1794315469359
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 8.702,
+        "end": 1794315478062
+      },
+      {
+        "name": "solar_entry_test",
+        "seconds": 2.268,
+        "end": 1794315480331
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 3.826,
+        "end": 1794315484158
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 9.148,
+        "end": 1794315493308
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 26.667,
+        "end": 1794315519976
+      },
+      {
+        "name": "cinematic_visual_test",
+        "seconds": 13.168,
+        "end": 1794315533145
+      },
+      {
+        "name": "cinematic_touch_test",
+        "seconds": 3.683,
+        "end": 1794315536829
+      },
+      {
+        "name": "cinematic_launch_test",
+        "seconds": 4.13,
+        "end": 1794315540960
+      },
+      {
+        "name": "expedition_resume_test",
+        "seconds": 2.925,
+        "end": 1794315543885
+      },
+      {
+        "name": "systems_failure_test",
+        "seconds": 3.678,
+        "end": 1794315547566
+      },
+      {
+        "name": "battle_layout_test",
+        "seconds": 26.277,
+        "end": 1794315573843
+      },
+      {
+        "name": "shield_shatter_test",
+        "seconds": 5.077,
+        "end": 1794315578921
+      },
+      {
+        "name": "alpha_visual_test",
+        "seconds": 8.396,
+        "end": 1794315587318
+      },
+      {
+        "name": "power_allocation_test",
+        "seconds": 152.856,
+        "end": 1794315740175
+      },
+      {
+        "name": "expedition_milestones_test",
+        "seconds": 6.639,
+        "end": 1794315746814
+      },
+      {
+        "name": "star_map_test",
+        "seconds": 2.523,
+        "end": 1794315749338
+      },
+      {
+        "name": "battlefield_environments_test",
+        "seconds": 42.643,
+        "end": 1794315791982
+      },
+      {
+        "name": "field_repairs_ui_test",
+        "seconds": 35.186,
+        "end": 1794315827169
+      },
+      {
+        "name": "outpost_screen_test",
+        "seconds": 5.287,
+        "end": 1794315832457
+      },
+      {
+        "name": "repair_selection_test",
+        "seconds": 1.216,
+        "end": 1794315833675
+      },
+      {
+        "name": "six_ship_profiles_test",
+        "seconds": 9.664,
+        "end": 1794315843343
+      },
+      {
+        "name": "chasedown_ui_test",
+        "seconds": 13.588,
+        "end": 1794315856931
+      },
+      {
+        "name": "deck_replacement_ui_test",
+        "seconds": 18.302,
+        "end": 1794315875235
+      },
+      {
+        "name": "card_inspection_test",
+        "seconds": 12.718,
+        "end": 1794315887954
+      },
+      {
+        "name": "enemy_models_visual_test",
+        "seconds": 2.522,
+        "end": 1794315890477
+      },
+      {
+        "name": "ship_models_test",
+        "seconds": 15.695,
+        "end": 1794315906173
+      },
+      {
+        "name": "settings_menu_test",
+        "seconds": 21.902,
+        "end": 1794315928077
+      },
+      {
+        "name": "startup_flow_test",
+        "seconds": 8.799,
+        "end": 1794315936879
+      },
+      {
+        "name": "unified_hud_test",
+        "seconds": 71.388,
+        "end": 1794316008270
+      },
+      {
+        "name": "tactical_focus_test",
+        "seconds": 28.688,
+        "end": 1794316036960
+      },
+      {
+        "name": "compact_poi_focus_test",
+        "seconds": 42.199,
+        "end": 1794316079159
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 7.292,
+        "end": 1794316086453
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 15.03,
+        "end": 1794316101484
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 4.482,
+        "end": 1794316105967
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 1.117,
+        "end": 1794316107085
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 4.377,
+        "end": 1794316111464
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 10.113,
+        "end": 1794316121580
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 16.48,
+        "end": 1794316138060
+      },
+      {
+        "name": "layout_invalidation_test",
+        "seconds": 5.747,
+        "end": 1794316143808
+      },
+      {
+        "name": "star_map_navigation_test",
+        "seconds": 1.518,
+        "end": 1794316145327
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 11.414,
+        "end": 1794316156743
+      }
+    ]
+  },
+  {
+    "run": 42819905218,
+    "job": "rendered-ui (mobile)",
+    "id": 129850103644,
+    "start": 1794315341346,
+    "end": 1794315691635,
+    "job_seconds": 350.289,
+    "test_sum": 277.209,
+    "test_wall": 277.224,
+    "tests": [
+      {
+        "name": "stellar_shafts_render_test",
+        "seconds": 40.59,
+        "end": 1794315440058
+      },
+      {
+        "name": "stellar_shafts_prototype_test",
+        "seconds": 13.87,
+        "end": 1794315453930
+      },
+      {
+        "name": "star_system_lighting_test",
+        "seconds": 16.441,
+        "end": 1794315470372
+      },
+      {
+        "name": "solar_render_test",
+        "seconds": 23.467,
+        "end": 1794315493839
+      },
+      {
+        "name": "asteroid_render_test",
+        "seconds": 8.706,
+        "end": 1794315502546
+      },
+      {
+        "name": "starfront_touch_gesture_test",
+        "seconds": 9.107,
+        "end": 1794315511654
+      },
+      {
+        "name": "starfront_inspection_test",
+        "seconds": 14.022,
+        "end": 1794315525677
+      },
+      {
+        "name": "starfront_presentation_test",
+        "seconds": 34.721,
+        "end": 1794315560399
+      },
+      {
+        "name": "star_system_render_smoke_test",
+        "seconds": 9.568,
+        "end": 1794315569967
+      },
+      {
+        "name": "star_system_lens_effects_test",
+        "seconds": 6.545,
+        "end": 1794315576513
+      },
+      {
+        "name": "imported_combat_vfx_test",
+        "seconds": 10.821,
+        "end": 1794315587335
+      },
+      {
+        "name": "combat_beam_test",
+        "seconds": 13.215,
+        "end": 1794315600551
+      },
+      {
+        "name": "card_vfx_timing_test",
+        "seconds": 19.024,
+        "end": 1794315619576
+      },
+      {
+        "name": "tactical_resize_test",
+        "seconds": 14.632,
+        "end": 1794315634210
+      },
+      {
+        "name": "hud_ownership_test",
+        "seconds": 25.03,
+        "end": 1794315659241
+      },
+      {
+        "name": "metagame_ui_test",
+        "seconds": 17.45,
+        "end": 1794315676692
+      }
+    ]
+  }
+]
