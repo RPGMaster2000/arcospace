@@ -77,7 +77,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_suite_continues_after_failure_and_records_each_result(self):
         self.project()
-        def run(command, log, timeout):
+        def run(command, log, timeout, completion_pattern=None):
             summary = json.loads((self.root / "results/summary.json").read_text())
             self.assertEqual(len(summary["runs"]), 0 if "expedition_milestones" in str(log) else 1)
             log.write_text("fixture output")
@@ -91,7 +91,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_parallel_suite_retains_every_result_and_failure(self):
         self.project()
-        def run(command, log, timeout):
+        def run(command, log, timeout, completion_pattern=None):
             import time
             if "a_test" in str(log):
                 time.sleep(0.02)

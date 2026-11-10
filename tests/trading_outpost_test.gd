@@ -56,8 +56,9 @@ func schedule_checks() -> void:
 		var without = fresh(seed_value % 3, seed_value)
 		without.rules.trading_outpost = null
 		for system in range(1, 31):
-			check(run.system_name == twin.system_name and run.system_profile == twin.system_profile and encounter_signature(run) == encounter_signature(twin) and run.service == twin.service, "Debug seed reproduces profiles, services and systems")
-			check(encounter_signature(run) == encounter_signature(without) and run.ftl_access == without.ftl_access and run.rng.state == without.rng.state, "Service stream independent of encounters, access and loot RNG")
+			var signature := encounter_signature(run)
+			check(run.system_name == twin.system_name and run.system_profile == twin.system_profile and signature == encounter_signature(twin) and run.service == twin.service, "Debug seed reproduces profiles, services and systems")
+			check(signature == encounter_signature(without) and run.ftl_access == without.ftl_access and run.rng.state == without.rng.state, "Service stream independent of encounters, access and loot RNG")
 			check(run.encounters.size() == 9, "Service never replaces a progression encounter")
 			profiles_seen[run.system_profile] = true
 			if run.system_profile == "quiet":

@@ -61,6 +61,8 @@ def main(argv=None):
     parser.add_argument("--shard-count", type=int, default=1)
     args = parser.parse_args(argv)
     project = args.project.resolve()
+    if args.script and set(args.script) - set(SUITES[args.renderer]):
+        parser.error("focused tests must belong to the selected renderer")
     try:
         names = select_shard(args.script or SUITES[args.renderer], args.renderer, args.shard_index, args.shard_count)
     except ValueError as error:

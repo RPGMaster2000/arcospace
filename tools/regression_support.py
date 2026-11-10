@@ -16,7 +16,13 @@ SUCCESS = {
 }
 
 
-def completion_for(name):
+def completion_for(name, headless=False):
+    # These two pre-existing tests deliberately have no pixel work headless.
+    # Rendered execution must still emit the ordinary assertion summary.
+    if headless and name == "orbit_visibility_test":
+        return r"^Orbit visibility: skipped without rendering device$"
+    if headless and name == "space_parallax_test":
+        return r"^Space parallax pixel checks: skipped without a rendering device$"
     return SUCCESS.get(name, r"\b0 failures\b")
 
 

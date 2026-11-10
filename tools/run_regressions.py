@@ -183,7 +183,7 @@ def main(argv=None):
         command = [args.godot, "--headless", "--audio-driver", "Dummy", "--path", str(project),
                    "--log-file", str(results / (name + ".engine.log"))] + extra
         result = run_process(command, results / (name + ".log"), timeout,
-                             completion_pattern=completion_for(name) if name != "import" else None)
+                             completion_pattern=completion_for(name, headless=True) if name != "import" else None)
         result["name"] = name
         return result
 
