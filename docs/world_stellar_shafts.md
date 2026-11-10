@@ -70,6 +70,11 @@ Local outer-field luminance (linear image luminance, same nine-by-nine patch):
 captures, one field draw, physical shadow direction, static resource reuse, moved
 body updates, collider-free effects and unchanged persisted state/RNG. The existing
 solar, lighting, asteroid, input, navigation and save suites remain in the CI matrix.
+The full HUD presentation matrix (four resolutions, every enemy/modifier preview,
+24 settling frames per transition) has a 300-second software-rendering budget,
+matching the existing long power-allocation matrix. Its initial GL CI run reached
+the former 120-second timeout without assertion errors; the unchanged test passes
+locally in 30.918 seconds. This budget change does not establish Android performance.
 Final CI results are recorded on PR #54.
 
 Combat, environmental selection/snapshots, saves, procedural positions, RNG streams,
