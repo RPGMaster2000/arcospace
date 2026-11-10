@@ -13,6 +13,7 @@ from run_regressions import positive_seconds, run_process
 # One selection shared by local verification and CI. These are presentation checks,
 # rather than all rule simulations running a second time through a renderer.
 COMPATIBILITY = (
+    "stellar_shafts_render_test", "stellar_shafts_prototype_test",
     "star_system_lighting_test",
     "asteroid_render_test", "asteroid_entry_test", "solar_render_test", "solar_entry_test",
     "starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test",
@@ -31,9 +32,11 @@ COMPATIBILITY = (
 # Navigation assertions run headless and in rendered GL. Under Mesa software Vulkan the
 # navigation script reports 26/26 passes but can hang during engine teardown.
 # Mobile still tests actual Vulkan initialization, tactical resize, HUD and metagame.
-MOBILE = ("star_system_lighting_test", "solar_render_test", "asteroid_render_test", "starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "imported_combat_vfx_test", "combat_beam_test", "card_vfx_timing_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
+MOBILE = ("stellar_shafts_render_test", "stellar_shafts_prototype_test", "star_system_lighting_test", "solar_render_test", "asteroid_render_test", "starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "imported_combat_vfx_test", "combat_beam_test", "card_vfx_timing_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
-TIMEOUTS = {"power_allocation_test": 300}
+# The HUD matrix renders 24 settling frames across four sizes and every enemy/
+# modifier preview. Allow software GL to finish the full matrix with global dust.
+TIMEOUTS = {"power_allocation_test": 300, "unified_hud_test": 300}
 
 
 def command(godot, project, renderer, name):
