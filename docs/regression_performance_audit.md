@@ -85,3 +85,72 @@ changes are permitted.
 
 Implementation and final measurements will be added after the baseline.
 
+
+## Cloud implementation and first complete CI result
+
+[Run 42872168078](https://github.com/RPGMaster2000/arcospace/actions/runs/42872168078)
+on `59323fd` passed every job: all 159 headless scripts, 46 GL scripts, 16 Mobile
+scripts, Python contracts, complete/disjoint aggregate checks, exported lens checks
+once per renderer, and the unchanged exported-startup/ship-model job.
+
+| Suite | PR55 baseline job seconds | Longest shard + aggregate seconds | Difference | Change |
+|---|---:|---:|---:|---:|
+| Headless | ~399 | 314 + 11 = 325 | ~74 s | ~18.5% shorter |
+| GL Compatibility | ~834 | 548 + 9 = 557 | ~277 s | ~33.2% shorter |
+| Mobile Vulkan | ~350 | 285 + 9 = 294 | ~56 s | ~16.0% shorter |
+
+These are job execution times, excluding queue and inter-job scheduling gaps.
+This is one new hosted sample compared with a historical baseline, not a controlled
+causal speedup estimate. Historical GL alone varied 834–1183 seconds. The new GL
+and Mobile paths meet the requested 12/6 minute execution targets in this sample;
+headless does not meet five minutes including aggregate overhead. More samples
+are required to estimate variance. Queue delays can offset critical-path savings.
+
+Sharding adds hosts and repeats imports/setup. Execution plus aggregate jobs in
+this sample sum to about 40 runner-minutes, versus about 28.5 minutes for the PR55
+baseline jobs. This resource trade-off is deliberate and must not be described as
+less total compute. Test-process scheduling estimates are 493.5/493.3 seconds for
+headless, 449.9/450.7 GL and 176.0/168.8 Mobile, before headless two-worker overlap.
+These estimates are scheduling inputs, not measurements of this run.
+
+Implementation:
+- Two independent hosts per suite; two headless workers per host; no concurrent
+  software renderers on one host. Static historical longest-first bin packing.
+- Full-suite aggregate checks validate every source-discovered name exactly once,
+  successful completion, shard indices, and absence of focused/incomplete results.
+- Strict completion evidence in addition to exit/diagnostic/timeout checks. Only
+  the two existing intentional headless pixel-skip messages have explicit mode-
+  specific completion patterns. No new skips or removed renderer tests.
+- Atomic partial summaries and per-shard Actions timing tables; first output,
+  completion and post-completion timings distinguish coarse lifecycle overhead.
+- `docs/.gdignore` avoids importing report screenshots; clean CI import and all
+  exported-pack checks pass with the exclusion. Source FileAccess data remains.
+- One immutable per-system test signature is reused in trading-outpost comparisons;
+  all 200 seeds × 30 systems × three actual generation streams are retained.
+
+The readiness follow-up preserves 24 startup frames and replaces only repeated
+HUD layout waits with bounded stable-geometry checks. The first attempt did not
+preserve shader warmup and failed; it was corrected rather than weakening the new
+assertion. Corrected local GL result: 401 checks, zero failures, 86 readiness calls
+and 258 observed layout frames, 48.857 seconds. The original matrix has 315 checks;
+all remain, plus one readiness assertion per call. The unchanged baseline passed locally in 200.964 seconds on the same Godot/Mesa fixture, versus 48.857 seconds for the readiness version (152.107 seconds / 75.7% shorter). This is one local pair; the optimized invocation overlapped a headless workload, so it is not a controlled variance estimate. Both passed. Other large randomized workloads, compact camera tween
+waits and the 40-frame shaft transition observation are unchanged.
+
+Local clean import passes. The initial local full run used incomplete imported
+audio and is not a clean-suite pass. After import, focused progression passes 3185
+checks and both intentional headless pixel cases complete correctly. Trading-outpost
+still reaches the unchanged 120-second timeout on this constrained machine, while
+clean hosted shards pass. No timeout increase or simulation reduction hides that
+local result. The known local star-map service-arrival assertion also occurs on
+unchanged baseline; hosted full checks pass. Windows timeout descendant cleanup
+remains unverified here and uses taskkill; a descendant retaining output fails even
+if its parent has exited. No Windows Job Object support is claimed.
+
+Limits: total scene initialization versus GPU waits versus screenshot encoding has
+not been fully instrumented in every test. Process timings include those costs;
+first output is only a coarse initialization proxy. HUD layout metrics are nested,
+not additional disjoint costs. Repeated renderer initialization remains intentional
+for process isolation. No gameplay, visual appearance, RNG, save or camera code
+was modified. Remaining large sampling workloads are meaningful coverage.
+
+Final implementation CI: [42875150569](https://github.com/RPGMaster2000/arcospace/actions/runs/42875150569) passed the complete matrix on `ad643d6`, including the HUD readiness follow-up and 22 Python contract tests. No remaining automated CI failures. The final documentation-only commit records these results.
