@@ -214,11 +214,14 @@ func run() -> void:
 		if not baseline: check(offscreen.contrast > 3.2 and offscreen.night > 0.04,"Calibrated day/night contrast preserves readable reflected fill")
 		probe.free()
 	var volume_root = map.visual_root.get_node("StellarShafts")
-	check(volume_root.get_child_count() <= 3,"Bounded major-body draw budget")
+	check(volume_root.get_child_count() == 1,"One continuous scattering-field draw")
+	check(volume_root.field.global_position == map.objects[-100].global_position,"Global medium originates at the physical star")
+	var extent: Vector3 = volume_root.material.get_shader_parameter("field_extent")
+	check(extent.x > map.settings.system_bounds.size.length(),"Field fades beyond the entire navigable diagonal")
 	check(volume_root.find_children("*","CollisionObject3D",true,false).is_empty(),"Volumes cannot intercept PoI input")
 	for record in volume_root.records:
 		var expected: Vector3 = (record.body.global_position-map.objects[-100].global_position).normalized()
-		check(record.volume.global_basis.z.dot(expected) > 0.999,"Shadow extends away from physical star")
+		check(record.axis.dot(expected) > 0.999,"Shadow extends away from physical star")
 		var original_mesh: Mesh = record.volume.mesh
 		var original: Transform3D = record.volume.global_transform
 		volume_root._update_geometry()
@@ -226,7 +229,7 @@ func run() -> void:
 		var position: Vector3 = record.body.position
 		record.body.position += Vector3(0.2,0,0)
 		volume_root._update_geometry()
-		check(record.volume.global_transform != original and record.volume.mesh == original_mesh,"Moved body updates orientation without reallocating shared mesh")
+		check(record.position == record.body.global_position and record.volume.mesh == original_mesh,"Moved body updates orientation without reallocating shared mesh")
 		record.body.position = position
 		volume_root._update_geometry()
 	check(Save.encode(host.state) == saved,"Camera, lighting and visual quality never alter persisted state or RNG streams")

@@ -84,4 +84,4 @@ extends Resource
 
 @export_group("World-space stellar dust")
 @export var stellar_shafts_enabled := true
-@export_range(0.0,0.08,0.005) var stellar_dust_density := 0.035
+@export_range(0.0,0.03,0.001) var stellar_dust_density := 0.007

@@ -303,14 +303,16 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var shafts := preload("res://scripts/presentation/star_system/stellar_shafts.gd").new()
 		visual_root.add_child(shafts)
 		shafts.strength = settings.stellar_dust_density
+		var bounds: Rect2 = settings.system_bounds.abs()
+		var navigation_radius := 0.0
+		for corner in [bounds.position,bounds.end,Vector2(bounds.position.x,bounds.end.y),Vector2(bounds.end.x,bounds.position.y)]:
+			navigation_radius = maxf(navigation_radius,corner.length())
+		shafts.field_radius = maxf(50.0,navigation_radius*1.65)
 		var major: Array = planet_nodes.values()
 		for entry in entries:
 			if entry.get("model_kind", "") == "gas_giant" and objects.has(entry.index) and not major.has(objects[entry.index]):
-				objects[entry.index].set_meta("stellar_medium","gas_giant")
 				major.append(objects[entry.index])
 		major.sort_custom(func(a,b): return float(a.get_meta("radius")) > float(b.get_meta("radius")))
-		for p in visual_data.planets:
-			planet_nodes[p.index].set_meta("stellar_medium",p.type)
 		shafts.configure(disc,SolarVisual.Solar.CORE_RADIUS_PER_SCALE * core_scale,major,visual_data.star_color)
 	if is_instance_valid(ship):
 		ship.queue_free()

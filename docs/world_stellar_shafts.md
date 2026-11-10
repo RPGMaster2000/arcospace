@@ -1,107 +1,99 @@
-# World-space stellar dust and shadow corridors
+# System-wide stellar scattering and shadow corridors
 
-Baseline: main 6d3aa8e, including merged PR #53. The previous work is retained;
-no competing planetary gain/contrast tuning is added here.
+Baseline: main 6d3aa8e, including PR #53. This supersedes the initial PR #54
+prototype of localized dust volumes: the production effect is now one continuous
+medium centered on the physical star, including when the star is offscreen.
 
-## Problem and technique selection
+## Distribution and shadows
 
-The lens addon synthesizes ghosts, anamorphic flare and radial depth-sampled rays
-around the projected source. It is intentionally absent offscreen. Those optical
-terms cannot represent persistent three-dimensional shadowed dust. They remain
-unchanged in this implementation, including centered-sun settings and safeguards.
+The field is a broad ellipsoid with an exact quadratic density integral. Its
+horizontal radius is at least 1.65 times the navigable corner distance (about 65
+units with current bounds), and its half-height is 14 units. Thus density fades
+far beyond navigable planets, encounters and PoIs rather than ending at them.
+This is deliberately gradual stylized attenuation, not inverse-square lighting.
+World-coordinate, low-frequency sinusoidal variation adds faint dust structure.
+The camera-relative `map_sky.gdshader` remains unchanged: spatial shadowing belongs
+in this world-space medium, not the sky.
 
-The prototype first used uniformly integrated finite cones. Inspection rejected
-that version: obvious flat end boundaries and bright shell contours appeared at
-oblique angles. Raising opacity would have made the problem worse.
+Up to six largest substantial celestial bodies supply physical positions and
+radii. Each obstructs the shared medium using the existing analytical finite-cone
+intersection method. The umbra slope is `(body_radius-star_radius)/distance`;
+the surrounding penumbra uses `(body_radius+star_radius)/distance`. Integrated
+shadow paths subtract illumination instead of adding bright per-planet plumes.
+Converging umbras end at their physical tip; penumbras continue through the field.
+Cone chord integration softens projected boundaries, and the remote field boundary
+fades continuously without a bright cap. Larger bodies cover more of the medium.
+Overlapping occluders use the strongest obstruction, avoiding excessive blackening.
 
-The selected alternative analytically integrates a quadratic longitudinal density
-profile through nested finite cones. Density reaches zero at both ends. Three
-weighted radial envelopes soften the outer boundary; subtracting the planet's
-finite umbra makes a darker corridor between illuminated dust. This is closed-form
-ray/cone intersection and integration, not ray marching. A tiny static subpixel
-alpha dither reduces visible LDR gradient bands.
+The star radius comes from the existing core-scale definition. Four procedural
+planets plus substantial gas-giant PoIs share a six-occluder budget, prioritizing
+larger bodies; additional bodies beyond this budget do not cast medium shadows.
+Bodies smaller than radius 0.5 are skipped. There are no separately generated moons
+currently. This represents shadows in dust, not eclipses on other solid surfaces.
 
-A one-star/one-planet fixture was reviewed before production integration. Its
-side and oblique views show the same world-anchored corridor; camera movement does
-not rotate/reallocate it. The first rectangular-cap version was not integrated.
+## Rendering and performance
 
-## Architecture
+`stellar_shafts.gd` owns one unit box mesh, one material and **one transparent draw**.
+The vertex shader expands the proxy to the field bounds; CPU culling uses matching
+bounds. A maximum-six-body transform/radius comparison updates packed uniforms only
+when geometry changes. Camera motion neither rotates nor rebuilds the field.
 
-- `stellar_shafts.gd`: one shared unit box mesh and one shared shader material;
-  at most three major-body instances. Vertex instance parameters size the bounded
-  proxies, with matching CPU culling bounds. No collision, light or shadow-map nodes.
-- `stellar_dust_volume.gdshader`: four analytic path integrals, one scene-depth
-  sample per covered pixel, no texture noise or sampling loop. Resolved opaque depth
-  truncates each ray so scattering does not draw through solid surfaces. Compatibility
-  and Mobile use their respective projection/depth conventions.
-- Map construction reads existing final physical positions and radius metadata.
-  Largest planets and substantial gas-giant PoIs are preferred; bodies below radius
-  0.5 are skipped. Generated appearance, positions, RNG and gameplay records are not
-  changed. There are no separately generated moons currently; substantial spherical
-  bodies use the same radius/position path.
-- Geometry points away from the authoritative rendered star. Stellar radius comes
-  from the same saved/core-scale definition as existing solar visuals. Umbra slope
-  is `(body_radius-star_radius)/distance`: larger stars converge the shadow, larger
-  occluders can diverge it. Surrounding dust spread is a bounded stylized approximation.
-- A cheap maximum-three-body transform/radius comparison runs each frame. Geometry
-  is never rebuilt; changed body/star positions update transforms, bounds and instance
-  parameters only. Static frames retain mesh/material identities.
-- Dust draws behind atmospheric/PoI ribbons at priority -20. This fixes transparent
-  ordering across camera angles rather than allowing distance-sort changes to pop.
-  Opaque depth still clips the ray. The result represents shadowed medium, not an
-  eclipse applied to another object's surface.
+`stellar_dust_volume.gdshader` intersects the ellipsoid and shadow cones in closed
+form. It uses one resolved scene-depth sample to stop scattering at opaque surfaces,
+with separate GL and Mobile depth reconstruction. There is no ray marching, global
+illumination, shadow map, texture noise, additional light or per-frame material
+allocation. Tiny static alpha dither reduces gradient banding. Transparent priority
+-20 keeps atmospheric and PoI ribbons legible.
 
-Map tuning: `stellar_shafts_enabled=true`, `stellar_dust_density=0.035`. Length is
-clamped to 5-12 units from eight body radii; spread is clamped to 0.08-0.22 from
-stellar angular size. Gas giants use 75% density. Opacity is capped at 0.26. Quality
-is visual only. No new player graphics interface is added.
+Defaults: `stellar_shafts_enabled=true`, `stellar_dust_density=0.007`; opacity is
+capped at 0.42. The single field may cover the full viewport, so analytical fragment
+work and depth resolving are real costs despite the single draw. Physical Android
+thermal/frame-time measurements remain outstanding. Mobile Vulkan and GL are both
+tested; their tone mapping yields different apparent brightness.
 
-## Cost and limits
+## Validation
 
-At most three additional bounded transparent draws share resources. No new lights,
-shadow maps, full-screen compositing shader or per-frame material allocation is
-introduced. Sampling depth can require Godot's existing resolved-depth/copy path,
-particularly on GL; this is not free and is a reason to cap coverage/object count.
-The existing lens compositor is neither disabled nor modified. Overdraw depends
-on camera proximity, and physical Android thermal/frame-time testing is outstanding.
+`stellar_shafts_prototype_test.gd` covers centered, fully offscreen, oblique,
+backlit and **outer-system offscreen** views. It verifies the full physical sun
+disc is offscreen and compares the same outer-field pixels with occlusion enabled
+and disabled: shadows must darken a persistently illuminated medium. Forty camera
+transition frames check fixed world transforms and mesh identity.
 
-This is deliberately stylized dust, not full volumetric radiative transfer or
-inter-object eclipse simulation. The finite tapered envelopes can still read as
-localized dust lobes in a sparse black-space close-up. Overlapping transparent
-volumes are not a global participating medium; the three-body budget limits clutter.
-The ordinary overview is more restrained than the controlled side view. No claim
-is made that numerical checks alone establish art-direction acceptance.
+Local outer-field luminance (linear image luminance, same nine-by-nine patch):
 
-## Validation and matched comparisons
+| Renderer | Unobstructed medium | Shadow corridor |
+|---|---:|---:|
+| Mobile Vulkan | 0.158933 | 0.145540 |
+| GL Compatibility | 0.073431 | 0.068880 |
 
-`stellar_shafts_prototype_test.gd`: controlled star/planet, centered, fully offscreen,
-oblique and backlit captures; checks the entire physical source disc is outside the
-frustum in the offscreen fixture; forty transition frames verify world transforms
-and mesh identity remain unchanged by camera movement.
+`stellar_shafts_render_test.gd` covers production seed 1042, matched enabled/disabled
+captures, one field draw, physical shadow direction, static resource reuse, moved
+body updates, collider-free effects and unchanged persisted state/RNG. The existing
+solar, lighting, asteroid, input, navigation and save suites remain in the CI matrix.
+Final CI results are recorded on PR #54.
 
-`stellar_shafts_render_test.gd`: production seed 1042 with matched enabled/disabled
-captures, same geometry/camera/viewport/renderer, major-body budget, shadow direction,
-mesh reuse and position-update checks, collider-free effects and unchanged saved
-state/RNG. Existing lighting, solar, asteroid, touch and navigation suites remain.
-Both suites are registered for GL and Mobile CI. Final full CI status is in the PR.
+Combat, environmental selection/snapshots, saves, procedural positions, RNG streams,
+camera controls, hitboxes, PoI interaction and the existing lens addon are unchanged.
 
-PNG files are original renderer output, not postprocessed. Before/after differ only
-in the new subtree's visibility; shader TIME remains live. Prototype framing is a
-test scene and does not change production camera controls. Windows production
-Mobile captures explicitly use Vulkan. No encoded motion video was recorded.
+## Original renderer captures
+
+Before/after differ only by field visibility; no image postprocessing. Shader TIME
+remains live. Prototype cameras are test fixtures, not production control changes.
+Mobile screenshots use Vulkan explicitly. No encoded motion video was recorded.
 
 | Production view | Before | After |
 |---|---|---|
 | Centered sun | ![](world_shafts_screenshots/centered-before-mobile.png) | ![](world_shafts_screenshots/centered-after-mobile.png) |
-| Edge | ![](world_shafts_screenshots/edge-before-mobile.png) | ![](world_shafts_screenshots/edge-after-mobile.png) |
-| Multiple bodies/PoIs/asteroids | ![](world_shafts_screenshots/asteroids-pois-before-mobile.png) | ![](world_shafts_screenshots/asteroids-pois-after-mobile.png) |
+| Offscreen sun | ![](world_shafts_screenshots/offscreen-before-mobile.png) | ![](world_shafts_screenshots/offscreen-after-mobile.png) |
+| Multiple bodies, PoIs and asteroids | ![](world_shafts_screenshots/asteroids-pois-before-mobile.png) | ![](world_shafts_screenshots/asteroids-pois-after-mobile.png) |
 
 | Controlled prototype | Before | After |
 |---|---|---|
 | Fully offscreen source | ![](world_shafts_screenshots/prototype-offscreen-before-mobile.png) | ![](world_shafts_screenshots/prototype-offscreen-after-mobile.png) |
+| Outer-system, offscreen source | ![](world_shafts_screenshots/prototype-outer-offscreen-before-mobile.png) | ![](world_shafts_screenshots/prototype-outer-offscreen-after-mobile.png) |
 | Oblique | ![](world_shafts_screenshots/prototype-oblique-before-mobile.png) | ![](world_shafts_screenshots/prototype-oblique-after-mobile.png) |
 | Backlit | ![](world_shafts_screenshots/prototype-backlit-before-mobile.png) | ![](world_shafts_screenshots/prototype-backlit-after-mobile.png) |
 
-GL equivalents and the remaining production close-ups are included in the gallery
-folder. Combat, environmental selection/snapshots, save formats, procedural systems,
-navigation, camera controls, PoI interaction and unrelated RNG are unchanged.
+GL equivalents and remaining production close-ups are in the gallery folder.
+Art-direction acceptance still needs visual review; numeric checks establish
+coverage and obstruction, not subjective quality.
