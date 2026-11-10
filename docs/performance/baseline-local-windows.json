@@ -1,0 +1,148 @@
+[
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 75.755,
+    "log": ".godot\\perf-audit\\local-before\\headless-trading_outpost_test.log",
+    "name": "trading_outpost_test",
+    "renderer": "headless"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 70.154,
+    "log": ".godot\\perf-audit\\local-before\\headless-poi_reward_overhaul_test.log",
+    "name": "poi_reward_overhaul_test",
+    "renderer": "headless"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 45.779,
+    "log": ".godot\\perf-audit\\local-before\\headless-card_progression_test.log",
+    "name": "card_progression_test",
+    "renderer": "headless"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [],
+    "seconds": 71.023,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-power_allocation_test.log",
+    "name": "power_allocation_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 30.086,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-unified_hud_test.log",
+    "name": "unified_hud_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 33.37,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-compact_poi_focus_test.log",
+    "name": "compact_poi_focus_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [],
+    "seconds": 8.278,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-stellar_shafts_render_test.log",
+    "name": "stellar_shafts_render_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [],
+    "seconds": 4.716,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-stellar_shafts_prototype_test.log",
+    "name": "stellar_shafts_prototype_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [],
+    "seconds": 5.094,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-star_system_lighting_test.log",
+    "name": "star_system_lighting_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 5.314,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-solar_render_test.log",
+    "name": "solar_render_test",
+    "renderer": "gl_compatibility"
+  },
+  {
+    "status": "passed",
+    "exit_code": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "error_lines": [],
+    "shutdown_warning_lines": [
+      "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details)."
+    ],
+    "seconds": 26.176,
+    "log": ".godot\\perf-audit\\local-before\\gl_compatibility-starfront_presentation_test.log",
+    "name": "starfront_presentation_test",
+    "renderer": "gl_compatibility"
+  }
+]
