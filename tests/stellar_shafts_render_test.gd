@@ -217,7 +217,7 @@ func run() -> void:
 	check(volume_root.get_child_count() == 1,"One continuous scattering-field draw")
 	check(volume_root.field.global_position == map.objects[-100].global_position,"Global medium originates at the physical star")
 	var extent: Vector3 = volume_root.material.get_shader_parameter("field_extent")
-	check(extent.x > map.settings.system_bounds.size.length(),"Field fades beyond the entire navigable diagonal")
+	check(extent.x > map.settings.system_bounds.end.length(),"Field fades beyond the outer navigable corner")
 	check(volume_root.find_children("*","CollisionObject3D",true,false).is_empty(),"Volumes cannot intercept PoI input")
 	for record in volume_root.records:
 		var expected: Vector3 = (record.body.global_position-map.objects[-100].global_position).normalized()
