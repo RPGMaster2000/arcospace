@@ -72,6 +72,8 @@ func run() -> void:
 	state.defense.neutralize(0)
 	state.consume_defense_reveal()
 	state.rules.defense_tuning.enemy_speed = 0.0
+	# Isolate reinforcement scheduling from the new terminal mothership clock.
+	state.rules.defense_tuning.pressure_per_second = 0.0
 	var away := Vector3(0,100,0)
 	state.defense.advance_time(8.9, away, away, true)
 	check(state.defense.reinforcements_spawned == 0, "No reinforcement before first deadline")

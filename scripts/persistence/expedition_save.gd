@@ -360,6 +360,7 @@ static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> b
 	if not battle.has("environment"): return true
 	var snapshot: Variant = battle.environment
 	if not EnvironmentData.valid_snapshot(snapshot): return false
+	if not snapshot.get("friendly_support", {}).is_empty() and data.get("game_mode") != "defense": return false
 	var index: int = int(battle.get("index", -1))
 	if index < 0 or index >= data.encounters.size(): return false
 	return snapshot.run_seed == data.seed and snapshot.system_number == data.system_number \

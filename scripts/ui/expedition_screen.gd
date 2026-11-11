@@ -363,10 +363,7 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	overview_hud.hull_bar.max_value = state.ship().hull_capacity
 	overview_hud.hull_bar.value = state.hull
 	if state.is_defense():
-		var threats: int = 0
-		for unit in state.defense.units:
-			if state.defense.available(unit): threats += 1
-		overview_hud.metagame.text = "HOME %d/%d · %d THREATS\n%s" % [state.defense.integrity, state.rules.defense_tuning.base_integrity, threats, state.ftl_status()]
+		set_defense_status(state)
 	else:
 		overview_hud.set_metagame(state.profile_name(), state.pressure, state.ftl_status())
 	jump_button.text = ("FTL READY" if state.can_jump() else "FTL LOCKED") if state.is_defense() else state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
@@ -783,3 +780,13 @@ func present_rewards(state: Resource, visual_settings: Resource, map_3d: bool,
 					_label("The damage destroyed your ship. This expedition is over.", 22)
 				)
 			add_action("Continue", continue_requested)
+
+
+func set_defense_status(state: Resource) -> void:
+	var threats: int = 0
+	for unit in state.defense.units:
+		if state.defense.available(unit): threats += 1
+	overview_hud.metagame.text = "HOME %d/%d · %d THREATS\nPRESSURE %d / %d\n%s" % [
+		state.defense.integrity, state.defense.tuning.base_integrity, threats,
+		int(state.defense.pressure), int(state.defense.tuning.pressure_maximum), state.ftl_status()]
+	overview_hud.metagame.add_theme_color_override("font_color", Color("ff9b82") if state.defense.mothership_advancing else Color("ddfaff"))

@@ -46,6 +46,8 @@ var objects: Dictionary = {}
 var markers: Dictionary = {}
 var selection_rings: Dictionary = {}
 var input_allowed: Callable
+var turret_options: Callable
+var turret_requested: Callable
 var inspection_active: bool = false
 var inspection_area: Callable
 var hold_index: int = -1
@@ -915,6 +917,9 @@ func _initial_ship_position() -> Vector3:
 	return Vector3(0,1.5,3)
 
 func point_is_reserved(point: Vector2) -> bool:
+	if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.construction):
+		var build_button: Button = defense_effects.construction.button
+		if build_button.is_visible_in_tree() and build_button.get_global_rect().has_point(point): return true
 	return hud_regions.any(func(rect): return rect.has_point(point)) or (is_instance_valid(zoom_controls) and zoom_controls.visible and zoom_controls.get_global_rect().has_point(point))
 
 func fit_overview() -> void:
@@ -1047,5 +1052,7 @@ func sync_defense(snapshot: Dictionary) -> void:
 		if modifier_source.is_valid():
 			var modifier: int = modifier_source.call(index)
 			if modifier != 0: markers[index].tooltip_text += "\n" + preload("res://scripts/combat_modifier.gd").NAMES[modifier]
+		if unit.mothership and snapshot.get("mothership_advancing", false):
+			markers[index].tooltip_text += "\nAdvancing · ETA %.1fs" % snapshot.mothership_eta
 		visual_data.anchors[index] = objects[index].position
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)

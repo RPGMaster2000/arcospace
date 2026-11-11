@@ -17,3 +17,12 @@ extends Resource
 @export_range(0.15, 1.0, 0.05) var inspection_hold_seconds: float = 0.4
 
 @export_range(0.15, 0.8, 0.05) var double_tap_seconds: float = 0.35
+
+@export_range(1.0, 1000.0, 1.0) var pressure_maximum: float = 100.0
+@export_range(0.0, 100.0, 0.1) var pressure_per_second: float = 2.0
+@export_range(0.1, 5.0, 0.1) var mothership_speed: float = 0.65
+@export_range(1, 1000, 1) var turret_salvage_cost: int = 12
+@export_range(1, 8, 1) var turret_capacity: int = 2
+@export_range(1.0, 28.0, 0.1) var turret_radius: float = 7.0
+@export_range(1, 1000, 1) var turret_damage: int = 5
+@export_range(1, 100, 1) var turret_round_interval: int = 2

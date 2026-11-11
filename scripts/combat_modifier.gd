@@ -252,6 +252,11 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 	return notice
 
 
+static func shielded_hit(ship: Dictionary, damage: int) -> void:
+	var blocked: int = mini(ship.shields, damage)
+	ship.shields -= blocked
+	ship.hull = maxi(0, ship.hull - damage + blocked)
+
 func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -> String:
 	var outcomes: Array[String] = []
 	var ships: Array[Dictionary] = [player, enemy]
@@ -259,9 +264,7 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 		var roll: float = rng.randf() if rolls.is_empty() else float(rolls[index])
 		var hit: bool = roll < ASTEROID_CHANCE
 		if hit:
-			var blocked: int = mini(ships[index].shields, ASTEROID_DAMAGE)
-			ships[index].shields -= blocked
-			ships[index].hull = maxi(0, ships[index].hull - ASTEROID_DAMAGE + blocked)
+			shielded_hit(ships[index], ASTEROID_DAMAGE)
 		outcomes.append(("YOU" if index == 0 else "ENEMY") + (" HIT" if hit else " MISSED"))
 	return "ASTEROID SHOWER · " + " / ".join(outcomes)
 

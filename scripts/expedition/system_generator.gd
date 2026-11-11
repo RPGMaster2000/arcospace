@@ -208,3 +208,5 @@ static func _generate_defense(state: Resource) -> void:
 	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
 	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5))
 	state.defense.add_reserves(reserves)
+	state.defense.construction_sites = state.defense.Installations.sites(
+		state.defense.home, state.defense.anchors, state.encounters)
