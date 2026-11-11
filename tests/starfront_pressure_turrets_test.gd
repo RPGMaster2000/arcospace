@@ -242,6 +242,11 @@ func presentation_checks() -> void:
 		"Build action commits the authoritative installation once")
 	construction.popup.hide()
 	var ring: MeshInstance3D = construction.rings[id]
+	await process_frame
+	await process_frame
+	var panel: Control = map.defense_effects.home_panel
+	var turret_screen: Vector2 = map.camera.unproject_position(ring.global_position + Vector3.UP * 0.45)
+	check(not Rect2(panel.position, panel.size).has_point(turret_screen), "The homeworld HUD clears the turret model")
 	await capture("deployed")
 	var flank: Vector3 = Vector3.UP.cross(ring.global_position).normalized()
 	state.defense.unit_for(0).position = ring.global_position + flank * 4.0

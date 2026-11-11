@@ -9,7 +9,7 @@ const PREVIEW := Color(0.36, 0.73, 1.0, 0.75)
 var query: Callable
 var deploy: Callable
 var button: Button
-var popup: PopupPanel
+var popup: Control
 var picker: OptionButton
 var detail: Label
 var build: Button
@@ -19,7 +19,7 @@ var snapshot: Dictionary
 var site_ids: Array = []
 var selected: String = ""
 
-func configure(column: VBoxContainer, options: Callable, request: Callable) -> void:
+func configure(column: VBoxContainer, overlay: Control, options: Callable, request: Callable) -> void:
 	query = options
 	deploy = request
 	button = Button.new()
@@ -28,12 +28,19 @@ func configure(column: VBoxContainer, options: Callable, request: Callable) -> v
 	button.focus_mode = Control.FOCUS_NONE
 	column.add_child(button)
 	button.pressed.connect(_open)
-	popup = PopupPanel.new()
+	popup = Control.new()
 	popup.name = "KineticTurretConstruction"
-	popup.transient = true
-	popup.exclusive = true
-	add_child(popup)
+	popup.z_index = 30
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.hide()
+	overlay.add_child(popup)
+	popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var centered := CenterContainer.new()
+	centered.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.add_child(centered)
+	centered.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var backing := PanelContainer.new()
+	backing.mouse_filter = Control.MOUSE_FILTER_STOP
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("111c2b")
 	style.border_color = Color("47748a")
@@ -41,7 +48,7 @@ func configure(column: VBoxContainer, options: Callable, request: Callable) -> v
 	style.set_corner_radius_all(8)
 	style.set_content_margin_all(12)
 	backing.add_theme_stylebox_override("panel", style)
-	popup.add_child(backing)
+	centered.add_child(backing)
 	var panel := VBoxContainer.new()
 	panel.custom_minimum_size.x = 300
 	panel.add_theme_constant_override("separation", 6)
@@ -63,8 +70,8 @@ func configure(column: VBoxContainer, options: Callable, request: Callable) -> v
 	close.text = "Close"
 	panel.add_child(close)
 	close.pressed.connect(popup.hide)
-	popup.popup_hide.connect(func():
-		if is_instance_valid(preview): preview.hide())
+	popup.visibility_changed.connect(func():
+		if not popup.visible and is_instance_valid(preview): preview.hide())
 
 func _open() -> void:
 	picker.clear()
@@ -78,7 +85,7 @@ func _open() -> void:
 		detail.text = "No eligible construction sites in this system."
 		build.text = "Build turret"
 		build.disabled = true
-	popup.popup_centered(Vector2i(330, 232))
+	popup.show()
 
 func _select_site(index: int) -> void:
 	selected = site_ids[index]
@@ -164,3 +171,11 @@ static func _model() -> Node3D:
 		instance.position = part[1]
 		model.add_child(instance)
 	return model
+
+func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(popup) and popup.visible and event.is_action_pressed("ui_cancel"):
+		popup.hide()
+		get_viewport().set_input_as_handled()
+
+func _exit_tree() -> void:
+	if is_instance_valid(popup): popup.queue_free()

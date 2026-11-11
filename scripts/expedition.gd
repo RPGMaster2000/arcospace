@@ -416,6 +416,10 @@ func _notification(what: int) -> void:
 		_cancel_presentation()
 		phase = Phase.OVERVIEW
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		var construction: Control = _construction_panel()
+		if is_instance_valid(construction) and construction.visible:
+			construction.hide()
+			return
 		var menu = battle.settings_button.menu if is_instance_valid(battle) else settings_button.menu
 		menu.present()
 	elif what == NOTIFICATION_APPLICATION_PAUSED:
@@ -481,11 +485,16 @@ func show_system(preserve_transition: bool = false) -> void:
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
+func _construction_panel() -> Control:
+	if state == null or not state.is_defense() or not is_instance_valid(star_map): return null
+	var effects: Node3D = star_map.defense_effects
+	if not is_instance_valid(effects) or not is_instance_valid(effects.construction): return null
+	return effects.construction.popup
+
 func _map_input_allowed(block_construction: bool = true) -> bool:
-	if block_construction and is_instance_valid(star_map) and state.is_defense():
-		var effects: Node3D = star_map.defense_effects
-		if is_instance_valid(effects) and is_instance_valid(effects.construction) and effects.construction.popup.visible:
-			return false
+	if block_construction:
+		var construction: Control = _construction_panel()
+		if is_instance_valid(construction) and construction.visible: return false
 	return (
 		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and not current_deck_viewer.shade.visible
