@@ -63,6 +63,7 @@ var result_cause: String = ""
 	set(value): _enemy_state.hull_capacity = value
 var current_actor: String = "player"
 var turn_number: int = 1
+var last_turret_round: int = 0
 var winner: String = ""
 var escaped_by_ftl: bool = false
 # A continuation carries only hull; setup resources/production and shields reset normally.
@@ -365,6 +366,7 @@ func _begin_turn(side: String) -> void:
 	var before: Dictionary = _both_states()
 	var asteroid_event: bool = false
 	var asteroid_hit_player: bool = false
+	var turret_event: bool = false
 	if side == "player":
 		var event_due: bool = (
 			(modifier.kind in [1, 3] or modifier.STORMS.has(modifier.kind))
@@ -411,7 +413,11 @@ func _begin_turn(side: String) -> void:
 		if event_due:
 			var player_hit: bool = asteroid_event and asteroid_hit_player
 			$ModifierDisplay.impact(modifier.kind, player_hit)
-		if not _check_winner():
+		var round_ended: bool = _check_winner()
+		if not round_ended:
+			turret_event = _fire_turret_support()
+			if turret_event: round_ended = _check_winner()
+		if not round_ended:
 			var was_offline: bool = ftl.disabled_turns > 0
 			ftl.begin_player_turn()
 			if was_offline and ftl.disabled_turns == 0:
@@ -420,7 +426,7 @@ func _begin_turn(side: String) -> void:
 	if winner.is_empty():
 		Execution.begin_turn(state)
 		apply_ship_snapshot(side, state)
-	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event)
+	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event or turret_event)
 	resolving_card = battle_effects.busy or resolving_card
 	_check_winner()
 	refresh_display()
@@ -436,6 +442,21 @@ func _begin_turn(side: String) -> void:
 	refresh_display()
 	if winner.is_empty() and side == "enemy":
 		enemy_timer.start()
+
+
+# Round 3 opens after two completed rounds. Latch before effects to prevent re-entry.
+func _fire_turret_support() -> bool:
+	var support: Dictionary = battle_environment.get("friendly_support", {})
+	if support.is_empty() or turn_number <= last_turret_round or turn_number <= 1:
+		return false
+	if (turn_number - 1) % int(support.interval) != 0:
+		return false
+	last_turret_round = turn_number
+	var enemy: Dictionary = ship_snapshot("enemy")
+	modifier.shielded_hit(enemy, int(support.damage))
+	apply_ship_snapshot("enemy", enemy)
+	$ModifierDisplay.announce("FRIENDLY TURRET SUPPORT · %d DAMAGE" % int(support.damage), Color("64d7ad"))
+	return true
 
 
 # Guard legality and lock input while CardMotion invokes _resolve_card at its animation cue.

@@ -1,6 +1,7 @@
 extends RefCounted
 ## Shared scene-free wire model. ExpeditionState owns mutable instances; consumers
 ## receive detached read-only views. Selection is pure and snapshots never track the world.
+const Installations = preload("res://scripts/expedition/defense_installations.gd")
 const NONE = "NONE"
 const ASTEROID_FIELD = "ASTEROID_FIELD"
 const SOLAR_INTERFERENCE = "SOLAR_INTERFERENCE"
@@ -87,6 +88,9 @@ static func snapshot(value: Dictionary) -> Dictionary:
 	for key in ["version", "system_number", "encounter_index", "legacy_modifier"]:
 		copy[key] = int(copy[key])
 	copy.intensity = float(copy.intensity)
+	if not copy.get("friendly_support", {}).is_empty():
+		copy.friendly_support.damage = int(copy.friendly_support.damage)
+		copy.friendly_support.interval = int(copy.friendly_support.interval)
 	var location: Array = []
 	for coordinate in copy.location: location.append(float(coordinate))
 	copy.location = location
@@ -98,6 +102,7 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.get("version") != 1 or value.get("type") not in [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE]: return false
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
+	if not Installations.valid_support(value.get("friendly_support", {})): return false
 	if value.type == NONE and (value.instance_id != "" or value.intensity != 0): return false
 	if not Navigation.valid_point(value.get("location")): return false
 	if not value.get("run_seed") is String or not value.run_seed.is_valid_int(): return false

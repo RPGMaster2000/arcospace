@@ -4,6 +4,7 @@ var map: Control
 var home_panel: PanelContainer
 var integrity_bar: ProgressBar
 var integrity_text: Label
+var construction: Node3D
 var home_label: Label3D
 var displayed_integrity: int = -1
 var hit_remaining: float = 0.0
@@ -107,6 +108,10 @@ func configure(source: Control) -> void:
 	integrity_bar.add_theme_stylebox_override("fill", fill)
 	column.add_child(integrity_bar)
 	map.add_child(home_panel)
+	if map.turret_options.is_valid() and map.turret_requested.is_valid():
+		construction = preload("res://scripts/presentation/star_system/turret_presentation.gd").new()
+		add_child(construction)
+		construction.configure(column, map, map.turret_options, map.turret_requested)
 	var identities: Array = [-999]
 	for unit in map.defense_view.units: identities.append(int(unit.encounter))
 	for index in identities:
@@ -149,6 +154,7 @@ func refresh(snapshot: Dictionary) -> void:
 		hit_remaining = 1.5
 		integrity_text.add_theme_color_override("font_color", Color("ff765e"))
 	displayed_integrity = snapshot.integrity
+	if is_instance_valid(construction): construction.refresh(snapshot)
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not map.objects.has(index): continue
@@ -157,7 +163,7 @@ func refresh(snapshot: Dictionary) -> void:
 			continue
 		if unit.status == "reserve": continue
 		_sample(index, map.objects[index].position, map.objects[index].visible)
-		if not unit.mothership and map.objects[index].visible:
+		if (not unit.mothership or snapshot.get("mothership_advancing", false)) and map.objects[index].visible:
 			var direction: Vector3 = point(snapshot.home) - map.objects[index].position
 			if direction.length_squared() > 0.001:
 				var model: Node3D = map.objects[index]
@@ -169,7 +175,14 @@ func _process(delta: float) -> void:
 	var home_position: Vector3 = map.planet_nodes[0].position
 	home_panel.position = map.camera.unproject_position(home_position + Vector3.UP * 3.2) - Vector2(80, 45)
 	home_panel.visible = map.visible and not map.focused and not map.introducing and not map.camera.is_position_behind(home_position)
+	if home_panel.visible and is_instance_valid(construction):
+		for ring in construction.rings.values():
+			_clear_installation_label(ring.global_position)
+		if is_instance_valid(construction.preview) and construction.preview.visible:
+			_clear_installation_label(construction.preview.global_position)
 	var planning: bool = map.visible and map.is_processing() and map.interactive and not map.focused and map.input_allowed.is_valid() and map.input_allowed.call()
+	if is_instance_valid(construction):
+		construction.button.disabled = not planning or map.traveling or map.defense_view.complete
 	var eligible: bool = planning and map.traveling
 	if planning:
 		if hit_remaining > 0:
@@ -193,6 +206,24 @@ func _process(delta: float) -> void:
 	else:
 		cinematic_tracking = false
 		for plume in plumes.values(): plume.visible = false
+
+func _clear_installation_label(at: Vector3) -> void:
+	if map.camera.is_position_behind(at): return
+	var projected: Vector2 = map.camera.unproject_position(at + Vector3.UP * 0.45)
+	var panel_rect := Rect2(home_panel.position, home_panel.size)
+	if not panel_rect.grow(10.0).has_point(projected): return
+	var viewport_rect := Rect2(Vector2.ZERO, map.size)
+	for candidate in [
+		Vector2(projected.x + 16.0, panel_rect.position.y),
+		Vector2(projected.x - panel_rect.size.x - 16.0, panel_rect.position.y),
+		Vector2(panel_rect.position.x, projected.y - panel_rect.size.y - 14.0),
+	]:
+		var region := Rect2(candidate, panel_rect.size)
+		if not viewport_rect.encloses(region): continue
+		if map.markers.values().any(func(marker): return marker.visible and marker.get_rect().intersects(region)): continue
+		home_panel.position = candidate
+		return
+	home_panel.position.y = projected.y - panel_rect.size.y - 14.0
 
 func _sample(index: int, at: Vector3, active: bool) -> void:
 	var history: Array = histories[index]

@@ -45,7 +45,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		navigation_origin = FREE_DESTINATION
 	if defense.failed(): run_ended = true
 	defense_advanced.emit(events)
-	if not carry and (events.contact >= 0 or events.arrivals > 0 or target_lost or not events.spawned.is_empty()): progress_committed.emit()
+	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or defense.failed() or target_lost or not events.spawned.is_empty()): progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
 	if not is_defense() or defense == null or defense.complete or run_ended: return
@@ -185,9 +185,33 @@ func battle_location(index: int) -> Array:
 	return encounter_positions.get(str(index), []).duplicate()
 
 
+func turret_support(index: int) -> Dictionary:
+	if not is_defense() or defense == null: return {}
+	return Defense.Installations.support_at(defense.turrets, battle_location(index))
+
+func can_deploy_turret(site: String) -> bool:
+	return is_defense() and defense != null and can_navigate() and not navigation.leg_active \
+		and not defense.complete and defense.construction_sites.has(site) and not defense.turrets.has(site) \
+		and defense.turrets.size() < defense.tuning.turret_capacity and salvage >= defense.tuning.turret_salvage_cost
+
+func deploy_turret(site: String) -> bool:
+	if not can_deploy_turret(site): return false
+	var tuning: Resource = defense.tuning
+	defense.turrets[site] = {"type": Defense.Installations.KINETIC, "owner": "player",
+		"position": defense.construction_sites[site].position.duplicate(), "radius": tuning.turret_radius,
+		"damage": tuning.turret_damage, "interval": tuning.turret_round_interval}
+	salvage -= tuning.turret_salvage_cost
+	progress_committed.emit()
+	return true
+
 func battle_environment(index: int) -> Dictionary:
-	return EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
+	var snapshot: Dictionary = EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
+	var support := turret_support(index)
+	if support.is_empty(): return snapshot
+	var combined := snapshot.duplicate(true)
+	combined.friendly_support = support
+	return EnvironmentData.snapshot(combined)
 
 
 # Preview is a pure query; only Persistence captures the authoritative entry snapshot.
@@ -397,6 +421,8 @@ func objective_marker(index: int) -> String:
 func ftl_status() -> String:
 	if is_defense():
 		if defense.complete: return "FTL READY"
+		if defense.mothership_advancing:
+			return "MOTHERSHIP ADVANCING · ETA %.1fs" % (defense.unit_for(defense.mothership_index()).position.distance_to(defense.home) / defense.tuning.mothership_speed)
 		return "MOTHERSHIP ACTIVE" if defense.revealed else "INTERCEPT TO LOCATE MOTHERSHIP"
 	if mandatory_boss_pending(): return "BOSS LOCK"
 	if ftl_access: return "FTL READY"

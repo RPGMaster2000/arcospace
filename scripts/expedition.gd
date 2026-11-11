@@ -416,6 +416,10 @@ func _notification(what: int) -> void:
 		_cancel_presentation()
 		phase = Phase.OVERVIEW
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		var construction: Control = _construction_panel()
+		if is_instance_valid(construction) and construction.visible:
+			construction.hide()
+			return
 		var menu = battle.settings_button.menu if is_instance_valid(battle) else settings_button.menu
 		menu.present()
 	elif what == NOTIFICATION_APPLICATION_PAUSED:
@@ -446,7 +450,7 @@ func show_system(preserve_transition: bool = false) -> void:
 			else:
 				start_battle(state.chasedown_index)
 		return
-	if not state.pending_choice.is_empty():
+	if not (state.is_defense() and state.run_ended) and not state.pending_choice.is_empty():
 		show_outcome()
 		return
 	get_node("/root/Music").play_starmap()
@@ -454,7 +458,9 @@ func show_system(preserve_transition: bool = false) -> void:
 	_clear("system", preserve_transition)
 	if state.hull <= 0 or state.run_ended:
 		var defeat_message: String = "Expedition ended — your ship was lost."
-		if state.is_defense() and state.defense.integrity <= 0:
+		if state.is_defense() and state.defense.mothership_arrived():
+			defeat_message = "Expedition ended — the mothership reached the homeworld."
+		elif state.is_defense() and state.defense.integrity <= 0:
 			defeat_message = "Expedition ended — homeworld lost."
 		elif state.is_defense() and state.defense.failed():
 			defeat_message = "Expedition ended — all attackers reached the homeworld before the mothership could be located."
@@ -479,7 +485,16 @@ func show_system(preserve_transition: bool = false) -> void:
 
 
 # Adapt generated encounters to presentation entries; arrival uses visit, exactly like grid selection.
-func _map_input_allowed() -> bool:
+func _construction_panel() -> Control:
+	if state == null or not state.is_defense() or not is_instance_valid(star_map): return null
+	var effects: Node3D = star_map.defense_effects
+	if not is_instance_valid(effects) or not is_instance_valid(effects.construction): return null
+	return effects.construction.popup
+
+func _map_input_allowed(block_construction: bool = true) -> bool:
+	if block_construction:
+		var construction: Control = _construction_panel()
+		if is_instance_valid(construction) and construction.visible: return false
 	return (
 		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and not current_deck_viewer.shade.visible
@@ -516,6 +531,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.double_tap_msec = roundi(state.rules.defense_tuning.double_tap_seconds * 1000.0)
 		star_map.touch_confirmation_required = state.is_defense()
 		star_map.input_allowed = _map_input_allowed
+		star_map.turret_options = _turret_options if state.is_defense() else Callable()
+		star_map.turret_requested = _deploy_turret if state.is_defense() else Callable()
 		star_map.inspection_area = func(): return screen.sidebar.get_global_rect()
 	else:
 		star_map = preload("res://scripts/ui/star_map.gd").new()
@@ -732,6 +749,9 @@ func show_battle_preview(index: int) -> void:
 	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
 	if _uses_3d_map() and not inspecting: star_map.tactical_focus(index)
 	_add_tactical_briefing(encounter, enemy, false, index)
+	var support: Dictionary = state.turret_support(index)
+	if not support.is_empty():
+		view.add_child(_label("Friendly Turret Support · %d damage every %d rounds" % [support.damage, support.interval], 15))
 	# Inspection only shows enemy information; entering combat requires arrival.
 	if not inspecting:
 		var enter = _button("Enter Combat", _enter_battle.bind(index))
@@ -809,7 +829,9 @@ func show_outpost() -> void:
 
 
 func _purchase_finished() -> void:
-	if not state.pending_choice.is_empty():
+	if state.is_defense() and state.run_ended:
+		show_system()
+	elif not state.pending_choice.is_empty():
 		show_outcome()
 	elif return_to_outpost:
 		show_outpost()
@@ -929,6 +951,9 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 
 
 func show_outcome() -> void:
+	if state.is_defense() and state.run_ended:
+		show_system()
+		return
 	if transitioning or phase == Phase.EXITED:
 		return
 	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
@@ -1290,11 +1315,23 @@ func _reveal_mothership() -> void:
 		screen.set_system_name(star_map.visual_data.name)
 		_refresh_defense_hud()
 
+func _turret_options(site: String) -> Dictionary:
+	var tuning: Resource = state.defense.tuning
+	return {"salvage": state.salvage, "radius": tuning.turret_radius,
+		"cost": tuning.turret_salvage_cost, "capacity": tuning.turret_capacity,
+		"allowed": phase == Phase.OVERVIEW and _map_input_allowed(false) and state.can_deploy_turret(site)}
+
+func _deploy_turret(site: String) -> bool:
+	if phase != Phase.OVERVIEW or not _map_input_allowed(false) or not state.deploy_turret(site):
+		return false
+	star_map.sync_defense(state.defense.snapshot())
+	resource_bar.exploration(state)
+	screen.overview_hud.refresh()
+	_refresh_defense_hud()
+	return true
+
 func _refresh_defense_hud() -> void:
-	var threats: int = 0
-	for unit in state.defense.units:
-		if state.defense.available(unit): threats += 1
-	screen.overview_hud.metagame.text = "HOME %d/%d · %d THREATS\n%s" % [state.defense.integrity, state.rules.defense_tuning.base_integrity, threats, state.ftl_status()]
+	screen.set_defense_status(state)
 
 # Read-only inspection reuses the existing encounter panels and does not focus
 # or move the camera. A hold never commits a visit or encounter.

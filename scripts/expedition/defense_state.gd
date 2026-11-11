@@ -10,6 +10,12 @@ var integrity: int = 100
 var revealed: bool = false
 var reveal_pending: bool = false
 var complete: bool = false
+var pressure: float = 0.0
+var mothership_advancing: bool = false
+var construction_sites: Dictionary = {}
+var turrets: Dictionary = {}
+const Installations = preload("res://scripts/expedition/defense_installations.gd")
+
 var contact: int = -1
 var reinforcement_remaining: float = 0.0
 var reinforcements_spawned: int = 0
@@ -84,8 +90,11 @@ func neutralized_attackers() -> int:
 	return count
 # With no surviving attacker and no neutralization, the only reveal condition is
 # permanently unreachable. Resolve that failed objective instead of soft-locking FTL.
+func mothership_arrived() -> bool:
+	return unit_for(mothership_index()).get("status") == "arrived"
+
 func failed() -> bool:
-	if integrity <= 0: return true
+	if integrity <= 0 or mothership_arrived(): return true
 	if revealed or complete: return false
 	for unit in units:
 		if not unit.mothership and unit.status == "active": return false
@@ -97,6 +106,7 @@ func neutralize(index: int) -> bool:
 	contact = -1
 	if unit.mothership:
 		complete = true
+		mothership_advancing = false
 		deferred_seconds = 0.0
 		for remaining in units:
 			if remaining.status in ["active", "reserve"]: remaining.status = "secured"
@@ -121,9 +131,26 @@ static func hit_time(relative: Vector3, velocity: Vector3, radius: float, limit:
 func target_for(_unit: Dictionary) -> Vector3:
 	return home
 
+func _speed(unit: Dictionary) -> float:
+	if unit.mothership:
+		return tuning.mothership_speed if mothership_advancing else 0.0
+	return tuning.enemy_speed
+
+func _advance_pressure(seconds: float) -> bool:
+	pressure = minf(tuning.pressure_maximum, pressure + seconds * tuning.pressure_per_second)
+	if mothership_advancing or pressure < tuning.pressure_maximum - 0.00000001:
+		return false
+	pressure = tuning.pressure_maximum
+	mothership_advancing = true
+	if not revealed:
+		# Reveal immediately during the current movement/activity instead of pausing it.
+		revealed = true
+		reinforcement_remaining = tuning.first_reinforcement_seconds
+	return true
+
 func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false) -> Dictionary:
-	var result: Dictionary = {"position": to, "contact": -1, "arrivals": 0, "spawned": []}
-	if complete or contact >= 0 or integrity <= 0 or seconds <= 0 or not is_finite(seconds): return result
+	var result: Dictionary = {"position": to, "contact": -1, "arrivals": 0, "spawned": [], "escalated": false}
+	if complete or contact >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
 	var elapsed: float = 0.0
 	var spawn_blocked: bool = false
@@ -136,11 +163,17 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		if can_spawn and not spawn_blocked and reinforcement_remaining <= event_time:
 			event_time = maxf(0.0, reinforcement_remaining)
 			event_kind = "spawn"
+		if not mothership_advancing and tuning.pressure_per_second > 0:
+			var threshold: float = (tuning.pressure_maximum - pressure) / tuning.pressure_per_second
+			if threshold <= event_time:
+				event_time = maxf(0.0, threshold)
+				event_kind = "pressure"
 		for unit in units:
 			if not available(unit): continue
 			var target: Vector3 = target_for(unit)
-			var velocity: Vector3 = Vector3.ZERO if unit.mothership else (target - unit.position).normalized() * tuning.enemy_speed
-			var arrival: float = INF if unit.mothership or tuning.enemy_speed <= 0 else unit.position.distance_to(target) / tuning.enemy_speed
+			var speed: float = _speed(unit)
+			var velocity: Vector3 = (target - unit.position).normalized() * speed
+			var arrival: float = unit.position.distance_to(target) / speed if speed > 0 else INF
 			var hit: float = INF if carry else hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
 			if hit <= event_time:
 				event_time = hit
@@ -151,12 +184,14 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				event_unit = unit
 				event_kind = "arrival"
 		for unit in units:
-			if available(unit) and not unit.mothership:
-				unit.position = unit.position.move_toward(target_for(unit), tuning.enemy_speed * event_time)
+			if available(unit):
+				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
 		if revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements:
 			reinforcement_remaining = maxf(0.0, reinforcement_remaining - event_time)
 		elapsed += event_time
+		if _advance_pressure(event_time): result.escalated = true
 		if event_kind.is_empty(): break
+		if event_kind == "pressure": continue
 		if event_kind == "spawn":
 			var at: Variant = spawn_position(from + player_velocity * elapsed)
 			var reserve: Dictionary = {}
@@ -181,9 +216,14 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			if carry: deferred_seconds += maxf(0.0, seconds - elapsed)
 			break
 		event_unit.status = "arrived"
+		if event_unit.mothership:
+			mothership_advancing = false
+			result.position = from + player_velocity * elapsed
+			break
 		integrity = maxi(0, integrity - tuning.base_attack_damage)
 		result.arrivals += 1
 		if failed():
+			mothership_advancing = false
 			result.position = from + player_velocity * elapsed
 			break
 	return result
@@ -193,10 +233,10 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 func intercept_point(index: int, player: Vector3) -> Vector3:
 	var unit: Dictionary = unit_for(index)
 	if unit.is_empty() or not available(unit): return player
-	if unit.mothership: return unit.position
+	if _speed(unit) <= 0: return unit.position
 	var relative: Vector3 = unit.position - player
 	var target: Vector3 = target_for(unit)
-	var velocity: Vector3 = (target - unit.position).normalized() * tuning.enemy_speed * tuning.seconds_per_distance
+	var velocity: Vector3 = (target - unit.position).normalized() * _speed(unit) * tuning.seconds_per_distance
 	var a: float = velocity.length_squared() - 1.0
 	var b: float = 2.0 * relative.dot(velocity)
 	var c: float = relative.length_squared()
@@ -217,6 +257,9 @@ func intercept_point(index: int, player: Vector3) -> Vector3:
 func snapshot() -> Dictionary:
 	var data: Dictionary = {"home": wire(home), "start": wire(start), "integrity": integrity, "maximum_integrity": tuning.base_integrity,
 		"revealed": revealed, "reveal_pending": reveal_pending, "complete": complete, "contact": contact,
+		"pressure": pressure, "maximum_pressure": tuning.pressure_maximum, "mothership_advancing": mothership_advancing,
+		"mothership_eta": unit_for(mothership_index()).position.distance_to(home) / tuning.mothership_speed if mothership_advancing else 0.0,
+		"construction_sites": construction_sites.duplicate(true), "turrets": turrets.duplicate(true),
 		"reinforcement_remaining": reinforcement_remaining, "reinforcements_spawned": reinforcements_spawned, "deferred_seconds": deferred_seconds, "units": [], "anchors": {}}
 	for unit in units:
 		var copy: Dictionary = unit.duplicate()
@@ -264,6 +307,12 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 	reveal_pending = data.reveal_pending
 	complete = data.complete
 	contact = int(data.contact)
+	var saved_pressure: Variant = data.get("pressure", 0.0)
+	if not (saved_pressure is int or saved_pressure is float) or not is_finite(float(saved_pressure)) or saved_pressure < 0 or saved_pressure > 1000.0: return false
+	if not data.get("mothership_advancing", false) is bool: return false
+	pressure = minf(float(saved_pressure), tuning.pressure_maximum)
+	mothership_advancing = data.get("mothership_advancing", false)
+	if mothership_advancing and (not revealed or complete): return false
 	var remaining: Variant = data.get("reinforcement_remaining", configuration.first_reinforcement_seconds if revealed else 0.0)
 	var deferred: Variant = data.get("deferred_seconds", 0.0)
 	if not (remaining is int or remaining is float) or not is_finite(float(remaining)) or remaining < 0 or remaining > 60: return false
@@ -283,7 +332,8 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		copy.reinforcement = bool(copy.get("reinforcement", false))
 		copy.spawned = bool(copy.get("spawned", false))
 		units.append(copy)
-	if revealed != (neutralized_attackers() >= 1) or complete and not revealed or reveal_pending and not revealed: return false
+	if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
+	if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or complete): return false
 	if contact >= 0 and (unit_for(contact).is_empty() or not available(unit_for(contact))): return false
 	var expected: Dictionary = {}
 	for index in encounters.size():
@@ -297,6 +347,15 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		anchors[index] = point(data.anchors[key])
 	for index in expected:
 		if not anchors.has(index): return false
+	construction_sites = Installations.sites(home, anchors, encounters)
+	var saved_turrets: Variant = data.get("turrets", {})
+	if not Installations.valid_deployments(saved_turrets, construction_sites): return false
+	turrets = saved_turrets.duplicate(true)
+	for turret in turrets.values():
+		turret.position = wire(point(turret.position))
+		turret.radius = float(turret.radius)
+		turret.damage = int(turret.damage)
+		turret.interval = int(turret.interval)
 	return true
 static func number(value: Variant, low: int, high: int) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value == floor(value) and value >= low and value <= high
