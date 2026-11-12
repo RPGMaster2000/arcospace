@@ -56,21 +56,30 @@ The full user specification remains authoritative. Do not merge automatically.
    refresh, pressure precedence, expiry boundaries and expedition/system scopes.
 3. Focused headless tests for both components pass with Godot 4.7.2 after clean import.
 
-Neither component is wired into live play yet. Existing gameplay and save wire data
-are unchanged. No shared encounter resources, baseline fixtures or production combat
+The ledger is now owned by ExpeditionState and borrowed by DefenseState. Optional
+`defense_poi_effects` save records validate and restore it; missing records give an
+empty ledger. Exploration saves do not acquire the record. Battle setup adds temporary
+production without changing permanent upgrade requirements, and idempotent completed
+card-battle results decrement charges once. System departure clears system-scoped
+entries, while production and fuel survive. The strategic event loop splits on ledger
+expiry and applies the multiplier only to the effective Pressure rate. Enemy, missile,
+reinforcement and mothership clocks continue normally.
+
+The approach catalogue is still not enabled in generated systems. Live games currently
+have no transaction granting these new effects. Existing PoI gameplay remains unchanged. No shared encounter resources, baseline fixtures or production combat
 formulas have been changed. No screenshot or full feature/CI pass is claimed.
 
 ## Remaining implementation (required before PR delivery)
 
-- State-owned ledger and additive save validation; generated-system opt-in marker
+- Generated-system opt-in marker
   retained by the codec. Never reinterpret completed or pending historical PoIs.
 - Mode-aware approach accessor in state, screen and controller; transactional guaranteed
   resolver with exact costs, stored randomized rewards and no success RNG rolls.
 - Two-card batch confirmation and replacement queue with persisted pending ownership.
-- Completed-battle production charges and frozen boss card-damage advantage, including
+- Frozen boss card-damage advantage, including
   half-up integer damage rounding and nested card attack coverage.
-- Pressure rate and expiry splitting in the Defense event loop, including pause on an
-  already advancing mother, deterministic partitions and continued missile/turret events.
+- Remaining integration coverage for effects acquired in actual PoI transactions and
+  continuation/retry flows; basic pressure partition and moving-fleet/missile tests pass.
 - Distance-limited physical travel speed, fuel exhaustion segmentation and compact status.
 - Separate free turret source/limit at the Mining Operation anchor, codec/render/support
   integration, standard purchased capacity independent of the free slot.
@@ -84,3 +93,12 @@ and remaining battles (caps +2 / 3 battles); categories coexist. Pressure pause 
 while both timers count down concurrently. Propulsion uses one nonmultiplying fuel
 reserve. Research boss advantage is mutually exclusive per system. These policies
 must be documented in the final player-facing descriptions and tested in integration.
+
+## Integration validation
+
+Godot 4.7.2 focused runs pass: catalogue, ledger, state integration, existing
+Starfront v2 and Starfront persistence. The state integration checks actual codec
+roundtrips, invalid-data rejection, borrowed ownership, effective v2 Pressure rates,
+35 seconds versus 350 × 0.1 second partitions, continued attacker/mothership movement,
+missile launches during Pressure pause, battle production at entry, and idempotent
+completed-battle charge consumption. Full feature and rendered checks remain pending.

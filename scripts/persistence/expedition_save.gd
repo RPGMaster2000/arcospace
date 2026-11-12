@@ -73,6 +73,7 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if state.is_defense(): data.defense_poi_effects = state.poi_effects.snapshot()
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
 	if state.orbit_clearance > 0.0: data.orbit_clearance = state.orbit_clearance
@@ -215,6 +216,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
+	if data.has("defense_poi_effects"):
+		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
 	state.bind_defense_movement()
 	state.system_profile = data.system_profile
 	state.ftl_access = data.ftl_access

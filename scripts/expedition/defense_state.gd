@@ -238,8 +238,10 @@ func moving_route(unit: Dictionary) -> Dictionary:
 		origin = unit.position
 	return {"position": unit.position, "origin": origin, "target": target, "speed": speed}
 
+var poi_effects: RefCounted # Borrowed state-owned ledger, never copied or serialized here.
+
 func pressure_rate() -> float:
-	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0)
+	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0) * (poi_effects.pressure_multiplier() if poi_effects != null else 1.0)
 
 func reveal_threshold() -> float:
 	return minf(tuning.mothership_reveal_pressure, tuning.pressure_maximum)
@@ -272,6 +274,9 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		var event_time: float = span
 		var event_unit: Dictionary = {}
 		var event_kind: String = ""
+		if poi_effects != null and poi_effects.next_boundary() <= event_time:
+			event_time = poi_effects.next_boundary()
+			event_kind = "poi_expiry"
 		var reserve: Dictionary = {}
 		for unit in units:
 			if unit.status == "reserve":
@@ -324,9 +329,10 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		elapsed += event_time
 		var was_revealed := revealed
 		if _advance_pressure(event_time): result.escalated = true
+		if poi_effects != null: poi_effects.advance_seconds(event_time)
 		if revealed and not was_revealed: result.revealed = true
 		if event_kind.is_empty(): break
-		if event_kind == "pressure": continue
+		if event_kind in ["pressure", "poi_expiry"]: continue
 		if event_kind == "missile":
 			if missile_event.kind == "shot":
 				var missile: Dictionary = missiles.active[missile_event.id]

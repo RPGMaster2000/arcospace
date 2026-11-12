@@ -15,6 +15,8 @@ var orbit_clearance: float = 0.0
 var game_mode: String = "exploration"
 var defense: RefCounted
 var rifts := TemporalRift.new()
+const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
+var poi_effects := PoiEffects.new()
 
 func is_defense() -> bool:
 	return game_mode == "defense"
@@ -26,6 +28,7 @@ func consume_defense_reveal() -> bool:
 	return true
 
 func bind_defense_movement() -> void:
+	if defense != null: defense.poi_effects = poi_effects
 	if not navigation.movement_advanced.is_connected(_advance_defense):
 		navigation.movement_advanced.connect(_advance_defense)
 
@@ -275,6 +278,7 @@ func encounter_at(index: int) -> Dictionary:
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	run_ended = false
+	poi_effects = PoiEffects.new()
 	rules = configuration
 	game_mode = rules.game_mode
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
@@ -408,7 +412,9 @@ func generate_system() -> bool:
 	environmental_instances.clear()
 	layout_expansion = rules.system_expansion
 	orbit_clearance = rules.planet_orbit_clearance if rules.defense_v2 and layout_expansion > 0.0 else 0.0
+	poi_effects.leave_system()
 	SystemGenerator.generate(self)
+	bind_defense_movement()
 	refresh_defense_bodies()
 	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
@@ -1198,7 +1204,7 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 	setup.player_state.configure_profile(ship())
 	setup.player_state.hull = hull
 	for key in PRODUCTION:
-		setup.player_state.set(key, maxi(0, production(key)))
+		setup.player_state.set(key, maxi(0, production(key) + (poi_effects.bonus(key) if is_defense() else 0)))
 	for key in RESOURCES + ["shields"]:
 		setup.player_state.set(key, starting_value(ship(), key))
 	if setup.enemy_profile != null:
@@ -1265,6 +1271,7 @@ func record_battle(result: BattleResult) -> void:
 	):
 		return
 	_recorded_results[result.result_id] = true
+	if is_defense(): poi_effects.completed_battle()
 	sync_battle(result, false)
 	if result.winner != "player":
 		run_ended = true
