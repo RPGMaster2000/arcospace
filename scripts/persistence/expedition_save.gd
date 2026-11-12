@@ -73,6 +73,7 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	data.upgrades = deck.upgrades
 	for entry in state.encounters: data.encounters.append(_entry(entry))
 	for key in ["rng", "station_rng", "chasedown_rng"]:
@@ -226,6 +227,13 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if state.pending_destination >= 0 and state.chasedown_index >= 0:
 		state.travel_destination = -1
 	state.environmental_instances = data.get("environmental_instances", []).duplicate(true)
+	var active_rift := State.TemporalRift.active(state.environmental_instances)
+	if state.is_defense():
+		state.rifts.reset(state.seed_used, state.system_number, state.defense.tuning.rift_initial_delay)
+		if data.has("temporal_rift_schedule"):
+			if not state.rifts.restore(data.temporal_rift_schedule) or not state.rifts.valid_active(active_rift, state.defense): return null
+		elif not active_rift.is_empty(): return null
+	elif not active_rift.is_empty() or data.has("temporal_rift_schedule"): return null
 	state.encounter_positions = data.get("encounter_positions", {}).duplicate(true)
 	state.encounters = entries
 	state.service = service
