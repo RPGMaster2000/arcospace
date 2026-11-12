@@ -60,7 +60,7 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 				var candidate := direction * ((float(rings[ring]) + jitter) * factor)
 				var score: float = absf(rings[ring] - radial)
 				for unit in units:
-					score += maxf(0.0, 5.5 - candidate.distance_to(unit.position)) * 8.0
+					if candidate.distance_to(unit.position) <= 5.5: score += 100.0
 				if score >= best_score: continue
 				chosen = ring
 				best_score = score

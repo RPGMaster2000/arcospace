@@ -115,8 +115,8 @@ func run() -> void:
 		check(state.defense.anchors.size() >= 8, "Eight optional sites")
 		for encounter in state.encounters:
 			if encounter.kind == "poi": check(encounter.poi.resource_path.get_file().get_basename() != "unstable_wormhole", "Defense excludes unstable wormholes")
-		var visuals: Dictionary = VisualSystem.generate(seed_value + 1, 1, [], VisualSettings)
-		DefenseVisual.layout(visuals, state.defense.snapshot())
+		var visuals: Dictionary = VisualSystem.generate(seed_value + 1, 1, [], VisualSettings, state.system_profile, state.layout_expansion)
+		DefenseVisual.layout(visuals, state.defense.snapshot(), State.SystemLayout.planetary_indices(state.encounters), state.layout_expansion)
 		check(visuals.planets.size() >= 2 and visuals.planets[0].type == "terrestrial", "Procedural additional planets and terrestrial homeworld")
 		for planet in visuals.planets.slice(1):
 			check(planet.position.length() >= 4.999, "Planet clears the sun")
@@ -125,7 +125,9 @@ func run() -> void:
 			if unit.status == "reserve": continue
 			check(Geometry3D.get_closest_point_to_segment(Vector3.ZERO, unit.position, state.defense.home).length() > 3, "Direct approach clears sun geometry")
 			for anchor in state.defense.anchors.values(): check(unit.position.distance_to(anchor) > 5.5, "Hostile deployment clears all PoIs")
-			check(unit.position.length() <= 22.001 and unit.position.dot(state.defense.home) < 0, "Hostile inside bounds and opposite homeworld")
+			var bounds := State.SystemLayout.bounds(state.layout_expansion)
+			check(bounds.has_point(Vector2(unit.position.x, unit.position.z)) and unit.position.dot(state.defense.home) < 0,
+				"Hostile inside expanded bounds and opposite homeworld")
 		for anchor in state.defense.anchors.values():
 			check(anchor.distance_to(state.defense.home) > 4, "PoIs clear homeworld")
 	state = fresh()
