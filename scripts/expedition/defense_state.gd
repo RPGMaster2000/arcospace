@@ -44,7 +44,12 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 	start = home * 0.78
 	var fleet_rng := RandomNumberGenerator.new()
 	fleet_rng.seed = hash("%d:deployment" % orbit_seed)
-	var approaches := [1.1, -2.70, -1.23, 2.14]
+	var approaches := [1.1, -2.70, -1.23]
+	# Keep enough radial space for the existing planetary orbits and their
+	# deployment clearance even when an attacker rolls a short starting distance.
+	var minimum_deployment := 4.1501 + 5.55 + maxf(0.0, float(planet_sizes.size() - 1)) * clearance
+	for radius in planet_sizes.values(): minimum_deployment += 2.0 * float(radius)
+	var maximum_deployment := Layout.bounds(expansion).end.x - 1.0
 	for i in indices.size():
 		var mother: bool = i == indices.size() - 1
 		# Keep all three routes on the same safe flank of the sun and opposite home.
@@ -53,10 +58,14 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 		var distance: float = tuning.hostile_spawn_distance
 		if v2 and not mother:
 			heading = angle + flank_sign * (approaches[i] + fleet_rng.randf_range(-0.095, 0.095))
-			distance *= fleet_rng.randf_range(0.91, 1.02)
+			var distance_range: Vector2 = tuning.starting_distance_range
+			distance *= fleet_rng.randf_range(distance_range.x, distance_range.y)
 		else:
 			heading = angle + PI + hostile_offset + flank_sign * (0.35 if mother else [-0.45, 0.0][i])
-		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * (distance * factor)
+		var radial_distance := distance * factor
+		if v2 and not mother:
+			radial_distance = clampf(radial_distance, minf(minimum_deployment, maximum_deployment), maximum_deployment)
+		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * radial_distance
 		units.append({"encounter": indices[i], "position": origin, "route_origin": origin,
 			"status": "active", "mothership": mother, "reinforcement": false, "spawned": false})
 	var rings := [7.0, 10.0, 13.0, 16.0, 19.0, 5.5, 8.5, 14.5]
@@ -120,6 +129,7 @@ func _planet_radii(slots: Array, sizes: Dictionary, factor: float, margin: float
 # Reserve units have stable encounter IDs and existing profiles, but no active
 # simulation or rendered presence until the scheduler deploys them.
 func add_reserves(indices: Array) -> void:
+	if v2 and not indices.is_empty(): reinforcement_remaining = tuning.v2_reinforcement_seconds
 	var mother: Dictionary = unit_for(mothership_index())
 	for index in indices:
 		units.append({"encounter": index, "position": mother.position, "route_origin": mother.position,
@@ -140,11 +150,15 @@ func spawn_position(player: Vector3) -> Variant:
 			var candidate: Vector3 = center + Vector3(cos(angle), 0, sin(angle)) * distance
 			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < 3.5: continue
 			if candidate.distance_to(player) < tuning.interception_radius + 1.0 or candidate.distance_to(home) < 5: continue
+			if v2 and Geometry3D.get_closest_point_to_segment(Vector3.ZERO, candidate, home).length() < 3.5: continue
 			var clear: bool = true
 			for other in units:
 				if other.status == "active" and candidate.distance_to(other.position) < 3.0: clear = false
 			for anchor in anchors.values():
 				if candidate.distance_to(anchor) < 3.0: clear = false
+			if v2:
+				for body in decorative_bodies:
+					if candidate.distance_to(body.position) < float(body.radius) * 1.553 + 1.2: clear = false
 			if clear: return candidate
 	return null
 
@@ -258,7 +272,14 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		var event_time: float = span
 		var event_unit: Dictionary = {}
 		var event_kind: String = ""
-		var can_spawn: bool = not v2 and revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements and active_attackers() < tuning.maximum_active_attackers
+		var reserve: Dictionary = {}
+		for unit in units:
+			if unit.status == "reserve":
+				reserve = unit
+				break
+		var reinforcement_clock: bool = not reserve.is_empty() if v2 else revealed and not reveal_pending and reinforcements_spawned < tuning.maximum_reinforcements
+		var active_limit: int = 2 if v2 else tuning.maximum_active_attackers
+		var can_spawn: bool = reinforcement_clock and active_attackers() < active_limit
 		if can_spawn and not spawn_blocked and reinforcement_remaining <= event_time:
 			event_time = maxf(0.0, reinforcement_remaining)
 			event_kind = "spawn"
@@ -298,7 +319,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
 		if v2:
 			missiles.advance(event_time, self)
-		elif revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements:
+		if reinforcement_clock:
 			reinforcement_remaining = maxf(0.0, reinforcement_remaining - event_time)
 		elapsed += event_time
 		var was_revealed := revealed
@@ -321,20 +342,17 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			continue
 		if event_kind == "spawn":
 			var at: Variant = spawn_position(from + player_velocity * elapsed)
-			var reserve: Dictionary = {}
-			for unit in units:
-				if unit.status == "reserve":
-					reserve = unit
-					break
 			if at == null or reserve.is_empty():
-				spawn_blocked = true
+				# Retry at the next scheduled v2 attempt, independent of frame size.
+				if v2: reinforcement_remaining = tuning.v2_reinforcement_seconds
+				else: spawn_blocked = true
 				continue
 			reserve.position = at
 			reserve.route_origin = at
 			reserve.status = "active"
 			reserve.spawned = true
 			reinforcements_spawned += 1
-			reinforcement_remaining = tuning.reinforcement_interval_seconds
+			reinforcement_remaining = tuning.v2_reinforcement_seconds if v2 else tuning.reinforcement_interval_seconds
 			result.spawned.append(reserve.encounter)
 			continue
 		if event_kind == "contact":
@@ -417,18 +435,19 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 	var seen: Dictionary = {}
 	var bosses: int = 0
 	var spawned_count: int = 0
+	var reserve_count: int = 0
 	var initial_count: int = 0
 	for unit in data.units:
 		if not unit is Dictionary or not unit.get("mothership") is bool: return false
 		if unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
 		if not unit.get("reinforcement", false) is bool or not unit.get("spawned", false) is bool: return false
 		if unit.get("reinforcement", false):
+			reserve_count += 1
 			if unit.mothership or unit.status == "reserve" and unit.get("spawned", false): return false
 			if unit.status in ["active", "neutralized", "arrived"] and not unit.get("spawned", false): return false
 			if unit.get("spawned", false): spawned_count += 1
 		elif unit.get("spawned", false) or unit.status == "reserve": return false
 		if not unit.mothership and not unit.get("reinforcement", false): initial_count += 1
-		if v2 and unit.get("reinforcement", false): return false
 		if not number(unit.get("encounter"), 0, encounters.size()-1): return false
 		var index: int = int(unit.encounter)
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
@@ -443,6 +462,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 			if unit.status == "arrived" or data.complete != (unit.status == "neutralized"): return false
 		seen[index] = true
 	if bosses != 1 or initial_count < 2 or initial_count > (4 if v2 else 2) or not number(data.get("contact"), -1, encounters.size()-1): return false
+	if v2 and (reserve_count > 3 or (reserve_count > 0 and initial_count > 3)): return false
 	tuning = configuration
 	home = point(data.home)
 	start = point(data.start)
@@ -461,12 +481,12 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 	var deferred: Variant = data.get("deferred_seconds", 0.0)
 	if not (remaining is int or remaining is float) or not is_finite(float(remaining)) or remaining < 0 or remaining > 60: return false
 	if not (deferred is int or deferred is float) or not is_finite(float(deferred)) or deferred < 0 or deferred > 1000: return false
-	if not number(data.get("reinforcements_spawned", 0), 0, configuration.maximum_reinforcements): return false
+	if not number(data.get("reinforcements_spawned", 0), 0, 3 if v2 else configuration.maximum_reinforcements): return false
 	reinforcement_remaining = float(remaining)
 	deferred_seconds = float(deferred)
 	reinforcements_spawned = int(data.get("reinforcements_spawned", 0))
 	if spawned_count != reinforcements_spawned: return false
-	if spawned_count > 0 and not revealed: return false
+	if spawned_count > 0 and not revealed and not v2: return false
 	if deferred_seconds > 0 and contact < 0: return false
 	units.clear()
 	for unit in data.units:

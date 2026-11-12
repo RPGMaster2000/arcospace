@@ -33,7 +33,10 @@ extends Resource
 @export_range(0.0, 120.0, 0.1) var rift_initial_delay: float = 12.0
 
 @export_group("Starfront Defense v2")
-@export var starting_fleet_weights := Vector3(0.25, 0.50, 0.25)
+@export var starting_fleet_weights := Vector2(0.40, 0.60)
+@export var starting_distance_range := Vector2(0.75, 1.20)
+@export_range(25.0, 35.0, 1.0) var v2_reinforcement_seconds := 30.0
+@export_range(0, 3) var v2_maximum_reinforcements := 3
 @export_range(0.0, 1.0, 0.01) var pressure_rate_multiplier := 0.5
 @export_range(1.0, 99.0, 1.0) var mothership_reveal_pressure := 50.0
 @export_range(0.1, 120.0, 0.1) var first_missile_seconds := 8.0

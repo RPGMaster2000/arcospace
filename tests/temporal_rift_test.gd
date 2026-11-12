@@ -238,6 +238,18 @@ func combat_checks(seed_value: int) -> void:
 		and setup.environment.configuration.region.is_read_only(), "Live expiration leaves an already prepared battle frozen")
 
 
+# Use the same capped process clock as the visual fade, not SceneTreeTimer's
+# elapsed clock. The original 0.23 + 0.52 duration and cleanup assertion stay.
+func observe_visual_time(seconds: float) -> void:
+	var elapsed := 0.0
+	var deadline := Time.get_ticks_msec() + 10000
+	while elapsed < seconds and Time.get_ticks_msec() < deadline:
+		await process_frame
+		elapsed += root.get_process_delta_time()
+	# process_frame precedes node callbacks and their queued deletion.
+	await process_frame
+	check(elapsed >= seconds, "Visual process-clock observation completes")
+
 func capture(label: String) -> void:
 	if DisplayServer.get_name() == "headless": return
 	await RenderingServer.frame_post_draw
@@ -292,9 +304,9 @@ func presentation_checks(seed_value: int) -> void:
 	map.camera.overview(map.settings, true)
 	advance(state, float(record.simulation.remaining))
 	check(live(state).is_empty() and visual.closing and not visual.caption.visible, "Expiration removes mechanics before presentation fades")
-	await create_timer(0.23).timeout
+	await observe_visual_time(0.23)
 	await capture("closing")
-	await create_timer(0.52).timeout
+	await observe_visual_time(0.52)
 	check(not is_instance_valid(visual), "Expired visual cleans itself up")
 	state.defense.contact = index
 	host.start_battle(index, 9812, frozen)

@@ -8,12 +8,14 @@ const Layout = preload("res://scripts/expedition/system_layout.gd")
 static func points(fleet: RefCounted) -> Array:
 	var candidates: Array = []
 	for unit in fleet.units:
+		if unit.status == "reserve": continue
 		for fraction in [0.22, 0.36, 0.50, 0.64, 0.78]:
 			candidates.append(fleet.wire(unit.route_origin.lerp(fleet.home, fraction)))
 	return candidates
 
 static func relevant(item: Dictionary, fleet: RefCounted) -> bool:
 	for unit in fleet.units:
+		if unit.status == "reserve": continue
 		var origin: Array = fleet.wire(unit.route_origin)
 		match item.type:
 			Solar.TYPE:
@@ -23,6 +25,7 @@ static func relevant(item: Dictionary, fleet: RefCounted) -> bool:
 			Storms.TYPE:
 				if Storms.contains(item, origin): return false
 	for unit in fleet.units:
+		if unit.status == "reserve": continue
 		if intersects(item, unit.route_origin, fleet.home): return true
 	return false
 
