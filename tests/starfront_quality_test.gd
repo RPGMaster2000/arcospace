@@ -47,19 +47,35 @@ func run() -> void:
 	var approach_index: int = -1
 	for i in range(state.encounters.size()):
 		if state.encounters[i].kind != "poi": continue
-		var poi: Resource = state.encounters[i].poi
-		for j in poi.approaches.size():
-			var approach: Resource = poi.approaches[j]
+		var approaches: Array = state.poi_approaches(i)
+		for j in approaches.size():
+			var approach: Resource = approaches[j]
 			if state.locked_reason(approach).is_empty() and approach.success.hull >= 0:
 				index = i
 				approach_index = j
 				break
 		if index >= 0: break
+	var cost: float = state.poi_approaches(index)[approach_index].get_meta("strategic_seconds",state.rules.defense_tuning.poi_seconds)
 	var before: Vector3 = state.defense.units[0].position
 	check(index >= 0 and state.resolve_approach(index, approach_index, 0.0), "PoI interaction resolves")
-	check(absf(before.distance_to(state.defense.units[0].position)-1.8) < 0.0001, "Completed PoI advances exactly 1.5 strategic seconds")
+	check(absf(before.distance_to(state.defense.units[0].position)-cost*state.defense.tuning.enemy_speed) < 0.0001, "Completed PoI advances exactly its declared strategic cost")
 	before = state.defense.units[0].position
 	check(not state.resolve_approach(index, approach_index, 0.0) and state.defense.units[0].position == before, "Repeated PoI cannot advance time again")
+	state = fresh()
+	state.defense_poi_version = 0 # Explicit saved-system compatibility path.
+	index = -1
+	for i in state.encounters.size():
+		if state.encounters[i].kind != "poi": continue
+		var approaches: Array = state.poi_approaches(i)
+		for j in approaches.size():
+			if state.locked_reason(approaches[j]).is_empty() and approaches[j].success.hull >= 0:
+				index = i
+				approach_index = j
+				break
+		if index >= 0: break
+	before = state.defense.units[0].position
+	check(index >= 0 and state.resolve_approach(index,approach_index,0.0), "Historical PoI still resolves original approach")
+	check(absf(before.distance_to(state.defense.units[0].position)-1.8) < 0.0001, "Historical PoI retains exactly 1.5 strategic seconds")
 	state = fresh()
 	var result = result_for(state, 0)
 	before = state.defense.units[1].position

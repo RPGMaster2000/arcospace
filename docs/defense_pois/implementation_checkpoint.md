@@ -1,3 +1,9 @@
+# Historical implementation checkpoints
+
+The foundations below have since been integrated. See [current implementation](../defense_strategic_pois.md) and the PR for current validation status. Do not use the old pending-work list as current status.
+
+---
+
 # Strategic Defense PoIs — implementation checkpoint
 
 Base: `c5ec25aec69c1e13b3f73d05c8565ce287618caf` (merged PR #62).

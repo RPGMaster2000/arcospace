@@ -3,6 +3,8 @@ extends Control
 signal arrived(index: int)
 signal interrupted
 signal travel_started
+signal travel_boundary
+var speed_profile: Callable
 signal inspect_requested(index: int)
 signal inspection_dismissed
 signal free_move_requested(point: Vector3)
@@ -543,7 +545,16 @@ func _start_journey(destination: Vector3, index: int, intercepted: bool) -> void
 		motion.tween_interval(1.0)
 		motion.tween_callback(func(): traveling = false; interrupted.emit())
 	else:
-		motion.tween_property(ship, "position", destination, maxf(0.001, seconds))
+		if physical_speed > 0 and speed_profile.is_valid():
+			var distance := origin.distance_to(destination)
+			var consumed := 0.0
+			for segment in speed_profile.call(distance):
+				consumed += segment.x
+				var point: Vector3 = origin.lerp(destination,minf(1.0,consumed/maxf(0.000001,distance)))
+				motion.tween_property(ship,"position",point,maxf(0.001,segment.x/(physical_speed*segment.y)))
+				motion.tween_callback(func(): travel_boundary.emit())
+		else:
+			motion.tween_property(ship, "position", destination, maxf(0.001, seconds))
 		motion.tween_callback(func():
 			traveling = false
 			feedback.set_travel(false,true)

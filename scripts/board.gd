@@ -602,7 +602,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	var other: String = "enemy" if side == "player" else "player"
 	var actor: Dictionary = ship_snapshot(side)
 	var target: Dictionary = ship_snapshot(other)
-	var resolution = Execution.resolve(card, discard, actor, target, modifier)
+	var resolution = Execution.resolve(card, discard, actor, target, modifier, null, battle_environment.get("mothership_advantage", "") if side == "player" else "")
 	if resolution == null:
 		return false
 	$ModifierDisplay.announce(resolution.announcement, modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE)

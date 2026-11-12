@@ -145,6 +145,11 @@ func present(
 			instruction.text = "Choose one reward. Select a card to compare its details."
 			context.text = "One card reward"
 			confirm_button.text = "Acquire Card"
+		"card_batch":
+			heading.text = "Two Tier 1 Cards"
+			instruction.text = "Keep both rewards. Select either card to inspect it; confirmation awards both."
+			context.text = "Both cards are yours · replace owned cards if the deck is full"
+			confirm_button.text = "Keep Both Cards"
 		"upgrade":
 			heading.text = "Upgrade Card — %d upgrades remaining" % remaining
 			instruction.text = "Choose different cards. All available upgrades must be spent."
@@ -157,7 +162,7 @@ func present(
 			confirm_button.text = "Replace Selected Card"
 	if not result_context.is_empty():
 		instruction.text = result_context + " · " + instruction.text
-	gallery.show_toolbar = mode != "card"
+	gallery.show_toolbar = mode not in ["card","card_batch"]
 	gallery.filters.visible = gallery.show_toolbar
 	gallery.category = "All"
 	gallery.sort_mode = 0
@@ -280,7 +285,7 @@ func _confirm() -> void:
 	confirmed.emit(mode, selected_card, revision)
 
 func _decline() -> void:
-	if consumed or closing or not shade.visible or mode != "replace":
+	if consumed or closing or not shade.visible or mode != "replace" or not decline_button.visible:
 		return
 	consumed = true
 	confirm_button.disabled = true

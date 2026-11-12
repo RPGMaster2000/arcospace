@@ -17,6 +17,8 @@ var defense: RefCounted
 var rifts := TemporalRift.new()
 const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
 var poi_effects := PoiEffects.new()
+var defense_poi_version: int = 0
+const DefensePois = preload("res://scripts/expedition/defense_poi_approaches.gd")
 
 func is_defense() -> bool:
 	return game_mode == "defense"
@@ -56,6 +58,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		pending_destination = -1
 		navigation_origin = FREE_DESTINATION
 	if defense.failed(): run_ended = true
+	if not carry: poi_effects.consume_distance(from.distance_to(events.position))
 	defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
 			or events.missile_event or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed):
@@ -263,20 +266,25 @@ func can_deploy_poi_turret(index: int) -> bool:
 
 func deploy_poi_turret(index: int) -> bool:
 	if not can_deploy_poi_turret(index): return false
+	_install_poi_turret(index)
+	return true
+
+func _install_poi_turret(index: int) -> void:
 	var id: String = Defense.Installations.FREE_PREFIX + str(index)
 	var tuning: Resource = defense.tuning
 	defense.turrets[id] = {"type":Defense.Installations.KINETIC,"owner":"player",
 		"position":Defense.wire(defense.anchors[index]),"radius":tuning.turret_radius,
 		"damage":tuning.turret_damage,"interval":tuning.turret_round_interval}
-	return true
 
 func battle_environment(index: int) -> Dictionary:
 	var snapshot: Dictionary = EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
 	var support := turret_support(index)
-	if support.is_empty(): return snapshot
+	var advantage: String = poi_effects.mothership if is_defense() and defense.unit_for(index).get("mothership",false) else ""
+	if support.is_empty() and advantage.is_empty(): return snapshot
 	var combined := snapshot.duplicate(true)
-	combined.friendly_support = support
+	if not support.is_empty(): combined.friendly_support = support
+	if not advantage.is_empty(): combined.mothership_advantage = advantage
 	return EnvironmentData.snapshot(combined)
 
 
@@ -294,6 +302,7 @@ func encounter_at(index: int) -> Dictionary:
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	run_ended = false
 	poi_effects = PoiEffects.new()
+	defense_poi_version = 0
 	rules = configuration
 	game_mode = rules.game_mode
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
@@ -344,6 +353,14 @@ func production(key: String) -> int:
 
 #region Systems and navigation
 
+
+# Pure travel plan. Strategic seconds per distance remain unchanged.
+func travel_speed_profile(distance: float) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	var boosted: float = minf(maxf(0.0,distance),poi_effects.fuel) if is_defense() else 0.0
+	if boosted > 0: result.append(Vector2(boosted,1.5))
+	if distance > boosted: result.append(Vector2(distance-boosted,1.0))
+	return result
 
 func can_jump() -> bool:
 	return (
@@ -545,6 +562,7 @@ func _complete_encounter(index: int) -> bool:
 
 
 func can_survey(index: int) -> bool:
+	if is_defense() and defense_poi_version == 1: return false
 	if not can_visit(index) or index == SERVICE_INDEX or objective_locked(index) or encounters[index].kind != "poi":
 		return false
 	for approach in encounters[index].poi.approaches:
@@ -783,8 +801,86 @@ func arrive_destination(index: int) -> void:
 #region Approaches and modifiers
 
 
+func poi_description(index: int) -> String:
+	var poi: Resource = encounter_at(index).poi
+	if is_defense() and defense_poi_version == 1 and index != SERVICE_INDEX:
+		return DefensePois.description(poi.resource_path.get_file().get_basename())
+	return poi.description
+
+func poi_approaches(index: int) -> Array:
+	var poi: Resource = encounter_at(index).poi
+	if not is_defense() or defense_poi_version != 1 or index == SERVICE_INDEX:
+		return poi.approaches
+	var result: Array = []
+	for row in DefensePois.definitions(poi.resource_path.get_file().get_basename()):
+		row.approach.set_meta("source_encounter",index)
+		result.append(row.approach)
+	return result
+
+func _defense_poi_reward_rng(index: int) -> RandomNumberGenerator:
+	# Existing reward APIs accept an injected generator. Fork only this transaction
+	# so its quantity/card draws cannot perturb future system generation.
+	var generator := RandomNumberGenerator.new()
+	generator.seed = hash("%d:%d:%d:defense-poi-reward:v1" % [seed_used,system_number,index])
+	return generator
+
+func _resolve_defense_poi(index: int, slot: int) -> bool:
+	var approaches: Array = poi_approaches(index)
+	if slot < 0 or slot >= approaches.size(): return false
+	var approach: Resource = approaches[slot]
+	if not locked_reason(approach).is_empty(): return false
+	var reward: Dictionary = approach.get_meta("strategic_reward")
+	# All validations precede mutation, including scarce identity rewards.
+	if reward.has("cards"):
+		var eligible := 0
+		for card in available_reward_cards():
+			if card.tier == 1: eligible += 1
+		if eligible < 2: return false
+	if reward.has("turret") and not can_deploy_poi_turret(index): return false
+	if reward.has("mothership") and not poi_effects.mothership.is_empty(): return false
+	if not _complete_encounter(index): return false
+	_commit_activity_time(float(approach.get_meta("strategic_seconds")))
+	if run_ended:
+		last_outcome = "The invasion ended the expedition during this operation."
+		progress_committed.emit()
+		return true
+	var reward_rng := _defense_poi_reward_rng(index)
+	last_poi_success = 1
+	last_outcome = approach.get_meta("strategic_description")
+	if reward.has("salvage_range"):
+		var amount := reward_rng.randi_range(reward.salvage_range[0],reward.salvage_range[1])
+		salvage += amount
+		last_outcome = "+%d Salvage recovered." % amount
+	salvage += int(reward.get("salvage",0))
+	if reward.has("production"):
+		var boost: Dictionary = reward.production
+		poi_effects.grant_production(boost.category,boost.amount,boost.battles)
+	if reward.has("pause"): poi_effects.pause = maxf(poi_effects.pause,reward.pause)
+	if reward.has("reduction"): poi_effects.reduction = maxf(poi_effects.reduction,reward.reduction)
+	if reward.has("fuel"): poi_effects.fuel = maxf(poi_effects.fuel,reward.fuel)
+	if reward.has("mothership"): poi_effects.mothership = reward.mothership
+	if reward.has("cards"): start_card_batch(reward_rng)
+	if reward.has("next_battle"): add_modifiers(reward.next_battle)
+	if reward.has("hull"): hull = mini(ship().hull_capacity,hull+int(reward.hull))
+	if reward.has("turret"): _install_poi_turret(index)
+	progress_committed.emit()
+	return true
+
 # Preserve gate order: production, price, then a full Hull repair target.
 func approach_requirement(approach: Resource) -> RefCounted:
+	if approach.has_meta("strategic_reward"):
+		var reward: Dictionary = approach.get_meta("strategic_reward")
+		var reason := ""
+		if reward.has("turret") and not can_deploy_poi_turret(int(approach.get_meta("source_encounter",-1))): reason = "Free turret already used or location unavailable"
+		if reward.has("mothership") and (not poi_effects.mothership.is_empty() or defense.complete): reason = "Mothership research is already active or the system is secured"
+		if defense.complete and (reward.has("pause") or reward.has("reduction")): reason = "System secured; Pressure effects are no longer needed"
+		if reward.has("cards"):
+			var count := 0
+			for card in available_reward_cards():
+				if card.tier == 1: count += 1
+			if count < 2: reason = "Fewer than two eligible unowned Tier 1 cards remain"
+			if deck_limit() < 2: reason = "Deck capacity must support both reward identities"
+		if not reason.is_empty(): return Requirement.new(Requirement.Kind.UNAVAILABLE,reason)
 	if not approach.requirement.is_empty():
 		var available: int = production(approach.requirement)
 		if available < approach.minimum_production:
@@ -806,6 +902,8 @@ func locked_reason(approach: Resource) -> String:
 			return "Requires %d Salvage (you have %d)" % [requirement.required, requirement.current]
 		Requirement.Kind.FULL_HULL:
 			return "Hull already full"
+		Requirement.Kind.UNAVAILABLE:
+			return requirement.attribute
 	return ""
 
 
@@ -814,6 +912,8 @@ func locked_reason(approach: Resource) -> String:
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
 	if index == SERVICE_INDEX or not can_visit(index) or objective_locked(index) or encounter_at(index).kind != "poi":
 		return false
+	if is_defense() and defense_poi_version == 1:
+		return _resolve_defense_poi(index,approach_index)
 	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
 		return false
@@ -1098,6 +1198,21 @@ func random_card_offers(minimum_tier: int = 1) -> Array[Resource]:
 	return _deck.random_card_offers(ship(), rules, rng, minimum_tier)
 
 
+func start_card_batch(generator: RandomNumberGenerator = null) -> bool:
+	return is_defense() and deck_limit() >= 2 and _deck.start_card_batch(ship(),rng if generator == null else generator)
+
+func confirm_card_batch() -> bool:
+	return _commit_deck_choice(_deck.confirm_card_batch(ship(),rules))
+
+func replacement_pool() -> Array[Resource]:
+	var result: Array[Resource] = []
+	for card in player_pool():
+		if card.identity_key() not in _deck.batch_protected: result.append(card)
+	return result
+
+func card_batch_active() -> bool:
+	return _deck.batch_active
+
 func choose_card(index: int) -> bool:
 	return _commit_deck_choice(_deck.choose_card(index, ship(), rules))
 
@@ -1110,6 +1225,10 @@ func deck_limit() -> int:
 func _commit_deck_choice(result: Dictionary) -> bool:
 	if result.is_empty():
 		return false
+	if _deck.batch_active and pending_choice.is_empty():
+		var continuation: Dictionary = _deck.advance_card_batch(ship(),rules)
+		result.message += continuation.message
+		result.deck_changed = result.deck_changed or continuation.deck_changed
 	last_outcome += result.message
 	if result.deck_changed:
 		deck_changed.emit()
@@ -1300,6 +1419,7 @@ func record_battle(result: BattleResult) -> void:
 			encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
 			if is_defense():
 				defense.neutralize(active_battle)
+				if defense.complete: poi_effects.leave_system()
 				for unit in defense.units:
 					if unit.status == "secured": encounters[unit.encounter].completed = true
 				defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})

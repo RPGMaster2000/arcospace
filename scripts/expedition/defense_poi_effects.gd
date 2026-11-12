@@ -16,8 +16,9 @@ func restore(value: Variant) -> bool:
 	if not value is Dictionary or value.size() != 5: return false
 	if not value.get("production") is Dictionary or value.production.size() > 3: return false
 	if value.get("mothership") not in ["", "penetration", "damage"]: return false
-	for key in ["pause","reduction","fuel"]:
-		if not number(value.get(key), 0, 100): return false
+	var limits := {"pause":15.0,"reduction":30.0,"fuel":30.0}
+	for key in limits:
+		if not number(value.get(key), 0, limits[key]): return false
 	for category in value.production:
 		var item: Variant = value.production[category]
 		if category not in CATEGORIES or not item is Dictionary or item.size() != 2: return false

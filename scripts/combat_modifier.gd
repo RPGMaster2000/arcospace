@@ -213,7 +213,7 @@ func forecast_context() -> Dictionary:
 # Shared detached-state execution. Caller owns snapshots, report and RNG/draw policy.
 static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionary, context: Dictionary,
 	generator: RandomNumberGenerator, report: Dictionary, forecast_draws: RefCounted = null,
-	missed: bool = false) -> bool:
+	missed: bool = false, attack_advantage: String = "") -> bool:
 	if actor[card.family] < card.cost:
 		return false
 	var modified: Resource = card.duplicate(true)
@@ -230,7 +230,7 @@ static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionar
 		modified.effects = modified.effects.duplicate(true)
 		modified.effects.erase("shields")
 		modified.effects.erase("swap_shields")
-	var played: bool = Effects.play(modified,actor,target,generator,false,report,-1,forecast_draws)
+	var played: bool = Effects.play(modified,actor,target,generator,false,report,-1,forecast_draws,attack_advantage)
 	if flare:
 		actor.shields = saved_actor_shields
 		target.shields = saved_target_shields
@@ -238,7 +238,7 @@ static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionar
 
 
 # Live scheduler/RNG and notices stay here; forecast never calls this Node method.
-func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0) -> String:
+func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0, attack_advantage: String = "") -> String:
 	if actor[card.family] < card.cost:
 		return ""
 	var chance: float = rng.randf() if roll < 0.0 else roll
@@ -248,7 +248,7 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 		notice = "MISS · NEBULA INTERFERENCE"
 	elif affects_card(card):
 		notice = storm_notice(kind,ion_factor)
-	resolve_effects(card,actor,target,forecast_context(),rng,last_hull_damage,null,missed)
+	resolve_effects(card,actor,target,forecast_context(),rng,last_hull_damage,null,missed,attack_advantage)
 	return notice
 
 

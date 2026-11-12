@@ -196,6 +196,11 @@ func refresh(value: Dictionary) -> void:
 		var center := _point(turret.position)
 		if not rings.has(id):
 			var model := _model()
+			if str(id).begins_with(Installations.FREE_PREFIX):
+				# Keep the authoritative root/range centered on the PoI; show the
+				# weapon above the existing rocky body instead of inside its mesh.
+				var height := preload("res://scripts/expedition/system_layout.gd").planetary_radius("mining_operation")
+				for part in model.get_children(): part.position.y += height
 			model.position = center
 			add_child(model)
 			var ring := _ring(turret.radius, READY)

@@ -73,6 +73,8 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if state.is_defense() and state.defense_poi_version > 0: data.defense_poi_version = state.defense_poi_version
+	if deck.batch.active: data.card_batch = deck.batch
 	if state.is_defense(): data.defense_poi_effects = state.poi_effects.snapshot()
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
@@ -144,7 +146,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data.get("seed") is String or not data.seed.is_valid_int(): return null
 	for key in ["system_name", "last_outcome", "pending_choice", "pending_card"]:
 		if not data.get(key) is String or data[key].length() > 65536: return null
-	if data.pending_choice not in ["", "card", "upgrade", "replace", "resource", "production"]: return null
+	if data.pending_choice not in ["", "card", "card_batch", "upgrade", "replace", "resource", "production"]: return null
 	for key in COUNTERS:
 		var minimum: int = -3 if key in ["navigation_origin", "travel_destination", "pending_destination"] else (-1 if key in ["chasedown_index", "last_poi_success"] else 0)
 		if not _integer(data.get(key), minimum): return null
@@ -202,6 +204,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			reserve.erase("resolution")
 			entries.append(reserve)
 	state.game_mode = mode
+	if data.has("defense_poi_version"):
+		if mode != "defense" or not _integer(data.defense_poi_version,1,1): return null
+		state.defense_poi_version = int(data.defense_poi_version)
 	state.layout_expansion = float(data.get("layout_expansion", 0.0))
 	state.orbit_clearance = float(orbit_clearance)
 	if mode == "defense":
@@ -248,9 +253,31 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	state.encounters = entries
 	state.service = service
 	state.refresh_defense_bodies()
+	var batch: Variant = data.get("card_batch", {"active":false,"queue":[],"protected":[]})
+	if not batch is Dictionary or batch.size() != 3 or not batch.get("active") is bool or not batch.get("queue") is Array or batch.queue.size() > 2: return null
+	if not batch.get("protected") is Array or batch.protected.size() > 1: return null
+	if batch.active and mode != "defense": return null
+	if not batch.active and (not batch.queue.is_empty() or not batch.protected.is_empty() or data.pending_choice == "card_batch"): return null
+	if batch.active and data.pending_choice not in ["card_batch","replace"]: return null
+	var batch_ids: Array = data.offers if data.pending_choice == "card_batch" else batch.queue.duplicate()
+	if data.pending_choice == "card_batch" and (data.offers.size() != 2 or not batch.queue.is_empty() or not batch.protected.is_empty()): return null
+	if batch.active and data.pending_choice == "replace": batch_ids.append(data.pending_card)
+	if batch.active and data.pending_choice == "replace" and batch_ids.size() + batch.protected.size() != 2: return null
+	var batch_seen := {}
+	for id in batch_ids:
+		if not cards.has(id) or batch_seen.has(id) or cards[id].tier != 1 or cards[id].signature_ship >= 0: return null
+		batch_seen[id] = true
+	for id in batch.protected:
+		if not cards.has(id) or cards[id].tier != 1 or batch_seen.has(id): return null
 	state.restore_deck(data, cards)
 	var owned: Dictionary = {}
 	for card in state.player_pool(): owned[card.identity_key()] = true
+	if batch.active:
+		if state.deck_limit() < 2: return null
+		for id in batch.protected:
+			if not owned.has(id): return null
+		for id in batch_ids:
+			if owned.has(id): return null
 	for id in data.upgrades:
 		if not owned.has(id): return null
 	for id in data.upgraded_this_event:
@@ -381,6 +408,12 @@ static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> b
 	if not EnvironmentData.valid_snapshot(snapshot): return false
 	if not snapshot.get("friendly_support", {}).is_empty() and data.get("game_mode") != "defense": return false
 	var index: int = int(battle.get("index", -1))
+	if not snapshot.get("mothership_advantage", "").is_empty():
+		if data.get("game_mode") != "defense": return false
+		var mother := false
+		for unit in data.defense.units:
+			if unit.encounter == index and unit.mothership: mother = true
+		if not mother: return false
 	if index < 0 or index >= data.encounters.size(): return false
 	return snapshot.run_seed == data.seed and snapshot.system_number == data.system_number \
 		and snapshot.encounter_index == index and snapshot.legacy_modifier == data.encounters[index].get("modifier", 0)

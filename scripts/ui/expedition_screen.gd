@@ -697,6 +697,10 @@ func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resour
 	view.add_child(briefing)
 	briefing.configure(enemy,state.difficulty_level(),state.preview_modifier(index) if index >= 0 else int(encounter.get("modifier", 0)),state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
 
+	if state.is_defense() and state.defense.unit_for(index).get("mothership",false):
+		if state.poi_effects.mothership == "penetration": view.add_child(_label("Research: player card attacks bypass mothership Shields",15))
+		if state.poi_effects.mothership == "damage": view.add_child(_label("Research: player card attacks deal +50% damage",15))
+
 
 func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 		icon: Callable, select_approach: Callable) -> void:
@@ -712,10 +716,11 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 	var risk: String = state.pressure_risk_description(index)
 	if not risk.is_empty(): view.add_child(_label(risk, 16))
 	if map_3d:
-		view.add_child(_label(poi.description, 18))
+		view.add_child(_label(state.poi_description(index), 18))
 	var options = add_grid(1 if map_3d else 2)
-	for slot in range(poi.approaches.size()):
-		var approach: Resource = poi.approaches[slot]
+	var approaches: Array = state.poi_approaches(index)
+	for slot in range(approaches.size()):
+		var approach: Resource = approaches[slot]
 		var key: String = Presentation.approach_key(poi, slot)
 		var requirement = state.approach_requirement(approach)
 		var button = add_tile(
@@ -726,7 +731,7 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 			select_approach.bind(slot),
 			requirement.is_locked()
 		)
-		if map_3d and requirement.is_locked():
+		if map_3d and requirement.is_locked() and not approach.has_meta("strategic_reward"):
 			button.heading.text = approach.title
 			button.collapse_requirement(Text.requirement_text(requirement, state.LABELS))
 		else:
@@ -790,4 +795,6 @@ func set_defense_status(state: Resource) -> void:
 	overview_hud.metagame.text = "HOME %d/%d · %d THREATS\nPRESSURE %d / %d\n%s" % [
 		state.defense.integrity, state.defense.tuning.base_integrity, threats,
 		int(state.defense.pressure), int(state.defense.tuning.pressure_maximum), state.ftl_status()]
+	if state.poi_effects.fuel > 0:
+		overview_hud.metagame.text += "\nPROPULSION +50%% · %.1f units" % state.poi_effects.fuel
 	overview_hud.metagame.add_theme_color_override("font_color", Color("ff9b82") if state.defense.mothership_advancing else Color("ddfaff"))

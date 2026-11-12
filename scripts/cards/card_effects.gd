@@ -23,7 +23,8 @@ static func play(
 	simulate: bool = false,
 	damage_report: Dictionary = {},
 	simulation_production_target: int = -1,
-	forecast_draws: RefCounted = null
+	forecast_draws: RefCounted = null,
+	attack_advantage: String = ""
 ) -> bool:
 	damage_report.clear()
 	damage_report.merge({"actor": 0, "target": 0})
@@ -39,7 +40,8 @@ static func play(
 		simulate,
 		damage_report,
 		simulation_production_target,
-		forecast_draws
+		forecast_draws,
+		attack_advantage
 	)
 	return true
 
@@ -54,7 +56,8 @@ static func _apply_effects(
 	simulate: bool,
 	damage_report: Dictionary,
 	simulation_production_target: int,
-	forecast_draws: RefCounted = null
+	forecast_draws: RefCounted = null,
+	attack_advantage: String = ""
 ) -> void:
 	for key in ["hull", "shields"] + RESOURCES + PRODUCTION:
 		actor[key] += int(effects.get(key, 0))
@@ -117,7 +120,8 @@ static func _apply_effects(
 	# Pierce bypasses Shields; the remaining damage is absorbed before Hull loss is reported.
 	# Board uses this report to disrupt escape charging only for permanent Hull damage.
 	var damage: int = int(effects.get("damage", 0))
-	var direct: int = int(floor(damage * float(effects.get("pierce", 0.0))))
+	if attack_advantage == "damage": damage = floori(damage * 1.5 + 0.5)
+	var direct: int = int(floor(damage * (1.0 if attack_advantage == "penetration" else float(effects.get("pierce", 0.0)))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
 	# Presentation only: count ordinary opposing damage at the actual resolution site.
@@ -169,7 +173,8 @@ static func _apply_effects(
 			simulate,
 			damage_report,
 			simulation_production_target,
-			forecast_draws
+			forecast_draws,
+			attack_advantage
 		)
 
 

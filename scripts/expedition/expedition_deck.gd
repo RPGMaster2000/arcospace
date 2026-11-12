@@ -13,9 +13,15 @@ var upgrades_remaining: int = 0
 var upgraded_this_event: Dictionary = {}
 var card_offers: Array[Resource] = []
 var pending_choice: String = ""
+var batch_active := false
+var batch_queue: Array[Resource] = []
+var batch_protected: Array[String] = []
 
 
 func reset() -> void:
+	batch_active = false
+	batch_queue.clear()
+	batch_protected.clear()
 	signatures_enabled = true
 	acquired_cards.clear()
 	upgraded_cards.clear()
@@ -34,7 +40,7 @@ func snapshot() -> Dictionary:
 	return {"signatures_enabled": signatures_enabled, "acquired": _ids(acquired_cards), "removed": removed_starting_cards.keys(),
 		"upgrades": levels, "pending_choice": pending_choice, "offers": _ids(card_offers),
 		"pending_card": pending_card.identity_key() if pending_card != null else "",
-		"upgrades_remaining": upgrades_remaining, "upgraded_this_event": upgraded_this_event.keys()}
+		"batch": {"active":batch_active,"queue":_ids(batch_queue),"protected":batch_protected.duplicate()}, "upgrades_remaining": upgrades_remaining, "upgraded_this_event": upgraded_this_event.keys()}
 
 
 # Same card-choice precedence and exact draw order; the coordinator owns non-card rewards.
@@ -123,6 +129,45 @@ func upgrade_candidates(profile: Resource) -> Array[Resource]:
 
 
 # Valid offer commits either acquisition or a fixed pending replacement, never both.
+# Uniform draws over every unowned, non-signature Tier 1 identity. Ownership is
+# unique in this project, so draw without replacement and never offer duplicates.
+func start_card_batch(profile: Resource, rng: RandomNumberGenerator) -> bool:
+	if not pending_choice.is_empty() or batch_active: return false
+	var candidates: Array[Resource] = []
+	for card in available_reward_cards(profile):
+		if card.tier == 1: candidates.append(card)
+	if candidates.size() < 2: return false
+	card_offers.clear()
+	for slot in range(2):
+		var selected: Resource = candidates[rng.randi_range(0,candidates.size()-1)]
+		card_offers.append(selected)
+		candidates.erase(selected)
+	batch_active = true
+	pending_choice = "card_batch"
+	return true
+
+func confirm_card_batch(profile: Resource, rules: Resource) -> Dictionary:
+	if not batch_active or pending_choice != "card_batch" or card_offers.size() != 2: return {}
+	batch_queue.assign(card_offers)
+	card_offers.clear()
+	pending_choice = ""
+	return advance_card_batch(profile,rules)
+
+func advance_card_batch(profile: Resource, rules: Resource) -> Dictionary:
+	var result := {"message":"","deck_changed":false}
+	if not batch_active or pending_choice == "card_batch" or pending_choice == "replace": return result
+	while not batch_queue.is_empty():
+		var chosen: Resource = batch_queue.pop_front()
+		if player_pool(profile).size() >= deck_limit(profile,rules):
+			pending_card = chosen
+			pending_choice = "replace"
+			return result
+		result.message += _acquire_card(chosen,rules)
+		result.deck_changed = true
+	batch_active = false
+	batch_protected.clear()
+	return result
+
 func choose_card(index: int, profile: Resource, rules: Resource) -> Dictionary:
 	if pending_choice != "card" or index < 0 or index >= card_offers.size():
 		return {}
@@ -141,6 +186,7 @@ func choose_card(index: int, profile: Resource, rules: Resource) -> Dictionary:
 func _acquire_card(chosen: Resource, rules: Resource) -> String:
 	var message: String = ""
 	acquired_cards.append(chosen)
+	if batch_active: batch_protected.append(chosen.identity_key())
 	message += (
 		"\nAcquired %s: added to your expedition pool (×%.1f draw weight within rarity)."
 		% [chosen.card_name, rules.acquired_card_draw_weight]
@@ -159,7 +205,7 @@ func replace_card(key: String, profile: Resource, rules: Resource) -> Dictionary
 	var owned: Dictionary = {}
 	for card in player_pool(profile):
 		owned[card.identity_key()] = card
-	if not owned.has(key) or owned.has(pending_card.identity_key()):
+	if not owned.has(key) or owned.has(pending_card.identity_key()) or key in batch_protected:
 		return {}
 	# No mutation until the explicit confirmation reaches this validated method.
 	removed_starting_cards[key] = true
@@ -173,6 +219,7 @@ func replace_card(key: String, profile: Resource, rules: Resource) -> Dictionary
 
 
 func decline_card() -> Dictionary:
+	if batch_active: return {}
 	var message: String = ""
 	if pending_choice != "replace" or pending_card == null:
 		return {}
@@ -231,6 +278,11 @@ func finish_upgrades(profile: Resource) -> bool:
 # No rolls, rewards, signals or currency changes occur while restoring a checkpoint.
 func restore(data: Dictionary, cards: Dictionary) -> void:
 	reset()
+	var batch: Dictionary = data.get("card_batch", {"active":false,"queue":[],"protected":[]})
+	batch_active = batch.active
+	batch_protected.assign(batch.protected)
+	batch_queue.clear()
+	for id in batch.queue: batch_queue.append(cards[id])
 	signatures_enabled = bool(data.get("signatures_enabled", false))
 	pending_choice = data.pending_choice
 	upgrades_remaining = int(data.upgrades_remaining)

@@ -4,6 +4,24 @@ extends RefCounted
 const Approach = preload("res://scripts/expedition/encounter_approach.gd")
 const Outcome = preload("res://scripts/expedition/encounter_outcome.gd")
 
+static func description(id: String) -> String:
+	return {
+		"mining_operation":"An abandoned industrial complex holds materials, machinery and defensive equipment.",
+		"research_station":"Military archives offer card schematics, experimental weapons and mothership research.",
+		"spatial_anomaly":"A spacetime disturbance can alter Pressure, propulsion or reactor performance.",
+		"gas_giant":"Harvest atmospheric energy for reserves or temporary production.",
+		"distress_signal":"Recover supplies, rescue specialists or retrieve equipment.",
+		"derelict_starship":"Recover salvage, armaments or industrial machinery from a silent wreck.",
+		"radiation_nebula":"Collect useful isotopes or channel radiation into reactor reserves.",
+		"pirate_debris_field":"Choose cargo, munitions or recovered card technology from pirate wreckage.",
+		"raider_cache":"Recover secured supplies, weapons or EMP cells.",
+		"quarantined_colony":"Help the colony and recover supplies, specialists or medical support.",
+		"fuel_depot":"Recover stored fuel or recharge combat reserves.",
+		"sensor_relay":"Recover navigation archives or decode tactical schematics.",
+		"ancient_navigation_array":"Recover navigation archives or decode tactical schematics.",
+		"unstable_wormhole":"Recover displaced cargo or channel exotic energy."
+	}.get(id, "Choose a guaranteed benefit; the invasion advances during the operation.")
+
 static func definitions(id: String) -> Array:
 	match id:
 		"mining_operation": return [
@@ -71,7 +89,11 @@ static func row(title: String, description: String, seconds: int, reward: Dictio
 	approach.success_chance = 1.0
 	approach.success = Outcome.new()
 	approach.success.blurb = description
+	approach.success.hull = int(reward.get("hull",0))
 	# A neutral failure resource preserves existing Resource consumers while the
 	# Defense transaction never rolls a success/failure outcome.
 	approach.failure = Outcome.new()
+	approach.set_meta("strategic_reward",reward.duplicate(true))
+	approach.set_meta("strategic_seconds",seconds)
+	approach.set_meta("strategic_description",description)
 	return {"approach":approach,"description":description,"seconds":seconds,"reward":reward}
