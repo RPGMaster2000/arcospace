@@ -365,6 +365,13 @@ func generate_system() -> bool:
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
 	environmental_instances.append(solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
 		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range))
+	var hostile_positions: Array = []
+	for index in encounters.size():
+		var location := battle_location(index)
+		if not location.is_empty(): hostile_positions.append(location)
+	var storm := EnvironmentData.Storms.generate(seed_used, system_number, rules.space_storm_chance,
+		hostile_positions, environmental_instances)
+	if not storm.is_empty(): environmental_instances.append(storm)
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.

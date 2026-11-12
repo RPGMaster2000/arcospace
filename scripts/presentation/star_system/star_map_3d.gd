@@ -14,6 +14,7 @@ const Planets = preload("res://scripts/presentation/star_system/planet_models.gd
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
 const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
+const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -22,6 +23,7 @@ var system_profile: String = "industrial"
 # Query-only world environment interface. Meshes are rebuilt from compact saved records.
 var environment_source: Callable
 var modifier_source: Callable
+var storm_legend: PanelContainer
 
 func environment_instances() -> Array:
 	return environment_source.call() if environment_source.is_valid() else []
@@ -173,6 +175,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 				markers[entry.index].set_state(entry.completed,false,false)
 				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index) or entry.get("profile") != null)
 				markers[entry.index].set_objective(entry.get("objective_marker",""))
+				markers[entry.index].tooltip_text = entry.tooltip
 		if not defense_view.is_empty(): sync_defense(defense_view)
 		overview()
 		return
@@ -255,6 +258,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
 	material.set_shader_parameter("map_corona_visibility",true)
 	visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
+	var storm := StormVisual.primary(environment_instances())
+	if not storm.is_empty(): visual_root.add_child(StormVisual.build(storm))
 	material.render_priority = 10
 	disc.material_override = material
 	objects[-100] = disc
@@ -341,6 +346,19 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		world.add_child(defense_effects)
 		defense_effects.configure(self)
 		sync_defense(defense_view)
+	if is_instance_valid(storm_legend):
+		storm_legend.hide()
+		storm_legend.queue_free()
+		storm_legend = null
+	if not storm.is_empty():
+		storm_legend = StormVisual.legend(storm)
+		add_child(storm_legend)
+		storm_legend.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
+		storm_legend.grow_horizontal = GROW_DIRECTION_BEGIN
+		storm_legend.offset_left = -202.0
+		storm_legend.offset_right = -12.0
+		storm_legend.offset_top = 66.0
+		storm_legend.offset_bottom = 112.0
 	focused = false
 	interactive = true
 
@@ -371,6 +389,8 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
+	if is_instance_valid(storm_legend):
+		storm_legend.visible = _zoom_enabled() and not introducing and not inspection_active
 	for p in visual_data.get("planets",[]):
 		planet_nodes[p.index].get_node("OverviewName").visible = p.encounter == -1 and not focused and not introducing
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
@@ -917,6 +937,8 @@ func _initial_ship_position() -> Vector3:
 	return Vector3(0,1.5,3)
 
 func point_is_reserved(point: Vector2) -> bool:
+	if is_instance_valid(storm_legend) and storm_legend.is_visible_in_tree():
+		if storm_legend.get_global_rect().has_point(point): return true
 	if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.construction):
 		var build_button: Button = defense_effects.construction.button
 		if build_button.is_visible_in_tree() and build_button.get_global_rect().has_point(point): return true
