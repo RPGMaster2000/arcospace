@@ -83,3 +83,7 @@ class_name ExpeditionRules
 @export_group("Physical solar interference")
 ## Center-to-boundary distance in world units; saved on new-system generation only.
 @export var solar_influence_radius_range := Vector2(8.0, 13.0)
+
+@export_group("Physical space storms")
+## Probability of one storm in a newly generated system.
+@export_range(0.0, 1.0, 0.01) var space_storm_chance: float = 0.32

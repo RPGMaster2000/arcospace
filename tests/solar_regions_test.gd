@@ -90,9 +90,9 @@ func run() -> void:
 			baseline.start(0,rules,seed_value)
 			for number in range(1,5):
 				var actual: Dictionary = Save.encode(state)
-				actual.environmental_instances = actual.environmental_instances.filter(func(item): return item.type != Solar.TYPE)
-				check(actual == Save.encode(baseline), "Only solar record differs from PR #50: all asteroid data, encounters, anchors, RNG streams and progression unchanged")
-				check(state.environmental_instances.size() == 2, "One unchanged asteroid formation plus one solar region per new system")
+				actual.environmental_instances = actual.environmental_instances.filter(func(item): return item.type not in [Solar.TYPE, EnvironmentData.SPACE_STORM])
+				check(actual == Save.encode(baseline), "Removing the newer phenomena matches PR #50, including asteroid data, encounters, anchors and RNG")
+				check(state.environmental_instances.filter(func(item): return item.type != EnvironmentData.SPACE_STORM).size() == 2, "One unchanged asteroid formation plus one solar region per new system")
 				var encoded: Dictionary = Save.encode(state)
 				var restored = Save.new().decode(JSON.parse_string(JSON.stringify(encoded)),rules)
 				check(restored != null and restored.environmental_instances == state.environmental_instances, "Version-3 saves restore exact solar geometry and visuals")

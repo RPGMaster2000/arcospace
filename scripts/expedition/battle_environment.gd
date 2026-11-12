@@ -10,6 +10,7 @@ const TEMPORAL_RIFT = "TEMPORAL_RIFT"
 const TYPES = [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE, SPACE_STORM, TEMPORAL_RIFT]
 const Asteroids = preload("res://scripts/expedition/asteroid_regions.gd")
 const Solar = preload("res://scripts/expedition/solar_regions.gd")
+const Storms = preload("res://scripts/expedition/storm_regions.gd")
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 
@@ -25,6 +26,7 @@ static func instance(id: String, type: String, position: Array = []) -> Dictiona
 static func valid_instances(value: Variant) -> bool:
 	if not value is Array or value.size() > 128: return false
 	var ids: Dictionary = {}
+	var physical_storm := false
 	for item in value:
 		if not item is Dictionary: return false
 		if not item.get("id") is String or item.id.is_empty() or item.id.length() > 128 or ids.has(item.id): return false
@@ -36,10 +38,15 @@ static func valid_instances(value: Variant) -> bool:
 		# Empty Phase 1 reserved records remain valid but cannot select an effect.
 		if item.type == ASTEROID_FIELD and not item.region.is_empty() and (not Asteroids.valid(item) or not Asteroids.valid_visual(item.visual)): return false
 		if item.type == SOLAR_INTERFERENCE and not item.region.is_empty() and (not Solar.valid(item) or not Solar.valid_visual(item.visual)): return false
+		if item.type == SPACE_STORM and not item.region.is_empty():
+			if physical_storm: return false
+			physical_storm = true
+			if not Storms.valid(item) or not Storms.valid_visual(item.visual, item.configuration.subtype): return false
+			if not Storms.valid_generation(item.generation): return false
 	return true
 
 
-# Explicit legacy > physical solar > physical asteroid. Lexical ID breaks ties
+# Explicit legacy > physical solar > physical asteroid > physical storm. Lexical ID breaks ties
 # within each type, independent of record order. Future types remain neutral.
 static func evaluate(state: Resource, location: Array, instances: Array,
 		encounter_index: int = -1, legacy_modifier: int = 0) -> Dictionary:
@@ -76,6 +83,9 @@ static func modifier_id(value: Dictionary) -> int:
 	match value.get("type"):
 		SOLAR_INTERFERENCE: return 3
 		ASTEROID_FIELD: return 1
+		SPACE_STORM:
+			var configuration: Variant = value.get("configuration")
+			return Storms.modifier_id(configuration.get("subtype")) if configuration is Dictionary else 0
 	return 0
 
 
@@ -99,7 +109,7 @@ static func snapshot(value: Dictionary) -> Dictionary:
 
 static func valid_snapshot(value: Variant) -> bool:
 	if not value is Dictionary: return false
-	if value.get("version") != 1 or value.get("type") not in [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE]: return false
+	if value.get("version") != 1 or value.get("type") not in [NONE, ASTEROID_FIELD, SOLAR_INTERFERENCE, SPACE_STORM]: return false
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
 	if not Installations.valid_support(value.get("friendly_support", {})): return false
@@ -116,12 +126,19 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.type == SOLAR_INTERFERENCE:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Solar.valid_visual(value.visual): return false
 		if not Solar.valid({"position": value.configuration.get("position"), "region": value.configuration.get("region"), "configuration": value.configuration}): return false
+	if value.type == SPACE_STORM:
+		if value.instance_id.is_empty() or value.legacy_modifier != 0: return false
+		if not Storms.valid_visual(value.visual, value.configuration.get("subtype")): return false
+		if not Storms.valid({"position": value.configuration.get("position"),
+				"region": value.configuration.get("region"), "configuration": value.configuration}): return false
 	return true
 
 
 static func _priority(item: Dictionary, location: Array) -> int:
-	if item.get("type") == SOLAR_INTERFERENCE and Solar.valid_visual(item.get("visual")) and Solar.contains(item, location): return 2
-	if item.get("type") == ASTEROID_FIELD and Asteroids.valid_visual(item.get("visual")) and Asteroids.contains(item, location): return 1
+	if item.get("type") == SOLAR_INTERFERENCE and Solar.valid_visual(item.get("visual")) and Solar.contains(item, location): return 3
+	if item.get("type") == ASTEROID_FIELD and Asteroids.valid_visual(item.get("visual")) and Asteroids.contains(item, location): return 2
+	if item.get("type") == SPACE_STORM and Storms.contains(item, location):
+		if Storms.valid_visual(item.get("visual"), item.configuration.subtype): return 1
 	return 0
 
 
