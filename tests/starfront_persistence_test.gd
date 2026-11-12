@@ -54,7 +54,8 @@ func run() -> void:
 		root.add_child(host)
 		await process_frame
 		check(is_instance_valid(host.battle) and host.state.active_battle == index, "Continue restores unresolved defense battle")
-		check(host.state.defense.snapshot() == state.defense.snapshot(), "Battle restore never advances strategic state")
+		check(JSON.stringify(host.state.defense.snapshot()) == JSON.stringify(state.defense.snapshot()),
+			"Battle restore never advances strategic state at save precision")
 		host.queue_free()
 		await process_frame
 	victory(state, index)

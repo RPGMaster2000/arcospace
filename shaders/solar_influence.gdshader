@@ -5,6 +5,7 @@ uniform float intensity = 0.7;
 uniform float activity = 0.5;
 uniform float phase = 0.0;
 uniform float pulse_rate = 0.5;
+uniform float fill_strength = 0.085;
 void fragment() {
 	vec2 p = (UV - vec2(0.5)) * 2.08;
 	float r = length(p);
@@ -14,6 +15,10 @@ void fragment() {
 	float wisps = 0.4 + 0.6 * pow(0.5 + 0.5 * sin(angle * 7.0 + phase), 2.0);
 	float ripple = pow(0.5 + 0.5 * sin(r * 30.0 - t), 6.0);
 	float envelope = smoothstep(0.3, 0.55, r) * (1.0 - smoothstep(0.85, 1.0, r));
-	ALBEDO = mix(star_color.rgb, vec3(1.0, 0.65, 0.3), 0.3);
-	ALPHA = intensity * (rim * wisps * 0.12 + ripple * envelope * activity * 0.018);
+	float boundary = rim * wisps * 0.12 + ripple * envelope * activity * 0.018;
+	float fill = fill_strength * (1.0 - smoothstep(0.1, 1.0, r));
+	vec3 amber = vec3(1.0, 0.48, 0.17);
+	vec3 rim_color = mix(star_color.rgb, vec3(1.0, 0.65, 0.3), 0.3);
+	ALBEDO = mix(amber, rim_color, boundary / max(0.001, boundary + fill));
+	ALPHA = intensity * (boundary + fill);
 }

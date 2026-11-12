@@ -22,6 +22,7 @@ func run() -> void:
 	var map = host.star_map
 	var camera = map.camera
 	var settings = map.settings
+	var expansion: float = maxf(1.0, host.state.layout_expansion)
 	var fitted_zoom: float = camera.zoom_target
 	check(fitted_zoom == camera.zoom_scale and fitted_zoom > 0, "Generated overview initializes synchronized fitted zoom")
 	var rng: int = host.state.rng.state
@@ -34,7 +35,7 @@ func run() -> void:
 	camera.zoom_by(100)
 	check(is_equal_approx(camera.zoom_target, settings.maximum_zoom), "Maximum zoom clamps")
 	camera.zoom_by(0.001)
-	check(is_equal_approx(camera.zoom_target, settings.minimum_zoom), "Minimum zoom clamps")
+	check(is_equal_approx(camera.zoom_target, settings.minimum_zoom / expansion), "Minimum zoom clamps for the current layout")
 	var gesture_origin: Vector2 = map.markers[0].get_global_rect().get_center()
 	for index in [0, 1]:
 		var touch := InputEventScreenTouch.new()
@@ -100,13 +101,13 @@ func run() -> void:
 	check(not map.dragging and map.traveling, "Finger release leaves ongoing travel intact")
 	map.traveling = false
 	camera.pan_screen(Vector2(640, 300), Vector2(-100000, -100000))
-	var bounds: Rect2 = settings.pan_bounds.abs()
+	var bounds: Rect2 = map.Layout.bounds(host.state.layout_expansion, settings.pan_bounds)
 	check(camera.pan_offset.x >= bounds.position.x and camera.pan_offset.x <= bounds.end.x and camera.pan_offset.y >= bounds.position.y and camera.pan_offset.y <= bounds.end.y, "Panning respects calibration bounds")
 	camera.pan_offset = Vector2.ZERO
 	camera.position = camera._overview_position(settings)
 	for index in map.markers:
 		var point: Vector3 = map.objects[index].position
-		check(settings.system_bounds.has_point(Vector2(point.x, point.z)), "Destinations respect calibrated borders")
+		check(map.Layout.bounds(host.state.layout_expansion, settings.system_bounds).has_point(Vector2(point.x, point.z)), "Destinations respect calibrated borders")
 	check(host.state.rng.state == rng, "Zoom and gestures preserve gameplay RNG")
 	map.camera.close_ship(map.ship.position, 0, &"ftl")
 	var at: Vector3 = map.ship.position

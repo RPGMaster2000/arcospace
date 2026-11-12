@@ -84,6 +84,7 @@ func run() -> void:
 		for seed_value in [17,1042,65537]:
 			rules = rules.duplicate(true)
 			rules.game_mode = mode
+			rules.system_expansion = 0.0
 			state = State.new()
 			var baseline = PhaseTwoState.new()
 			state.start(0,rules,seed_value)

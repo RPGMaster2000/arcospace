@@ -6,8 +6,9 @@ const BELT_WIDTH = Vector2(2.6, 4.4)
 const BELT_RADIUS = Vector2(7.0, 21.0)
 const SYSTEM_RADIUS = 27.0
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 
-static func generate(run_seed: int, number: int, battle_positions: Array) -> Array:
+static func generate(run_seed: int, number: int, battle_positions: Array, expansion: float = 0.0) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d:%d:asteroid-regions:v1" % [run_seed, number])
 	var item: Dictionary = _record(run_seed, number, 0, rng)
@@ -37,7 +38,13 @@ static func generate(run_seed: int, number: int, battle_positions: Array) -> Arr
 		angle = anchor.angle() + PI * 0.5 + rng.randf_range(-0.35, 0.35)
 		var extent: float = rng.randf_range(1.8, 3.0) if kind == 1 else rng.randf_range(3.6, 5.2)
 		# Bound the debris at outer anchors without relocating the formation.
-		extent = minf(extent, maxf(1.4, (SYSTEM_RADIUS - anchor.length()) / 2.0))
+		extent = minf(extent, maxf(1.4, (SYSTEM_RADIUS - anchor.length() / Layout.scale_factor(expansion)) / 2.0))
+		if expansion > 0.0:
+			# Place the whole formation inside the map while retaining the
+			# sampled pocket sizes and their tangential arrangement.
+			var bounds := Layout.bounds(expansion).grow(-extent * 2.35)
+			anchor = anchor.clamp(bounds.position, bounds.end)
+			item.position = [anchor.x, 0.0, anchor.y]
 		var pockets: Array = []
 		var count: int = 3 if kind == 1 else 7
 		var curve: float = rng.randf_range(0.15, 0.4)

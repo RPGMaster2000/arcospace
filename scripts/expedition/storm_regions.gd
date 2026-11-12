@@ -7,12 +7,13 @@ const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
 const Solar = preload("res://scripts/expedition/solar_regions.gd")
 const Asteroids = preload("res://scripts/expedition/asteroid_regions.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 static func modifier_id(subtype: Variant) -> int:
 	return MODIFIER_IDS.get(subtype, 0) if subtype is String else 0
 
 static func generate(run_seed: int, system: int, chance: float, hostile_positions: Array,
-		existing: Array) -> Dictionary:
+		existing: Array, expansion: float = 0.0) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d:%d:space-storm:v1" % [run_seed, system])
 	var roll := rng.randf()
@@ -20,18 +21,19 @@ static func generate(run_seed: int, system: int, chance: float, hostile_position
 	var subtype: String = SUBTYPES[rng.randi_range(0, SUBTYPES.size() - 1)]
 	var axes := Vector3(rng.randf_range(5.0, 7.5), rng.randf_range(2.4, 3.5),
 		rng.randf_range(4.5, 7.0))
+	var limit := Layout.bounds(expansion).end.x
 	var candidates: Array[Vector3] = []
 	for location in hostile_positions:
 		if not Navigation.valid_point(location, false): continue
 		if absf(float(location[1])) > axes.y: continue
 		var point := Vector3(location[0], 0.0, location[2])
-		if point.length() < 12.0 or absf(point.x) + axes.x > 28.0 or absf(point.z) + axes.z > 28.0: continue
+		if point.length() < 12.0 or absf(point.x) + axes.x > limit or absf(point.z) + axes.z > limit: continue
 		if existing.any(func(item): return _covers_with_priority(item, location)): continue
 		candidates.append(point)
 	var center: Vector3
 	if candidates.is_empty():
 		var angle := rng.randf_range(0.0, TAU)
-		center = Vector3(cos(angle), 0.0, sin(angle)) * rng.randf_range(15.0, 19.0)
+		center = Vector3(cos(angle), 0.0, sin(angle)) * (rng.randf_range(15.0, 19.0) * Layout.scale_factor(expansion))
 	else:
 		center = candidates[rng.randi_range(0, candidates.size() - 1)]
 	var record := {"id": "storm-%d" % system, "type": TYPE,

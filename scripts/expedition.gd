@@ -523,6 +523,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.modifier_source = state.preview_modifier
 		star_map.run_seed = state.seed_used
 		star_map.system_number = state.system_number
+		star_map.layout_expansion = state.layout_expansion
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}

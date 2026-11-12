@@ -1,7 +1,10 @@
 extends RefCounted
 # Scene-free strategic authority. Units reference the existing encounter ledger.
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 var tuning: Resource
+var layout_expansion: float = 0.0
+var decorative_bodies: Array = []
 var home: Vector3
 var start: Vector3
 var anchors: Dictionary = {}
@@ -24,26 +27,50 @@ static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 static func wire(value: Vector3) -> Array:
 	return [value.x, value.y, value.z]
-func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: Array, hostile_offset: float = 0.7, poi_phase: float = 0.35) -> void:
+func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: Array,
+		hostile_offset: float = 0.7, poi_phase: float = 0.35, expansion: float = 0.0,
+		planetary: Array = [], orbit_seed: int = 0) -> void:
 	tuning = configuration
+	layout_expansion = expansion
+	var factor := Layout.scale_factor(expansion)
 	integrity = tuning.base_integrity
-	home = Vector3(cos(angle), 0, sin(angle)) * 22.0
+	home = Vector3(cos(angle), 0, sin(angle)) * (22.0 * factor)
 	start = home * 0.78
 	for i in range(3):
 		# Keep all three routes on the same safe flank of the sun and opposite home.
 		var flank_sign: float = 1.0 if hostile_offset >= 0.0 else -1.0
 		var heading: float = angle + PI + hostile_offset + flank_sign * [-0.45, 0.0, 0.35][i]
-		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * tuning.hostile_spawn_distance
+		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * (tuning.hostile_spawn_distance * factor)
 		units.append({"encounter": indices[i], "position": origin, "route_origin": origin,
 			"status": "active", "mothership": i == 2, "reinforcement": false, "spawned": false})
+	var rings := [7.0, 10.0, 13.0, 16.0, 19.0, 5.5, 8.5, 14.5]
+	var orbit_rng := RandomNumberGenerator.new()
+	orbit_rng.seed = orbit_seed
 	for i in poi_indices.size():
 		var heading: float = angle + TAU * float(i) / maxi(1, poi_indices.size()) + poi_phase
 		var radial: float = [19.0, 10.0, 16.0, 7.0, 16.0, 10.0, 19.0, 13.0][i % 8]
-		var anchor: Vector3 = Vector3(cos(heading), 0, sin(heading)) * radial
-		for unit in units:
-			if unit.position.distance_to(anchor) <= 5.5:
-				anchor = Vector3(cos(heading), 0, sin(heading)) * 10.0
-				break
+		var direction := Vector3(cos(heading), 0, sin(heading))
+		var anchor := direction * (radial * factor)
+		if expansion > 0.0 and poi_indices[i] in planetary:
+			direction = direction.rotated(Vector3.UP, orbit_rng.randf_range(-0.08, 0.08))
+			var jitter := orbit_rng.randf_range(-0.16, 0.16)
+			var best_score := INF
+			var chosen := 0
+			for ring in rings.size():
+				var candidate := direction * ((float(rings[ring]) + jitter) * factor)
+				var score: float = absf(rings[ring] - radial)
+				for unit in units:
+					if candidate.distance_to(unit.position) <= 5.5: score += 100.0
+				if score >= best_score: continue
+				chosen = ring
+				best_score = score
+				anchor = candidate
+			rings.remove_at(chosen)
+		else:
+			for unit in units:
+				if unit.position.distance_to(anchor) <= 5.5 * factor:
+					anchor = direction * (10.0 * factor)
+					break
 		anchors[poi_indices[i]] = anchor
 # Reserve units have stable encounter IDs and existing profiles, but no active
 # simulation or rendered presence until the scheduler deploys them.
@@ -61,11 +88,12 @@ func active_attackers() -> int:
 
 func spawn_position(player: Vector3) -> Variant:
 	var center: Vector3 = unit_for(mothership_index()).position
+	var limit := Layout.bounds(layout_expansion).end.x - 2.0
 	for distance in [3.5, 5.0, 6.5]:
 		for i in range(24):
 			var angle: float = TAU * float((i + reinforcements_spawned * 7) % 24) / 24.0
 			var candidate: Vector3 = center + Vector3(cos(angle), 0, sin(angle)) * distance
-			if absf(candidate.x) > 26 or absf(candidate.z) > 26 or candidate.length() < 3.5: continue
+			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < 3.5: continue
 			if candidate.distance_to(player) < tuning.interception_radius + 1.0 or candidate.distance_to(home) < 5: continue
 			var clear: bool = true
 			for other in units:
@@ -287,8 +315,10 @@ func snapshot() -> Dictionary:
 		data.units.append(copy)
 	for index in anchors: data.anchors[str(index)] = wire(anchors[index])
 	return data
-func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
+func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0) -> bool:
 	if not data is Dictionary: return false
+	layout_expansion = expansion
+	var limit := Layout.bounds(expansion).end.x
 	if not Navigation.valid_point(data.get("home"), false) or not Navigation.valid_point(data.get("start"), false): return false
 	for key in ["revealed", "reveal_pending", "complete"]:
 		if not data.get(key) is bool: return false
@@ -311,7 +341,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
 		if not Navigation.valid_point(unit.get("position"), false): return false
 		if not Navigation.valid_point(unit.get("route_origin", unit.position), false): return false
-		if absf(float(unit.position[0])) > 28 or absf(float(unit.position[2])) > 28: return false
+		if absf(float(unit.position[0])) > limit or absf(float(unit.position[2])) > limit: return false
 		if unit.status == "secured" and not data.complete: return false
 		if data.complete and unit.status in ["active", "reserve"]: return false
 		if encounters[index].completed != (unit.status not in ["active", "reserve"]): return false
@@ -365,11 +395,11 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		if not str(key).is_valid_int() or not Navigation.valid_point(data.anchors[key], false): return false
 		var index: int = int(key)
 		if not expected.has(index) and index != -2: return false
-		if absf(float(data.anchors[key][0])) > 28 or absf(float(data.anchors[key][2])) > 28: return false
+		if absf(float(data.anchors[key][0])) > limit or absf(float(data.anchors[key][2])) > limit: return false
 		anchors[index] = point(data.anchors[key])
 	for index in expected:
 		if not anchors.has(index): return false
-	construction_sites = Installations.sites(home, anchors, encounters)
+	construction_sites = Installations.sites(home, anchors, encounters, expansion)
 	var saved_turrets: Variant = data.get("turrets", {})
 	if not Installations.valid_deployments(saved_turrets, construction_sites): return false
 	turrets = saved_turrets.duplicate(true)

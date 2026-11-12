@@ -16,20 +16,30 @@ var cinematic_previous: Vector3
 var cinematic_tracking: bool = false
 const LIMIT = 96
 const SPACING = 0.16
+const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
-static func layout(data: Dictionary, snapshot: Dictionary) -> void:
+static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = [], expansion: float = 0.0) -> void:
 	# The gameplay layout supplies every navigable anchor. Cosmetic RNG only
 	# controls the planet surface, star and atmosphere; it cannot move the base.
 	var generated_planets: Array = data.planets.duplicate(true)
 	data.assignments.clear()
+	data.poi_orbits.clear()
 	data.anchors.clear()
 	data.placement.clear()
+	var planetary_radii: Array[float] = []
 	for key in snapshot.anchors:
 		var index: int = int(key)
 		data.anchors[index] = point(snapshot.anchors[key])
 		data.placement[index] = {"radius": 1.2}
+	if expansion > 0.0:
+		for index in planetary:
+			if not data.anchors.has(index): continue
+			var orbit := VisualSystem.circular_orbit(data.anchors[index])
+			data.poi_orbits[index] = orbit
+			planetary_radii.append(orbit.distance)
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		data.anchors[index] = point(unit.position)
@@ -52,7 +62,12 @@ static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 	var obstacles: Array = [point(snapshot.home)]
 	for anchor in snapshot.anchors.values(): obstacles.append(point(anchor))
 	for unit in snapshot.units:
-		if unit.status != "reserve": obstacles.append(point(unit.position))
+		if expansion > 0.0:
+			if not unit.reinforcement: obstacles.append(point(unit.route_origin))
+		elif unit.status != "reserve":
+			obstacles.append(point(unit.position))
+	var factor := Layout.scale_factor(expansion)
+	var distances := [5.0, 6.0, 7.0, 8.0, 9.0, 11.0, 12.0] if expansion > 0.0 else [5.0, 7.0, 9.0, 12.0]
 	for original in generated_planets.slice(0, mini(3, generated_planets.size() - 1)):
 		var planet: Dictionary = original.duplicate(true)
 		planet.index = data.planets.size()
@@ -63,7 +78,9 @@ static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 		planet.orientation = 0.0
 		var best: Vector3 = Vector3.ZERO
 		var best_gap: float = -INF
-		for distance in [5.0, 7.0, 9.0, 12.0]:
+		for base_distance in distances:
+			var distance: float = base_distance * factor
+			if planetary_radii.any(func(other): return absf(other - distance) < 1.05): continue
 			for attempt in range(72):
 				var phase: float = float(original.phase) + TAU * float(attempt) / 72.0
 				var candidate: Vector3 = Vector3(cos(phase), 0, sin(phase)) * float(distance)
@@ -79,6 +96,7 @@ static func layout(data: Dictionary, snapshot: Dictionary) -> void:
 			planet.name = data.name + " " + str(planet.index)
 			data.planets.append(planet)
 			obstacles.append(best)
+			if expansion > 0.0: planetary_radii.append(planet.distance)
 
 func configure(source: Control) -> void:
 	map = source

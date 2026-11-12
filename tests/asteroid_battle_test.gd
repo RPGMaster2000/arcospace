@@ -36,6 +36,7 @@ func run() -> void:
 		for seed_value in [0, 17, 1042, 65537]:
 			var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
 			rules.game_mode = mode
+			rules.system_expansion = 0.0
 			rules.log_rolls = false
 			var state = State.new()
 			var baseline = PhaseOneState.new()
