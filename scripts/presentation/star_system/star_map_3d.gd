@@ -16,6 +16,8 @@ const Lighting = preload("res://scripts/presentation/star_system/stellar_lightin
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
 const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift_visual.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
+var layout_expansion: float = 0.0
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -186,11 +188,15 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	traveling = false
 	selected_index = -1
 	configured_seed = visual_seed
-	travel_duration = duration
+	travel_duration = duration * Layout.scale_factor(layout_expansion)
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
-	visual_data = VisualSystem.generate(cosmetic_seed, system_number, entries, settings, system_profile)
+	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
+	visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
+		settings, system_profile, layout_expansion)
 	if not defense_view.is_empty():
-		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(visual_data, defense_view)
+		var planetary := entries.filter(VisualSystem.is_planetary).map(func(entry): return entry.index)
+		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
+			visual_data, defense_view, planetary, layout_expansion)
 	# New exploration runs use State's committed static battle anchors. Old saves
 	# without anchors keep the historical cosmetic layout and neutral environment.
 	if defense_view.is_empty():
@@ -217,6 +223,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	background = Space.new()
 	background.name = "BackgroundEnvironment"
 	world.add_child(background)
+	camera.set_layout_expansion(layout_expansion)
 	camera.overview(settings, true)
 	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength)
 	for p in visual_data.planets:
@@ -239,6 +246,10 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		label.name = "OverviewName"
 		label.visible = p.encounter == -1
 		planet.add_child(label)
+	for index in visual_data.poi_orbits:
+		var orbit: MeshInstance3D = Planets.orbit(visual_data.poi_orbits[index], settings)
+		orbit.name = "DestinationOrbit%d" % index
+		visual_root.add_child(orbit)
 	var sun := QuadMesh.new()
 	sun.size = Vector2(18, 18)
 	var disc := Models.part(visual_root, sun, Color.WHITE)
@@ -254,6 +265,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		disc.position = Vector3(solar.position[0], solar.position[1], solar.position[2])
 		core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
 	world.get_node("SunLight").position = disc.position
+	world.get_node("SunLight").light_color = Color.WHITE.lerp(visual_data.star_color, 0.35) if layout_expansion > 0.0 else Color(1.0, 0.88, 0.70)
 	material.set_shader_parameter("core_scale", core_scale)
 	material.set_shader_parameter("corona_spread", settings.sun_corona_spread)
 	material.set_shader_parameter("corona_strength", settings.sun_corona_strength)
@@ -312,7 +324,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var shafts := preload("res://scripts/presentation/star_system/stellar_shafts.gd").new()
 		visual_root.add_child(shafts)
 		shafts.strength = settings.stellar_dust_density
-		var bounds: Rect2 = settings.system_bounds.abs()
+		var bounds := Layout.bounds(layout_expansion, settings.system_bounds)
 		var navigation_radius := 0.0
 		for corner in [bounds.position,bounds.end,Vector2(bounds.position.x,bounds.end.y),Vector2(bounds.end.x,bounds.position.y)]:
 			navigation_radius = maxf(navigation_radius,corner.length())
@@ -797,7 +809,7 @@ func screen_to_navigation(point: Vector2) -> Vector3:
 	var direction: Vector3 = camera.project_ray_normal(local)
 	if absf(direction.y) < 0.0001: return ship.position
 	var target: Vector3 = origin + direction * (-origin.y/direction.y)
-	var bounds: Rect2 = settings.system_bounds.abs()
+	var bounds := Layout.bounds(layout_expansion, settings.system_bounds)
 	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x-0.001),0,clampf(target.z,bounds.position.y,bounds.end.y-0.001))
 
 
@@ -950,6 +962,8 @@ func fit_overview() -> void:
 	var points: Array[Vector3] = []
 	for p in visual_data.planets:
 		for i in range(64): points.append(VisualSystem.orbit_point(p,TAU*i/64.0))
+	for orbit in visual_data.poi_orbits.values():
+		for i in range(32): points.append(VisualSystem.orbit_point(orbit, TAU * i / 32.0))
 	for key in objects:
 		var at: Vector3 = objects[key].position
 		var radius: float = float(objects[key].get_meta("radius",2.6 if key==-100 else 1.0))+2.0

@@ -72,7 +72,7 @@ func run() -> void:
 	await create_timer(1.6).timeout
 	check(resumed.state.navigation_origin == origin and resumed.star_map.selected_index == -1 and resumed.view_kind == "system", "No unsolicited arrival or selection")
 	resumed.star_map.travel(destination)
-	await create_timer(1.6).timeout
+	await create_timer(resumed.star_map.travel_duration + 0.2).timeout
 	check(resumed.state.navigation_origin == destination and resumed.selected_encounter == destination, "Explicit reselection travels and arrives once")
 	resumed.queue_free()
 	await settle()

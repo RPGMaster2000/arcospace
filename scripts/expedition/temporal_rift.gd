@@ -7,6 +7,7 @@ const Solar = preload("res://scripts/expedition/solar_regions.gd")
 const Asteroids = preload("res://scripts/expedition/asteroid_regions.gd")
 const Storms = preload("res://scripts/expedition/storm_regions.gd")
 const MAP_SETTINGS = preload("res://resources/presentation/star_system_settings.tres")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 const RADIUS = 2.35
 const EPSILON = 0.00000001
 
@@ -41,8 +42,10 @@ func restore(data: Variant) -> bool:
 func valid_active(item: Dictionary, defense: RefCounted) -> bool:
 	if item.is_empty(): return true
 	var event := int(item.generation.evaluation)
+	var at: Array = item.position
 	return event <= evaluation and item.id == _id(event) \
-		and not defense.unit_for(int(item.generation.encounter)).is_empty()
+		and not defense.unit_for(int(item.generation.encounter)).is_empty() \
+		and Layout.bounds(defense.layout_expansion, MAP_SETTINGS.system_bounds).grow(-float(item.region.radius)).has_point(Vector2(at[0], at[2]))
 
 
 func advance_span(seconds: float, defense: RefCounted, instances: Array) -> void:
@@ -116,7 +119,7 @@ func _id(event: int) -> String:
 
 
 static func _clear_navigation(at: Vector3, defense: RefCounted, instances: Array) -> bool:
-	if not MAP_SETTINGS.system_bounds.abs().grow(-RADIUS).has_point(Vector2(at.x, at.z)): return false
+	if not Layout.bounds(defense.layout_expansion, MAP_SETTINGS.system_bounds).grow(-RADIUS).has_point(Vector2(at.x, at.z)): return false
 	if at.distance_to(defense.home) <= RADIUS + 2.8: return false
 	for anchor in defense.anchors.values():
 		if at.distance_to(anchor) <= RADIUS + 1.6: return false
@@ -127,8 +130,10 @@ static func _clear_navigation(at: Vector3, defense: RefCounted, instances: Array
 		if item.type != Solar.TYPE or not Solar.valid(item): continue
 		var sun := Vector3(item.position[0], item.position[1], item.position[2])
 		if at.distance_to(sun) <= float(item.region.radius) + RADIUS: return false
-	# Defense's small decorative planets are all inside the 12-unit orbit.
-	return at.length() > 12.9
+	if defense.layout_expansion <= 0.0: return at.length() > 12.9
+	for body in defense.decorative_bodies:
+		if at.distance_to(body.position) <= RADIUS + float(body.radius) * 1.5: return false
+	return at.length() > RADIUS + 2.8
 
 
 static func _covered(location: Array, instances: Array) -> bool:
@@ -149,7 +154,7 @@ static func valid_geometry(item: Dictionary) -> bool:
 	var region: Variant = item.get("region")
 	if not region is Dictionary or region.get("shape") != "sphere" or not _number(region.get("radius"), 1.0, 5.0): return false
 	var at: Array = item.position
-	return MAP_SETTINGS.system_bounds.abs().grow(-float(region.radius)).has_point(Vector2(at[0], at[2]))
+	return Layout.bounds(Layout.MAX_EXPANSION, MAP_SETTINGS.system_bounds).grow(-float(region.radius)).has_point(Vector2(at[0], at[2]))
 
 
 static func valid_visual(value: Variant) -> bool:

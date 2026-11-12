@@ -6,13 +6,14 @@ const CORE_RADIUS_PER_SCALE = 1.26
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 
 static func generate(run_seed: int, number: int, star_position: Array, star_radius: float,
-		influence_range: Vector2 = Vector2(8.0, 13.0)) -> Dictionary:
+		influence_range: Vector2 = Vector2(8.0, 13.0), radius_factor: float = 1.0) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d:%d:solar-interference:v1" % [run_seed, number])
 	var low: float = clampf(minf(influence_range.x, influence_range.y), star_radius + 1.0, 63.0)
 	var high: float = clampf(maxf(influence_range.x, influence_range.y), low, 64.0)
+	var radius := maxf(star_radius + 0.25, rng.randf_range(low, high) * radius_factor)
 	var record := {"id": "solar-%d" % number, "type": TYPE,
-		"position": star_position.duplicate(), "region": {"shape": "sphere", "radius": rng.randf_range(low, high)},
+		"position": star_position.duplicate(), "region": {"shape": "sphere", "radius": radius},
 		"intensity": rng.randf_range(0.55, 0.9),
 		"configuration": {"subtype": "stellar_corona", "star_radius": star_radius},
 		"visual": {"seed": str(rng.randi()), "activity": rng.randf_range(0.3, 0.85),

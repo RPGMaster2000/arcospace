@@ -1,31 +1,33 @@
 extends RefCounted
 
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 const KINETIC = "KINETIC_TURRET"
 const CELESTIAL_SITES = ["gas_giant", "mining_operation", "quarantined_colony"]
 
-static func sites(home: Vector3, anchors: Dictionary, encounters: Array) -> Dictionary:
+static func sites(home: Vector3, anchors: Dictionary, encounters: Array, expansion: float = 0.0) -> Dictionary:
 	var result: Dictionary = {}
+	var limit := Layout.bounds(expansion).end.x - 2.0
 	var radial := home.normalized()
 	var tangent := Vector3.UP.cross(radial)
-	_add_site(result, "home", "Homeworld perimeter", home - radial * 4.8 + tangent * 3.5, home, anchors)
-	_add_site(result, "flank_a", "Approach relay A", home * 0.68 + tangent * 6.5, home, anchors)
-	_add_site(result, "flank_b", "Approach relay B", home * 0.68 - tangent * 6.5, home, anchors)
+	_add_site(result, "home", "Homeworld perimeter", home - radial * 4.8 + tangent * 3.5, home, anchors, limit)
+	_add_site(result, "flank_a", "Approach relay A", home * 0.68 + tangent * 6.5, home, anchors, limit)
+	_add_site(result, "flank_b", "Approach relay B", home * 0.68 - tangent * 6.5, home, anchors, limit)
 	for index in encounters.size():
 		if not anchors.has(index) or encounters[index].kind != "poi": continue
 		var entry: Dictionary = encounters[index]
 		if entry.poi.resource_path.get_file().get_basename() not in CELESTIAL_SITES: continue
 		var anchor: Vector3 = anchors[index]
 		_add_site(result, "poi_%d" % index, entry.title + " perimeter",
-			anchor + anchor.normalized() * 3.6, home, anchors)
+			anchor + anchor.normalized() * 3.6, home, anchors, limit)
 	return result
 
 static func _add_site(result: Dictionary, id: String, title: String, preferred: Vector3,
-		home: Vector3, anchors: Dictionary) -> void:
+		home: Vector3, anchors: Dictionary, limit: float) -> void:
 	var tangent := Vector3.UP.cross(preferred.normalized())
 	for offset in [0.0, 2.0, -2.0, 4.0, -4.0]:
 		var at: Vector3 = preferred + tangent * offset
-		if at.length() < 15.5 or absf(at.x) > 26.0 or absf(at.z) > 26.0: continue
+		if at.length() < 15.5 or absf(at.x) > limit or absf(at.z) > limit: continue
 		if at.distance_to(home) < 4.2 or at.distance_to(home * 0.78) < 2.8: continue
 		if anchors.values().any(func(anchor): return at.distance_to(anchor) < 3.4): continue
 		if result.values().any(func(site): return at.distance_to(_point(site.position)) < 3.4): continue

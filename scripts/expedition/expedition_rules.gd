@@ -4,6 +4,7 @@ class_name ExpeditionRules
 ## Central mode selection; old saves explicitly restore exploration.
 @export_enum("exploration", "defense") var game_mode: String = "defense"
 @export var defense_tuning: Resource = preload("res://resources/starfront_defense_tuning.tres")
+@export_range(1.0, 1.5, 0.01) var system_expansion: float = 1.20
 
 # RESPONSIBILITY: Store Inspector-editable encounter, service, reward and deck configuration.
 

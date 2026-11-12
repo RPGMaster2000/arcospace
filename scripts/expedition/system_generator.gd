@@ -206,7 +206,9 @@ static func _generate_defense(state: Resource) -> void:
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
 	var facing: float = state.rng.randf_range(0, TAU)
 	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
-	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5))
+	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5),
+		state.layout_expansion, state.SystemLayout.planetary_indices(state.encounters),
+		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]))
 	state.defense.add_reserves(reserves)
 	state.defense.construction_sites = state.defense.Installations.sites(
-		state.defense.home, state.defense.anchors, state.encounters)
+		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)

@@ -74,6 +74,7 @@ static func encode(state: Resource) -> Dictionary:
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
+	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
 	data.upgrades = deck.upgrades
 	for entry in state.encounters: data.encounters.append(_entry(entry))
 	for key in ["rng", "station_rng", "chasedown_rng"]:
@@ -125,6 +126,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		data = _migrate_legacy(data)
 		if data.is_empty(): return null
 	if not _integer(data.get("metagame_version"), 1, 3): return null
+	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0)): return null
 	if data.metagame_version >= 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
 	var mode: String = data.game_mode if data.metagame_version >= 2 else "exploration"
 	if mode == "exploration" and data.metagame_version >= 2 and not data.defense.is_empty(): return null
@@ -196,6 +198,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			reserve.erase("resolution")
 			entries.append(reserve)
 	state.game_mode = mode
+	state.layout_expansion = float(data.get("layout_expansion", 0.0))
 	if mode == "defense":
 		if data.metagame_version >= 3:
 			for key in ["reinforcement_remaining", "reinforcements_spawned", "deferred_seconds"]:
@@ -204,7 +207,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			for unit in data.defense.units:
 				if not unit is Dictionary or not unit.has("reinforcement") or not unit.has("spawned"): return null
 		state.defense = State.Defense.new()
-		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries): return null
+		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion): return null
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if state.defense.contact >= 0 and state.navigation.leg_active: return null
@@ -237,6 +240,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	state.encounter_positions = data.get("encounter_positions", {}).duplicate(true)
 	state.encounters = entries
 	state.service = service
+	state.refresh_defense_bodies()
 	state.restore_deck(data, cards)
 	var owned: Dictionary = {}
 	for card in state.player_pool(): owned[card.identity_key()] = true

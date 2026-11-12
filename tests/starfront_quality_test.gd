@@ -98,7 +98,7 @@ func run() -> void:
 	var copy = State.Defense.new()
 	var entries: Array = state.encounters.duplicate(true)
 	for unit in state.defense.units: entries[unit.encounter].completed = unit.status not in ["active", "reserve"]
-	check(copy.restore(snapshot, state.rules.defense_tuning, entries), "Fleet timing and identities restore from validated snapshot")
+	check(copy.restore(snapshot, state.rules.defense_tuning, entries, state.layout_expansion), "Fleet timing and identities restore from validated snapshot")
 	check(copy.reinforcements_spawned == 4 and is_equal_approx(copy.reinforcement_remaining,state.defense.reinforcement_remaining), "Reinforcement countdown and count survive restoration")
 	state.defense.neutralize(2)
 	state.defense.advance_time(100, away, away, true)

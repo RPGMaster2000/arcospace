@@ -8,6 +8,8 @@ signal progress_committed
 signal defense_advanced(events: Dictionary)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
+const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
+var layout_expansion: float = 0.0
 var game_mode: String = "exploration"
 var defense: RefCounted
 var rifts := TemporalRift.new()
@@ -179,6 +181,15 @@ func defense_map_view() -> Dictionary:
 	var view: Dictionary = defense.snapshot()
 	view.temporal_rift = TemporalRift.active(environmental_instances).duplicate(true)
 	return view
+
+func refresh_defense_bodies() -> void:
+	if not is_defense() or layout_expansion <= 0.0: return
+	var visual := preload("res://scripts/presentation/star_system/visual_system.gd").generate(
+		seed_used, system_number, [], preload("res://resources/presentation/star_system_settings.tres"),
+		system_profile, layout_expansion)
+	preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
+		visual, defense.snapshot(), SystemLayout.planetary_indices(encounters), layout_expansion)
+	defense.decorative_bodies = visual.planets.slice(1)
 
 
 func battle_location(index: int) -> Array:
@@ -368,20 +379,23 @@ func generate_system() -> bool:
 		return false
 	_recorded_results.clear()
 	environmental_instances.clear()
+	layout_expansion = rules.system_expansion
 	SystemGenerator.generate(self)
+	refresh_defense_bodies()
 	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
-	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values())
+	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values(), layout_expansion)
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
 	environmental_instances.append(solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
-		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range))
+		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range,
+		0.8 if layout_expansion > 0.0 else 1.0))
 	var hostile_positions: Array = []
 	for index in encounters.size():
 		var location := battle_location(index)
 		if not location.is_empty(): hostile_positions.append(location)
 	var storm := EnvironmentData.Storms.generate(seed_used, system_number, rules.space_storm_chance,
-		hostile_positions, environmental_instances)
+		hostile_positions, environmental_instances, layout_expansion)
 	if not storm.is_empty(): environmental_instances.append(storm)
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))

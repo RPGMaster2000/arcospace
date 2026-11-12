@@ -46,7 +46,8 @@ func run():
   map.camera.zoom_by(9999)
   check(map.camera.zoom_target==map.settings.maximum_zoom,"Zoom buttons retain max calibration")
   map.camera.zoom_by(0.00001)
-  check(map.camera.zoom_target==map.settings.minimum_zoom,"Zoom retains min calibration")
+  var zoom_floor: float = map.settings.minimum_zoom / maxf(1.0, host.state.layout_expansion)
+  check(is_equal_approx(map.camera.zoom_target,zoom_floor),"Zoom-out limit covers the current layout")
   map.camera.zoom_target = map.settings.default_zoom
   map.camera.zoom_scale = map.settings.default_zoom
   host.state.ftl_access = true
