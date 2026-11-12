@@ -201,7 +201,8 @@ static func _generate_defense(state: Resource) -> void:
 	state.station_production_purchases = 0
 	state.service_revision += 1
 	var reserves: Array = []
-	for i in range(0 if v2 else state.rules.defense_tuning.maximum_reinforcements):
+	var reserve_count: int = clampi(state.rules.defense_tuning.v2_maximum_reinforcements, 0, 3) if v2 else state.rules.defense_tuning.maximum_reinforcements
+	for i in range(reserve_count):
 		var profile: Resource = ordinary[state._enemy_index(ordinary)]
 		reserves.append(state.encounters.size())
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
@@ -220,8 +221,5 @@ static func _generate_defense(state: Resource) -> void:
 static func _starting_attackers(state: Resource) -> int:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%d:%d:starting-fleet:v2" % [state.seed_used, state.system_number])
-	var weights: Vector3 = state.rules.defense_tuning.starting_fleet_weights.max(Vector3.ZERO)
-	var total := weights.x + weights.y + weights.z
-	if total <= 0.0: return 3
-	var roll := rng.randf() * total
-	return 2 if roll < weights.x else (3 if roll < weights.x + weights.y else 4)
+	var weights: Vector2 = state.rules.defense_tuning.starting_fleet_weights.max(Vector2.ZERO)
+	return 2 if rng.randf() * (weights.x + weights.y) < weights.x else 3

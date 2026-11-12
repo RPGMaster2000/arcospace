@@ -20,10 +20,11 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 
-func fresh(seed_value: int = 1042, modern: bool = true) -> Resource:
+func fresh(seed_value: int = 1042, modern: bool = true, reserves: int = -1) -> Resource:
 	var rules: Resource = Rules.duplicate(true)
 	rules.defense_v2 = modern
 	rules.defense_tuning = Rules.defense_tuning.duplicate(true)
+	if reserves >= 0: rules.defense_tuning.v2_maximum_reinforcements = reserves
 	rules.log_rolls = false
 	rules.space_storm_chance = 1.0
 	var state := State.new()
@@ -36,7 +37,7 @@ func advance(state: Resource, seconds: float) -> void:
 
 func quiet_attackers(state: Resource) -> void:
 	for unit in state.defense.units:
-		if unit.mothership: continue
+		if unit.mothership or unit.status != "active": continue
 		state.defense.neutralize(unit.encounter)
 		state.encounters[unit.encounter].completed = true
 
@@ -48,24 +49,32 @@ func layout(state: Resource) -> Dictionary:
 	return data
 
 func generation_checks() -> void:
-	var counts := [0, 0, 0]
+	var counts := [0, 0]
+	var distance_min := INF
+	var distance_max := 0.0
 	var regions := {}
 	for seed_value in range(1, 121):
 		var state := fresh(seed_value)
 		var fleet: RefCounted = state.defense
 		var count: int = fleet.active_attackers()
-		check(count >= 2 and count <= 4 and fleet.units.size() == count + 1, "Starting roster has 2–4 attackers and one separate boss")
+		check(count >= 2 and count <= 3 and fleet.units.size() == count + 4, "Starting roster has 2–3 attackers, a boss and three reserves")
 		counts[count - 2] += 1
 		check(fleet.snapshot() == fresh(seed_value).defense.snapshot(), "Fleet generation is deterministic")
 		var start := State.Defense.wire(fleet.start)
 		var home := State.Defense.wire(fleet.home)
 		var directions: Array[Vector3] = []
 		for unit in fleet.units:
+			if unit.status == "reserve": continue
 			var pos: Vector3 = unit.position
 			check(pos.distance_to(fleet.start) > fleet.tuning.interception_radius, "Deployment clears player interception radius")
 			check(Geometry3D.get_closest_point_to_segment(Vector3.ZERO, pos, fleet.home).length() > 2.52,
 				"Approach clears the stellar surface")
-			if not unit.mothership: directions.append((pos - fleet.home).normalized())
+			if not unit.mothership:
+				directions.append((pos - fleet.home).normalized())
+				var ratio: float = pos.length() / (fleet.tuning.hostile_spawn_distance * state.layout_expansion)
+				check(ratio >= 0.7499 and ratio <= 1.2001, "Initial attacker fits the widened deployment band")
+				distance_min = minf(distance_min, ratio)
+				distance_max = maxf(distance_max, ratio)
 		check(directions[0].dot(directions[1]) < 0.7, "Attacker approach directions are meaningfully separated")
 		check(start.size() == 3 and home.size() == 3, "Defense points remain wire-compatible")
 		var visual := layout(state)
@@ -83,6 +92,7 @@ func generation_checks() -> void:
 		for item in state.environmental_instances:
 			var intersects := false
 			for unit in fleet.units:
+				if unit.status == "reserve": continue
 				for step in range(257):
 					var point: Vector3 = unit.route_origin.lerp(fleet.home, step / 256.0)
 					if _contains(item, State.Defense.wire(point)):
@@ -91,7 +101,8 @@ func generation_checks() -> void:
 				check(not _contains(item, State.Defense.wire(unit.route_origin)), "Initial fleet deploys outside environment")
 			check(intersects, "Independent route samples verify " + item.type)
 			regions[item.type] = int(regions.get(item.type, 0)) + 1
-	check(counts[0] > 12 and counts[1] > 40 and counts[2] > 12, "All weighted fleet sizes appear")
+	check(absf(counts[0] / 120.0 - 0.4) < 0.12, "Seed sweep follows the 40/60 fleet weighting")
+	check(distance_min < 0.85 and distance_max > 1.15, "Seed sweep reaches both ends of the widened deployment band")
 	check(regions.size() == 3 and regions.values().min() > 15, "Solar, asteroid and storm coverage remains common")
 
 func _contains(item: Dictionary, at: Array) -> bool:
@@ -102,7 +113,7 @@ func _contains(item: Dictionary, at: Array) -> bool:
 	return false
 
 func timing_checks() -> void:
-	var state := fresh()
+	var state := fresh(1042, true, 0)
 	var fleet: RefCounted = state.defense
 	var boss: Dictionary = fleet.unit_for(fleet.mothership_index())
 	var origin: Vector3 = boss.position
@@ -110,6 +121,8 @@ func timing_checks() -> void:
 	check(not fleet.revealed and fleet.pressure_rate() == 1.0, "Neutralizing attackers does not reveal the boss and pressure rate is halved")
 	advance(state, 49.0)
 	check(fleet.pressure == 49.0 and not fleet.revealed, "Boss remains hidden below 50 pressure")
+	check(fleet.reinforcements_spawned == 0 and fleet.reinforcement_remaining == 0.0,
+		"A v2 roster without reserves retains its original behavior")
 	advance(state, 1.0)
 	check(fleet.revealed and not fleet.mothership_advancing and boss.position == origin, "Pressure 50 reveals the stationary mothership")
 	advance(state, 8.0)
@@ -138,7 +151,7 @@ func timing_checks() -> void:
 	check(fleet.complete and fleet.missiles.active.is_empty() and fleet.missiles.pending == -1, "Boss neutralization secures remaining missiles")
 
 func defense_checks() -> void:
-	var state := fresh()
+	var state := fresh(1042, true, 0)
 	quiet_attackers(state)
 	var fleet: RefCounted = state.defense
 	advance(state, 58.0)
@@ -159,6 +172,51 @@ func defense_checks() -> void:
 	check(restored != null and not restored.defense.v2 and restored.defense.reveal_pending and restored.defense.missiles.active.is_empty(),
 		"Legacy saves keep their revealed fleet and launch no invented missiles")
 
+func reinforcement_checks() -> void:
+	var state := fresh()
+	quiet_attackers(state)
+	advance(state, 29.75)
+	check(state.defense.reinforcements_spawned == 0 and state.defense.reinforcement_remaining == 0.25,
+		"The first reserve waits 30 strategic seconds")
+	advance(state, 0.25)
+	check(state.defense.reinforcements_spawned == 1 and not state.defense.revealed,
+		"Regular reinforcements can arrive before mothership reveal")
+	var first: Dictionary = state.defense.units[-3]
+	check(first.status == "active" and first.spawned and first.route_origin.distance_to(state.defense.start) > 3.5
+		and Geometry3D.get_closest_point_to_segment(Vector3.ZERO, first.route_origin, state.defense.home).length() >= 3.5,
+		"The reserve deploys on a clear approach outside player contact")
+	advance(state, 4.75)
+	var restored := Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state))), state.rules)
+	check(restored != null and restored.defense.reinforcement_remaining == 25.25,
+		"An unrevealed system restores its partly elapsed reserve countdown")
+	if restored == null: return
+	advance(state, 25.25)
+	for step in range(101): advance(restored, 0.25)
+	check(state.defense.reinforcements_spawned == 2 and restored.defense.reinforcements_spawned == 2
+		and state.defense.reinforcement_remaining == restored.defense.reinforcement_remaining,
+		"Save/load and timestep subdivision preserve the second deployment")
+	check(state.defense.missiles.next_id == restored.defense.missiles.next_id
+		and state.defense.missiles.active.size() == 1 and state.defense.active_attackers() == 2,
+		"Missile launch at 58 coexists with regular deployment at 60")
+	for current in [state, restored]:
+		quiet_attackers(current)
+		advance(current, 30.0)
+		check(current.defense.reinforcements_spawned == 3, "Third reserve deploys at 90")
+		quiet_attackers(current)
+		advance(current, 30.0)
+		check(current.defense.reinforcements_spawned == 3, "A system deploys at most three reserves")
+
+	var capped := fresh()
+	capped.defense.tuning.enemy_speed = 0.0
+	advance(capped, 35.0)
+	check(capped.defense.reinforcements_spawned == 0, "A due reserve waits while at least two attackers are active")
+	for unit in capped.defense.units:
+		if capped.defense.active_attackers() < 2: break
+		if not unit.mothership and unit.status == "active": capped.defense.neutralize(unit.encounter)
+	advance(capped, 0.25)
+	check(capped.defense.reinforcements_spawned == 1 and capped.defense.active_attackers() == 2,
+		"The waiting reserve deploys when room opens under the cap")
+
 func capture(label: String) -> void:
 	if DisplayServer.get_name() == "headless": return
 	await RenderingServer.frame_post_draw
@@ -168,10 +226,10 @@ func capture(label: String) -> void:
 func presentation_checks() -> void:
 	root.size = Vector2i(1280, 720)
 	DirAccess.make_dir_recursive_absolute(CAPTURES)
-	var state := fresh(44)
+	var state := fresh(44, true, 0)
 	for seed_value in range(1, 50):
-		var candidate := fresh(seed_value)
-		if candidate.defense.active_attackers() == 4 and candidate.environmental_instances.size() == 3:
+		var candidate := fresh(seed_value, true, 0)
+		if candidate.defense.active_attackers() == 3 and candidate.environmental_instances.size() == 3:
 			state = candidate
 			break
 	var host = preload("res://scenes/expedition.tscn").instantiate()
@@ -265,6 +323,7 @@ func run() -> void:
 	generation_checks()
 	timing_checks()
 	defense_checks()
+	reinforcement_checks()
 	await presentation_checks()
 	root.get_node("Music").play_track("")
 	await create_timer(0.15).timeout

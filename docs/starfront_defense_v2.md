@@ -1,11 +1,16 @@
 # Starfront Defense v2
 
-New Defense systems roll for two, three or four attackers with weights
-25%, 50% and 25%. A dedicated seed controls the roster size and deployment
+New Defense systems roll for two or three attackers with weights
+40% and 60%. A dedicated seed controls the roster size and deployment
 variation. Attackers start on both sides of the homeworld approach with
 different travel distances. The mothership has its own encounter ID.
-New systems carry no reserve ships. Existing saves finish their current
-system with its original roster, reveal rule and reinforcement schedule.
+Starting attackers sample 75–120% of the base deployment radius, subject
+to map and orbital clearance. New systems carry up to three regular
+reserves. The first becomes due at 30 strategic seconds, with 30 seconds
+between deployments. A due reserve waits until fewer than two ordinary
+attackers remain active. This schedule runs independently of missiles.
+Existing saves finish their current system with its original roster,
+reveal rule and reinforcement schedule.
 
 ## Strategic clock
 
@@ -75,5 +80,5 @@ available from their map control on the left, leaving the FTL panel clear.
 | First construction site | [Mobile](starfront_defense_v2/construction-first-mobile.png) | [Compatibility](starfront_defense_v2/construction-first-gl_compatibility.png) |
 | Next construction site | [Mobile](starfront_defense_v2/construction-next-mobile.png) | [Compatibility](starfront_defense_v2/construction-next-gl_compatibility.png) |
 
-The Windows captures use both rendering backends. Physical Android frame
-times were not measured.
+The Windows captures use both rendering backends and predate the fleet
+pacing adjustment. Physical Android frame times were not measured.
