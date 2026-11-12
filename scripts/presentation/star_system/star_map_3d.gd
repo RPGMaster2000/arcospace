@@ -18,6 +18,7 @@ const StormVisual = preload("res://scripts/presentation/star_system/space_storm.
 const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift_visual.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 var layout_expansion: float = 0.0
+var orbit_clearance: float = 0.0
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -28,6 +29,8 @@ var environment_source: Callable
 var modifier_source: Callable
 var storm_legend: PanelContainer
 var rift_visual: Node3D
+const MissileVisual = preload("res://scripts/presentation/star_system/missile_visual.gd")
+var missile_ids: Dictionary = {}
 
 func environment_instances() -> Array:
 	return environment_source.call() if environment_source.is_valid() else []
@@ -192,11 +195,13 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
 	visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
-		settings, system_profile, layout_expansion)
+		settings, system_profile, layout_expansion, orbit_clearance)
 	if not defense_view.is_empty():
-		var planetary := entries.filter(VisualSystem.is_planetary).map(func(entry): return entry.index)
+		var planet_sizes := {}
+		for entry in entries.filter(VisualSystem.is_planetary):
+			planet_sizes[entry.index] = Layout.planetary_radius(entry.model_kind)
 		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
-			visual_data, defense_view, planetary, layout_expansion)
+			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes)
 	# New exploration runs use State's committed static battle anchors. Old saves
 	# without anchors keep the historical cosmetic layout and neutral environment.
 	if defense_view.is_empty():
@@ -211,6 +216,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	for button in markers.values(): button.queue_free()
 	objects.clear()
 	markers.clear()
+	missile_ids.clear()
 	selection_rings.clear()
 	planet_nodes.clear()
 	orbit_nodes.clear()
@@ -367,10 +373,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	if not storm.is_empty():
 		storm_legend = StormVisual.legend(storm)
 		add_child(storm_legend)
-		storm_legend.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
-		storm_legend.grow_horizontal = GROW_DIRECTION_BEGIN
-		storm_legend.offset_left = -202.0
-		storm_legend.offset_right = -12.0
+		storm_legend.set_anchors_and_offsets_preset(PRESET_TOP_LEFT)
+		storm_legend.offset_left = 12.0
+		storm_legend.offset_right = 202.0
 		storm_legend.offset_top = 66.0
 		storm_legend.offset_bottom = 112.0
 	focused = false
@@ -1074,12 +1079,14 @@ func _ship_extent(model: Node3D) -> float:
 static func _defense_point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 func _defense_hostile(index: int) -> bool:
+	if missile_ids.has(index): return true
 	for unit in defense_view.get("units", []):
 		if int(unit.encounter) == index: return true
 	return false
 func sync_defense(snapshot: Dictionary) -> void:
 	defense_view = snapshot
 	_sync_temporal_rift(snapshot.get("temporal_rift", {}))
+	_sync_missiles(snapshot.get("missiles", {}).get("active", []), _defense_point(snapshot.home))
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not objects.has(index): continue
@@ -1095,6 +1102,46 @@ func sync_defense(snapshot: Dictionary) -> void:
 			markers[index].tooltip_text += "\nAdvancing · ETA %.1fs" % snapshot.mothership_eta
 		visual_data.anchors[index] = objects[index].position
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)
+
+func _sync_missiles(records: Array, home: Vector3) -> void:
+	if not is_instance_valid(destination_root): return
+	var present := {}
+	for record in records:
+		var id := int(record.id)
+		present[id] = true
+		if not missile_ids.has(id):
+			var model := MissileVisual.build()
+			destination_root.add_child(model)
+			objects[id] = model
+			var marker := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
+			marker.style_tag(Color("ffb17e"))
+			marker.set_label("Missile", "➤", true)
+			marker.contrast = true
+			marker.hit_allowed = func(at): return not point_is_reserved(at)
+			marker.nearest_hit = func(at): return nearest_marker(at) == id
+			marker.pressed.connect(travel.bind(id))
+			add_child(marker)
+			markers[id] = marker
+			var ring := preload("res://scripts/presentation/star_system/selectable_ring.gd").new()
+			visual_root.add_child(ring)
+			ring.configure(0.48, marker.accent)
+			selection_rings[id] = ring
+		var body: Node3D = objects[id]
+		body.position = _defense_point(record.position)
+		if body.position.distance_squared_to(home) > 0.00001: body.look_at(home, Vector3.UP)
+		markers[id].tooltip_text = "Incoming missile · Hull %d" % record.hull
+	for id in missile_ids:
+		if present.has(id): continue
+		for collection in [objects, markers, selection_rings]:
+			collection[id].hide()
+			collection[id].queue_free()
+			collection.erase(id)
+	missile_ids = present
+
+func flash_missile_shots(shots: Array) -> void:
+	if not is_instance_valid(visual_root): return
+	for shot in shots:
+		MissileVisual.shot(visual_root, _defense_point(shot.from), _defense_point(shot.to), shot.destroyed)
 
 func _sync_temporal_rift(record: Dictionary) -> void:
 	if not is_instance_valid(visual_root): return

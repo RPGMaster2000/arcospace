@@ -37,6 +37,7 @@ func run() -> void:
 			var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
 			rules.game_mode = mode
 			rules.system_expansion = 0.0
+			rules.defense_v2 = false
 			rules.log_rolls = false
 			var state = State.new()
 			var baseline = PhaseOneState.new()

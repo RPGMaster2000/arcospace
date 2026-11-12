@@ -75,6 +75,7 @@ static func encode(state: Resource) -> Dictionary:
 	for key in COUNTERS: data[key] = state.get(key)
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
+	if state.orbit_clearance > 0.0: data.orbit_clearance = state.orbit_clearance
 	data.upgrades = deck.upgrades
 	for entry in state.encounters: data.encounters.append(_entry(entry))
 	for key in ["rng", "station_rng", "chasedown_rng"]:
@@ -127,6 +128,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if data.is_empty(): return null
 	if not _integer(data.get("metagame_version"), 1, 3): return null
 	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0)): return null
+	var orbit_clearance: Variant = data.get("orbit_clearance", 0.0)
+	if not (orbit_clearance is float or orbit_clearance is int) or not is_finite(float(orbit_clearance)) or orbit_clearance < 0.0 or orbit_clearance > 1.0: return null
 	if data.metagame_version >= 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
 	var mode: String = data.game_mode if data.metagame_version >= 2 else "exploration"
 	if mode == "exploration" and data.metagame_version >= 2 and not data.defense.is_empty(): return null
@@ -199,6 +202,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			entries.append(reserve)
 	state.game_mode = mode
 	state.layout_expansion = float(data.get("layout_expansion", 0.0))
+	state.orbit_clearance = float(orbit_clearance)
 	if mode == "defense":
 		if data.metagame_version >= 3:
 			for key in ["reinforcement_remaining", "reinforcements_spawned", "deferred_seconds"]:
@@ -210,7 +214,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion): return null
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
-		if state.defense.contact >= 0 and state.navigation.leg_active: return null
+		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
 	state.bind_defense_movement()
 	state.system_profile = data.system_profile
 	state.ftl_access = data.ftl_access

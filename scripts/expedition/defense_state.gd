@@ -2,6 +2,9 @@ extends RefCounted
 # Scene-free strategic authority. Units reference the existing encounter ledger.
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
+const Missiles = preload("res://scripts/expedition/defense_missiles.gd")
+var v2 := false
+var missiles := Missiles.new()
 var tuning: Resource
 var layout_expansion: float = 0.0
 var decorative_bodies: Array = []
@@ -18,6 +21,7 @@ var mothership_advancing: bool = false
 var construction_sites: Dictionary = {}
 var turrets: Dictionary = {}
 const Installations = preload("res://scripts/expedition/defense_installations.gd")
+const POI_RADII = [19.0, 10.0, 16.0, 7.0, 16.0, 10.0, 19.0, 13.0]
 
 var contact: int = -1
 var reinforcement_remaining: float = 0.0
@@ -29,29 +33,44 @@ static func wire(value: Vector3) -> Array:
 	return [value.x, value.y, value.z]
 func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: Array,
 		hostile_offset: float = 0.7, poi_phase: float = 0.35, expansion: float = 0.0,
-		planetary: Array = [], orbit_seed: int = 0) -> void:
+		planetary: Array = [], orbit_seed: int = 0, diversified: bool = false,
+		planet_sizes: Dictionary = {}, clearance: float = 0.0) -> void:
 	tuning = configuration
+	v2 = diversified
 	layout_expansion = expansion
 	var factor := Layout.scale_factor(expansion)
 	integrity = tuning.base_integrity
 	home = Vector3(cos(angle), 0, sin(angle)) * (22.0 * factor)
 	start = home * 0.78
-	for i in range(3):
+	var fleet_rng := RandomNumberGenerator.new()
+	fleet_rng.seed = hash("%d:deployment" % orbit_seed)
+	var approaches := [1.1, -2.70, -1.23, 2.14]
+	for i in indices.size():
+		var mother: bool = i == indices.size() - 1
 		# Keep all three routes on the same safe flank of the sun and opposite home.
 		var flank_sign: float = 1.0 if hostile_offset >= 0.0 else -1.0
-		var heading: float = angle + PI + hostile_offset + flank_sign * [-0.45, 0.0, 0.35][i]
-		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * (tuning.hostile_spawn_distance * factor)
+		var heading: float
+		var distance: float = tuning.hostile_spawn_distance
+		if v2 and not mother:
+			heading = angle + flank_sign * (approaches[i] + fleet_rng.randf_range(-0.095, 0.095))
+			distance *= fleet_rng.randf_range(0.91, 1.02)
+		else:
+			heading = angle + PI + hostile_offset + flank_sign * (0.35 if mother else [-0.45, 0.0][i])
+		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * (distance * factor)
 		units.append({"encounter": indices[i], "position": origin, "route_origin": origin,
-			"status": "active", "mothership": i == 2, "reinforcement": false, "spawned": false})
+			"status": "active", "mothership": mother, "reinforcement": false, "spawned": false})
 	var rings := [7.0, 10.0, 13.0, 16.0, 19.0, 5.5, 8.5, 14.5]
 	var orbit_rng := RandomNumberGenerator.new()
 	orbit_rng.seed = orbit_seed
+	var packed := _planet_radii(poi_indices, planet_sizes, factor, clearance, orbit_rng) if clearance > 0.0 else {}
 	for i in poi_indices.size():
 		var heading: float = angle + TAU * float(i) / maxi(1, poi_indices.size()) + poi_phase
-		var radial: float = [19.0, 10.0, 16.0, 7.0, 16.0, 10.0, 19.0, 13.0][i % 8]
+		var radial: float = POI_RADII[i % POI_RADII.size()]
 		var direction := Vector3(cos(heading), 0, sin(heading))
 		var anchor := direction * (radial * factor)
-		if expansion > 0.0 and poi_indices[i] in planetary:
+		if packed.has(poi_indices[i]):
+			anchor = direction.rotated(Vector3.UP, orbit_rng.randf_range(-0.065, 0.065)) * float(packed[poi_indices[i]])
+		elif expansion > 0.0 and poi_indices[i] in planetary:
 			direction = direction.rotated(Vector3.UP, orbit_rng.randf_range(-0.08, 0.08))
 			var jitter := orbit_rng.randf_range(-0.16, 0.16)
 			var best_score := INF
@@ -72,6 +91,32 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 					anchor = direction * (10.0 * factor)
 					break
 		anchors[poi_indices[i]] = anchor
+
+func _planet_radii(slots: Array, sizes: Dictionary, factor: float, margin: float, rng: RandomNumberGenerator) -> Dictionary:
+	var planets: Array = []
+	for i in slots.size():
+		if sizes.has(slots[i]):
+			planets.append({"id": slots[i], "wanted": POI_RADII[i % POI_RADII.size()] * factor, "radius": sizes[slots[i]]})
+	planets.sort_custom(func(a, b): return a.wanted < b.wanted or (a.wanted == b.wanted and a.id < b.id))
+	var outer := home.length() - 2.8 - margin
+	for unit in units: outer = minf(outer, unit.position.length() - 5.55)
+	var widths: Array[float] = []
+	widths.resize(planets.size())
+	var reserved := 0.0
+	for i in range(planets.size() - 1, -1, -1):
+		widths[i] = reserved
+		reserved += 2.0 * float(planets[i].radius) + margin
+	var edge := 4.15
+	var result := {}
+	for i in planets.size():
+		var planet: Dictionary = planets[i]
+		var low := edge + float(planet.radius)
+		var high := outer - widths[i] - float(planet.radius)
+		if high < low - 0.000001: return {}
+		var radius := clampf(float(planet.wanted) + rng.randf_range(-0.15, 0.15), low, maxf(low, high))
+		result[planet.id] = radius
+		edge = radius + float(planet.radius) + margin
+	return result
 # Reserve units have stable encounter IDs and existing profiles, but no active
 # simulation or rendered presence until the scheduler deploys them.
 func add_reserves(indices: Array) -> void:
@@ -125,7 +170,7 @@ func mothership_arrived() -> bool:
 
 func failed() -> bool:
 	if integrity <= 0 or mothership_arrived(): return true
-	if revealed or complete: return false
+	if v2 or revealed or complete: return false
 	for unit in units:
 		if not unit.mothership and unit.status == "active": return false
 	return true
@@ -138,9 +183,10 @@ func neutralize(index: int) -> bool:
 		complete = true
 		mothership_advancing = false
 		deferred_seconds = 0.0
+		missiles = Missiles.new()
 		for remaining in units:
 			if remaining.status in ["active", "reserve"]: remaining.status = "secured"
-	elif not revealed and neutralized_attackers() >= 1:
+	elif not v2 and not revealed and neutralized_attackers() >= 1:
 		reinforcement_remaining = tuning.first_reinforcement_seconds
 		revealed = true
 		reveal_pending = true
@@ -178,8 +224,17 @@ func moving_route(unit: Dictionary) -> Dictionary:
 		origin = unit.position
 	return {"position": unit.position, "origin": origin, "target": target, "speed": speed}
 
+func pressure_rate() -> float:
+	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0)
+
+func reveal_threshold() -> float:
+	return minf(tuning.mothership_reveal_pressure, tuning.pressure_maximum)
+
 func _advance_pressure(seconds: float) -> bool:
-	pressure = minf(tuning.pressure_maximum, pressure + seconds * tuning.pressure_per_second)
+	pressure = minf(tuning.pressure_maximum, pressure + seconds * pressure_rate())
+	if v2 and not revealed and pressure >= reveal_threshold() - 0.00000001:
+		revealed = true
+		missiles.countdown = tuning.first_missile_seconds
 	if mothership_advancing or pressure < tuning.pressure_maximum - 0.00000001:
 		return false
 	pressure = tuning.pressure_maximum
@@ -192,22 +247,25 @@ func _advance_pressure(seconds: float) -> bool:
 
 func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false,
 		observe_span: Callable = Callable()) -> Dictionary:
-	var result: Dictionary = {"position": to, "contact": -1, "arrivals": 0, "spawned": [], "escalated": false}
-	if complete or contact >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
+	var result: Dictionary = {"position": to, "contact": -1, "missile_contact": -1, "missile_event": false,
+		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false}
+	if complete or contact >= 0 or missiles.pending >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
 	var elapsed: float = 0.0
 	var spawn_blocked: bool = false
-	while elapsed < seconds:
+	while elapsed < seconds or (v2 and elapsed == seconds):
 		var span: float = seconds - elapsed
 		var event_time: float = span
 		var event_unit: Dictionary = {}
 		var event_kind: String = ""
-		var can_spawn: bool = revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements and active_attackers() < tuning.maximum_active_attackers
+		var can_spawn: bool = not v2 and revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements and active_attackers() < tuning.maximum_active_attackers
 		if can_spawn and not spawn_blocked and reinforcement_remaining <= event_time:
 			event_time = maxf(0.0, reinforcement_remaining)
 			event_kind = "spawn"
-		if not mothership_advancing and tuning.pressure_per_second > 0:
-			var threshold: float = (tuning.pressure_maximum - pressure) / tuning.pressure_per_second
+		var rate := pressure_rate()
+		if not mothership_advancing and rate > 0:
+			var limit: float = reveal_threshold() if v2 and not revealed else tuning.pressure_maximum
+			var threshold: float = (limit - pressure) / rate
 			if threshold <= event_time:
 				event_time = maxf(0.0, threshold)
 				event_kind = "pressure"
@@ -226,18 +284,41 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				event_time = arrival
 				event_unit = unit
 				event_kind = "arrival"
+		var missile_event: Dictionary = {}
+		if v2:
+			missile_event = missiles.event(self, from + player_velocity * elapsed, player_velocity, event_time, carry, hit_time)
+			if not missile_event.kind.is_empty():
+				event_time = missile_event.time
+				event_kind = "missile"
 		# Observe the consumed span with the current fleet and velocities. Events
 		# at its endpoint change the roster for the following span.
 		if observe_span.is_valid(): observe_span.call(event_time)
 		for unit in units:
 			if available(unit):
 				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
-		if revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements:
+		if v2:
+			missiles.advance(event_time, self)
+		elif revealed and not reveal_pending and not complete and reinforcements_spawned < tuning.maximum_reinforcements:
 			reinforcement_remaining = maxf(0.0, reinforcement_remaining - event_time)
 		elapsed += event_time
+		var was_revealed := revealed
 		if _advance_pressure(event_time): result.escalated = true
+		if revealed and not was_revealed: result.revealed = true
 		if event_kind.is_empty(): break
 		if event_kind == "pressure": continue
+		if event_kind == "missile":
+			if missile_event.kind == "shot":
+				var missile: Dictionary = missiles.active[missile_event.id]
+				result.missile_shots.append({"from": turrets[missile_event.site].position,
+					"to": wire(missiles.position(missile, home)),
+					"destroyed": missile.hull <= tuning.turret_missile_damage})
+			missiles.resolve(missile_event, self)
+			result.missile_event = true
+			if missiles.pending >= 0 or failed():
+				result.missile_contact = missiles.pending
+				result.position = from + player_velocity * elapsed
+				break
+			continue
 		if event_kind == "spawn":
 			var at: Variant = spawn_position(from + player_velocity * elapsed)
 			var reserve: Dictionary = {}
@@ -279,11 +360,15 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 # strategic second, so conversion to player distance is independent of FPS.
 func intercept_point(index: int, player: Vector3) -> Vector3:
 	var unit: Dictionary = unit_for(index)
+	if missiles.active.has(index):
+		return _intercept(missiles.position(missiles.active[index], home), home, missiles.speed(tuning), player)
 	if unit.is_empty() or not available(unit): return player
-	if _speed(unit) <= 0: return unit.position
-	var relative: Vector3 = unit.position - player
-	var target: Vector3 = target_for(unit)
-	var velocity: Vector3 = (target - unit.position).normalized() * _speed(unit) * tuning.seconds_per_distance
+	return _intercept(unit.position, target_for(unit), _speed(unit), player)
+
+func _intercept(at: Vector3, target: Vector3, speed: float, player: Vector3) -> Vector3:
+	if speed <= 0.0: return at
+	var relative := at - player
+	var velocity: Vector3 = (target - at).normalized() * speed * tuning.seconds_per_distance
 	var a: float = velocity.length_squared() - 1.0
 	var b: float = 2.0 * relative.dot(velocity)
 	var c: float = relative.length_squared()
@@ -297,9 +382,9 @@ func intercept_point(index: int, player: Vector3) -> Vector3:
 			var second: float = (-b + sqrt(discriminant)) / (2*a)
 			if first >= 0: root = first
 			if second >= 0: root = minf(root, second)
-	var until_arrival: float = unit.position.distance_to(target) / maxf(velocity.length(), 0.000001)
+	var until_arrival: float = at.distance_to(target) / maxf(velocity.length(), 0.000001)
 	if not is_finite(root) or root > until_arrival: return target
-	return unit.position + velocity * root
+	return at + velocity * root
 
 func snapshot() -> Dictionary:
 	var data: Dictionary = {"home": wire(home), "start": wire(start), "integrity": integrity, "maximum_integrity": tuning.base_integrity,
@@ -314,9 +399,14 @@ func snapshot() -> Dictionary:
 		copy.route_origin = wire(unit.route_origin)
 		data.units.append(copy)
 	for index in anchors: data.anchors[str(index)] = wire(anchors[index])
+	if v2:
+		data.v2 = true
+		data.missiles = missiles.snapshot(home)
 	return data
 func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0) -> bool:
 	if not data is Dictionary: return false
+	if not data.get("v2", false) is bool: return false
+	v2 = data.get("v2", false)
 	layout_expansion = expansion
 	var limit := Layout.bounds(expansion).end.x
 	if not Navigation.valid_point(data.get("home"), false) or not Navigation.valid_point(data.get("start"), false): return false
@@ -327,6 +417,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 	var seen: Dictionary = {}
 	var bosses: int = 0
 	var spawned_count: int = 0
+	var initial_count: int = 0
 	for unit in data.units:
 		if not unit is Dictionary or not unit.get("mothership") is bool: return false
 		if unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
@@ -336,6 +427,8 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 			if unit.status in ["active", "neutralized", "arrived"] and not unit.get("spawned", false): return false
 			if unit.get("spawned", false): spawned_count += 1
 		elif unit.get("spawned", false) or unit.status == "reserve": return false
+		if not unit.mothership and not unit.get("reinforcement", false): initial_count += 1
+		if v2 and unit.get("reinforcement", false): return false
 		if not number(unit.get("encounter"), 0, encounters.size()-1): return false
 		var index: int = int(unit.encounter)
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
@@ -349,7 +442,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 			bosses += 1
 			if unit.status == "arrived" or data.complete != (unit.status == "neutralized"): return false
 		seen[index] = true
-	if bosses != 1 or not number(data.get("contact"), -1, encounters.size()-1): return false
+	if bosses != 1 or initial_count < 2 or initial_count > (4 if v2 else 2) or not number(data.get("contact"), -1, encounters.size()-1): return false
 	tuning = configuration
 	home = point(data.home)
 	start = point(data.start)
@@ -384,8 +477,11 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		copy.reinforcement = bool(copy.get("reinforcement", false))
 		copy.spawned = bool(copy.get("spawned", false))
 		units.append(copy)
-	if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
-	if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or complete): return false
+	if v2:
+		if reveal_pending or revealed != (pressure >= reveal_threshold() - 0.00000001 or complete): return false
+	else:
+		if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
+		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or complete): return false
 	if contact >= 0 and (unit_for(contact).is_empty() or not available(unit_for(contact))): return false
 	var expected: Dictionary = {}
 	for index in encounters.size():
@@ -408,6 +504,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		turret.radius = float(turret.radius)
 		turret.damage = int(turret.damage)
 		turret.interval = int(turret.interval)
+	if v2 and (not missiles.restore(data.get("missiles"), self) or (contact >= 0 and missiles.pending >= 0)): return false
 	return true
 static func number(value: Variant, low: int, high: int) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value == floor(value) and value >= low and value <= high

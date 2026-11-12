@@ -786,6 +786,7 @@ func set_defense_status(state: Resource) -> void:
 	var threats: int = 0
 	for unit in state.defense.units:
 		if state.defense.available(unit): threats += 1
+	threats += state.defense.missiles.active.size()
 	overview_hud.metagame.text = "HOME %d/%d · %d THREATS\nPRESSURE %d / %d\n%s" % [
 		state.defense.integrity, state.defense.tuning.base_integrity, threats,
 		int(state.defense.pressure), int(state.defense.tuning.pressure_maximum), state.ftl_status()]

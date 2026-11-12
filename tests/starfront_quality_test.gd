@@ -13,6 +13,7 @@ func check(ok: bool, message: String) -> void:
 func fresh() -> Resource:
 	var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
 	rules.game_mode = "defense"
+	rules.defense_v2 = false
 	rules.defense_tuning = rules.defense_tuning.duplicate(true)
 	var state = State.new()
 	state.start(0, rules, 42042)

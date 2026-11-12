@@ -23,3 +23,14 @@ static func planetary_indices(encounters: Array) -> Array[int]:
 		if entry.kind == "poi" and PLANETARY.has(entry.poi.resource_path.get_file().get_basename()):
 			indices.append(index)
 	return indices
+
+static func planetary_radius(model_kind: String) -> float:
+	# Independent gas-giant mesh has a 1.25-unit sphere and a 1.5 scale.
+	# The other planetary destination models fit within their placement radius.
+	return 1.875 if model_kind == "gas_giant" else 1.2
+
+static func planetary_radii(encounters: Array) -> Dictionary:
+	var result := {}
+	for index in planetary_indices(encounters):
+		result[index] = planetary_radius(encounters[index].poi.resource_path.get_file().get_basename())
+	return result

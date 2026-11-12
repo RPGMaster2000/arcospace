@@ -26,6 +26,7 @@ func check(ok: bool, message: String) -> void:
 func fresh(seed_value: int, chance: float = 1.0) -> Resource:
 	var configuration: Resource = Rules.duplicate(true)
 	configuration.game_mode = "defense"
+	configuration.defense_v2 = false
 	configuration.defense_tuning = Rules.defense_tuning.duplicate(true)
 	configuration.defense_tuning.rift_spawn_chance = chance
 	configuration.log_rolls = false

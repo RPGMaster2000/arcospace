@@ -18,8 +18,13 @@ var preview: Node3D
 var snapshot: Dictionary
 var site_ids: Array = []
 var selected: String = ""
+var map: Control
+var transition := false
+var camera_before := {}
+var arrows: Array[Button] = []
 
 func configure(column: VBoxContainer, overlay: Control, options: Callable, request: Callable) -> void:
+	map = overlay
 	query = options
 	deploy = request
 	button = Button.new()
@@ -54,6 +59,7 @@ func configure(column: VBoxContainer, overlay: Control, options: Callable, reque
 	panel.add_theme_constant_override("separation", 6)
 	backing.add_child(panel)
 	var title := Label.new()
+	title.name = "ConstructionTitle"
 	title.text = "Kinetic Turret"
 	title.add_theme_font_size_override("font_size", 22)
 	panel.add_child(title)
@@ -71,23 +77,63 @@ func configure(column: VBoxContainer, overlay: Control, options: Callable, reque
 	panel.add_child(close)
 	close.pressed.connect(popup.hide)
 	popup.visibility_changed.connect(func():
-		if not popup.visible and is_instance_valid(preview): preview.hide())
+		if not popup.visible:
+			if is_instance_valid(preview): preview.hide()
+			_restore_camera())
+	for step in [-1, 1]:
+		var arrow := Button.new()
+		arrow.text = "‹" if step < 0 else "›"
+		arrow.tooltip_text = "Previous site" if step < 0 else "Next site"
+		arrow.custom_minimum_size = Vector2(64, 64)
+		arrow.add_theme_font_size_override("font_size", 38)
+		popup.add_child(arrow)
+		arrow.anchor_left = 0.0 if step < 0 else 1.0
+		arrow.anchor_right = arrow.anchor_left
+		arrow.anchor_top = 0.5
+		arrow.anchor_bottom = 0.5
+		arrow.offset_left = 18.0 if step < 0 else -82.0
+		arrow.offset_right = arrow.offset_left + 64.0
+		arrow.offset_top = -32.0
+		arrow.offset_bottom = 32.0
+		arrow.pressed.connect(_step_site.bind(step))
+		arrows.append(arrow)
+	centered.name = "ConstructionPanel"
 
 func _open() -> void:
+	if popup.visible: return
+	var modern: bool = snapshot.get("v2", false)
+	picker.visible = not modern
+	picker.get_parent().get_node("ConstructionTitle").visible = not modern
+	for arrow in arrows: arrow.visible = modern
+	var panel := popup.get_node("ConstructionPanel")
+	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE if modern else Control.PRESET_FULL_RECT)
+	if modern:
+		panel.offset_top = -214.0
+		panel.offset_bottom = -18.0
+		var camera = map.camera
+		camera_before = {"transform": camera.transform, "viewing": camera.viewing,
+			"pan": camera.pan_offset, "zoom": camera.zoom_scale, "target": camera.zoom_target}
 	picker.clear()
 	site_ids = snapshot.get("construction_sites", {}).keys()
 	for id in site_ids:
 		picker.add_item(snapshot.construction_sites[id].title + (" · Built" if snapshot.turrets.has(id) else ""))
+	popup.show()
 	if not site_ids.is_empty():
-		picker.select(0)
-		_select_site(0)
+		var first := 0
+		if modern:
+			for i in site_ids.size():
+				if not snapshot.turrets.has(site_ids[i]):
+					first = i
+					break
+		_select_site(first)
 	else:
 		detail.text = "No eligible construction sites in this system."
 		build.text = "Build turret"
 		build.disabled = true
-	popup.show()
 
-func _select_site(index: int) -> void:
+func _select_site(index: int, focus_camera: bool = true) -> void:
+	if transition or index < 0 or index >= site_ids.size(): return
+	picker.select(index)
 	selected = site_ids[index]
 	var options: Dictionary = query.call(selected)
 	var installed: Dictionary = snapshot.turrets.get(selected, {})
@@ -95,6 +141,9 @@ func _select_site(index: int) -> void:
 	detail.text = "%d Salvage available · %d / %d built\n%.1f units engagement radius\n%s" % [
 		options.salvage, snapshot.turrets.size(), options.capacity, radius,
 		"Installed" if not installed.is_empty() else "Deploy at the highlighted position."]
+	if snapshot.get("v2", false):
+		detail.text = "Kinetic Turret · %d Salvage · Range %.1f\n%s · %d / %d built" % [
+			options.cost, radius, snapshot.construction_sites[selected].title, snapshot.turrets.size(), options.capacity]
 	build.text = "Build · %d Salvage" % options.cost
 	build.disabled = not options.allowed
 	if is_instance_valid(preview): preview.queue_free()
@@ -102,11 +151,41 @@ func _select_site(index: int) -> void:
 	preview.add_child(_ring(radius, PREVIEW))
 	preview.position = _point(snapshot.construction_sites[selected].position)
 	add_child(preview)
+	if focus_camera and snapshot.get("v2", false): _focus_site(preview.position)
+
+func _step_site(direction: int) -> void:
+	if transition or site_ids.size() < 2: return
+	_select_site(posmod(picker.selected + direction, site_ids.size()))
+
+func _focus_site(at: Vector3) -> void:
+	transition = true
+	build.disabled = true
+	for arrow in arrows: arrow.disabled = true
+	var camera = map.camera
+	camera.frame(at + Vector3(2.0, 25.0, 27.0), at, 0.32, &"construction")
+	camera.motion.finished.connect(func():
+		if not popup.visible: return
+		transition = false
+		for arrow in arrows: arrow.disabled = site_ids.size() < 2
+		build.disabled = not query.call(selected).allowed)
+
+func _restore_camera() -> void:
+	transition = false
+	if camera_before.is_empty() or not is_instance_valid(map): return
+	var camera = map.camera
+	camera.cancel()
+	camera.transform = camera_before.transform
+	camera.viewing = camera_before.viewing
+	camera.pan_offset = camera_before.pan
+	camera.zoom_scale = camera_before.zoom
+	camera.zoom_target = camera_before.target
+	camera_before.clear()
 
 func _build() -> void:
+	if transition or build.disabled: return
 	if deploy.call(selected):
 		picker.set_item_text(picker.selected, snapshot.construction_sites[selected].title + " · Built")
-		_select_site(picker.selected)
+		_select_site(picker.selected, false)
 	else:
 		build.disabled = true
 
@@ -175,6 +254,9 @@ static func _model() -> Node3D:
 func _unhandled_input(event: InputEvent) -> void:
 	if is_instance_valid(popup) and popup.visible and event.is_action_pressed("ui_cancel"):
 		popup.hide()
+	elif is_instance_valid(popup) and popup.visible and snapshot.get("v2", false):
+		if event.is_action_pressed("ui_left"): _step_site(-1)
+		elif event.is_action_pressed("ui_right"): _step_site(1)
 		get_viewport().set_input_as_handled()
 
 func _exit_tree() -> void:
