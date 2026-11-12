@@ -37,7 +37,9 @@ func run() -> void:
 	store.path = "res://.godot/starfront-persistence.json"
 	store.clear_run()
 	var state = State.new()
-	state.start(0, preload("res://encounters/expedition_rules.tres"), 81)
+	var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
+	rules.defense_v2 = false
+	state.start(0, rules, 81)
 	var start: Vector3 = state.defense.start
 	state.begin_free_travel(State.Defense.wire(start * 0.7))
 	state.navigation.report_movement(State.Defense.wire(start * 0.9))

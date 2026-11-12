@@ -9,7 +9,9 @@ signal defense_advanced(events: Dictionary)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
+const RouteEnvironments = preload("res://scripts/expedition/route_environments.gd")
 var layout_expansion: float = 0.0
+var orbit_clearance: float = 0.0
 var game_mode: String = "exploration"
 var defense: RefCounted
 var rifts := TemporalRift.new()
@@ -44,7 +46,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	var target: Dictionary = defense.unit_for(travel_destination) if not carry else {}
 	var target_lost: bool = not target.is_empty() and not defense.available(target)
 	events.target_lost = target_lost
-	if events.contact >= 0 or defense.failed() or target_lost:
+	if events.contact >= 0 or events.missile_contact >= 0 or defense.failed() or target_lost:
 		navigation.checkpoint_position(Defense.wire(events.position))
 		navigation.stop()
 		travel_destination = -1
@@ -52,7 +54,9 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		navigation_origin = FREE_DESTINATION
 	if defense.failed(): run_ended = true
 	defense_advanced.emit(events)
-	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed): progress_committed.emit()
+	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
+			or events.missile_event or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed):
+		progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
 	if not is_defense() or defense == null or defense.complete or run_ended: return
@@ -182,13 +186,36 @@ func defense_map_view() -> Dictionary:
 	view.temporal_rift = TemporalRift.active(environmental_instances).duplicate(true)
 	return view
 
+func has_missile(index: int) -> bool:
+	return is_defense() and defense != null and defense.missiles.active.has(index)
+
+func resolve_missile(index: int, approach: String) -> bool:
+	if not has_missile(index) or defense.missiles.pending != index or run_ended: return false
+	var seconds: float
+	match approach:
+		"direct": seconds = defense.tuning.missile_intercept_seconds
+		"precision":
+			if int(production_upgrades.get("reactor", 0)) <= 0: return false
+			seconds = defense.tuning.missile_precision_seconds
+		"emp":
+			if modifier_value("emp_pulse_charge") <= 0: return false
+			pending_bonuses.emp_pulse_charge = int(pending_bonuses.get("emp_pulse_charge", 0)) - 1
+			seconds = defense.tuning.missile_emp_seconds
+		_: return false
+	defense.missiles.active.erase(index)
+	defense.missiles.pending = -1
+	_commit_activity_time(seconds)
+	progress_committed.emit()
+	return true
+
 func refresh_defense_bodies() -> void:
 	if not is_defense() or layout_expansion <= 0.0: return
 	var visual := preload("res://scripts/presentation/star_system/visual_system.gd").generate(
 		seed_used, system_number, [], preload("res://resources/presentation/star_system_settings.tres"),
-		system_profile, layout_expansion)
+		system_profile, layout_expansion, orbit_clearance)
 	preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
-		visual, defense.snapshot(), SystemLayout.planetary_indices(encounters), layout_expansion)
+		visual, defense.snapshot(), SystemLayout.planetary_indices(encounters), layout_expansion, orbit_clearance,
+		SystemLayout.planetary_radii(encounters))
 	defense.decorative_bodies = visual.planets.slice(1)
 
 
@@ -380,22 +407,28 @@ func generate_system() -> bool:
 	_recorded_results.clear()
 	environmental_instances.clear()
 	layout_expansion = rules.system_expansion
+	orbit_clearance = rules.planet_orbit_clearance if rules.defense_v2 and layout_expansion > 0.0 else 0.0
 	SystemGenerator.generate(self)
 	refresh_defense_bodies()
 	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
-	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values(), layout_expansion)
+	var routed: bool = is_defense() and defense.v2
+	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
+	environmental_instances = RouteEnvironments.asteroid(seed_used, system_number, defense, route_points) if routed \
+		else EnvironmentData.Asteroids.generate(seed_used, system_number, route_points, layout_expansion)
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
-	environmental_instances.append(solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
+	var influence := solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
 		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range,
-		0.8 if layout_expansion > 0.0 else 1.0))
+		0.8 if layout_expansion > 0.0 else 1.0)
+	if not routed or RouteEnvironments.relevant(influence, defense): environmental_instances.append(influence)
 	var hostile_positions: Array = []
 	for index in encounters.size():
 		var location := battle_location(index)
 		if not location.is_empty(): hostile_positions.append(location)
 	var storm := EnvironmentData.Storms.generate(seed_used, system_number, rules.space_storm_chance,
-		hostile_positions, environmental_instances, layout_expansion)
+		route_points if routed else hostile_positions, environmental_instances, layout_expansion)
+	if routed: storm = RouteEnvironments.storm(storm, defense, route_points, environmental_instances)
 	if not storm.is_empty(): environmental_instances.append(storm)
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
@@ -455,6 +488,8 @@ func ftl_status() -> String:
 		if defense.complete: return "FTL READY"
 		if defense.mothership_advancing:
 			return "MOTHERSHIP ADVANCING · ETA %.1fs" % (defense.unit_for(defense.mothership_index()).position.distance_to(defense.home) / defense.tuning.mothership_speed)
+		if defense.v2:
+			return "MOTHERSHIP ACTIVE" if defense.revealed else "MOTHERSHIP REVEAL AT %d PRESSURE" % defense.reveal_threshold()
 		return "MOTHERSHIP ACTIVE" if defense.revealed else "INTERCEPT TO LOCATE MOTHERSHIP"
 	if mandatory_boss_pending(): return "BOSS LOCK"
 	if ftl_access: return "FTL READY"
@@ -522,6 +557,7 @@ func can_visit(index: int) -> bool:
 		var unit: Dictionary = defense.unit_for(index)
 		if not unit.is_empty() and not defense.available(unit): return false
 		if defense.contact >= 0 and index != defense.contact: return false
+		if defense.missiles.pending >= 0 and index != defense.missiles.pending: return false
 	if run_ended or hull <= 0 or active_battle >= 0 or not pending_choice.is_empty():
 		return false
 	if chasedown_unresolved() and index != chasedown_index:
@@ -530,6 +566,7 @@ func can_visit(index: int) -> bool:
 		return false
 	if index == SERVICE_INDEX:
 		return not service.is_empty()
+	if has_missile(index): return true
 	return index >= 0 and index < encounters.size() and not encounters[index].completed
 
 
@@ -545,11 +582,11 @@ func cancel_travel() -> void:
 func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> Vector3:
 	if not is_defense(): return fallback
 	var unit: Dictionary = defense.unit_for(index)
-	return defense.intercept_point(index, player) if not unit.is_empty() and defense.available(unit) else fallback
+	return defense.intercept_point(index, player) if has_missile(index) or (not unit.is_empty() and defense.available(unit)) else fallback
 
 
 func can_engage(index: int) -> bool:
-	if not can_visit(index): return false
+	if not can_visit(index) or has_missile(index): return false
 	if not is_defense(): return true
 	var unit: Dictionary = defense.unit_for(index)
 	return unit.is_empty() or defense.contact == index
@@ -558,7 +595,7 @@ func can_engage(index: int) -> bool:
 # Roll once at actual movement initiation; arrival, menus and battle returns never call this.
 # Independent RNG leaves authored encounter generation and PoI outcome rolls unchanged.
 func can_navigate() -> bool:
-	return (not is_defense() or defense == null or defense.contact < 0) and not run_ended and hull > 0 and active_battle < 0 and pending_choice.is_empty() and not chasedown_unresolved()
+	return (not is_defense() or defense == null or (defense.contact < 0 and defense.missiles.pending < 0)) and not run_ended and hull > 0 and active_battle < 0 and pending_choice.is_empty() and not chasedown_unresolved()
 
 
 func begin_travel(destination: int, forced_roll: float = -1.0) -> bool:
@@ -1134,6 +1171,7 @@ func finish_upgrades() -> void:
 
 # Produce one encounter's data, consuming temporary bonuses once at entry.
 func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: Dictionary = {}) -> BattleSetup:
+	if index >= Defense.Missiles.FIRST_ID: return null
 	if is_defense() and not defense.unit_for(index).is_empty() and not can_engage(index):
 		return null
 	last_poi_success = -1

@@ -25,6 +25,7 @@ func check(ok: bool, message: String) -> void:
 func fresh() -> Resource:
 	var rules: Resource = Rules.duplicate(true)
 	rules.game_mode = "defense"
+	rules.defense_v2 = false
 	rules.defense_tuning = rules.defense_tuning.duplicate(true)
 	rules.log_rolls = false
 	var state := State.new()

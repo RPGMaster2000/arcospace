@@ -474,6 +474,10 @@ func show_system(preserve_transition: bool = false) -> void:
 		_show_star_map(false)
 		show_battle_preview(state.defense.contact)
 		return
+	if state.is_defense() and state.defense.missiles.pending >= 0:
+		_show_star_map(false)
+		_show_missile(state.defense.missiles.pending)
+		return
 	if use_star_map or state.is_defense():
 		_show_star_map()
 		return
@@ -524,6 +528,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.run_seed = state.seed_used
 		star_map.system_number = state.system_number
 		star_map.layout_expansion = state.layout_expansion
+		star_map.orbit_clearance = state.orbit_clearance
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
@@ -592,6 +597,9 @@ func _show_star_map(resume_travel: bool = true) -> void:
 
 func visit(index: int) -> void:
 	if phase == Phase.EXITED or transitioning:
+		return
+	if index >= State.Defense.Missiles.FIRST_ID:
+		_free_arrived()
 		return
 	var moving_hostile: bool = state.is_defense() and not state.defense.unit_for(index).is_empty()
 	if not moving_hostile and not state.can_visit(index) and not state.objective_locked(index): return
@@ -1260,6 +1268,8 @@ func _begin_map_travel(index: int) -> bool:
 	if _uses_3d_map():
 		var at: Vector3 = star_map.ship.position
 		state.update_navigation_position([at.x,at.y,at.z])
+		if state.has_missile(index):
+			return state.begin_free_travel(State.Defense.wire(state.defense.intercept_point(index, at)))
 	return state.begin_travel(index)
 
 func _begin_free_travel(point: Vector3) -> bool:
@@ -1282,13 +1292,15 @@ func _free_arrived() -> void:
 func _defense_updated(events: Dictionary) -> void:
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
 	star_map.sync_defense(state.defense_map_view())
+	star_map.flash_missile_shots(events.get("missile_shots", []))
 	# Activity events are presented after results and rewards, at show_system.
 	if phase != Phase.TRAVELING: return
 	_refresh_defense_hud()
-	if events.contact >= 0 or state.run_ended:
+	if events.contact >= 0 or events.get("missile_contact", -1) >= 0 or state.run_ended:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
 		phase = Phase.OVERVIEW
 		if state.run_ended: show_system()
+		elif events.get("missile_contact", -1) >= 0: _show_missile(events.missile_contact)
 		else:
 			map_destination = events.contact
 			show_battle_preview(events.contact)
@@ -1349,11 +1361,35 @@ func _inspect_marker(index: int) -> void:
 	backing.bg_color.a = 0.97
 	star_map.inspection_active = true
 	map_destination = index
-	if state.encounter_at(index).kind == "battle": show_battle_preview(index)
+	if state.has_missile(index): _show_missile(index)
+	elif state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
 	return_button.hide()
 	for option in screen.sidebar.find_children("*", "BaseButton", true, false):
 		option.disabled = true
+
+func _show_missile(index: int) -> void:
+	if not state.has_missile(index): return
+	map_destination = index
+	selected_encounter = index
+	_clear("poi")
+	var missile: Dictionary = state.defense.missiles.active[index]
+	view.add_child(_label("Incoming Missile", 26))
+	view.add_child(_label("Hull %d · Bound for the homeworld" % missile.hull, 16))
+	if inspecting: return
+	return_button.hide()
+	var options = screen.add_grid(1)
+	screen.add_tile(options, "Direct Interception", "Destroy the missile · %.1f strategic seconds" % state.defense.tuning.missile_intercept_seconds,
+		Color("75dce9"), _resolve_missile.bind(index, "direct"))
+	screen.add_tile(options, "Precision Targeting", "Upgraded reactor · %.1f strategic seconds" % state.defense.tuning.missile_precision_seconds,
+		Color("d3b1fa"), _resolve_missile.bind(index, "precision"), int(state.production_upgrades.get("reactor", 0)) <= 0)
+	screen.add_tile(options, "EMP Disruption", "Spend one stored EMP charge · %.2f strategic seconds" % state.defense.tuning.missile_emp_seconds,
+		Color("87e5ad"), _resolve_missile.bind(index, "emp"), state.modifier_value("emp_pulse_charge") <= 0)
+
+func _resolve_missile(index: int, approach: String) -> void:
+	if state.resolve_missile(index, approach):
+		map_destination = -1
+		show_system()
 
 func _dismiss_inspection() -> void:
 	if not inspecting: return

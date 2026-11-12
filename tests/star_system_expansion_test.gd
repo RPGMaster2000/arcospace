@@ -27,6 +27,7 @@ func check(ok: bool, message: String) -> void:
 func fresh(mode: String, seed_value: int, factor: float = 1.2) -> Resource:
 	var rules: Resource = Rules.duplicate(true)
 	rules.game_mode = mode
+	rules.defense_v2 = false
 	rules.system_expansion = factor
 	rules.log_rolls = false
 	rules.space_storm_chance = 1.0

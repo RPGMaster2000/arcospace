@@ -85,6 +85,7 @@ func run() -> void:
 			rules = rules.duplicate(true)
 			rules.game_mode = mode
 			rules.system_expansion = 0.0
+			rules.defense_v2 = false
 			state = State.new()
 			var baseline = PhaseTwoState.new()
 			state.start(0,rules,seed_value)

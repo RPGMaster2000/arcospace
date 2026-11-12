@@ -182,10 +182,13 @@ static func _generate_defense(state: Resource) -> void:
 	if ordinary.is_empty():
 		for profile in Ships.ENEMIES:
 			if profile.enemy_rank == 0: ordinary.append(profile)
-	for i in range(3):
-		var profile: Resource = state.rules.progression.mandatory_boss_profile() if i == 2 else ordinary[state._enemy_index(ordinary)]
+	var v2: bool = state.rules.defense_v2
+	var attackers := _starting_attackers(state) if v2 else 2
+	for i in range(attackers + 1):
+		var mother := i == attackers
+		var profile: Resource = state.rules.progression.mandatory_boss_profile() if mother else ordinary[state._enemy_index(ordinary)]
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
-			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if i == 2 else profile.ship_name, "completed": false})
+			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if mother else profile.ship_name, "completed": false})
 	var pois: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() != "unstable_wormhole")
 	var slots: Array = []
 	for i in range(mini(8, pois.size())):
@@ -198,7 +201,7 @@ static func _generate_defense(state: Resource) -> void:
 	state.station_production_purchases = 0
 	state.service_revision += 1
 	var reserves: Array = []
-	for i in range(state.rules.defense_tuning.maximum_reinforcements):
+	for i in range(0 if v2 else state.rules.defense_tuning.maximum_reinforcements):
 		var profile: Resource = ordinary[state._enemy_index(ordinary)]
 		reserves.append(state.encounters.size())
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
@@ -206,9 +209,19 @@ static func _generate_defense(state: Resource) -> void:
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
 	var facing: float = state.rng.randf_range(0, TAU)
 	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
-	state.defense.deploy(state.rules.defense_tuning, facing, [0, 1, 2], slots, flank, state.rng.randf_range(0.2, 0.5),
+	state.defense.deploy(state.rules.defense_tuning, facing, range(attackers + 1), slots, flank, state.rng.randf_range(0.2, 0.5),
 		state.layout_expansion, state.SystemLayout.planetary_indices(state.encounters),
-		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]))
+		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]), v2,
+		state.SystemLayout.planetary_radii(state.encounters), state.orbit_clearance)
 	state.defense.add_reserves(reserves)
 	state.defense.construction_sites = state.defense.Installations.sites(
 		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)
+
+static func _starting_attackers(state: Resource) -> int:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%d:%d:starting-fleet:v2" % [state.seed_used, state.system_number])
+	var weights: Vector3 = state.rules.defense_tuning.starting_fleet_weights.max(Vector3.ZERO)
+	var total := weights.x + weights.y + weights.z
+	if total <= 0.0: return 3
+	var roll := rng.randf() * total
+	return 2 if roll < weights.x else (3 if roll < weights.x + weights.y else 4)

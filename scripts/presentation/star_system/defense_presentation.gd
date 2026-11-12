@@ -21,7 +21,8 @@ const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
-static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = [], expansion: float = 0.0) -> void:
+static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = [], expansion: float = 0.0,
+		clearance: float = 0.0, planet_sizes: Dictionary = {}) -> void:
 	# The gameplay layout supplies every navigable anchor. Cosmetic RNG only
 	# controls the planet surface, star and atmosphere; it cannot move the base.
 	var generated_planets: Array = data.planets.duplicate(true)
@@ -29,7 +30,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 	data.poi_orbits.clear()
 	data.anchors.clear()
 	data.placement.clear()
-	var planetary_radii: Array[float] = []
+	var planetary_radii: Array[Vector2] = []
 	for key in snapshot.anchors:
 		var index: int = int(key)
 		data.anchors[index] = point(snapshot.anchors[key])
@@ -39,7 +40,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 			if not data.anchors.has(index): continue
 			var orbit := VisualSystem.circular_orbit(data.anchors[index])
 			data.poi_orbits[index] = orbit
-			planetary_radii.append(orbit.distance)
+			planetary_radii.append(Vector2(orbit.distance, float(planet_sizes.get(index, 1.2))))
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		data.anchors[index] = point(unit.position)
@@ -57,6 +58,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 	home.orientation = 0.0
 	home.phase = atan2(home.position.z, home.position.x)
 	data.planets = [home]
+	if clearance > 0.0: planetary_radii.append(Vector2(home.distance, VisualSystem.planet_extent(home)))
 	# Keep procedural planet appearances while choosing clear cosmetic positions
 	# around the already-authoritative fleet and PoIs.
 	var obstacles: Array = [point(snapshot.home)]
@@ -80,7 +82,9 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 		var best_gap: float = -INF
 		for base_distance in distances:
 			var distance: float = base_distance * factor
-			if planetary_radii.any(func(other): return absf(other - distance) < 1.05): continue
+			if planetary_radii.any(func(other):
+				var gap: float = other.y + VisualSystem.planet_extent(planet) + clearance if clearance > 0.0 else 1.05
+				return absf(other.x - distance) < gap): continue
 			for attempt in range(72):
 				var phase: float = float(original.phase) + TAU * float(attempt) / 72.0
 				var candidate: Vector3 = Vector3(cos(phase), 0, sin(phase)) * float(distance)
@@ -96,7 +100,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 			planet.name = data.name + " " + str(planet.index)
 			data.planets.append(planet)
 			obstacles.append(best)
-			if expansion > 0.0: planetary_radii.append(planet.distance)
+			if expansion > 0.0: planetary_radii.append(Vector2(planet.distance, VisualSystem.planet_extent(planet)))
 
 func configure(source: Control) -> void:
 	map = source

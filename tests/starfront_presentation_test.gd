@@ -10,6 +10,7 @@ func run() -> void:
 	host.persistence_enabled = false
 	host.play_system_intro = false
 	host.rules = host.rules.duplicate(true)
+	host.rules.defense_v2 = false
 	host.rules.debug_seed = 42042
 	root.add_child(host)
 	await process_frame
@@ -166,6 +167,8 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	var defeated = preload("res://scenes/expedition.tscn").instantiate()
+	defeated.rules = defeated.rules.duplicate(true)
+	defeated.rules.defense_v2 = false
 	defeated.persistence_enabled = false
 	defeated.play_system_intro = false
 	defeated.use_star_map = false
@@ -188,6 +191,7 @@ func run() -> void:
 	exploring.persistence_enabled = false
 	exploring.play_system_intro = false
 	exploring.rules = exploring.rules.duplicate(true)
+	exploring.rules.defense_v2 = false
 	exploring.rules.debug_seed = 42042
 	root.add_child(exploring)
 	await create_timer(1.0).timeout
