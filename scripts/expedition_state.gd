@@ -243,7 +243,7 @@ func turret_support(index: int) -> Dictionary:
 func can_deploy_turret(site: String) -> bool:
 	return is_defense() and defense != null and can_navigate() and not navigation.leg_active \
 		and not defense.complete and defense.construction_sites.has(site) and not defense.turrets.has(site) \
-		and defense.turrets.size() < defense.tuning.turret_capacity and salvage >= defense.tuning.turret_salvage_cost
+		and Defense.Installations.purchased_count(defense.turrets) < mini(2, defense.tuning.turret_capacity) and salvage >= defense.tuning.turret_salvage_cost
 
 func deploy_turret(site: String) -> bool:
 	if not can_deploy_turret(site): return false
@@ -253,6 +253,21 @@ func deploy_turret(site: String) -> bool:
 		"damage": tuning.turret_damage, "interval": tuning.turret_round_interval}
 	salvage -= tuning.turret_salvage_cost
 	progress_committed.emit()
+	return true
+
+# Called by the authoritative PoI transaction; never moves an anchor or spends Salvage.
+func can_deploy_poi_turret(index: int) -> bool:
+	if not is_defense() or defense == null or not can_visit(index): return false
+	return Defense.Installations.free_count(defense.turrets) == 0 and Defense.Installations.purchased_count(defense.turrets) <= 2 and not defense.complete \
+		and Defense.Installations.free_sites(defense.anchors, encounters).has(Defense.Installations.FREE_PREFIX + str(index))
+
+func deploy_poi_turret(index: int) -> bool:
+	if not can_deploy_poi_turret(index): return false
+	var id: String = Defense.Installations.FREE_PREFIX + str(index)
+	var tuning: Resource = defense.tuning
+	defense.turrets[id] = {"type":Defense.Installations.KINETIC,"owner":"player",
+		"position":Defense.wire(defense.anchors[index]),"radius":tuning.turret_radius,
+		"damage":tuning.turret_damage,"interval":tuning.turret_round_interval}
 	return true
 
 func battle_environment(index: int) -> Dictionary:

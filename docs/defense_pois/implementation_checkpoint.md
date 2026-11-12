@@ -102,3 +102,23 @@ roundtrips, invalid-data rejection, borrowed ownership, effective v2 Pressure ra
 35 seconds versus 350 × 0.1 second partitions, continued attacker/mothership movement,
 missile launches during Pressure pause, battle production at entry, and idempotent
 completed-battle charge consumption. Full feature and rendered checks remain pending.
+
+## Free Mining Operation turret integration
+
+Added source-stable `mining_free_<encounter>` installations directly at the stored
+PoI anchor. They share the existing turret dictionary, weapon configuration,
+renderer model/range rings, battle-support selection and missile scheduler.
+Purchased slots count independently (two), while the free slot is limited to one.
+Legacy purchased deployments retain their existing restore validation; new free
+records must match a known Mining Operation anchor and cannot exceed the total
+three-installation contract. Construction previews count purchased turrets only.
+
+State integration tests now exercise free deployment with no Salvage change,
+exact anchor equality, duplicate rejection, two additional purchased turrets,
+normal battle support, JSON save restoration, shifted-record rejection and a
+missile destroyed by the existing scheduler while crossing the real PoI turret.
+This deployment API is not yet invoked by a player-facing approach transaction.
+
+Latest main was fetched and remains `c5ec25a`; no rebase was required. Focused
+checks pass for the ledger/state, existing Starfront v2, purchased turret and
+Starfront persistence suites. Full feature/renderer CI remains pending.

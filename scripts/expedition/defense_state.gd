@@ -523,7 +523,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if not anchors.has(index): return false
 	construction_sites = Installations.sites(home, anchors, encounters, expansion)
 	var saved_turrets: Variant = data.get("turrets", {})
-	if not Installations.valid_deployments(saved_turrets, construction_sites): return false
+	if not Installations.valid_deployments(saved_turrets, construction_sites, Installations.free_sites(anchors, encounters)): return false
 	turrets = saved_turrets.duplicate(true)
 	for turret in turrets.values():
 		turret.position = wire(point(turret.position))

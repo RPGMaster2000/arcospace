@@ -139,11 +139,11 @@ func _select_site(index: int, focus_camera: bool = true) -> void:
 	var installed: Dictionary = snapshot.turrets.get(selected, {})
 	var radius: float = installed.get("radius", options.radius)
 	detail.text = "%d Salvage available · %d / %d built\n%.1f units engagement radius\n%s" % [
-		options.salvage, snapshot.turrets.size(), options.capacity, radius,
+		options.salvage, Installations.purchased_count(snapshot.turrets), options.capacity, radius,
 		"Installed" if not installed.is_empty() else "Deploy at the highlighted position."]
 	if snapshot.get("v2", false):
 		detail.text = "Kinetic Turret · %d Salvage · Range %.1f\n%s · %d / %d built" % [
-			options.cost, radius, snapshot.construction_sites[selected].title, snapshot.turrets.size(), options.capacity]
+			options.cost, radius, snapshot.construction_sites[selected].title, Installations.purchased_count(snapshot.turrets), options.capacity]
 	build.text = "Build · %d Salvage" % options.cost
 	build.disabled = not options.allowed
 	if is_instance_valid(preview): preview.queue_free()
