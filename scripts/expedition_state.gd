@@ -7,8 +7,10 @@ signal deck_changed
 signal progress_committed
 signal defense_advanced(events: Dictionary)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
+const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 var game_mode: String = "exploration"
 var defense: RefCounted
+var rifts := TemporalRift.new()
 
 func is_defense() -> bool:
 	return game_mode == "defense"
@@ -31,7 +33,10 @@ func _advance_defense(distance: float) -> void:
 # Activity commits and movement share event ordering and collision handling.
 func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) -> void:
 	if not is_defense() or defense == null or defense.complete or run_ended: return
-	var events: Dictionary = defense.advance_time(seconds, from, to, carry)
+	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
+	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
+		rifts.advance_span.bind(defense, environmental_instances))
+	var rift_changed: bool = previous_rift != TemporalRift.active(environmental_instances).get("id", "")
 	for unit in defense.units:
 		if unit.status == "arrived": encounters[unit.encounter].completed = true
 	var target: Dictionary = defense.unit_for(travel_destination) if not carry else {}
@@ -45,7 +50,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		navigation_origin = FREE_DESTINATION
 	if defense.failed(): run_ended = true
 	defense_advanced.emit(events)
-	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or defense.failed() or target_lost or not events.spawned.is_empty()): progress_committed.emit()
+	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed): progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
 	if not is_defense() or defense == null or defense.complete or run_ended: return
@@ -169,6 +174,11 @@ var seed_used: int = 0
 
 func environment_view() -> Array:
 	return EnvironmentData.frozen(environmental_instances)
+
+func defense_map_view() -> Dictionary:
+	var view: Dictionary = defense.snapshot()
+	view.temporal_rift = TemporalRift.active(environmental_instances).duplicate(true)
+	return view
 
 
 func battle_location(index: int) -> Array:
@@ -359,6 +369,7 @@ func generate_system() -> bool:
 	_recorded_results.clear()
 	environmental_instances.clear()
 	SystemGenerator.generate(self)
+	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
 	environmental_instances = preload("res://scripts/expedition/asteroid_regions.gd").generate(seed_used, system_number, encounter_positions.values())
 	var solar = preload("res://scripts/expedition/solar_regions.gd")

@@ -55,6 +55,7 @@ func run() -> void:
 			for data in [current, expected]:
 				data.erase("environmental_instances")
 				data.erase("encounter_positions")
+				data.erase("temporal_rift_schedule")
 			check(current == expected, "Phase 1 gameplay generation, all RNG streams, encounters, difficulty and objectives unchanged: " + context)
 			check(EnvironmentData.valid_instances(state.environmental_instances), "Generated records are valid save data")
 			var encoded: Dictionary = Save.encode(state)

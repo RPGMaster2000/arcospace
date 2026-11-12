@@ -15,6 +15,7 @@ const Space = preload("res://scripts/presentation/star_system/space_environment.
 const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
+const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift_visual.gd")
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -24,6 +25,7 @@ var system_profile: String = "industrial"
 var environment_source: Callable
 var modifier_source: Callable
 var storm_legend: PanelContainer
+var rift_visual: Node3D
 
 func environment_instances() -> Array:
 	return environment_source.call() if environment_source.is_valid() else []
@@ -1063,6 +1065,7 @@ func _defense_hostile(index: int) -> bool:
 	return false
 func sync_defense(snapshot: Dictionary) -> void:
 	defense_view = snapshot
+	_sync_temporal_rift(snapshot.get("temporal_rift", {}))
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not objects.has(index): continue
@@ -1078,3 +1081,16 @@ func sync_defense(snapshot: Dictionary) -> void:
 			markers[index].tooltip_text += "\nAdvancing · ETA %.1fs" % snapshot.mothership_eta
 		visual_data.anchors[index] = objects[index].position
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)
+
+func _sync_temporal_rift(record: Dictionary) -> void:
+	if not is_instance_valid(visual_root): return
+	if is_instance_valid(rift_visual) and rift_visual.get_parent() == visual_root:
+		if rift_visual.instance_id == record.get("id", ""):
+			rift_visual.update_lifetime(record.simulation.remaining)
+			return
+		rift_visual.expire()
+	rift_visual = null
+	if record.is_empty(): return
+	rift_visual = RiftVisual.new()
+	rift_visual.configure(record)
+	visual_root.add_child(rift_visual)

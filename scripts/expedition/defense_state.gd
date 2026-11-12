@@ -33,7 +33,8 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 		# Keep all three routes on the same safe flank of the sun and opposite home.
 		var flank_sign: float = 1.0 if hostile_offset >= 0.0 else -1.0
 		var heading: float = angle + PI + hostile_offset + flank_sign * [-0.45, 0.0, 0.35][i]
-		units.append({"encounter": indices[i], "position": Vector3(cos(heading), 0, sin(heading)) * tuning.hostile_spawn_distance,
+		var origin: Vector3 = Vector3(cos(heading), 0, sin(heading)) * tuning.hostile_spawn_distance
+		units.append({"encounter": indices[i], "position": origin, "route_origin": origin,
 			"status": "active", "mothership": i == 2, "reinforcement": false, "spawned": false})
 	for i in poi_indices.size():
 		var heading: float = angle + TAU * float(i) / maxi(1, poi_indices.size()) + poi_phase
@@ -49,7 +50,8 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 func add_reserves(indices: Array) -> void:
 	var mother: Dictionary = unit_for(mothership_index())
 	for index in indices:
-		units.append({"encounter": index, "position": mother.position, "status": "reserve", "mothership": false, "reinforcement": true, "spawned": false})
+		units.append({"encounter": index, "position": mother.position, "route_origin": mother.position,
+			"status": "reserve", "mothership": false, "reinforcement": true, "spawned": false})
 
 func active_attackers() -> int:
 	var count: int = 0
@@ -136,6 +138,18 @@ func _speed(unit: Dictionary) -> float:
 		return tuning.mothership_speed if mothership_advancing else 0.0
 	return tuning.enemy_speed
 
+func moving_route(unit: Dictionary) -> Dictionary:
+	if not available(unit): return {}
+	var speed := _speed(unit)
+	if speed <= 0.0: return {}
+	var target := target_for(unit)
+	var origin: Vector3 = unit.route_origin
+	# Use the original route ray to suppress rounding drift from Vector3 motion
+	# samples. A repositioned unit still uses its actual route to the target.
+	if Geometry3D.get_closest_point_to_segment(unit.position, origin, target).distance_squared_to(unit.position) > 0.000001:
+		origin = unit.position
+	return {"position": unit.position, "origin": origin, "target": target, "speed": speed}
+
 func _advance_pressure(seconds: float) -> bool:
 	pressure = minf(tuning.pressure_maximum, pressure + seconds * tuning.pressure_per_second)
 	if mothership_advancing or pressure < tuning.pressure_maximum - 0.00000001:
@@ -148,7 +162,8 @@ func _advance_pressure(seconds: float) -> bool:
 		reinforcement_remaining = tuning.first_reinforcement_seconds
 	return true
 
-func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false) -> Dictionary:
+func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false,
+		observe_span: Callable = Callable()) -> Dictionary:
 	var result: Dictionary = {"position": to, "contact": -1, "arrivals": 0, "spawned": [], "escalated": false}
 	if complete or contact >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
@@ -183,6 +198,9 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				event_time = arrival
 				event_unit = unit
 				event_kind = "arrival"
+		# Observe the consumed span with the current fleet and velocities. Events
+		# at its endpoint change the roster for the following span.
+		if observe_span.is_valid(): observe_span.call(event_time)
 		for unit in units:
 			if available(unit):
 				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
@@ -203,6 +221,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				spawn_blocked = true
 				continue
 			reserve.position = at
+			reserve.route_origin = at
 			reserve.status = "active"
 			reserve.spawned = true
 			reinforcements_spawned += 1
@@ -264,6 +283,7 @@ func snapshot() -> Dictionary:
 	for unit in units:
 		var copy: Dictionary = unit.duplicate()
 		copy.position = wire(unit.position)
+		copy.route_origin = wire(unit.route_origin)
 		data.units.append(copy)
 	for index in anchors: data.anchors[str(index)] = wire(anchors[index])
 	return data
@@ -290,6 +310,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		var index: int = int(unit.encounter)
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
 		if not Navigation.valid_point(unit.get("position"), false): return false
+		if not Navigation.valid_point(unit.get("route_origin", unit.position), false): return false
 		if absf(float(unit.position[0])) > 28 or absf(float(unit.position[2])) > 28: return false
 		if unit.status == "secured" and not data.complete: return false
 		if data.complete and unit.status in ["active", "reserve"]: return false
@@ -329,6 +350,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array) -> bool:
 		var copy: Dictionary = unit.duplicate(true)
 		copy.encounter = int(copy.encounter)
 		copy.position = point(copy.position)
+		copy.route_origin = point(copy.get("route_origin", unit.position))
 		copy.reinforcement = bool(copy.get("reinforcement", false))
 		copy.spawned = bool(copy.get("spawned", false))
 		units.append(copy)

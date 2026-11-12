@@ -525,7 +525,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_number = state.system_number
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
-		star_map.defense_view = state.defense.snapshot() if state.is_defense() else {}
+		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
 		star_map.double_tap_msec = roundi(state.rules.defense_tuning.double_tap_seconds * 1000.0)
@@ -1280,7 +1280,7 @@ func _free_arrived() -> void:
 # Simulation decides events; coordinator cancels presentation and routes existing UI.
 func _defense_updated(events: Dictionary) -> void:
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
-	star_map.sync_defense(state.defense.snapshot())
+	star_map.sync_defense(state.defense_map_view())
 	# Activity events are presented after results and rewards, at show_system.
 	if phase != Phase.TRAVELING: return
 	_refresh_defense_hud()
@@ -1324,7 +1324,7 @@ func _turret_options(site: String) -> Dictionary:
 func _deploy_turret(site: String) -> bool:
 	if phase != Phase.OVERVIEW or not _map_input_allowed(false) or not state.deploy_turret(site):
 		return false
-	star_map.sync_defense(state.defense.snapshot())
+	star_map.sync_defense(state.defense_map_view())
 	resource_bar.exploration(state)
 	screen.overview_hud.refresh()
 	_refresh_defense_hud()

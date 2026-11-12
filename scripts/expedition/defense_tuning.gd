@@ -26,3 +26,8 @@ extends Resource
 @export_range(1.0, 28.0, 0.1) var turret_radius: float = 7.0
 @export_range(1, 1000, 1) var turret_damage: int = 5
 @export_range(1, 100, 1) var turret_round_interval: int = 2
+
+@export_range(0.1, 120.0, 0.1) var rift_evaluation_interval: float = 12.0
+@export_range(0.0, 1.0, 0.01) var rift_spawn_chance: float = 0.12
+@export_range(0.1, 120.0, 0.1) var rift_lifetime: float = 15.0
+@export_range(0.0, 120.0, 0.1) var rift_initial_delay: float = 12.0
