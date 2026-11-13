@@ -47,6 +47,31 @@ func visual(state: Resource) -> Dictionary:
 			state.defense.snapshot(), Layout.planetary_indices(state.encounters), state.layout_expansion)
 	return result
 
+func expected_solar(state: Resource) -> Dictionary:
+	return Solar.generate(state.seed_used,state.system_number,[0.0,0.0,0.0],
+		Solar.CORE_RADIUS_PER_SCALE*Settings.sun_core_scale,state.rules.solar_influence_radius_range,
+		0.8 if state.layout_expansion > 0.0 else 1.0)
+
+func solar_record(state: Resource) -> Dictionary:
+	for item in state.environmental_instances:
+		if item.type == State.EnvironmentData.SOLAR_INTERFERENCE: return item
+	return {}
+
+func solar_excluded(state: Resource) -> bool:
+	var item := expected_solar(state)
+	var clearance := preload("res://scripts/expedition/environment_clearance.gd")
+	var margin: float = state.rules.defense_tuning.environment_visual_margin
+	if state.is_defense():
+		if clearance.intersects_sphere(item,state.defense.home,clearance.home_radius(margin)): return true
+		for index in Layout.planetary_indices(state.encounters):
+			if state.encounters[index].poi.resource_path.get_file().get_basename() == "gas_giant" \
+				and state.defense.anchors[index].length()-Layout.planetary_radius("gas_giant") < item.region.radius+margin: return true
+	var data := Visual.generate(state.seed_used,state.system_number,[] if state.is_defense() and state.layout_expansion > 0 else entries(state),Settings,
+		state.system_profile,state.layout_expansion,state.orbit_clearance,item.region.radius+margin)
+	if state.is_defense():
+		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(data,state.defense.snapshot(),Layout.planetary_indices(state.encounters),state.layout_expansion,state.orbit_clearance,Layout.planetary_radii(state.encounters),item.region.radius+margin)
+	return not data.solar_clear
+
 func verify_orbits(state: Resource, data: Dictionary) -> void:
 	var orbital_bands: Array[Vector2] = []
 	var assigned := {}
@@ -116,8 +141,14 @@ func generation_checks() -> void:
 				if mode == "exploration":
 					check(is_equal_approx(new_layout.planets[i].distance, old_layout.planets[i].distance * 1.2),
 						"Planet semimajor axis expands by 20 percent")
-			var old_solar: Dictionary = before.environmental_instances[1]
-			var new_solar: Dictionary = after.environmental_instances[1]
+			# Compare the generator's scaling independently of optional placement
+			# rejection; emitted records must still match those exact dimensions.
+			var old_solar := expected_solar(before)
+			var new_solar := expected_solar(after)
+			for state in [before,after]:
+				var active := solar_record(state)
+				check(active.is_empty() or active.region == expected_solar(state).region,"Retained Solar influence keeps exact generated dimensions")
+				check(not active.is_empty() or solar_excluded(state),"Omitted Solar influence has a concrete clearance conflict")
 			check(is_equal_approx(new_solar.region.radius, old_solar.region.radius * 0.8)
 				and new_solar.configuration.star_radius == old_solar.configuration.star_radius,
 				"Solar influence shrinks by 20 percent while the stellar core is unchanged")
@@ -233,10 +264,15 @@ func presentation_checks() -> void:
 		var state := fresh("defense", 1042, factor)
 		var host := await mount(state)
 		var map = host.star_map
-		var influence: MeshInstance3D = map.visual_root.get_node("SolarInterference/InfluenceBoundary")
-		if factor == 0.0: influence.material_override.set_shader_parameter("fill_strength", 0.0)
-		check(is_equal_approx(influence.mesh.size.x / 2.08, state.environmental_instances[1].region.radius),
-			"Solar ring and fill use the authoritative radius")
+		var solar := solar_record(state)
+		var influence := map.visual_root.get_node_or_null("SolarInterference/InfluenceBoundary") as MeshInstance3D
+		if solar.is_empty():
+			check(influence == null and solar_excluded(state),"Clearance-omitted Solar region has no misleading ring or fill")
+		else:
+			check(influence != null,"Saved Solar region has its visual boundary")
+			if influence != null:
+				if factor == 0.0: influence.material_override.set_shader_parameter("fill_strength",0.0)
+				check(is_equal_approx(influence.mesh.size.x/2.08,solar.region.radius),"Solar ring and fill use the authoritative radius")
 		scales.append([map.ship.scale, map.objects[0].scale, map.objects[-100].scale, map.planet_nodes[0].scale])
 		check(map.objects[-100].material_override.get_shader_parameter("sun_color") == map.visual_data.star_color,
 			"Selected color reaches the star material")

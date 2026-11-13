@@ -94,21 +94,40 @@ func run() -> void:
 				var actual: Dictionary = Save.encode(state)
 				var expected: Dictionary = Save.encode(baseline)
 				actual.environmental_instances = actual.environmental_instances.filter(func(item): return item.type not in [Solar.TYPE, EnvironmentData.SPACE_STORM])
-				for data in [actual, expected]: data.erase("temporal_rift_schedule")
-				check(actual == expected, "Removing the newer phenomena matches PR #50, including asteroid data, encounters, anchors and RNG")
-				check(state.environmental_instances.filter(func(item): return item.type != EnvironmentData.SPACE_STORM).size() == 2, "One unchanged asteroid formation plus one solar region per new system")
+				var old_asteroids: Array = expected.environmental_instances
+				var current_asteroids: Array = actual.environmental_instances
+				for data in [actual,expected]:
+					data.erase("temporal_rift_schedule")
+					data.erase("environmental_instances")
+				check(actual == expected,"New phenomena and clearance preserve PR #50 encounters, anchors, progression and every RNG stream")
+				var clearance := preload("res://scripts/expedition/environment_clearance.gd")
+				var invalid_old := false
+				if state.is_defense():
+					for item in old_asteroids:
+						if clearance.intersects_sphere(item,state.defense.home,clearance.home_radius(rules.defense_tuning.environment_visual_margin)): invalid_old = true
+				if not invalid_old:
+					check(current_asteroids == old_asteroids,"Already-clear asteroid records remain exactly unchanged")
+				else:
+					check(current_asteroids.size() <= old_asteroids.size(),"Clearance retries never invent extra asteroid regions")
+					for item in current_asteroids:
+						check(not clearance.intersects_sphere(item,state.defense.home,clearance.home_radius(rules.defense_tuning.environment_visual_margin)),"Required replacement clears complete homeworld geometry")
+				var solar_records: Array = state.environmental_instances.filter(func(item): return item.type == Solar.TYPE)
+				check(solar_records.size() <= 1,"At most one authoritative Solar region, with infeasible optional volumes omitted")
 				var encoded: Dictionary = Save.encode(state)
 				var restored = Save.new().decode(JSON.parse_string(JSON.stringify(encoded)),rules)
 				check(restored != null and restored.environmental_instances == state.environmental_instances, "Version-3 saves restore exact solar geometry and visuals")
 				for key in ["radius","visual"]:
 					var invalid: Dictionary = encoded.duplicate(true)
-					if key == "radius": invalid.environmental_instances[1].region.radius = -1
-					else: invalid.environmental_instances[1].visual.activity = INF
+					var malformed: Dictionary = Solar.generate(state.seed_used,state.system_number,[0,0,0],2.0)
+					if key == "radius": malformed.region.radius = -1
+					else: malformed.visual.activity = INF
+					invalid.environmental_instances = invalid.environmental_instances.filter(func(item): return item.type != Solar.TYPE)
+					invalid.environmental_instances.append(malformed)
 					check(Save.new().decode(invalid,rules) == null, "Malformed solar instance rejected at save boundary")
 				var old: Dictionary = encoded.duplicate(true)
-				old.environmental_instances = actual.environmental_instances
+				old.environmental_instances = current_asteroids
 				var old_state = Save.new().decode(old,rules)
-				check(old_state != null and old_state.environmental_instances == actual.environmental_instances, "Loading old asteroid-only system does not add solar regions")
+				check(old_state != null and old_state.environmental_instances == current_asteroids, "Loading old asteroid-only system does not add solar regions")
 				for run_state in [state,baseline]:
 					run_state.ftl_access = true
 					for entry in run_state.encounters: entry.completed = true

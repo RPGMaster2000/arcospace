@@ -23,7 +23,9 @@ orbit. Defense's authoritative gas PoI anchors are retained; if a fixed anchor o
 bounded cosmetic layout has no feasible solution, the optional Solar influence
 is omitted instead of moving that gameplay location, shrinking a planet or
 changing a combat multiplier. Solar radius comes from the actual generated record.
-The resulting layout is checked before committing exploration battle coordinates.
+Clearance is applied after baseline encounter placement so unrelated battle anchors
+remain exactly equal to the original visible anchors. A pure preview checks the
+result before committing coordinates; it is reused rather than generating twice.
 
 Saved Solar records without this opt-in metadata retain the old visual layout.
 Loading never runs the new-region clearance filter. Version-3 saves retain their

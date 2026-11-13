@@ -67,7 +67,51 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		p.type = PLANETARY[entry.model_kind]
 		result.assignments[entry.index] = p.index
 		result.anchors[entry.index] = p.position
-	# Finite deterministic outward retries change only invalid gas orbits. Each
+	var occupied: Array = [{"position":Vector3.ZERO,"radius":2.6,"label":false}]
+	var orbit_bands: Array[Vector2] = []
+	for p in result.planets:
+		occupied.append({"position":p.position,"radius":p.radius*1.5,"label":p.encounter!=-1,"named":true})
+		orbit_bands.append(Vector2(p.distance, p.distance * p.eccentricity
+			+ (planet_extent(p) if orbit_clearance > 0.0 else 0.0)))
+	result.placement = {}
+	var ordered: Array = entries.duplicate()
+	ordered.sort_custom(func(a,b):
+		if expansion > 0.0 and is_planetary(a) != is_planetary(b): return is_planetary(a)
+		return a.index < b.index)
+	for entry in ordered:
+		if result.anchors.has(entry.index): continue
+		var local = random_for(seed_value,number,"destination-%d" % entry.index)
+		var orbital: bool = expansion > 0.0 and is_planetary(entry)
+		var ring_gap := 0.7
+		if orbital and orbit_clearance > 0.0:
+			ring_gap = Layout.planetary_radius(entry.model_kind) + orbit_clearance
+		var placed: Dictionary = place_destination(entry,local,result.planets,occupied,settings,48,
+			expansion,orbit_bands if orbital else [],ring_gap)
+		result.anchors[entry.index] = placed.position
+		result.placement[entry.index] = placed
+		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
+		if orbital:
+			var orbit := circular_orbit(placed.position)
+			result.poi_orbits[entry.index] = orbit
+			orbit_bands.append(Vector2(orbit.distance,
+				Layout.planetary_radius(entry.model_kind) if orbit_clearance > 0.0 else 0.0))
+	var star_rng = random_for(seed_value, number, "star")
+	# Independent cosmetic streams keep appearance changes away from encounter/loot RNG.
+	var profile_data: Resource = preload("res://scripts/expedition/system_profile.gd").for_id(profile)
+	if expansion > 0.0:
+		var star := weighted_star(star_rng)
+		result.star_color = star.color
+		result.star_family = star.family
+	else:
+		var favored: Array = [profile_data.star_hue_bias,0.56,0.64]
+		var hue: float = star_rng.randf() if star_rng.randf() < 0.18 else fposmod(float(favored[star_rng.randi_range(0,favored.size()-1)])+star_rng.randf_range(-0.035,0.035),1.0)
+		result.star_color = Color.from_hsv(hue,star_rng.randf_range(0.48,0.88),1)
+	var atmosphere_rng = random_for(seed_value,number,"atmosphere")
+	var bright_chance: float = profile_data.nebula_chance
+	result.atmosphere_strength = atmosphere_rng.randf_range(1.1,1.55) if atmosphere_rng.randf() < bright_chance else atmosphere_rng.randf_range(0.7,1.05)
+	# Apply clearance AFTER all baseline anchors and appearance draws. Moving a
+	# gas orbit must never perturb an unrelated battle destination. Finite
+	# deterministic outward retries change only invalid gas orbits. Each
 	# candidate clears every full orbital shell, not just today's planet position.
 	result.solar_clear = true
 	for p in result.planets:
@@ -93,50 +137,32 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 			placed = true
 			break
 		if not placed: result.solar_clear = false
-	var occupied: Array = [{"position":Vector3.ZERO,"radius":2.6,"label":false}]
-	var orbit_bands: Array[Vector2] = []
-	for p in result.planets:
-		occupied.append({"position":p.position,"radius":p.radius*1.5,"label":p.encounter!=-1,"named":true})
-		orbit_bands.append(Vector2(p.distance, p.distance * p.eccentricity
-			+ (planet_extent(p) if orbit_clearance > 0.0 else 0.0)))
-	result.placement = {}
-	var ordered: Array = entries.duplicate()
-	ordered.sort_custom(func(a,b):
-		if expansion > 0.0 and is_planetary(a) != is_planetary(b): return is_planetary(a)
-		return a.index < b.index)
-	for entry in ordered:
-		if result.anchors.has(entry.index): continue
-		var local = random_for(seed_value,number,"destination-%d" % entry.index)
-		var orbital: bool = expansion > 0.0 and is_planetary(entry)
-		var ring_gap := 0.7
-		if orbital and orbit_clearance > 0.0:
-			ring_gap = Layout.planetary_radius(entry.model_kind) + orbit_clearance
-		var placed: Dictionary = place_destination(entry,local,result.planets,occupied,settings,48,
-			expansion,orbit_bands if orbital else [],ring_gap,
-			solar_clearance+Layout.planetary_radius("gas_giant") if entry.model_kind == "gas_giant" and solar_clearance > 0 else 0.0)
-		if entry.model_kind == "gas_giant" and not placed.valid: result.solar_clear = false
-		result.anchors[entry.index] = placed.position
-		result.placement[entry.index] = placed
-		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
-		if orbital:
-			var orbit := circular_orbit(placed.position)
-			result.poi_orbits[entry.index] = orbit
-			orbit_bands.append(Vector2(orbit.distance,
-				Layout.planetary_radius(entry.model_kind) if orbit_clearance > 0.0 else 0.0))
-	var star_rng = random_for(seed_value, number, "star")
-	# Independent cosmetic streams keep appearance changes away from encounter/loot RNG.
-	var profile_data: Resource = preload("res://scripts/expedition/system_profile.gd").for_id(profile)
-	if expansion > 0.0:
-		var star := weighted_star(star_rng)
-		result.star_color = star.color
-		result.star_family = star.family
-	else:
-		var favored: Array = [profile_data.star_hue_bias,0.56,0.64]
-		var hue: float = star_rng.randf() if star_rng.randf() < 0.18 else fposmod(float(favored[star_rng.randi_range(0,favored.size()-1)])+star_rng.randf_range(-0.035,0.035),1.0)
-		result.star_color = Color.from_hsv(hue,star_rng.randf_range(0.48,0.88),1)
-	var atmosphere_rng = random_for(seed_value,number,"atmosphere")
-	var bright_chance: float = profile_data.nebula_chance
-	result.atmosphere_strength = atmosphere_rng.randf_range(1.1,1.55) if atmosphere_rng.randf() < bright_chance else atmosphere_rng.randf_range(0.7,1.05)
+	for entry in entries:
+		if entry.model_kind != "gas_giant" or result.assignments.has(entry.index) or solar_clearance <= 0.0: continue
+		var radius: float = Layout.planetary_radius("gas_giant")
+		var original: Vector3 = result.anchors[entry.index]
+		var radial: float = Vector2(original.x,original.z).length()
+		if radial-radius >= solar_clearance: continue
+		var direction := Vector3(original.x,0,original.z).normalized()
+		if direction.length_squared() < 0.5: direction = Vector3.RIGHT
+		var limit: float = minf(absf(settings.system_bounds.position.x),settings.system_bounds.end.x)*factor-radius
+		var found := false
+		for attempt in range(32):
+			var distance: float = solar_clearance+radius+0.001+attempt*0.6
+			if distance > limit: break
+			var bands: Array = []
+			for p in result.planets: bands.append(Vector2(p.distance,p.distance*p.eccentricity+planet_extent(p)))
+			for index in result.poi_orbits:
+				if index != entry.index: bands.append(Vector2(result.poi_orbits[index].distance,model_radius({"model_kind":"gas_giant"})))
+			if not _orbit_clear(distance,bands,radius+orbit_clearance): continue
+			var candidate := direction*distance
+			if clearance(candidate,radius,occupied.filter(func(other): return not other.position.is_equal_approx(original))) < settings.destination_clearance: continue
+			result.anchors[entry.index] = candidate
+			result.placement[entry.index].position = candidate
+			if result.poi_orbits.has(entry.index): result.poi_orbits[entry.index] = circular_orbit(candidate)
+			found = true
+			break
+		if not found: result.solar_clear = false
 	return result
 
 static func is_planetary(entry: Dictionary) -> bool:

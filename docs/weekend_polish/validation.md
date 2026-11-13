@@ -31,9 +31,18 @@ DISPLAY=:99 python3 tools/run_rendered_regressions.py --godot godot --skip-impor
 godot --headless --script res://tools/weekend_generation_signature.gd -- /tmp/gameplay-signature.json
 ```
 
-The full local headless run was started. Its existing `trading_outpost_test` reached
-its unchanged 120-second timeout; the same timeout was reproduced on **unchanged
-main** in a separate worktree. No assertions or timing limits were weakened. The
+The full local headless run completed all 178 suites on the intermediate revision:
+171 passed and 7 failed. Five exposed presentation/clearance integration assumptions
+or bugs, now corrected and passing in focused reruns (`starfront_presentation_test`,
+`sfx_test`, `star_system_expansion_test`, `solar_regions_test`, `asteroid_battle_test`).
+In particular, gas-orbit adjustments now run after original anchor placement and
+the unchanged exact-coordinate assertions pass, including random expedition seeds.
+No baseline fixture was updated.
+
+The remaining two failures also reproduce on **unchanged main** in a separate
+worktree: `trading_outpost_test` reaches its unchanged 120-second timeout, and
+`star_map_test` reports “Service arrival grants no access or pressure.” Those tests
+and the corresponding unrelated Exploration gameplay are unchanged. No assertions or timing limits were weakened. The
 outdated Starfront defeat presentation assertions were updated to verify the new
 required rendered backdrop, cause text, terminal state and blocked navigation;
 that focused suite passes after the update.
@@ -48,3 +57,5 @@ separate these from runtime/assertion errors.
 Manual physical-device Android validation remains recommended: app background/resume,
 notches, touch skip/Continue, long travel interrupted by multiple impacts and low-end
 GPU performance. Software Mobile Vulkan validation does not certify an Android device.
+
+Python regression-runner contract tests: 22 passed (`python3 -m unittest discover -s tools -p 'test_*.py'`).
