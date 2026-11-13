@@ -10,14 +10,15 @@ const POLICIES = {
 
 func run() -> void:
 	var args := OS.get_cmdline_user_args()
-	if args.size() != 5:
-		push_error("Arguments: output path, ship index (-1 for all), first seed, last seed, policy (all or policy name)")
+	if args.size() < 5 or args.size() > 6 or (args.size() == 6 and args[5] != "storm-only"):
+		push_error("Arguments: output path, ship index (-1 for all), first seed, last seed, policy (all or policy name), optional storm-only")
 		quit(2)
 		return
 	var selected := int(args[1])
 	var first := int(args[2])
 	var last := int(args[3])
 	var policy_filter := args[4]
+	var storm_only := args.size() == 6
 	if selected < -1 or selected >= Ships.PLAYERS.size() or first < 1 or last < first or (policy_filter != "all" and not POLICIES.has(policy_filter)):
 		push_error("Invalid audit shard arguments")
 		quit(2)
@@ -35,18 +36,22 @@ func run() -> void:
 	file.store_line(JSON.stringify({"type": "config", "revision": source_revision(), "engine": Engine.get_version_info().string,
 		"ships": Ships.PLAYERS.map(func(ship): return ship.ship_name), "enemies": roster, "modifiers": Modifier.NAMES,
 		"policies": POLICIES, "selected_ship": selected, "first_seed": first, "last_seed": last, "policy_filter": policy_filter,
+		"storm_only_control": storm_only,
 		"round_limit": ROUND_LIMIT, "action_limit": ACTION_LIMIT, "failure_turns": failure_turns,
 		"boss_emp_bonus": Config.defense_tuning.mothership_emp_bonus}))
 	var count := 0
 	for i in Ships.PLAYERS.size():
 		if selected >= 0 and selected != i: continue
 		var player: Resource = Ships.PLAYERS[i]
+		if storm_only:
+			player = storm_only_profile(player)
 		for policy in POLICIES:
 			if policy_filter != "all" and policy_filter != policy: continue
 			var metrics := {}
 			var settings: Dictionary = POLICIES[policy].duplicate(true)
 			settings.cards = metrics
-			for enemy in enemies:
+			for original_enemy in enemies:
+				var enemy: Resource = storm_only_profile(original_enemy) if storm_only else original_enemy
 				settings.emp_bonus = Config.defense_tuning.mothership_emp_bonus if enemy.enemy_rank == 2 else 0
 				for kind in Modifier.NAMES.size():
 					for seed_value in range(first, last + 1):
@@ -61,3 +66,20 @@ func run() -> void:
 	file.store_line(JSON.stringify({"type": "complete", "matches": count}))
 	file.close()
 	quit()
+
+func storm_only_profile(profile: Resource) -> Resource:
+	const Deck = preload("res://scripts/expedition/expedition_deck.gd")
+	if profile.ship_name == "The Hollow Choir":
+		var copy := profile.duplicate()
+		copy.shields = 4
+		return copy
+	if profile not in [Deck.GANYMEDE, Deck.THUNDERBOLT]:
+		return profile
+	var current: Resource = Deck.GANYMEDE_NEW_CARD if profile == Deck.GANYMEDE else Deck.THUNDERBOLT_NEW_CARD
+	var previous: Resource = Deck.GANYMEDE_LEGACY_CARD if profile == Deck.GANYMEDE else Deck.THUNDERBOLT_LEGACY_CARD
+	var slot: int = profile.starting_cards.find(current)
+	assert(slot >= 0)
+	var copy := profile.duplicate()
+	copy.starting_cards = profile.starting_cards.duplicate()
+	copy.starting_cards[slot] = previous
+	return copy

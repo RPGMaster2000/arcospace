@@ -21,7 +21,7 @@ Battle entry uses the authoritative hostile position and freezes the selected
 environment. Explicit legacy modifiers take priority, followed by solar
 interference, [Temporal Rifts](physical_temporal_rifts.md), asteroid fields
 and storms. The existing modifier scheduler
-continues to own the three-round ×2 or ×½ effect for both ships. Friendly
+applies three rounds of guaranteed ×2 matching card effects for both ships. Friendly
 Turret Support remains a separate field in the same snapshot.
 
 The map uses one shader and the existing combat palette. Three translucent

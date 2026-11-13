@@ -109,8 +109,8 @@ static func compact_status(modifier: Node, round_number: int) -> String:
 		2, 6, 7:
 			return (
 				(
-					"ϟ  %s · %s effects %s · %d rounds left"
-					% [name, modifier.storm_family(modifier.kind).capitalize(), "doubled" if modifier.ion_factor == 2.0 else "halved", remaining]
+					"ϟ  %s · %s effects doubled · %d rounds left"
+					% [name, modifier.storm_family(modifier.kind).capitalize(), remaining]
 				)
 				if modifier.active
 				else "ϟ  %s · Next storm in %d rounds" % [name, wait_rounds]

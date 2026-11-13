@@ -9,7 +9,7 @@ const EXPECTED = [
 	[35,12,10,10,10,2,2,2,14,0.0], [28,17,14,10,8,1,3,2,11,0.35],
 	[40,6,16,17,16,3,2,3,17,-0.1], [35,12,8,12,10,3,1,2,14,0.0],
 	[35,12,10,8,12,2,3,1,14,0.0], [35,12,8,12,10,1,2,3,14,0.0]]
-const COUNTS = [[10,10,9],[5,15,9],[13,6,10],[14,7,8],[8,15,6],[7,9,13]]
+const COUNTS = [[10,10,9],[5,16,8],[13,6,10],[14,7,8],[8,15,6],[7,9,13]]
 const PREMIUM = ["Deploy boarding teams","Deep-core mining","Advanced fabrication","Reinforce EMP Pulse systems","Deep atmospheric dive","Board pirate flagship","Evacuate scientists","Shielded expedition","Stabilize corridor"]
 var failures: int = 0
 var checks: int = 0

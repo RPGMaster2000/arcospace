@@ -12,7 +12,6 @@ SUCCESS = {
     "combat_trace_test": r"Combat trace parity: \d+ exact baseline traces passed",
     "enemy_models_visual_test": r"Three enemy combat model captures complete",
     "expedition_fresh_process_test": r"Fresh-process persistence: write, forced termination, resume, reward and permadeath passed",
-    "storm_ion_parity_test": r"Ion baseline: 32 seeded schedules / 960 round checkpoints match",
 }
 
 

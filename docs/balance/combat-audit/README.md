@@ -1,5 +1,7 @@
 # Combat balance audit
 
+See [Combat Balance Pass 1](pass-1.md) for the paired follow-up and selected changes.
+
 ## Executive summary
 
 The audit completed **30,720 battles** across six playable ships, eight

@@ -81,7 +81,7 @@ static func legend(storm: Dictionary) -> PanelContainer:
 	button.custom_minimum_size.y = 40
 	column.add_child(button)
 	var detail := Label.new()
-	detail.text = "Effects ×2 or ×½\n%d rounds · Both ships\nCard costs unchanged" % Modifiers.ACTIVE_ROUNDS
+	detail.text = "Effects ×2\n%d rounds · Both ships\nCard costs unchanged" % Modifiers.ACTIVE_ROUNDS
 	detail.hide()
 	column.add_child(detail)
 	button.pressed.connect(func():

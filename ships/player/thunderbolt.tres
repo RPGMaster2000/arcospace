@@ -25,7 +25,7 @@
 [ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="23_or6qd"]
 [ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="24_ui3nu"]
 [ext_resource type="Resource" path="res://cards/41_shield_collapse.tres" id="25_x36o5"]
-[ext_resource type="Resource" path="res://cards/44_desperate_conversion.tres" id="26_nl1rv"]
+[ext_resource type="Resource" path="res://cards/53_capacitor_overload.tres" id="26_nl1rv"]
 
 [ext_resource type="PackedScene" path="res://scenes/ships/thunderbolt.tscn" id="VisualModel"]
 

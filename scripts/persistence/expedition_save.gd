@@ -73,6 +73,8 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if state.ship() in [State.Deck.GANYMEDE, State.Deck.THUNDERBOLT] and deck.revised_starting_decks:
+		data.revised_starting_decks = true
 	if state.is_defense() and state.defense_poi_version > 0: data.defense_poi_version = state.defense_poi_version
 	if deck.batch.active: data.card_batch = deck.batch
 	if state.is_defense(): data.defense_poi_effects = state.poi_effects.snapshot()
@@ -144,6 +146,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
+	if not data.get("revised_starting_decks", false) is bool: return null
 	if not data.get("seed") is String or not data.seed.is_valid_int(): return null
 	for key in ["system_name", "last_outcome", "pending_choice", "pending_card"]:
 		if not data.get(key) is String or data[key].length() > 65536: return null

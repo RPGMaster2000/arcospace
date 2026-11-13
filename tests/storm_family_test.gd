@@ -58,6 +58,8 @@ func _initialize() -> void:
 					var shown: Resource = mod.preview(card)
 					var matches: bool = card.family == Mod.storm_family(kind)
 					check(shown.effects == (Mod._scaled(card.effects,factor) if matches else card.effects),"Only matching family preview scales")
+					if matches:
+						check(shown.description.begins_with(Mod.STORMS[kind].short + " ×" + str(factor) + " · "), "Card preview shows the applied multiplier")
 					check(shown.cost == card.cost and shown.play_again == card.play_again,"Payment and extra action unchanged")
 					var a: Dictionary = ship()
 					var b: Dictionary = ship()
