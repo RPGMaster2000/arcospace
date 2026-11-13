@@ -164,6 +164,10 @@ func refresh_results(data: Dictionary) -> void:
 			)
 		)
 	)
+	if data.system_secured:
+		method = "Mothership neutralized" if data.defense_recovery else "Mothership neutralized · " + method
+	elif data.defense_recovery:
+		method = "Enemy disabled"
 	nodes["MatchResult/Panel/Details"].text = (
 		"%s · Turn %d\n❤️ %d → %d · Damage taken: %d"
 		% [

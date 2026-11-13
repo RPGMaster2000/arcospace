@@ -21,7 +21,7 @@ Generated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the in
 
 Enemy profiles also serialize EMP Pulse defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.
 
-Escape: **0 Salvage**; enemy is completed and cannot be farmed. Systems Failure uses the same Salvage rewards as destruction. Regular completed encounters increase pressure once; Chasedowns do not. Combat never grants FTL Access. Elite victories additionally grant +3 Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Standalone combat destruction fallback: 10 Salvage. Enemy registry and reward settings: `encounters/expedition_rules.tres`.
+Exploration escape awards **0 Salvage**. [Starfront Defense](salvage-economy.md) grants rank-based EMP recovery and additional victory Salvage. Systems Failure uses the same Salvage rewards as destruction. Regular completed encounters increase pressure once; Chasedowns do not. Combat never grants FTL Access. Elite victories additionally grant +3 Materials, Energy and Crew for the next battle, stacking with tactical rewards; escapes grant no Elite bonus. Tune `elite_salvage_multiplier` and `elite_resource_bonus` in `encounters/expedition_rules.tres`. Standalone combat destruction fallback: 10 Salvage. Enemy registry and reward settings: `encounters/expedition_rules.tres`.
 
 ## Card preferences
 
@@ -98,7 +98,7 @@ Each pool has 29 distinct identities. It includes 25 ordinary Tier 1 cards, one 
 
 ## Combat upgrade events and Chasedown
 
-Non-escape victories offer up to 1 / 2 / 3 / 3 upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades or Salvage. Quantities: `ExpeditionRules` → Combat Upgrades.
+Non-escape victories offer up to 1 / 2 / 3 / 3 upgrades for Chasedown / standard / elite / boss battles. Each selection must be a different card identity within that event; a later event can upgrade the identity again. Existing two-level limits remain. Finish skips unused choices; exhausted combat upgrades grant no extra Salvage. EMP Pulse escape grants no upgrades. Quantities: `ExpeditionRules` → Combat Upgrades.
 
 Sublight Chasedown: base 8% before pressure/profile modifiers, limit 2 per system. Eligible PoI and free travel share one roll per uninterrupted journey and a persisted 10-second active-gameplay cooldown. Initial entry, menus, invalid/same destinations, redirects, battle return and FTL travel never roll. Chasedowns grant no pressure or FTL Access. Interruption cancels the destination and leaves the ship at the interception position until a new movement order. See [implementation and tuning](../chasedown_rewards.md).
 

@@ -74,6 +74,7 @@ func _initialize() -> void:
 	var charge_state := fresh()
 	charge_state.poi_effects.grant_production("reactor",1,3)
 	charge_state.active_battle = 0
+	charge_state.defense.contact = 0
 	var result := State.BattleResult.new()
 	result.system_number = charge_state.system_number
 	result.encounter_index = 0

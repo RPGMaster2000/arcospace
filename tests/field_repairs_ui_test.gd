@@ -60,19 +60,19 @@ func run() -> void:
 		await activate(hull, dimensions.x == 960)
 		var overlay = host.resource_bar.overlay
 		check(overlay.shade.visible and overlay.extra.visible, "Mouse/touch opens existing Hull overlay with controls")
-		check(overlay.body.text.contains("2 Salvage / Hull") and overlay.body.text.contains("Maximum affordable: 6"), "Accurate price and affordable quantity")
+		check(overlay.body.text.contains("1 Salvage / Hull") and overlay.body.text.contains("Maximum affordable: 9"), "Accurate price and affordable quantity")
 		host.field_repairs.selector.value = 4
-		check(host.state.salvage == 12 and host.field_repairs.confirm.text.contains("8 Salvage"), "Selection previews exact cost without spending")
-		check(host.field_repairs.preview.bar.preview_hull == cap-5 and host.field_repairs.preview.cost_text.text.contains("12 → 4") and host.field_repairs.preview.hull_text.text.contains("+4 Hull"), "Bar and balance connect selected gain to Salvage spending")
+		check(host.state.salvage == 12 and host.field_repairs.confirm.text.contains("4 Salvage"), "Selection previews exact cost without spending")
+		check(host.field_repairs.preview.bar.preview_hull == cap-5 and host.field_repairs.preview.cost_text.text.contains("12 → 8") and host.field_repairs.preview.hull_text.text.contains("+4 Hull"), "Bar and balance connect selected gain to Salvage spending")
 		await settle()
 		check(root.get_visible_rect().encloses(overlay.panel.get_global_rect()), "Modal fits landscape")
 		check(overlay.panel.get_global_rect().encloses(host.field_repairs.confirm.get_global_rect()) and host.field_repairs.confirm.size.y >= 48, "Confirm remains visible and touch sized")
 		await capture(str(dimensions.x))
 		await activate(host.field_repairs.confirm)
-		check(host.state.hull == cap-5 and host.state.salvage == 4, "Confirm updates state immediately")
-		check(host.resource_bar.entries.hull.text.contains(str(cap-5)) and host.resource_bar.entries.salvage.text.contains("4"), "HUD values refresh immediately")
+		check(host.state.hull == cap-5 and host.state.salvage == 8, "Confirm updates state immediately")
+		check(host.resource_bar.entries.hull.text.contains(str(cap-5)) and host.resource_bar.entries.salvage.text.contains("8"), "HUD values refresh immediately")
 		host.field_repairs.confirm.pressed.emit()
-		check(host.state.salvage == 4 and host.field_repairs.confirm.disabled, "Repeated confirm cannot spend twice")
+		check(host.state.salvage == 8 and host.field_repairs.confirm.disabled, "Repeated confirm cannot spend twice")
 		overlay.dismiss()
 		host.state.salvage = 100
 		await activate(hull)
@@ -85,7 +85,7 @@ func run() -> void:
 		host.show_system()
 		await settle()
 		await activate(hull)
-		check(host.resource_bar.heartbeat_active and host.field_repairs.confirm.disabled and overlay.body.text.contains("Requires at least 2"), "No Salvage keeps warning with clear unavailable reason")
+		check(host.resource_bar.heartbeat_active and host.field_repairs.confirm.disabled and overlay.body.text.contains("Requires 1 Salvage"), "No Salvage keeps warning with clear unavailable reason")
 		# Navigating into an encounter dismisses the same popup and blocks old callbacks.
 		host.state.salvage = 100
 		host.show_poi(0) if host.state.encounters[0].kind == "poi" else host.show_battle_preview(0)
@@ -135,7 +135,7 @@ func run() -> void:
 	check(host.field_repairs.confirm.disabled, "Changing a stale selection disables confirmation")
 	host._show_hull_info()
 	host.field_repairs.confirm.pressed.emit()
-	check(host.state.salvage == 0 and host.state.hull == host.state.ship().hull_capacity, "Reopened component confirms against the new revision")
+	check(host.state.salvage == 2 and host.state.hull == host.state.ship().hull_capacity, "Reopened component confirms against the new revision")
 	check(previous_state.hull == previous_hull and previous_state.salvage == previous_salvage, "Restarted repair controls never mutate the previous expedition")
 	host.use_star_map = false
 	host.state.hull = host.state.ship().hull_capacity - 2
@@ -143,7 +143,7 @@ func run() -> void:
 	host.show_system()
 	host._show_hull_info()
 	host.field_repairs.confirm.pressed.emit()
-	check(is_instance_valid(host.grid) and host.state.salvage == 0 and host.state.hull == host.state.ship().hull_capacity, "Original grid supports the same field repair entry point")
+	check(is_instance_valid(host.grid) and host.state.salvage == 2 and host.state.hull == host.state.ship().hull_capacity, "Original grid supports the same field repair entry point")
 	host.queue_free()
 	await process_frame
 	print("Field repair UI: %d checks, %d failures" % [checks,failures])

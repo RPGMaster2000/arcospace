@@ -91,10 +91,12 @@ static func icon(key: String, font: Font, text_only: bool = false) -> String:
 	return "[" + str(entry[1]) + "]"
 
 
-static func approach_key(poi: Resource, slot: int) -> String:
+static func approach_key(poi: Resource, slot: int, approach: Resource) -> String:
+	if approach.has_meta("strategic_reward") and approach.get_meta("strategic_reward").has("extraction"):
+		return "automated"
 	if poi_key(poi) == "mining_operation" and slot < 4:
 		return ["mining_operation", "automated", "industrial", "deep_mining"][slot]
-	var requirement: String = poi.approaches[slot].requirement
+	var requirement: String = approach.requirement
 	return requirement if not requirement.is_empty() else poi_key(poi)
 
 

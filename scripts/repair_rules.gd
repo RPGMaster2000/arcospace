@@ -1,7 +1,7 @@
 extends RefCounted
 
 # Shared quantity and cost bounds for field and station repairs.
-const FIELD_SALVAGE_PER_HULL: int = 2
+const FIELD_SALVAGE_PER_HULL: int = 1
 const PLATING_SALVAGE_PER_POINT: int = 2
 const STATION_PLATING_LIMIT: int = 10
 

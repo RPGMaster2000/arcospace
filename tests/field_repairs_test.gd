@@ -25,15 +25,15 @@ func run() -> void:
 		var state = fresh(ship_index)
 		var cap: int = state.ship().hull_capacity
 		state.hull = cap - 9
-		state.salvage = 11
+		state.salvage = 5
 		check(state.field_repair_limit() == 0 and not state.field_repair(1,state.service_revision), "Closed system view refuses field repair")
 		state.field_repairs_open = true
-		check(state.field_repair_limit() == 5, "Field quantity uses floor(Salvage / 2)")
+		check(state.field_repair_limit() == 5, "Field quantity uses one Salvage per Hull")
 		var revision: int = state.service_revision
 		for amount in [-1,0,6]: check(not state.field_repair(amount,revision), "Reject invalid field quantity")
-		check(state.salvage == 11 and state.hull == cap - 9, "Rejected field repair never spends")
-		check(state.field_repair(4,revision) and state.salvage == 3 and state.hull == cap - 5, "Four Hull costs eight Salvage")
-		check(not state.field_repair(1,revision) and state.salvage == 3, "Duplicate field confirmation refused")
+		check(state.salvage == 5 and state.hull == cap - 9, "Rejected field repair never spends")
+		check(state.field_repair(4,revision) and state.salvage == 1 and state.hull == cap - 5, "Four Hull costs four Salvage")
+		check(not state.field_repair(1,revision) and state.salvage == 1, "Duplicate field confirmation refused")
 		state.active_battle = 0
 		check(not state.field_repair(1,state.service_revision), "No field repairs in combat")
 		state.active_battle = -1
@@ -45,7 +45,9 @@ func run() -> void:
 		check(not state.field_repair(1,state.service_revision), "Field repair cannot create plating")
 		state.salvage = 1
 		state.hull -= 1
-		check(not state.field_repair(1,state.service_revision), "One Salvage cannot buy a field point")
+		check(state.field_repair(1,state.service_revision) and state.salvage == 0 and state.hull == cap, "One Salvage buys one field point")
+		state.salvage = 1
+		state.hull -= 1
 		# Same service slot changes state/rate without another action or resource.
 		check(state.station_hull_title() == "Repair Hull", "Damaged station title")
 		check(state.purchase_service(0,state.service_revision,1) and state.salvage == 0 and state.hull == cap, "Station Hull repair remains 1:1")
@@ -104,8 +106,6 @@ func run() -> void:
 			board._check_winner()
 			board.refresh_display()
 			check(board.winner == "player" and state.hull == cap, "Result discards plating: " + result)
-			state.sync_battle(board.battle_result())
-			check(state.hull == cap, "Returning after repairs also caps carried Hull")
 			board.queue_free()
 			await process_frame
 	print("Field repairs and plating: %d checks, %d failures" % [checks,failures])

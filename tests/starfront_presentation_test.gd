@@ -111,7 +111,8 @@ func run() -> void:
 		board.ftl.charge = board.ftl.charge_target
 		board.current_actor = "player"
 		board._warp_out()
-		check(board.result_recorded and host.state.defense.revealed and host.state.salvage == 0, "Actual EMP combat result neutralizes attacker without destruction Salvage")
+		var rank: int = host.state.enemy_profile(host.state.encounters[index]).enemy_rank
+		check(board.result_recorded and host.state.defense.revealed and host.state.salvage == host.state.defense.tuning.emp_recovery_salvage[rank], "Actual EMP combat result neutralizes attacker and pays recovery")
 		check(not map.defense_effects.histories.has(index) and not map.defense_effects.plumes.has(index), "EMP immediately releases hostile trail and exhaust")
 		board._continue_encounter()
 		await create_timer(1.4).timeout

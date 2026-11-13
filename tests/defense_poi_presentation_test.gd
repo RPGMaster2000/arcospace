@@ -48,7 +48,7 @@ func run() -> void:
 		host.map_destination = index
 		host.show_poi(index)
 		for frame in range(16): await process_frame
-		check(host.approach_buttons.size() == 4, "Special PoI retains four choices in existing interface")
+		check(host.approach_buttons.size() == (5 if id == "mining_operation" else 4), "Special PoI shows all choices in existing interface")
 		for button in host.approach_buttons:
 			if not button.disabled:
 				check(button.details.text.contains("strategic seconds"), "Accessible action displays its time cost")

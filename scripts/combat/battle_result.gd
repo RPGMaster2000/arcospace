@@ -10,6 +10,7 @@ var result_cause: String = ""
 var escaped_by_ftl: bool = false
 var player_hull: int = 0
 var salvage: int = 0
+var salvage_rewards: Dictionary = {}
 var battles_won: int = 0
 var earned_tactical: bool = false
 var earned_strategic: bool = false
