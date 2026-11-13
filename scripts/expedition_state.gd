@@ -45,6 +45,7 @@ func _advance_defense(distance: float) -> void:
 # Activity commits and movement share event ordering and collision handling.
 func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) -> void:
 	if not is_defense() or defense == null or defense.complete or run_ended: return
+	var integrity_before: int = defense.integrity
 	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
 		rifts.advance_span.bind(defense, environmental_instances))
@@ -67,6 +68,9 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		run_ended = true
 		poi_effects.stop_extraction()
 	if not carry: poi_effects.consume_distance(from.distance_to(events.position))
+	events.integrity_before = integrity_before
+	events.integrity_after = defense.integrity
+	events.homeworld_damage = maxi(0,integrity_before-defense.integrity)
 	defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
 			or events.missile_event or events.decoy_changed or defense.failed() or target_lost
@@ -267,10 +271,12 @@ func refresh_defense_bodies() -> void:
 	if not is_defense() or layout_expansion <= 0.0: return
 	var visual := preload("res://scripts/presentation/star_system/visual_system.gd").generate(
 		seed_used, system_number, [], preload("res://resources/presentation/star_system_settings.tres"),
-		system_profile, layout_expansion, orbit_clearance)
+		system_profile, layout_expansion, orbit_clearance,
+		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
 	preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
 		visual, defense.snapshot(), SystemLayout.planetary_indices(encounters), layout_expansion, orbit_clearance,
-		SystemLayout.planetary_radii(encounters))
+		SystemLayout.planetary_radii(encounters),
+		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
 	defense.decorative_bodies = visual.planets.slice(1)
 
 
@@ -497,19 +503,45 @@ func generate_system() -> bool:
 	poi_effects.leave_system()
 	SystemGenerator.generate(self)
 	bind_defense_movement()
-	refresh_defense_bodies()
-	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
-	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self)
-	var routed: bool = is_defense() and defense.v2
-	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
-	environmental_instances = RouteEnvironments.asteroid(seed_used, system_number, defense, route_points) if routed \
-		else EnvironmentData.Asteroids.generate(seed_used, system_number, route_points, layout_expansion)
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
 	var influence := solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
 		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range,
 		0.8 if layout_expansion > 0.0 else 1.0)
-	if not routed or RouteEnvironments.relevant(influence, defense): environmental_instances.append(influence)
+	influence.generation.celestial_clearance = true
+	influence.generation.visual_margin = rules.defense_tuning.environment_visual_margin
+	influence = JSON.parse_string(JSON.stringify(influence))
+	if is_defense():
+		# Navigable gas PoIs already have authoritative orbit anchors. Preserve them
+		# and omit optional stellar influence if no safe volume fits that layout.
+		for index in SystemLayout.planetary_indices(encounters):
+			if encounters[index].poi.resource_path.get_file().get_basename() != "gas_giant": continue
+			if defense.anchors[index].length()-SystemLayout.planetary_radius("gas_giant") < influence.region.radius+influence.generation.visual_margin:
+				influence = {}
+				break
+	if not influence.is_empty() and (not is_defense() or not defense.v2 or RouteEnvironments.relevant(influence,defense)):
+		environmental_instances.append(influence)
+	# A pure preview proves the full gas orbit layout is feasible before committing
+	# encounter coordinates. No gameplay RNG is consumed by either preview.
+	var preview: Dictionary = {}
+	if not environmental_instances.is_empty():
+		var visual := preload("res://scripts/presentation/star_system/visual_system.gd")
+		preview = visual.generate(seed_used,system_number,[] if is_defense() and layout_expansion > 0 else preload("res://scripts/presentation/star_system/visual_system.gd").entries_for(self),star_settings,system_profile,layout_expansion,orbit_clearance,
+			preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
+		if is_defense():
+			preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(preview,defense.snapshot(),SystemLayout.planetary_indices(encounters),layout_expansion,orbit_clearance,SystemLayout.planetary_radii(encounters),
+				preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
+		if not preview.get("solar_clear",true):
+			environmental_instances.clear()
+			preview.clear()
+	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
+	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
+	var routed: bool = is_defense() and defense.v2
+	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
+	var solar_records := environmental_instances.duplicate(true)
+	environmental_instances = RouteEnvironments.asteroid(seed_used, system_number, defense, route_points) if routed \
+		else EnvironmentData.Asteroids.generate(seed_used, system_number, route_points, layout_expansion)
+	environmental_instances.append_array(solar_records)
 	var hostile_positions: Array = []
 	for index in encounters.size():
 		var location := battle_location(index)
@@ -518,6 +550,12 @@ func generate_system() -> bool:
 		route_points if routed else hostile_positions, environmental_instances, layout_expansion)
 	if routed: storm = RouteEnvironments.storm(storm, defense, route_points, environmental_instances)
 	if not storm.is_empty(): environmental_instances.append(storm)
+	if is_defense(): environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
+	if is_defense() and not preview.is_empty() and preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances) == preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(solar_records):
+		defense.decorative_bodies = preview.planets.slice(1)
+	else:
+		refresh_defense_bodies()
+
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.

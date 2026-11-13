@@ -7,6 +7,7 @@ var integrity_text: Label
 var construction: Node3D
 var home_label: Label3D
 var displayed_integrity: int = -1
+var display_override := -1.0
 var hit_remaining: float = 0.0
 var histories: Dictionary = {}
 var ribbons: Dictionary = {}
@@ -22,7 +23,7 @@ const Layout = preload("res://scripts/expedition/system_layout.gd")
 static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = [], expansion: float = 0.0,
-		clearance: float = 0.0, planet_sizes: Dictionary = {}) -> void:
+		clearance: float = 0.0, planet_sizes: Dictionary = {}, solar_clearance: float = 0.0) -> void:
 	# The gameplay layout supplies every navigable anchor. Cosmetic RNG only
 	# controls the planet surface, star and atmosphere; it cannot move the base.
 	var generated_planets: Array = data.planets.duplicate(true)
@@ -82,6 +83,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 		var best_gap: float = -INF
 		for base_distance in distances:
 			var distance: float = base_distance * factor
+			if planet.type == "gas_giant" and distance-VisualSystem.planet_extent(planet) < solar_clearance: continue
 			if planetary_radii.any(func(other):
 				var gap: float = other.y + VisualSystem.planet_extent(planet) + clearance if clearance > 0.0 else 1.05
 				return absf(other.x - distance) < gap): continue
@@ -93,6 +95,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 				if gap > best_gap:
 					best_gap = gap
 					best = candidate
+		if best_gap < 4.0 and planet.type == "gas_giant" and solar_clearance > 0.0: data.solar_clear = false
 		if best_gap >= 4.0:
 			planet.position = best
 			planet.distance = best.length()
@@ -170,7 +173,7 @@ func configure(source: Control) -> void:
 
 func refresh(snapshot: Dictionary) -> void:
 	integrity_bar.max_value = float(snapshot.get("maximum_integrity", 100))
-	integrity_bar.value = snapshot.integrity
+	integrity_bar.value = snapshot.integrity if display_override < 0 else display_override
 	integrity_text.text = "HOMEWORLD  %d / %d" % [snapshot.integrity, integrity_bar.max_value]
 	if displayed_integrity >= 0 and snapshot.integrity < displayed_integrity:
 		hit_remaining = 1.5
@@ -192,10 +195,22 @@ func refresh(snapshot: Dictionary) -> void:
 				var original_scale: Vector3 = model.scale
 				model.basis = map._facing_basis(direction) * Basis.from_scale(original_scale)
 
+func set_display_integrity(value: float) -> void:
+	display_override = value
+	integrity_bar.value = value
+	integrity_text.add_theme_color_override("font_color",Color("ff9a88"))
+	integrity_text.text = "HOMEWORLD  %d / %d" % [roundi(value),integrity_bar.max_value]
+
+func clear_display_integrity() -> void:
+	display_override = -1
+	if is_instance_valid(map): refresh(map.defense_view)
+
 func _process(delta: float) -> void:
 	if not is_instance_valid(map) or not is_instance_valid(map.ship): return
 	var home_position: Vector3 = map.planet_nodes[0].position
 	home_panel.position = map.camera.unproject_position(home_position + Vector3.UP * 3.2) - Vector2(80, 45)
+	if map.presentation_blocked:
+		home_panel.position = home_panel.position.clamp(Vector2(20,90),map.size-Vector2(200,180))
 	home_panel.visible = map.visible and not map.focused and not map.introducing and not map.camera.is_position_behind(home_position)
 	if home_panel.visible and is_instance_valid(construction):
 		for ring in construction.rings.values():

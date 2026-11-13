@@ -174,21 +174,18 @@ func presentation_checks(examples: Dictionary) -> void:
 			check(is_equal_approx(sheet.position.y, axes.y * height)
 				and is_equal_approx(sheet.scale.x, axes.x * sqrt(1.0 - height * height))
 				and is_equal_approx(sheet.scale.z, axes.z * sqrt(1.0 - height * height)), "Sheet fits its authoritative ellipsoid section")
-		var control: Control = map.storm_legend
-		var button: Button = control.get_child(0).get_child(0)
-		var family: String = Modifiers.storm_family(Storms.modifier_id(subtype)).capitalize()
-		check(control.visible and button.text.contains(family)
-			and map.point_is_reserved(button.get_global_rect().get_center()), "Storm legend identifies the family and owns its input")
-		var before: Array = state.navigation.position.duplicate()
-		button.pressed.emit()
-		check(control.get_child(0).get_child(1).visible and state.navigation.position == before, "Touch-accessible legend expands without navigating")
-		await process_frame
-		check(root.get_visible_rect().encloses(control.get_global_rect()), "Expanded legend fits in the viewport")
+		check(not is_instance_valid(map.storm_legend), "Persistent storm-family HUD legend is removed")
 		await capture(subtype)
 		host._inspect_marker(0)
 		for frame in range(18): await process_frame
 		var details: Button = host.view.find_child("ModifierDetails", true, false)
 		check(details != null and details.visible and details.text.to_lower().contains(subtype), "Hostile briefing identifies the selected storm")
+		var before: Array = state.navigation.position.duplicate()
+		details.pressed.emit()
+		check(state.navigation.position == before, "Storm inspection Details does not navigate")
+		var overlay = details.get_parent().get("_overlay")
+		check(overlay.shade.visible and overlay.body.text.contains(Modifiers.description(Storms.modifier_id(subtype))), "Storm rules remain available through inspection")
+		overlay.dismiss()
 		if subtype == "ion":
 			await capture("ion-hostile-inspection")
 			host._dismiss_inspection()

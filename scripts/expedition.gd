@@ -151,7 +151,15 @@ var selected_encounter: int = -1
 #region Screen initialization
 
 
+var homeworld_sequence = preload("res://scripts/presentation/star_system/homeworld_sequence.gd").new()
+var homeworld_previous_phase: Phase = Phase.OVERVIEW
+
 func _ready() -> void:
+	add_child(homeworld_sequence)
+	homeworld_sequence.finished.connect(func():
+		if state != null and not state.run_ended and phase == Phase.INTRO:
+			phase = homeworld_previous_phase
+			state.navigation.rebase_movement(state.navigation.position))
 	_build_ui()
 	_setup_decoy_controls()
 	card_management = CardManagement.new()
@@ -303,6 +311,7 @@ func _presentation_current(revision: int, owner: Resource) -> bool:
 
 
 func _cancel_presentation() -> void:
+	homeworld_sequence.cancel()
 	if state != null: state.navigation.rebase_movement()
 	# Invalidate first: cancellation wakes waiters synchronously.
 	_presentation_revision += 1
@@ -462,13 +471,14 @@ func show_system(preserve_transition: bool = false) -> void:
 	return_to_outpost = false
 	_clear("system", preserve_transition)
 	if state.hull <= 0 or state.run_ended:
+		if state.is_defense() and state.defense.failed() and _uses_3d_map():
+			_show_star_map(false)
+			screen.map_layout(true,false)
+			star_map.set_active(true)
+			phase = Phase.INTRO
+			homeworld_sequence.begin(star_map,state,true,_exit)
+			return
 		var defeat_message: String = "Expedition ended — your ship was lost."
-		if state.is_defense() and state.defense.mothership_arrived():
-			defeat_message = "Expedition ended — the mothership reached the homeworld."
-		elif state.is_defense() and state.defense.integrity <= 0:
-			defeat_message = "Expedition ended — homeworld lost."
-		elif state.is_defense() and state.defense.failed():
-			defeat_message = "Expedition ended — all attackers reached the homeworld before the mothership could be located."
 		if _uses_3d_map():
 			screen.map_layout(false, false)
 			if is_instance_valid(star_map): star_map.set_active(false)
@@ -538,6 +548,14 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
+		star_map.locator_exclusions = func():
+			var areas: Array = []
+			for panel in screen.overview_hud.panels:
+				if panel.is_visible_in_tree():
+					var rect: Rect2 = panel.get_global_rect()
+					rect.position -= star_map.global_position
+					areas.append(rect)
+			return areas
 		star_map.speed_profile = state.travel_speed_profile
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
@@ -1044,7 +1062,7 @@ func _preview_card(card: Resource) -> void:
 
 
 func _show_current_deck() -> void:
-	if presenting_outcome or card_management.shade.visible:
+	if transitioning or presenting_outcome or card_management.shade.visible:
 		return
 	resource_bar.overlay.dismiss()
 	current_deck_viewer.show_cards(
@@ -1248,6 +1266,8 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 var _navigation_clock: int = 0
 
 func _process(_delta: float) -> void:
+	if is_instance_valid(settings_button): settings_button.disabled = homeworld_sequence.active
+	if is_instance_valid(deck_button): deck_button.disabled = homeworld_sequence.active
 	_update_decoy_controls()
 	var now: int = Time.get_ticks_msec()
 	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
@@ -1259,6 +1279,7 @@ func _process(_delta: float) -> void:
 	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
 		state.advance_chasedown_cooldown(elapsed)
 	_sample_navigation_position()
+	_present_homeworld_damage()
 
 func _sample_navigation_position(arriving: bool = false) -> void:
 	if state == null: return
@@ -1309,6 +1330,7 @@ func _free_arrived() -> void:
 
 # Simulation decides events; coordinator cancels presentation and routes existing UI.
 func _defense_updated(events: Dictionary) -> void:
+	homeworld_sequence.record(state,events)
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
 	star_map.sync_defense(state.defense_map_view())
 	star_map.flash_missile_shots(events.get("missile_shots", []))
@@ -1336,6 +1358,19 @@ func _defense_updated(events: Dictionary) -> void:
 		if not unit.is_empty() and state.defense.available(unit):
 			var origin := State.Defense.point(state.navigation.position)
 			_retarget_decoy_pursuit.call_deferred(index, origin)
+
+# Called only after navigation sampling/routing. Modals and other cinematics keep
+# the queue pending; the existing phase gates the strategic clock and all input.
+func _present_homeworld_damage() -> void:
+	if state == null or not state.is_defense() or state.run_ended: return
+	if not homeworld_sequence.available(state): return
+	if phase not in [Phase.OVERVIEW,Phase.TRAVELING] or not _map_input_allowed(): return
+	if not is_instance_valid(star_map) or not star_map.visible or star_map.focused: return
+	if star_map.camera.motion and star_map.camera.motion.is_running(): return
+	homeworld_previous_phase = phase
+	phase = Phase.INTRO
+	homeworld_sequence.begin(star_map,state)
+
 
 func _retarget_decoy_pursuit(index: int, origin: Vector3) -> void:
 	if phase != Phase.TRAVELING or state.travel_destination != index or not is_instance_valid(star_map): return

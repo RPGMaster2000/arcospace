@@ -30,6 +30,8 @@ var system_profile: String = "industrial"
 var environment_source: Callable
 var modifier_source: Callable
 var storm_legend: PanelContainer
+var presentation_blocked := false
+var locator_exclusions: Callable
 var rift_visual: Node3D
 const DecoyVisual = preload("res://scripts/presentation/star_system/decoy_visual.gd")
 var decoy_preview: Node3D
@@ -200,14 +202,15 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	travel_duration = duration * Layout.scale_factor(layout_expansion)
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
+	var solar_clearance := preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environment_instances())
 	visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
-		settings, system_profile, layout_expansion, orbit_clearance)
+		settings, system_profile, layout_expansion, orbit_clearance, solar_clearance)
 	if not defense_view.is_empty():
 		var planet_sizes := {}
 		for entry in entries.filter(VisualSystem.is_planetary):
 			planet_sizes[entry.index] = Layout.planetary_radius(entry.model_kind)
 		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
-			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes)
+			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes, solar_clearance)
 	# New exploration runs use State's committed static battle anchors. Old saves
 	# without anchors keep the historical cosmetic layout and neutral environment.
 	if defense_view.is_empty():
@@ -359,6 +362,13 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	feedback.canvas = self
 	feedback.camera = camera
 	feedback.ship = ship
+	feedback.exclusion_regions = func():
+		var areas: Array = locator_exclusions.call() if locator_exclusions.is_valid() else []
+		if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.home_panel):
+			var rect: Rect2 = defense_effects.home_panel.get_global_rect()
+			rect.position -= global_position
+			areas.append(rect)
+		return areas
 	world.add_child(feedback)
 	ship.position = _initial_ship_position() if defense_view.is_empty() else _defense_point(defense_view.start)
 	orbit_index = last_destination if objects.has(last_destination) else -1
@@ -376,14 +386,6 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		storm_legend.hide()
 		storm_legend.queue_free()
 		storm_legend = null
-	if not storm.is_empty():
-		storm_legend = StormVisual.legend(storm)
-		add_child(storm_legend)
-		storm_legend.set_anchors_and_offsets_preset(PRESET_TOP_LEFT)
-		storm_legend.offset_left = 12.0
-		storm_legend.offset_right = 202.0
-		storm_legend.offset_top = 66.0
-		storm_legend.offset_bottom = 112.0
 	focused = false
 	interactive = true
 
@@ -414,8 +416,7 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(ship):
 		return
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
-	if is_instance_valid(storm_legend):
-		storm_legend.visible = _zoom_enabled() and not introducing and not inspection_active
+	if is_instance_valid(feedback): feedback.suppressed = introducing or presentation_blocked
 	for p in visual_data.get("planets",[]):
 		planet_nodes[p.index].get_node("OverviewName").visible = p.encounter == -1 and not focused and not introducing
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)

@@ -74,6 +74,7 @@ var salvage: int = 0
 var salvage_rewards: Dictionary = {}
 var battles_won: int = 0
 var result_recorded: bool = false
+var result_salvage_gained: int = 0
 # Leaving an unfinished battle preserves its entry checkpoint, including during VFX cleanup.
 var checkpoint_exit: bool = false
 # Presentation-only latch: reward recording can precede the visible result.
@@ -810,7 +811,6 @@ func _warp_out() -> void:
 	enemy_timer.stop()
 	$LastActionLabel.text = battle_setup.emp_victory_message if battle_setup != null and not battle_setup.emp_victory_message.is_empty() else "EMP Pulse complete — escaped!"
 	refresh_display()
-	$MatchResult/Panel/Title.text = "EMP PULSE SUCCESS"
 
 
 func _damage_ftl(amount: int) -> void:
@@ -916,6 +916,8 @@ func _display_snapshot() -> Dictionary:
 		"shields_disabled": modifier.shields_disabled(),
 		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
 		"rewards_text": victory_description(),
+		"salvage_earned": result_salvage_gained,
+		"upgrades_available": expedition.upgrades_remaining if expedition != null and expedition.pending_choice == "upgrade" else 0,
 		"defense_recovery": salvage_rewards.has("recovery"),
 		"system_secured": salvage_rewards.has("secured"),
 		"in_expedition": expedition != null,
@@ -1067,6 +1069,7 @@ func _resource_reward_text(amount: int) -> String:
 func _record_result() -> void:
 	if winner.is_empty() or result_recorded or checkpoint_exit:
 		return
+	var salvage_before: int = salvage
 	# Freeze combat rewards at the authoritative result boundary.
 	earned_tactical = tactical_victory()
 	earned_strategic = strategic_victory()
@@ -1083,6 +1086,7 @@ func _record_result() -> void:
 		if expedition.record_battle(result):
 			salvage = result.salvage
 			salvage_rewards = result.salvage_rewards
+	result_salvage_gained = maxi(0,salvage-salvage_before)
 	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
 		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 

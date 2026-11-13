@@ -120,7 +120,7 @@ func _id(event: int) -> String:
 
 static func _clear_navigation(at: Vector3, defense: RefCounted, instances: Array) -> bool:
 	if not Layout.bounds(defense.layout_expansion, MAP_SETTINGS.system_bounds).grow(-RADIUS).has_point(Vector2(at.x, at.z)): return false
-	if at.distance_to(defense.home) <= RADIUS + 2.8: return false
+	if at.distance_to(defense.home) <= RADIUS + preload("res://scripts/expedition/environment_clearance.gd").home_radius(defense.tuning.environment_visual_margin): return false
 	for anchor in defense.anchors.values():
 		if at.distance_to(anchor) <= RADIUS + 1.6: return false
 	for site in defense.construction_sites.values():
@@ -133,7 +133,7 @@ static func _clear_navigation(at: Vector3, defense: RefCounted, instances: Array
 	if defense.layout_expansion <= 0.0: return at.length() > 12.9
 	for body in defense.decorative_bodies:
 		if at.distance_to(body.position) <= RADIUS + float(body.radius) * 1.5: return false
-	return at.length() > RADIUS + 2.8
+	return at.length() > RADIUS + preload("res://scripts/expedition/environment_clearance.gd").home_radius(defense.tuning.environment_visual_margin)
 
 
 static func _covered(location: Array, instances: Array) -> bool:

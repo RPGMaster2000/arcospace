@@ -1,4 +1,6 @@
 extends Resource
+## Extra visual gap outside the complete rendered homeworld envelope. New generation only.
+@export_range(0, 3, 0.05) var environment_visual_margin: float = 0.6
 @export_range(1, 30, 0.1) var player_speed: float = 7.0
 @export_range(0, 5, 0.1) var enemy_speed: float = 1.2
 @export_range(0.001, 1, 0.001) var seconds_per_distance: float = 0.142857142857

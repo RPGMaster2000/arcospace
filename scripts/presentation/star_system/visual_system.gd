@@ -21,7 +21,7 @@ static func orbit_point(planet: Dictionary, angle: float) -> Vector3:
 	return Basis(Vector3.UP, planet.orientation) * Basis(Vector3.RIGHT, planet.inclination) * point
 
 static func generate(seed_value: int, number: int, entries: Array, settings: Resource,
-		profile: String = "industrial", expansion: float = 0.0, orbit_clearance: float = 0.0) -> Dictionary:
+		profile: String = "industrial", expansion: float = 0.0, orbit_clearance: float = 0.0, solar_clearance: float = 0.0) -> Dictionary:
 	var rng = random_for(seed_value, number, "planets")
 	var factor := Layout.scale_factor(expansion)
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {},
@@ -109,6 +109,61 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 	var atmosphere_rng = random_for(seed_value,number,"atmosphere")
 	var bright_chance: float = profile_data.nebula_chance
 	result.atmosphere_strength = atmosphere_rng.randf_range(1.1,1.55) if atmosphere_rng.randf() < bright_chance else atmosphere_rng.randf_range(0.7,1.05)
+	# Apply clearance AFTER all baseline anchors and appearance draws. Moving a
+	# gas orbit must never perturb an unrelated battle destination. Finite
+	# deterministic outward retries change only invalid gas orbits. Each
+	# candidate clears every full orbital shell, not just today's planet position.
+	result.solar_clear = true
+	for p in result.planets:
+		if p.type != "gas_giant" or solar_clearance <= 0.0: continue
+		if p.distance*(1.0-p.eccentricity)-planet_extent(p) >= solar_clearance: continue
+		var minimum: float = (solar_clearance+planet_extent(p)+0.001)/(1.0-p.eccentricity)
+		var bounds := Layout.bounds(expansion,settings.system_bounds)
+		var limit: float = minf(minf(absf(bounds.position.x),bounds.end.x),minf(absf(bounds.position.y),bounds.end.y))
+		var placed := false
+		for attempt in range(32):
+			var distance: float = minimum+attempt*0.6
+			if distance*(1.0+p.eccentricity)+planet_extent(p) > limit: break
+			var overlap := false
+			for other in result.planets:
+				if other.index == p.index: continue
+				if absf(distance-other.distance) < distance*p.eccentricity+other.distance*other.eccentricity+planet_extent(p)+planet_extent(other)+orbit_clearance:
+					overlap = true
+					break
+			if overlap: continue
+			p.distance = distance
+			p.position = orbit_point(p,p.phase)
+			if p.encounter >= 0: result.anchors[p.encounter] = p.position
+			placed = true
+			break
+		if not placed: result.solar_clear = false
+	for entry in entries:
+		if entry.model_kind != "gas_giant" or result.assignments.has(entry.index) or solar_clearance <= 0.0: continue
+		var radius: float = Layout.planetary_radius("gas_giant")
+		var original: Vector3 = result.anchors[entry.index]
+		var radial: float = Vector2(original.x,original.z).length()
+		if radial-radius >= solar_clearance: continue
+		var direction := Vector3(original.x,0,original.z).normalized()
+		if direction.length_squared() < 0.5: direction = Vector3.RIGHT
+		var bounds := Layout.bounds(expansion,settings.system_bounds)
+		var limit: float = minf(minf(absf(bounds.position.x),bounds.end.x),minf(absf(bounds.position.y),bounds.end.y))-radius
+		var found := false
+		for attempt in range(32):
+			var distance: float = solar_clearance+radius+0.001+attempt*0.6
+			if distance > limit: break
+			var bands: Array = []
+			for p in result.planets: bands.append(Vector2(p.distance,p.distance*p.eccentricity+planet_extent(p)))
+			for index in result.poi_orbits:
+				if index != entry.index: bands.append(Vector2(result.poi_orbits[index].distance,float(result.placement[index].radius)))
+			if not _orbit_clear(distance,bands,radius+orbit_clearance): continue
+			var candidate := direction*distance
+			if clearance(candidate,radius,occupied.filter(func(other): return not other.position.is_equal_approx(original))) < settings.destination_clearance: continue
+			result.anchors[entry.index] = candidate
+			result.placement[entry.index].position = candidate
+			if result.poi_orbits.has(entry.index): result.poi_orbits[entry.index] = circular_orbit(candidate)
+			found = true
+			break
+		if not found: result.solar_clear = false
 	return result
 
 static func is_planetary(entry: Dictionary) -> bool:
@@ -248,7 +303,7 @@ static func _orbit_clear(distance: float, bands: Array, gap: float) -> bool:
 
 # Reuse the existing placement algorithm and default calibration at system creation.
 # Only battle anchors become gameplay state. Moving/cosmetic PoIs stay presentation.
-static func battle_positions(state: Resource) -> Dictionary:
+static func entries_for(state: Resource) -> Array:
 	var entries: Array = []
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
@@ -258,9 +313,14 @@ static func battle_positions(state: Resource) -> Dictionary:
 		entries.append({"index": index, "model_kind": key, "profile": profile})
 	if not state.service.is_empty():
 		entries.append({"index": state.SERVICE_INDEX, "model_kind": "trading_outpost"})
+	return entries
+
+static func battle_positions(state: Resource, prepared: Dictionary = {}) -> Dictionary:
+	var entries := entries_for(state)
 	var layout_seed: int = state.seed_used if state.seed_used != 0 else hash("%d:%d:sky" % [state.seed_used, state.system_number])
-	var data: Dictionary = generate(layout_seed, state.system_number, entries,
-		preload("res://resources/presentation/star_system_settings.tres"), state.system_profile, state.layout_expansion, state.orbit_clearance)
+	var data: Dictionary = prepared if not prepared.is_empty() else generate(layout_seed, state.system_number, entries,
+		preload("res://resources/presentation/star_system_settings.tres"), state.system_profile, state.layout_expansion, state.orbit_clearance,
+		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(state.environmental_instances))
 	var result: Dictionary = {}
 	for entry in entries:
 		if entry.get("profile") == null: continue
