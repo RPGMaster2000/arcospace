@@ -19,7 +19,7 @@ def rates(result, metric):
 
 
 def table(headers, rows):
-    return "\n".join(" | ".join(["", *map(str, row), ""])
+    return "\n".join("| " + " | ".join(map(str, row)) + " |"
                      for row in [headers, ["---"] * len(headers), *rows])
 
 

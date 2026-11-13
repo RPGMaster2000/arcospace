@@ -4,6 +4,7 @@ import argparse
 from collections import Counter, defaultdict
 import gzip
 import json
+from itertools import product
 from pathlib import Path
 from random import Random
 from statistics import mean
@@ -20,13 +21,18 @@ def key(row):
     return tuple(row[name] for name in ("player", "enemy", "modifier", "policy", "seed"))
 
 
-def load_candidate(path):
+def load_candidate(path, control):
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
     matches = {key(row): row for row in rows if row["type"] == "match"}
     if (rows[0]["type"] != "config" or rows[0]["variant"] != path.stem
             or rows[-1] != {"type": "complete", "matches": len(matches)}
             or len(matches) != sum(row["type"] == "match" for row in rows)):
         raise ValueError(f"Incomplete or duplicate matches in {path}")
+    config = rows[0]
+    conditions = {k[:4] for k in matches}
+    expected = set(product(conditions, range(config["first_seed"], config["last_seed"] + 1)))
+    if {(k[:4], k[4]) for k in matches} != expected or not matches.keys() <= control.keys():
+        raise ValueError(f"Invalid seed coverage in {path}")
     cards = defaultdict(lambda: {"before": Counter(), "after": Counter()})
     for row in rows:
         if row["type"] == "cards":
@@ -91,7 +97,6 @@ def main():
     ships = config["ships"]
     enemies = [enemy["name"] for enemy in config["enemies"]]
     data = {
-        "storm_only_revision": config["revision"],
         "storm_only": {name: compare(baseline, storm, (k for k in storm if k[2] == name))
                        for name in STORMS},
         "unchanged_nonstorm_rows": len(nonstorm),
@@ -99,7 +104,7 @@ def main():
     }
     for name in CANDIDATES:
         path = args.candidate_shards / f"{name}.jsonl"
-        variant, cards = load_candidate(path)
+        variant, cards = load_candidate(path, storm)
         affected = [ship for ship in ships if any(k[0] == ship for k in variant)]
         data["candidates"][name] = {
             "overall": compare(storm, variant, variant),
@@ -134,7 +139,7 @@ def main():
                 ship: compare(control, combined, (k for k in control if k[0] == ship))
                 for ship in sorted({k[0] for k in control})
             }
-    args.output.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
