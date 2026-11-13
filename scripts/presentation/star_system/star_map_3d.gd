@@ -31,6 +31,10 @@ var environment_source: Callable
 var modifier_source: Callable
 var storm_legend: PanelContainer
 var rift_visual: Node3D
+const DecoyVisual = preload("res://scripts/presentation/star_system/decoy_visual.gd")
+var decoy_preview: Node3D
+var active_decoy: Node3D
+var decoy_controls: Control
 const MissileVisual = preload("res://scripts/presentation/star_system/missile_visual.gd")
 var missile_ids: Dictionary = {}
 
@@ -500,6 +504,7 @@ func _facing_basis(direction: Vector3, bank: float = 0.0) -> Basis:
 
 
 func travel(index: int) -> void:
+	if is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
@@ -516,6 +521,7 @@ func travel(index: int) -> void:
 # Free movement uses exactly the same presentation and interception path as PoI travel.
 # The coordinator authorizes intent; this map never changes expedition state.
 func travel_to_position(point: Vector3, check_eligibility: bool = true) -> void:
+	if is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or focused:
 		return
 	if check_eligibility and before_free_travel.is_valid() and not before_free_travel.call(point):
@@ -756,6 +762,7 @@ func _input(event: InputEvent) -> void:
 
 # The same nearest-target arbitration is used for native touch, mouse and GUI hit tests.
 func nearest_marker(point: Vector2) -> int:
+	if is_instance_valid(decoy_preview): return -1
 	if point_is_reserved(point) or not get_global_rect().has_point(point): return -1
 	var nearest: int = -1
 	var distance: float = INF
@@ -773,6 +780,7 @@ func nearest_marker(point: Vector2) -> int:
 # Touch selection is separate from confirmation; only a second tap on the
 # same current marker inside the interval initiates a journey.
 func _touch_tap(point: Vector2) -> void:
+	if is_instance_valid(decoy_preview): return
 	if not touch_confirmation_required:
 		_tap_at(point)
 		return
@@ -803,6 +811,7 @@ func consume_gesture() -> void:
 	last_touch_msec = 0
 
 func _tap_at(point: Vector2) -> void:
+	if is_instance_valid(decoy_preview): return
 	if inspection_active:
 		inspection_dismissed.emit()
 		return
@@ -820,13 +829,19 @@ func _tap_at(point: Vector2) -> void:
 
 
 func screen_to_navigation(point: Vector2) -> Vector3:
+	var target := _project_navigation_plane(point)
+	var bounds := Layout.bounds(layout_expansion, settings.system_bounds)
+	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x-0.001),0,clampf(target.z,bounds.position.y,bounds.end.y-0.001))
+
+func _project_navigation_plane(point: Vector2) -> Vector3:
 	var local: Vector2 = point - global_position
 	var origin: Vector3 = camera.project_ray_origin(local)
 	var direction: Vector3 = camera.project_ray_normal(local)
 	if absf(direction.y) < 0.0001: return ship.position
-	var target: Vector3 = origin + direction * (-origin.y/direction.y)
-	var bounds := Layout.bounds(layout_expansion, settings.system_bounds)
-	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x-0.001),0,clampf(target.z,bounds.position.y,bounds.end.y-0.001))
+	return origin + direction * (-origin.y/direction.y)
+
+func decoy_point() -> Vector3:
+	return _project_navigation_plane(get_global_rect().get_center())
 
 
 func _point_on_object(point: Vector2) -> bool:
@@ -967,6 +982,7 @@ func _initial_ship_position() -> Vector3:
 	return Vector3(0,1.5,3)
 
 func point_is_reserved(point: Vector2) -> bool:
+	if is_instance_valid(decoy_controls) and decoy_controls.visible and decoy_controls.get_global_rect().has_point(point): return true
 	if is_instance_valid(storm_legend) and storm_legend.is_visible_in_tree():
 		if storm_legend.get_global_rect().has_point(point): return true
 	if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.construction):
@@ -1097,6 +1113,16 @@ func _defense_hostile(index: int) -> bool:
 func sync_defense(snapshot: Dictionary) -> void:
 	defense_view = snapshot
 	_sync_temporal_rift(snapshot.get("temporal_rift", {}))
+	var beacon: Dictionary = snapshot.get("decoy", {})
+	if is_instance_valid(active_decoy) and (beacon.is_empty() or active_decoy.get_parent() != visual_root):
+		active_decoy.hide()
+		active_decoy.queue_free()
+		active_decoy = null
+	if not beacon.is_empty() and not is_instance_valid(active_decoy):
+		active_decoy = DecoyVisual.new()
+		active_decoy.position = _defense_point(beacon.position)
+		active_decoy.configure(beacon.radius, false)
+		visual_root.add_child(active_decoy)
 	_sync_missiles(snapshot.get("missiles", {}).get("active", []), _defense_point(snapshot.home))
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)

@@ -8,6 +8,7 @@ var missiles := Missiles.new()
 var tuning: Resource
 var layout_expansion: float = 0.0
 var decorative_bodies: Array = []
+var decoy: Dictionary = {}
 var home: Vector3
 var start: Vector3
 var anchors: Dictionary = {}
@@ -192,8 +193,10 @@ func neutralize(index: int) -> bool:
 	var unit: Dictionary = unit_for(index)
 	if unit.is_empty() or not available(unit): return false
 	unit.status = "neutralized"
+	if not decoy.is_empty(): decoy.affected.erase(index)
 	contact = -1
 	if unit.mothership:
+		clear_decoy()
 		complete = true
 		mothership_advancing = false
 		deferred_seconds = 0.0
@@ -218,8 +221,48 @@ static func hit_time(relative: Vector3, velocity: Vector3, radius: float, limit:
 	return t if t >= 0 and t <= limit else INF
 # Both player movement and committed activity costs use this same clock.
 # Activity time advances the fleet without initiating chained stationary battles.
-func target_for(_unit: Dictionary) -> Vector3:
+func target_for(unit: Dictionary) -> Vector3:
+	if not decoy.is_empty() and decoy.affected.has(unit.encounter): return point(decoy.position)
 	return home
+
+func decoy_targets(at: Vector3, radius: float) -> Array[int]:
+	var targets: Array[int] = []
+	for unit in units:
+		if not unit.mothership and available(unit) and _speed(unit) > 0.0 and at.distance_to(unit.position) <= radius + 0.00001:
+			targets.append(unit.encounter)
+	return targets
+
+func place_decoy(at: Vector3) -> void:
+	decoy = {"position": wire(at), "radius": tuning.decoy_attraction_radius,
+		"remaining": tuning.decoy_lifetime, "affected": []}
+	for index in decoy_targets(at, decoy.radius): _divert(index)
+
+func _divert(index: int) -> void:
+	if decoy.affected.has(index): return
+	decoy.affected.append(index)
+
+func clear_decoy() -> void:
+	if decoy.is_empty(): return
+	decoy.clear()
+
+func _restore_decoy(value: Variant) -> bool:
+	if not value is Dictionary: return false
+	if value.is_empty(): return true
+	if complete or not Navigation.valid_point(value.get("position"), false): return false
+	var at := point(value.position)
+	if absf(at.y) > 0.001 or not Layout.bounds(layout_expansion).has_point(Vector2(at.x, at.z)): return false
+	for key in ["radius", "remaining"]:
+		var amount: Variant = value.get(key)
+		if not (amount is int or amount is float) or not is_finite(float(amount)) or amount <= 0 or amount > 120: return false
+	if not value.get("affected") is Array: return false
+	var affected: Array[int] = []
+	for index in value.affected:
+		if not number(index, 0, 1000): return false
+		var unit := unit_for(int(index))
+		if unit.is_empty() or unit.mothership or not available(unit) or affected.has(int(index)): return false
+		affected.append(int(index))
+	decoy = {"position": wire(at), "radius": float(value.radius), "remaining": float(value.remaining), "affected": affected}
+	return true
 
 func _speed(unit: Dictionary) -> float:
 	if unit.mothership:
@@ -264,16 +307,19 @@ func _advance_pressure(seconds: float) -> bool:
 func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false,
 		observe_span: Callable = Callable()) -> Dictionary:
 	var result: Dictionary = {"position": to, "contact": -1, "missile_contact": -1, "missile_event": false,
-		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false}
+		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false, "decoy_changed": false}
 	if complete or contact >= 0 or missiles.pending >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
 	var elapsed: float = 0.0
 	var spawn_blocked: bool = false
-	while elapsed < seconds or (v2 and elapsed == seconds):
+	while elapsed < seconds or ((v2 or not decoy.is_empty()) and elapsed == seconds):
 		var span: float = seconds - elapsed
 		var event_time: float = span
 		var event_unit: Dictionary = {}
 		var event_kind: String = ""
+		if not decoy.is_empty() and decoy.remaining <= event_time:
+			event_time = decoy.remaining
+			event_kind = "decoy_end"
 		if poi_effects != null and poi_effects.next_boundary() <= event_time:
 			event_time = poi_effects.next_boundary()
 			event_kind = "poi_expiry"
@@ -307,9 +353,17 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				event_unit = unit
 				event_kind = "contact"
 			elif arrival <= event_time:
+				var diverted: bool = not decoy.is_empty() and decoy.affected.has(unit.encounter)
+				if diverted and arrival == event_time and event_kind in ["contact", "decoy_end"]: continue
 				event_time = arrival
 				event_unit = unit
-				event_kind = "arrival"
+				event_kind = "decoy_end" if diverted else "arrival"
+			if not decoy.is_empty() and not unit.mothership and speed > 0 and not decoy.affected.has(unit.encounter):
+				var entry := hit_time(unit.position - point(decoy.position), velocity, decoy.radius, minf(event_time, arrival))
+				if is_finite(entry) and (entry < event_time or event_kind.is_empty()):
+					event_time = entry
+					event_unit = unit
+					event_kind = "decoy_entry"
 		var missile_event: Dictionary = {}
 		if v2:
 			missile_event = missiles.event(self, from + player_velocity * elapsed, player_velocity, event_time, carry, hit_time)
@@ -322,6 +376,13 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		for unit in units:
 			if available(unit):
 				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
+		if not decoy.is_empty():
+			decoy.remaining = maxf(0.0, decoy.remaining - event_time)
+			var center := point(decoy.position)
+			if event_kind == "decoy_end" or decoy.remaining <= 0.00000001 or decoy.affected.any(func(index):
+				return unit_for(index).position.distance_squared_to(center) <= 0.00000001):
+				clear_decoy()
+				result.decoy_changed = true
 		if v2:
 			missiles.advance(event_time, self)
 		if reinforcement_clock:
@@ -333,6 +394,13 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		if revealed and not was_revealed: result.revealed = true
 		if event_kind.is_empty(): break
 		if event_kind in ["pressure", "poi_expiry"]: continue
+		if event_kind == "decoy_end":
+			continue
+		if event_kind == "decoy_entry":
+			if not decoy.is_empty():
+				_divert(event_unit.encounter)
+				result.decoy_changed = true
+			continue
 		if event_kind == "missile":
 			if missile_event.kind == "shot":
 				var missile: Dictionary = missiles.active[missile_event.id]
@@ -426,6 +494,7 @@ func snapshot() -> Dictionary:
 	if v2:
 		data.v2 = true
 		data.missiles = missiles.snapshot(home)
+	if not decoy.is_empty(): data.decoy = decoy.duplicate(true)
 	return data
 func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0) -> bool:
 	if not data is Dictionary: return false
@@ -531,6 +600,6 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		turret.damage = int(turret.damage)
 		turret.interval = int(turret.interval)
 	if v2 and (not missiles.restore(data.get("missiles"), self) or (contact >= 0 and missiles.pending >= 0)): return false
-	return true
+	return _restore_decoy(data.get("decoy", {}))
 static func number(value: Variant, low: int, high: int) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value == floor(value) and value >= low and value <= high

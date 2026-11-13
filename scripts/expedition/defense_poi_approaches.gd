@@ -50,7 +50,8 @@ static func definitions(id: String) -> Array:
 		"derelict_starship": return [
 			row("External Salvage", "+10 Salvage", 2, {"salvage":10}),
 			row("Recover Armaments", "Two random Tier 1 cards · keep both", 4, {"cards":2}),
-			row("Engineering Recovery", "+1 Materials production · 2 battles", 4, production("synthesizer",1,2), "synthesizer")]
+			row("Engineering Recovery", "+1 Materials production · 2 battles", 4, production("synthesizer",1,2), "synthesizer"),
+			row("Recover Tactical Decoy", "+1 Tactical Decoy Beacon", 3, {"decoy":true})]
 		"radiation_nebula": return [
 			row("Collect Isotopes", "+6–10 Salvage", 3, {"salvage_range":[6,10]}),
 			row("Charge Capacitors", "+8 Energy next battle", 3, {"next_battle":{"energy":8}}),
