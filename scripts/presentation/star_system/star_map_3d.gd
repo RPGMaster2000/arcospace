@@ -580,6 +580,10 @@ func apply_navigation_position(point: Vector3) -> void:
 	ship.position = point
 	if is_instance_valid(feedback): feedback.set_travel(false)
 
+func retarget_pursuit(index: int, destination: Vector3) -> void:
+	if traveling:
+		_start_journey(destination, index, false)
+
 
 func _impact() -> void:
 	feedback.set_travel(false)

@@ -1329,6 +1329,16 @@ func _defense_updated(events: Dictionary) -> void:
 		map_destination = -1
 		phase = Phase.OVERVIEW
 		_clear("system")
+	elif events.get("decoy_changed", false):
+		var index: int = state.travel_destination
+		var unit: Dictionary = state.defense.unit_for(index)
+		if not unit.is_empty() and state.defense.available(unit):
+			var origin := State.Defense.point(state.navigation.position)
+			_retarget_decoy_pursuit.call_deferred(index, origin)
+
+func _retarget_decoy_pursuit(index: int, origin: Vector3) -> void:
+	if phase != Phase.TRAVELING or state.travel_destination != index or not is_instance_valid(star_map): return
+	star_map.retarget_pursuit(index, state.defense.intercept_point(index, origin))
 
 func _reveal_mothership() -> void:
 	if not state.is_defense() or not state.defense.reveal_pending or phase != Phase.OVERVIEW: return
