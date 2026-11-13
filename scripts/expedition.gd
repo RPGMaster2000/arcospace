@@ -1490,6 +1490,8 @@ func _begin_decoy_placement() -> void:
 
 func _update_decoy_controls() -> void:
 	if not is_instance_valid(decoy_button): return
+	if not decoy_camera.is_empty() and not _decoy_available():
+		_cancel_decoy()
 	var visible_now := decoy_camera.is_empty() and _decoy_available()
 	if decoy_button.visible != visible_now:
 		decoy_button.visible = visible_now

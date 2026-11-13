@@ -97,6 +97,13 @@ func model_checks() -> void:
 	if restored == null: return
 	check(restored.defense.decoy == fleet.decoy and restored.decoys == 0, "Save retains affected ships and remaining lifetime")
 	var frozen: Dictionary = state.battle_environment(0)
+	var contact := Save.new().decode(save, state.rules)
+	if contact != null:
+		var enemy: Vector3 = contact.defense.unit_for(0).position
+		contact._advance_strategy(1.0, enemy + Vector3.UP * 4.0, enemy, false)
+		var setup = contact.prepare_battle(0, null, contact.battle_environment(0))
+		check(contact.defense.contact == 0 and setup != null and setup.modifier == 2,
+			"Swept combat contact with the diverted attacker uses the Ion modifier")
 	advance(state, 5.0)
 	for step in range(20): advance(restored, 0.25)
 	check(fleet.decoy.is_empty() and restored.defense.decoy.is_empty(), "First enemy arrival destroys the beacon")
@@ -151,6 +158,27 @@ func presentation_checks() -> void:
 	check(host.decoy_confirmation.shade.visible, "Deploy opens confirmation")
 	host.decoy_confirmation.initiate.pressed.emit()
 	check(is_instance_valid(map.decoy_preview), "Confirmation starts world-space placement")
+	var center: Vector2 = map.get_global_rect().get_center()
+	var pan_before: Vector2 = map.camera.pan_offset
+	var touch := InputEventScreenTouch.new()
+	touch.index = 0
+	touch.position = center
+	touch.pressed = true
+	map._input(touch)
+	var swipe := InputEventScreenDrag.new()
+	swipe.index = 0
+	swipe.position = center + Vector2(40, 0)
+	map._input(swipe)
+	touch.pressed = false
+	touch.position = swipe.position
+	map._input(touch)
+	check(map.camera.pan_offset != pan_before and not state.navigation.leg_active, "Touch drag pans without sending a ship order")
+	var zoom_before: float = map.camera.zoom_target
+	var magnify := InputEventMagnifyGesture.new()
+	magnify.position = center
+	magnify.factor = 1.15
+	map._unhandled_input(magnify)
+	check(map.camera.zoom_target > zoom_before, "Placement preserves zoom input")
 	var at := test_position(state)
 	var current: Vector3 = map.decoy_point()
 	map.camera.pan_offset += Vector2(at.x - current.x, at.z - current.z)
