@@ -3,9 +3,16 @@ extends RefCounted
 # DOES NOT: Hold expedition/Board references, spend currency, resolve encounters or save.
 # Context and the authoritative reward RNG are supplied by ExpeditionState per operation.
 const Cards = preload("res://scripts/cards/card_library.gd")
+const GANYMEDE = preload("res://ships/player/ganymede.tres")
+const GANYMEDE_LEGACY_CARD = preload("res://cards/06_shield_disruptor.tres")
+const GANYMEDE_NEW_CARD = preload("res://cards/47_siege_charges.tres")
+const THUNDERBOLT = preload("res://ships/player/thunderbolt.tres")
+const THUNDERBOLT_LEGACY_CARD = preload("res://cards/44_desperate_conversion.tres")
+const THUNDERBOLT_NEW_CARD = preload("res://cards/53_capacitor_overload.tres")
 var acquired_cards: Array[Resource] = []
 ## Old saves retain their historical starting pool without newly authored signatures.
 var signatures_enabled: bool = true
+var revised_starting_decks := true
 var upgraded_cards: Dictionary = {}
 var removed_starting_cards: Dictionary = {}
 var pending_card: Resource
@@ -23,6 +30,7 @@ func reset() -> void:
 	batch_queue.clear()
 	batch_protected.clear()
 	signatures_enabled = true
+	revised_starting_decks = true
 	acquired_cards.clear()
 	upgraded_cards.clear()
 	removed_starting_cards.clear()
@@ -37,7 +45,8 @@ func reset() -> void:
 func snapshot() -> Dictionary:
 	var levels: Dictionary = {}
 	for key in upgraded_cards: levels[key] = upgraded_cards[key].upgrade_level
-	return {"signatures_enabled": signatures_enabled, "acquired": _ids(acquired_cards), "removed": removed_starting_cards.keys(),
+	return {"signatures_enabled": signatures_enabled, "revised_starting_decks": revised_starting_decks,
+		"acquired": _ids(acquired_cards), "removed": removed_starting_cards.keys(),
 		"upgrades": levels, "pending_choice": pending_choice, "offers": _ids(card_offers),
 		"pending_card": pending_card.identity_key() if pending_card != null else "",
 		"batch": {"active":batch_active,"queue":_ids(batch_queue),"protected":batch_protected.duplicate()}, "upgrades_remaining": upgrades_remaining, "upgraded_this_event": upgraded_this_event.keys()}
@@ -66,7 +75,13 @@ func player_pool(profile: Resource) -> Array[Resource]:
 	)
 	var seen: Dictionary = {}
 	var retained: Array = []
-	for card in starting:
+	for starting_card in starting:
+		var card: Resource = starting_card
+		if not revised_starting_decks:
+			if profile == GANYMEDE and card == GANYMEDE_NEW_CARD:
+				card = GANYMEDE_LEGACY_CARD
+			elif profile == THUNDERBOLT and card == THUNDERBOLT_NEW_CARD:
+				card = THUNDERBOLT_LEGACY_CARD
 		if not removed_starting_cards.has(card.identity_key()) and (signatures_enabled or card.signature_ship < 0):
 			retained.append(card)
 	for card in retained + acquired_cards:
@@ -284,6 +299,7 @@ func restore(data: Dictionary, cards: Dictionary) -> void:
 	batch_queue.clear()
 	for id in batch.queue: batch_queue.append(cards[id])
 	signatures_enabled = bool(data.get("signatures_enabled", false))
+	revised_starting_decks = data.get("revised_starting_decks", false)
 	pending_choice = data.pending_choice
 	upgrades_remaining = int(data.upgrades_remaining)
 	for id in data.acquired: acquired_cards.append(cards[id])
