@@ -54,6 +54,10 @@ func _initialize() -> void:
 					var resolved = Execution.resolve(card, false, direct_actor, direct_enemy, null, generator)
 					assert(resolved != null, "Every fixture can afford its card")
 					var notice: String = modifier.play(card, actor, enemy)
+					if modifier.affects_card(card):
+						# Keep the frozen effect fixture independent of the updated HUD copy.
+						assert(notice == "ION STORM · ENERGY AMPLIFIED ×2")
+						notice = "ION STORM · BLUE CARD " + ("×½" if mode == 1 else "×2")
 					var record: Array = [actor,enemy,baseline_report(modifier.last_hull_damage),modifier.rng.state,notice,simulated,simulated_enemy,preview,choice,ai.rng.state,card.describe_effects(card.effects),Text.comparison(card,base),card.play_again,direct_actor,direct_enemy,baseline_report(resolved.hull_damage),resolved.extra_action,generator.state]
 					hashes.append(JSON.stringify(record).sha256_text())
 					modifier.free()

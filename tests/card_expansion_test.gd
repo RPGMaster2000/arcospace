@@ -241,7 +241,7 @@ func test_decks() -> void:
 		var run = State.new()
 		run.start(ship,Rules,1707)
 		check(run.player_pool().size() == 29 and run.deck_limit() == 36, "Expanded starting pool and capacity")
-		for card in run.player_pool().slice(0,25): check(Library.CARDS.find(card)<44, "Original identities preserved")
+		check(run.player_pool() == run.ship().starting_cards, "New runs use their complete authored starting pool in order")
 		for n in range(7):
 			run.pending_choice = "card"; run.card_offers = run.random_card_offers()
 			check(run.choose_card(0) and run.player_pool().size()==30+n and run.pending_choice.is_empty(), "Eight normal acquisitions")

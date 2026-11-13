@@ -180,8 +180,8 @@ func run() -> void:
 			identities[card.identity_key()] = true
 			if slot < 25:
 				check(
-					Library.CARDS.find(card) < 44 and card.tier == 1,
-					"Original 25 identities remain first"
+					card.tier == 1 and card.signature_ship < 0,
+					"First 25 slots hold ordinary Tier 1 identities"
 				)
 			if Library.CARDS.find(card) >= 68 and Library.CARDS.find(card) < 74:
 				found.append(Library.CARDS.find(card))

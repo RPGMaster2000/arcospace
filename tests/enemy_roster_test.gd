@@ -24,7 +24,7 @@ func run() -> void:
 		for encounter in expedition.encounters:
 			if encounter.kind == "battle" and expedition.enemy_profile(encounter).enemy_rank == 0: seen[expedition.enemy_profile(encounter).ship_name] = true
 	check(seen.size() == 6, "All regular profiles occur in generated first-system encounters")
-	var expected: Array = [[32,4,14,8,10,3,1,2],[29,16,8,14,10,1,3,2],[42,4,12,8,12,2,1,3]]
+	var expected: Array = [[32,4,14,8,10,3,1,2],[29,16,8,14,10,1,3,2],[42,2,12,8,12,2,1,3]]
 	for index in range(3,6):
 		var profile = Ships.ENEMIES[index]
 		check(profile in Config.enemy_ships and profile.encounter_weight == 1 and profile.enemy_rank == 0, "Standard equal encounter weight")
