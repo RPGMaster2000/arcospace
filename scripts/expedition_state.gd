@@ -48,6 +48,9 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
 		rifts.advance_span.bind(defense, environmental_instances))
+	var extraction_salvage: int = poi_effects.advance_extraction(events.elapsed)
+	salvage += extraction_salvage
+	events.extraction_salvage = extraction_salvage
 	var rift_changed: bool = previous_rift != TemporalRift.active(environmental_instances).get("id", "")
 	for unit in defense.units:
 		if unit.status == "arrived": encounters[unit.encounter].completed = true
@@ -60,11 +63,14 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		travel_destination = -1
 		pending_destination = -1
 		navigation_origin = FREE_DESTINATION
-	if defense.failed(): run_ended = true
+	if defense.failed():
+		run_ended = true
+		poi_effects.stop_extraction()
 	if not carry: poi_effects.consume_distance(from.distance_to(events.position))
 	defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
-			or events.missile_event or events.decoy_changed or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed):
+			or events.missile_event or events.decoy_changed or defense.failed() or target_lost
+			or not events.spawned.is_empty() or rift_changed or extraction_salvage > 0):
 		progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
@@ -908,6 +914,7 @@ func _resolve_defense_poi(index: int, slot: int) -> bool:
 	if reward.has("hull"): hull = mini(ship().hull_capacity,hull+int(reward.hull))
 	if reward.has("turret"): _install_poi_turret(index)
 	if reward.has("decoy"): decoys += 1
+	if reward.has("extraction"): poi_effects.start_extraction(index)
 	progress_committed.emit()
 	return true
 
@@ -917,6 +924,8 @@ func approach_requirement(approach: Resource) -> RefCounted:
 		var reward: Dictionary = approach.get_meta("strategic_reward")
 		var reason := ""
 		if reward.has("decoy") and decoys >= DECOY_CAPACITY: reason = "Tactical Decoy inventory full"
+		if reward.has("extraction") and (defense.complete or poi_effects.extraction_source >= 0):
+			reason = "Extraction already online or system secured"
 		if reward.has("turret") and not can_deploy_poi_turret(int(approach.get_meta("source_encounter",-1))): reason = "Free turret already used or location unavailable"
 		if reward.has("mothership") and (not poi_effects.mothership.is_empty() or defense.complete): reason = "Mothership research is already active or the system is secured"
 		if defense.complete and (reward.has("pause") or reward.has("reduction")): reason = "System secured; Pressure effects are no longer needed"
@@ -1421,6 +1430,14 @@ func victory_salvage(result: BattleResult) -> int:
 	return reward * rules.elite_salvage_multiplier if _elite_defeated(result) else reward
 
 
+func _defense_salvage(result: BattleResult, unit: Dictionary) -> Dictionary:
+	var tuning: Resource = defense.tuning
+	var rank: int = 2 if unit.mothership else clampi(enemy_profile(encounters[active_battle]).enemy_rank, 0, 2)
+	if result.escaped_by_ftl:
+		return {"recovery": maxi(0, tuning.emp_recovery_salvage[rank])}
+	return {"standard": victory_salvage(result), "victory": maxi(0, tuning.victory_salvage_bonus[rank])}
+
+
 func _elite_defeated(result: BattleResult) -> bool:
 	return (
 		result.winner == "player"
@@ -1437,40 +1454,55 @@ func elite_resource_reward(result: BattleResult) -> int:
 
 
 # Persist a result and complete the encounter once; escape resolves Boss navigation too.
-# Board._record_result calculates Salvage first; escape and destruction keep distinct reward rules.
-func record_battle(result: BattleResult) -> void:
-	if _recorded_results.has(result.result_id):
-		return
+# Defense currency is owned here. The result returns its committed balance and breakdown.
+func record_battle(result: BattleResult) -> bool:
+	if run_ended or _recorded_results.has(result.result_id):
+		return false
 	if result.system_number != system_number or result.encounter_index != active_battle:
-		return
+		return false
 	# Reject a stale/reopened result before copying its currency or queuing another reward.
 	if (
 		active_battle >= 0
 		and active_battle < encounters.size()
 		and encounters[active_battle].completed
 	):
-		return
+		return false
+	var unit: Dictionary = {}
+	if is_defense():
+		if defense.complete or defense.failed(): return false
+		unit = defense.unit_for(active_battle)
+		if unit.is_empty() or not defense.available(unit) or defense.contact != active_battle: return false
+		if result.escaped_by_ftl and result.winner != "player": return false
+	if result.winner == "player" and active_battle >= 0 and not _complete_encounter(active_battle):
+		return false
 	_recorded_results[result.result_id] = true
-	if is_defense(): poi_effects.completed_battle()
-	sync_battle(result, false)
+	if is_defense():
+		result.salvage_rewards = _defense_salvage(result, unit) if result.winner == "player" else {}
+		result.salvage = salvage
+		for amount in result.salvage_rewards.values():
+			result.salvage += amount
+		poi_effects.completed_battle()
+	hull = clampi(result.player_hull, 0, ship().hull_capacity)
+	salvage = result.salvage
+	battles_won = result.battles_won
 	if result.winner != "player":
 		run_ended = true
+		poi_effects.stop_extraction()
 		progress_committed.emit()
-		return
-	if active_battle >= 0 and active_battle < encounters.size():
-		if result.winner == "player":
-			# Escape and destruction both complete navigation; Salvage remains separate.
-			if not _complete_encounter(active_battle):
-				return
-			encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
-			if is_defense():
-				defense.neutralize(active_battle)
-				if defense.complete: poi_effects.leave_system()
-				for unit in defense.units:
-					if unit.status == "secured": encounters[unit.encounter].completed = true
-				defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})
-		else:
-			return
+		return true
+	if active_battle >= 0:
+		encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
+		if is_defense():
+			defense.neutralize(active_battle)
+			if defense.complete:
+				poi_effects.leave_system()
+				if not defense.secured_reward_claimed:
+					defense.secured_reward_claimed = true
+					result.salvage_rewards.secured = defense.tuning.secured_salvage
+					salvage += result.salvage_rewards.secured
+			for remaining in defense.units:
+				if remaining.status == "secured": encounters[remaining.encounter].completed = true
+			defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})
 	if result.winner == "player":
 		var elite_bonus: int = elite_resource_reward(result)
 		if elite_bonus > 0:
@@ -1490,15 +1522,13 @@ func record_battle(result: BattleResult) -> void:
 			last_outcome = "Combat victory — upgrade %d different cards." % count
 			start_upgrade_event(count)
 
+	var before_activity := salvage
 	_commit_activity_time(rules.defense_tuning.battle_seconds)
+	if salvage > before_activity:
+		result.salvage_rewards.extraction = salvage - before_activity
+	result.salvage = salvage
 	progress_committed.emit()
+	return true
 
-
-func sync_battle(result: BattleResult, notify: bool = true) -> void:
-	hull = clampi(result.player_hull, 0, ship().hull_capacity)
-	salvage = result.salvage
-	battles_won = result.battles_won
-	if notify:
-		progress_committed.emit()
 
 #endregion

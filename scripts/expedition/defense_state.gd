@@ -17,6 +17,7 @@ var integrity: int = 100
 var revealed: bool = false
 var reveal_pending: bool = false
 var complete: bool = false
+var secured_reward_claimed := false
 var pressure: float = 0.0
 var mothership_advancing: bool = false
 var construction_sites: Dictionary = {}
@@ -307,7 +308,8 @@ func _advance_pressure(seconds: float) -> bool:
 func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = false,
 		observe_span: Callable = Callable()) -> Dictionary:
 	var result: Dictionary = {"position": to, "contact": -1, "missile_contact": -1, "missile_event": false,
-		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false, "decoy_changed": false}
+		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false,
+		"decoy_changed": false, "elapsed": 0.0}
 	if complete or contact >= 0 or missiles.pending >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
 	var elapsed: float = 0.0
@@ -446,6 +448,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			mothership_advancing = false
 			result.position = from + player_velocity * elapsed
 			break
+	result.elapsed = elapsed
 	return result
 
 # Predict a meeting in distance travelled by the player. Enemy speed is per
@@ -495,6 +498,7 @@ func snapshot() -> Dictionary:
 		data.v2 = true
 		data.missiles = missiles.snapshot(home)
 	if not decoy.is_empty(): data.decoy = decoy.duplicate(true)
+	if secured_reward_claimed: data.secured_reward_claimed = true
 	return data
 func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0) -> bool:
 	if not data is Dictionary: return false
@@ -545,6 +549,9 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 	revealed = data.revealed
 	reveal_pending = data.reveal_pending
 	complete = data.complete
+	var claimed: Variant = data.get("secured_reward_claimed", complete)
+	if not claimed is bool or claimed != complete: return false
+	secured_reward_claimed = claimed
 	contact = int(data.contact)
 	var saved_pressure: Variant = data.get("pressure", 0.0)
 	if not (saved_pressure is int or saved_pressure is float) or not is_finite(float(saved_pressure)) or saved_pressure < 0 or saved_pressure > 1000.0: return false

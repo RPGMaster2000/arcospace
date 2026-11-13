@@ -3,6 +3,7 @@ extends RefCounted
 ## The resolver owns eligibility, transaction timing and applying these declarative rewards.
 const Approach = preload("res://scripts/expedition/encounter_approach.gd")
 const Outcome = preload("res://scripts/expedition/encounter_outcome.gd")
+const Effects = preload("res://scripts/expedition/defense_poi_effects.gd")
 
 static func description(id: String) -> String:
 	return {
@@ -28,7 +29,9 @@ static func definitions(id: String) -> Array:
 			row("Strip the Facility", "+12 Salvage", 2, {"salvage":12}),
 			row("Recover Industrial Equipment", "+1 Materials production · 3 battles", 4, production("synthesizer",1,3)),
 			row("Restore Defense Platform", "Free Kinetic Turret at this location", 5, {"turret":true}),
-			row("Automated Extraction", "+18 Salvage", 6, {"salvage":18}, "synthesizer")]
+			row("Automated Extraction", "+18 Salvage", 6, {"salvage":18}, "synthesizer"),
+			row("Reactivate Extraction", "Extraction online · +%d Salvage every %d strategic seconds · Maximum %d"
+				% [Effects.EXTRACTION_PAYOUT, Effects.EXTRACTION_INTERVAL, Effects.EXTRACTION_CAP], 4, {"extraction":true})]
 		"research_station": return [
 			row("Recover Card Schematics", "Two random Tier 1 cards · keep both", 4, {"cards":2}),
 			row("Experimental Weapons", "+1 Energy production · 3 battles", 4, production("reactor",1,3)),

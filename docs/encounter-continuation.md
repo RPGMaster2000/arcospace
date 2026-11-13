@@ -20,8 +20,8 @@ Rewards are passed separately from setup values, so they expire after the immedi
 
 Defeat/draw shows a large bold battles-won count. Every player victory (including FTL escape) increments this count once. Continue carries it; Play Again/Setup begins a fresh run.
 
-Defeating the enemy by destruction or Systems Failure grants the existing destruction Salvage reward, once per result. FTL escape grants no Salvage. Unspent salvage carries to the next encounter; a small counter appears below Turn in the battle's upper left.
+Defeating the enemy by destruction or Systems Failure grants the existing destruction Salvage reward once per result. Standalone and Exploration EMP escapes grant zero Salvage. [Starfront Defense](balance/salvage-economy.md) awards EMP recovery and a system-secured bonus. Unspent Salvage carries to the next encounter.
 
-The victory panel’s −/+ controls select Hull points at 2 Salvage per Hull, defaulting to the smaller of floor(Salvage / 2) and missing Hull. The shared bar and before/after balance preview the exact gain and cost; Confirm deducts only that cost. Repairs stop at configured Hull capacity (default 30) and never reduce excess Hull. This is available after any victory, so saved salvage can be used after FTL escape. TUNE board.gd constants DESTRUCTION_SALVAGE, RepairRules.RESULT_SALVAGE_PER_HULL and the exported player_hull_capacity.
+Expedition players can repair permanent Hull on the star map after returning from battle. The Hull panel previews the cost of 1 Salvage per Hull, bounded by available Salvage and missing permanent Hull.
 
-Combat result hull and earned tactical/strategic bonuses are frozen before repair. Post-battle repairs cannot earn an additional tactical bonus; repaired hull is carried into the next encounter as its new baseline.
+Combat result Hull and earned tactical and strategic bonuses are frozen at the result. Field repairs contribute to the Hull baseline for the next encounter.

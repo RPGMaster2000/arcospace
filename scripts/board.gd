@@ -71,6 +71,7 @@ var continuation_hull: int = -1
 var encounter_number: int = 1
 var next_modifier: int = -1
 var salvage: int = 0
+var salvage_rewards: Dictionary = {}
 var battles_won: int = 0
 var result_recorded: bool = false
 # Leaving an unfinished battle preserves its entry checkpoint, including during VFX cleanup.
@@ -915,6 +916,8 @@ func _display_snapshot() -> Dictionary:
 		"shields_disabled": modifier.shields_disabled(),
 		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
 		"rewards_text": victory_description(),
+		"defense_recovery": salvage_rewards.has("recovery"),
+		"system_secured": salvage_rewards.has("secured"),
 		"in_expedition": expedition != null,
 		"pending_choice": expedition.pending_choice if expedition != null else "",
 		"next_modifier_name": modifier.NAMES[next_modifier] if next_modifier >= 0 else "",
@@ -1023,9 +1026,21 @@ func victory_description() -> String:
 	var bonuses: PackedStringArray = []
 	if expedition != null:
 		var result: BattleResult = battle_result()
-		lines.append("🪨 +%d Salvage" % expedition.victory_salvage(result))
+		if expedition.is_defense():
+			if salvage_rewards.has("standard"):
+				lines.append("Standard reward · +%d Salvage" % salvage_rewards.standard)
+			if salvage_rewards.has("victory"):
+				lines.append("Defense victory bonus · +%d Salvage" % salvage_rewards.victory)
+			if salvage_rewards.has("recovery"):
+				lines.append("Allied EMP recovery · +%d Salvage" % salvage_rewards.recovery)
+			if salvage_rewards.has("secured"):
+				lines.append("System secured · +%d Salvage" % salvage_rewards.secured)
+			if salvage_rewards.has("extraction"):
+				lines.append("Mining extraction · +%d Salvage" % salvage_rewards.extraction)
+		else:
+			lines.append("🪨 +%d Salvage" % expedition.victory_salvage(result))
 		var upgrades: int = expedition.battle_upgrade_count(result)
-		if upgrades > 0:
+		if upgrades > 0 and not lines.is_empty():
 			lines[0] += " · Upgrade %d cards" % upgrades
 		var elite_bonus: int = expedition.elite_resource_reward(result)
 		if elite_bonus > 0:
@@ -1059,12 +1074,15 @@ func _record_result() -> void:
 	result_recorded = true
 	if winner == "player":
 		battles_won += 1
-		if expedition != null:
+		if expedition != null and not expedition.is_defense():
 			salvage += expedition.victory_salvage(battle_result())
-		elif not escaped_by_ftl:
+		elif expedition == null and not escaped_by_ftl:
 			salvage += DESTRUCTION_SALVAGE
 	if expedition != null:
-		expedition.record_battle(battle_result())
+		var result := battle_result()
+		if expedition.record_battle(result):
+			salvage = result.salvage
+			salvage_rewards = result.salvage_rewards
 	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
 		next_modifier = randi_range(1, modifier.NAMES.size() - 1)
 

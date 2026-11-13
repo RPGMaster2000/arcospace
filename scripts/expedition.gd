@@ -1135,13 +1135,12 @@ func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {
 		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)
 
 
-# Continue returns here after result recording; sync post-battle repairs before removing the board.
+# The result transaction already committed Hull and Salvage.
 func _battle_finished(source: Node = null) -> void:
 	if source == null:
 		source = battle
 	if not is_instance_valid(source) or source != battle or phase == Phase.EXITED or not is_inside_tree() or is_queued_for_deletion():
 		return
-	state.sync_battle(source.battle_result())
 	state.active_battle = -1
 	_remove_battle()
 	phase = Phase.OVERVIEW
@@ -1315,6 +1314,8 @@ func _defense_updated(events: Dictionary) -> void:
 	star_map.flash_missile_shots(events.get("missile_shots", []))
 	# Activity events are presented after results and rewards, at show_system.
 	if phase != Phase.TRAVELING: return
+	if events.get("extraction_salvage", 0) > 0:
+		resource_bar.exploration(state)
 	_refresh_defense_hud()
 	if events.contact >= 0 or events.get("missile_contact", -1) >= 0 or state.run_ended:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))

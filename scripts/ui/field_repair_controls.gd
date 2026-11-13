@@ -84,8 +84,8 @@ func _update_preview(_value: float) -> void:
 	var text: String = (
 		_heading
 		+ (
-			"\nField repair: 2 Salvage / Hull · Maximum affordable: %d\nPermanent Hull carries between battles. Excess is temporary plating."
-			% limit
+			"\nField repair: %d Salvage / Hull · Maximum affordable: %d\nPermanent Hull carries between battles. Excess is temporary plating."
+			% [Repairs.FIELD_SALVAGE_PER_HULL, limit]
 		)
 	)
 	preview.show_repair(
@@ -98,7 +98,7 @@ func _update_preview(_value: float) -> void:
 	if _state.hull >= _state.ship().hull_capacity:
 		text += "\nHull full · Field repairs cannot create Ablative Plating."
 	elif limit == 0:
-		text += "\nRequires at least 2 Salvage to repair 1 Hull."
+		text += "\nRequires %d Salvage to repair 1 Hull." % Repairs.FIELD_SALVAGE_PER_HULL
 	description_changed.emit(text)
 	selector.editable = limit > 0
 	_minus.disabled = amount <= 0

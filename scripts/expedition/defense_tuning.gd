@@ -8,6 +8,13 @@ extends Resource
 @export_range(1, 200, 1) var base_integrity: int = 100
 @export_range(0, 10, 1) var mothership_emp_bonus: int = 2
 
+@export_group("Salvage Rewards")
+## Indexed by enemy rank (ordinary, elite, boss). The mothership uses the boss tier.
+@export var victory_salvage_bonus := Vector3i(5, 10, 20)
+@export var emp_recovery_salvage := Vector3i(3, 6, 10)
+@export_range(0, 1000, 1) var secured_salvage: int = 10
+
+@export_group("")
 @export_range(0, 10, 0.1) var poi_seconds: float = 1.5
 @export_range(0, 10, 0.1) var battle_seconds: float = 2.5
 @export_range(0.1, 30, 0.1) var first_reinforcement_seconds: float = 9.0

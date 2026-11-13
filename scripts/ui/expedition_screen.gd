@@ -721,7 +721,7 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 	var approaches: Array = state.poi_approaches(index)
 	for slot in range(approaches.size()):
 		var approach: Resource = approaches[slot]
-		var key: String = Presentation.approach_key(poi, slot)
+		var key: String = Presentation.approach_key(poi, slot, approach)
 		var requirement = state.approach_requirement(approach)
 		var button = add_tile(
 			options,

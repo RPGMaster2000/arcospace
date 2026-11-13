@@ -18,6 +18,7 @@ level 3. Trading Outpost retains its separate service interface.
 | mining_operation | Recover Industrial Equipment | +1 Materials production · 3 battles | 4 | — |
 | mining_operation | Restore Defense Platform | Free Kinetic Turret at this location | 5 | — |
 | mining_operation | Automated Extraction | +18 Salvage | 6 | synthesizer ≥3 |
+| mining_operation | Reactivate Extraction | +3 Salvage every 15 strategic seconds, maximum +12 | 4 | — |
 | research_station | Recover Card Schematics | Two random Tier 1 cards · keep both | 4 | — |
 | research_station | Experimental Weapons | +1 Energy production · 3 battles | 4 | — |
 | research_station | Analyze Mothership Defenses | Player card damage bypasses mothership Shields · this system | 6 | — |

@@ -95,7 +95,8 @@ func run() -> void:
 		var initial: int = state.salvage
 		win(state, 0, emp)
 		check(state.defense.revealed and state.defense.reveal_pending and state.defense.neutralized_attackers() == 1, "Destruction or EMP reveals exactly once")
-		check(not emp or state.salvage == initial, "EMP awards zero destruction Salvage")
+		var rank: int = state.enemy_profile(state.encounters[0]).enemy_rank
+		check(not emp or state.salvage == initial + state.defense.tuning.emp_recovery_salvage[rank], "EMP awards only rank-based recovery")
 		restored = Save.new().decode(Save.encode(state))
 		check(restored != null and restored.defense.revealed, "Post-neutralization restoration")
 		state.defense.reveal_pending = false

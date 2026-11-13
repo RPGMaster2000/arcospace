@@ -230,6 +230,11 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
 	if data.has("defense_poi_effects"):
 		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
+		var source: int = state.poi_effects.extraction_source
+		if source >= 0:
+			if state.defense.complete or state.defense_poi_version != 1 or source >= entries.size(): return null
+			var mining: Dictionary = entries[source]
+			if mining.kind != "poi" or not mining.completed or mining.poi.resource_path != "res://encounters/mining_operation.tres": return null
 	state.bind_defense_movement()
 	state.system_profile = data.system_profile
 	state.ftl_access = data.ftl_access
