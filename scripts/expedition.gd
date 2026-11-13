@@ -153,6 +153,7 @@ var selected_encounter: int = -1
 
 func _ready() -> void:
 	_build_ui()
+	_setup_decoy_controls()
 	card_management = CardManagement.new()
 	add_child(card_management)
 	card_management.confirmed.connect(_management_confirmed)
@@ -242,6 +243,7 @@ func _icon(key: String) -> String:
 
 # Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
 func _clear(kind: String, preserve_transition: bool = false) -> void:
+	_cancel_decoy()
 	if not preserve_transition:
 		_cancel_presentation()
 	current_deck_viewer.dismiss()
@@ -416,6 +418,9 @@ func _notification(what: int) -> void:
 		_cancel_presentation()
 		phase = Phase.OVERVIEW
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		if not decoy_camera.is_empty() or decoy_confirmation.shade.visible:
+			_cancel_decoy()
+			return
 		var construction: Control = _construction_panel()
 		if is_instance_valid(construction) and construction.visible:
 			construction.hide()
@@ -501,6 +506,7 @@ func _map_input_allowed(block_construction: bool = true) -> bool:
 		if is_instance_valid(construction) and construction.visible: return false
 	return (
 		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
+		and (not is_instance_valid(decoy_confirmation) or not decoy_confirmation.shade.visible)
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
 		and not settings_button.menu.shade.visible
@@ -626,6 +632,7 @@ func visit(index: int) -> void:
 
 
 func _jump() -> void:
+	if not decoy_camera.is_empty(): return
 	if transitioning or presenting_outcome or not state.can_jump():
 		return
 	if not _uses_3d_map() or not is_instance_valid(star_map):
@@ -1242,6 +1249,7 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 var _navigation_clock: int = 0
 
 func _process(_delta: float) -> void:
+	_update_decoy_controls()
 	var now: int = Time.get_ticks_msec()
 	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
 	_navigation_clock = now
@@ -1321,6 +1329,16 @@ func _defense_updated(events: Dictionary) -> void:
 		map_destination = -1
 		phase = Phase.OVERVIEW
 		_clear("system")
+	elif events.get("decoy_changed", false):
+		var index: int = state.travel_destination
+		var unit: Dictionary = state.defense.unit_for(index)
+		if not unit.is_empty() and state.defense.available(unit):
+			var origin := State.Defense.point(state.navigation.position)
+			_retarget_decoy_pursuit.call_deferred(index, origin)
+
+func _retarget_decoy_pursuit(index: int, origin: Vector3) -> void:
+	if phase != Phase.TRAVELING or state.travel_destination != index or not is_instance_valid(star_map): return
+	star_map.retarget_pursuit(index, state.defense.intercept_point(index, origin))
 
 func _reveal_mothership() -> void:
 	if not state.is_defense() or not state.defense.reveal_pending or phase != Phase.OVERVIEW: return
@@ -1344,10 +1362,10 @@ func _turret_options(site: String) -> Dictionary:
 	var tuning: Resource = state.defense.tuning
 	return {"salvage": state.salvage, "radius": tuning.turret_radius,
 		"cost": tuning.turret_salvage_cost, "capacity": tuning.turret_capacity,
-		"allowed": phase == Phase.OVERVIEW and _map_input_allowed(false) and state.can_deploy_turret(site)}
+		"allowed": decoy_camera.is_empty() and phase == Phase.OVERVIEW and _map_input_allowed(false) and state.can_deploy_turret(site)}
 
 func _deploy_turret(site: String) -> bool:
-	if phase != Phase.OVERVIEW or not _map_input_allowed(false) or not state.deploy_turret(site):
+	if not decoy_camera.is_empty() or phase != Phase.OVERVIEW or not _map_input_allowed(false) or not state.deploy_turret(site):
 		return false
 	star_map.sync_defense(state.defense_map_view())
 	resource_bar.exploration(state)
@@ -1361,6 +1379,7 @@ func _refresh_defense_hud() -> void:
 # Read-only inspection reuses the existing encounter panels and does not focus
 # or move the camera. A hold never commits a visit or encounter.
 func _inspect_marker(index: int) -> void:
+	if not decoy_camera.is_empty(): return
 	if not state.is_defense() or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not state.can_visit(index): return
 	if phase == Phase.TRAVELING:
 		_sample_navigation_position()
@@ -1402,6 +1421,160 @@ func _resolve_missile(index: int, approach: String) -> void:
 	if state.resolve_missile(index, approach):
 		map_destination = -1
 		show_system()
+
+var decoy_button: Button
+var decoy_confirmation: CanvasLayer
+var decoy_panel: PanelContainer
+var decoy_status: Label
+var decoy_place: Button
+var decoy_camera := {}
+var decoy_last_point := Vector3.INF
+
+func _setup_decoy_controls() -> void:
+	decoy_confirmation = preload("res://scripts/ui/approach_confirmation.gd").new()
+	add_child(decoy_confirmation)
+	decoy_confirmation.initiate.text = "Deploy"
+	decoy_confirmation.initiate.pressed.connect(_begin_decoy_placement)
+	decoy_confirmation.cancelled.connect(decoy_confirmation.dismiss)
+	decoy_button = Button.new()
+	decoy_button.name = "DeployTacticalDecoy"
+	decoy_button.custom_minimum_size = Vector2(64, 48)
+	decoy_button.tooltip_text = "Deploy Tactical Decoy Beacon"
+	for style in ["normal", "hover", "pressed"]:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color("51242a") if style == "normal" else Color("753936")
+		box.border_color = Color("ff8c7b")
+		box.set_border_width_all(1)
+		box.set_corner_radius_all(7)
+		decoy_button.add_theme_stylebox_override(style, box)
+	add_child(decoy_button)
+	decoy_button.hide()
+	decoy_button.pressed.connect(func():
+		if _decoy_available():
+			decoy_confirmation.present("Deploy Tactical Decoy?\nRedirect nearby enemy ships toward a location of your choice."))
+
+func _decoy_available() -> bool:
+	return state != null and phase == Phase.OVERVIEW and view_kind == "system" and not inspecting \
+		and is_instance_valid(star_map) and star_map.has_method("decoy_point") \
+		and state.navigation.position.size() == 3 and state.can_place_decoy() and _map_input_allowed()
+
+func _begin_decoy_placement() -> void:
+	decoy_confirmation.dismiss()
+	if not _decoy_available(): return
+	var camera = star_map.camera
+	decoy_camera = {"transform": camera.transform, "pan": camera.pan_offset,
+		"zoom": camera.zoom_scale, "target": camera.zoom_target}
+	camera.cancel()
+	var player := State.Defense.point(state.navigation.position)
+	var offset: Vector3 = camera.position - star_map.decoy_point()
+	var target := player.move_toward(Vector3.ZERO, 5.0)
+	camera.pan_offset = Vector2(target.x, target.z) - Vector2(star_map.settings.overview_target.x, star_map.settings.overview_target.z)
+	camera.position = target + offset
+	star_map._end_pinch()
+	star_map._select_destination(-1)
+	star_map.decoy_preview = star_map.DecoyVisual.new()
+	star_map.decoy_preview.configure(state.defense.tuning.decoy_attraction_radius, true)
+	star_map.visual_root.add_child(star_map.decoy_preview)
+	decoy_panel = PanelContainer.new()
+	decoy_panel.z_index = 25
+	star_map.add_child(decoy_panel)
+	star_map.decoy_controls = decoy_panel
+	var column := VBoxContainer.new()
+	decoy_panel.add_child(column)
+	decoy_status = _label("", 16)
+	column.add_child(decoy_status)
+	var actions := HBoxContainer.new()
+	column.add_child(actions)
+	var cancel := Button.new()
+	cancel.text = "Cancel"
+	decoy_place = Button.new()
+	decoy_place.text = "Place Decoy"
+	for button in [cancel, decoy_place]:
+		button.custom_minimum_size = Vector2(110, 48)
+		actions.add_child(button)
+	cancel.pressed.connect(func(): _cancel_decoy())
+	decoy_place.pressed.connect(_place_decoy)
+	decoy_last_point = Vector3.INF
+	_update_decoy_controls()
+
+func _update_decoy_controls() -> void:
+	if not is_instance_valid(decoy_button): return
+	if not decoy_camera.is_empty() and not _decoy_available():
+		_cancel_decoy()
+	var visible_now := decoy_camera.is_empty() and _decoy_available()
+	if decoy_button.visible != visible_now:
+		if visible_now:
+			decoy_button.reparent(screen.overview_hud.utilities, false)
+			screen.overview_hud.utilities.move_child(decoy_button, 0)
+		else:
+			decoy_button.reparent(self, false)
+		decoy_button.visible = visible_now
+		screen.overview_hud.queue_layout()
+	if visible_now:
+		decoy_button.text = "◎ %d" % state.decoys
+		decoy_button.modulate.a = 0.88 + 0.12 * sin(Time.get_ticks_msec() * 0.004)
+	if decoy_camera.is_empty() or not is_instance_valid(star_map.decoy_preview): return
+	decoy_panel.position = Vector2((star_map.size.x - decoy_panel.size.x) * 0.5, star_map.size.y - decoy_panel.size.y - 18)
+	var at: Vector3 = star_map.decoy_point()
+	if at.is_equal_approx(decoy_last_point): return
+	decoy_last_point = at
+	var reason: String = state.decoy_placement(at)
+	var radius: float = state.defense.tuning.decoy_attraction_radius
+	var positions: Array[Vector3] = []
+	if reason.is_empty():
+		for index in state.defense.decoy_targets(at, radius):
+			positions.append(state.defense.unit_for(index).position)
+	decoy_place.disabled = not reason.is_empty()
+	decoy_status.text = reason
+	if reason.is_empty():
+		match positions.size():
+			0: decoy_status.text = "No enemies in range"
+			1: decoy_status.text = "1 enemy in range"
+			_: decoy_status.text = "%d enemies in range" % positions.size()
+	star_map.decoy_preview.position = at
+	star_map.decoy_preview.draw(radius, State.Defense.point(state.navigation.position),
+		state.defense.tuning.decoy_deploy_range, positions, reason.is_empty())
+
+func _place_decoy() -> void:
+	if decoy_camera.is_empty() or not _map_input_allowed() or not state.deploy_decoy(star_map.decoy_point()): return
+	_cancel_decoy(false)
+	star_map.sync_defense(state.defense_map_view())
+
+func _cancel_decoy(restore_camera: bool = true) -> void:
+	if is_instance_valid(decoy_confirmation) and decoy_confirmation.shade.visible: decoy_confirmation.dismiss()
+	if decoy_camera.is_empty(): return
+	if is_instance_valid(star_map):
+		var camera = star_map.camera
+		if restore_camera:
+			camera.cancel()
+			camera.transform = decoy_camera.transform
+			camera.pan_offset = decoy_camera.pan
+			camera.zoom_scale = decoy_camera.zoom
+			camera.zoom_target = decoy_camera.target
+		if is_instance_valid(star_map.decoy_preview):
+			star_map.decoy_preview.hide()
+			star_map.decoy_preview.queue_free()
+		star_map.decoy_preview = null
+		star_map.decoy_controls = null
+		star_map._end_pinch()
+	if is_instance_valid(decoy_panel):
+		decoy_panel.hide()
+		decoy_panel.queue_free()
+	decoy_camera.clear()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if decoy_camera.is_empty() or not _map_input_allowed(): return
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_decoy()
+		get_viewport().set_input_as_handled()
+		return
+	var direction := Vector2(
+		int(event.is_action_pressed("ui_right")) - int(event.is_action_pressed("ui_left")),
+		int(event.is_action_pressed("ui_down")) - int(event.is_action_pressed("ui_up")))
+	if direction == Vector2.ZERO: return
+	var center: Vector2 = star_map.size * 0.5
+	star_map.camera.pan_screen(center, center - direction * 40.0)
+	get_viewport().set_input_as_handled()
 
 func _dismiss_inspection() -> void:
 	if not inspecting: return

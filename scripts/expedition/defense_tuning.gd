@@ -50,3 +50,8 @@ extends Resource
 @export_range(0.1, 10.0, 0.1) var missile_intercept_seconds := 1.0
 @export_range(0.1, 10.0, 0.1) var missile_precision_seconds := 0.5
 @export_range(0.1, 10.0, 0.05) var missile_emp_seconds := 0.25
+
+@export_group("Tactical Decoy")
+@export var decoy_deploy_range := 12.0
+@export var decoy_attraction_radius := 15.0
+@export var decoy_lifetime := 15.0

@@ -76,6 +76,7 @@ static func encode(state: Resource) -> Dictionary:
 	if state.is_defense() and state.defense_poi_version > 0: data.defense_poi_version = state.defense_poi_version
 	if deck.batch.active: data.card_batch = deck.batch
 	if state.is_defense(): data.defense_poi_effects = state.poi_effects.snapshot()
+	if state.is_defense() and state.decoys > 0: data.decoys = state.decoys
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
 	if state.orbit_clearance > 0.0: data.orbit_clearance = state.orbit_clearance
@@ -204,6 +205,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			reserve.erase("resolution")
 			entries.append(reserve)
 	state.game_mode = mode
+	if data.has("decoys"):
+		if mode != "defense" or not _integer(data.decoys, 0, State.DECOY_CAPACITY): return null
+		state.decoys = int(data.decoys)
 	if data.has("defense_poi_version"):
 		if mode != "defense" or not _integer(data.defense_poi_version,1,1): return null
 		state.defense_poi_version = int(data.defense_poi_version)

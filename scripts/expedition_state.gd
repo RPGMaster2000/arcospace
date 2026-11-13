@@ -19,6 +19,9 @@ const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
 var poi_effects := PoiEffects.new()
 var defense_poi_version: int = 0
 const DefensePois = preload("res://scripts/expedition/defense_poi_approaches.gd")
+const DECOY_CAPACITY := 2
+const DECOY_MAP_SETTINGS = preload("res://resources/presentation/star_system_settings.tres")
+var decoys := 0
 
 func is_defense() -> bool:
 	return game_mode == "defense"
@@ -61,7 +64,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	if not carry: poi_effects.consume_distance(from.distance_to(events.position))
 	defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
-			or events.missile_event or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed):
+			or events.missile_event or events.decoy_changed or defense.failed() or target_lost or not events.spawned.is_empty() or rift_changed):
 		progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
@@ -192,6 +195,46 @@ func defense_map_view() -> Dictionary:
 	view.temporal_rift = TemporalRift.active(environmental_instances).duplicate(true)
 	return view
 
+func can_place_decoy() -> bool:
+	return is_defense() and defense != null and decoys > 0 and defense.decoy.is_empty() \
+		and not defense.complete and can_navigate() and not navigation.leg_active
+
+func decoy_placement(at: Vector3) -> String:
+	if not can_place_decoy(): return "Decoy unavailable"
+	if not at.is_finite() or absf(at.y) > 0.001 or not SystemLayout.bounds(layout_expansion).has_point(Vector2(at.x, at.z)):
+		return "Outside navigation bounds"
+	if navigation.position.size() != 3: return "Ship position unavailable"
+	var distance := at.distance_to(Defense.point(navigation.position))
+	if distance > defense.tuning.decoy_deploy_range: return "Outside deployment range"
+	if distance < 1.0: return "Too close to your ship"
+	var sun: Dictionary = {}
+	for item in environmental_instances:
+		if item.type == EnvironmentData.SOLAR_INTERFERENCE and EnvironmentData.Solar.valid(item):
+			sun = item
+			break
+	var center := Vector3.ZERO if sun.is_empty() else Defense.point(sun.position)
+	var radius: float = EnvironmentData.Solar.CORE_RADIUS_PER_SCALE * DECOY_MAP_SETTINGS.sun_core_scale if sun.is_empty() else sun.configuration.star_radius
+	if at.distance_to(center) <= radius + 0.35: return "Stellar surface"
+	if at.distance_to(defense.home) <= 1.8 * 1.5 * 1.035 + 0.35: return "Homeworld"
+	for body in defense.decorative_bodies:
+		if at.distance_to(body.position) <= float(body.radius) * 1.5 * 1.035 + 0.35: return "Planetary surface"
+	var planetary := SystemLayout.planetary_radii(encounters)
+	for index in defense.anchors:
+		var interaction_radius := maxf(DECOY_MAP_SETTINGS.orbit_radius, float(planetary.get(index, 1.2)) + 1.0)
+		if at.distance_to(defense.anchors[index]) <= interaction_radius + 0.35: return "Too close to a destination"
+	for turret in defense.turrets.values():
+		if at.distance_to(Defense.point(turret.position)) <= 1.35: return "Turret installation"
+	for unit in defense.units:
+		if unit.status == "active" and at.distance_to(unit.position) < 0.75: return "Hostile ship"
+	return ""
+
+func deploy_decoy(at: Vector3) -> bool:
+	if not decoy_placement(at).is_empty(): return false
+	defense.place_decoy(at)
+	decoys -= 1
+	progress_committed.emit()
+	return true
+
 func has_missile(index: int) -> bool:
 	return is_defense() and defense != null and defense.missiles.active.has(index)
 
@@ -303,6 +346,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	run_ended = false
 	poi_effects = PoiEffects.new()
 	defense_poi_version = 0
+	decoys = 0
 	rules = configuration
 	game_mode = rules.game_mode
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
@@ -863,6 +907,7 @@ func _resolve_defense_poi(index: int, slot: int) -> bool:
 	if reward.has("next_battle"): add_modifiers(reward.next_battle)
 	if reward.has("hull"): hull = mini(ship().hull_capacity,hull+int(reward.hull))
 	if reward.has("turret"): _install_poi_turret(index)
+	if reward.has("decoy"): decoys += 1
 	progress_committed.emit()
 	return true
 
@@ -871,6 +916,7 @@ func approach_requirement(approach: Resource) -> RefCounted:
 	if approach.has_meta("strategic_reward"):
 		var reward: Dictionary = approach.get_meta("strategic_reward")
 		var reason := ""
+		if reward.has("decoy") and decoys >= DECOY_CAPACITY: reason = "Tactical Decoy inventory full"
 		if reward.has("turret") and not can_deploy_poi_turret(int(approach.get_meta("source_encounter",-1))): reason = "Free turret already used or location unavailable"
 		if reward.has("mothership") and (not poi_effects.mothership.is_empty() or defense.complete): reason = "Mothership research is already active or the system is secured"
 		if defense.complete and (reward.has("pause") or reward.has("reduction")): reason = "System secured; Pressure effects are no longer needed"

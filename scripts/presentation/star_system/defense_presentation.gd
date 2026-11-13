@@ -204,7 +204,7 @@ func _process(delta: float) -> void:
 			_clear_installation_label(construction.preview.global_position)
 	var planning: bool = map.visible and map.is_processing() and map.interactive and not map.focused and map.input_allowed.is_valid() and map.input_allowed.call()
 	if is_instance_valid(construction):
-		construction.button.disabled = not planning or map.traveling or map.defense_view.complete
+		construction.button.disabled = not planning or map.traveling or map.defense_view.complete or is_instance_valid(map.decoy_preview)
 	var eligible: bool = planning and map.traveling
 	if planning:
 		if hit_remaining > 0:
