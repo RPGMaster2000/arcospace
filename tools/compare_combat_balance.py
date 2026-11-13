@@ -91,6 +91,7 @@ def main():
     ships = config["ships"]
     enemies = [enemy["name"] for enemy in config["enemies"]]
     data = {
+        "storm_only_revision": config["revision"],
         "storm_only": {name: compare(baseline, storm, (k for k in storm if k[2] == name))
                        for name in STORMS},
         "unchanged_nonstorm_rows": len(nonstorm),
@@ -105,7 +106,7 @@ def main():
             "ships": {ship: compare(storm, variant, (k for k in variant if k[0] == ship))
                       for ship in affected},
             "cards": {ship: {label: card_rates(metrics) for label, metrics in groups.items()}
-                      for ship, groups in cards.items() if groups["before"]["drawn"]},
+                      for ship, groups in sorted(cards.items()) if groups["before"]["drawn"]},
         }
     data["choir_diagnosis"] = {
         ship: {policy: summarize([row for k, row in baseline.items()

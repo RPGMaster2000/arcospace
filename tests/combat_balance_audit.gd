@@ -43,18 +43,15 @@ func run() -> void:
 	for i in Ships.PLAYERS.size():
 		if selected >= 0 and selected != i: continue
 		var player: Resource = Ships.PLAYERS[i]
-		if storm_only and player.ship_name in ["Ganymede", "Thunderbolt"]:
-			player = legacy_starting_deck(player)
+		if storm_only:
+			player = storm_only_profile(player)
 		for policy in POLICIES:
 			if policy_filter != "all" and policy_filter != policy: continue
 			var metrics := {}
 			var settings: Dictionary = POLICIES[policy].duplicate(true)
 			settings.cards = metrics
 			for original_enemy in enemies:
-				var enemy: Resource = original_enemy
-				if storm_only and enemy.ship_name == "The Hollow Choir":
-					enemy = enemy.duplicate()
-					enemy.shields = 4
+				var enemy: Resource = storm_only_profile(original_enemy) if storm_only else original_enemy
 				settings.emp_bonus = Config.defense_tuning.mothership_emp_bonus if enemy.enemy_rank == 2 else 0
 				for kind in Modifier.NAMES.size():
 					for seed_value in range(first, last + 1):
@@ -70,15 +67,16 @@ func run() -> void:
 	file.close()
 	quit()
 
-func legacy_starting_deck(profile: Resource) -> Resource:
-	var current: Resource
-	var previous: Resource
-	if profile.ship_name == "Ganymede":
-		current = preload("res://cards/47_siege_charges.tres")
-		previous = preload("res://cards/06_shield_disruptor.tres")
-	else:
-		current = preload("res://cards/53_capacitor_overload.tres")
-		previous = preload("res://cards/44_desperate_conversion.tres")
+func storm_only_profile(profile: Resource) -> Resource:
+	const Deck = preload("res://scripts/expedition/expedition_deck.gd")
+	if profile.ship_name == "The Hollow Choir":
+		var copy := profile.duplicate()
+		copy.shields = 4
+		return copy
+	if profile not in [Deck.GANYMEDE, Deck.THUNDERBOLT]:
+		return profile
+	var current: Resource = Deck.GANYMEDE_NEW_CARD if profile == Deck.GANYMEDE else Deck.THUNDERBOLT_NEW_CARD
+	var previous: Resource = Deck.GANYMEDE_LEGACY_CARD if profile == Deck.GANYMEDE else Deck.THUNDERBOLT_LEGACY_CARD
 	var slot: int = profile.starting_cards.find(current)
 	assert(slot >= 0)
 	var copy := profile.duplicate()

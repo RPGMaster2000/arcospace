@@ -273,9 +273,7 @@ func preview(card: Resource) -> Resource:
 	var shown = card.duplicate(true)
 	shown.set_meta("inspection_base", card.get_meta("inspection_base", card))
 	shown.effects = _scaled(card.effects, ion_factor)
-	shown.description = (
-		(STORMS[kind].short + (" ×2 · " if ion_factor == 2.0 else " ×½ · ")) + card.describe_effects(shown.effects)
-	)
+	shown.description = "%s ×%s · %s" % [STORMS[kind].short, str(ion_factor), card.describe_effects(shown.effects)]
 	if card.play_again:
 		shown.description += "; play again"
 	return shown

@@ -1,5 +1,5 @@
 extends "res://tests/combat_balance_audit.gd"
-## Run with the storm-only gameplay revision. One shard per named variant.
+## Apply each isolated variant to the storm-only control. One shard per variant.
 
 const DECK_SWAPS = {
 	"Ganymede": [preload("res://cards/06_shield_disruptor.tres"), preload("res://cards/47_siege_charges.tres")],
@@ -35,6 +35,7 @@ func run() -> void:
 	var enemies: Array = []
 	for enemy in Config.enemy_ships + Ships.ENEMIES + [Config.progression.mandatory_boss_profile()]:
 		if enemy not in enemies: enemies.append(enemy)
+	var control_enemies := enemies.map(storm_only_profile)
 	var card: Resource = CARD_VARIANTS.get(variant)
 	var replacement: Resource
 	if card != null:
@@ -48,7 +49,7 @@ func run() -> void:
 	file.store_line(JSON.stringify({"type": "config", "revision": source_revision(), "variant": variant,
 		"first_seed": first, "last_seed": last, "modifier_ids": modifiers, "engine": Engine.get_version_info().string}))
 	var count := 0
-	for original in Ships.PLAYERS:
+	for original in Ships.PLAYERS.map(storm_only_profile):
 		if SHIP_VARIANTS.has(variant) and original.ship_name != SHIP_VARIANTS[variant]: continue
 		var player: Resource = original
 		if SHIP_VARIANTS.has(variant):
@@ -62,7 +63,7 @@ func run() -> void:
 			player = replace_card(original, card, replacement)
 		for policy in POLICIES:
 			var settings: Dictionary = POLICIES[policy].duplicate(true)
-			for original_enemy in enemies:
+			for original_enemy in control_enemies:
 				var enemy: Resource = original_enemy
 				if variant == "progressed_boss" and enemy != Config.progression.mandatory_boss_profile():
 					continue
