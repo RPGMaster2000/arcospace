@@ -183,9 +183,10 @@ func run() -> void:
 	defeated.state.begin_free_travel([1,100,0])
 	defeated.phase = defeated.Phase.TRAVELING
 	defeated.state.navigation.report_movement([1,100,0])
-	check(defeated.state.run_ended and not defeated.star_map.visible, "Failed objective opens expedition defeat rather than a locked map")
-	var labels: Array = defeated.view.find_children("*", "Label", true, false)
-	check(labels.any(func(label): return label.text.contains("all attackers reached")), "Defeat explains why the mothership is unreachable")
+	check(defeated.state.run_ended and defeated.star_map.visible and defeated.homeworld_sequence.terminal and not defeated._map_input_allowed(), "Failed objective preserves rendered map under terminal defeat and blocks navigation")
+	await create_timer(0.6).timeout
+	var labels: Array = defeated.homeworld_sequence.overlay.find_children("*", "Label", true, false)
+	check(labels.any(func(label): return label.text.to_lower().contains("all attackers reached")), "Defeat explains why the mothership is unreachable")
 	defeated.queue_free()
 	await process_frame
 	var exploring = preload("res://scenes/expedition.tscn").instantiate()

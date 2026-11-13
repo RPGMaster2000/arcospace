@@ -120,15 +120,15 @@ func refresh_results(data: Dictionary) -> void:
 	if not data.winner.is_empty():
 		nodes["allocation_popup"].dismiss()
 	nodes["MatchResult"].visible = (
-		not data.winner.is_empty() and not data.resolving_card and (not data.effects_busy or nodes["MatchResult"].started)
+		not data.winner.is_empty() and data.result_recorded and not data.resolving_card and (not data.effects_busy or nodes["MatchResult"].started)
 	)
 	nodes["MatchResult/Panel/Title"].text = (
-		"EMP PULSE SUCCESS"
+		"SYSTEM SECURED" if data.system_secured else "VESSEL DISABLED"
 		if data.escaped_by_ftl
 		else (
 			"DRAW"
 			if data.winner == "draw"
-			else ("VICTORY" if data.winner == "player" else "DEFEAT")
+			else (("SYSTEM SECURED" if data.system_secured else "VICTORY") if data.winner == "player" else "DEFEAT")
 		)
 	)
 	var visible_now: bool = nodes["MatchResult"].visible
@@ -156,7 +156,7 @@ func refresh_results(data: Dictionary) -> void:
 		if data.escaped_by_ftl
 		else (
 			"Enemy ship destroyed"
-			if data.enemy.hull <= 0 and data.winner == "player"
+			if data.enemy.hull <= 0 and data.winner == "player" and data.result_cause != "systems_failure"
 			else (
 				"Systems Failure"
 				if data.result_cause == "systems_failure"
@@ -196,6 +196,8 @@ func refresh_results(data: Dictionary) -> void:
 		nodes["MatchResult/Panel/Continue"].text = (
 			"Upgrade Cards" if data.pending_choice == "upgrade" else "Star System"
 		)
+
+	nodes["MatchResult"].set_summary(data)
 
 
 func refresh_emp(data: Dictionary) -> void:

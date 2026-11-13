@@ -89,8 +89,8 @@ func acknowledge(at: Vector3, radius: float, tint: Color) -> void:
 func _process(delta: float) -> void:
  if not is_instance_valid(ship): return
  position = ship.position
- player_marker.visible = not tactical and not camera.is_position_behind(ship.position)
- identification.visible = not tactical
+ player_marker.visible = not tactical and not suppressed and not camera.is_position_behind(ship.position)
+ identification.visible = not tactical and not suppressed
  player_marker.position = camera.unproject_position(ship.position)
  var heading: Vector2 = camera.unproject_position(ship.position+ship.basis.x)-player_marker.position
  player_marker.rotation = heading.angle()+PI*0.5

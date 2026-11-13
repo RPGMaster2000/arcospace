@@ -202,14 +202,15 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	travel_duration = duration * Layout.scale_factor(layout_expansion)
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
+	var solar_clearance := preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environment_instances())
 	visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
-		settings, system_profile, layout_expansion, orbit_clearance)
+		settings, system_profile, layout_expansion, orbit_clearance, solar_clearance)
 	if not defense_view.is_empty():
 		var planet_sizes := {}
 		for entry in entries.filter(VisualSystem.is_planetary):
 			planet_sizes[entry.index] = Layout.planetary_radius(entry.model_kind)
 		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
-			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes)
+			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes, solar_clearance)
 	# New exploration runs use State's committed static battle anchors. Old saves
 	# without anchors keep the historical cosmetic layout and neutral environment.
 	if defense_view.is_empty():

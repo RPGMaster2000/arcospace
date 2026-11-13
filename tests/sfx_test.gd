@@ -313,6 +313,9 @@ func run() -> void:
 	board.resolving_card = false
 	board.winner = "player"
 	board.refresh_display()
+	check(not heard(&"result_reveal"), "Uncommitted result cannot announce rewards")
+	board._record_result()
+	board.refresh_display()
 	check(heard(&"result_reveal"), "Result reveal accent")
 	reset_audio()
 	for n in range(5): board.refresh_display()
@@ -322,6 +325,7 @@ func run() -> void:
 	reset_audio()
 	board.winner = "enemy"
 	board.result_cause = "systems_failure"
+	board._record_result()
 	board.battle_effects.busy = false
 	board.resolving_card = false
 	board.refresh_display()

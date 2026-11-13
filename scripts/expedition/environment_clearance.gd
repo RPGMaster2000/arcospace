@@ -85,8 +85,17 @@ static func protect_home(state: Resource, records: Array, candidates: Array) -> 
 					replacement.position = [rng.randf_range(bounds.position.x+axes.x,bounds.end.x-axes.x),item.position[1],rng.randf_range(bounds.position.y+axes.z,bounds.end.y-axes.z)]
 				var at := point(replacement.position)
 				if not bounds.encloses(Rect2(Vector2(at.x-axes.x,at.z-axes.z),Vector2(axes.x*2,axes.z*2))): continue
+			if not replacement.is_empty() and state.defense.v2 and not preload("res://scripts/expedition/route_environments.gd").relevant(replacement,state.defense): continue
 			if replacement.is_empty() or intersects_sphere(replacement,state.defense.home,radius): continue
 			replacement.generation.clearance_attempt = attempt+1
 			result.append(JSON.parse_string(JSON.stringify(replacement)))
 			break
 	return result
+
+# Saved generation metadata opts new layouts into clearance; historical systems
+# are never reinterpreted. This margin is shared by map and scene-free layout.
+static func solar_clearance(records: Array) -> float:
+	for item in records:
+		if item.type == "SOLAR_INTERFERENCE" and item.generation.get("celestial_clearance",false) == true:
+			return float(item.region.radius)+clampf(float(item.generation.get("visual_margin",0.6)),0.0,3.0)
+	return 0.0

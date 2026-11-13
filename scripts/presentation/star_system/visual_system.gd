@@ -21,7 +21,7 @@ static func orbit_point(planet: Dictionary, angle: float) -> Vector3:
 	return Basis(Vector3.UP, planet.orientation) * Basis(Vector3.RIGHT, planet.inclination) * point
 
 static func generate(seed_value: int, number: int, entries: Array, settings: Resource,
-		profile: String = "industrial", expansion: float = 0.0, orbit_clearance: float = 0.0) -> Dictionary:
+		profile: String = "industrial", expansion: float = 0.0, orbit_clearance: float = 0.0, solar_clearance: float = 0.0) -> Dictionary:
 	var rng = random_for(seed_value, number, "planets")
 	var factor := Layout.scale_factor(expansion)
 	var result: Dictionary = {"name": Names.system_name(seed_value, number), "planets": [], "anchors": {},
@@ -67,6 +67,32 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		p.type = PLANETARY[entry.model_kind]
 		result.assignments[entry.index] = p.index
 		result.anchors[entry.index] = p.position
+	# Finite deterministic outward retries change only invalid gas orbits. Each
+	# candidate clears every full orbital shell, not just today's planet position.
+	result.solar_clear = true
+	for p in result.planets:
+		if p.type != "gas_giant" or solar_clearance <= 0.0: continue
+		if p.distance*(1.0-p.eccentricity)-planet_extent(p) >= solar_clearance: continue
+		var minimum: float = (solar_clearance+planet_extent(p)+0.001)/(1.0-p.eccentricity)
+		var bounds := Layout.bounds(expansion,settings.system_bounds)
+		var limit: float = minf(minf(absf(bounds.position.x),bounds.end.x),minf(absf(bounds.position.y),bounds.end.y))
+		var placed := false
+		for attempt in range(32):
+			var distance: float = minimum+attempt*0.6
+			if distance*(1.0+p.eccentricity)+planet_extent(p) > limit: break
+			var overlap := false
+			for other in result.planets:
+				if other.index == p.index: continue
+				if absf(distance-other.distance) < distance*p.eccentricity+other.distance*other.eccentricity+planet_extent(p)+planet_extent(other)+orbit_clearance:
+					overlap = true
+					break
+			if overlap: continue
+			p.distance = distance
+			p.position = orbit_point(p,p.phase)
+			if p.encounter >= 0: result.anchors[p.encounter] = p.position
+			placed = true
+			break
+		if not placed: result.solar_clear = false
 	var occupied: Array = [{"position":Vector3.ZERO,"radius":2.6,"label":false}]
 	var orbit_bands: Array[Vector2] = []
 	for p in result.planets:
@@ -86,7 +112,9 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		if orbital and orbit_clearance > 0.0:
 			ring_gap = Layout.planetary_radius(entry.model_kind) + orbit_clearance
 		var placed: Dictionary = place_destination(entry,local,result.planets,occupied,settings,48,
-			expansion,orbit_bands if orbital else [],ring_gap)
+			expansion,orbit_bands if orbital else [],ring_gap,
+			solar_clearance+Layout.planetary_radius("gas_giant") if entry.model_kind == "gas_giant" and solar_clearance > 0 else 0.0)
+		if entry.model_kind == "gas_giant" and not placed.valid: result.solar_clear = false
 		result.anchors[entry.index] = placed.position
 		result.placement[entry.index] = placed
 		occupied.append({"position":placed.position,"radius":placed.radius,"label":true})
@@ -198,7 +226,7 @@ static func _composition_score(at: Vector3, radius: float, contexts: Array, sett
 	return score
 
 static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, planets: Array, occupied: Array,
-		settings: Resource, attempts: int = 48, expansion: float = 0.0, orbit_bands: Array = [], ring_gap: float = 0.7) -> Dictionary:
+		settings: Resource, attempts: int = 48, expansion: float = 0.0, orbit_bands: Array = [], ring_gap: float = 0.7, minimum_distance: float = 0.0) -> Dictionary:
 	var region := placement_region(entry,planets,Layout.scale_factor(expansion))
 	var radius := model_radius(entry)
 	var contexts := _contexts(occupied,settings,expansion)
@@ -211,7 +239,7 @@ static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, pla
 		var angle: float = rng.randf_range(0,TAU)
 		var distance: float = rng.randf_range(region.x,region.y)
 		var height := rng.randf_range(-0.45,0.45)
-		if not _orbit_clear(distance,orbit_bands,ring_gap): continue
+		if distance < minimum_distance or not _orbit_clear(distance,orbit_bands,ring_gap): continue
 		var at := Vector3(cos(angle)*distance,height if orbit_bands.is_empty() else 0.0,sin(angle)*distance)
 		if not bounds.has_point(Vector2(at.x,at.z)): continue
 		var gap := clearance(at,radius,occupied)
@@ -227,7 +255,7 @@ static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, pla
 		for row in range(19):
 			for column in range(19):
 				var point: Vector2 = bounds.position+bounds.size*Vector2(column/18.0,row/18.0)
-				if not _orbit_clear(point.length(),orbit_bands,ring_gap): continue
+				if point.length() < minimum_distance or not _orbit_clear(point.length(),orbit_bands,ring_gap): continue
 				var at := Vector3(point.x,0,point.y)
 				var gap := clearance(at,radius,occupied)
 				if gap<settings.destination_clearance: continue
@@ -248,7 +276,7 @@ static func _orbit_clear(distance: float, bands: Array, gap: float) -> bool:
 
 # Reuse the existing placement algorithm and default calibration at system creation.
 # Only battle anchors become gameplay state. Moving/cosmetic PoIs stay presentation.
-static func battle_positions(state: Resource) -> Dictionary:
+static func entries_for(state: Resource) -> Array:
 	var entries: Array = []
 	for index in range(state.encounters.size()):
 		var encounter: Dictionary = state.encounters[index]
@@ -258,9 +286,14 @@ static func battle_positions(state: Resource) -> Dictionary:
 		entries.append({"index": index, "model_kind": key, "profile": profile})
 	if not state.service.is_empty():
 		entries.append({"index": state.SERVICE_INDEX, "model_kind": "trading_outpost"})
+	return entries
+
+static func battle_positions(state: Resource, prepared: Dictionary = {}) -> Dictionary:
+	var entries := entries_for(state)
 	var layout_seed: int = state.seed_used if state.seed_used != 0 else hash("%d:%d:sky" % [state.seed_used, state.system_number])
-	var data: Dictionary = generate(layout_seed, state.system_number, entries,
-		preload("res://resources/presentation/star_system_settings.tres"), state.system_profile, state.layout_expansion, state.orbit_clearance)
+	var data: Dictionary = prepared if not prepared.is_empty() else generate(layout_seed, state.system_number, entries,
+		preload("res://resources/presentation/star_system_settings.tres"), state.system_profile, state.layout_expansion, state.orbit_clearance,
+		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(state.environmental_instances))
 	var result: Dictionary = {}
 	for entry in entries:
 		if entry.get("profile") == null: continue
