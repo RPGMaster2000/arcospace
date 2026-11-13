@@ -86,8 +86,19 @@ func label(text: String, font_size: int) -> Label:
 	node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return node
 
+# HUD refresh schedules play deferred. Continuation can detach the board or
+# queue an ancestor for deletion before that callback runs. Never construct a
+# reveal, tween or focus owner for an expired presentation.
+func _can_present() -> bool:
+	if not is_inside_tree(): return false
+	var source: Node = self
+	while source != null:
+		if source.is_queued_for_deletion(): return false
+		source = source.get_parent()
+	return true
+
 func play() -> void:
-	if started or not visible or not summary.get("recorded",false): return
+	if started or not visible or not summary.get("recorded",false) or not _can_present(): return
 	started = true
 	running = true
 	$Shade.color.a = 0.9
@@ -242,7 +253,7 @@ func finish() -> void:
 	for button in disabled_states:
 		if is_instance_valid(button): button.disabled = disabled_states[button]
 	skip_button.hide()
-	if not details_overlay.shade.visible:
+	if _can_present() and not details_overlay.shade.visible:
 		for button in disabled_states:
 			if is_instance_valid(button) and not button.disabled:
 				button.grab_focus()
@@ -253,6 +264,7 @@ func skip() -> void:
 	finish()
 
 func _exit_tree() -> void:
+	running = false
 	if animation and animation.is_valid(): animation.kill()
 	for node in animated:
 		if is_instance_valid(node): Effects.reset(node)

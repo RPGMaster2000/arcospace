@@ -20,6 +20,7 @@ func capture(label: String) -> void:
 func run() -> void:
 	var vfx_before := Preferences.battle_vfx()
 	var skip_before := Preferences.skip_cinematics()
+	var last_summary: Dictionary = {}
 	Preferences.set_battle_vfx(false)
 	Preferences.set_skip_cinematics(false)
 	for outcome in ["hull","systems_failure","emp","mothership","mothership_emp","defeat","draw","maxed"]:
@@ -61,6 +62,7 @@ func run() -> void:
 		board.refresh_display()
 		var result = board.get_node("MatchResult")
 		while not result.started: await process_frame
+		last_summary = result.summary.duplicate(true)
 		var saved := Save.encode(state)
 		check(result.running,"Battle VFX disabled retains basic result UI animation")
 		check(result.banner.modulate.a < 1.0 or result.banner.scale != Vector2.ONE,"Title begins in a visibly distinct state")
@@ -125,6 +127,35 @@ func run() -> void:
 	check(not summary.get_node("Panel/Continue").disabled,"Reduced presentation is immediately interactive")
 	reduced.queue_free()
 	for frame in range(4): await process_frame
+	# The controller may continue/exit synchronously after scheduling play.
+	# remove_child happens before queue_free, leaving a valid detached object
+	# whose deferred call must do no work and must never grab focus.
+	var detached = preload("res://scenes/match_result.tscn").instantiate()
+	root.add_child(detached)
+	detached.show()
+	detached.summary = last_summary
+	detached.play.call_deferred()
+	root.remove_child(detached)
+	await process_frame
+	check(not detached.started and not detached.running,"Deferred reveal ignores a detached result scene")
+	check(detached.animation == null and detached.get_child_count() == 2,"Detached reveal creates no controls or tweens")
+	detached.free()
+	var next_action := Button.new()
+	next_action.text = "Next screen action"
+	root.add_child(next_action)
+	next_action.grab_focus()
+	var exiting_parent := Control.new()
+	root.add_child(exiting_parent)
+	var queued = preload("res://scenes/match_result.tscn").instantiate()
+	exiting_parent.add_child(queued)
+	queued.show()
+	queued.summary = last_summary
+	queued.play.call_deferred()
+	exiting_parent.queue_free()
+	for frame in range(2): await process_frame
+	check(root.gui_get_focus_owner() == next_action,"Queued ancestor cannot steal focus from the next screen")
+	check(not is_instance_valid(exiting_parent),"Queued presentation is released without orphaned callbacks")
+	next_action.free()
 	Preferences.set_battle_vfx(vfx_before)
 	Preferences.set_skip_cinematics(skip_before)
 	print("Result animation: %d checks, %d failures" % [checks,failures])

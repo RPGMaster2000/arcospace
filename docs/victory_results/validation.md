@@ -70,3 +70,30 @@ The continuous recording contains H.264 video and AAC audio at 1280×720, 5.4 se
 the UI portion lasts 1.55 seconds. These captures were made with software GL;
 independent Mobile Vulkan captures and tests also passed. No physical Android
 hardware was available for this pass.
+
+## Full-CI follow-up
+
+[Run 359](https://github.com/RPGMaster2000/arcospace/actions/runs/43477835605)
+passed the new input/animation suites, both Mobile shards and exported startup.
+It found an off-tree `grab_focus()` error in the result reveal during
+`travel_battle_test`, `chasedown_ui_test` and rendered `expedition_milestones_test`.
+The tests' assertions passed, but the runner correctly failed on runtime errors.
+The Mobile aggregate also failed because it depends on the entire rendered matrix,
+including the failing GL jobs; this was not a separate Mobile test failure.
+
+A focused detached-widget reproduction failed before the lifecycle fix, including
+the same focus error and an uninitialized overlay during reduced-mode completion.
+The sequence now guards the complete reveal before creating any UI/tween and
+checks ancestor deletion state before taking focus. Four additional lifecycle
+assertions cover detached reveals, unchanged scene structure, next-screen focus
+and queued-parent cleanup. Runtime diagnostic checks and existing assertions were
+not relaxed. The full matrix is rerun on the follow-up commit.
+
+Follow-up validation (Godot 4.7.2):
+- All five targeted headless suites passed: travel/battle, chasedown UI, expedition
+  milestones, real upgrade input, and expanded result lifecycle (268 checks).
+- GL Compatibility reruns passed for chasedown UI, expedition milestones and the
+  expanded result lifecycle.
+- Mobile Vulkan expanded result lifecycle passed.
+- All 22 Python runner contract tests passed.
+- Fresh full GitHub CI is pending after the follow-up push; the PR remains unmerged.

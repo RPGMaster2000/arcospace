@@ -111,3 +111,17 @@ media directory's `.gdignore`.
 | Completed victory / upgrade action | EMP at mobile resolution |
 | --- | --- |
 | ![Victory](media/victory-complete.png) | ![EMP](media/emp-mobile.png) |
+
+## Deferred reveal handoff
+
+The full CI matrix exercised a continuation path not covered by the initial focused
+runs: the HUD schedules `play()` with `call_deferred`, then the controller removes
+the board and queues it for deletion before the callback executes. The still-valid
+result object was constructing UI outside the scene tree and trying to focus Skip.
+
+The result sequence now rejects reveals when detached or when any ancestor is
+queued for deletion. Completion also requires a live presentation before taking
+focus, and scene exit marks animation as stopped. This prevents stale callbacks
+from building controls/tweens or stealing focus from the next screen. The new
+regressions reproduce both removal-before-deferred-call and queued-ancestor cases.
+No progression handler or result transaction changed.
