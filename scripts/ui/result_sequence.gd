@@ -17,6 +17,7 @@ var summary: Dictionary = {}
 var values: Array = []
 var controls: Array[Control] = []
 var disabled_states: Dictionary = {}
+var fit_queued := false
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const FONT = preload("res://assets/fonts/emoji_ui.tres")
 
@@ -35,6 +36,8 @@ func set_summary(data: Dictionary) -> void:
 
 func label(text: String, font_size: int) -> Label:
 	var node := Label.new()
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	node.minimum_size_changed.connect(queue_fit)
 	node.text = text
 	node.add_theme_font_override("font",FONT)
 	node.add_theme_font_size_override("font_size",font_size)
@@ -59,11 +62,14 @@ func play() -> void:
 	subtitle = label(summary.get("cause",""),24)
 	add_child(subtitle)
 	rewards = HBoxContainer.new()
+	rewards.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rewards.minimum_size_changed.connect(queue_fit)
 	rewards.add_theme_constant_override("separation",12)
 	rewards.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(rewards)
 	for entry in [["🪨 Salvage earned","earned"],["❤️ Hull remaining","hull"],["⚔ Battles won","battles"],["✦ Card upgrades","upgrades"]]:
 		var column := VBoxContainer.new()
+		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rewards.add_child(column)
 		var value := label("0",34)
@@ -71,6 +77,8 @@ func play() -> void:
 		column.add_child(label(entry[0],18))
 		values.append({"node":value,"target":int(summary.get(entry[1],0))})
 	lines = VBoxContainer.new()
+	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lines.minimum_size_changed.connect(queue_fit)
 	add_child(lines)
 	lines.add_child(label("Salvage balance · %d" % int(summary.get("balance",0)),20))
 	details_button = Button.new()
@@ -107,7 +115,15 @@ func play() -> void:
 	animation.chain().tween_callback(finish)
 	if Preferences.skip_cinematics() or not Preferences.battle_vfx(): skip.call_deferred()
 
+# Wrapped labels can report their narrow initial minimum before width settles.
+# Refit after that changes; decoration must never become an invisible input cover.
+func queue_fit() -> void:
+	if fit_queued or not is_inside_tree(): return
+	fit_queued = true
+	fit.call_deferred()
+
 func fit() -> void:
+	fit_queued = false
 	if not is_instance_valid(banner): return
 	banner.position = Vector2(24,size.y*0.12)
 	banner.size = Vector2(size.x-48,64)
