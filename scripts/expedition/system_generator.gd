@@ -10,6 +10,7 @@ const ARRAY = preload("res://encounters/ancient_navigation_array.tres")
 static func generate(state: Resource) -> void:
 	if state.is_defense():
 		_generate_defense(state)
+		state.defense_poi_version = 1
 		return
 	var rules: Resource = state.rules
 	var rng: RandomNumberGenerator = state.rng

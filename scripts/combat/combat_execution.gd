@@ -18,7 +18,7 @@ static func can_play(card: Resource, discard: bool, actor: Dictionary) -> bool:
 # Resolve into caller-owned snapshots. Live combat may stage Hull loss before committing them.
 static func resolve(
 	card: Resource, discard: bool, actor: Dictionary, target: Dictionary,
-	modifier: Node = null, generator: RandomNumberGenerator = null
+	modifier: Node = null, generator: RandomNumberGenerator = null, attack_advantage: String = ""
 ) -> Resolution:
 	if not can_play(card, discard, actor):
 		return null
@@ -26,10 +26,10 @@ static func resolve(
 	if discard:
 		actor[card.family] += floori(card.cost / 3.0)
 	elif modifier != null:
-		result.announcement = modifier.play(card, actor, target)
+		result.announcement = modifier.play(card, actor, target, -1.0, attack_advantage)
 		result.hull_damage = modifier.last_hull_damage.duplicate(true)
 	else:
-		Effects.play(card, actor, target, generator, false, result.hull_damage)
+		Effects.play(card, actor, target, generator, false, result.hull_damage, -1, null, attack_advantage)
 	result.direct_damage = int(result.hull_damage.get("direct_damage", 0))
 	result.extra_action = not discard and card.play_again
 	return result

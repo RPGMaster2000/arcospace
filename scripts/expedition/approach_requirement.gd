@@ -1,6 +1,6 @@
 extends RefCounted
 # Detached requirement facts. State evaluates eligibility; UI chooses wording and layout.
-enum Kind { NONE, PRODUCTION, SALVAGE, FULL_HULL }
+enum Kind { NONE, PRODUCTION, SALVAGE, FULL_HULL, UNAVAILABLE }
 var kind: Kind
 var attribute: String
 var required: int

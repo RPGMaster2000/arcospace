@@ -41,6 +41,14 @@ static func highlight_outcome(value: String) -> String:
 
 static func approach_text(state: Resource, approach: Resource, contextual: bool = false) -> String:
 	var lines: Array[String] = []
+	if approach.has_meta("strategic_reward"):
+		lines.append(approach.get_meta("strategic_description"))
+		lines.append("Cost: %d strategic seconds" % int(approach.get_meta("strategic_seconds")))
+		var reason: String = state.locked_reason(approach)
+		if not approach.requirement.is_empty() and not reason.begins_with("Requires " + state.LABELS[approach.requirement]):
+			lines.append("Requires %s ≥%d" % [state.LABELS[approach.requirement],approach.minimum_production])
+		if not reason.is_empty(): lines.append(reason)
+		return "\n".join(lines)
 	if not approach.requirement.is_empty():
 		lines.append(
 			(
@@ -116,4 +124,6 @@ static func requirement_text(requirement: RefCounted, labels: Dictionary) -> Str
 			return "Salvage %d required (%d)" % [requirement.required, requirement.current]
 		contract.Kind.FULL_HULL:
 			return "Hull already full"
+		contract.Kind.UNAVAILABLE:
+			return requirement.attribute
 	return ""

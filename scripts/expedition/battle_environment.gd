@@ -118,6 +118,7 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.get("version") != 1 or value.get("type") not in TYPES: return false
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
+	if value.get("mothership_advantage", "") not in ["", "penetration", "damage"]: return false
 	if not Installations.valid_support(value.get("friendly_support", {})): return false
 	if value.type == NONE and (value.instance_id != "" or value.intensity != 0): return false
 	if not Navigation.valid_point(value.get("location")): return false

@@ -532,6 +532,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
+		star_map.speed_profile = state.travel_speed_profile
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
 		star_map.double_tap_msec = roundi(state.rules.defense_tuning.double_tap_seconds * 1000.0)
@@ -578,6 +579,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			star_map.inspection_dismissed.connect(_dismiss_inspection)
 			star_map.free_move_requested.connect(func(point: Vector3):
 				if star_map == source_map: source_map.travel_to_position(point))
+			star_map.travel_boundary.connect(func():
+				if star_map == source_map: _sample_navigation_position())
 			star_map.free_arrived.connect(func():
 				if star_map == source_map: _free_arrived())
 		star_map.travel_started.connect(func():
@@ -863,17 +866,17 @@ func _select_approach(slot: int) -> void:
 		if not state.can_survey(selected_encounter, _uses_3d_map()):
 			return
 	else:
-		var poi: Resource = state.encounter_at(selected_encounter).poi
+		var approaches: Array = state.poi_approaches(selected_encounter)
 		if (
 			slot < 0
-			or slot >= poi.approaches.size()
-			or not state.locked_reason(poi.approaches[slot]).is_empty()
+			or slot >= approaches.size()
+			or not state.locked_reason(approaches[slot]).is_empty()
 		):
 			return
 	var selected_title: String = (
 		"Navigation survey"
 		if slot == -2
-		else state.encounter_at(selected_encounter).poi.approaches[slot].title
+		else state.poi_approaches(selected_encounter)[slot].title
 	)
 	screen.select_approach(slot, selected_title)
 
@@ -951,7 +954,8 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 			_purchase_outpost_service(slot, int(repair_selector.value), service_confirmation_revision, outpost_screen)
 		return
 	if state.resolve_approach(index, slot):
-		await _present_resolved_outcome(suspense, true)
+		var guaranteed: bool = state.is_defense() and state.defense_poi_version == 1
+		await _present_resolved_outcome(suspense and not guaranteed, not guaranteed)
 
 
 #endregion
@@ -967,7 +971,7 @@ func show_outcome() -> void:
 		return
 	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
 		state.finish_upgrades()
-	if state.pending_choice in ["card", "upgrade", "replace"]:
+	if state.pending_choice in ["card", "card_batch", "upgrade", "replace"]:
 		_present_card_management()
 		return
 	_clear("outcome")
@@ -991,12 +995,18 @@ func _present_card_management() -> void:
 	screen.resource_bar.overlay.dismiss()
 	screen.confirmation.dismiss()
 	screen.process_mode = Node.PROCESS_MODE_DISABLED
-	var cards: Array = state.card_offers if state.pending_choice == "card" else (
-		state.player_pool() if state.pending_choice == "replace" else state.upgrade_candidates())
+	var cards: Array = state.card_offers if state.pending_choice in ["card","card_batch"] else (
+		state.replacement_pool() if state.pending_choice == "replace" else state.upgrade_candidates())
 	var result_context: String = ""
 	if state.last_poi_success >= 0:
 		result_context = "Mission Successful" if state.last_poi_success == 1 else "Mission Compromised"
 	card_management.present(state.pending_choice, cards, state.upgrades_remaining, state.pending_card, state.deck_limit(), result_context)
+	if state.card_batch_active():
+		card_management.decline_button.hide()
+		if state.pending_choice == "replace":
+			card_management.heading.text = "Replace Card — Deck full: %d/%d cards" % [state.player_pool().size(),state.deck_limit()]
+			card_management.instruction.text = "Keep both Tier 1 rewards. Select an owned card to replace."
+			card_management.context.text = "Mandatory replacement · both rewards are kept"
 
 
 func _management_current(revision: int) -> bool:
@@ -1011,6 +1021,8 @@ func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
 		return
 	match mode:
 		"card": _choose_card(state.card_offers.find(card))
+		"card_batch":
+			if state.confirm_card_batch(): _purchase_finished()
 		"upgrade": _upgrade(card.identity_key())
 		"replace": _replace_card()
 

@@ -133,7 +133,8 @@ func starting_resource(state: Resource, key: String, production: String = "") ->
 	var value: String = str(base)
 	var detail: String = heading(key, name) + "\n\n"
 	if not production.is_empty():
-		value = "+%d/t · %d" % [state.production(production), base] if edge_compact else "+%d/t · %d %s" % [state.production(production), base, name]
+		var effective: int = state.production(production) + (state.poi_effects.bonus(production) if state.is_defense() else 0)
+		value = "+%d/t · %d" % [effective, base] if edge_compact else "+%d/t · %d %s" % [effective, base, name]
 		detail += (
 			"[b]%s[/b]  +%d / turn\n" % [state.LABELS[production], state.production(production)]
 		)
@@ -148,6 +149,9 @@ func starting_resource(state: Resource, key: String, production: String = "") ->
 			"[b]Next battle[/b]  %d %s = [b]%d[/b]\nAbsorbs damage first. Resets each battle."
 			% [base, colored_delta(delta), final]
 		)
+	if state.is_defense() and not production.is_empty() and state.poi_effects.production.has(production):
+		var boost: Dictionary = state.poi_effects.production[production]
+		detail += "\nTemporary: +%d production · %d completed battles remaining" % [boost.amount,boost.battles]
 	put(key, value, detail, "%+d" % delta if delta else "", delta < 0)
 
 
@@ -190,6 +194,8 @@ func exploration(state: Resource) -> void:
 			% [boost, state.ship().ftl_turns, offline]
 		)
 	)
+	if state.is_defense() and not state.poi_effects.summary().is_empty():
+		detail += "\n\n[b]Active expedition effects[/b]\n" + state.poi_effects.summary()
 	if offline > 0:
 		put(
 			"jump", "", detail, "Disabled -%d" % offline, true, "Boost +%d" % boost if boost else ""

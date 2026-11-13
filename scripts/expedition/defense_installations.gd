@@ -37,13 +37,37 @@ static func _add_site(result: Dictionary, id: String, title: String, preferred: 
 static func _point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 
-static func valid_deployments(value: Variant, eligible: Dictionary) -> bool:
+const FREE_PREFIX = "mining_free_"
+
+static func purchased_count(turrets: Dictionary) -> int:
+	var count := 0
+	for id in turrets:
+		if not str(id).begins_with(FREE_PREFIX): count += 1
+	return count
+
+static func free_count(turrets: Dictionary) -> int:
+	return turrets.size() - purchased_count(turrets)
+
+static func free_sites(anchors: Dictionary, encounters: Array) -> Dictionary:
+	var result := {}
+	for index in encounters.size():
+		var entry: Dictionary = encounters[index]
+		if entry.kind != "poi" or not anchors.has(index): continue
+		if entry.poi.resource_path.get_file().get_basename() != "mining_operation": continue
+		var at: Vector3 = anchors[index]
+		result[FREE_PREFIX + str(index)] = {"position":[at.x,at.y,at.z]}
+	return result
+
+static func valid_deployments(value: Variant, eligible: Dictionary, free_eligible: Dictionary = {}) -> bool:
 	if not value is Dictionary or value.size() > 8: return false
+	if free_count(value) > 1 or (free_count(value) > 0 and purchased_count(value) > 2): return false
+	var positions := eligible.duplicate(true)
+	positions.merge(free_eligible)
 	for id in value:
 		var turret: Variant = value[id]
-		if not eligible.has(id) or not turret is Dictionary or turret.size() != 6 or turret.get("owner") != "player": return false
+		if not positions.has(id) or not turret is Dictionary or turret.size() != 6 or turret.get("owner") != "player": return false
 		if not Navigation.valid_point(turret.get("position"), false): return false
-		if _point(turret.position).distance_to(_point(eligible[id].position)) > 0.001: return false
+		if _point(turret.position).distance_to(_point(positions[id].position)) > 0.001: return false
 		var radius: Variant = turret.get("radius")
 		if not (radius is float or radius is int) or not is_finite(float(radius)) or radius < 1 or radius > 28: return false
 		if not valid_support(turret) or turret.is_empty(): return false
