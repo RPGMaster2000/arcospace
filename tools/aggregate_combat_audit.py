@@ -2,6 +2,7 @@
 
 import argparse
 from collections import Counter, defaultdict
+import csv
 import gzip
 from itertools import product
 import json
@@ -14,12 +15,19 @@ def success(row):
     return row["outcome"].startswith("win_") or row["outcome"] == "emp_escape"
 
 
-def wilson(wins, n):
+def wilson(wins, n, z=1.96):
     p = wins / n
-    denominator = 1 + 1.96**2 / n
-    margin = 1.96 * sqrt(p * (1 - p) / n + 1.96**2 / (4 * n**2))
-    center = p + 1.96**2 / (2 * n)
-    return [(center - margin) / denominator, (center + margin) / denominator]
+    denominator = 1 + z**2 / n
+    margin = z * sqrt(p * (1 - p) / n + z**2 / (4 * n**2))
+    center = p + z**2 / (2 * n)
+    return [max(0.0, (center - margin) / denominator), min(1.0, (center + margin) / denominator)]
+
+
+def paired_interval(delta):
+    n = len(delta)
+    increase = wilson(delta.count(1), n, 2.2414)
+    decrease = wilson(delta.count(-1), n, 2.2414)
+    return [increase[0] - decrease[1], increase[1] - decrease[0]]
 
 
 def summarize(rows):
@@ -95,29 +103,52 @@ def collect(paths):
 def report(config, matches, cards):
     cells = defaultdict(list)
     pairs = defaultdict(list)
+    emp_pairs = defaultdict(list)
+    ship_pairs = defaultdict(list)
     for key, row in sorted(matches.items()):
         ship, enemy, modifier, policy, seed = key
         for dimensions in ((ship,), (ship, policy), (ship, enemy, policy),
-                           (ship, modifier, policy), (ship, enemy, modifier, policy), (enemy, policy)):
+                           (ship, modifier, policy), (ship, enemy, modifier, policy), (enemy, policy),
+                           (ship, "combat-only"), (ship, enemy, "combat-only"), (ship, modifier, "combat-only")):
+            if dimensions[-1] == "combat-only" and policy == "emp":
+                continue
             cells[dimensions].append(row)
         baseline = matches.get((ship, enemy, config["modifiers"][0], policy, seed))
         if baseline is not None:
             pairs[ship, modifier, policy].append(int(success(row)) - int(success(baseline)))
+            if policy != "emp":
+                pairs[ship, modifier, "combat-only"].append(int(success(row)) - int(success(baseline)))
+        if policy == "emp":
+            defensive = matches.get((ship, enemy, modifier, "defensive", seed))
+            if defensive is not None:
+                emp_pairs[ship].append(int(success(row)) - int(success(defensive)))
+        else:
+            for other in config["ships"]:
+                if ship >= other:
+                    continue
+                comparison = matches.get((other, enemy, modifier, policy, seed))
+                if comparison is not None:
+                    ship_pairs[ship, other].append(int(success(row)) - int(success(comparison)))
     effects = []
     for (ship, modifier, policy), delta in sorted(pairs.items()):
         counts = Counter(delta)
         changed = counts[-1] + counts[1]
-        # Conservative simultaneous Wilson bounds for the two discordant proportions.
-        increase = wilson(counts[1], len(delta))
-        decrease = wilson(counts[-1], len(delta))
+        # Bonferroni-adjusted Wilson bounds for the two discordant proportions.
         effects.append({"ship": ship, "modifier": modifier, "policy": policy,
                         "n": len(delta), "delta": mean(delta), "discordant": changed,
-                        "ci_conservative": [increase[0] - decrease[1], increase[1] - decrease[0]]})
+                        "ci_conservative": paired_interval(delta)})
     return {
         "config": config, "completed": len(matches),
         "seeds": sorted({key[-1] for key in matches}),
         "cells": [{"group": key, **summarize(rows)} for key, rows in sorted(cells.items())],
         "paired_modifiers": effects,
+        "paired_emp": [{"ship": ship, "n": len(delta), "delta": mean(delta),
+                        "gains": delta.count(1), "losses": delta.count(-1), "ci_conservative": paired_interval(delta)}
+                       for ship, delta in sorted(emp_pairs.items())],
+        "paired_ships_combat_only": [{"ship": ship, "other": other, "n": len(delta),
+                                      "delta": mean(delta), "gains": delta.count(1), "losses": delta.count(-1),
+                                      "ci_conservative": paired_interval(delta)}
+                                     for (ship, other), delta in sorted(ship_pairs.items())],
         "cards": [{"ship": group[0], "policy": group[1], "cards": totals}
                   for group, totals in sorted(cards.items())],
     }
@@ -130,12 +161,25 @@ def main():
     args = parser.parse_args()
     config, matches, cards = collect(args.shards)
     data = report(config, matches, cards)
+    data["missing_full_factorial_cells"] = sorted(
+        set(product(config["ships"], [enemy["name"] for enemy in config["enemies"]],
+                    config["modifiers"], config["policies"], data["seeds"])) - set(matches)
+    )
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "summary.json").write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
     with (args.output / "matches.jsonl.gz").open("wb") as output:
         with gzip.GzipFile(fileobj=output, mode="wb", filename="", mtime=0) as archive:
             for key in sorted(matches):
                 archive.write((json.dumps(matches[key], separators=(",", ":")) + "\n").encode())
+    with (args.output / "card_usage.csv").open("w", encoding="utf-8", newline="") as output:
+        fields = ["ship", "policy", "id", "name", "family", "tier", "drawn", "played",
+                  "discarded", "held_turns", "affordable", "target_hull", "shield_gain",
+                  "hull_gain", "family_net"]
+        writer = csv.DictWriter(output, fieldnames=fields)
+        writer.writeheader()
+        for (ship, policy), group in sorted(cards.items()):
+            for key, metrics in sorted(group.items()):
+                writer.writerow({"ship": ship, "policy": policy, "id": key, **metrics})
     print(f"Validated {len(matches):,} matches")
 
 
