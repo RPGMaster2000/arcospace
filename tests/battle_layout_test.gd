@@ -192,13 +192,6 @@ func run() -> void:
 					),
 					"Active effect is explicit"
 				)
-				if kind == 2:
-					board.modifier.ion_factor = 0.5
-					display.refresh(board.modifier, 6)
-					check(
-						display.get_node("Meter/Text").text.contains("halved"),
-						"Ion HUD follows announced half multiplier"
-					)
 			if kind == 0:
 				check(not panel.visible and text.is_empty(), "Neutral battle has no modifier label or details target")
 			else:

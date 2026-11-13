@@ -63,7 +63,7 @@ func _section(caption: String) -> VBoxContainer:
 
 static func modifier_summary(kind: int) -> String:
 	if kind in Modifiers.STORMS:
-		return "%s effects ×2 / ×½ for %d rounds; both ships." % [Modifiers.storm_family(kind).capitalize(), Modifiers.ACTIVE_ROUNDS]
+		return "%s effects ×2 for %d rounds · Both ships" % [Modifiers.storm_family(kind).capitalize(), Modifiers.ACTIVE_ROUNDS]
 	match kind:
 		1: return "%d%% chance / ship: %d damage, Shields first." % [roundi(Modifiers.ASTEROID_CHANCE * 100), Modifiers.ASTEROID_DAMAGE]
 		3: return "Both ships' Shields offline for %d rounds." % Modifiers.ACTIVE_ROUNDS

@@ -43,21 +43,21 @@ func run() -> void:
 			check(StatusPanel.compact_status(mod,1).contains("Next storm in 1"),"New storm countdown")
 			var announcement: String = mod.begin_round(2)
 			check(announcement.contains(Mod.NAMES[kind].to_upper()),"Activation name")
-			for factor in [0.5,2.0]:
-				mod.ion_factor = factor
+			if mod.active:
+
 				board.turn_number = 2
 				board.refresh_display()
 				check(meter.get_node("Text").text.contains(Mod.storm_family(kind).capitalize()),"HUD affected family")
-				check(meter.get_node("Text").text.contains("halved" if factor == 0.5 else "doubled"),"HUD multiplier")
+				check(meter.get_node("Text").text.contains("doubled"),"HUD multiplier")
 				check(meter.get_node("Text").modulate == Mod.storm_color(kind),"Amber/violet HUD identity")
-				check(meter.current_rules.contains("50%") and meter.current_rules.contains("costs stay unchanged"),"Pre-battle/full rules explain shared mechanics")
+				check(meter.current_rules.contains("×2") and meter.current_rules.to_lower().contains("costs stay unchanged"),"Pre-battle/full rules explain shared mechanics")
 				var snapshot: Dictionary = board._display_snapshot()
 				for index in range(snapshot.cards.size()):
 					var original: Resource = board.hand.cards[index]
 					var shown: Dictionary = snapshot.cards[index]
 					check(shown.ion_glow == (original.family == Mod.storm_family(kind)),"Only matching cards glow")
 					check(shown.storm_color == Mod.storm_color(kind,true),"Card glow tint supplied")
-				check(mod.status_text(2).contains("SUPPRESSED" if factor == 0.5 else "AMPLIFIED"),"Active status text")
+				check(mod.status_text(2).contains("AMPLIFIED"),"Active status text")
 				display.cinematic_enabled = true
 				display.warning_seconds = 0.01
 				await display.warning(kind,true,mod.storm_text())

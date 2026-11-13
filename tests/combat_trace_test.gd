@@ -77,6 +77,19 @@ const EXPECTED = [
 ]
 var trace: Array = []
 
+class HistoricalModifier extends "res://scripts/combat_modifier.gd":
+	func begin_round(round_number: int) -> String:
+		var before := rng.state
+		var starting := STORMS.has(kind) and not active and round_number >= next_round
+		var notice := super.begin_round(round_number)
+		if starting:
+			rng.state = before
+			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
+		return notice
+
+func make_modifier() -> Node:
+	return HistoricalModifier.new()
+
 func outcome(states: Array, clock: RefCounted) -> String:
 	trace.append([states.duplicate(true), clock.remaining.duplicate(true)])
 	return super.outcome(states, clock)
@@ -87,6 +100,14 @@ func run() -> void:
 		# Frozen pre-signature baseline: compare the original 28-card configurations.
 		var player: Resource = current_ship.duplicate(false)
 		player.starting_cards = current_ship.starting_cards.filter(func(card: Resource): return card.signature_ship < 0)
+		if player.ship_name == "Ganymede":
+			var slot: int = player.starting_cards.find(preload("res://cards/47_siege_charges.tres"))
+			assert(slot >= 0)
+			player.starting_cards[slot] = preload("res://cards/06_shield_disruptor.tres")
+		elif player.ship_name == "Thunderbolt":
+			var slot: int = player.starting_cards.find(preload("res://cards/53_capacitor_overload.tres"))
+			assert(slot >= 0)
+			player.starting_cards[slot] = preload("res://cards/44_desperate_conversion.tres")
 		player.set_meta("legacy_draws", true)
 		for kind in range(6):
 			for seed_value in [1, 7]:
