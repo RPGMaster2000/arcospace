@@ -1447,8 +1447,7 @@ func _setup_decoy_controls() -> void:
 		box.set_border_width_all(1)
 		box.set_corner_radius_all(7)
 		decoy_button.add_theme_stylebox_override(style, box)
-	screen.overview_hud.utilities.add_child(decoy_button)
-	screen.overview_hud.utilities.move_child(decoy_button, 0)
+	add_child(decoy_button)
 	decoy_button.hide()
 	decoy_button.pressed.connect(func():
 		if _decoy_available():
@@ -1504,6 +1503,11 @@ func _update_decoy_controls() -> void:
 		_cancel_decoy()
 	var visible_now := decoy_camera.is_empty() and _decoy_available()
 	if decoy_button.visible != visible_now:
+		if visible_now:
+			decoy_button.reparent(screen.overview_hud.utilities, false)
+			screen.overview_hud.utilities.move_child(decoy_button, 0)
+		else:
+			decoy_button.reparent(self, false)
 		decoy_button.visible = visible_now
 		screen.overview_hud.queue_layout()
 	if visible_now:
