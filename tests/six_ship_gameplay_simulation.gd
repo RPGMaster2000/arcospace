@@ -7,6 +7,16 @@ const Board = preload("res://scripts/board.gd")
 const SEEDS = 20
 const ROUND_LIMIT = 100
 const ACTION_LIMIT = 100
+
+class HistoricalModifier extends "res://scripts/combat_modifier.gd":
+	func begin_round(round_number: int) -> String:
+		var before := rng.state
+		var starting := STORMS.has(kind) and not active and round_number >= next_round
+		var notice := super.begin_round(round_number)
+		if starting:
+			rng.state = before
+			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
+		return notice
 func source_revision() -> String:
 	var output: Array = []
 	if OS.execute("git", ["-C", ProjectSettings.globalize_path("res://"), "rev-parse", "HEAD"], output) == 0:
@@ -42,7 +52,7 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	var states: Array = [state(player), state(enemy)]
 	var names: Array[String] = ["player", "enemy"]
 	var clock = Failure.new()
-	var modifier = Modifier.new()
+	var modifier = Modifier.new() if modern else HistoricalModifier.new()
 	modifier.configure(kind)
 	modifier.rng.seed = seed_value * 127 + kind
 	modifier.next_round = 1 + modifier.rng.randi_range(modifier.MIN_INTERVAL, modifier.MAX_INTERVAL)
