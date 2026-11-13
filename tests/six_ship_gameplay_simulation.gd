@@ -8,15 +8,6 @@ const SEEDS = 20
 const ROUND_LIMIT = 100
 const ACTION_LIMIT = 100
 
-class HistoricalModifier extends "res://scripts/combat_modifier.gd":
-	func begin_round(round_number: int) -> String:
-		var before := rng.state
-		var starting := STORMS.has(kind) and not active and round_number >= next_round
-		var notice := super.begin_round(round_number)
-		if starting:
-			rng.state = before
-			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
-		return notice
 func source_revision() -> String:
 	var output: Array = []
 	if OS.execute("git", ["-C", ProjectSettings.globalize_path("res://"), "rev-parse", "HEAD"], output) == 0:
@@ -45,6 +36,9 @@ func run() -> void:
 func outcome(states: Array, clock: RefCounted) -> String:
 	return Execution.outcome({"player": states[0], "enemy": states[1]}, clock)
 
+func make_modifier() -> Node:
+	return Modifier.new()
+
 func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, audit: Dictionary = {}) -> Dictionary:
 	var modern := not audit.is_empty()
 	var hands: Array = [Hand.new(), Hand.new()]
@@ -52,7 +46,7 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	var states: Array = [state(player), state(enemy)]
 	var names: Array[String] = ["player", "enemy"]
 	var clock = Failure.new()
-	var modifier = Modifier.new() if modern else HistoricalModifier.new()
+	var modifier = make_modifier()
 	modifier.configure(kind)
 	modifier.rng.seed = seed_value * 127 + kind
 	modifier.next_round = 1 + modifier.rng.randi_range(modifier.MIN_INTERVAL, modifier.MAX_INTERVAL)
@@ -83,6 +77,11 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		brains[1].rng.seed = seed_value ^ 107
 		hands[0].configure_player_allocation(preload("res://resources/power_allocation.tres").matching_draw_weight)
 		hands[0].signature_card = player.signature_card
+		if audit.has("progression"):
+			for card in audit.progression.acquired:
+				hands[0].card_pool.append(card)
+				hands[0].identity_weights[card.identity_key()] = Config.acquired_card_draw_weight
+			hands[0].apply_upgrades(audit.progression.upgrades)
 		brains[0].tactical_weights = audit.weights
 		drive.charge_target += int(audit.get("emp_bonus", 0))
 		use_emp = audit.emp

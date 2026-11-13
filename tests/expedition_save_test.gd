@@ -18,6 +18,27 @@ func run() -> void:
 	store.path = "user://test_expedition_save.json"
 	store.clear_run()
 	check(store.load_run().is_empty() and store.error.is_empty(), "Missing save is normal")
+	for change in [
+		[State.Deck.GANYMEDE, State.Deck.GANYMEDE_LEGACY_CARD, State.Deck.GANYMEDE_NEW_CARD],
+		[State.Deck.THUNDERBOLT, State.Deck.THUNDERBOLT_LEGACY_CARD, State.Deck.THUNDERBOLT_NEW_CARD],
+	]:
+		var run_state = State.new()
+		run_state.start(Ships.PLAYERS.find(change[0]), Rules, 9876)
+		var revised: Dictionary = Save.encode(run_state)
+		var old_card: Resource = change[1]
+		var new_card: Resource = change[2]
+		var current = store.decode(revised)
+		check(revised.get("revised_starting_decks", false) and current != null
+			and new_card in current.player_pool() and old_card not in current.player_pool(), "New runs keep the revised starting deck")
+		revised.erase("revised_starting_decks")
+		revised.upgrades[old_card.identity_key()] = 1
+		revised.acquired.append(new_card.identity_key())
+		var legacy = store.decode(revised)
+		check(legacy != null, "Older saves with upgrades and the acquired replacement still load")
+		if legacy != null:
+			var pool: Array = legacy.player_pool()
+			check(pool.any(func(card): return card.identity_key() == old_card.identity_key() and card.upgrade_level == 1)
+				and new_card in pool and not Save.encode(legacy).has("revised_starting_decks"), "Older saves keep the original starting deck and reward ledger")
 	for index in range(Ships.PLAYERS.size()):
 		var state = State.new()
 		state.start(index, Rules, 12345 + index)
