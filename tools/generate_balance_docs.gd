@@ -346,14 +346,7 @@ func _initialize() -> void:
 			"combat_modifier.gd: ASTEROID_*, *_INTERVAL"
 		]
 	)
-	text += row(
-		[
-			"Ion storm",
-			"50% ×2 / 50% ×0.5 Energy card effects for 3 rounds; half rounds down. Cost unchanged. Recursively scales numbers except pierce, shield_collapse_below, threshold, chance; legacy sabotage true counts as 1.",
-			"combat_modifier.gd: begin_round, _scaled"
-		]
-	)
-	for kind in [6,7]:
+	for kind in [2,6,7]:
 		text += row([Mod.NAMES[kind],Mod.description(kind),"combat_modifier.gd: STORMS, _scaled"])
 	text += row(
 		[

@@ -21,12 +21,7 @@ static func storm_applies(card: Resource, context: Dictionary) -> bool:
 func affects_card(card: Resource) -> bool:
 	return storm_applies(card,forecast_context())
 func storm_text() -> String:
-	# Preserve Ion's existing text contract; new storms use the same factor, never another roll.
-	if kind == 2: return ion_text()
-	return "%s %s %s" % [storm_family(kind).to_upper(), "AMPLIFIED" if ion_factor == 2.0 else "SUPPRESSED", "×2" if ion_factor == 2.0 else "×½"]
-static func storm_notice(selection: int, factor: float) -> String:
-	var label: String = "BLUE CARD" if selection == 2 else storm_family(selection).to_upper()
-	return NAMES[selection].to_upper() + " · " + label + " " + ("×2" if factor == 2.0 else "×½")
+	return "%s AMPLIFIED ×2" % storm_family(kind).to_upper()
 
 ## TUNE: Full rounds between events, counted after an event ends.
 const TEMPORAL_DROP_MULTIPLIER: float = 2.0  # TUNE: Tier 2 draw multiplier for the whole battle.
@@ -66,7 +61,7 @@ static func description(selection: int) -> String:
 	)
 	if STORMS.has(selection):
 		var lore: String = {6:" Magnetized metallic dust disrupts fabrication and material transfer.",7:" Exotic particles disrupt neural coordination and crew communication."}.get(selection,"")
-		return "%s: %s card effects ×2 or ×0.5 (50%% each) for %d rounds, for both ships. Halves round down; costs stay unchanged." % [timing,storm_family(selection).capitalize(),ACTIVE_ROUNDS] + lore
+		return "%s: %s card effects ×2 for %d rounds, for both ships. Costs stay unchanged." % [timing,storm_family(selection).capitalize(),ACTIVE_ROUNDS] + lore
 	match selection:
 		1:
 			return (
@@ -124,7 +119,9 @@ func begin_round(round_number: int) -> String:
 		active = true
 		ends_round = round_number + ACTIVE_ROUNDS
 		if STORMS.has(kind):
-			ion_factor = 2.0 if rng.randf() < 0.5 else 0.5
+			# Keep the historical RNG draw so seeded event timing remains identical.
+			rng.randf()
+			ion_factor = 2.0
 			return NAMES[kind].to_upper() + " · " + storm_text()
 		return ["", "ASTEROIDS INCOMING", "ION STORM ACTIVE", "SOLAR FLARE · SHIELDS OFFLINE"][kind]
 	return ""
@@ -247,7 +244,7 @@ func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -
 	if missed:
 		notice = "MISS · NEBULA INTERFERENCE"
 	elif affects_card(card):
-		notice = storm_notice(kind,ion_factor)
+		notice = NAMES[kind].to_upper() + " · " + storm_text()
 	resolve_effects(card,actor,target,forecast_context(),rng,last_hull_damage,null,missed,attack_advantage)
 	return notice
 
@@ -267,10 +264,6 @@ func asteroid_strike(player: Dictionary, enemy: Dictionary, rolls: Array = []) -
 			shielded_hit(ships[index], ASTEROID_DAMAGE)
 		outcomes.append(("YOU" if index == 0 else "ENEMY") + (" HIT" if hit else " MISSED"))
 	return "ASTEROID SHOWER · " + " / ".join(outcomes)
-
-
-func ion_text() -> String:
-	return "ENERGY cards are powered up!" if ion_factor == 2.0 else "ENERGY cards are surpressed!"
 
 
 # Return presentation data for the active matching-family storm; never apply a real combat action here.
