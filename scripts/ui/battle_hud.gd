@@ -194,7 +194,7 @@ func refresh_results(data: Dictionary) -> void:
 		)
 	if data.in_expedition:
 		nodes["MatchResult/Panel/Continue"].text = (
-			"Upgrade Cards" if data.pending_choice == "upgrade" else "Star System"
+			"Upgrade Cards" if data.pending_choice == "upgrade" and data.upgrades_available > 0 else "Star System"
 		)
 
 	nodes["MatchResult"].set_summary(data)

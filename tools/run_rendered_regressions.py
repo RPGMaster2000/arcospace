@@ -15,6 +15,7 @@ from regression_support import completion_for, markdown, select_shard, write_sum
 # One selection shared by local verification and CI. These are presentation checks,
 # rather than all rule simulations running a second time through a renderer.
 COMPATIBILITY = (
+    "result_upgrade_input_test", "result_animation_test",
     "weekend_homeworld_test", "weekend_results_test", "weekend_locator_test",
     "tactical_decoy_test",
     "defense_poi_presentation_test",
@@ -42,11 +43,14 @@ COMPATIBILITY = (
 # Navigation assertions run headless and in rendered GL. Under Mesa software Vulkan the
 # navigation script reports 26/26 passes but can hang during engine teardown.
 # Mobile still tests actual Vulkan initialization, tactical resize, HUD and metagame.
-MOBILE = ("weekend_homeworld_test", "weekend_results_test", "weekend_locator_test", "tactical_decoy_test", "defense_poi_presentation_test","starfront_v2_test", "star_system_expansion_test", "temporal_rift_test", "space_storm_test", "starfront_pressure_turrets_test", "stellar_shafts_render_test", "stellar_shafts_prototype_test", "star_system_lighting_test", "solar_render_test", "asteroid_render_test", "starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "imported_combat_vfx_test", "combat_beam_test", "card_vfx_timing_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
+MOBILE = ("result_upgrade_input_test", "result_animation_test", "weekend_homeworld_test", "weekend_results_test", "weekend_locator_test", "tactical_decoy_test", "defense_poi_presentation_test","starfront_v2_test", "star_system_expansion_test", "temporal_rift_test", "space_storm_test", "starfront_pressure_turrets_test", "stellar_shafts_render_test", "stellar_shafts_prototype_test", "star_system_lighting_test", "solar_render_test", "asteroid_render_test", "starfront_touch_gesture_test", "starfront_inspection_test", "starfront_presentation_test", "star_system_render_smoke_test", "star_system_lens_effects_test", "imported_combat_vfx_test", "combat_beam_test", "card_vfx_timing_test", "tactical_resize_test", "hud_ownership_test", "metagame_ui_test")
 SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 # The HUD matrix renders 24 settling frames across four sizes and every enemy/
 # modifier preview. Allow software GL to finish the full matrix with global dust.
-TIMEOUTS = {"power_allocation_test": 300, "unified_hud_test": 300}
+# Full real-input upgrade transactions render three production expeditions.
+# Keep every assertion; allow measured software-Vulkan frame/render overhead.
+TIMEOUTS = {"power_allocation_test": 300, "unified_hud_test": 300,
+            "result_upgrade_input_test": 240, "result_animation_test": 180}
 
 
 def command(godot, project, renderer, name):

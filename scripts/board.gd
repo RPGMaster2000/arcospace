@@ -917,7 +917,7 @@ func _display_snapshot() -> Dictionary:
 		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
 		"rewards_text": victory_description(),
 		"salvage_earned": result_salvage_gained,
-		"upgrades_available": expedition.upgrades_remaining if expedition != null and expedition.pending_choice == "upgrade" else 0,
+		"upgrades_available": mini(expedition.upgrades_remaining,expedition.upgrade_candidates().size()) if expedition != null and expedition.pending_choice == "upgrade" else 0,
 		"defense_recovery": salvage_rewards.has("recovery"),
 		"system_secured": salvage_rewards.has("secured"),
 		"in_expedition": expedition != null,
