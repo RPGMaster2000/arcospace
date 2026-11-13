@@ -1,7 +1,7 @@
 extends SceneTree
 ## Export comparable gameplay/save data for the base and feature revisions.
-## Only environmental records and deliberately adjusted cosmetic battle anchors
-## are excluded. Everything else, including all persisted RNG states, is compared.
+## Only environmental records are excluded. Encounter coordinates, progression
+## and every persisted RNG state are compared.
 func _initialize() -> void:
 	var records := []
 	for mode in ["defense","exploration"]:
@@ -13,7 +13,6 @@ func _initialize() -> void:
 			state.start(0,rules,seed_value)
 			var data: Dictionary = preload("res://scripts/persistence/expedition_save.gd").encode(state)
 			data.erase("environmental_instances")
-			data.erase("encounter_positions")
 			records.append(data)
 	var file := FileAccess.open(OS.get_cmdline_user_args()[0],FileAccess.WRITE)
 	file.store_string(JSON.stringify(records))

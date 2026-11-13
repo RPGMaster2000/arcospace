@@ -145,7 +145,8 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 		if radial-radius >= solar_clearance: continue
 		var direction := Vector3(original.x,0,original.z).normalized()
 		if direction.length_squared() < 0.5: direction = Vector3.RIGHT
-		var limit: float = minf(absf(settings.system_bounds.position.x),settings.system_bounds.end.x)*factor-radius
+		var bounds := Layout.bounds(expansion,settings.system_bounds)
+		var limit: float = minf(minf(absf(bounds.position.x),bounds.end.x),minf(absf(bounds.position.y),bounds.end.y))-radius
 		var found := false
 		for attempt in range(32):
 			var distance: float = solar_clearance+radius+0.001+attempt*0.6
@@ -153,7 +154,7 @@ static func generate(seed_value: int, number: int, entries: Array, settings: Res
 			var bands: Array = []
 			for p in result.planets: bands.append(Vector2(p.distance,p.distance*p.eccentricity+planet_extent(p)))
 			for index in result.poi_orbits:
-				if index != entry.index: bands.append(Vector2(result.poi_orbits[index].distance,model_radius({"model_kind":"gas_giant"})))
+				if index != entry.index: bands.append(Vector2(result.poi_orbits[index].distance,float(result.placement[index].radius)))
 			if not _orbit_clear(distance,bands,radius+orbit_clearance): continue
 			var candidate := direction*distance
 			if clearance(candidate,radius,occupied.filter(func(other): return not other.position.is_equal_approx(original))) < settings.destination_clearance: continue
@@ -252,7 +253,7 @@ static func _composition_score(at: Vector3, radius: float, contexts: Array, sett
 	return score
 
 static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, planets: Array, occupied: Array,
-		settings: Resource, attempts: int = 48, expansion: float = 0.0, orbit_bands: Array = [], ring_gap: float = 0.7, minimum_distance: float = 0.0) -> Dictionary:
+		settings: Resource, attempts: int = 48, expansion: float = 0.0, orbit_bands: Array = [], ring_gap: float = 0.7) -> Dictionary:
 	var region := placement_region(entry,planets,Layout.scale_factor(expansion))
 	var radius := model_radius(entry)
 	var contexts := _contexts(occupied,settings,expansion)
@@ -265,7 +266,7 @@ static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, pla
 		var angle: float = rng.randf_range(0,TAU)
 		var distance: float = rng.randf_range(region.x,region.y)
 		var height := rng.randf_range(-0.45,0.45)
-		if distance < minimum_distance or not _orbit_clear(distance,orbit_bands,ring_gap): continue
+		if not _orbit_clear(distance,orbit_bands,ring_gap): continue
 		var at := Vector3(cos(angle)*distance,height if orbit_bands.is_empty() else 0.0,sin(angle)*distance)
 		if not bounds.has_point(Vector2(at.x,at.z)): continue
 		var gap := clearance(at,radius,occupied)
@@ -281,7 +282,7 @@ static func place_destination(entry: Dictionary, rng: RandomNumberGenerator, pla
 		for row in range(19):
 			for column in range(19):
 				var point: Vector2 = bounds.position+bounds.size*Vector2(column/18.0,row/18.0)
-				if point.length() < minimum_distance or not _orbit_clear(point.length(),orbit_bands,ring_gap): continue
+				if not _orbit_clear(point.length(),orbit_bands,ring_gap): continue
 				var at := Vector3(point.x,0,point.y)
 				var gap := clearance(at,radius,occupied)
 				if gap<settings.destination_clearance: continue

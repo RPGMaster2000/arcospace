@@ -15,8 +15,8 @@ Passed locally:
   were corrected after capture review.
 - 40 seeded generated-state comparisons against unchanged base main `59d24f3`:
   Defense and Exploration seeds 1–20. All saved gameplay fields, encounter identities,
-  fleet/PoI anchors and persisted RNG states are equal. Only environmental definitions
-  and deliberately adjusted cosmetic battle coordinates are excluded. Reproducible
+  fleet/PoI anchors, exact exploration battle coordinates and persisted RNG states
+  are equal. Only environmental definitions are excluded. Reproducible
   export helper: `tools/weekend_generation_signature.gd`; compare its JSON outputs
   from both revisions after copying the helper into the base checkout.
 
@@ -59,3 +59,5 @@ notches, touch skip/Continue, long travel interrupted by multiple impacts and lo
 GPU performance. Software Mobile Vulkan validation does not certify an Android device.
 
 Python regression-runner contract tests: 22 passed (`python3 -m unittest discover -s tools -p 'test_*.py'`).
+
+Final focused renderer reruns: all five suites (`solar_render_test`, `star_system_expansion_test`, `weekend_homeworld_test`, `weekend_locator_test`, `weekend_results_test`) passed in both GL Compatibility and Mobile Vulkan.

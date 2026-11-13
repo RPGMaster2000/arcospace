@@ -31,10 +31,14 @@ func run() -> void:
 	state._commit_activity_time(1)
 	check(observed.get("homeworld_damage",0) > 0,"Damage event originates from committed simulation")
 	check(observed.get("integrity_after",-1) == state.defense.integrity,"Damage is immediate before any presentation")
+	var first_hit := observed.duplicate(true)
+	state.defense.units[1].position = state.defense.home+Vector3(0.01,0,0)
+	state._commit_activity_time(1)
+	check(observed.homeworld_damage > 0 and not state.run_ended,"Second strategic hit commits independently before deferred playback")
 	var sequence := Sequence.new()
+	sequence.record(state,first_hit)
 	sequence.record(state,observed)
-	sequence.record(state,{"homeworld_damage":12,"integrity_before":state.defense.integrity,"integrity_after":state.defense.integrity-12})
-	check(sequence.pending.damage == observed.homeworld_damage+12 and sequence.pending.before == observed.integrity_before,"Deferred impacts consolidate before/after without calculating gameplay damage")
+	check(sequence.pending.damage == first_hit.homeworld_damage+observed.homeworld_damage and sequence.pending.before == first_hit.integrity_before,"Deferred impacts consolidate before/after without calculating gameplay damage")
 	sequence.free()
 	var committed := Save.encode(state)
 	check(Save.new().decode(committed,rules).defense.integrity == state.defense.integrity,"Restore keeps damage with no presentation reapplication")
@@ -65,6 +69,7 @@ func run() -> void:
 	map.motion = map.create_tween()
 	map.motion.tween_property(map.ship,"position",ship_before+Vector3(4,0,0),2)
 	var journey: Tween = map.motion
+	host.homeworld_sequence.record(state,first_hit)
 	host.homeworld_sequence.record(state,observed)
 	host.phase = host.Phase.BATTLE
 	host._present_homeworld_damage()
@@ -76,6 +81,7 @@ func run() -> void:
 	await create_timer(0.6).timeout
 	check(state.defense.pressure == clock and map.ship.position == ship_before,"Camera impacts do not advance strategic time or move ship")
 	await capture("homeworld-damage")
+	await capture("deferred-multi-impact")
 	var deadline2 := Time.get_ticks_msec()+5000
 	while host.homeworld_sequence.active and Time.get_ticks_msec() < deadline2: await process_frame
 	check(not host.homeworld_sequence.active and map.motion == journey and journey.is_running(),"Travel resumes same tween without reroll or restart")

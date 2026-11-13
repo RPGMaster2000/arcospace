@@ -137,4 +137,8 @@ These images are review evidence, not replacement baseline fixtures.
 | --- | --- |
 | ![Systems Failure](images/systems-failure.png) | ![System secured](images/system-secured-emp.png) |
 
+![Player direction arrow outside the viewport](images/player-offscreen.png)
+
+![Deferred multi-impact feedback](images/deferred-multi-impact.png)
+
 ![Homebase Lost with rendered backdrop](images/homebase-lost.png)
