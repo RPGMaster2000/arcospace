@@ -538,6 +538,14 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
+		star_map.locator_exclusions = func():
+			var areas: Array = []
+			for panel in screen.overview_hud.panels:
+				if panel.is_visible_in_tree():
+					var rect: Rect2 = panel.get_global_rect()
+					rect.position -= star_map.global_position
+					areas.append(rect)
+			return areas
 		star_map.speed_profile = state.travel_speed_profile
 		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)

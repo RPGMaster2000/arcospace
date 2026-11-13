@@ -518,6 +518,7 @@ func generate_system() -> bool:
 		route_points if routed else hostile_positions, environmental_instances, layout_expansion)
 	if routed: storm = RouteEnvironments.storm(storm, defense, route_points, environmental_instances)
 	if not storm.is_empty(): environmental_instances.append(storm)
+	if is_defense(): environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
 	# A new system ends the leg but preserves the exploration risk cooldown.
