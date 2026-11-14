@@ -145,13 +145,13 @@ antialiased = true
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 14.0
-offset_top = 10.0
+offset_top = 11.0
 offset_right = 184.0
 offset_bottom = 58.0
 mouse_filter = 2
 theme_override_fonts/font = SubResource("StrongFont")
 theme_override_font_sizes/font_size = 18
-theme_override_constants/line_spacing = 4
+theme_override_constants/line_spacing = 2
 text = "Shield
 Plating"
 
