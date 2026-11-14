@@ -219,6 +219,7 @@ func refresh_card() -> void:
 	)
 	footer.bg_color = Color.TRANSPARENT
 	footer.set_border_width_all(0)
+	footer.expand_margin_bottom = -3  # Paint inside the frame; retain the full input rect.
 	footer.content_margin_top = maxf(0, discard_target_height - footer_visual_height)
 	footer.content_margin_bottom = 0
 	$DiscardButton.add_theme_stylebox_override("normal", footer)
@@ -227,6 +228,10 @@ func refresh_card() -> void:
 	highlighted.bg_color = Color(0.12, 0.20, 0.26, 0.5)
 	$DiscardButton.add_theme_stylebox_override("hover", highlighted)
 	$DiscardButton.add_theme_stylebox_override("pressed", highlighted)
+	var footer_focus: StyleBoxFlat = footer.duplicate()
+	footer_focus.border_color = Color(family_tint, 0.6)
+	footer_focus.set_border_width_all(1)
+	$DiscardButton.add_theme_stylebox_override("focus", footer_focus)
 	$DiscardButton.add_theme_color_override("font_color", family_tint)
 	$DiscardButton.add_theme_color_override("font_disabled_color", family_tint.darkened(0.25))
 	tooltip_text = (
@@ -319,7 +324,7 @@ func set_ion_glow(active: bool, tint: Color = Color(0.15, 0.55, 1.0)) -> void:
 
 func _draw() -> void:
 	# Slim visible footer; the existing full-width Button retains its larger hitbox.
-	draw_rect(Rect2(7, 294 - footer_visual_height, 184, footer_visual_height), Color("0b121c"))
+	draw_rect(Rect2(7, 294 - footer_visual_height, 184, footer_visual_height - 3), Color("0b121c"))
 	draw_line(
 		Vector2(12, 294 - footer_visual_height),
 		Vector2(186, 294 - footer_visual_height),

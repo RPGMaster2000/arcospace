@@ -83,10 +83,12 @@ Official Godot **4.7.2**, Linux software GL Compatibility / Mobile Vulkan:
   placeholder, border widths, bounded glow, zero expansion, selection lifecycle,
   environmental cue compatibility, readable unaffordable states and unchanged
   card data/RNG.
-- **166 production-hand checks pass** in both renderers: 1920×1080, 1280×720,
+- **190 production-hand checks pass** in both renderers: 1920×1080, 1280×720,
   960×540 and 1280×573; original six-card placement; no neighboring halo overlap;
   native mouse/touch play and discard; hold/inspection; keyboard/controller;
   correct existing Energy Surge effect and extra action, each applied once.
+  Rendered pixel assertions verify the lower frame remains visible beneath the
+  footer; its paint/focus styles are inset while its input bounds stay unchanged.
 - Existing inspection passes **1,023 checks** in both renderers. One initial GL
   run failed its fixed-delay Escape-close assertion; the complete unchanged test
   passed on rerun. No assertion or animation timing was relaxed.

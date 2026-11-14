@@ -141,6 +141,23 @@ func run() -> void:
 			var left_glow: float = left.get_theme_stylebox("pressed").shadow_size * left.scale.x
 			var right_glow: float = right.get_theme_stylebox("pressed").shadow_size * right.scale.x
 			check(gap > left_glow + right_glow, "Largest two card glows cannot reach each other")
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+			var pixels := root.get_texture().get_image()
+			var pixel_scale := Vector2(
+				pixels.get_width() / board.size.x, pixels.get_height() / board.size.y
+			)
+			for path in board.card_slots:
+				var card: Control = board.get_node(path)
+				var local_point := (
+					card.position + Vector2(card.size.x * 0.5, card.size.y - 1) * card.scale
+				)
+				var sample := local_point * pixel_scale
+				var ink := pixels.get_pixel(floori(sample.x), floori(sample.y))
+				check(
+					maxf(ink.r, maxf(ink.g, ink.b)) > 0.4,
+					"Rendered lower border remains visible beneath footer"
+				)
 		await capture("hand-%dx%d" % [dimensions.x, dimensions.y])
 	check(
 		JSON.stringify(board._both_states()) == snapshot,
