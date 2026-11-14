@@ -40,13 +40,10 @@ func run() -> void:
 	var original: String = snapshot()
 	var sample = preload("res://scripts/cards/card_data.gd").new()
 	sample.effects = {"damage": 6}
-	var summary = preload("res://scripts/ui/card_summary.gd")
-	for length in [49, 50]:
+	var summary = preload("res://scripts/ui/card_face_text.gd")
+	for length in [49,50,51,100]:
 		sample.description = "a".repeat(length)
-		check(summary.card_text(sample) == sample.description, "Full description retained through 50 characters")
-	sample.description = "a".repeat(51)
-	check(summary.card_text(sample) == summary.describe(sample.effects), "Shorthand begins above 50 characters")
-	check(summary.card_text(sample, 60) == sample.description, "Inspector threshold can retain longer text")
+		check(summary.card_text(sample) == "Deal 6 damage.", "Every face derives accurate copy from effects regardless of prose length")
 	var view=load("res://scenes/card.tscn").instantiate()
 	view.position=Vector2(25,180)
 	root.add_child(view)
@@ -58,10 +55,10 @@ func run() -> void:
 			await process_frame
 			var art: Control=view.get_node("ArtPlaceholder")
 			var description: Label=view.get_node("DescriptionLabel")
-			check(art.position==Vector2(12,101) and art.size==Vector2(174,74) and art.visible,"Expanded artwork "+view.card_data.card_name)
-			check(description.get_theme_font_size("font_size")==14 and description.position.y==180,"Readable font and redesigned description position")
+			check(art.position==Vector2(12,68) and art.size==Vector2(174,36) and art.visible,"Existing artwork in compact region "+view.card_data.card_name)
+			check(description.get_theme_font_size("font_size")==16 and description.position.y==112,"Readable font and redesigned description position")
 			check(description.get_minimum_size().y<=view.get_node("DiscardButton").position.y-description.position.y,"Description clears footer")
-			check(view.get_node("TitleLabel").offset_bottom <= view.get_node("ArtPlaceholder").position.y and view.get_node("TitleLabel").clip_text and view.get_node("TitleLabel").max_lines_visible == 2,"Full title clears artwork")
+			check(view.get_node("TitleLabel").offset_bottom <= view.get_node("ArtPlaceholder").position.y and not view.get_node("TitleLabel").clip_text and view.get_node("TitleLabel").max_lines_visible == 2,"Full title clears artwork")
 	view.card_data=Cards.CARDS[52]
 	await settle()
 	var point: Vector2=view.get_global_rect().get_center()

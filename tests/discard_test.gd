@@ -76,7 +76,9 @@ func run() -> void:
 	event.pressed = false
 	root.push_input(event, true)
 	check(board.player_energy == 2, "Footer must refund only, without playing the card")
-	check(footer.text.begins_with("Discard +"), "Footer must show the replacement refund")
+	var shown: Resource = button.card_data
+	var expected: String = "↻ +%d %s" % [floori(shown.cost/3.0), preload("res://scripts/ui/card_effect_rows.gd").resource_icon(shown.family)]
+	check(footer.text == expected and footer.tooltip_text.contains(shown.family.capitalize()), "Compact footer must show the exact replacement refund and resource family")
 	board.enemy_hull = 0
 	var stopped: Array = hand.cards.duplicate()
 	var stopped_state: Dictionary = board.ship_snapshot("player")
