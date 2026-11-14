@@ -59,9 +59,11 @@ func touch(point: Vector2, down: bool) -> void:
 
 
 func run() -> void:
+	seed(7331)  # Reproducible production arena and presentation captures.
 	board = load("res://scenes/board_3d.tscn").instantiate()
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardHand").rng.seed = 1042
+	board.get_node("EnemyHand").rng.seed = 1043
 	root.add_child(board)
 	current_scene = board
 	board.enemy_timer.stop()
@@ -200,6 +202,24 @@ func run() -> void:
 	view.set_interaction_emphasis(true, true)
 	await create_timer(0.25).timeout
 	check(view.get_global_rect() == original_rect, "Selected card keeps exact hand geometry")
+	var art_rect: Rect2 = view.get_node("ArtPlaceholder").get_global_rect()
+	check(
+		(
+			art_rect.position.x >= original_rect.position.x + 3 * view.scale.x
+			and art_rect.end.x <= original_rect.end.x - 3 * view.scale.x
+		),
+		"Existing selected artwork zoom clears the unchanged card frame"
+	)
+	check(
+		(
+			art_rect.position.y > original_rect.position.y + 57 * view.scale.y
+			and (
+				art_rect.end.y
+				<= view.get_node("DescriptionLabel").get_global_rect().position.y - 3 * view.scale.y
+			)
+		),
+		"Selected artwork remains separated from divider and effects"
+	)
 	await capture("selected-conditional")
 	var point := view.get_global_rect().get_center()
 	touch(point, true)

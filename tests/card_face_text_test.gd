@@ -37,9 +37,47 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "Gain 3 Energy.\nThen if Energy ≤5:\nDeal 8 damage.\nElse: Deal 2 damage."
+			== "Gain 3 Energy. Then:\nIf Energy ≤5:\nDeal 8 damage.\nElse: 2 damage."
 		),
 		"Base gain precedes threshold; branches never factored"
+	)
+	card.effects = {
+		"conditional":
+		{
+			"target": "enemy",
+			"attribute": "reactor",
+			"comparison": "above",
+			"compare_target": "self",
+			"compare_attribute": "reactor",
+			"then": {"shields": 4, "reactor": 1},
+			"else": {"materials": 11}
+		}
+	}
+	check(
+		(
+			Face.card_text(card)
+			== "If enemy Reactor >yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
+		),
+		"Compact else retains positive gain, production, relative target and full resource name"
+	)
+	card.effects = {
+		"conditional":
+		{
+			"target": "enemy",
+			"attribute": "hull",
+			"comparison": "below",
+			"threshold": 0.5,
+			"fraction_of": "hull_capacity",
+			"then": {"damage": 19, "pierce": 1.0},
+			"else": {"damage": 11, "pierce": 1.0}
+		}
+	}
+	check(
+		(
+			Face.card_text(card)
+			== "If enemy Hull <50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
+		),
+		"Compact damage else retains Hull bypass and both exact values"
 	)
 	card.effects = {"self_damage": 2, "self_damage_regular": 4}
 	check(

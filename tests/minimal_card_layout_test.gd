@@ -1,6 +1,7 @@
 extends SceneTree
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Scene = preload("res://scenes/card.tscn")
+const Modifier = preload("res://scripts/combat_modifier.gd")
 var checks := 0
 var failures := 0
 var records: Array = []
@@ -29,7 +30,16 @@ func run() -> void:
 	var all: Array = []
 	for base in Cards.CARDS:
 		for level in range(mini(base.max_upgrades, base.upgrade_effects.size()) + 1):
-			all.append(base.with_upgrade(level))
+			var card: Resource = base.with_upgrade(level)
+			all.append(card)
+			var storm := Modifier.new()
+			storm.kind = {"energy": 2, "materials": 6, "crew": 7}[card.family]
+			storm.active = true
+			storm.ion_factor = 2.0
+			var amplified: Resource = storm.preview(card)
+			amplified.set_meta("layout_storm", true)
+			all.append(amplified)
+			storm.free()
 	for start in range(0, all.size(), 6):
 		for slot in range(6):
 			if start + slot >= all.size():
@@ -42,7 +52,14 @@ func run() -> void:
 				break
 			var view = views[slot]
 			var card: Resource = view.card_data
-			var id: String = "%s / upgrade %d" % [card.identity_key(), card.upgrade_level]
+			var id: String = (
+				"%s / upgrade %d%s"
+				% [
+					card.identity_key(),
+					card.upgrade_level,
+					" / storm ×2" if card.has_meta("layout_storm") else ""
+				]
+			)
 			var title: Label = view.get_node("TitleLabel")
 			var cost: Label = view.get_node("CostLabel")
 			var text: Label = view.get_node("DescriptionLabel")
@@ -52,6 +69,20 @@ func run() -> void:
 				id + " exact card geometry"
 			)
 			check(cost.text == str(card.cost), id + " exact resource cost")
+			check(
+				view.get_node("ArtPlaceholder/Backdrop").get_global_rect().size.is_equal_approx(
+					view.get_node("ArtPlaceholder").get_global_rect().size
+				),
+				id + " placeholder paint fills the enlarged artwork region"
+			)
+			check(
+				view.get_node("ArtPlaceholder").size == Vector2(174, 60),
+				id + " common enlarged artwork band"
+			)
+			check(
+				text.get_theme_font_size("font_size") == 16 and text.size.x == 180,
+				id + " larger shared effect typography without per-card shrinking"
+			)
 			check(
 				cost.get_rect().end.x <= 194 and cost.position.x >= 157,
 				id + " full cost stays inside card and clears icon"
@@ -144,11 +175,14 @@ func run() -> void:
 				{
 					"id": card.identity_key(),
 					"level": card.upgrade_level,
+					"amplified": card.has_meta("layout_storm"),
 					"name": card.card_name,
 					"text": text.text,
 					"lines": text.get_line_count(),
 					"height": text.get_minimum_size().y,
-					"font": text.get_theme_font_size("font_size")
+					"font": text.get_theme_font_size("font_size"),
+					"art_size": str(view.get_node("ArtPlaceholder").size),
+					"effect_width": text.size.x
 				}
 			)
 			view.discard_target_height = 44

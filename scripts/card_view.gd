@@ -9,8 +9,8 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 signal discard_requested
 const Summary = preload("res://scripts/ui/card_face_text.gd")
 const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
-const ART_TOP := 60.0
-const BODY_TOP := 116.0
+const ART_TOP := 64.0
+const BODY_TOP := 130.0
 const INK := Color("edf4fa")
 var family_tint := Color.WHITE
 var footer_visual_height := 28.0
@@ -164,7 +164,7 @@ func refresh_card() -> void:
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for art in [$ArtPlaceholder, $FullCardArt]:
 		art.position = Vector2(12, ART_TOP)
-		art.size = Vector2(174, 48)
+		art.size = Vector2(174, 60)
 	fit_placeholder_art()
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
@@ -261,7 +261,7 @@ func fit_placeholder_art() -> void:
 	# Retain main's original primitive placeholder on its 174×74 design surface.
 	$ArtPlaceholder.clip_contents = true
 	for child in $ArtPlaceholder.get_children():
-		child.scale.y = $ArtPlaceholder.size.y / 74.0
+		child.scale = Vector2($ArtPlaceholder.size.x / 174.0, $ArtPlaceholder.size.y / 74.0)
 
 
 func set_preview_selected(active: bool) -> void:

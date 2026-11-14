@@ -91,7 +91,7 @@ func run() -> void:
 		var title_font: FontVariation = view.get_node("TitleLabel").get_theme_font("font")
 		check(
 			(
-				body_font.variation_embolden >= 0.5
+				is_equal_approx(body_font.variation_embolden, 0.65)
 				and title_font.variation_embolden >= 0.2
 				and view.get_node("DiscardButton").get_theme_font("font") == body_font
 			),
