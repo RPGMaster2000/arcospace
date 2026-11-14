@@ -28,7 +28,7 @@ static func condition(rule: Dictionary) -> String:
 			else ("enemy's" if same else "enemy " + other.capitalize())
 		)
 	return (
-		"%s %s%s"
+		"%s%s%s"
 		% [
 			subject,
 			{"below": "<", "at_most": "≤", "equal": "=", "at_least": "≥", "above": ">"}.get(
@@ -176,11 +176,20 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 	if effects.has("conditional"):
 		handled.append("conditional")
 		var rule: Dictionary = effects.conditional
-		result.append(("Then if " if not result.is_empty() else "If ") + condition(rule) + ":")
+		if not result.is_empty():
+			# Keep explicit timing, without making a long condition header wrap twice.
+			result[-1] += " Then:"
+		result.append("If " + condition(rule) + ":")
 		result.append_array(rows(rule.get("then", {}), family))
 		if not rule.get("else", {}).is_empty():
 			var otherwise := rows(rule["else"], family)
 			if not otherwise.is_empty():
+				# Positive gains and damage retain their full amount/resource/type.
+				# The branch label already establishes this as an action.
+				if otherwise[0].begins_with("Gain "):
+					otherwise[0] = "+" + otherwise[0].trim_prefix("Gain ")
+				elif otherwise[0].begins_with("Deal "):
+					otherwise[0] = otherwise[0].trim_prefix("Deal ")
 				otherwise[0] = "Else: " + otherwise[0]
 			result.append_array(otherwise)
 	# Future effects must stay visible and fail the audit if too long, rather

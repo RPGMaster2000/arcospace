@@ -5,7 +5,7 @@ class_name CardPresentationSettings
 # RESPONSIBILITY: Store shared compact-card and read-only inspection presentation settings.
 # TUNE: One shared presentation/input configuration. No gameplay values live here.
 @export_group("Compact cards")
-@export_range(10, 24, 1) var compact_description_font_size: int = 15
+@export_range(10, 24, 1) var compact_description_font_size: int = 16
 @export_range(14, 24, 1) var card_title_font_size: int = 18
 @export_range(40, 56, 1) var discard_button_height: float = 44.0
 @export_range(12, 22, 1) var discard_button_font_size: int = 14

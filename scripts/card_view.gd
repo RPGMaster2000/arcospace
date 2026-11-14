@@ -9,8 +9,8 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 signal discard_requested
 const Summary = preload("res://scripts/ui/card_face_text.gd")
 const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
-const ART_TOP := 60.0
-const BODY_TOP := 116.0
+const ART_TOP := 64.0
+const BODY_TOP := 131.0
 const INK := Color("edf4fa")
 var family_tint := Color.WHITE
 var footer_visual_height := 28.0
@@ -155,7 +155,7 @@ func refresh_card() -> void:
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
 	$DescriptionLabel.offset_top = BODY_TOP
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 7
 	$DescriptionLabel.clip_text = false
 	$DescriptionLabel.max_lines_visible = -1
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
@@ -164,7 +164,7 @@ func refresh_card() -> void:
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for art in [$ArtPlaceholder, $FullCardArt]:
 		art.position = Vector2(12, ART_TOP)
-		art.size = Vector2(174, 48)
+		art.size = Vector2(174, 60)
 	fit_placeholder_art()
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
@@ -221,7 +221,7 @@ func refresh_card() -> void:
 	footer.set_border_width_all(0)
 	footer.expand_margin_bottom = -3  # Paint inside the frame; retain the full input rect.
 	footer.content_margin_top = maxf(0, discard_target_height - footer_visual_height)
-	footer.content_margin_bottom = 0
+	footer.content_margin_bottom = 2
 	$DiscardButton.add_theme_stylebox_override("normal", footer)
 	$DiscardButton.add_theme_stylebox_override("disabled", footer)
 	var highlighted: StyleBoxFlat = footer.duplicate()
@@ -261,7 +261,7 @@ func fit_placeholder_art() -> void:
 	# Retain main's original primitive placeholder on its 174×74 design surface.
 	$ArtPlaceholder.clip_contents = true
 	for child in $ArtPlaceholder.get_children():
-		child.scale.y = $ArtPlaceholder.size.y / 74.0
+		child.scale = Vector2($ArtPlaceholder.size.x / 174.0, $ArtPlaceholder.size.y / 74.0)
 
 
 func set_preview_selected(active: bool) -> void:
