@@ -34,8 +34,11 @@ func run() -> void:
 	var card = board.get_node(board.card_slots[0])
 	var base_scale: Vector2 = card.scale
 	var base_position: Vector2 = card.position
+	# Sample the tween itself: a wall-clock Timer can fire before a slow rendered
+	# frame has advanced its idle tween. Keep the exact end-state assertions.
 	card.mouse_entered.emit()
-	await create_timer(Settings.card_hover_duration + 0.05).timeout
+	card.interaction_tween.pause()
+	card.interaction_tween.custom_step(Settings.card_hover_duration + 0.05)
 	check(
 		card.get_node("ArtPlaceholder").scale.is_equal_approx(
 			Vector2.ONE * Settings.card_hover_scale
@@ -43,7 +46,8 @@ func run() -> void:
 		"Hover zoom uses shared configuration"
 	)
 	card.button_down.emit()
-	await create_timer(Settings.card_selected_duration + 0.05).timeout
+	card.interaction_tween.pause()
+	card.interaction_tween.custom_step(Settings.card_selected_duration + 0.05)
 	check(
 		card.get_node("ArtPlaceholder").scale.is_equal_approx(
 			Vector2.ONE * Settings.card_selected_scale
@@ -56,7 +60,8 @@ func run() -> void:
 	)
 	await capture("card-selected")
 	card.mouse_exited.emit()
-	await create_timer(Settings.card_hover_duration + 0.05).timeout
+	card.interaction_tween.pause()
+	card.interaction_tween.custom_step(Settings.card_hover_duration + 0.05)
 	check(
 		card.get_node("ArtPlaceholder").scale.is_equal_approx(Vector2.ONE),
 		"Interrupted selection resets smoothly"
@@ -68,8 +73,11 @@ func run() -> void:
 	after.player.shields -= 2
 	board.battle_effects.enabled = true
 	board.battle_effects.play_changes(before, after, "", "", 0, true)
-	await create_timer(0.05).timeout
+	var screen_shake: Tween = board.get_node("ModifierDisplay").shake_tween
+	screen_shake.pause()
+	screen_shake.custom_step(0.05)
 	check(root.canvas_transform != canvas_before, "Shield damage produces a small screen shake")
+	screen_shake.custom_step(Settings.shield_screen_shake_duration + 0.05)
 	await board.battle_effects.finished
 	check(root.canvas_transform == canvas_before, "Shield screen shake restores the viewport")
 	board.battle_effects.enabled = false

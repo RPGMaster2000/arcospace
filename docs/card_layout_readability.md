@@ -118,3 +118,13 @@ A follow-up adds one unit of text-edge padding: 10px side insets, slightly more
 title/cost top inset, 7px effect/footer separation and a raised footer baseline.
 Comparison operators use compact mathematical spacing to keep every rule visible
 at the same shared 16px font. Card and touch bounds are unchanged.
+
+## CI timing recheck
+
+On padding revision `e128d23`, both headless shards, both Mobile shards and
+exported startup passed. GL shard 1 failed the alpha visual hover assertion;
+the two rendered summary gates inherited that matrix failure. The test now
+samples hover/selection/reset and shield-shake tweens deterministically instead
+of assuming a wall-clock Timer means an idle tween has already advanced. All
+48 exact assertions are retained; production timings and gameplay are unchanged.
+The corrected GL test passes locally. Full CI is restarted on the fix.
