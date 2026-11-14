@@ -63,7 +63,7 @@ func run() -> void:
 	var editable: Resource = Library.CARDS[0].duplicate(true)
 	view.card_data = editable
 	editable.card_name = "Preview test"
-	check(view.get_node("TitleLabel").text == "PREVIEW TEST", "Resource edits must update card labels")
+	check(view.get_node("TitleLabel").text.replace("\n", " ") == editable.card_name, "Resource edits must update card labels")
 	board.enemy_hull = 0
 	previous = hand.cards.duplicate()
 	board._on_card_pressed(0)

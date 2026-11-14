@@ -112,6 +112,7 @@ func present(hold: Node) -> void:
 	signature = fingerprint(source.card_data)
 	refresh_targets()
 	source.z_index = 190
+	source.set_preview_selected(true)
 	var preferences = preload("res://scripts/ui/menu_preferences.gd")
 	if not preferences.preview_hint_seen():
 		hint.position = Vector2(160, 76)
@@ -162,6 +163,7 @@ func dismiss(immediate: bool = false) -> void:
 			if source == null: inspect.hide())
 	if is_instance_valid(source):
 		var card: Control = source
+		card.set_preview_selected(false)
 		if immediate:
 			card.position = origin
 			card.z_index = saved_z

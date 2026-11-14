@@ -7,7 +7,18 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Apply effects or draw cards.
 
 signal discard_requested
-const Summary = preload("res://scripts/ui/card_summary.gd")
+const Summary = preload("res://scripts/ui/card_face_text.gd")
+const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
+const ART_TOP := 60.0
+const BODY_TOP := 116.0
+const INK := Color("edf4fa")
+var family_tint := Color.WHITE
+var footer_visual_height := 28.0
+var preview_selected := false
+var affordable := true
+var storm_active := false
+var storm_color := Color(0.15, 0.55, 1.0)
+var theme_stamp := ""
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -52,7 +63,7 @@ func _ready() -> void:
 
 
 func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
-	if Engine.is_editor_hint() or not is_node_ready():
+	if Engine.is_editor_hint() or not is_node_ready() or not is_inside_tree():
 		return
 	if selected and not interaction_selected and card_data != null and not disabled:
 		Sound.play(&"card_select", self)
@@ -76,8 +87,8 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration
 	)
 	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
-	interaction_tween.tween_property(art, "position:y", 101.0 - elevation, duration)
-	queue_redraw()
+	interaction_tween.tween_property(art, "position:y", ART_TOP - elevation, duration)
+	apply_card_theme()
 
 
 func _on_discard_pressed() -> void:
@@ -97,182 +108,226 @@ func _gui_input(event: InputEvent) -> void:
 		discard_requested.emit()
 
 
+# Two-line shaped header: the first line reserves the cost corner; the second
+# uses the full width BELOW the cost. Every title keeps the same 18px type.
+func title_text(name: String) -> String:
+	var title := name.trim_suffix("++").trim_suffix("+")
+	var font: Font = $TitleLabel.get_theme_font("font")
+	var first := ""
+	var words := title.split(" ")
+	while not words.is_empty():
+		var candidate: String = first + (" " if not first.is_empty() else "") + words[0]
+		if (
+			(
+				(
+					font
+					. get_string_size(
+						candidate,
+						HORIZONTAL_ALIGNMENT_LEFT,
+						-1,
+						presentation_settings.card_title_font_size
+					)
+					. x
+				)
+				> 126
+			)
+			and not first.is_empty()
+		):
+			break
+		first = candidate
+		words.remove_at(0)
+	return first + ("\n" + " ".join(words) if not words.is_empty() else "")
+
+
 func refresh_card() -> void:
 	queue_redraw()
-	set_process(card_data != null and card_data.tier > 1)
+	set_process(false)  # No continuous rarity animation across the whole hand.
+	$TitleLabel.add_theme_font_size_override(
+		"font_size", presentation_settings.card_title_font_size
+	)
+	$DescriptionLabel.add_theme_font_size_override(
+		"font_size", presentation_settings.compact_description_font_size
+	)
+	$DiscardButton.add_theme_font_size_override(
+		"font_size", presentation_settings.discard_button_font_size
+	)
+	$DiscardButton.offset_top = 294.0 - discard_target_height
+	$DiscardButton.offset_bottom = 294.0
+	$DiscardButton.custom_minimum_size.y = discard_target_height
+	$DescriptionLabel.offset_top = BODY_TOP
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
+	$DescriptionLabel.clip_text = false
+	$DescriptionLabel.max_lines_visible = -1
+	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	$TitleLabel.clip_text = false
+	$TitleLabel.max_lines_visible = 2
+	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	for art in [$ArtPlaceholder, $FullCardArt]:
+		art.position = Vector2(12, ART_TOP)
+		art.size = Vector2(174, 48)
+	fit_placeholder_art()
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
 		$TierLabel.text = ""
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
-		$FullCardArt.visible = false
+		$FullCardArt.hide()
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
 		return
-	$TitleLabel.text = card_data.card_name.trim_suffix("++").trim_suffix("+").to_upper()
-	# Keep full names prominent; only an unusually long title needs a small font fallback.
-	for reduction in range(3):
-		var font_size: int = presentation_settings.card_title_font_size - reduction
-		$TitleLabel.add_theme_font_size_override("font_size", font_size)
-		if $TitleLabel.get_line_count() <= 2:
-			break
-	$TitleLabel.max_lines_visible = 2
-	$TitleLabel.clip_text = true
-	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	$TitleLabel.text = title_text(card_data.card_name)
 	$TierLabel.text = (
 		("T%d " % card_data.tier if card_data.tier > 1 else "")
 		+ "+".repeat(card_data.upgrade_level)
 	)
 	$CostLabel.text = str(card_data.cost)
-	$DescriptionLabel.text = Summary.card_text(
-		card_data, presentation_settings.description_shorthand_threshold
+	$DescriptionLabel.text = Summary.card_text(card_data)
+	var artwork: Variant = (
+		card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	)
-	$DescriptionLabel.add_theme_font_size_override(
-		"font_size", presentation_settings.compact_description_font_size
-	)
-	# Fixed artwork and description rectangles. Overflow is an ellipsis, never borrowed art space.
-	$DiscardButton.add_theme_font_size_override(
-		"font_size", roundi(presentation_settings.discard_button_font_size / maxf(scale.y, 0.01))
-	)
-	$TitleLabel.offset_bottom = 99.0
-	$DiscardButton.offset_top = 294.0 - discard_target_height
-	$DiscardButton.offset_bottom = 294.0
-	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = 180.0
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 6
-	$DescriptionLabel.clip_text = true
-	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var line_height: float = $DescriptionLabel.get_theme_font("font").get_height(
-		presentation_settings.compact_description_font_size
-	)
-	$DescriptionLabel.max_lines_visible = maxi(
-		1, floori(($DescriptionLabel.offset_bottom - 180.0) / line_height)
-	)
-	# Exception to the length threshold: abbreviate short text only when it cannot fit.
-	if $DescriptionLabel.get_line_count() > $DescriptionLabel.max_lines_visible:
-		$DescriptionLabel.text = Summary.card_text(card_data, -1)
-	$ArtPlaceholder.offset_top = 101.0
-	$ArtPlaceholder.offset_bottom = 175.0
-	var artwork: Variant = card_data.get_meta("card_art") if card_data.has_meta("card_art") else null
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
-	fit_placeholder_art()
-	var colors = {
-		"materials": Color(1, 0.55, 0.5), "energy": Color(0.5, 0.8, 1), "crew": Color(0.5, 1, 0.65)
-	}
-	var color: Color = colors.get(card_data.family, Color.WHITE)
+	family_tint = presentation_settings.family_color(card_data.family)
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
-	var normal: StyleBoxFlat = get_theme_stylebox("normal").duplicate()
-	normal.bg_color = Color(color.r * 0.16, color.g * 0.16, color.b * 0.16, 1)
-	normal.border_color = color.lerp(Color(0.97, 0.89, 0.69), 0.5)
-	add_theme_stylebox_override("normal", normal)
-	add_theme_stylebox_override("disabled", normal)
-	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = normal.bg_color.lightened(0.08)
-	hover.border_color = Color(1, 0.96, 0.8)
-	add_theme_stylebox_override("hover", hover)
-	add_theme_stylebox_override("pressed", hover)
-	$DiscardButton.text = "Discard +%d" % int(floor(card_data.cost / 3.0))
+		icon.color = family_tint
+	$ThemeWash.texture = ThemeStyle.wash(family_tint)
+	$ArtPlaceholder/Backdrop.color = Color("060d15").lerp(family_tint, 0.045)
+	$ArtPlaceholder/Accent.default_color = Color(family_tint, 0.6)
+	$CostRule.default_color = Color(family_tint, 0.9)
+	$CostLabel.add_theme_color_override("font_color", family_tint)
+	for node in [$TitleLabel, $DescriptionLabel]:
+		node.add_theme_color_override("font_color", INK)
+	apply_card_theme()
+	$DiscardButton.text = (
+		"Discard +%d %s" % [floori(card_data.cost / 3.0), card_data.family.capitalize()]
+	)
 	$DiscardButton.tooltip_text = (
-		"Recover %d %s" % [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
+		"Discard · Recover %d %s" % [floori(card_data.cost / 3.0), card_data.family.capitalize()]
 	)
-	tooltip_text = card_data.card_name + "\n" + card_data.description
-	tooltip_text += (
-		"\nHold to preview · I: preview/inspect · Middle-click to inspect\nRight-click: discard (+%d %s)"
-		% [int(floor(card_data.cost / 3.0)), card_data.family.capitalize()]
+	var footer: StyleBoxFlat = $DiscardButton.get_theme_stylebox("normal").duplicate()
+	footer_visual_height = maxf(
+		28,
+		(
+			$DiscardButton.get_theme_font("font").get_height(
+				presentation_settings.discard_button_font_size
+			)
+			+ 6
+		)
 	)
+	footer.bg_color = Color.TRANSPARENT
+	footer.set_border_width_all(0)
+	footer.expand_margin_bottom = -3  # Paint inside the frame; retain the full input rect.
+	footer.content_margin_top = maxf(0, discard_target_height - footer_visual_height)
+	footer.content_margin_bottom = 0
+	$DiscardButton.add_theme_stylebox_override("normal", footer)
+	$DiscardButton.add_theme_stylebox_override("disabled", footer)
+	var highlighted: StyleBoxFlat = footer.duplicate()
+	highlighted.bg_color = Color(0.12, 0.20, 0.26, 0.5)
+	$DiscardButton.add_theme_stylebox_override("hover", highlighted)
+	$DiscardButton.add_theme_stylebox_override("pressed", highlighted)
+	var footer_focus: StyleBoxFlat = footer.duplicate()
+	footer_focus.border_color = Color(family_tint, 0.6)
+	footer_focus.set_border_width_all(1)
+	$DiscardButton.add_theme_stylebox_override("focus", footer_focus)
+	$DiscardButton.add_theme_color_override("font_color", family_tint)
+	$DiscardButton.add_theme_color_override("font_disabled_color", family_tint.darkened(0.25))
+	tooltip_text = (
+		card_data.card_name
+		+ "\n"
+		+ preload("res://scripts/cards/card_data.gd").describe_effects(card_data.effects)
+	)
+	tooltip_text += "\nHold / I / middle-click: inspect · Right-click: discard"
 
 
-func set_playable(playable: bool, affordable: int = -1) -> void:
+func set_playable(playable: bool, can_afford: int = -1) -> void:
 	disabled = not playable
-	if affordable < 0:
-		affordable = int(playable)
-	# Keep the discard footer bright and clickable even when play is unaffordable.
-	var tint: Color = Color.WHITE if affordable != 0 else Color(0.48, 0.48, 0.48)
-	self_modulate = tint
-	for path in [
-		"TitleLabel",
-		"CostLabel",
-		"TierLabel",
-		"DescriptionLabel",
-		"ResourceIcon",
-		"ArtPlaceholder",
-		"CostRule"
-	]:
-		get_node(path).modulate = tint
+	affordable = bool(int(playable) if can_afford < 0 else can_afford)
+	# Dim the surface and ink moderately; never lose resource identity or readable rules.
+	self_modulate = Color.WHITE
+	for path in ["TitleLabel", "TierLabel", "DescriptionLabel"]:
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.90, 0.90, 0.90)
+	for path in ["CostLabel", "ResourceIcon", "CostRule"]:
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.86, 0.86, 0.86)
+	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.65)
+	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.75, 0.75, 0.75)
+	$FullCardArt.modulate = $ArtPlaceholder.modulate
+	apply_card_theme()
 
 
 func fit_placeholder_art() -> void:
-	# Existing primitive art uses a 174×74 design surface; scale its children to fit.
+	# Retain main's original primitive placeholder on its 174×74 design surface.
 	$ArtPlaceholder.clip_contents = true
-	var height: float = maxf(0, $ArtPlaceholder.offset_bottom - $ArtPlaceholder.offset_top)
 	for child in $ArtPlaceholder.get_children():
-		child.scale.y = height / 74.0
+		child.scale.y = $ArtPlaceholder.size.y / 74.0
+
+
+func set_preview_selected(active: bool) -> void:
+	# The existing tactical preview owns raising, z-order and restoration.
+	preview_selected = active
+	if not active:
+		set_interaction_emphasis(is_hovered(), false)
+	apply_card_theme()
+
+
+func apply_card_theme() -> void:
+	if not is_node_ready():
+		return
+	var selected := interaction_selected or preview_selected
+	var stamp := str(
+		[
+			family_tint,
+			presentation_settings.card_base_color,
+			selected,
+			interaction_hovered,
+			affordable,
+			storm_active,
+			storm_color
+		]
+	)
+	if stamp == theme_stamp:
+		return
+	theme_stamp = stamp
+	for state in ["normal", "disabled", "hover", "pressed"]:
+		var box := ThemeStyle.box(
+			presentation_settings.card_base_color,
+			family_tint,
+			selected or state == "pressed",
+			interaction_hovered or state == "hover",
+			affordable,
+			storm_active,
+			storm_color
+		)
+		add_theme_stylebox_override(state, box)
+	# Keep native keyboard focus visible without a second, unrelated blue border.
+	var focus := StyleBoxFlat.new()
+	focus.bg_color = Color.TRANSPARENT
+	focus.border_color = Color(family_tint, 0.9)
+	focus.set_border_width_all(1)
+	focus.set_corner_radius_all(7)
+	add_theme_stylebox_override("focus", focus)
+	queue_redraw()
 
 
 func set_discardable(allowed: bool) -> void:
 	$DiscardButton.disabled = not allowed
 
 
-func set_ion_glow(active: bool, tint: Color = Color(0.15,0.55,1.0)) -> void:
-	# TUNE: Shared storm outline; the default blue preserves the Ion caller contract.
-	for style in ["normal", "disabled", "hover", "pressed"]:
-		var box: StyleBoxFlat = get_theme_stylebox(style).duplicate()
-		box.shadow_color = Color(tint, 0.55 if active else 0.0)
-		box.shadow_size = 9 if active else 0
-		add_theme_stylebox_override(style, box)
-
-
-var border_time: float = 0.0
-
-
-func _process(delta: float) -> void:
-	border_time += delta
-	queue_redraw()
+func set_ion_glow(active: bool, tint: Color = Color(0.15, 0.55, 1.0)) -> void:
+	# Preserve the existing storm cue; active selection keeps its family-colored glow.
+	storm_active = active
+	storm_color = tint
+	apply_card_theme()
 
 
 func _draw() -> void:
-	if interaction_hovered or interaction_selected:
-		var tint: Color = visual_settings.card_selection_color
-		draw_rect(
-			Rect2(Vector2(3, 3), size - Vector2(6, 6)),
-			Color(tint, visual_settings.card_glow_intensity),
-			false,
-			6.0
-		)
-		draw_rect(
-			Rect2(Vector2(2, 2), size - Vector2(4, 4)),
-			tint,
-			false,
-			2.0 if interaction_selected else 1.0
-		)
-	if card_data == null or card_data.tier < 2:
-		return
-	# TUNE: Jagged edge depth (pixels), tooth spacing and subtle pulse strength.
-	var depth: float = 2.0
-	var spacing: float = 12.0
-	var pulse: float = 0.28 + 0.10 * sin(border_time * 2.0)
-	var color = Color(0.65, 0.8, 1.0, pulse)
-	var points = PackedVector2Array()
-	var corners = [
-		Vector2(3, 3),
-		Vector2(size.x - 3, 3),
-		size - Vector2(3, 3),
-		Vector2(3, size.y - 3),
-		Vector2(3, 3)
-	]
-	for edge in range(4):
-		var start: Vector2 = corners[edge]
-		var end: Vector2 = corners[edge + 1]
-		var steps: int = maxi(2, int(start.distance_to(end) / spacing))
-		var inward: Vector2 = (end - start).normalized().orthogonal()
-		for step in range(steps):
-			points.append(
-				start.lerp(end, float(step) / steps) + inward * (depth if step % 2 else 0.0)
-			)
-	points.append(points[0])
-	for width in [8.0, 4.0, 1.5]:
-		draw_polyline(points, Color(color, pulse * (0.3 if width > 2 else 1.0)), width, true)
+	# Slim visible footer; the existing full-width Button retains its larger hitbox.
+	draw_rect(Rect2(7, 294 - footer_visual_height, 184, footer_visual_height - 3), Color("0b121c"))
+	draw_line(
+		Vector2(12, 294 - footer_visual_height),
+		Vector2(186, 294 - footer_visual_height),
+		Color(family_tint, 0.25),
+		1.0
+	)
