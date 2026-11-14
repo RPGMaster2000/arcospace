@@ -182,6 +182,15 @@ func run() -> void:
 	touch(point, false)
 	await settle()
 	check(board.hud.tactical.source == view, "Native Android hold reaches existing preview")
+	check(
+		view.preview_selected and view.get_theme_stylebox("normal").border_width_top == 2,
+		"Actual held card receives selected resource theme"
+	)
+	check(
+		view.position.y < original_rect.position.y and view.z_index == 190,
+		"Existing preview raises selection above neighboring cards"
+	)
+	await capture("held-selection")
 	board.hud.tactical.open_inspection()
 	await create_timer(0.25).timeout
 	var overlay := root.get_node_or_null("CardInspection")
@@ -193,6 +202,7 @@ func run() -> void:
 		await capture("inspected-upgrade")
 		overlay.dismiss(true)
 	board.hud.tactical.dismiss(true)
+	check(not view.preview_selected, "Dismissal clears resource selection highlight")
 	await create_timer(0.25).timeout
 	# Existing keyboard/controller inspection path remains on the original footer focus.
 	for use_controller in [false, true]:

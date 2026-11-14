@@ -2,34 +2,46 @@
 
 The shared card scene remains **198 × 294**. Six-slot hand spacing, scaling,
 placement, motion, hold gestures and discard eligibility are unchanged. This pass
-changes card presentation and display copy; no card definitions, combat rules,
-RNG streams, save data or artwork assets change.
+changes card presentation; no card definitions, combat rules, RNG streams or
+save data change. No artwork assets were added.
 
 ## Shared template
 
 | Region | Base coordinates / typography |
 |---|---|
-| Name | x12–186, y8–62; bundled DejaVu Sans Bold 18 |
-| Cost | upper right, bold 25; original resource polygons beside it |
-| Art | x12–186, y68–104; existing art or primitive placeholder |
-| Effects | x13–186, y112 onward; shared medium 16, line spacing 0 |
+| Name | x12–186, y6–54; bundled DejaVu Sans Bold 18 |
+| Cost | upper right, bold 23; original resource polygons beside it |
+| Art | x12–186, y60–108; blank tinted placeholder, future texture slot retained |
+| Effects | x13–186, y116 onward; shared medium 15, line spacing 0 |
 | Discard | bottom 28px visual strip, shared 14; original full-width Button |
 
 The first title line reserves 126px before the resource/cost corner; the second
 uses the full width below it. Titles retain their natural case. No card gets an
-individual font reduction. The small artwork band gives the rules more room;
-optional textures retain aspect-cover rendering and existing placeholders remain.
-Family accents use coral, cyan and green with the existing square, diamond and
-circle vocabulary. Text stays neutral, high contrast and left aligned.
+individual font reduction. The 48px artwork band is a blank, dark, subtly tinted
+container. The repeated
+spaceship silhouette and decorative grid have been removed. Optional future
+textures retain aspect-cover rendering without restructuring the scene.
+
+The exact resource palette lives in `CardPresentationSettings`: Materials
+**#FF5757**, Energy **#FFD447**, Crew **#76F76B**, over base **#0B1724**.
+Borders, dividers, existing resource shapes, costs and discard returns all use
+these themes. `card_theme.gd` supplies shared, native 4×64 gradient textures,
+strongest near the header and fading toward the effect area. Text stays neutral,
+high contrast and left aligned. No shader or artwork asset was added.
 
 The discard face displays `↻ +N [resource symbol]`, with its full resource name
 in the tooltip. It uses the same `floor(cost / 3)` calculation as combat. Its
-original 44px screen-space hit area remains intact, including the space above the
+original 44-unit, hand-scale-adjusted hit area remains intact, including the space above the
 slim visible strip. There is no additional discard control. An unaffordable card
-keeps readable rules and a usable discard button; its cost turns amber and its
-artwork softens. Selection changes an inset outline and existing artwork tween,
-never the hand geometry. Tier/upgrades remain visible without continuous border
-animation. Bundled fonts include their redistribution license and avoid
+keeps readable rules and a usable discard button; its surface, text and theme
+soften moderately while retaining the same resource hue. Selection uses a 2px
+bright family border, a soft 10px matching shadow and 2px visual expansion. The
+existing tactical preview owns the raised position, z-order and restoration;
+normal hand geometry and touch bounds are unchanged. Dismissal clears the
+highlight, while releasing a held card keeps it selected until the preview closes.
+Existing unselected environmental glows remain supported. Tier/upgrades stay
+visible without continuous border animation. Bundled fonts include their
+redistribution license and avoid
 platform-dependent wrapping or missing symbols.
 
 ## Accurate compact copy
@@ -73,7 +85,7 @@ Godot Label shaping, checks complete names/cost separation, glyph availability,
 resource identity, exact refunds, body/footer clearance and unmodified base size.
 It tests the original 960px hand scale as well as scale 1, including the larger
 local footer hitbox required to preserve its physical size. **5,244 checks pass**;
-the longest body is six lines / 114px, within the tightest measured 116.5px area.
+the longest body is six lines / 108px, within the tightest measured 112.5px area.
 The [complete 240-variant report](minimal_mobile_cards/layout-audit.json) records
 every identity, upgrade state, displayed effect text and measured height.
 
@@ -87,7 +99,9 @@ retaining their gameplay and input assertions.
 
 The screenshots below come from the production battle renderer, using actual
 definitions and deliberately empty player reserves to demonstrate unaffordable
-cards. Zero-cost cards correctly stay playable. No mockups are used.
+cards. Zero-cost cards correctly stay playable. No mockups are used. All 240 displayed descriptions were compared with the
+previous PR revision and remain identical; typography/layout, not wording, was
+adjusted for this visual follow-up. [Before resource themes](minimal_mobile_cards/before-resource-themes.webp).
 
 | View | Capture |
 |---|---|
@@ -95,7 +109,7 @@ cards. Zero-cost cards correctly stay playable. No mockups are used.
 | GL, three resource families, 1280×720 | [Image](minimal_mobile_cards/gl_compatibility-hand-1280x720.webp) |
 | GL, minimum requested viewport | [Image](minimal_mobile_cards/gl_compatibility-hand-960x540.webp) |
 | GL, six complex Upgrade II cards | [Image](minimal_mobile_cards/gl_compatibility-complex-upgrades-960x540.webp) |
-| Selected card, stable positioning | [Image](minimal_mobile_cards/gl_compatibility-selected-conditional.webp) |
+| Actual held selection, raised by existing preview | [Image](minimal_mobile_cards/gl_compatibility-held-selection.webp) |
 | Existing full inspector | [Image](minimal_mobile_cards/gl_compatibility-inspected-upgrade.webp) |
 | Mobile Vulkan, Android-shaped viewport | [Image](minimal_mobile_cards/mobile-hand-1280x573.webp) |
 | Mobile Vulkan, complex upgraded effects | [Image](minimal_mobile_cards/mobile-complex-upgrades-960x540.webp) |

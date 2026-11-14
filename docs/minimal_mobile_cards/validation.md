@@ -9,9 +9,10 @@ Mobile Vulkan, Xvfb. No physical Android or Windows hardware was available.
 | Final editor import | Complete, no parse/import errors |
 | Regression runner Python unit tests | 22 tests; pass |
 | Complete card-library layout, headless / GL / Mobile | 240 variants; 5,244 checks; 0 failures |
+| Resource palette, shared gradient, blank placeholder and selection lifecycle | 68 checks; 0 failures in headless / GL / Mobile |
 | Data-derived face semantics | 488 checks; 0 failures |
 | Card effect baseline parity | 2,220 exact baseline checkpoints match; state/RNG unchanged |
-| Production battle hand, GL / Mobile | 138 checks each; 0 failures |
+| Production battle hand, GL / Mobile | 141 checks each; 0 failures |
 | Existing inspection, GL / Mobile | 1,023 checks each; 0 failures |
 | Existing inspection, final headless recheck | Pass |
 | Existing alpha visual interactions, GL | Pass |
@@ -19,7 +20,21 @@ Mobile Vulkan, Xvfb. No physical Android or Windows hardware was available.
 | Existing result animation and upgrade input | Pass on focused recheck / full headless respectively |
 | Existing UI overhaul | 961 checks; 0 failures on focused recheck |
 
-The complete local headless run executed **183 scripts**, initially passing 177.
+The resource-theme follow-up passes **17 focused headless executions**, **5 GL
+scripts** and **4 Mobile Vulkan scripts**. This includes actual held-card selection,
+restoration of its highlight, keyboard/controller preview, right-click/normal
+discard, card upgrades/motion, tactical resize and HUD ownership. An exact
+comparison confirms that all 240 card-face descriptions match the prior PR
+revision; only their layout and typography changed.
+
+```sh
+python3 tools/run_regressions.py --godot GODOT --skip-import --script card_theme_test --script minimal_card_layout_test --script card_face_text_test --script card_icon_cue_test --script card_inspection_test --script discard_test --script player_hand_test --script ui_overhaul_test --script card_effect_parity_test --script card_effect_contract_test --workers 2 --results /workspace/card-theme-headless
+python3 tools/run_regressions.py --godot GODOT --skip-import --script tactical_cards_test --script tactical_resize_test --script hud_ownership_test --script card_upgrade_ui_test --script card_motion_test --script card_vfx_timing_test --script card_theme_test --workers 2 --results /workspace/card-theme-interactions
+python3 tools/run_rendered_regressions.py --godot GODOT --skip-import --renderer gl_compatibility --script card_theme_test --script minimal_card_layout_test --script minimal_card_hand_test --script card_inspection_test --script alpha_visual_test --results /workspace/card-theme-gl
+python3 tools/run_rendered_regressions.py --godot GODOT --skip-import --renderer mobile --script card_theme_test --script minimal_card_layout_test --script minimal_card_hand_test --script card_inspection_test --results /workspace/card-theme-mobile
+```
+
+The earlier complete local headless run executed **183 scripts**, initially passing 177.
 All six initial failures were investigated, rather than treating the run as green:
 
 | Initial failure | Investigation / final result |

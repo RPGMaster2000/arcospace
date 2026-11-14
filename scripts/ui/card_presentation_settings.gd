@@ -5,12 +5,15 @@ class_name CardPresentationSettings
 # RESPONSIBILITY: Store shared compact-card and read-only inspection presentation settings.
 # TUNE: One shared presentation/input configuration. No gameplay values live here.
 @export_group("Compact cards")
-@export_range(10, 24, 1) var compact_description_font_size: int = 16
-## TUNE: Keep authored descriptions at or below this length; shorten longer text.
-@export_range(0, 200, 1) var description_shorthand_threshold: int = 50
+@export_range(10, 24, 1) var compact_description_font_size: int = 15
 @export_range(14, 24, 1) var card_title_font_size: int = 18
 @export_range(40, 56, 1) var discard_button_height: float = 44.0
 @export_range(12, 22, 1) var discard_button_font_size: int = 14
+@export_group("Resource card themes")
+@export var card_base_color := Color("0b1724")
+@export var materials_card_color := Color("ff5757")
+@export var energy_card_color := Color("ffd447")
+@export var crew_card_color := Color("76f76b")
 @export_group("Inspection input")
 @export_range(0.1, 2.0, 0.05) var hold_duration: float = 0.4
 @export_range(2, 64, 1) var hold_movement_cancellation: float = 12.0
@@ -41,3 +44,10 @@ class_name CardPresentationSettings
 @export var target_uncertain: Color = Color(1.0, 0.72, 0.2)
 @export var target_cost: Color = Color(0.8, 0.85, 0.9)
 @export var reduced_preview_animation: bool = false
+
+
+func family_color(family: String) -> Color:
+	return (
+		{"materials": materials_card_color, "energy": energy_card_color, "crew": crew_card_color}
+		. get(family, Color.WHITE)
+	)

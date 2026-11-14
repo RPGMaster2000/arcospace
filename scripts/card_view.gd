@@ -9,11 +9,17 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 signal discard_requested
 const Summary = preload("res://scripts/ui/card_face_text.gd")
 const Icons = preload("res://scripts/ui/card_effect_rows.gd")
-const ART_TOP := 68.0
-const BODY_TOP := 112.0
+const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
+const ART_TOP := 60.0
+const BODY_TOP := 116.0
 const INK := Color("edf4fa")
 var family_tint := Color.WHITE
 var footer_visual_height := 28.0
+var preview_selected := false
+var affordable := true
+var storm_active := false
+var storm_color := Color(0.15, 0.55, 1.0)
+var theme_stamp := ""
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -58,7 +64,7 @@ func _ready() -> void:
 
 
 func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
-	if Engine.is_editor_hint() or not is_node_ready():
+	if Engine.is_editor_hint() or not is_node_ready() or not is_inside_tree():
 		return
 	if selected and not interaction_selected and card_data != null and not disabled:
 		Sound.play(&"card_select", self)
@@ -83,7 +89,7 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 	)
 	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
 	interaction_tween.tween_property(art, "position:y", ART_TOP - elevation, duration)
-	queue_redraw()
+	apply_card_theme()
 
 
 func _on_discard_pressed() -> void:
@@ -159,7 +165,7 @@ func refresh_card() -> void:
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for art in [$ArtPlaceholder, $FullCardArt]:
 		art.position = Vector2(12, ART_TOP)
-		art.size = Vector2(174, 36)
+		art.size = Vector2(174, 48)
 	fit_placeholder_art()
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
@@ -184,28 +190,17 @@ func refresh_card() -> void:
 	$FullCardArt.texture = artwork if artwork is Texture2D else null
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
-	family_tint = (
-		{"materials": Color("f39489"), "energy": Color("80cfe9"), "crew": Color("a0d9ac")}
-		. get(card_data.family, Color.WHITE)
-	)
+	family_tint = presentation_settings.family_color(card_data.family)
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
 		icon.color = family_tint
-	var normal: StyleBoxFlat = get_theme_stylebox("normal").duplicate()
-	normal.bg_color = Color("101b27")
-	normal.border_color = family_tint.darkened(0.40)
-	normal.set_border_width_all(1)
-	add_theme_stylebox_override("normal", normal)
-	add_theme_stylebox_override("disabled", normal)
-	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = Color("152330")
-	hover.border_color = family_tint
-	add_theme_stylebox_override("hover", hover)
-	add_theme_stylebox_override("pressed", hover)
-	$CostRule.default_color = Color(family_tint, 0.28)
-	$ArtPlaceholder/Accent.default_color = Color(family_tint, 0.6)
-	for node in [$TitleLabel, $CostLabel, $DescriptionLabel]:
+	$ThemeWash.texture = ThemeStyle.wash(family_tint)
+	$ArtPlaceholder/Backdrop.color = Color("060d15").lerp(family_tint, 0.045)
+	$CostRule.default_color = Color(family_tint, 0.9)
+	$CostLabel.add_theme_color_override("font_color", family_tint)
+	for node in [$TitleLabel, $DescriptionLabel]:
 		node.add_theme_color_override("font_color", INK)
+	apply_card_theme()
 	$DiscardButton.text = (
 		"↻ +%d %s" % [floori(card_data.cost / 3.0), Icons.resource_icon(card_data.family)]
 	)
@@ -242,25 +237,72 @@ func refresh_card() -> void:
 	tooltip_text += "\nHold / I / middle-click: inspect · Right-click: discard"
 
 
-func set_playable(playable: bool, affordable: int = -1) -> void:
+func set_playable(playable: bool, can_afford: int = -1) -> void:
 	disabled = not playable
-	if affordable < 0:
-		affordable = int(playable)
-	# Unaffordable changes cost/art emphasis, never the readability of the rules.
+	affordable = bool(int(playable) if can_afford < 0 else can_afford)
+	# Dim the surface and ink moderately; never lose resource identity or readable rules.
 	self_modulate = Color.WHITE
-	for path in ["TitleLabel", "TierLabel", "DescriptionLabel", "ResourceIcon", "CostRule"]:
-		get_node(path).modulate = Color.WHITE
-	$CostLabel.modulate = Color.WHITE if affordable != 0 else Color("ffc483")
-	$ArtPlaceholder.modulate = Color.WHITE if affordable != 0 else Color(0.72, 0.72, 0.72)
+	for path in ["TitleLabel", "TierLabel", "DescriptionLabel"]:
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.86, 0.86, 0.86)
+	for path in ["CostLabel", "ResourceIcon", "CostRule"]:
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.78, 0.78, 0.78)
+	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.65)
+	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.75, 0.75, 0.75)
 	$FullCardArt.modulate = $ArtPlaceholder.modulate
+	apply_card_theme()
 
 
 func fit_placeholder_art() -> void:
-	# Existing primitive art uses a 174×74 design surface; scale its children to fit.
+	# A blank native container; optional future artwork retains the same bounds.
 	$ArtPlaceholder.clip_contents = true
-	var height: float = maxf(0, $ArtPlaceholder.offset_bottom - $ArtPlaceholder.offset_top)
-	for child in $ArtPlaceholder.get_children():
-		child.scale.y = height / 74.0
+	$ArtPlaceholder/Backdrop.size = $ArtPlaceholder.size
+
+
+func set_preview_selected(active: bool) -> void:
+	# The existing tactical preview owns raising, z-order and restoration.
+	preview_selected = active
+	if not active:
+		set_interaction_emphasis(is_hovered(), false)
+	apply_card_theme()
+
+
+func apply_card_theme() -> void:
+	if not is_node_ready():
+		return
+	var selected := interaction_selected or preview_selected
+	var stamp := str(
+		[
+			family_tint,
+			presentation_settings.card_base_color,
+			selected,
+			interaction_hovered,
+			affordable,
+			storm_active,
+			storm_color
+		]
+	)
+	if stamp == theme_stamp:
+		return
+	theme_stamp = stamp
+	for state in ["normal", "disabled", "hover", "pressed"]:
+		var box := ThemeStyle.box(
+			presentation_settings.card_base_color,
+			family_tint,
+			selected or state == "pressed",
+			interaction_hovered or state == "hover",
+			affordable,
+			storm_active,
+			storm_color
+		)
+		add_theme_stylebox_override(state, box)
+	# Keep native keyboard focus visible without a second, unrelated blue border.
+	var focus := StyleBoxFlat.new()
+	focus.bg_color = Color.TRANSPARENT
+	focus.border_color = Color(family_tint, 0.9)
+	focus.set_border_width_all(1)
+	focus.set_corner_radius_all(7)
+	add_theme_stylebox_override("focus", focus)
+	queue_redraw()
 
 
 func set_discardable(allowed: bool) -> void:
@@ -268,13 +310,10 @@ func set_discardable(allowed: bool) -> void:
 
 
 func set_ion_glow(active: bool, tint: Color = Color(0.15, 0.55, 1.0)) -> void:
-	# TUNE: Shared storm outline; the default blue preserves the Ion caller contract.
-	for style in ["normal", "disabled", "hover", "pressed"]:
-		var box: StyleBoxFlat = get_theme_stylebox(style).duplicate()
-		box.shadow_color = Color(tint, 0.55 if active else 0.0)
-		box.shadow_size = 9 if active else 0
-		add_theme_stylebox_override(style, box)
-
+	# Preserve the existing storm cue; active selection keeps its family-colored glow.
+	storm_active = active
+	storm_color = tint
+	apply_card_theme()
 
 
 func _draw() -> void:
@@ -286,10 +325,3 @@ func _draw() -> void:
 		Color(family_tint, 0.25),
 		1.0
 	)
-	if interaction_hovered or interaction_selected:
-		draw_rect(
-			Rect2(Vector2(2, 2), size - Vector2(4, 4)),
-			visual_settings.card_selection_color,
-			false,
-			2.0 if interaction_selected else 1.0
-		)

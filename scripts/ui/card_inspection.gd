@@ -196,6 +196,7 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 		"ResourceIcon",
 		"ArtPlaceholder",
 		"FullCardArt",
+		"ThemeWash",
 		"CostRule"
 	]:
 		visual.get_node(name).modulate = original.get_node(name).modulate
