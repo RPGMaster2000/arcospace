@@ -107,5 +107,5 @@ Rendered verification uses Mesa software GL/Vulkan on Linux, not a physical Andr
 device. Physical phone readability, touch comfort and GPU performance still need
 device review. The implementation introduces no per-frame card rebuild; the new
 work is shared font shaping and event-driven copy/style updates. This is not a
-claim of measured Android frame-time improvement. See the PR for full run results,
+claim of measured Android frame-time improvement. See the [validation record](minimal_mobile_cards/validation.md) and PR for full run results,
 timeouts/retries and GitHub CI status.

@@ -203,7 +203,6 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 		visual.add_theme_stylebox_override(name, original.get_theme_stylebox(name).duplicate())
 	visual.modulate = original.modulate
 	visual.self_modulate = original.self_modulate
-	visual.border_time = original.border_time
 	if owner.has_method("set_card_scale") and is_instance_valid(owner.badge):
 		visual.add_child(owner.badge.duplicate())
 	info_scroll.scroll_vertical = 0

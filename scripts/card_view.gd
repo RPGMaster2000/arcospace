@@ -276,8 +276,6 @@ func set_ion_glow(active: bool, tint: Color = Color(0.15, 0.55, 1.0)) -> void:
 		add_theme_stylebox_override(style, box)
 
 
-var border_time: float = 0.0
-
 
 func _draw() -> void:
 	# Slim visible footer; the existing full-width Button retains its larger hitbox.
