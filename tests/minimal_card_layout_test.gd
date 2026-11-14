@@ -80,7 +80,7 @@ func run() -> void:
 				id + " common enlarged artwork band"
 			)
 			check(
-				text.get_theme_font_size("font_size") == 16 and text.size.x == 180,
+				text.get_theme_font_size("font_size") == 16 and text.size.x == 178,
 				id + " larger shared effect typography without per-card shrinking"
 			)
 			check(
@@ -159,7 +159,7 @@ func run() -> void:
 				view.refresh_card()
 				# Label shaping is the production renderer's actual measured text.
 				var needed: float = text.get_minimum_size().y
-				var available: float = footer.position.y - 6 - text.position.y
+				var available: float = footer.position.y - 7 - text.position.y
 				check(
 					needed <= available + 0.1,
 					(

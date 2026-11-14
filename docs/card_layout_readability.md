@@ -9,8 +9,8 @@ Resource colors/icons, 2px/3px borders, bounded glow and compact discard remain.
 |---|---|---|
 | Artwork/placeholder | 174×48 at (12,60) | **174×60** at (12,64), 25% taller |
 | Effect typography | Shared 15px, embolden 0.55 | **Shared 16px, embolden 0.65** |
-| Effect text width | 173px | **180px**, consistent 9px insets |
-| Effect start | y116 | y130; 6px below artwork |
+| Effect text width | 173px | **178px**, consistent 10px insets |
+| Effect start | y116 | y131; 7px below artwork |
 | Title / cost | Bold 18 / 23 | Unchanged; cost stays upper right |
 | Discard | Existing full-width button | Same bounds, touch target and return |
 
@@ -24,7 +24,7 @@ no new art, icons, shaders, materials or decorative effects are introduced.
 There is one effect font size for every card. No per-card shrinking, truncation,
 ellipsis, text stretching or dynamic artwork sizing is used. Short cards keep
 breathing room. Long cards get consistent natural wrapping and explicit effect
-rows, with at least the existing 6px clearance above the discard hit area.
+rows, with 7px clearance above the discard hit area.
 
 ## Accurate compact statements
 
@@ -57,7 +57,7 @@ Official Godot **4.7.2**, Linux software GL Compatibility and Mobile Vulkan:
   fabricated multiplier or fixture rewrite.
 - Every state checks fixed geometry, complete titles/cost separation, enlarged
   artwork and backdrop fill, one 16px font, text/foot clearance and full discard
-  text. Maximum body: **five lines / 95px**, within the tightest 98.5px area.
+  text. Maximum body: **five lines / 95px**, within the tightest 96.5px area.
 - **192 production-hand checks pass** in each renderer at 1920×1080, 1280×720,
   960×540 and 1280×573: short/long/conditional text, upgrades, unaffordable cards,
   mouse/native-touch play and discard, keyboard/controller preview, inspection,
@@ -113,3 +113,8 @@ Before at 960×540:
 After at 960×540:
 
 ![After](card_layout_readability/after-gl_compatibility-hand-960x540.webp)
+
+A follow-up adds one unit of text-edge padding: 10px side insets, slightly more
+title/cost top inset, 7px effect/footer separation and a raised footer baseline.
+Comparison operators use compact mathematical spacing to keep every rule visible
+at the same shared 16px font. Card and touch bounds are unchanged.

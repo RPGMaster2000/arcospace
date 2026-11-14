@@ -37,7 +37,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "Gain 3 Energy. Then:\nIf Energy ≤5:\nDeal 8 damage.\nElse: 2 damage."
+			== "Gain 3 Energy. Then:\nIf Energy≤5:\nDeal 8 damage.\nElse: 2 damage."
 		),
 		"Base gain precedes threshold; branches never factored"
 	)
@@ -56,7 +56,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "If enemy Reactor >yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
+			== "If enemy Reactor>yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
 		),
 		"Compact else retains positive gain, production, relative target and full resource name"
 	)
@@ -75,7 +75,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "If enemy Hull <50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
+			== "If enemy Hull<50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
 		),
 		"Compact damage else retains Hull bypass and both exact values"
 	)
@@ -109,7 +109,7 @@ func _initialize() -> void:
 					"comparison": "below"
 				}
 			)
-			== "Hull <50% max"
+			== "Hull<50% max"
 		),
 		"Capacity-relative threshold remains explicit"
 	)
@@ -124,7 +124,7 @@ func _initialize() -> void:
 					"comparison": "above"
 				}
 			)
-			== "enemy Reactor >yours"
+			== "enemy Reactor>yours"
 		),
 		"Relative production retains both targets"
 	)

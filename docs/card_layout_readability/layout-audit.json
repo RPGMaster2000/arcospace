@@ -3,7 +3,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -15,7 +15,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -27,7 +27,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -39,7 +39,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -51,7 +51,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -63,7 +63,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/01_shield_plating.tres",
@@ -75,7 +75,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/02_shield_array.tres",
@@ -87,7 +87,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/02_shield_array.tres",
@@ -99,7 +99,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/02_shield_array.tres",
@@ -111,7 +111,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/02_shield_array.tres",
@@ -123,7 +123,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/02_shield_array.tres",
@@ -135,7 +135,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/02_shield_array.tres",
@@ -147,79 +147,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 0,
       "lines": 4,
       "name": "Hull Patch",
-      "text": "If Hull ≤20:\nRepair 5 Hull.\nGain 5 Shields.\nElse: Repair 5 Hull."
+      "text": "If Hull≤20:\nRepair 5 Hull.\nGain 5 Shields.\nElse: Repair 5 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 0,
       "lines": 4,
       "name": "Hull Patch",
-      "text": "If Hull ≤20:\nRepair 10 Hull.\nGain 10 Shields.\nElse: Repair 10 Hull."
+      "text": "If Hull≤20:\nRepair 10 Hull.\nGain 10 Shields.\nElse: Repair 10 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 1,
       "lines": 4,
       "name": "Hull Patch+",
-      "text": "If Hull ≤20:\nRepair 7 Hull.\nGain 6 Shields.\nElse: Repair 7 Hull."
+      "text": "If Hull≤20:\nRepair 7 Hull.\nGain 6 Shields.\nElse: Repair 7 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 1,
       "lines": 4,
       "name": "Hull Patch+",
-      "text": "If Hull ≤20:\nRepair 14 Hull.\nGain 12 Shields.\nElse: Repair 14 Hull."
+      "text": "If Hull≤20:\nRepair 14 Hull.\nGain 12 Shields.\nElse: Repair 14 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 2,
       "lines": 4,
       "name": "Hull Patch++",
-      "text": "If Hull ≤20:\nRepair 9 Hull.\nGain 7 Shields.\nElse: Repair 9 Hull."
+      "text": "If Hull≤20:\nRepair 9 Hull.\nGain 7 Shields.\nElse: Repair 9 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/03_hull_patch.tres",
       "level": 2,
       "lines": 4,
       "name": "Hull Patch++",
-      "text": "If Hull ≤20:\nRepair 18 Hull.\nGain 14 Shields.\nElse: Repair 18 Hull."
+      "text": "If Hull≤20:\nRepair 18 Hull.\nGain 14 Shields.\nElse: Repair 18 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -231,7 +231,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -243,7 +243,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -255,7 +255,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -267,7 +267,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -279,7 +279,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/04_synthesizer_upgrade.tres",
@@ -291,7 +291,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -303,7 +303,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -315,7 +315,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -327,7 +327,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -339,7 +339,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -351,7 +351,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/05_structural_reinforcement.tres",
@@ -363,7 +363,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -375,7 +375,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -387,7 +387,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -399,7 +399,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -411,7 +411,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -423,7 +423,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/06_shield_disruptor.tres",
@@ -435,7 +435,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -447,7 +447,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -459,7 +459,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -471,7 +471,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -483,7 +483,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -495,7 +495,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/07_hull_overhaul.tres",
@@ -507,79 +507,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 0,
       "lines": 4,
       "name": "Emergency Power Cell",
-      "text": "Gain 3 Materials.\nGain 3 Crew. Then:\nIf Energy ≤5:\nGain 3 Energy."
+      "text": "Gain 3 Materials.\nGain 3 Crew. Then:\nIf Energy≤5:\nGain 3 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 0,
       "lines": 4,
       "name": "Emergency Power Cell",
-      "text": "Gain 6 Materials.\nGain 6 Crew. Then:\nIf Energy ≤5:\nGain 6 Energy."
+      "text": "Gain 6 Materials.\nGain 6 Crew. Then:\nIf Energy≤5:\nGain 6 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 1,
       "lines": 4,
       "name": "Emergency Power Cell+",
-      "text": "Gain 4 Materials.\nGain 3 Crew. Then:\nIf Energy ≤5:\nGain 4 Energy."
+      "text": "Gain 4 Materials.\nGain 3 Crew. Then:\nIf Energy≤5:\nGain 4 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 1,
       "lines": 4,
       "name": "Emergency Power Cell+",
-      "text": "Gain 8 Materials.\nGain 6 Crew. Then:\nIf Energy ≤5:\nGain 8 Energy."
+      "text": "Gain 8 Materials.\nGain 6 Crew. Then:\nIf Energy≤5:\nGain 8 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 2,
       "lines": 4,
       "name": "Emergency Power Cell++",
-      "text": "Gain 4 Materials.\nGain 4 Crew. Then:\nIf Energy ≤5:\nGain 5 Energy."
+      "text": "Gain 4 Materials.\nGain 4 Crew. Then:\nIf Energy≤5:\nGain 5 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/08_energy_cell.tres",
       "level": 2,
       "lines": 4,
       "name": "Emergency Power Cell++",
-      "text": "Gain 8 Materials.\nGain 8 Crew. Then:\nIf Energy ≤5:\nGain 10 Energy."
+      "text": "Gain 8 Materials.\nGain 8 Crew. Then:\nIf Energy≤5:\nGain 10 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -591,7 +591,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -603,7 +603,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -615,7 +615,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -627,7 +627,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -639,7 +639,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/09_hull_nanobots.tres",
@@ -651,7 +651,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -663,7 +663,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -675,7 +675,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -687,7 +687,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -699,7 +699,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -711,7 +711,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/10_shield_recharge.tres",
@@ -723,7 +723,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -735,7 +735,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -747,7 +747,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -759,7 +759,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -771,7 +771,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -783,7 +783,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/11_reactor_upgrade.tres",
@@ -795,79 +795,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 0,
       "lines": 4,
       "name": "Laser Burst",
-      "text": "Deal 6 damage. Then:\nIf enemy Shields =0:\nDeal 3 damage."
+      "text": "Deal 6 damage. Then:\nIf enemy Shields=0:\nDeal 3 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 0,
       "lines": 4,
       "name": "Laser Burst",
-      "text": "Deal 12 damage. Then:\nIf enemy Shields =0:\nDeal 6 damage."
+      "text": "Deal 12 damage. Then:\nIf enemy Shields=0:\nDeal 6 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 1,
       "lines": 4,
       "name": "Laser Burst+",
-      "text": "Deal 8 damage. Then:\nIf enemy Shields =0:\nDeal 4 damage."
+      "text": "Deal 8 damage. Then:\nIf enemy Shields=0:\nDeal 4 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 1,
       "lines": 4,
       "name": "Laser Burst+",
-      "text": "Deal 16 damage. Then:\nIf enemy Shields =0:\nDeal 8 damage."
+      "text": "Deal 16 damage. Then:\nIf enemy Shields=0:\nDeal 8 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 2,
       "lines": 4,
       "name": "Laser Burst++",
-      "text": "Deal 10 damage. Then:\nIf enemy Shields =0:\nDeal 5 damage."
+      "text": "Deal 10 damage. Then:\nIf enemy Shields=0:\nDeal 5 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/12_laser_burst.tres",
       "level": 2,
       "lines": 4,
       "name": "Laser Burst++",
-      "text": "Deal 20 damage. Then:\nIf enemy Shields =0:\nDeal 10 damage."
+      "text": "Deal 20 damage. Then:\nIf enemy Shields=0:\nDeal 10 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -879,7 +879,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -891,7 +891,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -903,7 +903,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -915,7 +915,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -927,7 +927,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/13_plasma_strike.tres",
@@ -939,7 +939,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -951,7 +951,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -963,7 +963,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -975,7 +975,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -987,7 +987,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -999,7 +999,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/14_energy_surge.tres",
@@ -1011,7 +1011,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1023,7 +1023,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1035,7 +1035,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1047,7 +1047,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1059,7 +1059,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1071,7 +1071,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/15_boarding_party.tres",
@@ -1083,151 +1083,151 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 0,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team",
-      "text": "If enemy Shields ≥10:\nBreak 4 Shields.\nDeal 6 damage.\nElse: 6 damage."
+      "text": "If enemy Shields≥10:\nBreak 4 Shields.\nDeal 6 damage.\nElse: 6 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 0,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team",
-      "text": "If enemy Shields ≥10:\nBreak 8 Shields.\nDeal 12 damage.\nElse: 12 damage."
+      "text": "If enemy Shields≥10:\nBreak 8 Shields.\nDeal 12 damage.\nElse: 12 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 1,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team+",
-      "text": "If enemy Shields ≥10:\nBreak 5 Shields.\nDeal 8 damage.\nElse: 8 damage."
+      "text": "If enemy Shields≥10:\nBreak 5 Shields.\nDeal 8 damage.\nElse: 8 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 1,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team+",
-      "text": "If enemy Shields ≥10:\nBreak 10 Shields.\nDeal 16 damage.\nElse: 16 damage."
+      "text": "If enemy Shields≥10:\nBreak 10 Shields.\nDeal 16 damage.\nElse: 16 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 2,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team++",
-      "text": "If enemy Shields ≥10:\nBreak 6 Shields.\nDeal 10 damage.\nElse: 10 damage."
+      "text": "If enemy Shields≥10:\nBreak 6 Shields.\nDeal 10 damage.\nElse: 10 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/16_missile_team.tres",
       "level": 2,
-      "lines": 5,
+      "lines": 4,
       "name": "Missile Team++",
-      "text": "If enemy Shields ≥10:\nBreak 12 Shields.\nDeal 20 damage.\nElse: 20 damage."
+      "text": "If enemy Shields≥10:\nBreak 12 Shields.\nDeal 20 damage.\nElse: 20 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 0,
       "lines": 4,
       "name": "Shield Breachers",
-      "text": "Break 8 Shields. Then:\nIf enemy Shields =0:\nGain 4 Materials."
+      "text": "Break 8 Shields. Then:\nIf enemy Shields=0:\nGain 4 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 0,
       "lines": 4,
       "name": "Shield Breachers",
-      "text": "Break 16 Shields. Then:\nIf enemy Shields =0:\nGain 8 Materials."
+      "text": "Break 16 Shields. Then:\nIf enemy Shields=0:\nGain 8 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 1,
       "lines": 4,
       "name": "Shield Breachers+",
-      "text": "Break 11 Shields. Then:\nIf enemy Shields =0:\nGain 5 Materials."
+      "text": "Break 11 Shields. Then:\nIf enemy Shields=0:\nGain 5 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 1,
       "lines": 4,
       "name": "Shield Breachers+",
-      "text": "Break 22 Shields. Then:\nIf enemy Shields =0:\nGain 10 Materials."
+      "text": "Break 22 Shields. Then:\nIf enemy Shields=0:\nGain 10 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 2,
       "lines": 4,
       "name": "Shield Breachers++",
-      "text": "Break 14 Shields. Then:\nIf enemy Shields =0:\nGain 6 Materials."
+      "text": "Break 14 Shields. Then:\nIf enemy Shields=0:\nGain 6 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/17_shield_breachers.tres",
       "level": 2,
       "lines": 4,
       "name": "Shield Breachers++",
-      "text": "Break 28 Shields. Then:\nIf enemy Shields =0:\nGain 12 Materials."
+      "text": "Break 28 Shields. Then:\nIf enemy Shields=0:\nGain 12 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1239,7 +1239,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1251,7 +1251,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1263,7 +1263,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1275,7 +1275,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1287,7 +1287,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/18_quarters_upgrade.tres",
@@ -1299,7 +1299,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1311,7 +1311,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1323,7 +1323,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1335,7 +1335,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1347,7 +1347,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1359,7 +1359,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/19_system_disruption.tres",
@@ -1371,79 +1371,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 0,
       "lines": 3,
       "name": "Torpedo Salvo",
-      "text": "If enemy Hull ≤15:\nDeal 16 damage.\nElse: 12 damage."
+      "text": "If enemy Hull≤15:\nDeal 16 damage.\nElse: 12 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 0,
       "lines": 3,
       "name": "Torpedo Salvo",
-      "text": "If enemy Hull ≤15:\nDeal 32 damage.\nElse: 24 damage."
+      "text": "If enemy Hull≤15:\nDeal 32 damage.\nElse: 24 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 1,
       "lines": 3,
       "name": "Torpedo Salvo+",
-      "text": "If enemy Hull ≤15:\nDeal 20 damage.\nElse: 15 damage."
+      "text": "If enemy Hull≤15:\nDeal 20 damage.\nElse: 15 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 1,
       "lines": 3,
       "name": "Torpedo Salvo+",
-      "text": "If enemy Hull ≤15:\nDeal 40 damage.\nElse: 30 damage."
+      "text": "If enemy Hull≤15:\nDeal 40 damage.\nElse: 30 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 2,
       "lines": 3,
       "name": "Torpedo Salvo++",
-      "text": "If enemy Hull ≤15:\nDeal 24 damage.\nElse: 18 damage."
+      "text": "If enemy Hull≤15:\nDeal 24 damage.\nElse: 18 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/20_torpedo_salvo.tres",
       "level": 2,
       "lines": 3,
       "name": "Torpedo Salvo++",
-      "text": "If enemy Hull ≤15:\nDeal 48 damage.\nElse: 36 damage."
+      "text": "If enemy Hull≤15:\nDeal 48 damage.\nElse: 36 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1455,7 +1455,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1467,7 +1467,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1479,7 +1479,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1491,7 +1491,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1503,7 +1503,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/21_phase_lance.tres",
@@ -1515,7 +1515,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1527,7 +1527,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1539,7 +1539,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1551,7 +1551,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1563,7 +1563,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1575,7 +1575,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/22_energy_siphon.tres",
@@ -1587,7 +1587,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1599,7 +1599,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1611,7 +1611,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1623,7 +1623,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1635,7 +1635,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1647,7 +1647,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/23_cargo_raid.tres",
@@ -1659,7 +1659,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1671,7 +1671,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1683,7 +1683,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1695,7 +1695,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1707,7 +1707,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1719,7 +1719,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/24_crew_capture.tres",
@@ -1731,7 +1731,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1743,7 +1743,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1755,7 +1755,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1767,7 +1767,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1779,7 +1779,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1791,7 +1791,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/25_emp_pulse.tres",
@@ -1803,7 +1803,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1815,7 +1815,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1827,7 +1827,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1839,7 +1839,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1851,7 +1851,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1863,7 +1863,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/26_shield_exchange.tres",
@@ -1875,7 +1875,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1887,7 +1887,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1899,7 +1899,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1911,7 +1911,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1923,7 +1923,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1935,7 +1935,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/27_missile_barrage.tres",
@@ -1947,7 +1947,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -1959,7 +1959,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -1971,7 +1971,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -1983,7 +1983,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -1995,7 +1995,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -2007,7 +2007,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/28_breach_charge.tres",
@@ -2019,7 +2019,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2031,7 +2031,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2043,7 +2043,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2055,7 +2055,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2067,7 +2067,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2079,7 +2079,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/29_polaron_burst.tres",
@@ -2091,7 +2091,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2103,7 +2103,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 19.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2115,7 +2115,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2127,7 +2127,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2139,7 +2139,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2151,7 +2151,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/30_siege_driver.tres",
@@ -2163,7 +2163,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2175,7 +2175,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2187,7 +2187,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2199,7 +2199,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2211,7 +2211,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2223,7 +2223,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/31_emergency_refit.tres",
@@ -2235,7 +2235,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2247,7 +2247,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2259,7 +2259,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2271,7 +2271,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2283,7 +2283,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2295,7 +2295,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/32_antimatter_lance.tres",
@@ -2307,7 +2307,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2319,7 +2319,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2331,7 +2331,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2343,7 +2343,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2355,7 +2355,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2367,7 +2367,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/33_omega_overcharge.tres",
@@ -2379,79 +2379,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 57.0,
+      "height": 76.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 0,
-      "lines": 3,
+      "lines": 4,
       "name": "Sabotage Commandos",
       "text": "Deal 18 damage.\nEnemy all production −2 (min 0)."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 57.0,
+      "height": 76.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 0,
-      "lines": 3,
+      "lines": 4,
       "name": "Sabotage Commandos",
       "text": "Deal 36 damage.\nEnemy all production −4 (min 0)."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 1,
-      "lines": 4,
+      "lines": 5,
       "name": "Sabotage Commandos+",
       "text": "Deal 22 damage.\nDrain 3 Energy.\nEnemy all production −2 (min 0)."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 1,
-      "lines": 4,
+      "lines": 5,
       "name": "Sabotage Commandos+",
       "text": "Deal 44 damage.\nDrain 6 Energy.\nEnemy all production −4 (min 0)."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 2,
-      "lines": 4,
+      "lines": 5,
       "name": "Sabotage Commandos++",
       "text": "Deal 26 damage.\nDrain 6 Energy.\nEnemy all production −2 (min 0)."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/34_sabotage_commandos.tres",
       "level": 2,
-      "lines": 4,
+      "lines": 5,
       "name": "Sabotage Commandos++",
       "text": "Deal 52 damage.\nDrain 12 Energy.\nEnemy all production −4 (min 0)."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2463,7 +2463,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2475,7 +2475,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2487,7 +2487,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2499,7 +2499,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2511,7 +2511,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/35_damage_control.tres",
@@ -2523,7 +2523,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2535,7 +2535,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2547,7 +2547,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2559,7 +2559,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2571,7 +2571,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2583,7 +2583,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/36_salvage_strike.tres",
@@ -2595,7 +2595,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2607,7 +2607,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2619,7 +2619,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2631,7 +2631,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2643,7 +2643,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2655,7 +2655,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/37_pulse_repeater.tres",
@@ -2667,7 +2667,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2679,7 +2679,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2691,7 +2691,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2703,7 +2703,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2715,7 +2715,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2727,7 +2727,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/38_cataclysm_protocol.tres",
@@ -2739,7 +2739,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2751,7 +2751,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2763,7 +2763,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2775,7 +2775,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2787,7 +2787,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2799,7 +2799,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/39_reactor_salvage.tres",
@@ -2811,7 +2811,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2823,7 +2823,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2835,7 +2835,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2847,7 +2847,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2859,7 +2859,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2871,7 +2871,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/40_supply_diversion.tres",
@@ -2883,7 +2883,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2895,7 +2895,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2907,7 +2907,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2919,7 +2919,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2931,7 +2931,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2943,7 +2943,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/41_shield_collapse.tres",
@@ -2955,7 +2955,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -2967,7 +2967,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -2979,7 +2979,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -2991,7 +2991,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -3003,7 +3003,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -3015,7 +3015,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/42_overloaded_warhead.tres",
@@ -3027,7 +3027,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3039,7 +3039,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3051,7 +3051,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3063,7 +3063,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3075,7 +3075,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3087,7 +3087,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/43_emergency_reserves.tres",
@@ -3099,7 +3099,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3111,7 +3111,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3123,7 +3123,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3135,7 +3135,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3147,7 +3147,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3159,7 +3159,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/44_desperate_conversion.tres",
@@ -3171,79 +3171,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 0,
       "lines": 3,
       "name": "Emergency Bulkheads",
-      "text": "Gain 9 Shields. Then:\nIf Hull ≤20:\nGain 5 Shields."
+      "text": "Gain 9 Shields. Then:\nIf Hull≤20:\nGain 5 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 0,
       "lines": 4,
       "name": "Emergency Bulkheads",
-      "text": "Gain 18 Shields. Then:\nIf Hull ≤20:\nGain 10 Shields."
+      "text": "Gain 18 Shields. Then:\nIf Hull≤20:\nGain 10 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 1,
       "lines": 4,
       "name": "Emergency Bulkheads+",
-      "text": "Gain 11 Shields. Then:\nIf Hull ≤20:\nGain 6 Shields."
+      "text": "Gain 11 Shields. Then:\nIf Hull≤20:\nGain 6 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 1,
       "lines": 4,
       "name": "Emergency Bulkheads+",
-      "text": "Gain 22 Shields. Then:\nIf Hull ≤20:\nGain 12 Shields."
+      "text": "Gain 22 Shields. Then:\nIf Hull≤20:\nGain 12 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 2,
       "lines": 4,
       "name": "Emergency Bulkheads++",
-      "text": "Gain 13 Shields. Then:\nIf Hull ≤20:\nGain 7 Shields."
+      "text": "Gain 13 Shields. Then:\nIf Hull≤20:\nGain 7 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/45_emergency_bulkheads.tres",
       "level": 2,
       "lines": 4,
       "name": "Emergency Bulkheads++",
-      "text": "Gain 26 Shields. Then:\nIf Hull ≤20:\nGain 14 Shields."
+      "text": "Gain 26 Shields. Then:\nIf Hull≤20:\nGain 14 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3255,7 +3255,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3267,7 +3267,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3279,7 +3279,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3291,7 +3291,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3303,7 +3303,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/46_structural_reclamation.tres",
@@ -3315,151 +3315,151 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 0,
       "lines": 4,
       "name": "Siege Charges",
-      "text": "Deal 9 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 7 Hull damage."
+      "text": "Deal 9 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 7 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 0,
       "lines": 4,
       "name": "Siege Charges",
-      "text": "Deal 18 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 14 Hull damage."
+      "text": "Deal 18 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 14 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 1,
       "lines": 4,
       "name": "Siege Charges+",
-      "text": "Deal 11 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 8 Hull damage."
+      "text": "Deal 11 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 8 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 1,
       "lines": 4,
       "name": "Siege Charges+",
-      "text": "Deal 22 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 16 Hull damage."
+      "text": "Deal 22 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 16 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 2,
       "lines": 4,
       "name": "Siege Charges++",
-      "text": "Deal 13 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 9 Hull damage."
+      "text": "Deal 13 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 9 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/47_siege_charges.tres",
       "level": 2,
       "lines": 4,
       "name": "Siege Charges++",
-      "text": "Deal 26 Hull damage. Then:\nIf enemy Shields ≤5:\nDeal 18 Hull damage."
+      "text": "Deal 26 Hull damage. Then:\nIf enemy Shields≤5:\nDeal 18 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 0,
       "lines": 5,
       "name": "Industrial Sabotage",
-      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials ≥15:\nGain 6 Energy."
+      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials≥15:\nGain 6 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 0,
       "lines": 5,
       "name": "Industrial Sabotage",
-      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials ≥15:\nGain 12 Energy."
+      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials≥15:\nGain 12 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 1,
       "lines": 5,
       "name": "Industrial Sabotage+",
-      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials ≥15:\nGain 8 Energy."
+      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials≥15:\nGain 8 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 1,
       "lines": 5,
       "name": "Industrial Sabotage+",
-      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials ≥15:\nGain 16 Energy."
+      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials≥15:\nGain 16 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 2,
       "lines": 5,
       "name": "Industrial Sabotage++",
-      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials ≥15:\nGain 10 Energy."
+      "text": "Enemy Synthesizer -1 (min 0). Then:\nIf enemy Materials≥15:\nGain 10 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/48_industrial_sabotage.tres",
       "level": 2,
       "lines": 5,
       "name": "Industrial Sabotage++",
-      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials ≥15:\nGain 20 Energy."
+      "text": "Enemy Synthesizer -2 (min 0). Then:\nIf enemy Materials≥15:\nGain 20 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3471,7 +3471,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3483,7 +3483,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3495,7 +3495,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3507,7 +3507,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3519,7 +3519,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/49_salvage_cannibalization.tres",
@@ -3531,79 +3531,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 0,
       "lines": 4,
       "name": "Demolition Crew",
-      "text": "Break 8 Shields. Then:\nIf enemy Shields =0:\nDrain 5 Crew."
+      "text": "Break 8 Shields. Then:\nIf enemy Shields=0:\nDrain 5 Crew."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 0,
       "lines": 4,
       "name": "Demolition Crew",
-      "text": "Break 16 Shields. Then:\nIf enemy Shields =0:\nDrain 10 Crew."
+      "text": "Break 16 Shields. Then:\nIf enemy Shields=0:\nDrain 10 Crew."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 1,
       "lines": 4,
       "name": "Demolition Crew+",
-      "text": "Break 10 Shields. Then:\nIf enemy Shields =0:\nDrain 6 Crew."
+      "text": "Break 10 Shields. Then:\nIf enemy Shields=0:\nDrain 6 Crew."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 1,
       "lines": 4,
       "name": "Demolition Crew+",
-      "text": "Break 20 Shields. Then:\nIf enemy Shields =0:\nDrain 12 Crew."
+      "text": "Break 20 Shields. Then:\nIf enemy Shields=0:\nDrain 12 Crew."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 2,
       "lines": 4,
       "name": "Demolition Crew++",
-      "text": "Break 12 Shields. Then:\nIf enemy Shields =0:\nDrain 7 Crew."
+      "text": "Break 12 Shields. Then:\nIf enemy Shields=0:\nDrain 7 Crew."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/50_demolition_crew.tres",
       "level": 2,
       "lines": 4,
       "name": "Demolition Crew++",
-      "text": "Break 24 Shields. Then:\nIf enemy Shields =0:\nDrain 14 Crew."
+      "text": "Break 24 Shields. Then:\nIf enemy Shields=0:\nDrain 14 Crew."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3615,7 +3615,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3627,7 +3627,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3639,7 +3639,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3651,7 +3651,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3663,7 +3663,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/51_reinforced_foundations.tres",
@@ -3675,7 +3675,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3687,7 +3687,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3699,7 +3699,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3711,7 +3711,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3723,7 +3723,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3735,7 +3735,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/52_resource_seizure.tres",
@@ -3747,79 +3747,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 0,
       "lines": 4,
       "name": "Capacitor Overload",
-      "text": "Break 8 Shields. Then:\nIf enemy Energy ≥10:\nBreak 7 Shields."
+      "text": "Break 8 Shields. Then:\nIf enemy Energy≥10:\nBreak 7 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 0,
       "lines": 4,
       "name": "Capacitor Overload",
-      "text": "Break 16 Shields. Then:\nIf enemy Energy ≥10:\nBreak 14 Shields."
+      "text": "Break 16 Shields. Then:\nIf enemy Energy≥10:\nBreak 14 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 1,
       "lines": 4,
       "name": "Capacitor Overload+",
-      "text": "Break 10 Shields. Then:\nIf enemy Energy ≥10:\nBreak 8 Shields."
+      "text": "Break 10 Shields. Then:\nIf enemy Energy≥10:\nBreak 8 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 1,
       "lines": 4,
       "name": "Capacitor Overload+",
-      "text": "Break 20 Shields. Then:\nIf enemy Energy ≥10:\nBreak 16 Shields."
+      "text": "Break 20 Shields. Then:\nIf enemy Energy≥10:\nBreak 16 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 2,
       "lines": 4,
       "name": "Capacitor Overload++",
-      "text": "Break 12 Shields. Then:\nIf enemy Energy ≥10:\nBreak 9 Shields."
+      "text": "Break 12 Shields. Then:\nIf enemy Energy≥10:\nBreak 9 Shields."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/53_capacitor_overload.tres",
       "level": 2,
       "lines": 4,
       "name": "Capacitor Overload++",
-      "text": "Break 24 Shields. Then:\nIf enemy Energy ≥10:\nBreak 18 Shields."
+      "text": "Break 24 Shields. Then:\nIf enemy Energy≥10:\nBreak 18 Shields."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3831,7 +3831,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3843,7 +3843,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3855,7 +3855,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3867,7 +3867,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3879,7 +3879,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/54_power_grid_reroute.tres",
@@ -3891,79 +3891,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 0,
       "lines": 4,
       "name": "Reactor Synchronization",
-      "text": "If enemy Reactor >yours:\nEnergy prod. +1.\nElse: +7 Materials."
+      "text": "If enemy Reactor>yours:\nEnergy prod. +1.\nElse: +7 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 0,
       "lines": 4,
       "name": "Reactor Synchronization",
-      "text": "If enemy Reactor >yours:\nEnergy prod. +2.\nElse: +14 Materials."
+      "text": "If enemy Reactor>yours:\nEnergy prod. +2.\nElse: +14 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 1,
       "lines": 5,
       "name": "Reactor Synchronization+",
-      "text": "If enemy Reactor >yours:\nGain 2 Shields.\nEnergy prod. +1.\nElse: +9 Materials."
+      "text": "If enemy Reactor>yours:\nGain 2 Shields.\nEnergy prod. +1.\nElse: +9 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 1,
       "lines": 5,
       "name": "Reactor Synchronization+",
-      "text": "If enemy Reactor >yours:\nGain 4 Shields.\nEnergy prod. +2.\nElse: +18 Materials."
+      "text": "If enemy Reactor>yours:\nGain 4 Shields.\nEnergy prod. +2.\nElse: +18 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 2,
       "lines": 5,
       "name": "Reactor Synchronization++",
-      "text": "If enemy Reactor >yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
+      "text": "If enemy Reactor>yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/55_reactor_synchronization.tres",
       "level": 2,
       "lines": 5,
       "name": "Reactor Synchronization++",
-      "text": "If enemy Reactor >yours:\nGain 8 Shields.\nEnergy prod. +2.\nElse: +22 Materials."
+      "text": "If enemy Reactor>yours:\nGain 8 Shields.\nEnergy prod. +2.\nElse: +22 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -3975,7 +3975,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -3987,7 +3987,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -3999,7 +3999,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -4011,7 +4011,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -4023,7 +4023,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/56_phase_inverter.tres",
@@ -4035,7 +4035,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4047,7 +4047,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4059,7 +4059,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4071,7 +4071,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4083,7 +4083,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4095,7 +4095,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/57_emergency_discharge.tres",
@@ -4107,7 +4107,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4119,7 +4119,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4131,7 +4131,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4143,7 +4143,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4155,7 +4155,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4167,7 +4167,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/58_energy_equalizer.tres",
@@ -4179,79 +4179,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 0,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop",
-      "text": "If enemy Shields ≥12:\nBreak 14 Shields.\nElse: +4 Shields.\nGain 5 Materials."
+      "text": "If enemy Shields≥12:\nBreak 14 Shields.\nElse: +4 Shields.\nGain 5 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 0,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop",
-      "text": "If enemy Shields ≥12:\nBreak 28 Shields.\nElse: +8 Shields.\nGain 10 Materials."
+      "text": "If enemy Shields≥12:\nBreak 28 Shields.\nElse: +8 Shields.\nGain 10 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 1,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop+",
-      "text": "If enemy Shields ≥12:\nBreak 17 Shields.\nElse: +5 Shields.\nGain 6 Materials."
+      "text": "If enemy Shields≥12:\nBreak 17 Shields.\nElse: +5 Shields.\nGain 6 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 1,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop+",
-      "text": "If enemy Shields ≥12:\nBreak 34 Shields.\nElse: +10 Shields.\nGain 12 Materials."
+      "text": "If enemy Shields≥12:\nBreak 34 Shields.\nElse: +10 Shields.\nGain 12 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 2,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop++",
-      "text": "If enemy Shields ≥12:\nBreak 20 Shields.\nElse: +6 Shields.\nGain 7 Materials."
+      "text": "If enemy Shields≥12:\nBreak 20 Shields.\nElse: +6 Shields.\nGain 7 Materials."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 95.0,
+      "height": 76.0,
       "id": "res://cards/59_feedback_loop.tres",
       "level": 2,
-      "lines": 5,
+      "lines": 4,
       "name": "Feedback Loop++",
-      "text": "If enemy Shields ≥12:\nBreak 40 Shields.\nElse: +12 Shields.\nGain 14 Materials."
+      "text": "If enemy Shields≥12:\nBreak 40 Shields.\nElse: +12 Shields.\nGain 14 Materials."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4263,7 +4263,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4275,7 +4275,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4287,7 +4287,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4299,7 +4299,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4311,7 +4311,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/60_auxiliary_power_link.tres",
@@ -4323,151 +4323,151 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 0,
       "lines": 4,
       "name": "Tactical Assessment",
-      "text": "If enemy Hull <50% max:\nDeal 13 Hull damage.\nElse: 7 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 13 Hull damage.\nElse: 7 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 0,
-      "lines": 4,
+      "lines": 5,
       "name": "Tactical Assessment",
-      "text": "If enemy Hull <50% max:\nDeal 26 Hull damage.\nElse: 14 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 26 Hull damage.\nElse: 14 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 1,
       "lines": 4,
       "name": "Tactical Assessment+",
-      "text": "If enemy Hull <50% max:\nDeal 16 Hull damage.\nElse: 9 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 16 Hull damage.\nElse: 9 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 1,
-      "lines": 4,
+      "lines": 5,
       "name": "Tactical Assessment+",
-      "text": "If enemy Hull <50% max:\nDeal 32 Hull damage.\nElse: 18 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 32 Hull damage.\nElse: 18 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 2,
-      "lines": 4,
+      "lines": 5,
       "name": "Tactical Assessment++",
-      "text": "If enemy Hull <50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
-      "height": 76.0,
+      "height": 95.0,
       "id": "res://cards/61_tactical_assessment.tres",
       "level": 2,
-      "lines": 4,
+      "lines": 5,
       "name": "Tactical Assessment++",
-      "text": "If enemy Hull <50% max:\nDeal 38 Hull damage.\nElse: 22 Hull damage."
+      "text": "If enemy Hull<50% max:\nDeal 38 Hull damage.\nElse: 22 Hull damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 0,
       "lines": 3,
       "name": "Emergency Medical Team",
-      "text": "If Hull <50% max:\nRepair 12 Hull.\nElse: Repair 6 Hull."
+      "text": "If Hull<50% max:\nRepair 12 Hull.\nElse: Repair 6 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 0,
       "lines": 3,
       "name": "Emergency Medical Team",
-      "text": "If Hull <50% max:\nRepair 24 Hull.\nElse: Repair 12 Hull."
+      "text": "If Hull<50% max:\nRepair 24 Hull.\nElse: Repair 12 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 1,
       "lines": 3,
       "name": "Emergency Medical Team+",
-      "text": "If Hull <50% max:\nRepair 15 Hull.\nElse: Repair 8 Hull."
+      "text": "If Hull<50% max:\nRepair 15 Hull.\nElse: Repair 8 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 1,
       "lines": 3,
       "name": "Emergency Medical Team+",
-      "text": "If Hull <50% max:\nRepair 30 Hull.\nElse: Repair 16 Hull."
+      "text": "If Hull<50% max:\nRepair 30 Hull.\nElse: Repair 16 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 2,
       "lines": 3,
       "name": "Emergency Medical Team++",
-      "text": "If Hull <50% max:\nRepair 18 Hull.\nElse: Repair 10 Hull."
+      "text": "If Hull<50% max:\nRepair 18 Hull.\nElse: Repair 10 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/62_emergency_medical_team.tres",
       "level": 2,
       "lines": 3,
       "name": "Emergency Medical Team++",
-      "text": "If Hull <50% max:\nRepair 36 Hull.\nElse: Repair 20 Hull."
+      "text": "If Hull<50% max:\nRepair 36 Hull.\nElse: Repair 20 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4479,7 +4479,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4491,7 +4491,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4503,7 +4503,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4515,7 +4515,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4527,7 +4527,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/63_boarding_specialists.tres",
@@ -4539,7 +4539,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4551,7 +4551,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4563,7 +4563,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4575,7 +4575,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4587,7 +4587,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4599,7 +4599,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/64_personnel_exchange.tres",
@@ -4611,79 +4611,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 0,
       "lines": 4,
       "name": "Scientific Breakthrough",
-      "text": "If enemy Reactor >yours:\nEnergy prod. +1.\nElse: +5 Energy."
+      "text": "If enemy Reactor>yours:\nEnergy prod. +1.\nElse: +5 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 0,
       "lines": 4,
       "name": "Scientific Breakthrough",
-      "text": "If enemy Reactor >yours:\nEnergy prod. +2.\nElse: +10 Energy."
+      "text": "If enemy Reactor>yours:\nEnergy prod. +2.\nElse: +10 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 1,
       "lines": 5,
       "name": "Scientific Breakthrough+",
-      "text": "If enemy Reactor >yours:\nGain 2 Materials.\nEnergy prod. +1.\nElse: +7 Energy."
+      "text": "If enemy Reactor>yours:\nGain 2 Materials.\nEnergy prod. +1.\nElse: +7 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 1,
       "lines": 5,
       "name": "Scientific Breakthrough+",
-      "text": "If enemy Reactor >yours:\nGain 4 Materials.\nEnergy prod. +2.\nElse: +14 Energy."
+      "text": "If enemy Reactor>yours:\nGain 4 Materials.\nEnergy prod. +2.\nElse: +14 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 2,
       "lines": 5,
       "name": "Scientific Breakthrough++",
-      "text": "If enemy Reactor >yours:\nGain 4 Materials.\nEnergy prod. +1.\nElse: +9 Energy."
+      "text": "If enemy Reactor>yours:\nGain 4 Materials.\nEnergy prod. +1.\nElse: +9 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/65_scientific_breakthrough.tres",
       "level": 2,
       "lines": 5,
       "name": "Scientific Breakthrough++",
-      "text": "If enemy Reactor >yours:\nGain 8 Materials.\nEnergy prod. +2.\nElse: +18 Energy."
+      "text": "If enemy Reactor>yours:\nGain 8 Materials.\nEnergy prod. +2.\nElse: +18 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4695,7 +4695,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4707,7 +4707,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4719,7 +4719,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4731,7 +4731,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4743,7 +4743,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/66_damage_control_teams.tres",
@@ -4755,79 +4755,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 0,
       "lines": 5,
       "name": "Sabotage Operation",
-      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy ≥15:\nGain 4 Materials.\nDrain 7 Energy."
+      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy≥15:\nGain 4 Materials.\nDrain 7 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 0,
       "lines": 5,
       "name": "Sabotage Operation",
-      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy ≥15:\nGain 8 Materials.\nDrain 14 Energy."
+      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy≥15:\nGain 8 Materials.\nDrain 14 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 1,
       "lines": 5,
       "name": "Sabotage Operation+",
-      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy ≥15:\nGain 5 Materials.\nDrain 9 Energy."
+      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy≥15:\nGain 5 Materials.\nDrain 9 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 1,
       "lines": 5,
       "name": "Sabotage Operation+",
-      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy ≥15:\nGain 10 Materials.\nDrain 18 Energy."
+      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy≥15:\nGain 10 Materials.\nDrain 18 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 2,
       "lines": 5,
       "name": "Sabotage Operation++",
-      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy ≥15:\nGain 6 Materials.\nDrain 11 Energy."
+      "text": "Enemy Reactor -1 (min 0). Then:\nIf enemy Energy≥15:\nGain 6 Materials.\nDrain 11 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/67_sabotage_operation.tres",
       "level": 2,
       "lines": 5,
       "name": "Sabotage Operation++",
-      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy ≥15:\nGain 12 Materials.\nDrain 22 Energy."
+      "text": "Enemy Reactor -2 (min 0). Then:\nIf enemy Energy≥15:\nGain 12 Materials.\nDrain 22 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4839,7 +4839,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4851,7 +4851,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4863,7 +4863,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4875,7 +4875,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4887,7 +4887,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/68_coordinated_assault.tres",
@@ -4899,7 +4899,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4911,7 +4911,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4923,7 +4923,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4935,7 +4935,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4947,7 +4947,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4959,7 +4959,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/69_industrial_interference.tres",
@@ -4971,7 +4971,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -4983,7 +4983,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -4995,7 +4995,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -5007,7 +5007,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -5019,7 +5019,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -5031,7 +5031,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/70_fabrication_strike.tres",
@@ -5043,7 +5043,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5055,7 +5055,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5067,7 +5067,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5079,7 +5079,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5091,7 +5091,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5103,7 +5103,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/71_reactor_interference.tres",
@@ -5115,7 +5115,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5127,7 +5127,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5139,7 +5139,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5151,7 +5151,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5163,7 +5163,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5175,7 +5175,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/72_core_destabilization.tres",
@@ -5187,7 +5187,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5199,7 +5199,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5211,7 +5211,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5223,7 +5223,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5235,7 +5235,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5247,7 +5247,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/73_personnel_disruption.tres",
@@ -5259,7 +5259,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5271,7 +5271,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5283,7 +5283,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5295,7 +5295,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5307,7 +5307,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5319,7 +5319,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/74_command_infiltration.tres",
@@ -5331,7 +5331,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5343,7 +5343,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5355,7 +5355,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5367,7 +5367,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5379,7 +5379,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5391,7 +5391,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/75_adaptive_command.tres",
@@ -5403,151 +5403,151 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 0,
       "lines": 4,
       "name": "Relentless Barrage",
-      "text": "Deal 7 damage. Then:\nIf enemy Shields =0:\nDeal 4 damage."
+      "text": "Deal 7 damage. Then:\nIf enemy Shields=0:\nDeal 4 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 0,
       "lines": 4,
       "name": "Relentless Barrage",
-      "text": "Deal 14 damage. Then:\nIf enemy Shields =0:\nDeal 8 damage."
+      "text": "Deal 14 damage. Then:\nIf enemy Shields=0:\nDeal 8 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 1,
       "lines": 4,
       "name": "Relentless Barrage+",
-      "text": "Deal 9 damage. Then:\nIf enemy Shields =0:\nDeal 5 damage."
+      "text": "Deal 9 damage. Then:\nIf enemy Shields=0:\nDeal 5 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 1,
       "lines": 4,
       "name": "Relentless Barrage+",
-      "text": "Deal 18 damage. Then:\nIf enemy Shields =0:\nDeal 10 damage."
+      "text": "Deal 18 damage. Then:\nIf enemy Shields=0:\nDeal 10 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 2,
       "lines": 4,
       "name": "Relentless Barrage++",
-      "text": "Deal 11 damage. Then:\nIf enemy Shields =0:\nDeal 6 damage."
+      "text": "Deal 11 damage. Then:\nIf enemy Shields=0:\nDeal 6 damage."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/76_relentless_barrage.tres",
       "level": 2,
       "lines": 4,
       "name": "Relentless Barrage++",
-      "text": "Deal 22 damage. Then:\nIf enemy Shields =0:\nDeal 12 damage."
+      "text": "Deal 22 damage. Then:\nIf enemy Shields=0:\nDeal 12 damage."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 0,
       "lines": 4,
       "name": "Reactive Armor",
-      "text": "Repair 3 Hull.\nGain 6 Shields. Then:\nIf Hull <50% max:\nRepair 4 Hull."
+      "text": "Repair 3 Hull.\nGain 6 Shields. Then:\nIf Hull<50% max:\nRepair 4 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 0,
       "lines": 5,
       "name": "Reactive Armor",
-      "text": "Repair 6 Hull.\nGain 12 Shields. Then:\nIf Hull <50% max:\nRepair 8 Hull."
+      "text": "Repair 6 Hull.\nGain 12 Shields. Then:\nIf Hull<50% max:\nRepair 8 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 1,
       "lines": 4,
       "name": "Reactive Armor+",
-      "text": "Repair 4 Hull.\nGain 8 Shields. Then:\nIf Hull <50% max:\nRepair 5 Hull."
+      "text": "Repair 4 Hull.\nGain 8 Shields. Then:\nIf Hull<50% max:\nRepair 5 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 1,
       "lines": 5,
       "name": "Reactive Armor+",
-      "text": "Repair 8 Hull.\nGain 16 Shields. Then:\nIf Hull <50% max:\nRepair 10 Hull."
+      "text": "Repair 8 Hull.\nGain 16 Shields. Then:\nIf Hull<50% max:\nRepair 10 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 2,
       "lines": 5,
       "name": "Reactive Armor++",
-      "text": "Repair 5 Hull.\nGain 10 Shields. Then:\nIf Hull <50% max:\nRepair 6 Hull."
+      "text": "Repair 5 Hull.\nGain 10 Shields. Then:\nIf Hull<50% max:\nRepair 6 Hull."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 95.0,
       "id": "res://cards/77_reactive_armor.tres",
       "level": 2,
       "lines": 5,
       "name": "Reactive Armor++",
-      "text": "Repair 10 Hull.\nGain 20 Shields. Then:\nIf Hull <50% max:\nRepair 12 Hull."
+      "text": "Repair 10 Hull.\nGain 20 Shields. Then:\nIf Hull<50% max:\nRepair 12 Hull."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5559,7 +5559,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5571,7 +5571,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5583,7 +5583,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5595,7 +5595,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5607,7 +5607,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/78_industrial_repurposing.tres",
@@ -5619,79 +5619,79 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 57.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 0,
       "lines": 3,
       "name": "Shield Capacitor",
-      "text": "Gain 7 Shields. Then:\nIf Shields >enemy's:\nGain 4 Energy."
+      "text": "Gain 7 Shields. Then:\nIf Shields>enemy's:\nGain 4 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 0,
       "lines": 4,
       "name": "Shield Capacitor",
-      "text": "Gain 14 Shields. Then:\nIf Shields >enemy's:\nGain 8 Energy."
+      "text": "Gain 14 Shields. Then:\nIf Shields>enemy's:\nGain 8 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 1,
       "lines": 4,
       "name": "Shield Capacitor+",
-      "text": "Gain 10 Shields. Then:\nIf Shields >enemy's:\nGain 5 Energy."
+      "text": "Gain 10 Shields. Then:\nIf Shields>enemy's:\nGain 5 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 1,
       "lines": 4,
       "name": "Shield Capacitor+",
-      "text": "Gain 20 Shields. Then:\nIf Shields >enemy's:\nGain 10 Energy."
+      "text": "Gain 20 Shields. Then:\nIf Shields>enemy's:\nGain 10 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 2,
       "lines": 4,
       "name": "Shield Capacitor++",
-      "text": "Gain 13 Shields. Then:\nIf Shields >enemy's:\nGain 6 Energy."
+      "text": "Gain 13 Shields. Then:\nIf Shields>enemy's:\nGain 6 Energy."
     },
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 76.0,
       "id": "res://cards/79_shield_capacitor.tres",
       "level": 2,
       "lines": 4,
       "name": "Shield Capacitor++",
-      "text": "Gain 26 Shields. Then:\nIf Shields >enemy's:\nGain 12 Energy."
+      "text": "Gain 26 Shields. Then:\nIf Shields>enemy's:\nGain 12 Energy."
     },
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",
@@ -5703,7 +5703,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",
@@ -5715,7 +5715,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",
@@ -5727,7 +5727,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",
@@ -5739,7 +5739,7 @@
     {
       "amplified": false,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",
@@ -5751,7 +5751,7 @@
     {
       "amplified": true,
       "art_size": "(174.0, 60.0)",
-      "effect_width": 180.0,
+      "effect_width": 178.0,
       "font": 16,
       "height": 38.0,
       "id": "res://cards/80_boarding_operations.tres",

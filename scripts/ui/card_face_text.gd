@@ -28,7 +28,7 @@ static func condition(rule: Dictionary) -> String:
 			else ("enemy's" if same else "enemy " + other.capitalize())
 		)
 	return (
-		"%s %s%s"
+		"%s%s%s"
 		% [
 			subject,
 			{"below": "<", "at_most": "≤", "equal": "=", "at_least": "≥", "above": ">"}.get(
