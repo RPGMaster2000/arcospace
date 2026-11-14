@@ -23,7 +23,7 @@ func run() -> void:
 	sample.allocation_category = "offense"
 	card.card_data = sample
 	await process_frame
-	check(card.get_node("TitleLabel").text == "TEST ATTACK", "Classic card title is visible")
+	check(card.get_node("TitleLabel").text == "Test Attack", "Title case card name is visible")
 	check(card.get_node("CostLabel").text == "6", "Classic cost label is visible")
 	check(card.get_node("DescriptionLabel").text == "Deal 9 damage.", "Original written effect remains visible")
 	check(not card.get_node("FullCardArt").visible, "Placeholder art remains when no artwork assigned")

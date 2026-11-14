@@ -1,15 +1,21 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/card_view.gd" id="1_view"]
+[ext_resource type="FontFile" path="res://assets/fonts/cards/DejaVuSans.ttf" id="BodyFont"]
+[ext_resource type="FontFile" path="res://assets/fonts/cards/DejaVuSans-Bold.ttf" id="TitleFont"]
 
-[sub_resource type="SystemFont" id="BoldFont"]
-font_names = PackedStringArray("DejaVu Sans", "Arial")
-font_weight = 700
+[sub_resource type="FontVariation" id="MediumFont"]
+base_font = ExtResource("BodyFont")
+variation_embolden = 0.55
+
+[sub_resource type="FontVariation" id="StrongFont"]
+base_font = ExtResource("TitleFont")
+variation_embolden = 0.2
 
 [sub_resource type="Theme" id="BoardTheme"]
-default_font = SubResource("BoldFont")
-Label/colors/font_color = Color(0.97, 0.89, 0.69, 1)
-Button/colors/font_color = Color(0.97, 0.89, 0.69, 1)
+default_font = SubResource("MediumFont")
+Label/colors/font_color = Color(0.92, 0.96, 1, 1)
+Button/colors/font_color = Color(0.92, 0.96, 1, 1)
 
 [sub_resource type="StyleBoxFlat" id="Normal"]
 bg_color = Color(0.08, 0.15, 0.22, 1)
@@ -17,11 +23,11 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.97, 0.89, 0.69, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_left = 5
-corner_radius_bottom_right = 5
+border_color = Color(0.92, 0.96, 1, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
 
 [sub_resource type="StyleBoxFlat" id="Hover"]
 bg_color = Color(0.12, 0.22, 0.3, 1)
@@ -29,11 +35,11 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.97, 0.83, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_left = 5
-corner_radius_bottom_right = 5
+border_color = Color(0.42, 0.85, 1, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
 
 [sub_resource type="StyleBoxFlat" id="Footer"]
 bg_color = Color(0.025, 0.04, 0.06, 0.65)
@@ -41,7 +47,7 @@ border_width_left = 0
 border_width_top = 1
 border_width_right = 0
 border_width_bottom = 0
-border_color = Color(0.97, 0.89, 0.69, 1)
+border_color = Color(0.92, 0.96, 1, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
@@ -62,10 +68,21 @@ theme_override_styles/disabled = SubResource("Normal")
 script = ExtResource("1_view")
 
 
+[node name="ThemeWash" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 194.0
+offset_bottom = 266.0
+mouse_filter = 2
+expand_mode = 1
+
 [node name="FullCardArt" type="TextureRect" parent="."]
 layout_mode = 0
-offset_right = 198.0
-offset_bottom = 294.0
+offset_left = 12.0
+offset_top = 60.0
+offset_right = 186.0
+offset_bottom = 108.0
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
@@ -73,12 +90,12 @@ visible = false
 
 [node name="ResourceIcon" type="Control" parent="."]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 10.0
-offset_right = 42.0
+offset_left = 142.0
+offset_top = 11.0
+offset_right = 170.0
 offset_bottom = 39.0
+scale = Vector2(0.46, 0.46)
 mouse_filter = 2
-
 
 [node name="Materials" type="Polygon2D" parent="ResourceIcon"]
 polygon = PackedVector2Array(0, 0, 28, 0, 28, 28, 0, 28)
@@ -97,50 +114,53 @@ color = Color(0.67, 0.85, 0.42, 1)
 
 [node name="CostLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 52.0
-offset_top = 1.0
-offset_right = 184.0
-offset_bottom = 44.0
+offset_left = 157.0
+offset_top = 2.0
+offset_right = 191.0
+offset_bottom = 32.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 35
+theme_override_fonts/font = SubResource("StrongFont")
+theme_override_font_sizes/font_size = 23
+horizontal_alignment = 2
 text = "3"
 
-
 [node name="TierLabel" type="Label" parent="."]
+z_index = 1
 layout_mode = 0
-offset_left = 132.0
-offset_top = 12.0
-offset_right = 187.0
-offset_bottom = 36.0
+offset_left = 130.0
+offset_top = 65.0
+offset_right = 182.0
+offset_bottom = 83.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.65, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 12
 horizontal_alignment = 2
 
 [node name="CostRule" type="Line2D" parent="."]
-points = PackedVector2Array(9, 44, 189, 44)
+points = PackedVector2Array(12, 56, 186, 56)
 width = 1.0
-default_color = Color(0.97, 0.89, 0.69, 1)
+default_color = Color(0.45, 0.6, 0.7, 0.3)
 antialiased = true
-
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 47.0
-offset_right = 187.0
-offset_bottom = 99.0
+offset_top = 6.0
+offset_right = 186.0
+offset_bottom = 54.0
 mouse_filter = 2
+theme_override_fonts/font = SubResource("StrongFont")
 theme_override_font_sizes/font_size = 18
-text = "SHIELD\nPLATING"
-autowrap_mode = 2
-
+theme_override_constants/line_spacing = 4
+text = "Shield
+Plating"
 
 [node name="ArtPlaceholder" type="Control" parent="."]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 101.0
+offset_top = 60.0
 offset_right = 186.0
-offset_bottom = 175.0
+offset_bottom = 108.0
 mouse_filter = 2
 
 
@@ -149,9 +169,9 @@ layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 174.0
-offset_bottom = 74.0
+offset_bottom = 48.0
 mouse_filter = 2
-color = Color(0.01, 0.03, 0.06, 0.5)
+color = Color(0.025, 0.045, 0.065, 1)
 
 
 [node name="Grid0" type="Line2D" parent="ArtPlaceholder"]
@@ -197,14 +217,15 @@ antialiased = true
 [node name="DescriptionLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 13.0
-offset_top = 180.0
+offset_top = 116.0
 offset_right = 186.0
 offset_bottom = 244.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 14
-text = "+4 Shields"
+theme_override_font_sizes/font_size = 15
+theme_override_constants/line_spacing = 0
+text = "Gain 4 Shields."
 autowrap_mode = 2
-vertical_alignment = 1
+vertical_alignment = 0
 
 
 [node name="DiscardButton" type="Button" parent="."]
