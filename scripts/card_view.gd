@@ -9,7 +9,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 signal discard_requested
 const Summary = preload("res://scripts/ui/card_face_text.gd")
 const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
-const ART_TOP := 64.0
+const ART_TOP := 68.0
 const BODY_TOP := 131.0
 const INK := Color("edf4fa")
 var family_tint := Color.WHITE
@@ -129,7 +129,7 @@ func title_text(name: String) -> String:
 					)
 					. x
 				)
-				> 126
+				> 120
 			)
 			and not first.is_empty()
 		):
@@ -164,7 +164,7 @@ func refresh_card() -> void:
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for art in [$ArtPlaceholder, $FullCardArt]:
 		art.position = Vector2(12, ART_TOP)
-		art.size = Vector2(174, 60)
+		art.size = Vector2(174, 56)
 	fit_placeholder_art()
 	if card_data == null:
 		$TitleLabel.text = "Empty slot"
@@ -221,7 +221,7 @@ func refresh_card() -> void:
 	footer.set_border_width_all(0)
 	footer.expand_margin_bottom = -3  # Paint inside the frame; retain the full input rect.
 	footer.content_margin_top = maxf(0, discard_target_height - footer_visual_height)
-	footer.content_margin_bottom = 2
+	footer.content_margin_bottom = 4
 	$DiscardButton.add_theme_stylebox_override("normal", footer)
 	$DiscardButton.add_theme_stylebox_override("disabled", footer)
 	var highlighted: StyleBoxFlat = footer.duplicate()
@@ -248,11 +248,11 @@ func set_playable(playable: bool, can_afford: int = -1) -> void:
 	# Dim the surface and ink moderately; never lose resource identity or readable rules.
 	self_modulate = Color.WHITE
 	for path in ["TitleLabel", "TierLabel", "DescriptionLabel"]:
-		get_node(path).modulate = Color.WHITE if affordable else Color(0.90, 0.90, 0.90)
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.58, 0.58, 0.58)
 	for path in ["CostLabel", "ResourceIcon", "CostRule"]:
-		get_node(path).modulate = Color.WHITE if affordable else Color(0.86, 0.86, 0.86)
-	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.65)
-	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.75, 0.75, 0.75)
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.62, 0.62, 0.62)
+	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.35)
+	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.42, 0.42, 0.42)
 	$FullCardArt.modulate = $ArtPlaceholder.modulate
 	apply_card_theme()
 

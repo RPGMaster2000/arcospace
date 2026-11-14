@@ -31,9 +31,9 @@ static func box(
 	storm_color: Color
 ) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = base.lerp(tint, 0.035 if affordable else 0.012)
+	style.bg_color = base.lerp(tint, 0.035) if affordable else base.darkened(0.28).lerp(tint, 0.008)
 	style.border_color = Color(
-		tint, 1.0 if selected else (1.0 if hovered else (0.94 if affordable else 0.78))
+		tint, 1.0 if selected else (1.0 if hovered else (0.94 if affordable else 0.45))
 	)
 	style.set_border_width_all(3 if selected else 2)
 	style.set_corner_radius_all(7)
@@ -48,6 +48,6 @@ static func box(
 		style.shadow_color = Color(tint, 0.14)
 		style.shadow_size = 3
 	else:
-		style.shadow_color = Color(tint, 0.09 if affordable else 0.06)
+		style.shadow_color = Color(tint, 0.09 if affordable else 0.03)
 		style.shadow_size = 3
 	return style
