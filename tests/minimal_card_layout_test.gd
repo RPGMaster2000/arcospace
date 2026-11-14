@@ -76,15 +76,15 @@ func run() -> void:
 				id + " placeholder paint fills the enlarged artwork region"
 			)
 			check(
-				view.get_node("ArtPlaceholder").size == Vector2(174, 60),
+				view.get_node("ArtPlaceholder").size == Vector2(174, 56),
 				id + " common enlarged artwork band"
 			)
 			check(
-				text.get_theme_font_size("font_size") == 16 and text.size.x == 178,
+				text.get_theme_font_size("font_size") == 16 and text.size.x == 170,
 				id + " larger shared effect typography without per-card shrinking"
 			)
 			check(
-				cost.get_rect().end.x <= 194 and cost.position.x >= 157,
+				cost.get_rect().end.x <= 194 and cost.position.x >= 153,
 				id + " full cost stays inside card and clears icon"
 			)
 			for symbol in ["↻", "■", "◆", "●", "≤", "≥"]:

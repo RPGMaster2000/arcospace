@@ -101,7 +101,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		var item: Dictionary = effects.shield_collapse
 		result.append(
 			(
-				"Clear enemy Shields.\nIf started ≥%d:\n%s%% risk: take %d damage\n(Shields first)."
+				"Clear enemy Shields\nIf started ≥%d:\n%s%% risk: take %d damage\n(Shields first)."
 				% [item.threshold, number(float(item.chance) * 100), item.self_damage]
 			)
 		)
@@ -116,7 +116,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		result.append(
 			(
 				(
-					"Deal %d Hull damage."
+					"Deal %d to Hull."
 					if float(effects.get("pierce", 0)) >= 1.0
 					else "Deal %d damage."
 				)
@@ -179,7 +179,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		if not result.is_empty():
 			# Keep explicit timing, without making a long condition header wrap twice.
 			result[-1] += " Then:"
-		result.append("If " + condition(rule) + ":")
+		result.append("If " + condition(rule))
 		result.append_array(rows(rule.get("then", {}), family))
 		if not rule.get("else", {}).is_empty():
 			var otherwise := rows(rule["else"], family)

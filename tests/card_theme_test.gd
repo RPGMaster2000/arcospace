@@ -162,10 +162,11 @@ func run() -> void:
 		)
 		check(
 			(
-				view.get_node("DescriptionLabel").modulate.r >= 0.8
+				view.get_node("DescriptionLabel").modulate.r >= 0.55
+				and view.get_node("DescriptionLabel").modulate.r <= 0.65
 				and view.get_node("DescriptionLabel").modulate.a == 1
 			),
-			"Unaffordable rules remain high contrast"
+			"Unaffordable rules are visibly dimmed but readable"
 		)
 		check(
 			(

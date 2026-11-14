@@ -20,7 +20,7 @@ func _initialize() -> void:
 	card.family = "materials"
 	card.effects = {"damage": 4, "pierce": 1.0, "steal": {"crew": 4}}
 	check(
-		Face.card_text(card) == "Deal 4 Hull damage.\nSteal up to 4 Crew.",
+		Face.card_text(card) == "Deal 4 to Hull.\nSteal up to 4 Crew.",
 		"Full pierce is Hull damage; theft is bounded by enemy reserve"
 	)
 	card.effects = {
@@ -37,7 +37,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "Gain 3 Energy. Then:\nIf Energy≤5:\nDeal 8 damage.\nElse: 2 damage."
+			== "Gain 3 Energy. Then:\nIf Energy≤5\nDeal 8 damage.\nElse: 2 damage."
 		),
 		"Base gain precedes threshold; branches never factored"
 	)
@@ -56,7 +56,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "If enemy Reactor>yours:\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
+			== "If enemy Reactor>yours\nGain 4 Shields.\nEnergy prod. +1.\nElse: +11 Materials."
 		),
 		"Compact else retains positive gain, production, relative target and full resource name"
 	)
@@ -75,7 +75,7 @@ func _initialize() -> void:
 	check(
 		(
 			Face.card_text(card)
-			== "If enemy Hull<50% max:\nDeal 19 Hull damage.\nElse: 11 Hull damage."
+			== "If enemy Hull<50% max\nDeal 19 to Hull.\nElse: 11 to Hull."
 		),
 		"Compact damage else retains Hull bypass and both exact values"
 	)
