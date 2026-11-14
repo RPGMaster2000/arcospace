@@ -1,5 +1,8 @@
 # Fixed-size card visual refinement
 
+For the subsequent artwork/text-space refinement, see
+[Card layout and readability](card_layout_readability.md).
+
 Base: main `0c0e51a` (PR #69). PR #70 has not merged; this independent branch
 reuses its measured shared-card foundation and supersedes its visual proposal.
 There is still one `scenes/card.tscn`, used by the hand, galleries, motion and
