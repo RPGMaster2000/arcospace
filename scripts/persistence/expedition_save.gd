@@ -73,6 +73,7 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if state.is_defense(): data.faction_id = state.faction_id
 	if state.ship() in [State.Deck.GANYMEDE, State.Deck.THUNDERBOLT] and deck.revised_starting_decks:
 		data.revised_starting_decks = true
 	if state.is_defense() and state.defense_poi_version > 0: data.defense_poi_version = state.defense_poi_version
@@ -142,7 +143,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if mode not in ["exploration", "defense"]: return null
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
-	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()])
+	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()] + preload("res://scripts/expedition/faction_catalog.gd").ships(configuration))
 	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
@@ -193,6 +194,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for field in ["seed", "state"]:
 			if not generator.get(field) is String or not generator[field].is_valid_int(): return null
 	var state = State.new()
+	if not data.get("faction_id", "") is String or data.get("faction_id", "").length() > 128: return null
+	state.faction_id = data.get("faction_id", "")
 	if not data.get("navigation") is Dictionary or not state.navigation.restore(data.navigation): return null
 	if not state.chasedown_roll_policy.restore(data.navigation): return null
 	if not _valid_navigation(data, entries): return null

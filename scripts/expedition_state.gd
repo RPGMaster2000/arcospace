@@ -128,6 +128,7 @@ const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const ChasedownRollPolicy = preload("res://scripts/expedition/chasedown_roll_policy.gd")
 const FREE_DESTINATION = -3
 var pressure: int = 0
+var faction_id: String = ""
 var system_profile: String = "industrial"
 var ftl_access: bool = false
 var navigation := Navigation.new()
@@ -355,6 +356,7 @@ func encounter_at(index: int) -> Dictionary:
 
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
+	faction_id = ""
 	run_ended = false
 	poi_effects = PoiEffects.new()
 	defense_poi_version = 0
