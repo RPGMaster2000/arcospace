@@ -1,11 +1,17 @@
 [gd_resource type="Resource" script_class="FactionProfile" format=3]
 [ext_resource type="Script" path="res://scripts/expedition/faction_profile.gd" id="1"]
 [ext_resource type="Resource" path="res://ships/enemy/hollow_choir.tres" id="s0"]
+[ext_resource type="Resource" path="res://ships/enemy/choir_spore.tres" id="choir_spore"]
+[ext_resource type="Resource" path="res://ships/enemy/choir_guardian.tres" id="choir_guardian"]
+[ext_resource type="Resource" path="res://ships/enemy/choir_leviathan.tres" id="choir_leviathan"]
+
 [resource]
 script = ExtResource("1")
 id = "hollow_choir"
 display_name = "Hollow Choir"
 description = "Regeneration and endurance."
 accent = Color(0.7058823529411765, 0.6274509803921569, 0.8745098039215686, 1)
-standard_roster = Array[Resource]([ExtResource("s0")])
+standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("choir_spore"), ExtResource("choir_guardian")])
 elite_roster = Array[Resource]([])
+mothership = ExtResource("choir_leviathan")
+mothership_minimum_system = 2

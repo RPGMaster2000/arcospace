@@ -24,6 +24,13 @@ class_name ShipData
 ## Custom models must support the ship_3d.gd animation API and Body/Shield nodes.
 @export var model_scene: PackedScene
 
+@export_group("Defense strategic role")
+@export_enum("Light", "Medium", "Heavy", "Mothership") var strategic_class: String = "Medium"
+@export_range(0.1, 2.0, 0.05) var strategic_speed_multiplier: float = 1.0
+@export_range(0.1, 3.0, 0.05) var homeworld_damage_multiplier: float = 1.0
+## Defense roster eligibility only; does not affect Exploration or combat scaling.
+@export_range(1, 99, 1) var minimum_defense_system: int = 1
+
 @export_group("Enemy expedition rewards")
 @export_enum("Standard", "Elite", "Boss") var enemy_rank: int = 0
 @export_range(0, 1000, 1) var destruction_salvage_reward: int = 10

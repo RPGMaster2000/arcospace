@@ -8,13 +8,19 @@ const DEFAULTS: Array[Resource] = [
 ]
 
 
-static func roster(profile: Resource) -> Array:
+static func roster(profile: Resource, system: int = 0) -> Array:
 	if profile == null:
 		return []
-	return profile.standard_roster.filter(
-		func(ship):
-			return ship is ShipData and ship.enemy_rank == 0 and not ship.resource_path.is_empty()
-	)
+	var result: Array = []
+	for ship in profile.standard_roster:
+		if (
+			ship is ShipData
+			and ship.enemy_rank == 0
+			and not ship.resource_path.is_empty()
+			and (system == 0 or ship.minimum_defense_system <= system)
+		):
+			result.append(ship)
+	return result
 
 
 static func eligible(rules: Resource) -> Array:
@@ -61,7 +67,9 @@ static func select(state: Resource) -> Resource:
 
 
 static func enemy(state: Resource, profile: Resource, slot: int) -> Resource:
-	var pool := roster(profile)
+	var pool := roster(profile, state.system_number)
+	if pool.is_empty():
+		pool = roster(profile)  # Custom gated-only rosters must remain playable.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(
 		"%d:%d:%s:%d:faction-enemy:v1" % [state.seed_used, state.system_number, profile.id, slot]

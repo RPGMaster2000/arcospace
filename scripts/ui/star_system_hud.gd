@@ -2,6 +2,7 @@ extends Control
 # Shared edge HUD layout and introduction typography. Reuses the screen's actual controls.
 signal settled
 signal geometry_changed
+signal system_details_requested
 
 enum Mode { HIDDEN, OVERVIEW, FOCUS }
 var mode: Mode = Mode.HIDDEN
@@ -17,6 +18,11 @@ var resources: HBoxContainer
 var status: VBoxContainer
 var utilities: HBoxContainer
 var metagame: Label
+var defense_mode := false
+var pressure_bar: ProgressBar
+var pressure_fill: StyleBoxFlat
+var details_button: Button
+var turret_count: Label
 var hull_bar: ProgressBar
 var identifier: Label
 var title: Label
@@ -76,6 +82,30 @@ func _ready() -> void:
 	metagame.add_theme_font_size_override("font_size", 14)
 	metagame.mouse_filter = MOUSE_FILTER_IGNORE
 	status.add_child(metagame)
+	pressure_bar = ProgressBar.new()
+	pressure_bar.name = "StrategicPressure"
+	pressure_bar.custom_minimum_size = Vector2(210,6)
+	pressure_bar.show_percentage = false
+	pressure_bar.mouse_filter = MOUSE_FILTER_IGNORE
+	var pressure_track := StyleBoxFlat.new()
+	pressure_track.bg_color = Color("263d4f")
+	pressure_track.set_corner_radius_all(2)
+	pressure_bar.add_theme_stylebox_override("background",pressure_track)
+	pressure_fill = StyleBoxFlat.new()
+	pressure_bar.add_theme_stylebox_override("fill",pressure_fill)
+	status.add_child(pressure_bar)
+	details_button = Button.new()
+	preload("res://scripts/ui/encounter_presentation.gd").action(details_button)
+	details_button.text = "System Details"
+	details_button.custom_minimum_size.y = 44
+	details_button.add_theme_font_size_override("font_size",18)
+	details_button.pressed.connect(system_details_requested.emit)
+	status.add_child(details_button)
+	turret_count = Label.new()
+	turret_count.add_theme_font_size_override("font_size",14)
+	turret_count.mouse_filter = MOUSE_FILTER_IGNORE
+	status.add_child(turret_count)
+	for node in [pressure_bar,details_button,turret_count]: node.hide()
 	hull_bar = ProgressBar.new()
 	hull_bar.custom_minimum_size.y = 4
 	hull_bar.show_percentage = false
@@ -143,6 +173,7 @@ func set_mode(next: Mode) -> void:
 	if mode == next: return
 	var was_active := active
 	mode = next
+	_sync_strategic_controls()
 	if active and not was_active:
 		_mount_controls()
 	elif not active and was_active:
@@ -354,6 +385,25 @@ func _release_zoom() -> void:
 
 # Read-only facts from the expedition screen; no gameplay state is stored here.
 func set_metagame(profile: String, pressure: int, access: String) -> void:
+	defense_mode = false
+	_sync_strategic_controls()
 	metagame.text = "%s · PRESSURE %d / 12\n%s" % [profile, pressure, access]
 	metagame.add_theme_color_override("font_color", Color("ff8e9b") if pressure >= 7 else (Color("e3bb6b") if pressure >= 4 else Color("9ad8e5")))
 	queue_layout()
+
+# Presentation only: use the same pressure denominator as the strategic simulation.
+func set_defense_status(state: Resource) -> void:
+	defense_mode = true
+	var ratio := clampf(state.defense.pressure / maxf(1.0,state.defense.tuning.pressure_maximum),0,1)
+	metagame.text = "PRESSURE %d / %d" % [int(state.defense.pressure),int(state.defense.tuning.pressure_maximum)]
+	if state.defense.mothership_advancing: metagame.text += "\nMOTHERSHIP ADVANCING"
+	pressure_bar.value = ratio*100
+	pressure_fill.bg_color = Color("77e596") if ratio < 0.5 else (Color("ffaf58") if ratio < 0.8 else Color("ff646e"))
+	pressure_bar.tooltip_text = "Pressure %.1f / %.1f" % [state.defense.pressure,state.defense.tuning.pressure_maximum]
+	turret_count.text = "Turrets: %d%s" % [state.defense.turrets.size(), " · Travel +50%" if state.poi_effects.fuel > 0 else ""]
+	_sync_strategic_controls()
+	queue_layout()
+
+func _sync_strategic_controls() -> void:
+	for node in [pressure_bar,details_button,turret_count]:
+		if is_instance_valid(node): node.visible = defense_mode and mode == Mode.OVERVIEW

@@ -9,5 +9,6 @@ class_name FactionProfile
 @export var standard_roster: Array[Resource] = []
 @export var elite_roster: Array[Resource] = []
 @export var mothership: Resource
+@export_range(1, 99, 1) var mothership_minimum_system: int = 1
 ## Optional path-keyed overrides; otherwise use each ship's existing encounter weight.
 @export var enemy_weights: Dictionary = {}

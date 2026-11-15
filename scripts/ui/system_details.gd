@@ -1,0 +1,148 @@
+extends RefCounted
+## Read-only presentation from authoritative encounter/Defense ledgers. No retained state.
+const Factions = preload("res://scripts/expedition/faction_catalog.gd")
+const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
+const Modifiers = preload("res://scripts/combat_modifier.gd")
+
+
+static func active_enemies(state: Resource) -> Array:
+	var result: Array = []
+	var faction: Resource = Factions.find(state.rules, state.faction_id)
+	for unit in state.defense.units:
+		if not state.defense.available(unit) or state.encounters[unit.encounter].completed:
+			continue
+		var profile: Resource = state.enemy_profile(state.encounters[unit.encounter])
+		result.append(
+			{
+				"index": unit.encounter,
+				"name": profile.ship_name,
+				"faction": faction.display_name if faction != null else "Unassigned",
+				"class": "Mothership" if unit.mothership else profile.strategic_class,
+				"status":
+				(
+					"Advancing"
+					if unit.mothership and state.defense.mothership_advancing
+					else "Deployed"
+				),
+				"speed": state.defense._speed(unit),
+				"relative_speed":
+				state.defense._speed(unit) / maxf(0.001, state.defense.tuning.enemy_speed),
+				"arrival_damage": state.defense.arrival_damage(unit),
+				"mothership": unit.mothership
+			}
+		)
+	return result
+
+
+static func text(state: Resource) -> String:
+	var faction: Resource = Factions.find(state.rules, state.faction_id)
+	var enemies := active_enemies(state)
+	var rows: Array[String] = [
+		"[b]SYSTEM DETAILS — STARFRONT %d[/b]" % state.system_number,
+		"Faction: %s" % [faction.display_name if faction != null else "Unassigned (legacy system)"],
+		"",
+		"[b]ACTIVE ENEMY FORCES · %d[/b]" % enemies.size()
+	]
+	if enemies.is_empty():
+		rows.append("No deployed enemy vessels.")
+	for enemy in enemies:
+		rows.append("[b]%s[/b] · %s · %s" % [enemy.name, enemy["class"], enemy.status])
+		var movement := (
+			"Stationary"
+			if enemy.speed == 0
+			else "%.0f%% standard speed" % (enemy.relative_speed * 100)
+		)
+		var arrival := (
+			"Expedition-ending arrival"
+			if enemy.mothership
+			else "%d homeworld damage" % enemy.arrival_damage
+		)
+		rows.append("%s · %s · %s" % [enemy.faction, movement, arrival])
+	rows.append_array(["", "[b]BATTLE MODIFIERS — TEMPORARY[/b]"])
+	var temporary: Array[String] = []
+	for bonuses in [state.pending_bonuses, state.pending_penalties]:
+		var description: String = state.describe_modifiers(bonuses)
+		if not description.is_empty():
+			temporary.append("Next battle: " + description)
+	var effects: String = state.poi_effects.summary()
+	for category in state.PRODUCTION:
+		effects = effects.replace(category + " production", state.LABELS[category] + " production")
+	if not effects.is_empty():
+		temporary.append(effects)
+	if (
+		not state.poi_effects.mothership.is_empty()
+		or state.poi_effects.pause > 0
+		or state.poi_effects.reduction > 0
+		or state.poi_effects.extraction_source >= 0
+	):
+		temporary.append("Research, Pressure and extraction effects expire on system departure.")
+	for enemy in enemies:
+		# Location preview only. Never assign or replace the frozen battle-entry snapshot.
+		var environment: Dictionary = state.battle_environment(enemy.index)
+		var modifier: int = EnvironmentData.modifier_id(environment)
+		if not environment.get("friendly_support", {}).is_empty():
+			var support: Dictionary = environment.friendly_support
+			temporary.append(
+				(
+					"%s: Kinetic Turret support — %d damage every %d rounds"
+					% [enemy.name, support.damage, support.interval]
+				)
+			)
+		if modifier != 0:
+			temporary.append(
+				(
+					"%s: %s — at current location; fixed on battle entry"
+					% [enemy.name, Modifiers.NAMES[modifier]]
+				)
+			)
+	rows.append("\n".join(temporary) if not temporary.is_empty() else "None")
+	rows.append_array(["", "[b]PERSISTENT — ACQUIRED UPGRADES[/b]"])
+	var upgrades: Array[String] = []
+	for category in state.PRODUCTION:
+		var amount: int = state.production_upgrades.get(category, 0)
+		if amount > 0:
+			upgrades.append("%s +%d" % [state.LABELS[category], amount])
+	var card_upgrades: Dictionary = state.upgraded_cards
+	for card in state.player_pool():
+		var level: int = card_upgrades.get(card.identity_key(), 0)
+		if level > 0:
+			upgrades.append("%s · upgrade %d" % [card.card_name, level])
+	rows.append(
+		(
+			"\n".join(upgrades)
+			if not upgrades.is_empty()
+			else "None (ship baseline production excluded)"
+		)
+	)
+	var boss := (
+		"Neutralized — system secured"
+		if state.defense.complete
+		else (
+			"Advancing"
+			if state.defense.mothership_advancing
+			else ("Revealed" if state.defense.revealed else "Unrevealed")
+		)
+	)
+	rows.append_array(
+		[
+			"",
+			"[b]DEFENSE[/b]",
+			(
+				"Homeworld: %d/%d · Turrets deployed: %d"
+				% [
+					state.defense.integrity,
+					state.defense.tuning.base_integrity,
+					state.defense.turrets.size()
+				]
+			),
+			(
+				"Pressure: %.0f%% · Mothership: %s"
+				% [
+					100 * state.defense.pressure / maxf(1, state.defense.tuning.pressure_maximum),
+					boss
+				]
+			),
+			"Missiles in flight: %d" % state.defense.missiles.active.size()
+		]
+	)
+	return "\n".join(rows)

@@ -3,11 +3,17 @@
 [ext_resource type="Resource" path="res://ships/enemy/marauder.tres" id="s0"]
 [ext_resource type="Resource" path="res://ships/enemy/rustjack.tres" id="s1"]
 [ext_resource type="Resource" path="res://ships/enemy/marauder_vanguard.tres" id="s2"]
+[ext_resource type="Resource" path="res://ships/enemy/scrap_skiff.tres" id="scrap_skiff"]
+[ext_resource type="Resource" path="res://ships/enemy/wreckbreaker.tres" id="wreckbreaker"]
+[ext_resource type="Resource" path="res://ships/enemy/clan_war_barge.tres" id="clan_war_barge"]
+
 [resource]
 script = ExtResource("1")
 id = "scavenger_clans"
 display_name = "Scavenger Clans"
 description = "Raiding, theft and aggressive attacks."
 accent = Color(1.0, 0.5333333333333333, 0.43137254901960786, 1)
-standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("s1")])
+standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("s1"), ExtResource("scrap_skiff"), ExtResource("wreckbreaker")])
 elite_roster = Array[Resource]([ExtResource("s2")])
+mothership = ExtResource("clan_war_barge")
+mothership_minimum_system = 2
