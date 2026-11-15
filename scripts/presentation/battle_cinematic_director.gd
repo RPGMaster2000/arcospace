@@ -31,6 +31,8 @@ var _skip_layer: CanvasLayer
 var skip_button: Button
 var _boost_body: Node3D
 var _body_rest := Vector3.ZERO
+var _boost_shield: Node3D
+var _shield_rest := Vector3.ZERO
 var _engine_rest := false
 var _focus_rest: WeakRef
 var _transition: CanvasLayer
@@ -313,6 +315,8 @@ func departure(transition: CanvasLayer) -> bool:
 	_transition = transition
 	_boost_body = player.get_node("Body")
 	_body_rest = _boost_body.position
+	_boost_shield = player.get_node("Shield")
+	_shield_rest = _boost_shield.position
 	_engine_rest = player.engine_boost
 	if allowed():
 		_stage("victory_orbit")
@@ -357,6 +361,9 @@ func departure(transition: CanvasLayer) -> bool:
 				func(p: float):
 					_boost_body.position = (
 						_body_rest + Vector3.RIGHT * settings.boost_distance * p * p
+					)
+					_boost_shield.position = (
+						_shield_rest + Vector3.RIGHT * settings.boost_distance * p * p
 					)
 					var pose := rest
 					pose.origin += forward * settings.boost_distance * p * .08
@@ -407,6 +414,9 @@ func _finish() -> void:
 	if is_instance_valid(_boost_body):
 		_boost_body.position = _body_rest
 		player.engine_boost = _engine_rest
+	if is_instance_valid(_boost_shield):
+		_boost_shield.position = _shield_rest
+	_boost_shield = null
 	_boost_body = null
 	for node in _ui:
 		if is_instance_valid(node):

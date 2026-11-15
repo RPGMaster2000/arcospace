@@ -13,7 +13,7 @@ class_name BattleCinematicSettings
 @export var attacker_offset: Vector3 = Vector3(3, 1, 3)
 @export var victim_offset: Vector3 = Vector3(-2, 1, 3)
 @export var orbit_seconds: float = 2.25
-@export var orbit_degrees: float = 70
+@export var orbit_degrees: float = -55
 @export var orbit_offset: Vector3 = Vector3(-3, 1.2, 3)
 @export var boost_seconds: float = .85
 @export var boost_distance: float = 18
