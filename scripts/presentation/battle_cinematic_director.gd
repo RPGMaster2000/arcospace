@@ -158,6 +158,8 @@ func mask_ui() -> void:
 func _set_camera(pose: Transform3D, fov: float) -> void:
 	camera.global_transform = pose
 	camera.fov = fov
+	if backdrop.get_meta("infinite_panorama", false):
+		return
 	# Reorient the existing panorama quad; preserve its material/environment.
 	var depth := 100.0
 	var mesh_size: Vector3 = backdrop.mesh.get_aabb().size
@@ -186,7 +188,7 @@ func _move(
 			func(p: float): _set_camera(from.interpolate_with(to, p), lerpf(from_fov, to_fov, p)),
 			0.0,
 			1.0,
-			maxf(.001, seconds)
+			settings.duration(seconds)
 		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
@@ -266,7 +268,7 @@ func introduction() -> void:
 				),
 			0.0,
 			1.0,
-			maxf(.001, settings.introduction_seconds.z)
+			settings.duration(settings.introduction_seconds.z)
 		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
@@ -338,7 +340,7 @@ func departure(transition: CanvasLayer) -> bool:
 						),
 					0.0,
 					1.0,
-					maxf(.001, settings.orbit_seconds)
+					settings.duration(settings.orbit_seconds)
 				)
 				. set_trans(Tween.TRANS_SINE)
 				. set_ease(Tween.EASE_IN_OUT)
@@ -370,7 +372,7 @@ func departure(transition: CanvasLayer) -> bool:
 					_set_camera(pose, settings.cinematic_fov + p * 3),
 				0.0,
 				1.0,
-				maxf(.001, settings.boost_seconds)
+				settings.duration(settings.boost_seconds)
 			)
 			duration = maxf(settings.fade_seconds, settings.boost_seconds)
 	_stage("fade_to_black")
@@ -378,7 +380,7 @@ func departure(transition: CanvasLayer) -> bool:
 		return false
 	if skipped:
 		duration = settings.fade_seconds
-	await transition.fade(1.0, duration)
+	await transition.fade(1.0, settings.duration(duration))
 	var covered: bool = token == revision and transition.curtain.color.a >= .999
 	_transition = null
 	if token == revision:

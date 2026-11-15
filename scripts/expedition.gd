@@ -1682,7 +1682,7 @@ func _depart_victory() -> void:
 	if not covered:
 		battle_return_transition.block()
 		battle_return_transition.curtain.color.a = 1.0
-	var fade_seconds: float = source.cinematic_settings.fade_seconds
+	var fade_seconds: float = source.cinematic_settings.duration(source.cinematic_settings.fade_seconds)
 	battle_session.release_return(self)
 	battle_session.return_in_progress = true
 	phase = Phase.OVERVIEW

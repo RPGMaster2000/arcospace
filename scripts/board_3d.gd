@@ -52,6 +52,9 @@ func _destroy_ships() -> void:
 	destruction_pending = true
 	_ensure_destruction_camera()
 	var animation := create_tween()
+	# Only terminal destruction presentation follows the cinematic playback speed.
+	if cinematic_director.active and cinematic_director.kind == "destruction":
+		animation.set_speed_scale(maxf(0.1, cinematic_settings.playback_speed))
 	for pair in [["PlayerShip", player_hull], ["EnemyShip", enemy_hull]]:
 		if pair[1] <= 0:
 			$BattleView/Viewport/Battlefield.get_node(pair[0]).animate_destruction(animation)
@@ -159,7 +162,9 @@ func _fit_backdrop() -> void:
 	# The flat starfield must cover the extra camera view as well as the viewport.
 	var height_scale: float = maxf(1.0, (size.y - 325.0) / 395.0)
 	var fitted_fov := rad_to_deg(2.0 * atan(tan(deg_to_rad(baseline_fov) * 0.5) * height_scale))
-	var fitted_scale := backdrop_scale * maxf(height_scale, size.x / 1280.0)
+	var fitted_scale := backdrop_scale
+	if not backdrop.get_meta("infinite_panorama", false):
+		fitted_scale *= maxf(height_scale, size.x / 1280.0)
 	if is_instance_valid(cinematic_director) and cinematic_director.active:
 		cinematic_director.default_fov = fitted_fov
 		cinematic_director.default_backdrop_scale = fitted_scale
