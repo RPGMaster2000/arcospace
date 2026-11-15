@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FactionProfile" format=3]
+[ext_resource type="Script" path="res://scripts/expedition/faction_profile.gd" id="1"]
+[ext_resource type="Resource" path="res://ships/enemy/hollow_choir.tres" id="s0"]
+[resource]
+script = ExtResource("1")
+id = "hollow_choir"
+display_name = "Hollow Choir"
+description = "Regeneration and endurance."
+accent = Color(0.7058823529411765, 0.6274509803921569, 0.8745098039215686, 1)
+standard_roster = Array[Resource]([ExtResource("s0")])
+elite_roster = Array[Resource]([])

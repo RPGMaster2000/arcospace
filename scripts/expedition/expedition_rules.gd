@@ -6,6 +6,7 @@ class_name ExpeditionRules
 @export var defense_tuning: Resource = preload("res://resources/starfront_defense_tuning.tres")
 @export_range(1.0, 1.5, 0.01) var system_expansion: float = 1.20
 @export var defense_v2: bool = true
+@export var factions: Array[Resource] = preload("res://scripts/expedition/faction_catalog.gd").DEFAULTS.duplicate()
 @export_range(0.1, 1.0, 0.05) var planet_orbit_clearance: float = 0.35
 
 # RESPONSIBILITY: Store Inspector-editable encounter, service, reward and deck configuration.

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FactionProfile" format=3]
+[ext_resource type="Script" path="res://scripts/expedition/faction_profile.gd" id="1"]
+[ext_resource type="Resource" path="res://ships/enemy/axiom_7.tres" id="s0"]
+[resource]
+script = ExtResource("1")
+id = "axiom_collective"
+display_name = "AXIOM Collective"
+description = "Precision attacks and energy disruption."
+accent = Color(0.47058823529411764, 0.8941176470588236, 0.9372549019607843, 1)
+standard_roster = Array[Resource]([ExtResource("s0")])
+elite_roster = Array[Resource]([])

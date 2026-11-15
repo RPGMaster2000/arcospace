@@ -272,6 +272,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 		_show_star_map(false)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
 		screen.set_system_name(star_map.visual_data.name)
+		screen.set_faction(_faction_profile())
 	if not preserve_transition:
 		phase = {"system": Phase.OVERVIEW, "chasedown": Phase.CHASEDOWN,
 			"poi": Phase.DESTINATION, "preview": Phase.DESTINATION}.get(kind, Phase.REWARD)
@@ -577,6 +578,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	)
 	if _uses_3d_map():
 		screen.set_system_name(star_map.visual_data.name)
+		screen.set_faction(_faction_profile())
 	if _uses_3d_map():
 		screen.overview_hud.attach_zoom(star_map)
 		screen._sync_map_rect()
@@ -615,6 +617,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
 	if state.is_defense():
 		screen.set_system_name(star_map.visual_data.name)
+		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
 		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
 	var destination: int = state.travel_destination
@@ -1392,6 +1395,7 @@ func _reveal_mothership() -> void:
 	if _presentation_current(revision, owner):
 		phase = Phase.OVERVIEW
 		screen.set_system_name(star_map.visual_data.name)
+		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
 
 func _turret_options(site: String) -> Dictionary:
@@ -1621,3 +1625,8 @@ func _dismiss_inspection() -> void:
 	map_destination = -1
 	phase = Phase.OVERVIEW
 	show_system()
+
+
+func _faction_profile() -> Resource:
+	if not state.is_defense() or state.faction_id.is_empty(): return null
+	return preload("res://scripts/expedition/faction_catalog.gd").find(state.rules, state.faction_id)

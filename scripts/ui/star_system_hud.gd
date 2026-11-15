@@ -32,6 +32,7 @@ var motion: Tween
 var revision := 0
 var _layout_queued := false
 var system_name := ""
+var faction_label: Label
 var system_number := 1
 
 func _ready() -> void:
@@ -53,7 +54,16 @@ func _ready() -> void:
 	economy = HBoxContainer.new()
 	economy.add_theme_constant_override("separation",4)
 	panels[0].add_child(economy)
-	economy.add_child(identifier)
+	var names := VBoxContainer.new()
+	names.add_theme_constant_override("separation",0)
+	economy.add_child(names)
+	names.add_child(identifier)
+	faction_label = Label.new()
+	faction_label.name = "ControllingFaction"
+	faction_label.add_theme_font_size_override("font_size",14)
+	faction_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	faction_label.hide()
+	names.add_child(faction_label)
 	resources = HBoxContainer.new()
 	resources.add_theme_constant_override("separation",2)
 	economy.add_child(resources)

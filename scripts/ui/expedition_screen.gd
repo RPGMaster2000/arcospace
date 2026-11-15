@@ -798,3 +798,10 @@ func set_defense_status(state: Resource) -> void:
 	if state.poi_effects.fuel > 0:
 		overview_hud.metagame.text += "\nPROPULSION +50%% · %.1f units" % state.poi_effects.fuel
 	overview_hud.metagame.add_theme_color_override("font_color", Color("ff9b82") if state.defense.mothership_advancing else Color("ddfaff"))
+
+
+func set_faction(profile: Resource) -> void:
+	overview_hud.faction_label.text = profile.display_name if profile != null else ""
+	overview_hud.faction_label.visible = profile != null
+	if profile != null: overview_hud.faction_label.modulate = profile.accent
+	overview_hud.queue_layout()
