@@ -161,6 +161,7 @@ func _ready() -> void:
 			phase = homeworld_previous_phase
 			state.navigation.rebase_movement(state.navigation.position))
 	_build_ui()
+	screen.overview_hud.system_details_requested.connect(_show_system_details)
 	_setup_decoy_controls()
 	card_management = CardManagement.new()
 	add_child(card_management)
@@ -389,6 +390,7 @@ func _bind_progress() -> void:
 
 
 func _progress_committed() -> void:
+	if state.is_defense(): _refresh_defense_hud()
 	if is_instance_valid(battle) and battle.result_recorded:
 		battle.settings_button.menu.battle_restart_notice = false
 	if persistence_enabled and not _save_progress():
@@ -428,6 +430,9 @@ func _notification(what: int) -> void:
 		_cancel_presentation()
 		phase = Phase.OVERVIEW
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		if screen.system_details_overlay.shade.visible:
+			screen.system_details_overlay.dismiss()
+			return
 		if not decoy_camera.is_empty() or decoy_confirmation.shade.visible:
 			_cancel_decoy()
 			return
@@ -521,6 +526,7 @@ func _map_input_allowed(block_construction: bool = true) -> bool:
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
 		and not settings_button.menu.shade.visible
+		and not screen.system_details_overlay.shade.visible
 	)
 
 
@@ -1630,3 +1636,7 @@ func _dismiss_inspection() -> void:
 func _faction_profile() -> Resource:
 	if not state.is_defense() or state.faction_id.is_empty(): return null
 	return preload("res://scripts/expedition/faction_catalog.gd").find(state.rules, state.faction_id)
+
+func _show_system_details() -> void:
+	if state == null or not state.is_defense() or phase not in [Phase.OVERVIEW,Phase.TRAVELING] or not _map_input_allowed(): return
+	screen.present_system_details(state)

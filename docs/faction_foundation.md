@@ -6,18 +6,18 @@
 
 | Stable ID | Standard roster | Elite roster | Configured mothership |
 | --- | --- | --- | --- |
-| `scavenger_clans` | Marauder, Rustjack | Marauder Vanguard | Fallback |
-| `iron_directorate` | Sentinel, Reclaimer | — | Sentinel Dreadnought |
-| `axiom_collective` | AXIOM-7 | — | Fallback |
-| `hollow_choir` | The Hollow Choir | — | Fallback |
+| `scavenger_clans` | Marauder, Rustjack; Scrap Skiff (2+), Wreckbreaker (3+) | Marauder Vanguard | Clan War Barge (2+) |
+| `iron_directorate` | Sentinel, Reclaimer; Bastion Frigate (2+), Siege Monitor (3+) | — | Sentinel Dreadnought |
+| `axiom_collective` | AXIOM-7; AXIOM Scout (2+), AXIOM Enforcer (3+) | — | AXIOM Command Nexus (2+) |
+| `hollow_choir` | The Hollow Choir; Choir Spore (2+), Choir Guardian (3+) | — | Choir Leviathan (2+) |
 
-All entries reference existing ShipData Resources. Statistics, decks, rewards, AI and scaling are unchanged. Defense previously filtered ordinary attackers to rank 0; this policy remains intact. Elite references are a data extension point, **not a new elite spawn chance**. Limited rosters may repeat the same existing ship.
+All entries reference ShipData Resources. Original profiles remain unchanged. The Phase 2 additions, strategic roles and HUD are documented in [faction_expansion.md](faction_expansion.md). Defense previously filtered ordinary attackers to rank 0; this policy remains intact. Elite references are a data extension point, **not a new elite spawn chance**. Limited rosters may repeat the same existing ship.
 
 ## Generation
 
 `faction_catalog.gd` validates definitions and provides selection. Every faction is eligible from system 1; selection uses `selection_weight` and excludes the previous faction whenever alternatives exist. A single eligible faction can repeat. Missing/invalid definitions, empty rosters and invalid weights fall back to the four built-in profiles. Duplicate stable IDs use the first valid definition.
 
-`system_generator.gd::_generate_defense()` selects one profile before creating the starting fleet and reserve encounters. All ordinary and reserve ships use its standard roster, weighted by existing `encounter_weight` unless a path-keyed `enemy_weights` override is supplied. Mothership selection uses a valid configured rank-2 profile, otherwise the existing `expedition_progression.gd::mandatory_boss_profile()` fallback. No unrestricted neutral/cross-faction mixing is added.
+`system_generator.gd::_generate_defense()` selects one profile before creating the starting fleet and reserve encounters. All ordinary and reserve ships use its standard roster filtered by `minimum_defense_system`, weighted by existing `encounter_weight` unless a path-keyed `enemy_weights` override is supplied. Mothership selection uses a valid configured rank-2 profile once its `mothership_minimum_system` is reached, otherwise the existing `expedition_progression.gd::mandatory_boss_profile()` fallback. No unrestricted neutral/cross-faction mixing is added.
 
 ```mermaid
 flowchart LR

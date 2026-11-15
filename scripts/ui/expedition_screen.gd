@@ -24,6 +24,7 @@ signal jump_requested
 
 const EdgeHUD = preload("res://scripts/ui/star_system_hud.gd")
 var overview_hud: Control
+var system_details_overlay: CanvasLayer
 var focus_layout_size := Vector2(-1,-1)
 var _focus_safe_insets := Vector4(-1,-1,-1,-1)
 var _layout_queued := false
@@ -63,6 +64,9 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_ui()
+	system_details_overlay = preload("res://scripts/ui/info_overlay.gd").new()
+	add_child(system_details_overlay)
+	for key in ["normal_font_size","bold_font_size"]: system_details_overlay.body.add_theme_font_size_override(key,18)
 	resized.connect(_request_layout)
 	body.item_rect_changed.connect(_request_layout)
 	sidebar.item_rect_changed.connect(_request_layout)
@@ -788,16 +792,15 @@ func present_rewards(state: Resource, visual_settings: Resource, map_3d: bool,
 
 
 func set_defense_status(state: Resource) -> void:
-	var threats: int = 0
-	for unit in state.defense.units:
-		if state.defense.available(unit): threats += 1
-	threats += state.defense.missiles.active.size()
-	overview_hud.metagame.text = "HOME %d/%d · %d THREATS\nPRESSURE %d / %d\n%s" % [
-		state.defense.integrity, state.defense.tuning.base_integrity, threats,
-		int(state.defense.pressure), int(state.defense.tuning.pressure_maximum), state.ftl_status()]
-	if state.poi_effects.fuel > 0:
-		overview_hud.metagame.text += "\nPROPULSION +50%% · %.1f units" % state.poi_effects.fuel
-	overview_hud.metagame.add_theme_color_override("font_color", Color("ff9b82") if state.defense.mothership_advancing else Color("ddfaff"))
+	overview_hud.set_defense_status(state)
+	if system_details_overlay.shade.visible:
+		system_details_overlay.body.text = preload("res://scripts/ui/system_details.gd").text(state)
+
+func present_system_details(state: Resource) -> void:
+	system_details_overlay.show_text(preload("res://scripts/ui/system_details.gd").text(state))
+	system_details_overlay.desired_height = 560
+	system_details_overlay.body.get_parent().scroll_vertical = 0
+	system_details_overlay._fit()
 
 
 func set_faction(profile: Resource) -> void:
