@@ -5,6 +5,11 @@ extends "res://scripts/board.gd"
 # DOES NOT: Redefine card rules, input or turn handling; these are inherited from board.gd.
 var destruction_started: bool = false
 var destruction_pending: bool = false
+@export var cinematic_settings: Resource = preload("res://resources/presentation/battle_cinematics.tres")
+var cinematic_director: Node
+var _beam_side := ""
+var _camera_attack: Dictionary = {}
+
 
 
 func refresh_display() -> void:
@@ -16,7 +21,11 @@ func refresh_display() -> void:
 		destruction_started = true
 		if battle_effects.enabled:
 			_destroy_ships()
+		elif not _presentation_locked():
+			var victim = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
+			cinematic_director.attack(null,victim,true,false)
 	super.refresh_display()
+	if is_instance_valid(cinematic_director): cinematic_director.mask_ui()
 	$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(
 		mini(player_hull, player_hull_capacity)
@@ -34,18 +43,21 @@ func refresh_display() -> void:
 
 func _display_snapshot() -> Dictionary:
 	var data: Dictionary = super._display_snapshot()
-	data.effects_busy = data.effects_busy or destruction_pending
+	data.effects_busy = data.effects_busy or destruction_pending or _presentation_locked()
+	data.resolving_card = data.resolving_card or _presentation_locked()
 	return data
 
 
 func _destroy_ships() -> void:
 	destruction_pending = true
+	_ensure_destruction_camera()
 	var animation := create_tween()
 	for pair in [["PlayerShip", player_hull], ["EnemyShip", enemy_hull]]:
 		if pair[1] <= 0:
 			$BattleView/Viewport/Battlefield.get_node(pair[0]).animate_destruction(animation)
 	await animation.finished
 	destruction_pending = false
+	if is_instance_valid(cinematic_director): cinematic_director.release_destruction()
 	refresh_display()
 
 
@@ -125,6 +137,14 @@ func _ready() -> void:
 	backdrop_scale = backdrop.scale
 	resized.connect(_fit_backdrop)
 	_fit_backdrop()
+	cinematic_director = preload("res://scripts/presentation/battle_cinematic_director.gd").new()
+	cinematic_director.settings = cinematic_settings
+	add_child(cinematic_director)
+	cinematic_director.configure(self,camera,backdrop,$BattleView)
+	battle_effects.weapon_presented.connect(func(side, weapon):
+		if weapon == "beam": _beam_side = side)
+	cinematic_director.settled.connect(func():
+		if is_inside_tree() and hud != null and not cinematic_director.exiting: refresh_display())
 	engine_light = get_node_or_null("BattleView/Viewport/Battlefield/PlayerShip/Body/OmniLight3D")
 	if engine_light:
 		engine_base_energy = engine_light.light_energy
@@ -138,8 +158,14 @@ func _ready() -> void:
 func _fit_backdrop() -> void:
 	# The flat starfield must cover the extra camera view as well as the viewport.
 	var height_scale: float = maxf(1.0, (size.y - 325.0) / 395.0)
-	battle_camera.fov = rad_to_deg(2.0 * atan(tan(deg_to_rad(baseline_fov) * 0.5) * height_scale))
-	backdrop.scale = backdrop_scale * maxf(height_scale, size.x / 1280.0)
+	var fitted_fov := rad_to_deg(2.0 * atan(tan(deg_to_rad(baseline_fov) * 0.5) * height_scale))
+	var fitted_scale := backdrop_scale * maxf(height_scale, size.x / 1280.0)
+	if is_instance_valid(cinematic_director) and cinematic_director.active:
+		cinematic_director.default_fov = fitted_fov
+		cinematic_director.default_backdrop_scale = fitted_scale
+	else:
+		battle_camera.fov = fitted_fov
+		backdrop.scale = fitted_scale
 	_fit_ftl()
 
 
@@ -167,3 +193,43 @@ func _fit_ftl() -> void:
 	# Shared HUD placement follows the Hull bar, independently of camera/idle motion.
 	_fit_allocation_button()
 	_fit_jump_button()
+
+func _begin_battle_presentation() -> void:
+	await cinematic_director.introduction()
+	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit and not cinematic_director.exiting:
+		_begin_turn("player")
+
+func _presentation_locked() -> bool:
+	return is_instance_valid(cinematic_director) and cinematic_director.active
+
+func _card_resolution_presented(side: String, damage: int, discard: bool) -> void:
+	_camera_attack = {"actor":side,"damage":damage,"beam":not discard and _beam_side == side,"presented":false}
+	_beam_side = ""
+	_try_attack_camera()
+
+func _committed_damage_presented() -> void:
+	_try_attack_camera()
+
+func _try_attack_camera() -> void:
+	if not is_instance_valid(cinematic_director) or cinematic_director.exiting: return
+	if _camera_attack.is_empty() or _camera_attack.presented or not damage_timeline.pending.is_empty(): return
+	var destroyed: bool = not winner.is_empty() and result_cause == "hull" and not escaped_by_ftl
+	if not destroyed and (not _camera_attack.beam or _camera_attack.damage < cinematic_settings.heavy_beam_threshold): return
+	_camera_attack.presented = true
+	var actor: Node3D = $BattleView/Viewport/Battlefield.get_node("PlayerShip" if _camera_attack.actor == "player" else "EnemyShip")
+	var victim: Node3D = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if _camera_attack.actor == "player" else "PlayerShip")
+	if destroyed: victim = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
+	cinematic_director.attack(actor,victim,destroyed,destroyed and battle_effects.enabled)
+
+func _ensure_destruction_camera() -> void:
+	if not is_instance_valid(cinematic_director) or cinematic_director.exiting or cinematic_director.active: return
+	var victim: Node3D = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
+	cinematic_director.attack(null,victim,true,true)
+
+func _wait_action_presentation() -> void:
+	while _presentation_locked() and cinematic_director.kind != "destruction":
+		await cinematic_director.settled
+	_camera_attack = {}
+
+func play_victory_departure(transition: CanvasLayer) -> bool:
+	return await cinematic_director.departure(transition)
