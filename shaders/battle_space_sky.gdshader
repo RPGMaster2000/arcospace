@@ -1,5 +1,7 @@
 shader_type spatial;
-render_mode unshaded, fog_disabled, cull_front, depth_draw_never;
+render_mode unshaded, fog_disabled, cull_front, depth_draw_opaque;
+// Write the distant opaque surface depth normally: disabling it lets this
+// background overwrite transparent beam passes. Foreground geometry still occludes VFX.
 // Standard arenas only. A stationary enclosing mesh supplies coverage; sampling
 // follows the world ray, never the mesh UV, position, scale or active camera pose.
 uniform sampler2D panorama : source_color, filter_linear_mipmap, repeat_enable;

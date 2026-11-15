@@ -842,7 +842,7 @@ func _damage_ftl(amount: int) -> void:
 
 func _continue_encounter() -> void:
 	damage_timeline.finish_now(false)
-	if winner != "player" or player_hull <= 0 or resolving_card or battle_effects.busy:
+	if winner != "player" or player_hull <= 0 or resolving_card or battle_effects.busy or _presentation_locked():
 		return
 	$MatchResult/Panel/Continue.disabled = true
 	if expedition != null:

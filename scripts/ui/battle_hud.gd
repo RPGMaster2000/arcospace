@@ -116,7 +116,8 @@ func refresh_results(data: Dictionary) -> void:
 	nodes["MatchResult/Panel/BattlesWon"].visible = data.winner in ["enemy", "draw"]
 	nodes["MatchResult/Panel/BattlesWon"].text = "%d BATTLES WON" % data.battles_won
 	nodes["MatchResult/Panel/Rewards"].visible = data.winner == "player"
-	nodes["allocation_button"].visible = data.winner.is_empty()
+	nodes["allocation_button"].visible = data.winner.is_empty() or data.get("destruction_presenting",false)
+	nodes["allocation_button"].disabled = not data.winner.is_empty()
 	if not data.winner.is_empty():
 		nodes["allocation_popup"].dismiss()
 	nodes["MatchResult"].visible = (
@@ -224,7 +225,7 @@ func refresh_emp(data: Dictionary) -> void:
 	)
 	nodes["FTLPanel/Progress"].max_value = data.emp.charge_target
 	nodes["FTLPanel/Progress"].value = data.emp.charge
-	var charged: bool = data.emp.charge >= data.emp.charge_target and data.winner.is_empty()
+	var charged: bool = data.emp.charge >= data.emp.charge_target and (data.winner.is_empty() or data.get("destruction_presenting",false))
 	nodes["FTLPanel/Charge"].visible = not charged
 	nodes["FTLPanel/Progress"].visible = not charged
 	nodes["FTLPanel/WarpButton"].visible = charged
