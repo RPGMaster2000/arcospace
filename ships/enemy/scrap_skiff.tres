@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/scrap_skiff.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/06_shield_disruptor.tres" id="C6"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C8"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="C15"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C16"]
+[ext_resource type="Resource" path="res://cards/17_shield_breachers.tres" id="C17"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="C19"]
+[ext_resource type="Resource" path="res://cards/22_energy_siphon.tres" id="C22"]
+[ext_resource type="Resource" path="res://cards/23_cargo_raid.tres" id="C23"]
+[ext_resource type="Resource" path="res://cards/24_crew_capture.tres" id="C24"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="C28"]
+[ext_resource type="Resource" path="res://cards/36_salvage_strike.tres" id="C36"]
+[ext_resource type="Resource" path="res://cards/39_reactor_salvage.tres" id="C39"]
+[ext_resource type="Resource" path="res://cards/40_supply_diversion.tres" id="C40"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="C42"]
+[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C45"]
+[ext_resource type="Resource" path="res://cards/49_salvage_cannibalization.tres" id="C49"]
+
+[resource]
+script = ExtResource("Ship")
+ship_name = "Scrap Skiff"
+subtitle = "Light Scrap Raider"
+role = "Light"
+summary = "Scrap Skiff: raiding and recovered weapons."
+hull_capacity = 20
+shields = 3
+materials = 14
+energy = 8
+crew = 10
+synthesizer = 3
+reactor = 1
+quarters = 2
+card_family_weights = {"materials": 1.5, "energy": 0.8, "crew": 1.1}
+card_effect_weights = {"damage": 1.5, "steal": 1.8, "disruption": 1.5, "hull": 1.2}
+tactical_weights = {"damage": 1.6, "hull": 1, "shields": 0.3, "production": 3, "resources": 0.45, "disruption": 1.1, "play_again": 1.2}
+tactical_variation = 0.22
+hull_color = Color(0.6, 0.32, 0.18, 1)
+model_scene = ExtResource("Model")
+strategic_class = "Light"
+minimum_defense_system = 2
+strategic_speed_multiplier = 1.2
+homeworld_damage_multiplier = 0.65
+starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C6"), ExtResource("C8"), ExtResource("C12"), ExtResource("C15"), ExtResource("C16"), ExtResource("C17"), ExtResource("C19"), ExtResource("C22"), ExtResource("C23"), ExtResource("C24"), ExtResource("C28"), ExtResource("C36"), ExtResource("C39"), ExtResource("C40"), ExtResource("C42"), ExtResource("C45"), ExtResource("C49")])

@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/bastion_frigate.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="C5"]
+[ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C8"]
+[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="C9"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="C10"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="C11"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="C13"]
+[ext_resource type="Resource" path="res://cards/14_energy_surge.tres" id="C14"]
+[ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C16"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="C19"]
+[ext_resource type="Resource" path="res://cards/26_shield_exchange.tres" id="C26"]
+[ext_resource type="Resource" path="res://cards/30_siege_driver.tres" id="C30"]
+[ext_resource type="Resource" path="res://cards/35_damage_control.tres" id="C35"]
+[ext_resource type="Resource" path="res://cards/43_emergency_reserves.tres" id="C43"]
+[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C45"]
+[ext_resource type="Resource" path="res://cards/53_capacitor_overload.tres" id="C53"]
+[ext_resource type="Resource" path="res://cards/54_power_grid_reroute.tres" id="C54"]
+
+[resource]
+script = ExtResource("Ship")
+ship_name = "Bastion Frigate"
+subtitle = "Light Armored Vessel"
+role = "Light"
+summary = "Bastion Frigate: layered defenses and attrition."
+hull_capacity = 25
+shields = 13
+materials = 8
+energy = 12
+crew = 10
+synthesizer = 1
+reactor = 3
+quarters = 2
+ftl_turns = 14
+ftl_resistance = 0
+hull_color = Color(0.3, 0.4, 0.52, 1)
+card_family_weights = {"energy":1.15}
+card_effect_weights = {"hull":1.8,"shields":2,"production":1.3,"disruption":1.6}
+tactical_weights = {"damage":0.9,"hull":1.5,"shields":0.95,"production":4,"resources":0.3,"disruption":0.8,"play_again":1}
+tactical_variation = 0.25
+model_scene = ExtResource("Model")
+strategic_class = "Light"
+minimum_defense_system = 2
+strategic_speed_multiplier = 1.2
+homeworld_damage_multiplier = 0.65
+starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C16"), ExtResource("C19"), ExtResource("C26"), ExtResource("C30"), ExtResource("C35"), ExtResource("C43"), ExtResource("C45"), ExtResource("C53"), ExtResource("C54")])

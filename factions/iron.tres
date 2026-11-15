@@ -3,12 +3,15 @@
 [ext_resource type="Resource" path="res://ships/enemy/sentinel.tres" id="s0"]
 [ext_resource type="Resource" path="res://ships/enemy/reclaimer.tres" id="s1"]
 [ext_resource type="Resource" path="res://ships/enemy/sentinel_dreadnought.tres" id="s2"]
+[ext_resource type="Resource" path="res://ships/enemy/bastion_frigate.tres" id="bastion_frigate"]
+[ext_resource type="Resource" path="res://ships/enemy/siege_monitor.tres" id="siege_monitor"]
+
 [resource]
 script = ExtResource("1")
 id = "iron_directorate"
 display_name = "Iron Directorate"
 description = "Defense, production and attrition."
 accent = Color(0.5529411764705883, 0.7254901960784313, 0.8784313725490196, 1)
-standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("s1")])
+standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("s1"), ExtResource("bastion_frigate"), ExtResource("siege_monitor")])
 elite_roster = Array[Resource]([])
 mothership = ExtResource("s2")

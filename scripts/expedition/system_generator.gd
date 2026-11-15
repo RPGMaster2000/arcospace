@@ -193,7 +193,7 @@ static func _generate_defense(state: Resource) -> void:
 		# Retain the old draw site so unrelated gameplay RNG remains exact.
 		var legacy: Resource = state.rules.progression.mandatory_boss_profile() if mother else ordinary[state._enemy_index(ordinary)]
 		var profile: Resource = legacy if mother else Factions.enemy(state, faction, i)
-		if mother and faction.mothership is ShipData and faction.mothership.enemy_rank == 2 and not faction.mothership.resource_path.is_empty():
+		if mother and state.system_number >= faction.mothership_minimum_system and faction.mothership is ShipData and faction.mothership.enemy_rank == 2 and not faction.mothership.resource_path.is_empty():
 			profile = faction.mothership
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if mother else profile.ship_name, "completed": false})
@@ -224,6 +224,7 @@ static func _generate_defense(state: Resource) -> void:
 		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]), v2,
 		state.SystemLayout.planetary_radii(state.encounters), state.orbit_clearance)
 	state.defense.add_reserves(reserves)
+	state.defense.encounter_ledger = state.encounters
 	state.defense.construction_sites = state.defense.Installations.sites(
 		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)
 

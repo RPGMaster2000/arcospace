@@ -1,11 +1,17 @@
 [gd_resource type="Resource" script_class="FactionProfile" format=3]
 [ext_resource type="Script" path="res://scripts/expedition/faction_profile.gd" id="1"]
 [ext_resource type="Resource" path="res://ships/enemy/axiom_7.tres" id="s0"]
+[ext_resource type="Resource" path="res://ships/enemy/axiom_scout.tres" id="axiom_scout"]
+[ext_resource type="Resource" path="res://ships/enemy/axiom_enforcer.tres" id="axiom_enforcer"]
+[ext_resource type="Resource" path="res://ships/enemy/axiom_command_nexus.tres" id="axiom_command_nexus"]
+
 [resource]
 script = ExtResource("1")
 id = "axiom_collective"
 display_name = "AXIOM Collective"
 description = "Precision attacks and energy disruption."
 accent = Color(0.47058823529411764, 0.8941176470588236, 0.9372549019607843, 1)
-standard_roster = Array[Resource]([ExtResource("s0")])
+standard_roster = Array[Resource]([ExtResource("s0"), ExtResource("axiom_scout"), ExtResource("axiom_enforcer")])
 elite_roster = Array[Resource]([])
+mothership = ExtResource("axiom_command_nexus")
+mothership_minimum_system = 2

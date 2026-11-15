@@ -6,6 +6,8 @@ const Missiles = preload("res://scripts/expedition/defense_missiles.gd")
 var v2 := false
 var missiles := Missiles.new()
 var tuning: Resource
+# Borrow the encounter ledger; never copy profiles or serialize a second set of attributes.
+var encounter_ledger: Array = []
 var layout_expansion: float = 0.0
 var decorative_bodies: Array = []
 var decoy: Dictionary = {}
@@ -265,10 +267,24 @@ func _restore_decoy(value: Variant) -> bool:
 	decoy = {"position": wire(at), "radius": float(value.radius), "remaining": float(value.remaining), "affected": affected}
 	return true
 
+func ship_profile(unit: Dictionary) -> Resource:
+	var index: int = unit.get("encounter", -1)
+	if index < 0 or index >= encounter_ledger.size(): return null
+	return encounter_ledger[index].get("enemy_data")
+
+func speed_multiplier(unit: Dictionary) -> float:
+	var profile := ship_profile(unit)
+	return profile.strategic_speed_multiplier if profile != null else 1.0
+
+func arrival_damage(unit: Dictionary) -> int:
+	var profile := ship_profile(unit)
+	var factor: float = profile.homeworld_damage_multiplier if profile != null else 1.0
+	return maxi(1, roundi(tuning.base_attack_damage * factor))
+
 func _speed(unit: Dictionary) -> float:
 	if unit.mothership:
 		return tuning.mothership_speed if mothership_advancing else 0.0
-	return tuning.enemy_speed
+	return tuning.enemy_speed * speed_multiplier(unit)
 
 func moving_route(unit: Dictionary) -> Dictionary:
 	if not available(unit): return {}
@@ -442,7 +458,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			mothership_advancing = false
 			result.position = from + player_velocity * elapsed
 			break
-		integrity = maxi(0, integrity - tuning.base_attack_damage)
+		integrity = maxi(0, integrity - arrival_damage(event_unit))
 		result.arrivals += 1
 		if failed():
 			mothership_advancing = false
@@ -607,6 +623,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		turret.damage = int(turret.damage)
 		turret.interval = int(turret.interval)
 	if v2 and (not missiles.restore(data.get("missiles"), self) or (contact >= 0 and missiles.pending >= 0)): return false
+	encounter_ledger = encounters
 	return _restore_decoy(data.get("decoy", {}))
 static func number(value: Variant, low: int, high: int) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value == floor(value) and value >= low and value <= high
