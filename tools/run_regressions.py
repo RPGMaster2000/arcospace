@@ -52,6 +52,9 @@ def run_process(command, log_path, timeout, completion_pattern=None):
     with log_path.open("w", encoding="utf-8") as log:
         try:
             environment = os.environ.copy()
+            # Legacy scene tests retain their immediate presentation contract. Dedicated
+            # battle-camera tests opt in explicitly, without rewriting user preferences.
+            environment.setdefault("ARCOSPACE_BATTLE_CINEMATICS", "0")
             userdata = (log_path.parent / "userdata" / log_path.stem).resolve()
             environment["XDG_DATA_HOME"] = str(userdata)
             if os.name == "nt":
