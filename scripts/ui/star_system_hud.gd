@@ -21,6 +21,8 @@ var metagame: Label
 var defense_mode := false
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
+var pressure_gap: Control
+var status_actions: VBoxContainer
 var details_button: Button
 var turret_count: Label
 var hull_bar: ProgressBar
@@ -94,18 +96,33 @@ func _ready() -> void:
 	pressure_fill = StyleBoxFlat.new()
 	pressure_bar.add_theme_stylebox_override("fill",pressure_fill)
 	status.add_child(pressure_bar)
+	pressure_gap = Control.new()
+	pressure_gap.custom_minimum_size.y = 18
+	pressure_gap.mouse_filter = MOUSE_FILTER_IGNORE
+	status.add_child(pressure_gap)
+	# Reuse the unused edge slot for a transparent group above the utility row.
+	panels[1].add_theme_stylebox_override("panel",StyleBoxEmpty.new())
+	panels[1].mouse_filter = MOUSE_FILTER_IGNORE
+	status_actions = VBoxContainer.new()
+	status_actions.add_theme_constant_override("separation",4)
+	status_actions.mouse_filter = MOUSE_FILTER_IGNORE
+	panels[1].add_child(status_actions)
 	details_button = Button.new()
 	preload("res://scripts/ui/encounter_presentation.gd").action(details_button)
-	details_button.text = "System Details"
-	details_button.custom_minimum_size.y = 44
+	details_button.name = "SystemStatus"
+	details_button.tooltip_text = "System Status"
+	details_button.icon = preload("res://assets/ui/system_status.svg")
+	details_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	details_button.custom_minimum_size = Vector2(48,48)
 	details_button.add_theme_font_size_override("font_size",18)
 	details_button.pressed.connect(system_details_requested.emit)
-	status.add_child(details_button)
 	turret_count = Label.new()
 	turret_count.add_theme_font_size_override("font_size",14)
 	turret_count.mouse_filter = MOUSE_FILTER_IGNORE
-	status.add_child(turret_count)
-	for node in [pressure_bar,details_button,turret_count]: node.hide()
+	turret_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	status_actions.add_child(turret_count)
+	status_actions.add_child(details_button)
+	for node in [pressure_bar,pressure_gap,details_button,turret_count]: node.hide()
 	hull_bar = ProgressBar.new()
 	hull_bar.custom_minimum_size.y = 4
 	hull_bar.show_percentage = false
@@ -275,6 +292,7 @@ func layout() -> void:
 	panels[2].position = Vector2(inset.x,size.y-panels[2].size.y-inset.w)
 	panels[3].position = Vector2(size.x-panels[3].size.x-inset.z,inset.y)
 	panels[4].position = size-panels[4].size-Vector2(inset.z,inset.w)
+	panels[1].position = Vector2(size.x-panels[1].size.x-inset.z,panels[4].position.y-panels[1].size.y-10)
 	title.position = Vector2(0,size.y*0.38)
 	title.size = Vector2(size.x,124)
 	subtitle.position = Vector2(0,size.y*0.38+128)
@@ -405,5 +423,5 @@ func set_defense_status(state: Resource) -> void:
 	queue_layout()
 
 func _sync_strategic_controls() -> void:
-	for node in [pressure_bar,details_button,turret_count]:
+	for node in [pressure_bar,pressure_gap,details_button,turret_count,panels[1]]:
 		if is_instance_valid(node): node.visible = defense_mode and mode == Mode.OVERVIEW
