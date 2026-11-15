@@ -319,8 +319,24 @@ func _ready() -> void:
 		button.discard_requested.connect(_discard_card.bind(slot))
 	# TUNE in the scene: EnemyThinkTimer > Wait Time sets the AI pause in seconds.
 	enemy_timer.timeout.connect(_on_enemy_timeout)
+	_begin_battle_presentation()
+
+
+# Presentation hooks; the 2D board keeps the original immediate flow.
+func _begin_battle_presentation() -> void:
 	_begin_turn("player")
 
+func _presentation_locked() -> bool:
+	return false
+
+func _card_resolution_presented(_side: String, _damage: int, _discard: bool) -> void:
+	pass
+
+func _committed_damage_presented() -> void:
+	pass
+
+func _wait_action_presentation() -> void:
+	pass
 
 #endregion
 
@@ -466,6 +482,7 @@ func _fire_turret_support() -> bool:
 func _act(side: String, slot: int, discard: bool) -> bool:
 	if (
 		resolving_card
+		or _presentation_locked()
 		or not damage_timeline.pending.is_empty()
 		or current_actor != side
 		or not winner.is_empty()
@@ -508,6 +525,8 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		await battle_effects.finished
 	if battle_effects.cancelling or is_queued_for_deletion():
 		return false
+	await _wait_action_presentation()
+	if checkpoint_exit or is_queued_for_deletion(): return false
 	battle_effects.end_card_presentation()
 	resolving_card = false
 	if _check_winner():
@@ -655,6 +674,7 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	if not pending.is_empty():
 		_arm_pending_damage(pending, report, side)
 	_check_winner()
+	_card_resolution_presented(side, resolution.direct_damage, discard)
 	refresh_display()
 
 	return delay_visuals
@@ -738,6 +758,7 @@ func _apply_pending_hull(
 	if visuals and battle_effects.enabled and not battle_effects.cancelling:
 		battle_effects.play_changes(before, _both_states())
 	_check_winner()
+	_committed_damage_presented()
 	if visuals and not is_queued_for_deletion():
 		refresh_display()
 	elif not winner.is_empty():
@@ -796,6 +817,7 @@ func _return_to_setup() -> void:
 func _warp_out() -> void:
 	if (
 		current_actor != "player"
+		or _presentation_locked()
 		or resolving_card
 		or not damage_timeline.pending.is_empty()
 		or battle_effects.busy

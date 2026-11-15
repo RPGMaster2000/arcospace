@@ -55,6 +55,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Animate actual stat changes without modifying game state.
 # DOES NOT: Apply card rules, draw cards or advance turns.
 # EXTEND: Dispatch committed deltas in play_changes; register all independent tweens with _job.
+signal weapon_presented(side: String, kind: String)
 signal finished
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 const REPAIR_SHADER = preload("res://shaders/hull_repair.gdshader")
@@ -143,6 +144,7 @@ func _play_direct_damage(side: String) -> Tween:
 	if is_instance_valid(active_beam):
 		active_beam.hide()
 		_remove(active_beam)
+	weapon_presented.emit(side, "beam")
 	var beam: Node3D = ImportedVFX.beam(actor, target)
 	active_beam = beam
 	temporary_nodes.append(beam)
