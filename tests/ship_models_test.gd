@@ -103,6 +103,12 @@ func run() -> void:
 				board.setup_settings["enemy_data"] = CAPITALS[index-6]
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
+			# This audit measures the authored gameplay frame. The introduction owns
+			# a deliberately different camera until dismissed; dedicated cinematic
+			# tests measure those shots. Exercise normal Skip restoration here.
+			if board._presentation_locked():
+				board.cinematic_director.skip()
+			check(not board._presentation_locked(), "Gameplay camera restored before geometry audit")
 			board.enemy_timer.stop()
 			var player = board.get_node("BattleView/Viewport/Battlefield/PlayerShip")
 			check(player.scene_file_path == Ships.PLAYERS[mini(index,5)].model_scene.resource_path, "Correct combat player model")

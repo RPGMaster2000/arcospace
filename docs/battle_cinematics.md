@@ -50,6 +50,8 @@ The 140×48 Skip button supports mouse and emulated Android touch, with keyboard
 
 `tests/battle_departure_test.gd` exercises the real expedition win → upgrade → final return flow, same-board retention, each skip stage, the preference bypass, opaque scene replacement, restored map input and equality with the original return's serialized expedition. Ordinary EMP escape retains its original path.
 
+The standalone `ship_models_test.gd` audit explicitly dismisses the optional introduction through normal Skip before projecting geometry into the authored gameplay camera. All original geometry assertions remain; a restoration assertion guards that handoff.
+
 Both are registered in the GL Compatibility and Mobile Vulkan rendered suites. Capture files are written to `.godot/testlogs/battle-camera/` and uploaded by CI. Legacy timing-sensitive scene tests explicitly disable the new optional camera presentation through the regression runner's `ARCOSPACE_BATTLE_CINEMATICS=0` environment default; these two tests explicitly enable it. This does not change user preferences, existing assertions, result animations or fixtures. Outside that test environment cinematics are enabled normally.
 
 ```sh
