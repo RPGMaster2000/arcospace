@@ -147,7 +147,7 @@ func ready_for_action(board: Node) -> bool:
 	return (
 		not board.resolving_card
 		and not board.battle_effects.busy
-		and not board.cinematic_director.active
+		and not board._presentation_locked()
 		and not board.destruction_pending
 	)
 
@@ -173,7 +173,16 @@ func combat_depth_checks(board: Node, label: String) -> void:
 	board.cinematic_settings.boost_seconds = .4
 	board.cinematic_settings.fade_seconds = .04
 	var director = board.cinematic_director
-	director.stage_changed.connect(func(stage): stage_capture(board, label + "-" + stage))
+	var stages: Array = []
+	var departure_state: Array = [{}, 0]
+	director.stage_changed.connect(
+		func(stage):
+			stages.append(stage)
+			if stage == "victory_orbit":
+				departure_state[0] = board._both_states()
+				departure_state[1] = board.turn_number
+			stage_capture(board, label + "-" + stage)
+	)
 	for side in ["player", "enemy"]:
 		var target := "enemy" if side == "player" else "player"
 		var card = load("res://cards/27_missile_barrage.tres")
@@ -196,28 +205,26 @@ func combat_depth_checks(board: Node, label: String) -> void:
 	await process_frame
 	await wait_ready(board)
 	check(
-		board.result_recorded and board.winner == "player" and director.kind == "destruction",
-		"Real lethal resolution retains destruction priority in each standard arena"
-	)
-	var before: Dictionary = board._both_states()
-	var turn: int = board.turn_number
-	var transition = load("res://scripts/presentation/star_system/white_transition.gd").new()
-	root.add_child(transition)
-	transition.curtain.color = Color(0, 0, 0, 0)
-	check(
-		await board.play_victory_departure(transition),
-		"Victory departure finishes under opaque black"
+		(
+			board.result_recorded
+			and board.winner == "player"
+			and "impact_hold" in stages
+			and "victory_orbit" in stages
+		),
+		"Real lethal resolution finishes destruction before automatic victory departure"
 	)
 	check(
-		board._both_states() == before and board.turn_number == turn,
-		"Slower orbit/boost/fade cannot advance combat state or turns"
+		board.victory_ready and board.get_node("MatchResult").visible,
+		"Victory result follows departure in each standard arena"
+	)
+	check(
+		board._both_states() == departure_state[0] and board.turn_number == departure_state[1],
+		"Orbit/boost/fade cannot advance combat state or turns"
 	)
 	check(
 		not director.active and board.backdrop.position == Vector3.ZERO,
-		"Departure restores camera ownership without moving the infinite sky"
+		"Victory presentation restores camera ownership without moving the infinite sky"
 	)
-	transition.queue_free()
-	await process_frame
 
 
 func run() -> void:

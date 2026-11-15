@@ -25,12 +25,16 @@ func sample() -> void:
 	capturing = true
 	last_capture = Time.get_ticks_msec()
 	await RenderingServer.frame_post_draw
-	var source = host.battle if is_instance_valid(host.battle) else host.battle_session.returning
+	var source = host.battle
 	var stage: String = (
 		source.cinematic_director.stage
 		if is_instance_valid(source) and source.cinematic_director.active
 		else "gameplay"
 	)
+	if is_instance_valid(source) and source.get_node("MatchResult").visible:
+		stage = "victory_result"
+	elif not is_instance_valid(source):
+		stage = "upgrades" if host.card_management.shade.visible else "star_system"
 	var path := "%s/%04d.webp" % [directory, records.size()]
 	root.get_texture().get_image().save_webp(path)
 	records.append(
@@ -94,11 +98,13 @@ func run() -> void:
 			)
 	)
 	await create_timer(1.6).timeout
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_webp(directory+"/victory-complete.webp")
 	board._continue_encounter()
 	while host.state.pending_choice == "upgrade" and not host.state.upgrade_candidates().is_empty():
 		host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 	host.show_system()
-	await wait_for(func(): return not host.battle_session.return_in_progress)
+	await wait_for(func(): return not is_instance_valid(host.battle))
 	await create_timer(.35).timeout
 	recording = false
 	while capturing:

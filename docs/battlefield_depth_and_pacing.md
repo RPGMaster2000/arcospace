@@ -4,7 +4,7 @@ Only `scenes/battlefield_3d.tscn` and `scenes/battlefield_planetary_orbit.tscn` 
 
 ## Rendering
 
-`shaders/battle_space_sky.gdshader` samples the existing galaxy panorama using the world-space viewing ray. A stationary, inward-rendered 600-unit sphere supplies coverage. Its UVs and distance do not determine the sampled direction. Camera rotation reveals another part of the panorama; camera translation leaves infinitely distant stars unchanged. Horizontal sampling repeats, with wrapped derivatives for stable mip selection at the longitude seam.
+`shaders/battle_space_sky.gdshader` samples the existing galaxy panorama using the world-space viewing ray. A stationary, inward-rendered 600-unit sphere supplies coverage. Its UVs and distance do not determine the sampled direction. Normal opaque depth writing keeps transparent beams in front of the distant surface while retaining foreground occlusion. Camera rotation reveals another part of the panorama; camera translation leaves infinitely distant stars unchanged. Horizontal sampling repeats, with wrapped derivatives for stable mip selection at the longitude seam.
 
 `scripts/presentation/battlefield_depth.gd` freezes the authored camera basis once on scene entry. It never updates that basis during shots or resize. Each scene owns its shader material. The existing `MeshInstance3D` name is retained for board compatibility; `infinite_panorama` metadata tells the board/director to leave that enclosing mesh stationary. Modifier quads retain their existing projection, resize and camera-following code.
 
@@ -31,7 +31,7 @@ Native geometry costs: one unshaded enclosing sphere replaces the original singl
 
 Confirmed destruction previously held its camera until the existing terminal destruction tween completed. That specific tween now uses the same playback speed when a destruction cinematic is active, doubling both the pan and the VFX-owned hold. No shared ship-animation implementation or resource is changed. With Skip Cinematics enabled, destruction keeps its original VFX timing. Skipping an already running destruction camera still leaves its existing terminal effects to finish safely.
 
-Beam discharge and damage resolution remain at their original boundaries: the optional camera is still selected only after actual damage is committed. Beam damage, impact rules and combat RNG are unchanged. Engine boost starts with departure acceleration; only the local presentation timeline stretches. The blackout covers map replacement, and fade-in uses the same converted transition duration.
+Beam discharge and damage resolution remain at their original boundaries: the optional camera is still selected only after actual damage is committed. Beam damage, impact rules and combat RNG are unchanged. Engine boost starts with departure acceleration; only the local presentation timeline stretches. The blackout now prepares the existing Victory screen after departure; the normal reward/upgrade confirmation then returns to the map without replaying departure or adding another fade.
 
 `Engine.time_scale`, strategic time, turn calculations, card animation settings, ordinary ship animations, modifiers, rewards, checkpoints and save schemas are untouched. The existing Skip button/preference and camera restoration remain in place.
 

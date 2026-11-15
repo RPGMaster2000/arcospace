@@ -244,6 +244,87 @@ func input_and_parity_checks() -> void:
 	await process_frame
 
 
+func track_destruction_hud(board: Node) -> Dictionary:
+	var controls: Array = [
+		board.player_hull_label,
+		board.enemy_hull_label,
+		board.player_shields_label,
+		board.enemy_shields_label,
+		board.player_materials_label,
+		board.player_energy_label,
+		board.player_crew_label,
+		board.enemy_materials_label,
+		board.enemy_energy_label,
+		board.enemy_crew_label,
+		board.allocation_button
+	]
+	for slot in board.card_slots:
+		controls.append(board.get_node(slot))
+	var rectangles: Array = []
+	for control in controls:
+		rectangles.append(control.get_global_rect())
+	var audit := {"intact": true, "frames": 0}
+	var observe := func():
+		if not is_instance_valid(board) or not board.destruction_pending:
+			return
+		audit.frames += 1
+		audit.intact = audit.intact and board.get_node("BattleView").offset_bottom == -325
+		for i in controls.size():
+			audit.intact = (
+				audit.intact
+				and controls[i].is_visible_in_tree()
+				and controls[i].get_global_rect() == rectangles[i]
+				and controls[i].modulate.a == 1.0
+			)
+	process_frame.connect(observe)
+	audit["observe"] = observe
+	return audit
+
+
+func finish_destruction_hud(audit: Dictionary) -> void:
+	process_frame.disconnect(audit.observe)
+	audit.erase("observe") # Break the observer closure/dictionary cycle.
+	check(
+		audit.intact and audit.frames > 1,
+		"Every destruction VFX frame preserves the complete HUD, hand geometry and normal viewport"
+	)
+
+
+func defeat_hud_checks() -> void:
+	Preferences.set_skip_cinematics(true)
+	var board := fresh()
+	await settle_board(board)
+	Preferences.set_skip_cinematics(false)
+	board.current_actor = "enemy"
+	board.enemy_hand.cards[0] = load("res://cards/27_missile_barrage.tres")
+	board.enemy_crew = 99
+	board.player_shields = 0
+	board.player_hull = 3
+	board.refresh_display()
+	var audit := track_destruction_hud(board)
+	board._act("enemy", 0, false)
+	await wait_until(
+		func(): return board.destruction_pending, "Enemy attack starts real player destruction VFX"
+	)
+	await shot_capture(board, "player-destruction-hud")
+	await wait_until(
+		func():
+			return (
+				not board.destruction_pending
+				and not board._presentation_locked()
+				and board.get_node("MatchResult").visible
+			),
+		"Player destruction finishes at the existing defeat result"
+	)
+	finish_destruction_hud(audit)
+	check(
+		board.winner == "enemy" and not board.victory_started,
+		"Confirmed player destruction cannot trigger a victory departure"
+	)
+	board.free()
+	await process_frame
+
+
 func attack_checks() -> void:
 	for side in ["player", "enemy"]:
 		for damage in [6, 16]:
@@ -302,6 +383,8 @@ func attack_checks() -> void:
 	board.player_crew = 99
 	board.enemy_shields = 0
 	board.enemy_hull = 3
+	board.refresh_display()
+	var audit := track_destruction_hud(board)
 	board._act("player", 0, false)
 	await wait_until(
 		func(): return board.result_recorded, "Actual card action reaches confirmed lethal outcome"
@@ -323,10 +406,11 @@ func attack_checks() -> void:
 		"Result waits for corresponding destruction presentation"
 	)
 	await wait_until(
-		func(): return not board.destruction_pending and not board.cinematic_director.active,
+		func(): return not board.destruction_pending and not board._presentation_locked(),
 		"Existing destruction VFX and camera complete"
 	)
 	check(stages.count("attacker") == 1, "No second cinematic for the same lethal event")
+	finish_destruction_hud(audit)
 	board.free()
 	await process_frame
 
@@ -344,6 +428,7 @@ func run() -> void:
 	await introduction_checks()
 	await input_and_parity_checks()
 	await attack_checks()
+	await defeat_hud_checks()
 	Preferences.set_skip_cinematics(previous_skip)
 	Preferences.set_battle_vfx(previous_vfx)
 	print("Battle cinematic cameras: %d checks, %d failures" % [checks, failures])
