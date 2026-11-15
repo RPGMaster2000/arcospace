@@ -18,6 +18,7 @@ var rifts := TemporalRift.new()
 const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
 var poi_effects := PoiEffects.new()
 var defense_poi_version: int = 0
+const DefensePoiResolver = preload("res://scripts/expedition/defense_poi_resolver.gd")
 const DefensePois = preload("res://scripts/expedition/defense_poi_approaches.gd")
 const DECOY_CAPACITY := 2
 const DECOY_MAP_SETTINGS = preload("res://resources/presentation/star_system_settings.tres")
@@ -907,75 +908,22 @@ func poi_approaches(index: int) -> Array:
 		result.append(row.approach)
 	return result
 
+# Compatibility adapter: the resolver owns the deterministic reward seed policy.
 func _defense_poi_reward_rng(index: int) -> RandomNumberGenerator:
-	# Existing reward APIs accept an injected generator. Fork only this transaction
-	# so its quantity/card draws cannot perturb future system generation.
-	var generator := RandomNumberGenerator.new()
-	generator.seed = hash("%d:%d:%d:defense-poi-reward:v1" % [seed_used,system_number,index])
-	return generator
+	return DefensePoiResolver.reward_rng(self, index)
 
 func _resolve_defense_poi(index: int, slot: int) -> bool:
-	var approaches: Array = poi_approaches(index)
-	if slot < 0 or slot >= approaches.size(): return false
-	var approach: Resource = approaches[slot]
-	if not locked_reason(approach).is_empty(): return false
-	var reward: Dictionary = approach.get_meta("strategic_reward")
-	# All validations precede mutation, including scarce identity rewards.
-	if reward.has("cards"):
-		var eligible := 0
-		for card in available_reward_cards():
-			if card.tier == 1: eligible += 1
-		if eligible < 2: return false
-	if reward.has("turret") and not can_deploy_poi_turret(index): return false
-	if reward.has("mothership") and not poi_effects.mothership.is_empty(): return false
-	if not _complete_encounter(index): return false
-	_commit_activity_time(float(approach.get_meta("strategic_seconds")))
-	if run_ended:
-		last_outcome = "The invasion ended the expedition during this operation."
-		progress_committed.emit()
-		return true
-	var reward_rng := _defense_poi_reward_rng(index)
-	last_poi_success = 1
-	last_outcome = approach.get_meta("strategic_description")
-	if reward.has("salvage_range"):
-		var amount := reward_rng.randi_range(reward.salvage_range[0],reward.salvage_range[1])
-		salvage += amount
-		last_outcome = "+%d Salvage recovered." % amount
-	salvage += int(reward.get("salvage",0))
-	if reward.has("production"):
-		var boost: Dictionary = reward.production
-		poi_effects.grant_production(boost.category,boost.amount,boost.battles)
-	if reward.has("pause"): poi_effects.pause = maxf(poi_effects.pause,reward.pause)
-	if reward.has("reduction"): poi_effects.reduction = maxf(poi_effects.reduction,reward.reduction)
-	if reward.has("fuel"): poi_effects.fuel = maxf(poi_effects.fuel,reward.fuel)
-	if reward.has("mothership"): poi_effects.mothership = reward.mothership
-	if reward.has("cards"): start_card_batch(reward_rng)
-	if reward.has("next_battle"): add_modifiers(reward.next_battle)
-	if reward.has("hull"): hull = mini(ship().hull_capacity,hull+int(reward.hull))
-	if reward.has("turret"): _install_poi_turret(index)
-	if reward.has("decoy"): decoys += 1
-	if reward.has("extraction"): poi_effects.start_extraction(index)
+	var result = DefensePoiResolver.resolve(self, index, slot)
+	if not result.resolved: return false
+	# One notification after rewards, or after an activity ends the expedition.
 	progress_committed.emit()
 	return true
 
 # Preserve gate order: production, price, then a full Hull repair target.
 func approach_requirement(approach: Resource) -> RefCounted:
 	if approach.has_meta("strategic_reward"):
-		var reward: Dictionary = approach.get_meta("strategic_reward")
-		var reason := ""
-		if reward.has("decoy") and decoys >= DECOY_CAPACITY: reason = "Tactical Decoy inventory full"
-		if reward.has("extraction") and (defense.complete or poi_effects.extraction_source >= 0):
-			reason = "Extraction already online or system secured"
-		if reward.has("turret") and not can_deploy_poi_turret(int(approach.get_meta("source_encounter",-1))): reason = "Free turret already used or location unavailable"
-		if reward.has("mothership") and (not poi_effects.mothership.is_empty() or defense.complete): reason = "Mothership research is already active or the system is secured"
-		if defense.complete and (reward.has("pause") or reward.has("reduction")): reason = "System secured; Pressure effects are no longer needed"
-		if reward.has("cards"):
-			var count := 0
-			for card in available_reward_cards():
-				if card.tier == 1: count += 1
-			if count < 2: reason = "Fewer than two eligible unowned Tier 1 cards remain"
-			if deck_limit() < 2: reason = "Deck capacity must support both reward identities"
-		if not reason.is_empty(): return Requirement.new(Requirement.Kind.UNAVAILABLE,reason)
+		var requirement = DefensePoiResolver.reward_requirement(self, approach)
+		if requirement != null: return requirement
 	if not approach.requirement.is_empty():
 		var available: int = production(approach.requirement)
 		if available < approach.minimum_production:
