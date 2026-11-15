@@ -3,6 +3,10 @@
 All battlefield scenes are independent `.tscn` files. Open one directly in Godot
 and use F6 for a 3D-only preview, or run `board_3d.tscn` to see its combat HUD.
 
+The two standard arenas now use direction-aware enclosing skies and stationary 3D
+scenery. See [depth and pacing](battlefield_depth_and_pacing.md) for their projection,
+parameters and cinematic timings; modifier environments retain their original quads.
+
 | Modifier index | Scene under `scenes/` | Visual identity |
 |---|---|---|
 | 0 / None | `battlefield_3d.tscn` | Deep Space: sparse fixed stars, near-black space, neutral blue-white key and cool rim. |
@@ -11,7 +15,7 @@ and use F6 for a 3D-only preview, or run `board_3d.tscn` to see its combat HUD.
 | 3 / Solar Flare | `battlefield_solar_flare.tscn` | Dark warm space, bright stellar disc/corona, orange-yellow key and restrained red rim. |
 | 4 / Nebula | `battlefield_nebula.tscn` | Broad teal/rose clouds moving slowly; teal key and complementary rose rim. |
 | 5 / Temporal Rift | `battlefield_temporal_rift.tscn` | Green/cyan distorted ring and slow cloud motion; mint key and cool cyan rim. |
-| 0 / None, random normal variant | `battlefield_planetary_orbit.tscn` | Standalone Deep Space duplicate with a large, partly visible dark blue-grey planet. |
+| 0 / None, random normal variant | `battlefield_planetary_orbit.tscn` | Stationary amber ringed planet, distant moon, sparse orbital debris and world-direction sky. |
 
 There is no radiation battlefield in the current modifier registry. The modifier
 scenes communicate the encounter environment for the whole battle; scheduled
@@ -26,8 +30,8 @@ Environment animation is deliberately independent of modifier timing and mechani
   restrained secondary light color/energy/rotation. Neither casts shadows. Existing
   ship engine lights and their escape-charge feedback remain unchanged.
 - **MeshInstance3D → Material Override → Shader Parameters**: the opaque procedural
-  backdrop. Keep this node name: `board_3d.gd` resizes it for responsive framing. Its
-  material is named **Procedural Space Backdrop**. The script does not set its colors,
+  backdrop. Keep this node name: `board_3d.gd` resizes legacy quads for responsive framing; standard enclosing spheres remain stationary. Its
+  standard material is named **World-direction Space Panorama**. The script does not set its colors,
   speed, shader or light values. Toggle Visibility to compare with the solid fallback.
 - **Asteroids**: `asteroid_count` (0–8; default 6), `drift_velocity` in background-local
   units/second, `spin_speed` in radians/second and `wrap_width` / `wrap_height`. Its eight **Rock** child
@@ -39,8 +43,8 @@ Environment animation is deliberately independent of modifier timing and mechani
   Material Override. The opaque planet uses normal scene lighting, procedural surface
   variation and a faint shader rim, without an extra transparent atmospheric sphere.
 
-Keep decorative objects behind both ships. The Asteroids/BackgroundObjects parent
-transforms define a camera-aligned background plane at approximately 28 world units
+Keep decorative objects behind both ships. The modifier Asteroids parent
+transform defines a camera-aligned background plane at approximately 28 world units
 from the camera; ships are closer. No body, collision, physics or gameplay hooks are
 attached to these decorations. Changing a parent transform changes the whole group.
 
@@ -48,6 +52,7 @@ attached to these decorations. Changing a parent transform changes the whole gro
 
 | Shader | Editable parameters | Cost / behavior |
 |---|---|---|
+| `shaders/battle_space_sky.gdshader` | `panorama`, `panorama_center`, `panorama_brightness`, `panorama_tint`, `space_color` | Standard arenas only: one direction-sampled panorama on a stationary enclosing sphere. Authored camera orientation is frozen by `battlefield_depth.gd`. |
 | `shaders/space_background.gdshader` | `space_color`, `cloud_color`, `accent_color`, `cloud_intensity`, `cloud_scale`, `animation_speed`, `star_density`, `star_brightness`, `variation_seed`, `streak_intensity`, `rift_intensity`, `feature_center` | Three interpolated 2D value-noise samples, one sparse star layer; smooth streak/ring formulas. Set optional intensities to zero for normal space. Speed 0 is static. |
 | `shaders/solar_background.gdshader` | `space_color`, `corona_color`, `star_color`, `star_center`, `star_radius`, `corona_intensity`, `animation_speed`, `band_scale` | Radial disc/corona and slowly shifting bands; brightness pulse is only ±4%, without full-screen flashes. UV position controls the star framing; the authored disc avoids the top modifier HUD. |
 | `shaders/planet_surface.gdshader` | `ocean_color`, `land_color`, `rim_color`, `surface_scale`, `rim_intensity` | Opaque lit sphere, simple surface pattern and small view-angle rim emission. No rotation/orbit simulation. |
@@ -58,10 +63,10 @@ shared `.tres` unless you intentionally want coupled editing. The rocky material
 shared by the rocks *within* the Asteroid scene so one edit updates that group.
 The normal variant is a full duplicate, not inherited from a modifier scene.
 
-## Why a backdrop quad rather than animated Sky Resources?
+## Background projection and cost
 
-The existing board already renders a single camera-facing opaque background mesh.
-Reusing it avoids a second star layer, texture sampling from the former dense 5 MB
+Modifier scenes retain a single camera-facing opaque background mesh.
+Standard scenes instead use one stationary direction-sampled enclosing sphere. Both avoid a second star layer, texture sampling from the former dense 5 MB
 starfield and animated sky/radiance cubemap updates. A solid `WorldEnvironment` supplies
 ambient lighting and a simple fallback. No `Sky`, fog, SSR, bloom, post-process or
 transparent full-screen layers are needed for these stylized scenes.
@@ -86,7 +91,7 @@ Planetary Orbit can also be opened and played directly.
 ## Performance and validation
 
 The project remains on its existing **Mobile** renderer; no global project settings
-change. Backdrops are one opaque unshaded quad each. Decorations have no shadow casting,
+change. Backdrops are one opaque unshaded mesh each (standard sphere or modifier quad). Decorations have no shadow casting,
 collisions, particles or extra lights. Lighting adds one shadow-free rim directional
 light to the original primary light and existing ship engine lights. Asteroids are
 low-segment primitives; the planet is one 48-segment / 24-ring sphere. Materials avoid

@@ -45,7 +45,7 @@ func run() -> void:
 			var camera: Camera3D = a.get_node("Camera3D")
 			check(camera.to_local(first.global_position).z < camera.to_local(a.get_node("PlayerShip").global_position).z - 5, "Rocks are behind combat geometry")
 		if scene == Planet:
-			check(not a.has_node("BackgroundObjects/Planet"), "Planetary skybox contains the planet without a duplicate mesh")
+			check(a.has_node("BackgroundObjects/Planet") and a.get_node("BackgroundObjects/Planet").mesh is SphereMesh, "Orbit landmark is actual stationary spherical geometry")
 		a.queue_free(); b.queue_free()
 		await process_frame
 	var ui_snapshot: Dictionary = {}
