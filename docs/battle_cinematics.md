@@ -9,8 +9,8 @@ The 3D board borrows its existing camera, ships, engine effects and background f
 - `scripts/board_3d.gd` connects confirmed presentation events and delays the first turn until the introduction ends. Resize updates the eventual gameplay FOV/background scale while the director controls the current shot.
 - `scripts/battle_effects.gd` reports `weapon_presented(side, "beam")` at the existing beam-delivery site. A description or card name cannot select a camera shot.
 - `scripts/board.gd` exposes narrow presentation hooks after real resolution and deferred Hull commits. Its existing damage timeline, VFX busy/finished waits and destruction/result sequencing remain authoritative.
-- `scripts/expedition/expedition_battle.gd` can retain the completed, hidden board through required card upgrades, with processing and its viewport disabled. It disconnects hand synchronization from that completed board. No ship or viewport is cloned.
-- `scripts/expedition.gd` starts departure only at the final return-to-system action, then rebuilds the map under a scene-owned black instance of the existing transition curtain. Map input/time resumes after the fade. Reward, encounter, upgrade and checkpoint transactions remain at their original boundaries.
+- `scripts/board_3d.gd` plays departure after terminal VFX finish and before revealing the existing Victory screen. Its own black curtain covers result construction. Presentation latches prevent replay or early continuation; committed rewards are never recalculated.
+- `scripts/expedition.gd` removes the completed board at the existing result-confirmation boundary, opens required upgrades and returns to the map normally. No board is retained through upgrades and no departure/fade replays on the final return. Reward, encounter, upgrade and checkpoint transactions remain at their original boundaries.
 
 ```mermaid
 flowchart LR
@@ -21,11 +21,12 @@ flowchart LR
     VFX --> Select[3D presentation selection]
     Resolution --> Select
     Select --> Camera[Heavy beam OR confirmed destruction camera]
-    Camera --> Result[Existing destruction VFX and result screen]
-    Result --> Upgrades[Existing reward and upgrade confirmations]
-    Upgrades --> Orbit[Orbit and engine boost on the same board]
+    Camera --> Destruction[Existing destruction VFX finish]
+    Destruction --> Orbit[Victory orbit and engine boost]
     Orbit --> Black[Opaque black curtain]
-    Black --> Map[Existing system view and fade in]
+    Black --> Result[Existing Victory screen]
+    Result --> Upgrades[Existing reward and upgrade confirmations]
+    Upgrades --> Map[Existing system view]
 ```
 
 ## Shot parameters and framing
@@ -42,13 +43,13 @@ Attack shots now last 2.50 seconds unless the destruction animation owns the hol
 
 `Skip Cinematics` bypasses introduction, optional attack cameras and victory orbit/boost. The short black transition remains. Battle VFX remains a separate preference. No new settings are added.
 
-The 140×48 Skip button supports mouse and emulated Android touch, with keyboard/controller Accept or Cancel and native Android Back. Repeated Skip is harmless. Cancellation kills camera tweens, releases pending presentation waiters, restores the viewport, camera/FOV, background, UI visibility and previous valid keyboard focus. Skipping destruction does not skip or repeat its existing damage/VFX transaction. App suspension during departure cancels the visual return and saves the already committed expedition normally.
+The 140×48 Skip button supports mouse and emulated Android touch, with keyboard/controller Accept or Cancel and native Android Back. Repeated Skip is harmless. Cancellation kills camera tweens, releases pending presentation waiters, restores the viewport, camera/FOV, background, UI visibility and previous valid keyboard focus. Skipping destruction does not skip or repeat its existing damage/VFX transaction. App suspension saves the already committed expedition normally; leaving the battle disposes its director and curtain. Destruction camera moves keep the normal viewport and HUD visible, with terminal actions disabled.
 
 ## Validation and captures
 
 `tests/battle_cinematic_test.gd` exercises measured light/heavy/mothership framing, all modifier arenas, action locking, real touchscreen Skip at four viewport sizes, resize ownership, first-turn/RNG/save equivalence, actual beam damage, both attacker directions and lethal priority/result synchronization.
 
-`tests/battle_departure_test.gd` exercises the real expedition win → upgrade → final return flow, same-board retention, each skip stage, the preference bypass, opaque scene replacement, restored map input and equality with the original return's serialized expedition. Ordinary EMP escape retains its original path.
+`tests/battle_departure_test.gd` exercises the real destruction → departure → Victory → upgrade → return flow, each skip stage, the preference bypass, result construction under opaque black, no replay on return, restored map input and equality with the original return's serialized expedition. Ordinary EMP escape retains its original path.
 
 The standalone `ship_models_test.gd` audit explicitly dismisses the optional introduction through normal Skip before projecting geometry into the authored gameplay camera. All original geometry assertions remain; a restoration assertion guards that handoff.
 

@@ -71,7 +71,6 @@ var station_preview: VBoxContainer:
 	get: return outpost_screen.preview if is_instance_valid(outpost_screen) else null
 var star_map: Control
 var transition: CanvasLayer
-var battle_return_transition: CanvasLayer
 # Ephemeral presentation only; authoritative travel/rewards remain in State/Deck.
 enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, INTRO, EXITED }
 var phase: Phase = Phase.OVERVIEW
@@ -205,10 +204,6 @@ func _ready() -> void:
 func _build_ui() -> void:
 	transition = preload("res://scripts/presentation/star_system/white_transition.gd").new()
 	add_child(transition)
-	battle_return_transition = preload("res://scripts/presentation/star_system/white_transition.gd").new()
-	add_child(battle_return_transition)
-	battle_return_transition.layer = 301
-	battle_return_transition.curtain.color = Color(0,0,0,0)
 	screen = ExpeditionScreen.new()
 	screen.hull_pulse_period = hull_pulse_period
 	screen.hull_pulse_scale = hull_pulse_scale
@@ -328,7 +323,6 @@ func _cancel_presentation() -> void:
 		outcome_flash.cancel()
 	if is_instance_valid(transition):
 		transition.cancel()
-	if is_instance_valid(battle_return_transition): battle_return_transition.cancel()
 	if is_instance_valid(star_map) and star_map.has_method("cancel_presentation"):
 		if star_map.traveling or transitioning:
 			star_map.cancel_presentation()
@@ -371,7 +365,6 @@ func start_expedition() -> bool:
 		_show_save_error()
 		return false
 	_cancel_presentation()
-	battle_session.release_return(self)
 	phase = Phase.OVERVIEW
 	if is_instance_valid(star_map) and star_map.get_parent() == screen:
 		screen.remove_child(star_map)
@@ -434,15 +427,10 @@ func _notification(what: int) -> void:
 		if state != null: state.navigation.rebase_movement()
 	if not persistence_enabled or state == null: return
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		var cinematic_board = battle_session.current if is_instance_valid(battle_session.current) else battle_session.returning
+		var cinematic_board = battle
 		if is_instance_valid(cinematic_board) and cinematic_board.has_method("_presentation_locked") and cinematic_board._presentation_locked():
 			cinematic_board.cinematic_director.skip()
 			return
-	if what == NOTIFICATION_APPLICATION_PAUSED and battle_session.return_in_progress:
-		_cancel_presentation()
-		battle_session.release_return(self)
-		phase = Phase.OVERVIEW
-		show_system()
 	if phase == Phase.INTRO and what in [NOTIFICATION_WM_GO_BACK_REQUEST,NOTIFICATION_APPLICATION_PAUSED]:
 		_cancel_presentation()
 		phase = Phase.OVERVIEW
@@ -490,12 +478,6 @@ func show_system(preserve_transition: bool = false) -> void:
 	if not (state.is_defense() and state.run_ended) and not state.pending_choice.is_empty():
 		show_outcome()
 		return
-	if is_instance_valid(battle_session.returning):
-		if battle_session.returning.expedition != state:
-			battle_session.release_return(self)
-		else:
-			if not battle_session.return_in_progress: _depart_victory()
-			return
 	get_node("/root/Music").play_starmap()
 	return_to_outpost = false
 	_clear("system", preserve_transition)
@@ -648,7 +630,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
-		if state.defense.reveal_pending and not battle_session.return_in_progress: _reveal_mothership.call_deferred()
+		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
 	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
 		_resume_navigation.call_deferred(destination, _presentation_revision, state, weakref(star_map))
@@ -1192,10 +1174,7 @@ func _battle_finished(source: Node = null) -> void:
 	if not is_instance_valid(source) or source != battle or phase == Phase.EXITED or not is_inside_tree() or is_queued_for_deletion():
 		return
 	state.active_battle = -1
-	if source.has_method("play_victory_departure") and source.cinematic_director.enabled() and source.result_recorded and source.winner == "player" and source.player_hull > 0 and not source.escaped_by_ftl:
-		battle_session.retain_return()
-	else:
-		_remove_battle()
+	_remove_battle()
 	phase = Phase.OVERVIEW
 	show_system()
 
@@ -1237,7 +1216,6 @@ func _exit() -> void:
 
 func _prepare_departure() -> void:
 	_cancel_presentation()
-	battle_session.release_return(self)
 	phase = Phase.EXITED
 	if is_instance_valid(battle) and not battle.result_recorded:
 		battle.checkpoint_exit = true
@@ -1667,33 +1645,3 @@ func _faction_profile() -> Resource:
 func _show_system_details() -> void:
 	if state == null or not state.is_defense() or phase not in [Phase.OVERVIEW,Phase.TRAVELING] or not _map_input_allowed(): return
 	screen.present_system_details(state)
-
-# Rewards, upgrades, encounter time and autosaves have already committed. Only
-# now replace the normal return with a camera showcase under a persistent curtain.
-func _depart_victory() -> void:
-	battle_session.return_in_progress = true
-	var revision := _begin_presentation(Phase.INTRO)
-	var owner: Resource = state
-	var source: Node = battle_session.reveal_return()
-	screen.hide_for_battle()
-	if is_instance_valid(star_map): star_map.set_active(false)
-	var covered: bool = await source.play_victory_departure(battle_return_transition)
-	if not _presentation_current(revision,owner): return
-	if not covered:
-		battle_return_transition.block()
-		battle_return_transition.curtain.color.a = 1.0
-	var fade_seconds: float = source.cinematic_settings.duration(source.cinematic_settings.fade_seconds)
-	battle_session.release_return(self)
-	battle_session.return_in_progress = true
-	phase = Phase.OVERVIEW
-	show_system(true)
-	var destination_phase: Phase = phase
-	phase = Phase.INTRO
-	await get_tree().process_frame
-	await get_tree().process_frame
-	if not _presentation_current(revision,owner): return
-	if await battle_return_transition.fade(0.0,fade_seconds):
-		if _presentation_current(revision,owner):
-			phase = destination_phase
-			battle_session.return_in_progress = false
-			if state.is_defense() and state.defense.reveal_pending: _reveal_mothership.call_deferred()

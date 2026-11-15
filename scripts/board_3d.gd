@@ -9,6 +9,11 @@ var destruction_pending: bool = false
 var cinematic_director: Node
 var _beam_side := ""
 var _camera_attack: Dictionary = {}
+# Presentation latches only; rewards remain committed by Board._record_result.
+var victory_started := false
+var victory_pending := false
+var victory_ready := false
+var victory_transition: CanvasLayer
 
 
 
@@ -24,6 +29,17 @@ func refresh_display() -> void:
 		elif not _presentation_locked():
 			var victim = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
 			cinematic_director.attack(null,victim,true,false)
+	if (
+		_victory_eligible()
+		and not victory_started
+		and not destruction_pending
+		and not resolving_card
+		and not battle_effects.busy
+		and not _presentation_locked()
+	):
+		victory_started = true
+		victory_pending = true
+		_present_victory.call_deferred()
 	super.refresh_display()
 	if is_instance_valid(cinematic_director): cinematic_director.mask_ui()
 	$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
@@ -43,8 +59,20 @@ func refresh_display() -> void:
 
 func _display_snapshot() -> Dictionary:
 	var data: Dictionary = super._display_snapshot()
-	data.effects_busy = data.effects_busy or destruction_pending or _presentation_locked()
-	data.resolving_card = data.resolving_card or _presentation_locked()
+	var camera_busy: bool = (
+		(is_instance_valid(cinematic_director) and cinematic_director.active)
+		or (victory_pending and not victory_ready)
+	)
+	data.effects_busy = data.effects_busy or destruction_pending or camera_busy
+	data.resolving_card = data.resolving_card or camera_busy
+	data.destruction_presenting = (
+		destruction_pending
+		or (
+			is_instance_valid(cinematic_director)
+			and cinematic_director.kind == "destruction"
+			and (cinematic_director.active or victory_pending)
+		)
+	)
 	return data
 
 
@@ -140,6 +168,11 @@ func _ready() -> void:
 	backdrop_scale = backdrop.scale
 	resized.connect(_fit_backdrop)
 	_fit_backdrop()
+	# Create the curtain first so the director cancels before it exits the tree.
+	victory_transition = preload("res://scripts/presentation/star_system/white_transition.gd").new()
+	add_child(victory_transition)
+	victory_transition.layer = 301
+	victory_transition.curtain.color = Color(0,0,0,0)
 	cinematic_director = preload("res://scripts/presentation/battle_cinematic_director.gd").new()
 	cinematic_director.settings = cinematic_settings
 	add_child(cinematic_director)
@@ -205,7 +238,7 @@ func _begin_battle_presentation() -> void:
 		_begin_turn("player")
 
 func _presentation_locked() -> bool:
-	return is_instance_valid(cinematic_director) and cinematic_director.active
+	return victory_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
 
 func _card_resolution_presented(side: String, damage: int, discard: bool) -> void:
 	_camera_attack = {"actor":side,"damage":damage,"beam":not discard and _beam_side == side,"presented":false}
@@ -238,3 +271,40 @@ func _wait_action_presentation() -> void:
 
 func play_victory_departure(transition: CanvasLayer) -> bool:
 	return await cinematic_director.departure(transition)
+
+
+func _victory_eligible() -> bool:
+	return (
+		is_instance_valid(cinematic_director)
+		and cinematic_director.enabled()
+		and result_recorded
+		and winner == "player"
+		and player_hull > 0
+		and not escaped_by_ftl
+	)
+
+
+func _present_victory() -> void:
+	if not is_inside_tree() or is_queued_for_deletion() or checkpoint_exit:
+		return
+	await cinematic_director.departure(victory_transition)
+	if (
+		not is_inside_tree()
+		or is_queued_for_deletion()
+		or checkpoint_exit
+		or not is_instance_valid(cinematic_director)
+		or cinematic_director.exiting
+	):
+		return
+	# The outcome is already authoritative. Prepare the existing result screen
+	# under black, then reveal its own animation without another scene fade.
+	$BattleView/Viewport/Battlefield/PlayerShip.hide()
+	$BattleView/Viewport/Battlefield/EnemyShip.hide()
+	victory_ready = true
+	refresh_display()
+	await get_tree().process_frame
+	if not is_inside_tree() or is_queued_for_deletion() or checkpoint_exit:
+		return
+	victory_transition.cancel()
+	victory_pending = false
+	refresh_display()
