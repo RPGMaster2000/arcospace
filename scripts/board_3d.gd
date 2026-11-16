@@ -7,7 +7,9 @@ var destruction_started: bool = false
 var destruction_pending: bool = false
 @export var cinematic_settings: Resource = preload("res://resources/presentation/battle_cinematics.tres")
 var cinematic_director: Node
-var _beam_side := ""
+const CombatForecast = preload("res://scripts/combat/combat_forecast.gd")
+var _beam_choreographed := false
+var _skip_destruction_camera := false
 var _camera_attack: Dictionary = {}
 # Presentation latches only; rewards remain committed by Board._record_result.
 var victory_started := false
@@ -26,7 +28,7 @@ func refresh_display() -> void:
 		destruction_started = true
 		if battle_effects.enabled:
 			_destroy_ships()
-		elif not _presentation_locked():
+		elif not _presentation_locked() and not _skip_destruction_camera:
 			var victim = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
 			cinematic_director.attack(null,victim,true,false)
 	if (
@@ -42,7 +44,8 @@ func refresh_display() -> void:
 		_present_victory.call_deferred()
 	super.refresh_display()
 	if is_instance_valid(cinematic_director): cinematic_director.mask_ui()
-	$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
+	if not is_instance_valid(cinematic_director) or not cinematic_director.active or cinematic_director.kind != "departure":
+		$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(
 		mini(player_hull, player_hull_capacity)
 	)
@@ -177,8 +180,8 @@ func _ready() -> void:
 	cinematic_director.settings = cinematic_settings
 	add_child(cinematic_director)
 	cinematic_director.configure(self,camera,backdrop,$BattleView)
-	battle_effects.weapon_presented.connect(func(side, weapon):
-		if weapon == "beam": _beam_side = side)
+	battle_effects.weapon_presented.connect(func(_side, weapon):
+		if weapon == "beam" and _beam_choreographed: cinematic_director.beam_launched())
 	cinematic_director.settled.connect(func():
 		if is_inside_tree() and hud != null and not cinematic_director.exiting: refresh_display())
 	engine_light = get_node_or_null("BattleView/Viewport/Battlefield/PlayerShip/Body/OmniLight3D")
@@ -240,9 +243,25 @@ func _begin_battle_presentation() -> void:
 func _presentation_locked() -> bool:
 	return victory_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
 
-func _card_resolution_presented(side: String, damage: int, discard: bool) -> void:
-	_camera_attack = {"actor":side,"damage":damage,"beam":not discard and _beam_side == side,"presented":false}
-	_beam_side = ""
+func _prepare_beam_presentation(side: String, card: Resource) -> float:
+	if not cinematic_director.allowed(): return 0.0
+	var other := "enemy" if side == "player" else "player"
+	var forecast := CombatForecast.predict(card, ship_snapshot(side), ship_snapshot(other), modifier.forecast_context())
+	var cinematic: bool = forecast.outcomes.any(func(outcome):
+		var damage: int = outcome.damage.get("direct_damage", 0)
+		return damage >= cinematic_settings.heavy_beam_threshold or (damage > 0 and outcome.target.hull <= 0))
+	if not cinematic: return 0.0
+	_beam_choreographed = true
+	var actor: Node3D = cinematic_director.player if side == "player" else cinematic_director.enemy
+	var victim: Node3D = cinematic_director.enemy if side == "player" else cinematic_director.player
+	await cinematic_director.beam_charge(actor, victim)
+	return cinematic_settings.duration(cinematic_settings.beam_turn_seconds) if cinematic_director.active and not cinematic_director.skipped else 0.0
+
+func _beam_reached_target() -> void:
+	if _beam_choreographed: cinematic_director.beam_impact()
+
+func _card_resolution_presented(side: String, _damage: int, _discard: bool) -> void:
+	_camera_attack = {"actor": side, "presented": false}
 	_try_attack_camera()
 
 func _committed_damage_presented() -> void:
@@ -252,19 +271,27 @@ func _try_attack_camera() -> void:
 	if not is_instance_valid(cinematic_director) or cinematic_director.exiting: return
 	if _camera_attack.is_empty() or _camera_attack.presented or not damage_timeline.pending.is_empty(): return
 	var destroyed: bool = not winner.is_empty() and result_cause == "hull" and not escaped_by_ftl
-	if not destroyed and (not _camera_attack.beam or _camera_attack.damage < cinematic_settings.heavy_beam_threshold): return
+	if not destroyed: return
 	_camera_attack.presented = true
+	if _beam_choreographed:
+		_skip_destruction_camera = true
+		if battle_effects.enabled: cinematic_director.finish_beam(true)
+		return
 	var actor: Node3D = $BattleView/Viewport/Battlefield.get_node("PlayerShip" if _camera_attack.actor == "player" else "EnemyShip")
 	var victim: Node3D = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if _camera_attack.actor == "player" else "PlayerShip")
 	if destroyed: victim = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
 	cinematic_director.attack(actor,victim,destroyed,destroyed and battle_effects.enabled)
 
 func _ensure_destruction_camera() -> void:
-	if not is_instance_valid(cinematic_director) or cinematic_director.exiting or cinematic_director.active: return
+	if _skip_destruction_camera or not is_instance_valid(cinematic_director) or cinematic_director.exiting or cinematic_director.active: return
 	var victim: Node3D = $BattleView/Viewport/Battlefield.get_node("EnemyShip" if enemy_hull <= 0 else "PlayerShip")
 	cinematic_director.attack(null,victim,true,true)
 
 func _wait_action_presentation() -> void:
+	if _beam_choreographed:
+		if cinematic_director.active and cinematic_director.kind == "heavy_beam":
+			await cinematic_director.finish_beam(false)
+		_beam_choreographed = false
 	while _presentation_locked() and cinematic_director.kind != "destruction":
 		await cinematic_director.settled
 	_camera_attack = {}

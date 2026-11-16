@@ -196,6 +196,7 @@ func combat_depth_checks(board: Node, label: String) -> void:
 			board.get(target + "_hull") == 84 and director.kind == "heavy_beam",
 			"Both attacker directions retain actual beam damage and camera selection"
 		)
+		await board._wait_action_presentation()
 		await wait_ready(board)
 	board.hand.cards[0] = load("res://cards/27_missile_barrage.tres")
 	board.player_crew = 99
@@ -251,9 +252,9 @@ func run() -> void:
 		(
 			settings.duration(settings.attack_seconds) == 2.5
 			and settings.duration(settings.orbit_seconds) == 4.5
-			and settings.duration(settings.boost_seconds) == 1.7
+			and is_equal_approx(settings.duration(settings.boost_seconds), .76)
 		),
-		"Attack, orbit and boost durations double without shrinking paths"
+		"Attack, orbit and faster boost retain the playback multiplier"
 	)
 	settings.playback_speed = 1
 	check(

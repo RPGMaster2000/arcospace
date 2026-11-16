@@ -124,14 +124,14 @@ func play_direct_damage(side: String) -> void:
 	if _defer_presentation(_play_direct_damage.bind(side)): return
 	_play_direct_damage(side)
 
-func fire_before_impact(side: String) -> void:
+func fire_before_impact(side: String, minimum_travel: float = 0.0) -> void:
 	# Await the single weapon cue; the caller commits combat state at contact.
-	var shot: Tween = _play_direct_damage(side)
+	var shot: Tween = _play_direct_damage(side, maxf(BEAM_SECONDS, minimum_travel))
 	if shot != null:
 		await shot.finished
 
 
-func _play_direct_damage(side: String) -> Tween:
+func _play_direct_damage(side: String, duration: float = BEAM_SECONDS) -> Tween:
 	if not enabled or cancelling: return null
 	var actor = get_parent().get_node(player_ship_path if side == "player" else enemy_ship_path)
 	var target = get_parent().get_node(enemy_ship_path if side == "player" else player_ship_path)
@@ -144,7 +144,6 @@ func _play_direct_damage(side: String) -> Tween:
 	if is_instance_valid(active_beam):
 		active_beam.hide()
 		_remove(active_beam)
-	weapon_presented.emit(side, "beam")
 	var beam: Node3D = ImportedVFX.beam(actor, target)
 	active_beam = beam
 	temporary_nodes.append(beam)
@@ -153,10 +152,11 @@ func _play_direct_damage(side: String) -> Tween:
 	timeline.tween_method(func(progress: float):
 		var current = reference.get_ref()
 		if current != null and not current.is_queued_for_deletion():
-			ImportedVFX.update_beam(current, actor, target, progress), 0.0, 1.0, BEAM_SECONDS)
+			ImportedVFX.update_beam(current, actor, target, progress), 0.0, 1.0, duration)
 	timeline.tween_callback(func():
 		var current = reference.get_ref()
 		if current != null: _remove(current))
+	weapon_presented.emit(side, "beam")
 	return timeline
 
 

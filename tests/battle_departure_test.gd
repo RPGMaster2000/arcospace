@@ -78,6 +78,7 @@ func result_ready(board: Node) -> bool:
 func boost_alignment(board: Node) -> void:
 	var director = board.cinematic_director
 	var forward: Vector3 = director.player.global_basis.x.normalized()
+	var departure_pose: Transform3D = director.camera.global_transform
 	check(
 		forward.dot(director.camera.global_position - director.player.global_position) < 0,
 		"Boost camera finishes behind the model's actual forward axis"
@@ -97,6 +98,7 @@ func boost_alignment(board: Node) -> void:
 			body_delta.length() > 0 and body_delta.is_equal_approx(shield_delta),
 			"Shield follows the accelerating hull instead of remaining at the battle anchor"
 		)
+		check(director.camera.global_transform.is_equal_approx(departure_pose), "Departure camera stays fixed through thrust")
 
 
 func win(board: Node) -> void:
@@ -152,12 +154,12 @@ func run() -> void:
 	baseline.free()
 	await process_frame
 	OS.set_environment("ARCOSPACE_BATTLE_CINEMATICS", "1")
-	for skipped_stage in ["", "victory_orbit", "engine_boost", "fade_to_black", "preference"]:
+	for skipped_stage in ["", "victory_orbit", "engine_charge", "engine_boost", "fade_to_black", "preference"]:
 		var host := fresh()
 		var board: Node = host.battle
 		var director = board.cinematic_director
 		if skipped_stage.is_empty():
-			board.cinematic_settings.boost_seconds = .85
+			board.cinematic_settings.boost_seconds = .38
 		Preferences.set_skip_cinematics(skipped_stage == "preference")
 		var events: Array = []
 		var committed: Array = [{}]
@@ -245,6 +247,8 @@ func run() -> void:
 			check(
 				(
 					events.find("impact_hold") < events.find("victory_orbit")
+					and events.find("victory_orbit") < events.find("engine_charge")
+					and events.find("engine_charge") < events.find("engine_boost")
 					and events.find("fade_to_black") < events.find("result")
 				),
 				"Destruction, departure and result execute in order"
