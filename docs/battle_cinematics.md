@@ -63,6 +63,18 @@ Android device frame pacing and each faction model's art direction still warrant
 
 ## Rendered gallery
 
+These 1280×720 frames come from one production battle rendered in Godot
+with GL Compatibility. The capture helper samples the live sequence and
+writes separate frame folders for each renderer.
+
+| Sequence | Frames |
+| --- | --- |
+| Introduction | [Frontal enemy close-up](battle_cinematic_direction_screenshots/enemy-close-up.webp) · [Settling into battle framing](battle_cinematic_direction_screenshots/intro-settling.webp) |
+| Beam attack | [Charge](battle_cinematic_direction_screenshots/beam-charge.webp) · [Discharge during the camera turn](battle_cinematic_direction_screenshots/beam-launch.webp) · [Hull impact with HUD](battle_cinematic_direction_screenshots/hull-impact.webp) |
+| Victory | [Engine buildup](battle_cinematic_direction_screenshots/engine-charge.webp) · [Departure before fade](battle_cinematic_direction_screenshots/departure.webp) |
+
+### Original implementation captures
+
 These are actual Godot production-scene captures, with no generated artwork. [Motion sequence](battle_cinematics_screenshots/cinematic-motion.webp) contains sampled frames encoded at **8 fps**, downscaled from 1280×720 to 640×360 for review. Playback is normalized: the software-renderer wall time is not an Android performance measurement. The reproducible capture helper is `tests/battle_cinematic_capture.gd`; it stages a real Missile Barrage against a 3-Hull, unshielded target with sufficient Crew to demonstrate confirmed destruction, then completes the normal result/upgrades and return.
 
 | Stage | Capture |
