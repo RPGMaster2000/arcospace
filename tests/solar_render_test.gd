@@ -28,6 +28,8 @@ func run() -> void:
 		host.persistence_enabled = false
 		host.rules = host.rules.duplicate(true)
 		host.rules.game_mode = mode
+		host.rules.system_variety = host.rules.system_variety.duplicate(true)
+		host.rules.system_variety.enabled = false # Exercise the original fixed solar fixture.
 		host.rules.debug_seed = 1042
 		host.rules.log_rolls = false
 		root.add_child(host)

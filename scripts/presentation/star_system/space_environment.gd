@@ -8,7 +8,7 @@ var origin := Vector3.ZERO
 var dust_basis := Basis.IDENTITY
 var settings: Resource
 
-func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null, atmosphere_strength: float = 1.0) -> void:
+func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null, atmosphere_strength: float = 1.0, variation: Dictionary = {}) -> void:
 	settings = calibration
 	origin = camera.position
 	dust_basis = camera.basis
@@ -33,7 +33,7 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 	sky.material_override = space
 	sky.extra_cull_margin = 1000.0
 	var sparse: bool = rng.randf()<0.3
-	for specification in settings.background_layers:
+	for specification in (settings.background_layers if variation.is_empty() else []):
 		if specification == null: continue
 		var quad = QuadMesh.new()
 		quad.size = specification.apparent_size
@@ -58,6 +58,8 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 		material.render_priority = -100+layers.size()
 		node.extra_cull_margin = 1000.0
 		layers.append(node)
+	for specification in variation.get("background", []):
+		_add_generated_layer(specification, atmosphere_strength)
 	if dust_rng == null: dust_rng = rng
 	if settings.stardust_enabled:
 		for level in range(2):
@@ -90,3 +92,31 @@ func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerat
 func set_active(enabled: bool) -> void:
 	# All sky/debris placement uses render-camera matrices. No pre-draw callbacks.
 	visible = enabled
+
+
+# The same far-depth, direction-stable layer pipeline as the calibrated sky.
+# At most four generated quads; no per-frame nodes/material allocations.
+func _add_generated_layer(specification: Dictionary, atmosphere_strength: float) -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(specification.size[0], specification.size[1])
+	var node := Models.part(self, quad, Color.WHITE)
+	node.name = "StellarPhenomenon%d" % int(specification.kind)
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/cosmic_layer.gdshader")
+	material.set_shader_parameter("phenomenon", int(specification.kind))
+	material.set_shader_parameter("galaxy", int(specification.kind) == 1)
+	material.set_shader_parameter("tint", Color(specification.color))
+	material.set_shader_parameter("opacity", float(specification.opacity) * settings.background_strength * atmosphere_strength)
+	material.set_shader_parameter("rotation", float(specification.rotation))
+	material.set_shader_parameter("variation", float(specification.variation))
+	material.set_shader_parameter("camera_relative", true)
+	material.set_shader_parameter("foreground_protection", 0.65)
+	var yaw: float = specification.yaw
+	var pitch: float = specification.pitch
+	material.set_shader_parameter("sky_direction", Vector3(sin(yaw)*cos(pitch), sin(pitch), cos(yaw)*cos(pitch)))
+	material.set_shader_parameter("reference_origin", origin)
+	material.set_shader_parameter("sky_parallax", 0.015)
+	material.render_priority = -100 + layers.size()
+	node.material_override = material
+	node.extra_cull_margin = 1000
+	layers.append(node)

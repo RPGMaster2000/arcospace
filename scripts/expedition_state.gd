@@ -12,6 +12,8 @@ const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
 const RouteEnvironments = preload("res://scripts/expedition/route_environments.gd")
 var layout_expansion: float = 0.0
 var orbit_clearance: float = 0.0
+## Sole owner of the optional new-system profile; absent in historical systems.
+var system_variation: Dictionary = {}
 var game_mode: String = "exploration"
 var defense: RefCounted
 var rifts := TemporalRift.new()
@@ -358,6 +360,7 @@ func encounter_at(index: int) -> Dictionary:
 
 func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
 	faction_id = ""
+	system_variation = {}
 	run_ended = false
 	poi_effects = PoiEffects.new()
 	defense_poi_version = 0
@@ -509,7 +512,7 @@ func generate_system() -> bool:
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
 	var influence := solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
-		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, rules.solar_influence_radius_range,
+		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, preload("res://scripts/expedition/system_variety_environments.gd").solar_range(self),
 		0.8 if layout_expansion > 0.0 else 1.0)
 	influence.generation.celestial_clearance = true
 	influence.generation.visual_margin = rules.defense_tuning.environment_visual_margin
@@ -549,10 +552,8 @@ func generate_system() -> bool:
 	for index in encounters.size():
 		var location := battle_location(index)
 		if not location.is_empty(): hostile_positions.append(location)
-	var storm := EnvironmentData.Storms.generate(seed_used, system_number, rules.space_storm_chance,
-		route_points if routed else hostile_positions, environmental_instances, layout_expansion)
-	if routed: storm = RouteEnvironments.storm(storm, defense, route_points, environmental_instances)
-	if not storm.is_empty(): environmental_instances.append(storm)
+	environmental_instances.append_array(preload("res://scripts/expedition/system_variety_environments.gd").storms(self,
+		route_points if routed else hostile_positions, environmental_instances))
 	if is_defense(): environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
 	if is_defense() and not preview.is_empty() and preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances) == preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(solar_records):
 		defense.decorative_bodies = preview.planets.slice(1)

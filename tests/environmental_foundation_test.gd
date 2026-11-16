@@ -28,6 +28,8 @@ func run() -> void:
 			for ship_index in range(6):
 				var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
 				rules.game_mode = mode
+				rules.system_variety = rules.system_variety.duplicate(true)
+				rules.system_variety.enabled = false # Retain Phase 1 region-count contract.
 				rules.log_rolls = false
 				var current = State.new()
 				var historical = HistoricalState.new()

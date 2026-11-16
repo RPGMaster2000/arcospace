@@ -81,6 +81,7 @@ static func encode(state: Resource) -> Dictionary:
 	if state.is_defense(): data.defense_poi_effects = state.poi_effects.snapshot()
 	if state.is_defense() and state.decoys > 0: data.decoys = state.decoys
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
+	if not state.system_variation.is_empty(): data.system_variation = state.system_variation.duplicate(true)
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
 	if state.orbit_clearance > 0.0: data.orbit_clearance = state.orbit_clearance
 	data.upgrades = deck.upgrades
@@ -135,6 +136,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if data.is_empty(): return null
 	if not _integer(data.get("metagame_version"), 1, 3): return null
 	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0)): return null
+	if not preload("res://scripts/expedition/system_variation.gd").valid(data.get("system_variation", {})): return null
+	if data.has("system_variation") and data.get("game_mode", "exploration") != "defense": return null
 	var orbit_clearance: Variant = data.get("orbit_clearance", 0.0)
 	if not (orbit_clearance is float or orbit_clearance is int) or not is_finite(float(orbit_clearance)) or orbit_clearance < 0.0 or orbit_clearance > 1.0: return null
 	if data.metagame_version >= 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
@@ -217,6 +220,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if data.has("defense_poi_version"):
 		if mode != "defense" or not _integer(data.defense_poi_version,1,1): return null
 		state.defense_poi_version = int(data.defense_poi_version)
+	state.system_variation = data.get("system_variation", {}).duplicate(true)
 	state.layout_expansion = float(data.get("layout_expansion", 0.0))
 	state.orbit_clearance = float(orbit_clearance)
 	if mode == "defense":

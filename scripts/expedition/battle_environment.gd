@@ -27,7 +27,7 @@ static func instance(id: String, type: String, position: Array = []) -> Dictiona
 static func valid_instances(value: Variant) -> bool:
 	if not value is Array or value.size() > 128: return false
 	var ids: Dictionary = {}
-	var physical_storm := false
+	var physical_storm := 0
 	var physical_rift := false
 	for item in value:
 		if not item is Dictionary: return false
@@ -41,8 +41,8 @@ static func valid_instances(value: Variant) -> bool:
 		if item.type == ASTEROID_FIELD and not item.region.is_empty() and (not Asteroids.valid(item) or not Asteroids.valid_visual(item.visual)): return false
 		if item.type == SOLAR_INTERFERENCE and not item.region.is_empty() and (not Solar.valid(item) or not Solar.valid_visual(item.visual)): return false
 		if item.type == SPACE_STORM and not item.region.is_empty():
-			if physical_storm: return false
-			physical_storm = true
+			physical_storm += 1
+			if physical_storm > 2: return false
 			if not Storms.valid(item) or not Storms.valid_visual(item.visual, item.configuration.subtype): return false
 			if not Storms.valid_generation(item.generation): return false
 		if item.type == TEMPORAL_RIFT and not item.region.is_empty():

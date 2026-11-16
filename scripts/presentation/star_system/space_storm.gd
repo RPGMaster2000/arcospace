@@ -18,6 +18,7 @@ static func build(storm: Dictionary) -> Node3D:
 	if storm.is_empty(): return root
 	var axes := Vector3(storm.region.axes[0], storm.region.axes[1], storm.region.axes[2])
 	root.position = Vector3(storm.position[0], storm.position[1], storm.position[2])
+	root.rotation.y = float(storm.region.get("angle", 0.0))
 	var tint := Color.from_string(storm.visual.color, Color.WHITE)
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(2.0, 2.0)

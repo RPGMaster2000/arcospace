@@ -1,0 +1,30 @@
+{
+  "baseline_commit": "b41a5c3",
+  "seeds": [
+    1,
+    100
+  ],
+  "systems": [
+    1,
+    6
+  ],
+  "records": 600,
+  "disabled_exact_save_matches": 600,
+  "enabled_exact_rng_matches": 600,
+  "enabled_exact_enemy_record_matches": 600,
+  "poi_counts_main": {
+    "8": 600
+  },
+  "poi_counts_feature": {
+    "9": 81,
+    "8": 91,
+    "5": 88,
+    "12": 32,
+    "3": 45,
+    "11": 31,
+    "6": 73,
+    "10": 30,
+    "7": 89,
+    "4": 40
+  }
+}

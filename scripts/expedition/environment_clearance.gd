@@ -10,7 +10,7 @@ static func intersects_sphere(item: Dictionary, center: Vector3, radius: float) 
 	match region.shape:
 		"sphere": return local.length() <= float(region.radius)+radius
 		"ellipsoid":
-			return ellipsoid_distance(local,point(region.axes)) <= radius
+			return ellipsoid_distance(local.rotated(Vector3.UP, -float(region.get("angle", 0.0))),point(region.axes)) <= radius
 		"belt":
 			var plane := Vector2(local.x,local.z).rotated(-float(region.angle))
 			var ratio: float = region.ratio
@@ -77,6 +77,8 @@ static func protect_home(state: Resource, records: Array, candidates: Array) -> 
 			elif item.type == "SPACE_STORM":
 				replacement = item.duplicate(true)
 				var axes := point(item.region.axes)
+				var angle: float = item.region.get("angle", 0.0)
+				axes = Vector3(absf(cos(angle))*axes.x+absf(sin(angle))*axes.z, axes.y, absf(sin(angle))*axes.x+absf(cos(angle))*axes.z)
 				if attempt < candidates.size(): replacement.position = candidates[attempt].duplicate()
 				else:
 					var rng := RandomNumberGenerator.new()

@@ -59,7 +59,8 @@ static func valid(item: Dictionary) -> bool:
 	var axes: Variant = region.get("axes")
 	if not Navigation.valid_point(axes, false): return false
 	for extent in axes:
-		if extent < 1.0 or extent > 9.0: return false
+		if extent < 1.0 or extent > (18.0 if item.get("generation", {}).get("extended", false) else 9.0): return false
+	if not Solar._number(region.get("angle", 0.0), 0.0, TAU): return false
 	var configuration: Variant = item.get("configuration")
 	return configuration is Dictionary and modifier_id(configuration.get("subtype")) != 0
 
@@ -72,12 +73,21 @@ static func valid_visual(value: Variant, subtype: Variant) -> bool:
 
 static func valid_generation(value: Dictionary) -> bool:
 	var seed_value: Variant = value.get("seed")
-	return value.get("version") == 1 and seed_value is String and seed_value.is_valid_int()
+	return value.get("version") == 1 and seed_value is String and seed_value.is_valid_int() and value.get("extended", false) is bool
 
 static func contains(item: Dictionary, location: Array) -> bool:
 	if not valid(item) or not Navigation.valid_point(location, false): return false
+	var angle: float = item.region.get("angle", 0.0)
+	# Preserve the original double-precision calculation for historical records.
+	if angle == 0.0:
+		var legacy_distance := 0.0
+		for axis in range(3):
+			var normalized := (float(location[axis]) - float(item.position[axis])) / float(item.region.axes[axis])
+			legacy_distance += normalized * normalized
+		return legacy_distance <= 1.0
+	var local := Vector3(location[0] - item.position[0], location[1] - item.position[1], location[2] - item.position[2]).rotated(Vector3.UP, -angle)
 	var distance_squared := 0.0
 	for axis in range(3):
-		var normalized := (float(location[axis]) - float(item.position[axis])) / float(item.region.axes[axis])
+		var normalized := local[axis] / float(item.region.axes[axis])
 		distance_squared += normalized * normalized
 	return distance_squared <= 1.0
