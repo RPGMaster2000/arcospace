@@ -14,6 +14,9 @@ const Camera = preload("res://scripts/presentation/star_system/map_camera.gd")
 const VisualSystem = preload("res://scripts/presentation/star_system/visual_system.gd")
 const Planets = preload("res://scripts/presentation/star_system/planet_models.gd")
 const Space = preload("res://scripts/presentation/star_system/space_environment.gd")
+const AtmosphericAccents = preload("res://scripts/presentation/star_system/atmospheric_accents.gd")
+var atmospheric_recipe: Dictionary = {}
+var atmospheric_nodes: Array[Node3D] = []
 const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
@@ -351,6 +354,12 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var body: Node3D = objects[index]
 		exclusions.append({"position": body.position, "radius": float(body.get_meta("radius", 0.65))})
 	visual_root.add_child(preload("res://scripts/presentation/star_system/asteroid_fields.gd").build(environment_instances(), OS.has_feature("android"), exclusions))
+	atmospheric_nodes.clear()
+	atmospheric_recipe = AtmosphericAccents.recipe(cosmetic_seed, system_number, visual_data,
+		system_variation, settings.atmospheric_accents, layout_expansion, environment_instances(), exclusions)
+	background.add_atmospheric_accent(atmospheric_recipe.sky, camera)
+	atmospheric_nodes = AtmosphericAccents.build_world(atmospheric_recipe, visual_root,
+		planet_nodes, settings.atmospheric_accents, settings)
 	if settings.stellar_shafts_enabled:
 		var shafts := preload("res://scripts/presentation/star_system/stellar_shafts.gd").new()
 		visual_root.add_child(shafts)

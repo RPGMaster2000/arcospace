@@ -62,6 +62,7 @@ extends Resource
 @export_range(1.0, 4.0, 0.25) var orbit_line_width: float = 2.0
 @export_group("Background and quality")
 @export var background_layers: Array[Resource] = [preload("res://resources/presentation/sky_nebula.tres"), preload("res://resources/presentation/sky_galaxy.tres")]
+@export var atmospheric_accents: Resource = preload("res://resources/presentation/atmospheric_accents.tres")
 @export_range(0.0, 1.0, 0.05) var background_strength: float = 0.6
 ## Distant-star translation response; zero restores an infinitely distant sky.
 @export_range(0.0, 0.5, 0.01) var starfield_parallax: float = 0.12

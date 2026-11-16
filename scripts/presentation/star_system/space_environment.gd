@@ -1,12 +1,14 @@
 extends Node3D
 # One camera-relative sky in the existing viewport; no independent update loop.
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
+const Accents = preload("res://scripts/presentation/star_system/atmospheric_accents.gd")
 var sky: MeshInstance3D
 var layers: Array[MeshInstance3D] = []
 var dust: Array[MultiMeshInstance3D] = []
 var origin := Vector3.ZERO
 var dust_basis := Basis.IDENTITY
 var settings: Resource
+var atmospheric_accent: MeshInstance3D
 
 func configure(camera: Camera3D, calibration: Resource, rng: RandomNumberGenerator, dust_rng: RandomNumberGenerator = null, atmosphere_strength: float = 1.0, variation: Dictionary = {}) -> void:
 	settings = calibration
@@ -94,6 +96,55 @@ func set_active(enabled: bool) -> void:
 	visible = enabled
 
 
+# Localized spherical panorama sampling in the existing far-depth layer pipeline.
+# No full-sky replacement, new viewport, camera callback or gameplay object.
+func add_atmospheric_accent(specification: Dictionary, camera: Camera3D) -> void:
+	if specification.is_empty():
+		return
+	var direction: Vector3 = (
+		camera.basis
+		* Vector3(
+			sin(specification.yaw) * cos(specification.pitch),
+			sin(specification.pitch),
+			-cos(specification.yaw) * cos(specification.pitch)
+		)
+	)
+	var center := (
+		Vector2(0.50, 0.43)
+		if specification.asset == "anomaly"
+		else (Vector2(0.50, 0.38) if specification.asset == "galaxy" else Vector2(0.45, 0.46))
+	)
+	var mesh := _panorama_patch_mesh(
+		direction,
+		specification.roll,
+		specification.extent,
+		center,
+		(
+			2.0
+			if specification.asset == "nebula"
+			else (10.0 if specification.asset == "anomaly" else 5.0)
+		)
+	)
+	var node := Models.part(self, mesh, Color.WHITE)
+	node.name = "AtmosphericPanoramaAccent"
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/cosmic_layer.gdshader")
+	material.set_shader_parameter("source_texture", load(Accents.PANORAMAS[specification.asset]))
+	material.set_shader_parameter("panorama_patch", true)
+	material.set_shader_parameter("patch_extent", specification.extent)
+	material.set_shader_parameter("panorama_gain", specification.brightness)
+	material.set_shader_parameter("tint", Color.WHITE)
+	material.set_shader_parameter("opacity", specification.opacity * settings.background_strength)
+	material.set_shader_parameter("camera_relative", true)
+	material.set_shader_parameter("sky_direction", direction)
+	material.set_shader_parameter("sky_parallax", 0.0)
+	material.set_shader_parameter("foreground_protection", 0.7)
+	material.render_priority = -90
+	node.material_override = material
+	node.extra_cull_margin = 1000
+	atmospheric_accent = node
+	layers.append(node)
+
 # The same far-depth, direction-stable layer pipeline as the calibrated sky.
 # At most four generated quads; no per-frame nodes/material allocations.
 func _add_generated_layer(specification: Dictionary, atmosphere_strength: float) -> void:
@@ -120,3 +171,37 @@ func _add_generated_layer(specification: Dictionary, atmosphere_strength: float)
 	node.material_override = material
 	node.extra_cull_margin = 1000
 	layers.append(node)
+
+
+# A small angular cap, not a flattened 2:1 panorama. UVs are equirectangular
+# longitudes/latitudes; UV2 retains angular distance for the soft circular mask.
+func _panorama_patch_mesh(
+	direction: Vector3, roll: float, extent: float, center: Vector2, crop_scale: float
+) -> ArrayMesh:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var basis := Basis.looking_at(direction, Vector3.UP).rotated(direction, roll)
+	for y in 6:
+		for x in 6:
+			for corner in [
+				Vector2(0, 0),
+				Vector2(1, 0),
+				Vector2(1, 1),
+				Vector2(0, 0),
+				Vector2(1, 1),
+				Vector2(0, 1)
+			]:
+				var angles: Vector2 = (
+					(Vector2(x, y) + corner) / 6.0 * extent * 2.0 - Vector2.ONE * extent
+				)
+				var ray := (
+					basis
+					* Vector3(
+						sin(angles.x) * cos(angles.y), sin(angles.y), -cos(angles.x) * cos(angles.y)
+					)
+				)
+				surface.set_normal(-ray)
+				surface.set_uv(center + angles * crop_scale * Vector2(1.0 / TAU, -1.0 / PI))
+				surface.set_uv2(angles)
+				surface.add_vertex(ray * 55.0)
+	return surface.commit()
