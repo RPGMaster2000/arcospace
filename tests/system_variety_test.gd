@@ -6,6 +6,7 @@ const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Layout = State.SystemLayout
 var checks := 0
 var failures := 0
+var persisted_storm_types: Dictionary = {}
 var stats := {
 	"archetypes": {},
 	"counts": {},
@@ -184,6 +185,63 @@ func verify(state: Resource, baseline: Resource) -> void:
 				),
 				"Real movement reaches each selected initial attacker " + id
 			)
+			var persistence := preload("res://scripts/expedition/expedition_persistence.gd").new()
+			persistence.enabled = false
+			var checkpoint: Dictionary = persistence.checkpoint_battle(
+				navigation_copy, unit.encounter, 998877
+			)
+			check(
+				checkpoint.saved,
+				"Every reached encounter accepts its battle environment checkpoint " + id
+			)
+			if checkpoint.saved:
+				var environment: Dictionary = checkpoint.environment
+				check(
+					Save._valid_environment_marker(
+						persistence.battle_marker, persistence.battle_checkpoint
+					),
+					"Battle marker validates after physical entry " + id
+				)
+				check(
+					State.EnvironmentData.valid_snapshot(
+						State.EnvironmentData.snapshot(
+							JSON.parse_string(JSON.stringify(environment))
+						)
+					),
+					"Frozen environment remains valid after JSON restore " + id
+				)
+				if (
+					environment.type == "SPACE_STORM"
+					and environment.configuration.get("extended", false)
+				):
+					var subtype: String = environment.configuration.subtype
+					if not persisted_storm_types.has(subtype):
+						var store := Save.new()
+						store.path = "user://variety_extended_storm_checkpoint.json"
+						check(
+							store.save_data(
+								persistence.battle_checkpoint, persistence.battle_marker
+							),
+							"Extended storm checkpoint writes to disk: " + subtype
+						)
+						check(
+							(
+								store.load_run().get("battle", {}).get("environment", {})
+								== environment
+							),
+							"Extended storm checkpoint restores exactly: " + subtype
+						)
+						store.clear_run()
+						persisted_storm_types[subtype] = true
+						check_extended_snapshot_contract(environment)
+					navigation_copy.environmental_instances.clear()
+					var retry: Dictionary = persistence.checkpoint_battle(
+						navigation_copy, unit.encounter, 998877, environment
+					)
+					check(
+						retry.saved and retry.environment == environment,
+						"Retry preserves frozen extended storm after world changes " + id
+					)
 	stats.systems += 1
 	increment(stats.archetypes, profile.archetype)
 	increment(stats.counts, pois.size())
@@ -216,6 +274,7 @@ func run() -> void:
 			if number < 6:
 				bump(state)
 				bump(baseline)
+	check(persisted_storm_types.size() == 3, "All extended storm subtypes pass disk checkpoints")
 	check(
 		stats.archetypes.size() == 7 and stats.formations.size() == 6,
 		"All archetypes and formations reached"
@@ -249,3 +308,30 @@ func run() -> void:
 	print("VARIETY_STATISTICS " + JSON.stringify(stats))
 	print("System variety: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+
+
+func check_extended_snapshot_contract(environment: Dictionary) -> void:
+	var missing: Dictionary = environment.duplicate(true)
+	missing.configuration.erase("extended")
+	missing.configuration.region.axes = [17.0, 3.0, 12.0]
+	check(
+		not State.EnvironmentData.valid_snapshot(missing),
+		"Large snapshots still require explicit extended-size permission"
+	)
+	var oversized: Dictionary = environment.duplicate(true)
+	oversized.configuration.region.axes = [18.1, 3.0, 12.0]
+	check(
+		not State.EnvironmentData.valid_snapshot(oversized),
+		"Extended snapshots still reject axes above eighteen"
+	)
+	var invalid_flag: Dictionary = environment.duplicate(true)
+	invalid_flag.configuration.extended = "true"
+	check(
+		not State.EnvironmentData.valid_snapshot(invalid_flag),
+		"Extended snapshot permission must be a boolean"
+	)
+	missing.configuration.region.axes = [8.0, 3.0, 6.0]
+	check(
+		State.EnvironmentData.valid_snapshot(missing),
+		"Legacy bounded snapshots remain valid without a new flag"
+	)

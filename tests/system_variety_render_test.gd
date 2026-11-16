@@ -177,6 +177,49 @@ func run() -> void:
 		if label != "binary":
 			check(Save.encode(host.state) == before, "Rendering consumes no state or RNG")
 		check(Save.encode(host.state).rng == before.rng, "Pointer input consumes no unrelated RNG")
+		if label == "storm_dominated":
+			var target_index := -1
+			for unit in host.state.defense.units:
+				if unit.mothership or unit.status == "reserve":
+					continue
+				var copy: Resource = Save.new().decode(before, host.state.rules)
+				if not preload("res://tests/fixtures/expedition_contact.gd").reach(
+					copy, unit.encounter
+				):
+					continue
+				var environment: Dictionary = copy.battle_environment(unit.encounter)
+				if (
+					environment.type == "SPACE_STORM"
+					and (
+						maxf(
+							environment.configuration.region.axes[0],
+							environment.configuration.region.axes[2]
+						)
+						> 9.0
+					)
+				):
+					target_index = unit.encounter
+					break
+			check(target_index >= 0, "Production example reaches an extended-size storm battle")
+			if target_index >= 0:
+				check(
+					preload("res://tests/fixtures/expedition_contact.gd").reach(
+						host.state, target_index
+					),
+					"Real movement establishes dominant-storm combat contact"
+				)
+				var expected: Dictionary = host.state.battle_environment(target_index)
+				host.start_battle(target_index, 998877)
+				check(
+					is_instance_valid(host.battle),
+					"Actual battle instantiates after the extended storm checkpoint"
+				)
+				if is_instance_valid(host.battle):
+					host.battle.enemy_timer.stop()
+					check(
+						host.battle.modifier.kind == State.EnvironmentData.modifier_id(expected),
+						"Dominant storm uses its existing combat modifier"
+					)
 		host.queue_free()
 		await settle()
 	print("System variety render: %d checks, %d failures" % [checks, failures])

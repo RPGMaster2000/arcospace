@@ -77,6 +77,10 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 			result.configuration = selected.configuration.duplicate(true)
 			result.configuration.region = selected.region.duplicate(true)
 			result.configuration.position = selected.position.duplicate()
+			# The frozen geometry needs the same size contract as its world record.
+			# Historical snapshots omit this optional flag and retain the old bounds.
+			if selected.type == SPACE_STORM and selected.generation.get("extended", false):
+				result.configuration.extended = true
 			result.visual = selected.visual.duplicate(true)
 	return snapshot(result)
 
@@ -136,8 +140,11 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.type == SPACE_STORM:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0: return false
 		if not Storms.valid_visual(value.visual, value.configuration.get("subtype")): return false
+		var extended: Variant = value.configuration.get("extended", false)
+		if not extended is bool: return false
 		if not Storms.valid({"position": value.configuration.get("position"),
-				"region": value.configuration.get("region"), "configuration": value.configuration}): return false
+				"region": value.configuration.get("region"), "configuration": value.configuration,
+				"generation": {"extended": extended}}): return false
 	if value.type == TEMPORAL_RIFT:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Rifts.valid_visual(value.visual): return false
 		if not Rifts.contains({"position": value.configuration.get("position"),

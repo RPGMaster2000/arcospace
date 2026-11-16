@@ -124,7 +124,8 @@ No combat/card/loot/reward stream is used by layout, validation or rendering.
 compares against the legacy preset. It checks profiles, rosters, RNG, geometry,
 homeworld hazard clearance, actual-speed arrival fairness, rotated boundaries,
 map bounds, exact JSON save roundtrips, real movement to every initial attacker,
-invalid data and unchanged Exploration. The current sweep passes 50,339 checks.
+invalid data and unchanged Exploration. The current sweep passes 55,169 checks, including battle checkpoints after
+every initial interception and disk roundtrips for all three storm subtypes.
 `tests/system_variety_render_test.gd` runs the production expedition scene with
 all seven layouts plus binary, quasar, nebula and large-solar examples, four viewport sizes and real
 mouse/touch input. Registered for both GL Compatibility and Mobile Vulkan CI.
@@ -198,7 +199,8 @@ mobile-aspect/size matrix. Corresponding Mobile Vulkan frames are CI artifacts; 
 ![](system_variety_screenshots/mobile-storm_dominated-seed-23.webp)
 ![](system_variety_screenshots/mobile-quasar-seed-4.webp)
 
-The final production map test passes 155 checks on each renderer. Exporting a Web
+The original production map test passed 155 checks on each renderer; it now also
+enters a deterministic extended-storm battle through the real expedition controller. Exporting a Web
 pack and running the menu-to-battle startup script with `--main-pack` passes all
 84 checks. Python regression-runner checks pass 22/22.
 
@@ -219,3 +221,36 @@ These assertions/fixtures were not weakened or regenerated. The PR remains a
 draft for CI review. The existing GitHub workflow runs the complete headless,
 GL Compatibility, Mobile Vulkan and exported-startup matrix on the final branch;
 results should be reviewed before merging. No automatic merge is configured.
+
+
+### CI recheck: extended storm battle-entry fix
+
+The first GitHub matrix passed both headless shards, both Mobile Vulkan shards
+and exported startup. GL startup exposed a real snapshot bug: extended storm
+world records allowed semiaxes above nine, but the frozen snapshot omitted the
+size-permission flag, so battle checkpoint validation rejected those encounters.
+The generation/interception-only sweep had not tried creating the checkpoints.
+Adding that step reproduced 57 failures across 600 systems before the fix.
+
+`BattleEnvironment.evaluate()` now captures the optional boolean
+`configuration.extended` from the chosen storm's generation metadata. Snapshot
+validation passes it to the same geometry validator. Historical snapshots omit
+it and retain the nine-unit bound; extended snapshots retain the eighteen-unit
+bound. Nonboolean flags and oversized geometry remain invalid. No combat effect,
+RNG, layout, save version, checkpoint order or result behavior changes.
+
+The expanded suite passes 55,169 assertions, including every reached attacker's
+checkpoint, frozen JSON restoration, disk restoration for ion/metal/psionic
+storms and retries after the world changes. The production render test now
+reaches a known large storm (System 1, seed 23), starts the actual battle and
+checks the existing combat modifier. The GL and Mobile aggregate statuses share
+a matrix dependency, so the previous GL failure also marked the Mobile aggregate
+red despite both Mobile shards passing. The full matrix is rerun on the fix;
+this document does not claim that rerun complete.
+
+
+Local validation of the corrective change: 55,169 generation/checkpoint checks,
+GL startup (84 checks), and 159 production map/battle-entry checks on each of
+GL Compatibility and Mobile Vulkan pass. Existing storm, Phase 1 foundation,
+expedition save and fresh-process resume suites also pass. Full GitHub rerun is
+left unmonitored; the PR remains unmerged.
