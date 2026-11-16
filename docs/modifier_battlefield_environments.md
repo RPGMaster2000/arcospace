@@ -135,6 +135,16 @@ updated to the intentional new contract: bounded ship-owned fills plus preserved
 shadowless authored directional lights. No baseline fixtures, combat expectations
 or cinematic timing parameters were changed.
 
+The first full CI run exposed two further obsolete test contracts: the depth
+suite required all seven modifiers to retain flat UV quads, and the storm
+presentation suite required the old panorama shader. The updated tests verify
+direction-aware enclosing skies, opaque depth writes, fixed world geometry and
+panorama orientation, plus rendered translation/rotation/seam behavior for every
+modifier. Metal/Psionic checks also require their distinct constructed geometry
+and absence of Ion clouds/lightning. Custom legacy quad projection remains
+covered by an isolated scene instance. Existing standard-arena, combat, card,
+HUD and timing assertions remain intact; no fixtures were changed.
+
 Local Godot 4.7.2 checks include the new headless/GL Compatibility/Mobile Vulkan
 suite, existing battlefield environment integration, cinematic/departure suites,
 GL beam-depth pixels, combat trace/state, asteroid snapshot and storm parity.

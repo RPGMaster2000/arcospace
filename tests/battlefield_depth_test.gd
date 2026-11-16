@@ -420,36 +420,65 @@ func run() -> void:
 				await combat_depth_checks(board, arena.resource_path.get_file().get_basename())
 			board.free()
 			await process_frame
-	# Legacy modifier scenes retain their exact quad shader, material and camera-following behavior.
+	# Modifier arenas now share the depth-correct sky but keep fixed world scenery.
+	# The standard-arena checks above remain unchanged.
 	for index in range(1, 8):
 		var board = Board.instantiate()
 		Preferences.set_skip_cinematics(true)
 		board.setup_settings = {"modifier": index}
 		board.get_node("BattleEffects").enabled = false
 		root.add_child(board)
+		var field: Node3D = board.battle_camera.get_parent()
 		check(
-			(
-				not board.backdrop.get_meta("infinite_panorama", false)
-				and (
-					board.backdrop.material_override.shader.resource_path
-					== (
-						"res://shaders/space_background.gdshader"
-						if index == 1
-						else (
-							"res://shaders/solar_background.gdshader"
-							if index == 3
-							else "res://shaders/battle_panorama.gdshader"
-						)
-					)
-				)
-			),
-			"Modifier environment retains its existing UV shader"
+			board.backdrop.get_meta("infinite_panorama", false)
+			and board.backdrop.mesh is SphereMesh
+			and board.backdrop.material_override.shader.resource_path == "res://shaders/battle_space_sky.gdshader",
+			"Every modifier uses the enclosing direction-aware sky"
 		)
-		var rest: Transform3D = board.backdrop.transform
-		board.cinematic_director._set_camera(board.battle_camera.global_transform, 42)
-		check(board.backdrop.transform != rest, "Legacy modifier quad projection remains supported")
+		var shader_source: String = board.backdrop.material_override.shader.code
+		check("depth_draw_opaque" in shader_source and not "depth_test_disabled" in shader_source,
+			"Modifier backgrounds retain depth writes and foreground occlusion")
+		var rest: Transform3D = board.backdrop.global_transform
+		var geometry: Node3D = field.get_node("EnvironmentGeometry")
+		var scenery_rest: Transform3D = geometry.global_transform
+		var panorama_basis: Basis = board.backdrop.material_override.get_shader_parameter("panorama_basis")
+		var pose: Transform3D = board.battle_camera.global_transform
+		pose.origin += Vector3(7, 2, 3)
+		pose.basis = pose.basis.rotated(Vector3.UP, 0.4)
+		board.cinematic_director._set_camera(pose, 42)
+		check(board.backdrop.global_transform == rest and board.backdrop.position == Vector3.ZERO,
+			"Modifier sky stays fixed during camera translation and rotation")
+		check(geometry.global_transform == scenery_rest
+			and board.backdrop.material_override.get_shader_parameter("panorama_basis") == panorama_basis,
+			"World scenery and panorama orientation never follow cinematic cameras")
+		check(board.modifier.kind == index, "Sky projection changes never change the active modifier")
+		await sky_checks(board)
 		board.free()
 		await process_frame
+	# Keep coverage for custom/legacy flat arenas even though shipped modifiers
+	# now use world-direction skies. This is an isolated scene instance only.
+	var legacy = Board.instantiate()
+	legacy.normal_battlefield = ARENAS[0]
+	legacy.setup_settings = {"modifier": 0}
+	legacy.get_node("BattleEffects").enabled = false
+	root.add_child(legacy)
+	legacy.enemy_timer.stop()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(45, 23)
+	legacy.backdrop.mesh = quad
+	legacy.backdrop.set_meta("infinite_panorama", false)
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/battle_panorama.gdshader")
+	legacy.backdrop.material_override = material
+	var legacy_rest: Transform3D = legacy.backdrop.transform
+	var legacy_pose: Transform3D = legacy.battle_camera.global_transform
+	legacy_pose.origin += Vector3(2, 1, 0)
+	legacy.cinematic_director._set_camera(legacy_pose, 42)
+	check(legacy.backdrop.transform != legacy_rest, "Legacy quad projection remains supported for custom arenas")
+	check(legacy.backdrop.mesh is QuadMesh and legacy.backdrop.material_override.shader == material.shader,
+		"The legacy projection fallback preserves the caller's mesh and shader")
+	legacy.free()
+	await process_frame
 	Preferences.set_skip_cinematics(previous_skip)
 	print("Battlefield depth: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
