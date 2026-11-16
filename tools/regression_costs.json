@@ -161,7 +161,9 @@
     "victory_music_test": 2.37,
     "victory_rewards_test": 2.14,
     "victory_upgrade_music_test": 1.97,
-    "visual_system_test": 1.12
+    "visual_system_test": 1.12,
+    "atmospheric_accents_render_test": 11.63,
+    "atmospheric_accents_test": 5.38
   },
   "gl_compatibility": {
     "alpha_visual_test": 9.23,
@@ -212,7 +214,8 @@
     "systems_failure_test": 4.73,
     "tactical_focus_test": 30.16,
     "tactical_resize_test": 9.93,
-    "unified_hud_test": 95.19
+    "unified_hud_test": 95.19,
+    "atmospheric_accents_render_test": 61.13
   },
   "mobile": {
     "asteroid_render_test": 10.86,
@@ -233,6 +236,7 @@
     "starfront_touch_gesture_test": 11.01,
     "stellar_shafts_prototype_test": 16.65,
     "stellar_shafts_render_test": 53.6,
-    "tactical_resize_test": 19.63
+    "tactical_resize_test": 19.63,
+    "atmospheric_accents_render_test": 114.19
   }
 }

@@ -2,6 +2,11 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, fog_disabled;
 uniform sampler2D source_texture : source_color, hint_default_white;
 uniform bool use_texture = false;
+// Opt-in map accent: sample a localized angular window of an existing panorama.
+// Defaults preserve every existing layer and encounter material.
+uniform bool panorama_patch = false;
+uniform float patch_extent = 0.48;
+uniform float panorama_gain = 0.48;
 uniform bool galaxy = false;
 // Optional map-only profiles: nebula, galaxy, dust lane, remnant, quasar.
 uniform int phenomenon = 0;
@@ -22,12 +27,17 @@ float noise(vec2 p) {
  return mix(mix(hash2(i),hash2(i+vec2(1,0)),f.x),mix(hash2(i+vec2(0,1)),hash2(i+vec2(1,1)),f.x),f.y);
 }
 void vertex() {
- if (camera_relative) {
+ if (camera_relative && !panorama_patch) {
   vec3 center = CAMERA_POSITION_WORLD+sky_direction*55.0-(CAMERA_POSITION_WORLD-reference_origin)*sky_parallax;
   MODELVIEW_MATRIX = VIEW_MATRIX*mat4(INV_VIEW_MATRIX[0],INV_VIEW_MATRIX[1],INV_VIEW_MATRIX[2],vec4(center,1.0));
  } else if (billboard) MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0],INV_VIEW_MATRIX[1],INV_VIEW_MATRIX[2],MODEL_MATRIX[3]);
+ if (panorama_patch) MODELVIEW_MATRIX = VIEW_MATRIX * mat4(vec4(1.0,0.0,0.0,0.0),vec4(0.0,1.0,0.0,0.0),vec4(0.0,0.0,1.0,0.0),vec4(CAMERA_POSITION_WORLD,1.0));
  POSITION = PROJECTION_MATRIX*MODELVIEW_MATRIX*vec4(VERTEX,1.0);
- if (camera_relative) POSITION.z = CLIP_SPACE_FAR*POSITION.w;
+ if (camera_relative) {
+  // A small opt-in far-plane inset avoids precision loss on transparent
+  // angular caps. World geometry still occludes them with normal depth tests.
+  POSITION.z = (CLIP_SPACE_FAR + (panorama_patch ? 0.00001 : 0.0))*POSITION.w;
+ }
 }
 void fragment() {
  vec2 p = UV - 0.5;
@@ -49,4 +59,13 @@ void fragment() {
  ALBEDO = tint.rgb * (use_texture ? image.rgb : vec3(1.0));
  float corridor = 1.0-smoothstep(0.55,1.15,length((SCREEN_UV-vec2(0.5,0.48))/vec2(0.42,0.36)));
  ALPHA = opacity * (use_texture ? image.a : alpha) * edge * (1.0-corridor*foreground_protection);
+ if (panorama_patch) {
+  vec2 panorama_uv = UV;
+  vec2 dx = dFdx(panorama_uv), dy = dFdy(panorama_uv);
+  dx.x -= round(dx.x); dy.x -= round(dy.x);
+  vec3 source = textureGrad(source_texture,vec2(fract(panorama_uv.x),clamp(panorama_uv.y,0.001,0.999)),dx,dy).rgb;
+  float mask = 1.0-smoothstep(patch_extent*0.45,patch_extent,length(UV2));
+  ALBEDO = source * panorama_gain;
+  ALPHA = opacity * mask * (1.0-corridor*foreground_protection);
+ }
 }
