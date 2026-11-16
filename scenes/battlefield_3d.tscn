@@ -12,7 +12,7 @@ background_mode = 1
 background_color = Color(0.006, 0.012, 0.025, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.43, 0.52, 0.65, 1)
-ambient_light_energy = 0.60
+ambient_light_energy = 0.68
 
 [sub_resource type="StandardMaterial3D" id="EnemyMaterial"]
 albedo_color = Color(0.53, 0.24, 0.22, 1)
@@ -63,7 +63,7 @@ size = 12.8
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=2115728314]
 transform = Transform3D(0.7056614, 0.7031474, -0.087325744, -0.7084838, 0.70189285, -0.07346828, 0.009634316, 0.11371256, 0.993467, 0, 0, 0)
 light_color = Color(0.86, 0.92, 1, 1)
-light_energy = 1.45
+light_energy = 1.65
 shadow_enabled = false
 
 [node name="PlayerShip" parent="." unique_id=2061140808 instance=ExtResource("Ship")]
@@ -131,7 +131,7 @@ mesh = SubResource("SpaceSphere")
 [node name="RimLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-25, -130, 0)
 light_color = Color(0.32, 0.46, 0.68, 1)
-light_energy = 0.35
+light_energy = 0.45
 shadow_enabled = false
 
 [node name="BackgroundObjects" type="Node3D" parent="."]

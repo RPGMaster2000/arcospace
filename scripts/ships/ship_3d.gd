@@ -288,6 +288,39 @@ func set_hull_color(color: Color) -> void:
 	hull_material.albedo_color = color
 
 
+func measure_hull() -> AABB:
+	var bounds := AABB()
+	var first := true
+	for part in body.find_children("*", "MeshInstance3D", true, false):
+		if part.mesh == null:
+			continue
+		var part_bounds: AABB = (global_transform.affine_inverse() * part.global_transform) * part.get_aabb()
+		bounds = part_bounds if first else bounds.merge(part_bounds)
+		first = false
+	return bounds
+
+
+func add_visibility_light(hull_layer: int) -> void:
+	var bounds := measure_hull()
+	var light := OmniLight3D.new()
+	light.name = "HullVisibilityLight"
+	light.light_color = Color(.73, .84, 1.0)
+	light.light_energy = .95
+	light.light_specular = .35
+	light.light_cull_mask = hull_layer
+	light.shadow_enabled = false
+	light.omni_attenuation = 1.35
+	var hull_scale := global_basis.get_scale().abs()
+	light.omni_range = clampf((bounds.size * hull_scale).length() * .85, 2.0, 5.5)
+	for part in body.find_children("*", "MeshInstance3D", true, false):
+		part.layers |= hull_layer
+	body.add_child(light)
+	# Offset toward the nose and camera-facing flank so the hull keeps a dark side.
+	var flank := signf(global_basis.z.dot(Vector3.BACK))
+	var offset := Vector3(bounds.size.x * .32, bounds.size.y * .8 + .24, flank * (bounds.size.z * .55 + .18))
+	light.position = body.to_local(to_global(bounds.get_center() + offset))
+
+
 # Terminal presentation only: deterministic visual fragments, no physics or combat mutations.
 func animate_destruction(sequence: Tween) -> void:
 	$Shield.hide()
@@ -327,6 +360,8 @@ func animate_destruction(sequence: Tween) -> void:
 		sequence.tween_property(flash, "scale", Vector3.ONE * 3.0, DESTRUCTION_BURST_SECONDS / DESTRUCTION_BURSTS)
 		sequence.tween_callback(flash.queue_free)
 	sequence.tween_callback(func():
+		for light in $Body.find_children("*", "Light3D", true, false):
+			light.hide()
 		$Body.hide()
 		$Shield.hide()
 		preload("res://scripts/audio/sfx.gd").play(&"ship_destroyed", self)

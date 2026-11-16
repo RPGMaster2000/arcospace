@@ -1,8 +1,8 @@
 extends Resource
 class_name BattleCinematicSettings
 ## Camera-only tuning. Distances are relative to measured hull bounds (+X forward).
-## 0.5 doubles presentation durations without touching Engine.time_scale.
-@export_range(0.1, 2.0, 0.05) var playback_speed: float = 0.5
+## Local playback rate. 0.75 is 50% faster than the previous 0.5.
+@export_range(0.1, 2.0, 0.05) var playback_speed: float = 0.75
 @export var introduction_seconds: Vector3 = Vector3(1.15, 1.05, 1.25)
 @export var establishing_from: Vector3 = Vector3(4, 2, 4)
 @export var establishing_to: Vector3 = Vector3(3, 1.4, 4)

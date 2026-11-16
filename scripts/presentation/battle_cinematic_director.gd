@@ -6,6 +6,7 @@ signal stage_changed(stage: String)
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
+const IntroFont = preload("res://assets/fonts/emoji_ui.tres")
 @export var settings: Resource = preload("res://resources/presentation/battle_cinematics.tres")
 var camera: Camera3D
 var player: Node3D
@@ -31,6 +32,9 @@ var _bounds: Dictionary = {}
 var _backfill: ColorRect
 var _skip_layer: CanvasLayer
 var skip_button: Button
+var _intro_caption: PanelContainer
+var _intro_name: Label
+var _intro_class: Label
 var _boost_body: Node3D
 var _body_rest := Vector3.ZERO
 var _boost_shield: Node3D
@@ -85,28 +89,47 @@ func configure(
 	preload("res://scripts/ui/encounter_presentation.gd").action(skip_button)
 	blocker.add_child(skip_button)
 	skip_button.pressed.connect(skip)
+	_intro_caption = PanelContainer.new()
+	_intro_caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_intro_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro_caption.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_intro_caption.offset_left = 24
+	_intro_caption.offset_right = 24
+	_intro_caption.offset_top = -24
+	_intro_caption.offset_bottom = -24
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(.025, .05, .085, .86)
+	plate.border_color = Color(.43, .68, .84, .66)
+	plate.border_width_left = 2
+	plate.content_margin_left = 15
+	plate.content_margin_right = 18
+	plate.content_margin_top = 8
+	plate.content_margin_bottom = 8
+	_intro_caption.add_theme_stylebox_override("panel", plate)
+	blocker.add_child(_intro_caption)
+	var caption_lines := VBoxContainer.new()
+	caption_lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	caption_lines.add_theme_constant_override("separation", 0)
+	_intro_caption.add_child(caption_lines)
+	_intro_name = Label.new()
+	_intro_name.add_theme_font_override("font", IntroFont)
+	_intro_name.add_theme_font_size_override("font_size", 25)
+	caption_lines.add_child(_intro_name)
+	_intro_class = Label.new()
+	_intro_class.add_theme_font_override("font", IntroFont)
+	_intro_class.add_theme_font_size_override("font_size", 17)
+	_intro_class.add_theme_color_override("font_color", Color(.70, .84, .93))
+	caption_lines.add_child(_intro_class)
+	_intro_caption.hide()
 	_skip_layer.hide()
 
 
 func _measure(ship: Node3D) -> Dictionary:
-	var bounds := AABB()
-	var first := true
-	for mesh in ship.get_node("Body").find_children("*", "MeshInstance3D", true, false):
-		if mesh.mesh == null:
-			continue
-		for i in range(8):
-			var point: Vector3 = ship.to_local(
-				mesh.global_transform * mesh.mesh.get_aabb().get_endpoint(i)
-			)
-			if first:
-				bounds = AABB(point, Vector3.ZERO)
-				first = false
-			else:
-				bounds = bounds.expand(point)
-	var scale: Vector3 = ship.global_basis.get_scale()
+	var bounds: AABB = ship.measure_hull()
+	var scale: Vector3 = ship.global_basis.get_scale().abs()
 	return {
 		"center": bounds.get_center(),
-		"radius": maxf(.5, bounds.size.length() * .5 * maxf(scale.x, maxf(scale.y, scale.z)))
+		"radius": maxf(.5, (bounds.size * scale).length() * .5)
 	}
 
 
@@ -184,13 +207,16 @@ func _stage(label: String) -> void:
 
 
 func _move(
-	from: Transform3D, to: Transform3D, seconds: float, from_fov: float, to_fov: float
+	from: Transform3D, to: Transform3D, seconds: float, from_fov: float, to_fov: float,
+	reveal_caption: bool = false
 ) -> void:
 	motion = create_tween()
 	(
 		motion
 		. tween_method(
-			func(p: float): _set_camera(from.interpolate_with(to, p), lerpf(from_fov, to_fov, p)),
+			func(p: float):
+				_set_camera(from.interpolate_with(to, p), lerpf(from_fov, to_fov, p))
+				if reveal_caption: _intro_caption.modulate.a = smoothstep(0.0, .50, p),
 			0.0,
 			1.0,
 			settings.duration(seconds)
@@ -202,10 +228,14 @@ func _move(
 	await settled
 
 
-func introduction() -> void:
+func introduction(enemy_name: String = "", enemy_class: String = "") -> void:
 	if not allowed():
 		return
 	var token := _begin("introduction", true)
+	_intro_name.text = enemy_name
+	_intro_class.text = enemy_class
+	_intro_caption.modulate.a = 0.0
+	_intro_caption.visible = not enemy_name.is_empty()
 	_stage("establishing")
 	if token != revision or not active:
 		return
@@ -213,7 +243,7 @@ func introduction() -> void:
 	var b := _pose(enemy, settings.establishing_to)
 	_set_camera(a, settings.cinematic_fov)
 	await _move(
-		a, b, settings.introduction_seconds.x, settings.cinematic_fov, settings.cinematic_fov
+		a, b, settings.introduction_seconds.x, settings.cinematic_fov, settings.cinematic_fov, true
 	)
 	if token != revision or not active:
 		return
@@ -250,6 +280,7 @@ func introduction() -> void:
 		motion
 		. tween_method(
 			func(p: float):
+				_intro_caption.modulate.a = 1.0 - smoothstep(.12, .72, p)
 				view.offset_bottom = lerpf(0, _view_bottom, p)
 				var normal_height := maxf(1, board.size.y + _view_bottom)
 				var adjusted := rad_to_deg(
@@ -285,14 +316,15 @@ func beam_charge(actor: Node3D, victim: Node3D) -> void:
 	var horizontal := half_angle if camera.keep_aspect == Camera3D.KEEP_WIDTH else atan(tan(half_angle) * aspect)
 	var vertical := atan(tan(half_angle) / aspect) if camera.keep_aspect == Camera3D.KEEP_WIDTH else half_angle
 	var radius: float = maxf(_bounds[actor].radius, _bounds[victim].radius)
-	var distance: float = settings.framing_margin * maxf(
-		(attacker_center.distance_to(victim_center) * .95 + radius) / tan(horizontal),
-		radius / sin(vertical)
-	)
-	var position := midpoint + (normal + Vector3.UP * .18).normalized() * distance
+	var half_gap := attacker_center.distance_to(victim_center) * .5
+	# Fit the focused hull. The opposing hull can fall off the edge during the turn.
+	var focus_distance: float = radius * settings.framing_margin / sin(minf(horizontal, vertical))
+	var distance := maxf(half_gap * .95, sqrt(maxf(0.0, focus_distance * focus_distance - half_gap * half_gap)))
+	var lift := Vector3.UP.slide(axis)
+	var position := midpoint + (normal + lift * .18).normalized() * distance
 	var pose := Transform3D(Basis.IDENTITY, position)
-	_beam_victim_pose = pose.looking_at(midpoint.lerp(victim_center, .48), Vector3.UP)
-	_set_camera(pose.looking_at(midpoint.lerp(attacker_center, .48), Vector3.UP), settings.cinematic_fov)
+	_beam_victim_pose = pose.looking_at(midpoint.lerp(victim_center, .94), Vector3.UP)
+	_set_camera(pose.looking_at(midpoint.lerp(attacker_center, .94), Vector3.UP), settings.cinematic_fov)
 	_charge_glow = MeshInstance3D.new()
 	_charge_glow.mesh = QuadMesh.new()
 	_charge_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -525,6 +557,7 @@ func _finish() -> void:
 		if is_instance_valid(node):
 			node.visible = _ui[node]
 	_ui.clear()
+	_intro_caption.hide()
 	_skip_layer.hide()
 	_backfill.hide()
 	if _focus_rest != null:

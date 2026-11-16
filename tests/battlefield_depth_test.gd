@@ -74,6 +74,43 @@ func difference(a: Image, b: Image) -> float:
 	return total / maxi(1, samples)
 
 
+func visibility_checks(board: Node, label: String) -> void:
+	var director = board.cinematic_director
+	for ship in [director.player, director.enemy]:
+		var light: OmniLight3D = ship.get_node("Body/HullVisibilityLight")
+		check(light.visible and not light.shadow_enabled and light.omni_range <= 5.5,
+			"Each standard ship has a bounded shadowless fill")
+		var other: Node3D = director.enemy if ship == director.player else director.player
+		check(light.light_cull_mask & other.get_node("Body/Hull").layers == 0
+			and light.light_cull_mask & ship.get_node("Body/Hull").layers != 0,
+			"The fill reaches only its own hull layer")
+	if DisplayServer.get_name() == "headless":
+		return
+	var player: Node3D = director.player
+	var enemy: Node3D = director.enemy
+	player.set_process(false)
+	enemy.set_process(false)
+	player.get_node("Shield").hide()
+	enemy.get_node("Shield").hide()
+	var light: OmniLight3D = player.get_node("Body/HullVisibilityLight")
+	var other_light: OmniLight3D = enemy.get_node("Body/HullVisibilityLight")
+	light.hide()
+	other_light.hide()
+	var unlit := await sky_image(board)
+	light.show()
+	other_light.show()
+	var lit := await sky_image(board)
+	var center: Vector2i = Vector2i(board.battle_camera.unproject_position(player.get_node("Body/Hull").global_position))
+	var crop := Rect2i(center - Vector2i(65, 40), Vector2i(130, 80))
+	check(difference(unlit.get_region(crop), lit.get_region(crop)) > .005,
+		"Ship fill adds measurable shaping to the rendered hull")
+	await capture(board, label + "-visibility-light")
+	player.get_node("Shield").show()
+	enemy.get_node("Shield").show()
+	player.set_process(true)
+	enemy.set_process(true)
+
+
 func sky_checks(board: Node) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
@@ -119,7 +156,7 @@ func timing_checks(board: Node) -> void:
 	var seen: Array = []
 	director.stage_changed.connect(func(label): seen.append(label))
 	director.introduction()
-	for pair in [["establishing", 2.3], ["flyby", 2.1], ["confrontation", 2.5]]:
+	for pair in [["establishing", 1.15 / .75], ["flyby", 1.05 / .75], ["confrontation", 1.25 / .75]]:
 		check(director.stage == pair[0], "Introduction shot order remains unchanged")
 		var tween: Tween = director.motion
 		tween.pause()
@@ -131,7 +168,7 @@ func timing_checks(board: Node) -> void:
 		tween.custom_step(pair[1] * .5 + .001)
 	check(
 		not director.active and director.camera.global_transform == original,
-		"Doubled introduction restores the original camera"
+		"Faster introduction restores the original camera"
 	)
 	check(
 		board.backdrop.transform == sky_rest,
@@ -202,6 +239,13 @@ func combat_depth_checks(board: Node, label: String) -> void:
 	board.player_crew = 99
 	board.enemy_shields = 0
 	board.enemy_hull = 3
+	var victim_light: OmniLight3D = director.enemy.get_node("Body/HullVisibilityLight")
+	var body: Node3D = director.enemy.get_node("Body")
+	var shed_light := [false]
+	body.visibility_changed.connect(func():
+		if not body.visible:
+			shed_light[0] = not victim_light.visible and director.player.get_node("Body/HullVisibilityLight").visible
+			stage_capture(board, label + "-fragments-unlit"))
 	board._act("player", 0, false)
 	await process_frame
 	await wait_ready(board)
@@ -218,6 +262,7 @@ func combat_depth_checks(board: Node, label: String) -> void:
 		board.victory_ready and board.get_node("MatchResult").visible,
 		"Victory result follows departure in each standard arena"
 	)
+	check(shed_light[0], "The destroyed hull switches off its fill at fragmentation")
 	check(
 		board._both_states() == departure_state[0] and board.turn_number == departure_state[1],
 		"Orbit/boost/fade cannot advance combat state or turns"
@@ -230,7 +275,7 @@ func combat_depth_checks(board: Node, label: String) -> void:
 
 func run() -> void:
 	var settings := Settings.new()
-	check(settings.playback_speed == .5, "Default cinematic speed is half the previous speed")
+	check(settings.playback_speed == .75, "Default cinematic speed is 50 percent faster than the previous .5")
 	check(
 		settings.introduction_seconds == Vector3(1.15, 1.05, 1.25),
 		"Authored shot durations remain independently editable"
@@ -244,15 +289,15 @@ func run() -> void:
 					+ settings.introduction_seconds.z
 				)
 			),
-			6.9
+			4.6
 		),
-		"Three-shot introduction now totals 6.9 seconds"
+		"Three-shot introduction now totals 4.6 seconds"
 	)
 	check(
 		(
-			settings.duration(settings.attack_seconds) == 2.5
-			and settings.duration(settings.orbit_seconds) == 4.5
-			and is_equal_approx(settings.duration(settings.boost_seconds), .76)
+			is_equal_approx(settings.duration(settings.attack_seconds), 1.25 / .75)
+			and settings.duration(settings.orbit_seconds) == 3.0
+			and is_equal_approx(settings.duration(settings.boost_seconds), .38 / .75)
 		),
 		"Attack, orbit and faster boost retain the playback multiplier"
 	)
@@ -284,6 +329,7 @@ func run() -> void:
 				board.enemy_ship_data == profile,
 				"Requested light/heavy/mothership profile is actually bound"
 			)
+			await visibility_checks(board, arena.resource_path.get_file().get_basename() + "-" + profile.resource_path.get_file().get_basename())
 			var positions: Array = scenery.ORBIT_ROCKS if arena == ARENAS[1] else scenery.DEEP_ROCKS
 			var visible_rocks := 0
 			var low := INF

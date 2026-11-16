@@ -107,6 +107,9 @@ const BATTLEFIELDS = [
 	preload("res://scenes/battlefield_metal_storm.tscn"),
 	preload("res://scenes/battlefield_psionic_storm.tscn")
 ]
+const PLANETARY_BATTLEFIELD = preload("res://scenes/battlefield_planetary_orbit.tscn")
+const PLAYER_HULL_LIGHT_LAYER := 1 << 18
+const ENEMY_HULL_LIGHT_LAYER := 1 << 19
 
 ## TUNE: Optional normal-only override; empty randomizes Deep Space / Planetary Orbit.
 ## Drag battlefield_planetary_orbit.tscn here to use that normal variant. No gameplay RNG or modifier changes.
@@ -132,7 +135,7 @@ func _enter_tree() -> void:
 		var visual_rng := RandomNumberGenerator.new()
 		visual_rng.randomize()
 		if visual_rng.randi_range(0, 1) == 1:
-			scene = preload("res://scenes/battlefield_planetary_orbit.tscn")
+			scene = PLANETARY_BATTLEFIELD
 	var battlefield = scene.instantiate()
 	battlefield.name = "Battlefield"
 	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:
@@ -188,6 +191,9 @@ func _ready() -> void:
 	if engine_light:
 		engine_base_energy = engine_light.light_energy
 	super._ready()
+	if camera.get_parent().scene_file_path in [BATTLEFIELDS[0].resource_path, PLANETARY_BATTLEFIELD.resource_path]:
+		cinematic_director.player.add_visibility_light(PLAYER_HULL_LIGHT_LAYER)
+		cinematic_director.enemy.add_visibility_light(ENEMY_HULL_LIGHT_LAYER)
 	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:
 		if pair[1] != null:
 			$BattleView/Viewport/Battlefield.get_node(pair[0]).set_hull_color(pair[1].hull_color)
@@ -236,7 +242,10 @@ func _fit_ftl() -> void:
 	_fit_jump_button()
 
 func _begin_battle_presentation() -> void:
-	await cinematic_director.introduction()
+	await cinematic_director.introduction(
+		enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship",
+		enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel"
+	)
 	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit and not cinematic_director.exiting:
 		_begin_turn("player")
 

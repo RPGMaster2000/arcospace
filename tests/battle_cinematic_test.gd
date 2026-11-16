@@ -114,6 +114,9 @@ func introduction_checks() -> void:
 			"Introduction locks real battle actions"
 		)
 		check(not board._act("player", 0, false), "Card input rejected during introduction")
+		check(director._intro_caption.visible and director._intro_caption.modulate.a < .10
+			and director._intro_name.text == profile.ship_name and director._intro_class.text == profile.subtitle,
+			"Intro title fades in with the authoritative name and class")
 		director.stage_changed.connect(
 			func(stage):
 				stages.append(stage)
@@ -129,10 +132,17 @@ func introduction_checks() -> void:
 			"Measured hull stays clear of flyby camera"
 		)
 		await wait_until(func(): return director.stage == "confrontation", "Third shot frames the enemy")
+		check(is_equal_approx(director._intro_caption.modulate.a, 1.0), "Enemy title holds between the flyby and confrontation")
+		var caption: Rect2 = director._intro_caption.get_global_rect()
+		check(root.get_visible_rect().encloses(caption) and caption.position.y > root.size.y * .65,
+			"Enemy title fits at the lower left")
+		await shot_capture(board, profile.resource_path.get_file().get_basename() + "-enemy-caption")
 		var forward: Vector3 = director.enemy.global_basis.x.normalized()
 		var close: Vector3 = director.camera.global_position - director._center(director.enemy)
 		check(close.normalized().dot(forward) > .95 and close.length() > radius, "Third shot starts off the nose at a hull-safe distance")
 		await settle_board(board)
+		check(not director._intro_caption.is_visible_in_tree() and is_zero_approx(director._intro_caption.modulate.a),
+			"Enemy title fades before gameplay begins")
 		check(
 			stages == ["establishing", "flyby", "confrontation"],
 			"Three distinct introduction shots in order"
@@ -159,8 +169,13 @@ func introduction_checks() -> void:
 		await process_frame
 	for arena in range(8):
 		var board := fresh(null, arena)
+		if arena > 0:
+			check(board.cinematic_director.player.get_node_or_null("Body/HullVisibilityLight") == null
+				and board.cinematic_director.enemy.get_node_or_null("Body/HullVisibilityLight") == null,
+				"Modifier battlefields keep their authored lighting")
 		board.cinematic_director.skip()
 		await settle_board(board)
+		check(not board.cinematic_director._intro_caption.is_visible_in_tree(), "Skip clears the enemy title")
 		check(
 			board.battle_camera.global_transform == board.cinematic_director._camera_rest,
 			"Every arena restores gameplay camera after skip"
@@ -351,13 +366,19 @@ func attack_checks() -> void:
 			board.set(target + "_shields", 0)
 			board.set(target + "_hull", 100)
 			var beams := [0]
+			var charge_origin := [Vector3.ZERO]
 			director.stage_changed.connect(func(stage):
 				if stage == "beam_charge":
-					var rect := Rect2(Vector2.ZERO, director.camera.get_viewport().get_visible_rect().size)
-					for ship in [director.player, director.enemy]:
-						check(rect.has_point(director.camera.unproject_position(director._center(ship))), "Side-on frame establishes both ships")
+					check_beam_focus(director, side)
+					var a: Vector3 = director._center(director.player)
+					var b: Vector3 = director._center(director.enemy)
+					charge_origin[0] = director.camera.global_position
+					check(absf((charge_origin[0] - a.lerp(b, .5)).dot((b - a).normalized())) < .001,
+						"Beam camera starts on the perpendicular through the ship midpoint")
 					check(board.get(target + "_hull") == 100 and beams[0] == 0, "Charge precedes damage and weapon launch")
 				if stage == "impact_hold":
+					check_beam_focus(director, target)
+					check(director.camera.global_position.is_equal_approx(charge_origin[0]), "Beam turn rotates around the same camera origin")
 					check(board.get(target + "_hull") == 100 and beams[0] == 1, "Victim pose established before authoritative impact")
 					check(director.camera.global_transform.is_equal_approx(director._beam_victim_pose), "Impact uses victim-focused camera")
 			)
@@ -435,6 +456,19 @@ func attack_checks() -> void:
 	finish_destruction_hud(audit)
 	board.free()
 	await process_frame
+
+
+func check_beam_focus(director: Node, side: String) -> void:
+	var focus: Node3D = director.player if side == "player" else director.enemy
+	var opposite: Node3D = director.enemy if side == "player" else director.player
+	var center: Vector3 = director._center(focus)
+	var other: Vector3 = director._center(opposite)
+	var rect: Rect2 = director.camera.get_viewport().get_visible_rect()
+	var screen_center := rect.get_center()
+	var subject_distance: float = screen_center.distance_to(director.camera.unproject_position(center))
+	var other_distance: float = screen_center.distance_to(director.camera.unproject_position(other))
+	check(subject_distance < rect.size.x * .07 and subject_distance * 3.0 < other_distance,
+		"Intended beam subject dominates the centered side-on setup")
 
 
 func skip_beam_checks() -> void:
