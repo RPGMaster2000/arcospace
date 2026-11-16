@@ -459,6 +459,7 @@ func attack_checks() -> void:
 
 
 func check_beam_focus(director: Node, side: String) -> void:
+	check(is_equal_approx(director.camera.fov, 12.0), "Beam charge and impact use the tighter 12-degree lens")
 	var focus: Node3D = director.player if side == "player" else director.enemy
 	var opposite: Node3D = director.enemy if side == "player" else director.player
 	var center: Vector3 = director._center(focus)
