@@ -191,7 +191,11 @@ func _ready() -> void:
 	if engine_light:
 		engine_base_energy = engine_light.light_energy
 	super._ready()
-	if camera.get_parent().scene_file_path in [BATTLEFIELDS[0].resource_path, PLANETARY_BATTLEFIELD.resource_path]:
+	# Modifier scenery opts into the same isolated, shadowless hull fills.
+	if (
+		camera.get_parent().scene_file_path in [BATTLEFIELDS[0].resource_path, PLANETARY_BATTLEFIELD.resource_path]
+		or camera.get_parent().has_node("EnvironmentGeometry")
+	):
 		cinematic_director.player.add_visibility_light(PLAYER_HULL_LIGHT_LAYER)
 		cinematic_director.enemy.add_visibility_light(ENEMY_HULL_LIGHT_LAYER)
 	for pair in [["PlayerShip", player_ship_data], ["EnemyShip", enemy_ship_data]]:

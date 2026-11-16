@@ -170,9 +170,15 @@ func introduction_checks() -> void:
 	for arena in range(8):
 		var board := fresh(null, arena)
 		if arena > 0:
-			check(board.cinematic_director.player.get_node_or_null("Body/HullVisibilityLight") == null
-				and board.cinematic_director.enemy.get_node_or_null("Body/HullVisibilityLight") == null,
-				"Modifier battlefields keep their authored lighting")
+			# Modifier arenas now opt into the existing ship-owned fill, while
+			# retaining their authored directional lighting and no shadow maps.
+			for ship in [board.cinematic_director.player, board.cinematic_director.enemy]:
+				var light: OmniLight3D = ship.get_node_or_null("Body/HullVisibilityLight")
+				check(light != null and not light.shadow_enabled and light.omni_range <= 5.5,
+					"Modifier ships use the existing bounded shadowless visibility fill")
+			var field: Node3D = board.battle_camera.get_parent()
+			check(not field.get_node("Sun").shadow_enabled and not field.get_node("RimLight").shadow_enabled,
+				"Modifier battlefields retain their authored shadowless directional lights")
 		board.cinematic_director.skip()
 		await settle_board(board)
 		check(not board.cinematic_director._intro_caption.is_visible_in_tree(), "Skip clears the enemy title")
