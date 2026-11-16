@@ -27,6 +27,9 @@ func check(ok: bool, message: String) -> void:
 func fresh(mode: String, chance: float = 0.0, seed_value: int = 1042) -> Resource:
 	var configuration: Resource = Rules.duplicate(true)
 	configuration.game_mode = mode
+	# Original single-storm generation contract; expanded profiles have separate tests.
+	configuration.system_variety = Rules.system_variety.duplicate(true)
+	configuration.system_variety.enabled = false
 	configuration.space_storm_chance = chance
 	configuration.log_rolls = false
 	var state := State.new()

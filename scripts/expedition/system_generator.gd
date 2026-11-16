@@ -167,6 +167,7 @@ static func _poi_weight(item: Resource, profile: Resource) -> float:
 static func _generate_defense(state: Resource) -> void:
 	state.system_number += 1
 	state.system_name = "Starfront %d" % state.system_number
+	state.system_variation = preload("res://scripts/expedition/system_variation.gd").generate(state.seed_used, state.system_number, state.rules.system_variety) if state.rules.defense_v2 and state.layout_expansion > 0.0 else {}
 	var faction: Resource = Factions.select(state)
 	state.faction_id = faction.id
 	state.system_profile = "industrial"
@@ -198,9 +199,21 @@ static func _generate_defense(state: Resource) -> void:
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if mother else profile.ship_name, "completed": false})
 	var pois: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() != "unstable_wormhole")
-	var slots: Array = []
+	var selected: Array = []
+	# Consume exactly the historical eight selection draws, regardless of new count.
 	for i in range(mini(8, pois.size())):
-		var poi: Resource = pois.pop_at(state.rng.randi_range(0, pois.size()-1))
+		selected.append(pois.pop_at(state.rng.randi_range(0, pois.size()-1)))
+	if not state.system_variation.is_empty():
+		var local := preload("res://scripts/expedition/system_variation.gd").rng_for(state.seed_used, state.system_number, "poi-selection")
+		var count: int = state.system_variation.poi_count
+		if count < selected.size(): selected.resize(count)
+		# Extra destinations are installations/phenomena, keeping planetary orbit
+		# packing feasible without increasing the number of celestial bodies.
+		var independent: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() not in ["unstable_wormhole", "mining_operation", "gas_giant", "research_station", "quarantined_colony"])
+		while selected.size() < count and not independent.is_empty():
+			selected.append(independent[local.randi_range(0, independent.size() - 1)])
+	var slots: Array = []
+	for poi in selected:
 		slots.append(state.encounters.size())
 		state.encounters.append(_poi(poi))
 	if state.rules.trading_outpost != null:
@@ -225,6 +238,7 @@ static func _generate_defense(state: Resource) -> void:
 		state.SystemLayout.planetary_radii(state.encounters), state.orbit_clearance)
 	state.defense.add_reserves(reserves)
 	state.defense.encounter_ledger = state.encounters
+	preload("res://scripts/expedition/varied_system_layout.gd").apply(state)
 	state.defense.construction_sites = state.defense.Installations.sites(
 		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)
 

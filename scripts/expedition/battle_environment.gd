@@ -27,7 +27,7 @@ static func instance(id: String, type: String, position: Array = []) -> Dictiona
 static func valid_instances(value: Variant) -> bool:
 	if not value is Array or value.size() > 128: return false
 	var ids: Dictionary = {}
-	var physical_storm := false
+	var physical_storm := 0
 	var physical_rift := false
 	for item in value:
 		if not item is Dictionary: return false
@@ -41,8 +41,8 @@ static func valid_instances(value: Variant) -> bool:
 		if item.type == ASTEROID_FIELD and not item.region.is_empty() and (not Asteroids.valid(item) or not Asteroids.valid_visual(item.visual)): return false
 		if item.type == SOLAR_INTERFERENCE and not item.region.is_empty() and (not Solar.valid(item) or not Solar.valid_visual(item.visual)): return false
 		if item.type == SPACE_STORM and not item.region.is_empty():
-			if physical_storm: return false
-			physical_storm = true
+			physical_storm += 1
+			if physical_storm > 2: return false
 			if not Storms.valid(item) or not Storms.valid_visual(item.visual, item.configuration.subtype): return false
 			if not Storms.valid_generation(item.generation): return false
 		if item.type == TEMPORAL_RIFT and not item.region.is_empty():
@@ -77,6 +77,10 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 			result.configuration = selected.configuration.duplicate(true)
 			result.configuration.region = selected.region.duplicate(true)
 			result.configuration.position = selected.position.duplicate()
+			# The frozen geometry needs the same size contract as its world record.
+			# Historical snapshots omit this optional flag and retain the old bounds.
+			if selected.type == SPACE_STORM and selected.generation.get("extended", false):
+				result.configuration.extended = true
 			result.visual = selected.visual.duplicate(true)
 	return snapshot(result)
 
@@ -136,8 +140,11 @@ static func valid_snapshot(value: Variant) -> bool:
 	if value.type == SPACE_STORM:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0: return false
 		if not Storms.valid_visual(value.visual, value.configuration.get("subtype")): return false
+		var extended: Variant = value.configuration.get("extended", false)
+		if not extended is bool: return false
 		if not Storms.valid({"position": value.configuration.get("position"),
-				"region": value.configuration.get("region"), "configuration": value.configuration}): return false
+				"region": value.configuration.get("region"), "configuration": value.configuration,
+				"generation": {"extended": extended}}): return false
 	if value.type == TEMPORAL_RIFT:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Rifts.valid_visual(value.visual): return false
 		if not Rifts.contains({"position": value.configuration.get("position"),

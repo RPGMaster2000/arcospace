@@ -38,15 +38,20 @@ static func asteroid(seed_value: int, system: int, fleet: RefCounted, candidates
 	return []
 
 static func storm(item: Dictionary, fleet: RefCounted, candidates: Array, existing: Array) -> Dictionary:
-	if item.is_empty() or relevant(item, fleet): return item
+	if item.is_empty(): return item
 	var bounds := Layout.bounds(fleet.layout_expansion)
 	var retry := item.duplicate(true)
 	var best := {}
 	var best_score := INF
+	var axes := Vector3(item.region.axes[0], item.region.axes[1], item.region.axes[2])
+	var angle: float = item.region.get("angle", 0.0)
+	axes = Vector3(absf(cos(angle))*axes.x+absf(sin(angle))*axes.z, axes.y, absf(sin(angle))*axes.x+absf(cos(angle))*axes.z)
+	var center := Vector3(item.position[0], item.position[1], item.position[2])
+	if relevant(item, fleet) and absf(center.x)+axes.x <= bounds.end.x and absf(center.z)+axes.z <= bounds.end.y: return item
 	for at in candidates:
 		var point := Vector2(at[0], at[2])
-		if point.length() < 12.0 or absf(point.x) + float(item.region.axes[0]) > bounds.end.x \
-				or absf(point.y) + float(item.region.axes[2]) > bounds.end.y: continue
+		if point.length() < 12.0 or absf(point.x) + axes.x > bounds.end.x \
+				or absf(point.y) + axes.z > bounds.end.y: continue
 		retry.position = at
 		if not relevant(retry, fleet): continue
 		var score := point.distance_squared_to(Vector2(item.position[0], item.position[2]))
@@ -69,7 +74,8 @@ static func intersects(item: Dictionary, start: Vector3, finish: Vector3) -> boo
 			return Geometry3D.get_closest_point_to_segment(Vector3.ZERO, a, b).length() <= item.region.radius
 		Storms.TYPE:
 			var axes := Vector3(item.region.axes[0], item.region.axes[1], item.region.axes[2])
-			return Geometry3D.get_closest_point_to_segment(Vector3.ZERO, a / axes, b / axes).length_squared() <= 1.0
+			var angle: float = item.region.get("angle", 0.0)
+			return Geometry3D.get_closest_point_to_segment(Vector3.ZERO, a.rotated(Vector3.UP, -angle) / axes, b.rotated(Vector3.UP, -angle) / axes).length_squared() <= 1.0
 		Asteroids.TYPE:
 			var left := Vector2(a.x, a.z).rotated(-float(item.region.angle))
 			var right := Vector2(b.x, b.z).rotated(-float(item.region.angle))

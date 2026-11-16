@@ -20,9 +20,11 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 
-func fresh(seed_value: int = 1042, modern: bool = true, reserves: int = -1) -> Resource:
+func fresh(seed_value: int = 1042, modern: bool = true, reserves: int = -1, variety: bool = true) -> Resource:
 	var rules: Resource = Rules.duplicate(true)
 	rules.defense_v2 = modern
+	rules.system_variety = Rules.system_variety.duplicate(true)
+	rules.system_variety.enabled = variety
 	rules.defense_tuning = Rules.defense_tuning.duplicate(true)
 	if reserves >= 0: rules.defense_tuning.v2_maximum_reinforcements = reserves
 	rules.log_rolls = false
@@ -49,17 +51,19 @@ func layout(state: Resource) -> Dictionary:
 	return data
 
 func generation_checks() -> void:
+	# Retain every original v2 band/angle assertion against its legacy preset.
+	# system_variety_test independently validates 600 systems with all formations.
 	var counts := [0, 0]
 	var distance_min := INF
 	var distance_max := 0.0
 	var regions := {}
 	for seed_value in range(1, 121):
-		var state := fresh(seed_value)
+		var state := fresh(seed_value, true, -1, false)
 		var fleet: RefCounted = state.defense
 		var count: int = fleet.active_attackers()
 		check(count >= 2 and count <= 3 and fleet.units.size() == count + 4, "Starting roster has 2–3 attackers, a boss and three reserves")
 		counts[count - 2] += 1
-		check(fleet.snapshot() == fresh(seed_value).defense.snapshot(), "Fleet generation is deterministic")
+		check(fleet.snapshot() == fresh(seed_value, true, -1, false).defense.snapshot(), "Fleet generation is deterministic")
 		var start := State.Defense.wire(fleet.start)
 		var home := State.Defense.wire(fleet.home)
 		var directions: Array[Vector3] = []

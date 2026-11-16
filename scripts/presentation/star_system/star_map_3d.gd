@@ -21,6 +21,7 @@ const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 var layout_expansion: float = 0.0
 var orbit_clearance: float = 0.0
+var system_variation: Dictionary = {}
 const SunLensEffects = preload("res://scripts/presentation/star_system/sun_lens_effects.gd")
 var sun_lens = SunLensEffects.new()
 var run_seed: int = 0
@@ -240,7 +241,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	world.add_child(background)
 	camera.set_layout_expansion(layout_expansion)
 	camera.overview(settings, true)
-	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength)
+	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength, system_variation)
 	for p in visual_data.planets:
 		var orbit: MeshInstance3D = Planets.orbit(p,settings)
 		visual_root.add_child(orbit)
@@ -287,11 +288,26 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
 	material.set_shader_parameter("map_corona_visibility",true)
 	visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
-	var storm := StormVisual.primary(environment_instances())
-	if not storm.is_empty(): visual_root.add_child(StormVisual.build(storm))
+	for item in environment_instances():
+		if item.type == "SPACE_STORM" and StormVisual.Storms.valid(item): visual_root.add_child(StormVisual.build(item))
 	material.render_priority = 10
 	disc.material_override = material
 	objects[-100] = disc
+	# Cosmetic companion: no light, target, collider or solar influence source.
+	var companion: Dictionary = system_variation.get("companion", {})
+	if not companion.is_empty():
+		var companion_mesh := QuadMesh.new()
+		companion_mesh.size = Vector2.ONE * float(companion.radius) / 0.07
+		var companion_node := Models.part(visual_root, companion_mesh, Color.WHITE)
+		companion_node.name = "VisualCompanionStar"
+		companion_node.position = Vector3(companion.position[0], companion.position[1], companion.position[2])
+		companion_node.custom_aabb = AABB(Vector3.ONE * -4, Vector3.ONE * 8)
+		var companion_material := ShaderMaterial.new()
+		companion_material.shader = material.shader
+		companion_material.set_shader_parameter("sun_color", Color(companion.color))
+		companion_material.set_shader_parameter("corona_strength", 0.4)
+		companion_material.set_shader_parameter("flare_intensity", 0.04)
+		companion_node.material_override = companion_material
 	for entry in entries:
 		var index: int = entry.index
 		if not objects.has(index):
