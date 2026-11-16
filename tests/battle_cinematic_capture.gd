@@ -57,6 +57,7 @@ func run() -> void:
 		quit(1)
 		return
 	root.size = Vector2i(1280, 720)
+	directory += "-" + RenderingServer.get_current_rendering_method()
 	DirAccess.make_dir_recursive_absolute(directory)
 	host = load("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false

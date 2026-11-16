@@ -4,6 +4,8 @@ extends Node
 signal settled
 signal stage_changed(stage: String)
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
+const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
+const Sound = preload("res://scripts/audio/sfx.gd")
 @export var settings: Resource = preload("res://resources/presentation/battle_cinematics.tres")
 var camera: Camera3D
 var player: Node3D
@@ -36,6 +38,9 @@ var _shield_rest := Vector3.ZERO
 var _engine_rest := false
 var _focus_rest: WeakRef
 var _transition: CanvasLayer
+var _charge_glow: MeshInstance3D
+var _beam_victim_pose: Transform3D
+var _impact_hold: Tween
 
 
 static func enabled() -> bool:
@@ -232,28 +237,15 @@ func introduction() -> void:
 	_stage("confrontation")
 	if token != revision or not active:
 		return
-	var center := (_center(player) + _center(enemy)) * .5
-	var radius := (
-		player.global_position.distance_to(enemy.global_position) * .5
-		+ maxf(_bounds[player].radius, _bounds[enemy].radius)
-	)
-	a = (
-		Transform3D(
-			Basis.IDENTITY,
-			(
-				center
-				+ (
-					Vector3(-.6, .5, 1).normalized()
-					* radius
-					/ sin(deg_to_rad(settings.cinematic_fov) * .5)
-					* settings.framing_margin
-				)
-			)
-		)
-		. looking_at(center, Vector3.UP)
-	)
+	a = _pose(enemy, settings.confrontation_offset)
 	_set_camera(a, settings.cinematic_fov)
+	var hold: float = minf(settings.confrontation_hold, settings.introduction_seconds.z * .4)
+	var exit_direction := (_camera_rest.origin - a.origin).slide(a.basis.z).normalized()
+	var travel := a.origin.distance_to(_camera_rest.origin)
+	# Bend above the intervening player ship, then descend into its normal frame.
+	var pullback := a.origin + (a.basis.z * .38 + exit_direction * .26 + Vector3.UP * .42) * travel
 	motion = create_tween()
+	motion.tween_interval(settings.duration(hold))
 	(
 		motion
 		. tween_method(
@@ -263,12 +255,12 @@ func introduction() -> void:
 				var adjusted := rad_to_deg(
 					2 * atan(tan(deg_to_rad(default_fov) * .5) * view.size.y / normal_height)
 				)
-				_set_camera(
-					a.interpolate_with(_camera_rest, p), lerpf(settings.cinematic_fov, adjusted, p)
-				),
+				var pose := a.interpolate_with(_camera_rest, p)
+				pose.origin = a.origin.lerp(pullback, p).lerp(pullback.lerp(_camera_rest.origin, p), p)
+				_set_camera(pose, lerpf(settings.cinematic_fov, adjusted, p)),
 			0.0,
 			1.0,
-			settings.duration(settings.introduction_seconds.z)
+			settings.duration(settings.introduction_seconds.z - hold)
 		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
@@ -277,6 +269,111 @@ func introduction() -> void:
 	await settled
 	if token == revision:
 		_finish()
+
+
+func beam_charge(actor: Node3D, victim: Node3D) -> void:
+	var token := _begin("heavy_beam", false)
+	var attacker_center := _center(actor)
+	var victim_center := _center(victim)
+	var midpoint := attacker_center.lerp(victim_center, .5)
+	var axis := (victim_center - attacker_center).normalized()
+	var normal := Vector3.UP.cross(axis).normalized()
+	if normal.is_zero_approx(): normal = Vector3.BACK
+	if normal.dot(_camera_rest.origin - midpoint) < 0.0: normal = -normal
+	var aspect := maxf(.1, view.size.x / maxf(1, view.size.y))
+	var half_angle := deg_to_rad(settings.cinematic_fov * .5)
+	var horizontal := half_angle if camera.keep_aspect == Camera3D.KEEP_WIDTH else atan(tan(half_angle) * aspect)
+	var vertical := atan(tan(half_angle) / aspect) if camera.keep_aspect == Camera3D.KEEP_WIDTH else half_angle
+	var radius: float = maxf(_bounds[actor].radius, _bounds[victim].radius)
+	var distance: float = settings.framing_margin * maxf(
+		(attacker_center.distance_to(victim_center) * .95 + radius) / tan(horizontal),
+		radius / sin(vertical)
+	)
+	var position := midpoint + (normal + Vector3.UP * .18).normalized() * distance
+	var pose := Transform3D(Basis.IDENTITY, position)
+	_beam_victim_pose = pose.looking_at(midpoint.lerp(victim_center, .48), Vector3.UP)
+	_set_camera(pose.looking_at(midpoint.lerp(attacker_center, .48), Vector3.UP), settings.cinematic_fov)
+	_charge_glow = MeshInstance3D.new()
+	_charge_glow.mesh = QuadMesh.new()
+	_charge_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	material.no_depth_test = true
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, .24, .55, 1.0])
+	gradient.colors = PackedColorArray([Color.WHITE, Color(.35, .82, 1, .9), Color(.12, .45, 1, .40), Color.TRANSPARENT])
+	var glow := GradientTexture2D.new()
+	glow.width = 48
+	glow.height = 48
+	glow.gradient = gradient
+	glow.fill = GradientTexture2D.FILL_RADIAL
+	glow.fill_from = Vector2(.5, .5)
+	glow.fill_to = Vector2(1, .5)
+	material.albedo_texture = glow
+	_charge_glow.material_override = material
+	actor.add_child(_charge_glow)
+	_charge_glow.global_position = ImportedVFX.beam_origin(actor)
+	var size: float = clampf(_bounds[actor].radius * .72, .36, 1.2)
+	_charge_glow.scale = Vector3.ONE * size * .15
+	motion = create_tween()
+	motion.tween_method(func(progress: float):
+		_charge_glow.scale = Vector3.ONE * size * lerpf(.15, 1.0, progress)
+		material.albedo_color = Color(.06, .40, .95, .30).lerp(Color(.65, .90, 1, .85), progress),
+		0.0, 1.0, settings.duration(settings.beam_charge_seconds))
+	motion.tween_callback(settled.emit)
+	Sound.play(&"emp_charge", self)
+	_stage("beam_charge")
+	if active and token == revision:
+		await settled
+
+
+func beam_launched() -> void:
+	if not active or skipped or stage != "beam_charge": return
+	_clear_charge()
+	var from := camera.global_transform
+	motion = create_tween()
+	motion.tween_method(
+		func(progress: float): _set_camera(from.interpolate_with(_beam_victim_pose, progress), settings.cinematic_fov),
+		0.0, 1.0, settings.duration(settings.beam_turn_seconds)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_stage("beam_turn")
+
+
+func beam_impact() -> void:
+	if not active: return
+	if stage == "beam_charge":
+		# Battle VFX may have been turned off during the charge.
+		_finish()
+		return
+	if stage != "beam_turn": return
+	if motion and motion.is_valid(): motion.kill()
+	_set_camera(_beam_victim_pose, settings.cinematic_fov)
+	_impact_hold = create_tween()
+	_impact_hold.tween_interval(settings.duration(settings.beam_impact_hold))
+	_impact_hold.tween_callback(settled.emit)
+	_stage("impact_hold")
+
+
+func finish_beam(destruction: bool) -> void:
+	if not active or kind != "heavy_beam": return
+	if destruction:
+		kind = "destruction"
+		_stage("destruction_hold")
+		return
+	var token := revision
+	if _impact_hold and _impact_hold.is_running():
+		await settled
+	if token == revision: _finish()
+
+
+func _clear_charge() -> void:
+	if is_instance_valid(_charge_glow):
+		_charge_glow.hide()
+		_charge_glow.queue_free()
+		_charge_glow = null
 
 
 func attack(actor: Node3D, victim: Node3D, destruction: bool, hold_for_vfx: bool) -> void:
@@ -349,38 +446,39 @@ func departure(transition: CanvasLayer) -> bool:
 			await settled
 	if token != revision or not active:
 		return false
-	var duration: float = settings.fade_seconds
 	if allowed() and not skipped:
+		player.engine_boost = true
+		motion = create_tween()
+		motion.tween_interval(settings.duration(settings.engine_charge_seconds))
+		motion.tween_callback(settled.emit)
+		_stage("engine_charge")
+		if token != revision or not active:
+			return false
+		if not skipped:
+			await settled
+	if token != revision or not active:
+		return false
+	if allowed() and not skipped:
+		motion = create_tween()
+		motion.tween_method(
+			func(progress: float):
+				var displacement: Vector3 = Vector3.RIGHT * settings.boost_distance * progress * (.28 + .72 * progress * progress)
+				_boost_body.position = _body_rest + displacement
+				_boost_shield.position = _shield_rest + displacement,
+			0.0, 1.0, settings.duration(settings.boost_seconds)
+		)
+		motion.tween_callback(settled.emit)
 		_stage("engine_boost")
 		if token != revision or not active:
 			return false
 		if not skipped:
-			player.engine_boost = true
-			var rest := camera.global_transform
-			var forward := player.global_basis.x.normalized()
-			motion = create_tween()
-			motion.tween_method(
-				func(p: float):
-					_boost_body.position = (
-						_body_rest + Vector3.RIGHT * settings.boost_distance * p * p
-					)
-					_boost_shield.position = (
-						_shield_rest + Vector3.RIGHT * settings.boost_distance * p * p
-					)
-					var pose := rest
-					pose.origin += forward * settings.boost_distance * p * .08
-					_set_camera(pose, settings.cinematic_fov + p * 3),
-				0.0,
-				1.0,
-				settings.duration(settings.boost_seconds)
-			)
-			duration = maxf(settings.fade_seconds, settings.boost_seconds)
+			await settled
+	if token != revision or not active:
+		return false
 	_stage("fade_to_black")
 	if token != revision or not active:
 		return false
-	if skipped:
-		duration = settings.fade_seconds
-	await transition.fade(1.0, settings.duration(duration))
+	await transition.fade(1.0, settings.duration(settings.fade_seconds))
 	var covered: bool = token == revision and transition.curtain.color.a >= .999
 	_transition = null
 	if token == revision:
@@ -407,6 +505,9 @@ func _finish() -> void:
 		return
 	if motion and motion.is_valid():
 		motion.kill()
+	if _impact_hold and _impact_hold.is_valid():
+		_impact_hold.kill()
+	_clear_charge()
 	active = false
 	view.offset_bottom = _view_bottom
 	camera.global_transform = _camera_rest

@@ -75,12 +75,15 @@ static func beam(actor: Node3D, target: Node3D) -> Node3D:
 	return effect
 
 
+static func beam_origin(ship: Node3D) -> Vector3:
+	var hull := ship.get_node_or_null("Body/Hull") as Node3D
+	return hull.global_position if hull != null else ship.global_position
+
+
 static func update_beam(effect: Node3D, actor: Node3D, target: Node3D, progress: float) -> void:
 	if not is_instance_valid(actor) or not is_instance_valid(target): return
-	var origin := actor.get_node_or_null("Body/Hull") as Node3D
-	var end := target.get_node_or_null("Body/Hull") as Node3D
-	effect.global_position = origin.global_position if origin != null else actor.global_position
-	var endpoint: Vector3 = end.global_position if end != null else target.global_position
+	effect.global_position = beam_origin(actor)
+	var endpoint := beam_origin(target)
 	if effect.global_position.distance_squared_to(endpoint) < 0.0001:
 		effect.hide()
 		return

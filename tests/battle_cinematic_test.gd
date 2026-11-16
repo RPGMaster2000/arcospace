@@ -50,6 +50,9 @@ func fresh(profile: Resource = null, arena: int = 0) -> Node:
 		else Vector3(1.15, 1.05, 1.25)
 	)
 	board.cinematic_settings.attack_seconds = .16
+	if DisplayServer.get_name() == "headless":
+		board.cinematic_settings.beam_charge_seconds = .12
+		board.cinematic_settings.beam_impact_hold = .12
 	board.cinematic_settings.orbit_seconds = .12
 	board.cinematic_settings.boost_seconds = .10
 	board.cinematic_settings.fade_seconds = .06
@@ -125,6 +128,10 @@ func introduction_checks() -> void:
 			),
 			"Measured hull stays clear of flyby camera"
 		)
+		await wait_until(func(): return director.stage == "confrontation", "Third shot frames the enemy")
+		var forward: Vector3 = director.enemy.global_basis.x.normalized()
+		var close: Vector3 = director.camera.global_position - director._center(director.enemy)
+		check(close.normalized().dot(forward) > .95 and close.length() > radius, "Third shot starts off the nose at a hull-safe distance")
 		await settle_board(board)
 		check(
 			stages == ["establishing", "flyby", "confrontation"],
@@ -344,7 +351,21 @@ func attack_checks() -> void:
 			board.set(target + "_shields", 0)
 			board.set(target + "_hull", 100)
 			var beams := [0]
-			board.battle_effects.weapon_presented.connect(func(_side, _kind): beams[0] += 1)
+			director.stage_changed.connect(func(stage):
+				if stage == "beam_charge":
+					var rect := Rect2(Vector2.ZERO, director.camera.get_viewport().get_visible_rect().size)
+					for ship in [director.player, director.enemy]:
+						check(rect.has_point(director.camera.unproject_position(director._center(ship))), "Side-on frame establishes both ships")
+					check(board.get(target + "_hull") == 100 and beams[0] == 0, "Charge precedes damage and weapon launch")
+				if stage == "impact_hold":
+					check(board.get(target + "_hull") == 100 and beams[0] == 1, "Victim pose established before authoritative impact")
+					check(director.camera.global_transform.is_equal_approx(director._beam_victim_pose), "Impact uses victim-focused camera")
+			)
+			board.battle_effects.weapon_presented.connect(func(_side, _kind):
+				beams[0] += 1
+				if damage >= director.settings.heavy_beam_threshold:
+					check(director.stage == "beam_turn" and is_instance_valid(board.battle_effects.active_beam), "Pan begins on the visible beam launch event")
+			)
 			await board._resolve_after_activation(side, 0, false, card)
 			check(
 				board.get(target + "_hull") == 100 - damage and beams[0] == 1,
@@ -355,6 +376,7 @@ func attack_checks() -> void:
 				"Only actual high-damage beam starts a shot"
 			)
 			if director.active:
+				check(seen == ["beam_charge", "beam_turn", "impact_hold"], "Heavy beam camera follows the weapon timeline")
 				check(director.kind == "heavy_beam", "Nonlethal shot has heavy-beam identity")
 				await shot_capture(board, "heavy-" + side)
 				# A resize updates the eventual default FOV, never the owned shot.
@@ -394,7 +416,7 @@ func attack_checks() -> void:
 		"Confirmed lethal outcome commits before cinematic completion"
 	)
 	check(
-		board.cinematic_director.kind == "destruction" and stages.count("attacker") == 1,
+		board.cinematic_director.kind == "destruction" and stages.count("beam_charge") == 1,
 		"Destruction replaces heavy-beam shot"
 	)
 	await wait_until(
@@ -409,10 +431,38 @@ func attack_checks() -> void:
 		func(): return not board.destruction_pending and not board._presentation_locked(),
 		"Existing destruction VFX and camera complete"
 	)
-	check(stages.count("attacker") == 1, "No second cinematic for the same lethal event")
+	check(stages.count("beam_turn") == 1 and not "attacker" in stages, "No second cinematic for the same lethal event")
 	finish_destruction_hud(audit)
 	board.free()
 	await process_frame
+
+
+func skip_beam_checks() -> void:
+	for requested in ["beam_charge", "beam_turn", "impact_hold"]:
+		Preferences.set_skip_cinematics(true)
+		var board := fresh()
+		await settle_board(board)
+		Preferences.set_skip_cinematics(false)
+		var director = board.cinematic_director
+		var camera_rest: Transform3D = director.camera.global_transform
+		var seen: Array[String] = []
+		var beams := [0]
+		director.stage_changed.connect(func(stage):
+			seen.append(stage)
+			if stage == requested: director.skip())
+		board.battle_effects.weapon_presented.connect(func(_side, _kind): beams[0] += 1)
+		board.hand.cards[0] = load("res://cards/27_missile_barrage.tres")
+		board.player_crew = 99
+		board.enemy_shields = 0
+		board.enemy_hull = 100
+		await board._act("player", 0, false)
+		board.enemy_timer.stop()
+		check(requested in seen and beams[0] == 1 and board.enemy_hull == 84,
+			"Skipping %s preserves the single beam and damage commit" % requested)
+		check(not board._presentation_locked() and director._charge_glow == null
+			and director.camera.global_transform.is_equal_approx(camera_rest), "Skipping restores camera, input and the muzzle effect")
+		board.free()
+		await process_frame
 
 
 func _initialize() -> void:
@@ -428,6 +478,7 @@ func run() -> void:
 	await introduction_checks()
 	await input_and_parity_checks()
 	await attack_checks()
+	await skip_beam_checks()
 	await defeat_hud_checks()
 	Preferences.set_skip_cinematics(previous_skip)
 	Preferences.set_battle_vfx(previous_vfx)

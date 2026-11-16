@@ -335,6 +335,12 @@ func _card_resolution_presented(_side: String, _damage: int, _discard: bool) -> 
 func _committed_damage_presented() -> void:
 	pass
 
+func _prepare_beam_presentation(_side: String, _card: Resource) -> float:
+	return 0.0
+
+func _beam_reached_target() -> void:
+	pass
+
 func _wait_action_presentation() -> void:
 	pass
 
@@ -607,8 +613,11 @@ func _resolve_after_activation(side: String, slot: int, discard: bool, card: Res
 		and _may_fire_beam(card.effects)
 	)
 	if shot:
-		await battle_effects.fire_before_impact(side)
-		if is_queued_for_deletion() or battle_effects.cancelling: return
+		var minimum_travel: float = await _prepare_beam_presentation(side, card)
+		if checkpoint_exit or is_queued_for_deletion() or battle_effects.cancelling: return
+		await battle_effects.fire_before_impact(side, minimum_travel)
+		if checkpoint_exit or is_queued_for_deletion() or battle_effects.cancelling: return
+		_beam_reached_target()
 	_resolve_card(side, slot, discard, card, false, shot)
 
 

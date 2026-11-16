@@ -7,8 +7,8 @@ The 3D board borrows its existing camera, ships, engine effects and background f
 - `scripts/presentation/battle_cinematic_director.gd` owns one camera tween and a temporary input/Skip overlay. It never reads expedition state, awards rewards or draws random numbers.
 - `scripts/presentation/battle_cinematic_settings.gd` and `resources/presentation/battle_cinematics.tres` expose shot durations, ship-relative offsets, framing margin, FOV and the heavy-beam threshold. Assign a different settings resource on the 3D board to tune a scene.
 - `scripts/board_3d.gd` connects confirmed presentation events and delays the first turn until the introduction ends. Resize updates the eventual gameplay FOV/background scale while the director controls the current shot.
-- `scripts/battle_effects.gd` reports `weapon_presented(side, "beam")` at the existing beam-delivery site. A description or card name cannot select a camera shot.
-- `scripts/board.gd` exposes narrow presentation hooks after real resolution and deferred Hull commits. Its existing damage timeline, VFX busy/finished waits and destruction/result sequencing remain authoritative.
+- `scripts/battle_effects.gd` reports `weapon_presented(side, "beam")` when it creates the live beam. The cinematic turn starts on that signal. The existing beam contact callback still resolves the card and plays the impact.
+- `scripts/board.gd` exposes presentation hooks before discharge, on contact, and after committed resolution or deferred Hull loss. The original damage timeline still owns commits and the turn waits for its VFX.
 - `scripts/board_3d.gd` plays departure after terminal VFX finish and before revealing the existing Victory screen. Its own black curtain covers result construction. Presentation latches prevent replay or early continuation; committed rewards are never recalculated.
 - `scripts/expedition.gd` removes the completed board at the existing result-confirmation boundary, opens required upgrades and returns to the map normally. No board is retained through upgrades and no departure/fade replays on the final return. Reward, encounter, upgrade and checkpoint transactions remain at their original boundaries.
 
@@ -16,12 +16,10 @@ The 3D board borrows its existing camera, ships, engine effects and background f
 flowchart LR
     Entry[Existing battle setup] --> Intro[Three-shot introduction]
     Intro --> Turn[Existing first turn]
-    Turn --> VFX[Existing beam VFX metadata]
-    Turn --> Resolution[Existing resolved damage and Hull timeline]
-    VFX --> Select[3D presentation selection]
-    Resolution --> Select
-    Select --> Camera[Heavy beam OR confirmed destruction camera]
-    Camera --> Destruction[Existing destruction VFX finish]
+    Turn --> Charge[Eligible beam charges in a two-ship frame]
+    Charge --> Launch[Existing beam cue turns camera]
+    Launch --> Contact[Existing contact commits damage]
+    Contact --> Destruction[Confirmed destruction holds the victim frame]
     Destruction --> Orbit[Victory orbit and engine boost]
     Orbit --> Black[Opaque black curtain]
     Black --> Result[Existing Victory screen]
@@ -31,13 +29,13 @@ flowchart LR
 
 ## Shot parameters and framing
 
-The authored introduction totals 3.45 seconds: elevated establishing sweep (1.15), lower front-quarter flyby (1.05), then a two-ship confrontation settling into the default camera (1.25). The default `playback_speed = 0.5` stretches these to 2.30, 2.10 and 2.50 seconds (6.90 total). Ship roots never travel during introduction or attacks.
+The authored introduction totals 3.45 seconds. The elevated establishing sweep (1.15) and lower front-quarter flyby (1.05) retain their original paths. The third shot (1.25) holds a frontal enemy close-up for .30 seconds, then pulls backward on a curved path while restoring battlefield rotation, FOV and viewport. The default `playback_speed = 0.5` stretches the three shots to 2.30, 2.10 and 2.50 seconds. Ship roots stay at their combat anchors.
 
 The director measures transformed mesh bounds beneath each model's `Body`; shield geometry is excluded. Offsets are expressed in measured hull radii and the model's local axes. The minimum distance also accounts for FOV and framing margin. Existing ship models face **local +X**. Future models should preserve the existing `Body`, `Shield` and engine interfaces.
 
-High-damage beams default to at least **12 actual resolved damage**, including damage absorbed by Shields. Zero damage, unrelated resource changes and description text cannot trigger them. Deferred Hull damage must commit first. Confirmed Hull destruction takes precedence over the optional beam shot; the same attack starts only one camera sequence. Its final framing is held until the original destruction animation completes. Environmental destruction without an attacker uses the victim's framing. Existing VFX are never replayed. Only the terminal destruction tween follows the active cinematic playback speed so its hold and explosion remain synchronized; ordinary combat VFX retain their original timing.
+The read-only combat forecast selects cinematic beams with at least **12 possible direct damage**, including Shield damage, or a possible lethal direct hit. The default authored timings are .60 seconds for the muzzle charge, .20 for the side-on turn, and .50 for the impact hold. All three are Inspector-editable and follow playback speed. The beam uses its usual travel window, extended only when needed to accommodate the camera turn. On contact the camera is already facing the victim. If the existing damage timeline confirms Hull destruction, the same camera holds through the destruction VFX with the normal HUD visible. Environmental and other non-beam destruction keep the existing fallback shot.
 
-Attack shots now last 2.50 seconds unless the destruction animation owns the hold. Victory departure uses a 4.50-second partial orbit and an accelerating 1.70-second boost at the default half-speed setting. The orbit finishes behind the model’s forward axis. Boost changes only the local `Body.position` and matching `Shield.position`, in local +X, and the existing `engine_boost` flag; all restore under black. The authored root, combat anchors and saved state never move. Modifier background quads retain their camera-following/restoration behavior. The two standard arenas instead use stationary direction-sampled skies and finite-distance scenery; see [depth and pacing](battlefield_depth_and_pacing.md).
+Victory keeps the 4.50-second partial orbit at the default half-speed setting. The orbit finishes behind the model's forward axis, followed by .60 seconds of engine buildup and .76 seconds of acceleration. The camera stays fixed as the hull and shield travel up to 72 local units along +X. The fade starts after the boost and restores the model under black. See [depth and pacing](battlefield_depth_and_pacing.md) for battlefield background behavior.
 
 ## Cancellation, settings and accessibility
 
@@ -64,6 +62,18 @@ python3 tools/run_rendered_regressions.py --godot godot --renderer mobile --scri
 Android device frame pacing and each faction model's art direction still warrant a device review; Mesa GL/Vulkan captures validate the render paths, not physical Android performance. No new lights, models, particle systems, continuously rendered viewports or postprocessing passes are added.
 
 ## Rendered gallery
+
+These 1280×720 frames come from one production battle rendered in Godot
+with GL Compatibility. The capture helper samples the live sequence and
+writes separate frame folders for each renderer.
+
+| Sequence | Frames |
+| --- | --- |
+| Introduction | [Frontal enemy close-up](battle_cinematic_direction_screenshots/enemy-close-up.webp) · [Settling into battle framing](battle_cinematic_direction_screenshots/intro-settling.webp) |
+| Beam attack | [Charge](battle_cinematic_direction_screenshots/beam-charge.webp) · [Discharge during the camera turn](battle_cinematic_direction_screenshots/beam-launch.webp) · [Hull impact with HUD](battle_cinematic_direction_screenshots/hull-impact.webp) |
+| Victory | [Engine buildup](battle_cinematic_direction_screenshots/engine-charge.webp) · [Departure before fade](battle_cinematic_direction_screenshots/departure.webp) |
+
+### Original implementation captures
 
 These are actual Godot production-scene captures, with no generated artwork. [Motion sequence](battle_cinematics_screenshots/cinematic-motion.webp) contains sampled frames encoded at **8 fps**, downscaled from 1280×720 to 640×360 for review. Playback is normalized: the software-renderer wall time is not an Android performance measurement. The reproducible capture helper is `tests/battle_cinematic_capture.gd`; it stages a real Missile Barrage against a 3-Hull, unshielded target with sufficient Crew to demonstrate confirmed destruction, then completes the normal result/upgrades and return.
 
