@@ -33,6 +33,8 @@ func sample() -> void:
 	)
 	if is_instance_valid(source) and source.get_node("MatchResult").visible:
 		stage = "victory_result"
+	elif stage == "destruction_hold" and not source.cinematic_director.enemy.get_node("Body").visible:
+		stage = "fragments"
 	elif not is_instance_valid(source):
 		stage = "upgrades" if host.card_management.shade.visible else "star_system"
 	var path := "%s/%04d.webp" % [directory, records.size()]

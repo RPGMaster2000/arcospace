@@ -29,13 +29,23 @@ flowchart LR
 
 ## Shot parameters and framing
 
-The authored introduction totals 3.45 seconds. The elevated establishing sweep (1.15) and lower front-quarter flyby (1.05) retain their original paths. The third shot (1.25) holds a frontal enemy close-up for .30 seconds, then pulls backward on a curved path while restoring battlefield rotation, FOV and viewport. The default `playback_speed = 0.5` stretches the three shots to 2.30, 2.10 and 2.50 seconds. Ship roots stay at their combat anchors.
+The authored introduction totals 3.45 seconds. The elevated establishing sweep, lower front-quarter flyby, and frontal pullback retain their paths. The opening shot fades in the enemy profile's name and class at lower left. The caption fades during the pullback and clears on Skip. The default `playback_speed` is .75, up from .50. The full introduction now runs in 4.60 seconds, down from 6.90. This rate applies only to presentation.
 
 The director measures transformed mesh bounds beneath each model's `Body`; shield geometry is excluded. Offsets are expressed in measured hull radii and the model's local axes. The minimum distance also accounts for FOV and framing margin. Existing ship models face **local +X**. Future models should preserve the existing `Body`, `Shield` and engine interfaces.
 
-The read-only combat forecast selects cinematic beams with at least **12 possible direct damage**, including Shield damage, or a possible lethal direct hit. The default authored timings are .60 seconds for the muzzle charge, .20 for the side-on turn, and .50 for the impact hold. All three are Inspector-editable and follow playback speed. The beam uses its usual travel window, extended only when needed to accommodate the camera turn. On contact the camera is already facing the victim. If the existing damage timeline confirms Hull destruction, the same camera holds through the destruction VFX with the normal HUD visible. Environmental and other non-beam destruction keep the existing fallback shot.
+The read-only combat forecast selects cinematic beams with at least **12 possible direct damage**, including Shield damage, or a possible lethal direct hit. The camera stays near the midpoint, offset perpendicular to the ship axis. It uses the measured hull sizes to put the attacker in the center during the charge and the victim in the center during impact. At the default rate, the charge takes .80 seconds, the turn takes about .27, and the minimum impact hold takes about .67. The existing launch signal turns the camera, and the existing contact callback plays one impact. The standard .45-second beam window gives the camera time to settle before contact. Lethal hits retain that angle through the original destruction VFX with the battle HUD visible.
 
-Victory keeps the 4.50-second partial orbit at the default half-speed setting. The orbit finishes behind the model's forward axis, followed by .60 seconds of engine buildup and .76 seconds of acceleration. The camera stays fixed as the hull and shield travel up to 72 local units along +X. The fade starts after the boost and restores the model under black. See [depth and pacing](battlefield_depth_and_pacing.md) for battlefield background behavior.
+Victory keeps the existing partial orbit, which now takes 3.00 seconds, followed by .40 seconds of engine buildup and about .51 seconds of acceleration. The camera stays fixed as the hull and shield travel up to 72 local units along +X. The fade starts after the boost and restores the model under black. See [depth and pacing](battlefield_depth_and_pacing.md) for battlefield background behavior.
+
+## Standard battlefield lighting
+
+Deep Space and Planetary Orbit retain their authored light colors. Key energy
+rises from 1.45 to 1.65, rim energy from .35 to .45, and ambient energy from .60
+to .68. Each ship gets one shadowless point fill on its own hull layer, with
+a model-scaled range capped at 5.5 world units. The fill adds definition to
+the camera-facing flank and follows the existing hull node. The destruction
+callback switches off its lights as the fragments appear. Modifier arenas
+continue using their authored lighting.
 
 ## Cancellation, settings and accessibility
 
@@ -59,7 +69,10 @@ python3 tools/run_rendered_regressions.py --godot godot --renderer gl_compatibil
 python3 tools/run_rendered_regressions.py --godot godot --renderer mobile --script battle_cinematic_test --script battle_departure_test
 ```
 
-Android device frame pacing and each faction model's art direction still warrant a device review; Mesa GL/Vulkan captures validate the render paths, not physical Android performance. No new lights, models, particle systems, continuously rendered viewports or postprocessing passes are added.
+The two hull fills use the existing forward lighting path and require no
+shadow maps, extra viewports, or postprocessing. Rendered regressions check
+the hull pixels with the fills enabled and disabled. Physical Android
+frame pacing was not measured.
 
 ## Rendered gallery
 
