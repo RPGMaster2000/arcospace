@@ -312,7 +312,8 @@ func beam_charge(actor: Node3D, victim: Node3D) -> void:
 	if normal.is_zero_approx(): normal = Vector3.BACK
 	if normal.dot(_camera_rest.origin - midpoint) < 0.0: normal = -normal
 	var aspect := maxf(.1, view.size.x / maxf(1, view.size.y))
-	var half_angle := deg_to_rad(settings.cinematic_fov * .5)
+	# Pull back partway on tighter lenses, keeping the hit readable on large hulls.
+	var half_angle := deg_to_rad(lerpf(settings.beam_fov, settings.cinematic_fov, .5) * .5)
 	var horizontal := half_angle if camera.keep_aspect == Camera3D.KEEP_WIDTH else atan(tan(half_angle) * aspect)
 	var vertical := atan(tan(half_angle) / aspect) if camera.keep_aspect == Camera3D.KEEP_WIDTH else half_angle
 	var radius: float = maxf(_bounds[actor].radius, _bounds[victim].radius)
@@ -324,7 +325,7 @@ func beam_charge(actor: Node3D, victim: Node3D) -> void:
 	var position := midpoint + (normal + lift * .18).normalized() * distance
 	var pose := Transform3D(Basis.IDENTITY, position)
 	_beam_victim_pose = pose.looking_at(midpoint.lerp(victim_center, .94), Vector3.UP)
-	_set_camera(pose.looking_at(midpoint.lerp(attacker_center, .94), Vector3.UP), settings.cinematic_fov)
+	_set_camera(pose.looking_at(midpoint.lerp(attacker_center, .94), Vector3.UP), settings.beam_fov)
 	_charge_glow = MeshInstance3D.new()
 	_charge_glow.mesh = QuadMesh.new()
 	_charge_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -368,7 +369,7 @@ func beam_launched() -> void:
 	var from := camera.global_transform
 	motion = create_tween()
 	motion.tween_method(
-		func(progress: float): _set_camera(from.interpolate_with(_beam_victim_pose, progress), settings.cinematic_fov),
+		func(progress: float): _set_camera(from.interpolate_with(_beam_victim_pose, progress), settings.beam_fov),
 		0.0, 1.0, settings.duration(settings.beam_turn_seconds)
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_stage("beam_turn")
@@ -382,7 +383,7 @@ func beam_impact() -> void:
 		return
 	if stage != "beam_turn": return
 	if motion and motion.is_valid(): motion.kill()
-	_set_camera(_beam_victim_pose, settings.cinematic_fov)
+	_set_camera(_beam_victim_pose, settings.beam_fov)
 	_impact_hold = create_tween()
 	_impact_hold.tween_interval(settings.duration(settings.beam_impact_hold))
 	_impact_hold.tween_callback(settled.emit)

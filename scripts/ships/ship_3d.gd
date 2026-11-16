@@ -305,8 +305,8 @@ func add_visibility_light(hull_layer: int) -> void:
 	var light := OmniLight3D.new()
 	light.name = "HullVisibilityLight"
 	light.light_color = Color(.73, .84, 1.0)
-	light.light_energy = .95
-	light.light_specular = .35
+	light.light_energy = 1.65
+	light.light_specular = .55
 	light.light_cull_mask = hull_layer
 	light.shadow_enabled = false
 	light.omni_attenuation = 1.35
