@@ -76,6 +76,21 @@ frame pacing was not measured.
 
 ## Rendered gallery
 
+### Framing and lighting refinement
+
+These frames were captured in Godot with GL Compatibility. The two lighting
+frames show the hulls with shield bubbles hidden so the surfaces are easier
+to compare.
+
+| Sequence | Godot frames |
+| --- | --- |
+| Enemy introduction | [Name and class caption](battle_cinematic_lighting_screenshots/intro-title.webp) |
+| Heavy beam | [Attacker charging](battle_cinematic_lighting_screenshots/beam-charge.webp) · [Turn at discharge](battle_cinematic_lighting_screenshots/beam-discharge.webp) · [Victim impact](battle_cinematic_lighting_screenshots/beam-impact.webp) |
+| Standard lighting | [Deep Space with Siege Monitor](battle_cinematic_lighting_screenshots/deep-space.webp) · [Planetary Orbit with AXIOM Command Nexus](battle_cinematic_lighting_screenshots/planetary-orbit.webp) |
+| Destruction | [Fragments after the victim's fill switches off](battle_cinematic_lighting_screenshots/fragments.webp) |
+
+### Previous direction pass
+
 These 1280×720 frames come from one production battle rendered in Godot
 with GL Compatibility. The capture helper samples the live sequence and
 writes separate frame folders for each renderer.
