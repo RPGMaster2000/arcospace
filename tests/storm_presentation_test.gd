@@ -27,13 +27,23 @@ func run() -> void:
 			var meter = display.get_node("Meter")
 			check(mod.kind == kind,"Board retains appended modifier ID")
 			var field = board.get_node("BattleView/Viewport/Battlefield")
-			check(field.scene_file_path == preload("res://scripts/board_3d.gd").BATTLEFIELDS[kind].resource_path,"Both storms select their explicit Ion variant, never a normal/planetary arena")
+			check(field.scene_file_path == preload("res://scripts/board_3d.gd").BATTLEFIELDS[kind].resource_path,"Both storms select their explicit arena, never a normal/planetary arena")
 			var ion = preload("res://scenes/battlefield_ion_storm.tscn").instantiate()
 			check(field.get_node("Camera3D").transform == ion.get_node("Camera3D").transform,"Inherited Ion camera/framing preserved")
 			var backdrop: ShaderMaterial = field.get_node("MeshInstance3D").material_override
 			var ion_backdrop: ShaderMaterial = ion.get_node("MeshInstance3D").material_override
-			check(backdrop.shader == ion_backdrop.shader, "Both storm variants retain the Ion panorama shader")
-			check(backdrop.shader.resource_path == "res://shaders/battle_panorama.gdshader", "Storm scenes use the panorama shader, not legacy procedural space")
+			check(backdrop.shader == ion_backdrop.shader, "Storm variants share the direction-aware sky shader")
+			check(backdrop.shader.resource_path == "res://shaders/battle_space_sky.gdshader"
+				and field.get_node("MeshInstance3D").get_meta("infinite_panorama", false)
+				and field.get_node("MeshInstance3D").mesh is SphereMesh,
+				"Storm scenes use the depth-correct enclosing sky")
+			var geometry: Node3D = field.get_node("EnvironmentGeometry")
+			check(geometry.environment_kind == ("metal" if kind == 6 else "psionic"), "Storm selects its own geometric construction")
+			check(not geometry.has_node("IonBankLeft") and not geometry.has_node("DistantDischarge0"), "Storm variants do not instantiate Ion clouds or lightning")
+			if kind == 6:
+				check(geometry.has_node("HullPlating") and geometry.has_node("TwistedGirders") and geometry.has_node("BrokenHullFrames"), "Metal Storm has actual industrial wreckage")
+			else:
+				check(geometry.has_node("AnomalousRing0") and geometry.has_node("DistantMonolith0") and geometry.has_node("GeometricShards"), "Psionic Storm has actual rings, monoliths and shards")
 			check(backdrop.get_shader_parameter("panorama") != null, "Storm panorama texture is assigned")
 			check(backdrop.get_shader_parameter("panorama_tint") != ion_backdrop.get_shader_parameter("panorama_tint"), "Storm variant preserves distinct atmosphere tint")
 			check(not field.has_node("BackgroundObjects/Planet"),"No planetary decoration in either storm")
