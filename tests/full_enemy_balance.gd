@@ -2,6 +2,7 @@ extends "res://tests/combat_balance_audit.gd"
 
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const Progressed = preload("res://tests/progressed_balance_loadout.gd")
+const FactionBalance = preload("res://tests/faction_balance_scenarios.gd")
 const CHOIR = ["The Hollow Choir", "Choir Spore", "Choir Guardian", "Choir Leviathan"]
 const SENTINEL = ["Bastion Frigate", "Siege Monitor"]
 const VALIDATION = ["The Hollow Choir", "Choir Guardian"]
@@ -81,8 +82,10 @@ func run() -> void:
 	var variant := args[4]
 	var filter := args[5] if args.size() >= 6 else "all"
 	var policies: Array = POLICIES.keys() if filter == "all" else Array(filter.split(","))
-	var stage: Dictionary = Progressed.STAGES.get(variant, {})
-	var valid_mode := variant in ["full", "choir", "sentinel", "validation", "decisive-focus"] or VARIANTS.has(variant) or DECISIVE_MODES.has(variant) or not stage.is_empty()
+	var stage := Progressed.scenario(variant)
+	var faction_arm: Dictionary = FactionBalance.ARMS.get(variant, {})
+	var expedition_pool := OS.get_environment("ARCOSPACE_AUDIT_EXPEDITION_POOL") == "1"
+	var valid_mode := variant in ["full", "choir", "sentinel", "validation", "decisive-focus"] or VARIANTS.has(variant) or DECISIVE_MODES.has(variant) or not stage.is_empty() or not faction_arm.is_empty()
 	if selected < -1 or selected >= Ships.PLAYERS.size() or first < 1 or last < first or not valid_mode:
 		push_error("Invalid enemy audit shard arguments")
 		quit(2)
@@ -111,8 +114,10 @@ func run() -> void:
 		enemies = enemies.filter(func(enemy): return enemy.enemy_rank == 2)
 		for index in enemies.size():
 			var base: Resource = enemies[index]
-			enemies[index] = Config.progression.scaled_enemy(base, stage.system, true)
+			enemies[index] = Config.progression.scaled_enemy(base, stage.get("enemy_system", stage.system), true)
 			enemies[index].set_meta("audit_resource", base.resource_path)
+	elif not faction_arm.is_empty():
+		enemies = enemies.filter(func(enemy): return faction_arm.has(enemy.ship_name))
 	elif DECISIVE_MODES.has(variant):
 		enemies = enemies.filter(func(enemy): return DECISIVE_MODES[variant].has(enemy.ship_name))
 	elif variant == "decisive-focus":
@@ -134,10 +139,12 @@ func run() -> void:
 		return {"name": enemy.ship_name, "rank": enemy.enemy_rank, "resource": enemy.get_meta("audit_resource", enemy.resource_path),
 			"hull": enemy.hull_capacity, "shields": enemy.shields, "crew": enemy.crew, "quarters": enemy.quarters})
 	var config_row := {"type": "config", "revision": revision, "engine": Engine.get_version_info().string,
-		"variant": variant, "adjustment": DECISIVE_MODES.get(variant, VARIANTS.get(variant, [])), "selected_ship": selected,
+		"variant": variant, "adjustment": faction_arm if not faction_arm.is_empty() else DECISIVE_MODES.get(variant, VARIANTS.get(variant, [])), "selected_ship": selected,
 		"first_seed": first, "last_seed": last, "policy_filter": filter, "ships": Ships.PLAYERS.map(func(ship): return ship.ship_name),
 		"enemies": profiles, "modifiers": Modifier.NAMES, "policies": POLICIES, "round_limit": ROUND_LIMIT,
 		"action_limit": ACTION_LIMIT, "failure_turns": failure_turns, "boss_emp_bonus": Config.defense_tuning.mothership_emp_bonus}
+	if expedition_pool:
+		config_row.expedition_pool = true
 	var loadouts: Array = []
 	if not stage.is_empty():
 		config_row.stage = stage
@@ -156,12 +163,16 @@ func run() -> void:
 		var player: Resource = Ships.PLAYERS[i]
 		for policy in policies:
 			var settings: Dictionary = POLICIES[policy].duplicate(true)
+			if expedition_pool:
+				settings.expedition_pool = true
 			if not stage.is_empty():
 				settings.battle_setup = loadouts[i]
 			settings.cards = {}
 			for base in enemies:
 				var enemy: Resource = base
-				if DECISIVE_MODES.has(variant):
+				if not faction_arm.is_empty():
+					enemy = FactionBalance.adjusted(base, faction_arm[base.ship_name])
+				elif DECISIVE_MODES.has(variant):
 					enemy = decisive_profile(base, variant)
 				elif VARIANTS.has(variant):
 					var adjustment: Array = VARIANTS[variant]

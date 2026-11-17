@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Feeding Lunge"
+family = "crew"
+cost = 8
+allocation_category = "offense"
+max_upgrades = 0
+description = "Deal 5 damage. Restore 3 Hull if your Hull is at or below half."
+effects = {"damage": 5, "conditional": {"target": "self", "attribute": "hull", "comparison": "at_most", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 3}}}
