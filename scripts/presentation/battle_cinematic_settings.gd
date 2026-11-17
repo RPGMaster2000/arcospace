@@ -12,7 +12,7 @@ class_name BattleCinematicSettings
 ## Opening hold within the third shot's total duration.
 @export_range(0, 1, .05) var confrontation_hold: float = .30
 @export_range(20, 70, 1) var cinematic_fov: float = 42
-@export_range(5, 70, 1) var beam_fov: float = 12
+@export_range(5, 70, 1) var beam_fov: float = 22
 @export_range(1.05, 1.8, .05) var framing_margin: float = 1.2
 @export_range(1, 100, 1) var heavy_beam_threshold: int = 12
 @export var attack_seconds: float = 1.25
