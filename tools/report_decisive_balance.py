@@ -4,6 +4,7 @@ import argparse
 import gzip
 import json
 from pathlib import Path
+import sys
 
 from report_enemy_balance import (
     card_table, interval, inventory, metrics, non_emp, opens, paired, render, table, verify_grid, write_cards,
@@ -48,6 +49,11 @@ def compare(before, candidate):
             "before": metrics([before[k] for k in keys]),
             "after": metrics([candidate[k] for k in keys]),
         }
+        emp = [key for key in candidate if key[1] == name and not non_emp(key)]
+        if emp:
+            output[name]["emp_policy"] = {"n": len(emp),
+                "before": sum(before[k]["outcome"] == "emp_escape" for k in emp) / len(emp),
+                "after": sum(candidate[k]["outcome"] == "emp_escape" for k in emp) / len(emp)}
     return output
 
 
@@ -104,8 +110,12 @@ def main():
         changes = compare(baseline, candidate)
         targets.update(changes)
         trials[arm] = {"configuration": arm_config, "changes": changes, "cards": card_table(arm_cards, changes)}
-        print(screening_table(arm, changes))
+        if arm == "decisive-affordable":
+            affordable = candidate
     if args.output is None:
+        sys.stdout.reconfigure(encoding="utf-8")
+        for arm, trial in trials.items():
+            print(screening_table(arm, trial["changes"]))
         return
     tuned_config, tuned, tuned_cards = read(args.shards, "final")
     held_config, held, _ = read(args.shards, "held", HELD_SEEDS)
@@ -115,12 +125,18 @@ def main():
     if held_control.keys() != held_tuned.keys() or held.keys() & baseline.keys():
         raise ValueError("Held-out conditions must match exactly and use independent seeds")
     retained = set(args.retain)
-    if not retained <= {key[1] for key in tuned}:
-        raise ValueError("Every retained profile must have a production-profile rerun")
+    if retained != {key[1] for key in tuned} or retained != held_names:
+        raise ValueError("Production reruns must cover exactly the retained profiles")
+    if any(affordable.get(k) != row for k, row in tuned.items() if non_emp(k)):
+        raise ValueError("The production profile differs from the selected screening candidate")
     final = baseline | {k: v for k, v in tuned.items() if k[1] in retained}
     after, new_ranks = inventory(final, config)
     affordable_config, affordable_held, _ = read(args.shards, "affordable-held", HELD_SEEDS)
+    if any(affordable_held.get(k) != row for k, row in held_tuned.items()):
+        raise ValueError("The production profile differs from the selected independent candidate")
+    siege_config, siege_held, _ = read(args.shards, "siege-breach-held", HELD_SEEDS)
     selections = {"Independent affordable-candidate validation": compare(held, affordable_held),
+                  "Independent Siege Breach Charge validation": compare(held, siege_held),
                   "Production profile selection seeds": compare(baseline, tuned),
                   "Production profile held-out seeds": compare(held_control, held_tuned)}
     bosses = {}
@@ -134,7 +150,7 @@ def main():
               "targets": sorted(targets), "trials": trials, "validation": selections, "bosses": bosses, "comparisons": {},
               "baseline_matches": len(baseline), "tuned_revision": tuned_config["revision"], "retained": sorted(retained),
               "held_revisions": [held_config["revision"], held_tuned_config["revision"]], "held_seeds": list(HELD_SEEDS),
-              "held_candidate_configuration": affordable_config}
+              "held_candidate_configurations": [affordable_config, siege_config]}
     args.output.mkdir(parents=True, exist_ok=True)
     sections = [render(report), activity_table(report), "## Paired scenario results", ""]
     sections.extend(screening_table(name, trial["changes"]) for name, trial in trials.items())
@@ -145,6 +161,7 @@ def main():
     with (args.output / "summary.json.gz").open("wb") as stream:
         with gzip.GzipFile(fileobj=stream, mode="wb", filename="", mtime=0) as archive:
             archive.write(json.dumps(report, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    print(f"Report complete: {len(baseline):,} baseline matches and {len(held_tuned):,} retained-profile validation pairs")
 
 
 if __name__ == "__main__":
