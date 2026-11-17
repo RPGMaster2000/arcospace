@@ -44,6 +44,8 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	var hands: Array = [Hand.new(), Hand.new()]
 	var brains: Array = [AI.new(), AI.new()]
 	var states: Array = [state(player), state(enemy)]
+	if audit.has("battle_setup"):
+		states[0] = audit.battle_setup.player_state.snapshot()
 	var names: Array[String] = ["player", "enemy"]
 	var clock = Failure.new()
 	var modifier = make_modifier()
@@ -77,6 +79,9 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		brains[1].rng.seed = seed_value ^ 107
 		hands[0].configure_player_allocation(preload("res://resources/power_allocation.tres").matching_draw_weight)
 		hands[0].signature_card = player.signature_card
+		if audit.has("battle_setup"):
+			hands[0].card_pool.assign(audit.battle_setup.player_cards)
+			hands[0].identity_weights = audit.battle_setup.identity_weights.duplicate()
 		if audit.has("progression"):
 			for card in audit.progression.acquired:
 				hands[0].card_pool.append(card)
@@ -110,6 +115,10 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	var actions := 0
 	var disruptions := 0
 	var activations := [0, 0]
+	var recovery_run := 0
+	var recovery_sequences := 0
+	var recovery_sequence_turns := 0
+	var longest_recovery_run := 0
 	var cursor: Dictionary = {"side": "player", "round": 1}
 	while cursor.round <= ROUND_LIMIT:
 		var round_number: int = cursor.round
@@ -154,6 +163,8 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 			result = "emp_escape"
 			break
 		var completed_turn := false
+		var enemy_damage_before: int = flows[1].get("damage", 0)
+		var enemy_recovery_before: int = flows[1].get("recovery_plays", 0)
 		for action_index in range(ACTION_LIMIT):
 			for index in range(2):
 				states[index].systems_failure_remaining = clock.remaining[names[index]]
@@ -230,6 +241,17 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 			if not resolution.extra_action:
 				completed_turn = true
 				break
+		if detailed and side == 1:
+			if flows[1].recovery_plays > enemy_recovery_before and flows[1].damage - enemy_damage_before < 3:
+				recovery_run += 1
+				if recovery_run == 2:
+					recovery_sequences += 1
+					recovery_sequence_turns += 2
+				elif recovery_run > 2:
+					recovery_sequence_turns += 1
+				longest_recovery_run = maxi(longest_recovery_run, recovery_run)
+			else:
+				recovery_run = 0
 		if not result.is_empty():
 			break
 		if not completed_turn:
@@ -252,6 +274,9 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	if detailed:
 		record.flows = flows
 		record.enemy_resource = enemy.get_meta("audit_resource", enemy.resource_path)
+		record.recovery_sequences = recovery_sequences
+		record.recovery_sequence_turns = recovery_sequence_turns
+		record.longest_recovery_run = longest_recovery_run
 	for node in hands + brains + [modifier, drive]:
 		node.free()
 	return record

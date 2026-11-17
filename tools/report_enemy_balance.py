@@ -51,6 +51,9 @@ def metrics(rows):
     output["loss"] = sum(r["outcome"].startswith("loss_") for r in rows) / n
     output["draw"] = sum(r["outcome"].startswith("draw_") for r in rows) / n
     output["unresolved"] = sum(r["outcome"].endswith("_limit") for r in rows) / n
+    if "recovery_sequences" in rows[0]:
+        for field in ("recovery_sequences", "recovery_sequence_turns", "longest_recovery_run"):
+            output[field] = mean(row[field] for row in rows)
     output["flow"] = []
     for side in (0, 1):
         turns = sum(row["turns"][side] for row in rows)
@@ -66,8 +69,9 @@ def metrics(rows):
     return output
 
 
-def paired(before, after, keys):
+def paired(before, after, keys, extra=None):
     """Resample whole paired seed blocks so shared RNG seeds stay together."""
+    extra = extra or {}
     blocks = defaultdict(list)
     for key in sorted(keys):
         old, new = before[key], after[key]
@@ -76,12 +80,13 @@ def paired(before, after, keys):
             new["rounds"] - old["rounds"],
             new["flows"][1]["damage"] / new["rounds"] - old["flows"][1]["damage"] / old["rounds"],
             new["flows"][1]["recovery_plays"] - old["flows"][1]["recovery_plays"],
+            *(measure(new) - measure(old) for measure in extra.values()),
         ])
     values = [tuple(map(mean, zip(*block, strict=True))) for block in blocks.values()]
     rng = Random(1)
     samples = [tuple(map(mean, zip(*rng.choices(values, k=len(values)), strict=True))) for _ in range(4000)]
     result = {"n": sum(map(len, blocks.values())), "seeds": sorted(blocks)}
-    for i, metric in enumerate(("win", "rounds", "damage_per_round", "recovery_plays")):
+    for i, metric in enumerate(("win", "rounds", "damage_per_round", "recovery_plays", *extra)):
         interval = sorted(s[i] for s in samples)
         result[metric] = [mean(v[i] for v in values), interval[100], interval[3899]]
     return result
