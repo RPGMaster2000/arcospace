@@ -7,6 +7,7 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # DOES NOT: Apply effects or draw cards.
 
 signal discard_requested
+const Motifs = preload("res://scripts/ui/card_motifs.gd")
 const Summary = preload("res://scripts/ui/card_face_text.gd")
 const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
 const ART_TOP := 68.0
@@ -174,6 +175,9 @@ func refresh_card() -> void:
 		$CostLabel.text = ""
 		$DescriptionLabel.text = ""
 		$FullCardArt.hide()
+		$ArtPlaceholder/EffectMotif.hide()
+		$ArtPlaceholder/Ship.show()
+		$ArtPlaceholder/Accent.show()
 		tooltip_text = ""
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
@@ -192,6 +196,12 @@ func refresh_card() -> void:
 	$FullCardArt.visible = $FullCardArt.texture != null
 	$ArtPlaceholder.visible = not $FullCardArt.visible
 	family_tint = presentation_settings.family_color(card_data.family)
+	var motif: Texture2D = Motifs.texture_for(card_data)
+	$ArtPlaceholder/EffectMotif.texture = motif
+	$ArtPlaceholder/EffectMotif.visible = motif != null and not $FullCardArt.visible
+	$ArtPlaceholder/EffectMotif.modulate = family_tint
+	$ArtPlaceholder/Ship.visible = motif == null
+	$ArtPlaceholder/Accent.visible = motif == null
 	for icon in $ResourceIcon.get_children():
 		icon.visible = icon.name.to_lower() == card_data.family
 		icon.color = family_tint
@@ -263,6 +273,8 @@ func fit_placeholder_art() -> void:
 	# Retain main's original primitive placeholder on its 174×74 design surface.
 	$ArtPlaceholder.clip_contents = true
 	for child in $ArtPlaceholder.get_children():
+		if child == $ArtPlaceholder/EffectMotif:
+			continue
 		child.scale = Vector2($ArtPlaceholder.size.x / 174.0, $ArtPlaceholder.size.y / 74.0)
 
 
