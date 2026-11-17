@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "AXIOM Scout"
-subtitle = "Light Precision Vessel"
+subtitle = "AXIOM Collective · Scout"
 role = "Light"
-summary = "AXIOM Scout: energy disruption and precision strikes."
+summary = "Light disruptor attacks Shields and production systems."
 hull_capacity = 22
 shields = 10
 materials = 8

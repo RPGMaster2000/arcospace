@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1")
-card_name = "Iron Counterbattery"
+card_name = "Counter Volley"
 family = "energy"
 cost = 8
 allocation_category = "offense"
 max_upgrades = 0
-description = "Deal 4 damage. With at least 8 Shields, deal 4 more damage that pierces Shields."
+description = "Deal 4 damage. If your Shields ≥8, deal 4 more Hull damage."
 effects = {"damage": 4, "conditional": {"target": "self", "attribute": "shields", "comparison": "at_least", "threshold": 8, "then": {"damage": 4, "pierce": 1.0}}}

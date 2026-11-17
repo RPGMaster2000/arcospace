@@ -653,7 +653,10 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	extra_action_requested = resolution.extra_action
 	var who: String = "You" if side == "player" else "Enemy"
 	var action: String = "discarded" if discard else "played"
-	$LastActionLabel.text = "%s %s %s" % [who, action, card.card_name]
+	var shown_name: String = card.card_name
+	if side == "enemy":
+		shown_name = preload("res://scripts/ui/enemy_card_flavor.gd").title(card, enemy_ship_data)
+	$LastActionLabel.text = "%s %s %s" % [who, action, shown_name]
 	if discard:
 		$LastActionLabel.text += (
 			" (+%d %s)" % [int(floor(card.cost / 3.0)), card.family.capitalize()]

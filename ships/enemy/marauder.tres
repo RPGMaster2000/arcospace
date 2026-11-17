@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 ship_name = "Marauder"
-subtitle = "Energy Raider"
+subtitle = "Scavenger Clans · Raider"
 role = "Offensive"
-summary = "Energy-rich attacker."
+summary = "High Energy reserves fuel an aggressive opening."
 hull_capacity = 27
 shields = 5
 materials = 8

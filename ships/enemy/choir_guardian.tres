@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Choir Guardian"
-subtitle = "Heavy Living Vessel"
+subtitle = "Hollow Choir · Regenerator"
 role = "Heavy"
-summary = "Choir Guardian: regeneration and sustained crew attacks."
+summary = "Repairs Hull and sustains pressure with Crew attacks."
 hull_capacity = 51
 shields = 5
 materials = 12

@@ -163,7 +163,8 @@
     "victory_upgrade_music_test": 1.97,
     "visual_system_test": 1.12,
     "atmospheric_accents_render_test": 11.63,
-    "atmospheric_accents_test": 5.38
+    "atmospheric_accents_test": 5.38,
+    "enemy_identity_test": 5.13
   },
   "gl_compatibility": {
     "alpha_visual_test": 9.23,
@@ -215,7 +216,8 @@
     "tactical_focus_test": 30.16,
     "tactical_resize_test": 9.93,
     "unified_hud_test": 95.19,
-    "atmospheric_accents_render_test": 61.13
+    "atmospheric_accents_render_test": 61.13,
+    "enemy_identity_test": 21.71
   },
   "mobile": {
     "asteroid_render_test": 10.86,
@@ -237,6 +239,7 @@
     "stellar_shafts_prototype_test": 16.65,
     "stellar_shafts_render_test": 53.6,
     "tactical_resize_test": 19.63,
-    "atmospheric_accents_render_test": 114.19
+    "atmospheric_accents_render_test": 114.19,
+    "enemy_identity_test": 23.5
   }
 }

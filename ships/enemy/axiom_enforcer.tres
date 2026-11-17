@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "AXIOM Enforcer"
-subtitle = "Heavy Precision Vessel"
+subtitle = "AXIOM Collective · Enforcer"
 role = "Heavy"
-summary = "AXIOM Enforcer: energy disruption and precision strikes."
+summary = "Shield breaking and system disruption set up precise strikes."
 hull_capacity = 39
 shields = 19
 materials = 8

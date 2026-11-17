@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Rustjack"
-subtitle = "Scrap Raider"
+subtitle = "Scavenger Clans · Salvager"
 role = "Scrap Raider"
-summary = "Opportunistic scrap raider: demolition, salvage and theft."
+summary = "Steals supplies and turns unstable weapons into salvage."
 hull_capacity = 32
 shields = 4
 materials = 14

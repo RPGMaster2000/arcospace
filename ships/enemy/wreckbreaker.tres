@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Wreckbreaker"
-subtitle = "Heavy Scrap Raider"
+subtitle = "Scavenger Clans · Breaker"
 role = "Heavy"
-summary = "Wreckbreaker: raiding and recovered weapons."
+summary = "Heavy raider trades Hull for explosive strikes and salvage."
 hull_capacity = 40
 shields = 9
 materials = 14

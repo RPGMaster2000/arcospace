@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Scrap Skiff"
-subtitle = "Light Scrap Raider"
+subtitle = "Scavenger Clans · Skirmisher"
 role = "Light"
-summary = "Scrap Skiff: raiding and recovered weapons."
+summary = "Fast raider mixes theft with unstable weapons."
 hull_capacity = 20
 shields = 3
 materials = 14

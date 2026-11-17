@@ -13,6 +13,8 @@ const ART_TOP := 68.0
 const BODY_TOP := 131.0
 const INK := Color("edf4fa")
 var family_tint := Color.WHITE
+# Optional title for a read-only enemy reveal; never stored on CardData.
+var display_title := ""
 var footer_visual_height := 28.0
 var preview_selected := false
 var affordable := true
@@ -176,7 +178,7 @@ func refresh_card() -> void:
 		$DiscardButton.disabled = true
 		$DiscardButton.text = "Discard"
 		return
-	$TitleLabel.text = title_text(card_data.card_name)
+	$TitleLabel.text = title_text(display_title if not display_title.is_empty() else card_data.card_name)
 	$TierLabel.text = (
 		("T%d " % card_data.tier if card_data.tier > 1 else "")
 		+ "+".repeat(card_data.upgrade_level)
@@ -235,7 +237,7 @@ func refresh_card() -> void:
 	$DiscardButton.add_theme_color_override("font_color", family_tint)
 	$DiscardButton.add_theme_color_override("font_disabled_color", family_tint.darkened(0.25))
 	tooltip_text = (
-		card_data.card_name
+		(display_title if not display_title.is_empty() else card_data.card_name)
 		+ "\n"
 		+ preload("res://scripts/cards/card_data.gd").describe_effects(card_data.effects)
 	)
