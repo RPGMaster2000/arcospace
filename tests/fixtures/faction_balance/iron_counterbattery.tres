@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Iron Counterbattery"
+family = "energy"
+cost = 8
+allocation_category = "offense"
+max_upgrades = 0
+description = "Deal 4 damage. With at least 8 Shields, deal 4 more damage that pierces Shields."
+effects = {"damage": 4, "conditional": {"target": "self", "attribute": "shields", "comparison": "at_least", "threshold": 8, "then": {"damage": 4, "pierce": 1.0}}}
