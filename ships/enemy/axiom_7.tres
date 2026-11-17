@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "AXIOM-7"
-subtitle = "Autonomous Interceptor"
+subtitle = "AXIOM Collective · Disruptor"
 role = "Autonomous Interceptor"
-summary = "Precise energy interceptor: shield-breaking weapons and disruption."
+summary = "Breaks Shields and disrupts production to expose your Hull."
 hull_capacity = 29
 shields = 16
 materials = 8

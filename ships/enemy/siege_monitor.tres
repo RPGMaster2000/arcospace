@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Siege Monitor"
-subtitle = "Heavy Armored Vessel"
+subtitle = "Iron Directorate · Siege"
 role = "Heavy"
-summary = "Siege Monitor: layered defenses and attrition."
+summary = "Builds Shields to enable piercing counterfire."
 hull_capacity = 43
 shields = 22
 materials = 8

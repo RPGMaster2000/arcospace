@@ -7,7 +7,8 @@
 [resource]
 script = ExtResource("1")
 ship_name = "Marauder Vanguard"
-subtitle = "Elite Raider"
+subtitle = "Scavenger Clans · Vanguard"
+summary = "Elite raider with reinforced Hull and stronger reserves."
 role = "Elite"
 hull_capacity = 38
 shields = 12

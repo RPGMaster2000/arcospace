@@ -26,7 +26,7 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Clan War Barge"
-subtitle = "Mothership Scrap Raider"
+subtitle = "Scavenger Clans · Flagship"
 role = "Mothership"
 hull_capacity = 60
 shields = 14
@@ -45,7 +45,7 @@ card_effect_weights = {"damage": 1.5, "steal": 1.8, "disruption": 1.5, "hull": 1
 tactical_weights = {"damage": 1.6, "hull": 1, "shields": 0.3, "production": 3, "resources": 0.45, "disruption": 1.1, "play_again": 1.2}
 tactical_variation = 0.22
 model_scene = ExtResource("Model")
-summary = "Clan War Barge: raiding and recovered weapons."
+summary = "Raiding flagship combines theft with heavy ordnance."
 strategic_class = "Mothership"
 minimum_defense_system = 2
 strategic_speed_multiplier = 1.0

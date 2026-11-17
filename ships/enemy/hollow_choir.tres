@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "The Hollow Choir"
-subtitle = "Organic Vessel"
+subtitle = "Hollow Choir · Predator"
 role = "Organic Vessel"
-summary = "Living vessel: restoration, defensive buildup and steady crew attacks."
+summary = "Repair cards sustain the hunt while piercing attacks reach your Hull."
 hull_capacity = 42
 shields = 2
 materials = 12

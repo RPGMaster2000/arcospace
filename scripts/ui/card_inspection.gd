@@ -108,7 +108,8 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 		child.queue_free()
 	level_panels.clear()
 	var base: Resource = current_card.get_meta("inspection_base", current_card)
-	heading.text = base.card_name.trim_suffix("++").trim_suffix("+")
+	var shown_name: String = original.display_title if not original.display_title.is_empty() else base.card_name
+	heading.text = shown_name.trim_suffix("++").trim_suffix("+")
 	metadata.text = (
 		"%s · Cost %d · Tier %d · %s\nCurrent: %s"
 		% [
@@ -180,6 +181,7 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 	visual.inspection_enabled = false
 	visual.presentation_settings = original.presentation_settings
 	visual.discard_target_height = original.discard_target_height
+	visual.display_title = original.display_title
 	visual.card_data = current_card
 	shade.add_child(visual)
 	visual.get_node("DiscardButton").hide()

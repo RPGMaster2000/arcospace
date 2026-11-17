@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Bastion Frigate"
-subtitle = "Light Armored Vessel"
+subtitle = "Iron Directorate · Assault"
 role = "Light"
-summary = "Bastion Frigate: layered defenses and attrition."
+summary = "Reactor-fed volleys turn layered Shields into an aggressive opening."
 hull_capacity = 25
 shields = 13
 materials = 8

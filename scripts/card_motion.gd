@@ -1,5 +1,6 @@
 extends Control
 
+const Flavor = preload("res://scripts/ui/enemy_card_flavor.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
 
 # RESPONSIBILITY: Present a card, invoke resolution at its cue, then finish motion.
@@ -41,6 +42,8 @@ func animate_action(
 	clipper.size = card_size
 	add_child(clipper)
 	var visual = card_scene.instantiate()
+	if side == "enemy":
+		visual.display_title = Flavor.title(card, get_parent().get("enemy_ship_data"))
 	visual.card_data = card
 	clipper.add_child(visual)
 	visual.size = card_size

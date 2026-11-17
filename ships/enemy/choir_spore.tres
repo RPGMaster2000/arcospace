@@ -26,9 +26,9 @@
 [resource]
 script = ExtResource("Ship")
 ship_name = "Choir Spore"
-subtitle = "Light Living Vessel"
+subtitle = "Hollow Choir · Skirmisher"
 role = "Light"
-summary = "Choir Spore: regeneration and sustained crew attacks."
+summary = "Fragile predator repairs itself and strikes at a cost."
 hull_capacity = 27
 shields = 2
 materials = 12
