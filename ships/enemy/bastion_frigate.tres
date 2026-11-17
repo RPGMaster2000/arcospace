@@ -19,7 +19,7 @@
 [ext_resource type="Resource" path="res://cards/30_siege_driver.tres" id="C30"]
 [ext_resource type="Resource" path="res://cards/35_damage_control.tres" id="C35"]
 [ext_resource type="Resource" path="res://cards/43_emergency_reserves.tres" id="C43"]
-[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C45"]
+[ext_resource type="Resource" path="res://cards/28_breach_charge.tres" id="C28"]
 [ext_resource type="Resource" path="res://cards/53_capacitor_overload.tres" id="C53"]
 [ext_resource type="Resource" path="res://cards/54_power_grid_reroute.tres" id="C54"]
 
@@ -49,4 +49,4 @@ strategic_class = "Light"
 minimum_defense_system = 2
 strategic_speed_multiplier = 1.2
 homeworld_damage_multiplier = 0.65
-starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C16"), ExtResource("C19"), ExtResource("C26"), ExtResource("C30"), ExtResource("C35"), ExtResource("C43"), ExtResource("C45"), ExtResource("C53"), ExtResource("C54")])
+starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C14"), ExtResource("C16"), ExtResource("C19"), ExtResource("C26"), ExtResource("C30"), ExtResource("C35"), ExtResource("C43"), ExtResource("C28"), ExtResource("C53"), ExtResource("C54")])
