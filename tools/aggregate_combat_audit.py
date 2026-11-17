@@ -72,7 +72,7 @@ def collect(paths, enemy_cards=None):
             raise ValueError(f"Mismatched configuration in {path}")
         reference = config
         ships = config["ships"] if first["selected_ship"] < 0 else [config["ships"][first["selected_ship"]]]
-        policies = config["policies"] if first["policy_filter"] == "all" else [first["policy_filter"]]
+        policies = config["policies"] if first["policy_filter"] == "all" else first["policy_filter"].split(",")
         expected = set(product(ships, [enemy["name"] for enemy in config["enemies"]], config["modifiers"],
                                policies, range(first["first_seed"], first["last_seed"] + 1)))
         if len(expected) != last["matches"]:
