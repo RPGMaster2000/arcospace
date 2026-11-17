@@ -34,6 +34,8 @@ func verifies_exclusion(pool: Array) -> bool:
 
 func run() -> void:
 	check(verifies_exclusion(Cards.CARDS), "Enemy cards must stay out of the player catalog")
+	check(PRODUCTION_BATTERY.effects == BATTERY.effects and PRODUCTION_BATTERY.cost == BATTERY.cost,
+		"Production Counterbattery keeps the screened card's effects and cost")
 	for index in Ships.PLAYERS.size():
 		var expedition := Expedition.new()
 		expedition.start(index, Rules, 4712)
@@ -70,7 +72,7 @@ func run() -> void:
 		check(not ship.starting_cards.has(BATTERY) and not ship.starting_cards.has(LUNGE),
 			"Experimental resources must stay outside the live roster")
 		if ship.ship_name in ["Siege Monitor", "Choir Guardian"]:
-			var candidate := Scenario.adjusted(ship, Scenario.ARMS["faction-prototypes"][ship.ship_name])
+			var candidate: Resource = ship if ship.ship_name == "Siege Monitor" else Scenario.adjusted(ship, Scenario.ARMS["faction-prototypes"][ship.ship_name])
 			var expedition := Expedition.new()
 			expedition.start(0, Rules, 32)
 			var setup := expedition.prepare_battle(-1, candidate)

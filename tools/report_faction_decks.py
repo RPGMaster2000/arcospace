@@ -86,13 +86,22 @@ def deck_audit(path, authored, activity, cards):
             frequent = sorted(defensive, key=lambda item: (-item[1], item[0]))[:4]
             scarce = [(card, stats[2], stats[3]) for card, stats in examples.items()
                       if stats[1] >= 80 and stats[2] <= .2 and stats[0] <= 0.10 * combat["n"]]
+            blends = sorted(((card, stats[0], [role for role in stats[4] if role != "Offense"])
+                             for card, stats in examples.items() if "Offense" in stats[4] and len(stats[4]) > 1),
+                            key=lambda item: (-item[1], item[0]))[:3]
+            overlap = Counter(definitions[k]["family"] for k in profile["cards"]
+                              if set(definitions[k]["tags"]) & {"shields", "hull"})
             details.extend([f"## {name}", "", profile["summary"] or profile["role"], "",
                             f'Tactics `{json.dumps(profile["tactics"], sort_keys=True)}`, variation {profile["tactical_variation"]}.',
                             f'Family draw weights `{json.dumps(profile["family_weights"], sort_keys=True)}`.',
                             f'Effect draw weights `{json.dumps(profile["effect_weights"], sort_keys=True)}`.', "",
-                            "Most-used recovery or Shield cards per combat: " +
+                            "**Most-used recovery or Shield cards per combat**  " +
                             (", ".join(f"{card} {uses / combat['n']:.2f}" for card, uses in frequent if uses) or "none observed") + ".", "",
-                            "Low-affordability, low-play examples: " +
+                            "**Recovery and Shield slots sharing a resource family**  " +
+                            (", ".join(f"{family} {count}" for family, count in sorted(overlap.items())) or "none") + ".", "",
+                            "**Frequently played multi-role attacks**  " +
+                            (", ".join(f"{card} ({'/'.join(roles).lower()})" for card, uses, roles in blends if uses) or "none observed") + ".", "",
+                            "**Low-affordability, low-play examples**  " +
                             (", ".join(f"{card} ({affordable:.0%} affordable, {discard:.0%} discarded among removals)"
                                        for card, affordable, discard in sorted(scarce, key=lambda item: item[1])[:5]) or "none at the reporting cutoff") + ".", ""])
     lines.extend([table(columns, rows), "", *details])
