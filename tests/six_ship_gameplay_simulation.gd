@@ -88,8 +88,18 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	hands[0].deal_player_opening()
 	hands[1].deal(6)
 	var stats: Dictionary = audit.get("cards", {})
+	var detailed := audit.has("enemy_cards")
+	var enemy_stats = audit.get("enemy_cards")
 	if modern:
 		for card in hands[0].cards: _count_card(stats, card, "drawn")
+	if detailed:
+		for card in hands[1].cards: _count_card(enemy_stats, card, "drawn")
+	var flows := [{}, {}]
+	if detailed:
+		for flow in flows:
+			flow.merge({"income": [0, 0, 0], "reserves": [0, 0, 0], "spent": [0, 0, 0],
+				"hull_dealt": 0, "hull_restored": 0, "shields_gained": 0, "shields_lost": 0,
+				"damage": 0, "offensive_plays": 0, "recovery_plays": 0})
 	var resource_sum := Vector3.ZERO
 	var samples := 0
 	var dead_hands := [0, 0]
@@ -119,6 +129,14 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 				break
 			drive.begin_player_turn()
 		Execution.begin_turn(states[side])
+		if detailed:
+			for i in Rules.RESOURCES.size():
+				flows[side].income[i] += states[side][Rules.PRODUCTION[i]]
+				flows[side].reserves[i] += states[side][Rules.RESOURCES[i]]
+			if side == 1:
+				for held in hands[1].cards:
+					_count_card(enemy_stats, held, "held_turns")
+					if Execution.can_play(held, false, states[1]): _count_card(enemy_stats, held, "affordable")
 		var used_slot := -1
 		if modern:
 			turns[side] += 1
@@ -151,8 +169,29 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 			var old_shields: int = states[side].shields
 			var old_hull: int = states[side].hull
 			var old_resource: int = states[side][card.family]
+			var target_shields: int = states[1-side].shields
+			var target_hull: int = states[1-side].hull
 			var resolution = Execution.resolve(card, move.discard, states[side], states[1-side], modifier)
 			assert(resolution != null)
+			if detailed:
+				if side == 1: _count_card(enemy_stats, card, "discarded" if move.discard else "played")
+				if not move.discard:
+					var active_flow: Dictionary = flows[side]
+					var target_flow: Dictionary = flows[1-side]
+					var damage: Dictionary = resolution.hull_damage
+					active_flow.spent[Rules.RESOURCES.find(card.family)] += card.cost
+					active_flow.hull_dealt += damage.target
+					active_flow.damage += resolution.direct_damage
+					active_flow.offensive_plays += int(resolution.direct_damage > 0)
+					var restored: int = maxi(0, states[side].hull - old_hull + int(damage.actor))
+					var shield_gain: int = maxi(0, states[side].shields - old_shields)
+					active_flow.hull_restored += restored
+					active_flow.shields_gained += shield_gain
+					active_flow.shields_lost += maxi(0, old_shields - states[side].shields)
+					active_flow.recovery_plays += int(restored > 0 or shield_gain > 0)
+					target_flow.hull_restored += maxi(0, states[1-side].hull - target_hull + int(damage.target))
+					target_flow.shields_gained += maxi(0, states[1-side].shields - target_shields)
+					target_flow.shields_lost += maxi(0, target_shields - states[1-side].shields)
 			if not move.discard:
 				# Intermediate damage precedes any same-card healing.
 				var key := "actor" if side == 0 else "target"
@@ -183,7 +222,7 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 			if not result.is_empty():
 				break
 			if modern and resolution.extra_action:
-				_refill(hands, side, used_slot, round_number, stats)
+				_refill(hands, side, used_slot, round_number, stats if side == 0 else enemy_stats)
 				used_slot = -1
 			if side == 0 and use_emp and drive.can_warp():
 				result = "emp_escape"
@@ -201,7 +240,7 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		if not result.is_empty():
 			break
 		cursor = Execution.next_turn(names[side], round_number)
-		if modern and used_slot >= 0: _refill(hands, side, used_slot, cursor.round, stats)
+		if modern and used_slot >= 0: _refill(hands, side, used_slot, cursor.round, stats if side == 0 else enemy_stats)
 	if result.is_empty():
 		result = "round_limit"
 	assert(modern or not (player.ship_name == "Titania" and result == "emp_escape"))
@@ -210,14 +249,18 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		record.merge({"hull_lost": maxi(0, player.hull_capacity - states[0].hull), "gross_hull_damage": gross_damage,
 			"resource_sum": [int(resource_sum.x), int(resource_sum.y), int(resource_sum.z)],
 			"resource_samples": samples, "dead_hands": dead_hands, "turns": turns})
+	if detailed:
+		record.flows = flows
+		record.enemy_resource = enemy.get_meta("audit_resource", enemy.resource_path)
 	for node in hands + brains + [modifier, drive]:
 		node.free()
 	return record
 
-func _refill(hands: Array, side: int, slot: int, round_number: int, stats: Dictionary) -> void:
+func _refill(hands: Array, side: int, slot: int, round_number: int, stats: Variant) -> void:
 	hands[side].current_round = round_number
 	hands[side].replace_card(slot)
-	if side == 0: _count_card(stats, hands[side].cards[slot], "drawn")
+	if stats != null:
+		_count_card(stats, hands[side].cards[slot], "drawn")
 
 func _count_card(stats: Dictionary, card: Resource, metric: String, amount: int = 1) -> void:
 	if card == null: return
