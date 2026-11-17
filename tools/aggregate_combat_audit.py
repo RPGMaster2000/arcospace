@@ -56,7 +56,7 @@ def summarize(rows):
     }
 
 
-def collect(paths):
+def collect(paths, enemy_cards=None):
     reference = None
     matches = {}
     cards = defaultdict(dict)
@@ -72,12 +72,13 @@ def collect(paths):
             raise ValueError(f"Mismatched configuration in {path}")
         reference = config
         ships = config["ships"] if first["selected_ship"] < 0 else [config["ships"][first["selected_ship"]]]
-        policies = config["policies"] if first["policy_filter"] == "all" else [first["policy_filter"]]
+        policies = config["policies"] if first["policy_filter"] == "all" else first["policy_filter"].split(",")
         expected = set(product(ships, [enemy["name"] for enemy in config["enemies"]], config["modifiers"],
                                policies, range(first["first_seed"], first["last_seed"] + 1)))
         if len(expected) != last["matches"]:
             raise ValueError(f"Unexpected count in {path}")
         groups = set(product(ships, policies))
+        enemy_groups = set(product(ships, [enemy["name"] for enemy in config["enemies"]], policies))
         for row in records[1:-1]:
             kind = row.pop("type")
             if kind == "match":
@@ -93,9 +94,16 @@ def collect(paths):
                     total = cards[group].setdefault(key, {})
                     for metric, value in card.items():
                         total[metric] = total.get(metric, 0) + value if isinstance(value, int) and metric != "tier" else value
+            elif kind == "enemy_cards" and enemy_cards is not None:
+                enemy_groups.remove((row["player"], row["enemy"], row["policy"]))
+                group = enemy_cards.setdefault((row["enemy"], row["policy"]), {})
+                for identity, card in row["cards"].items():
+                    total = group.setdefault(identity, {})
+                    for metric, value in card.items():
+                        total[metric] = total.get(metric, 0) + value if isinstance(value, int) and metric != "tier" else value
             else:
                 raise ValueError(f"Unexpected row type {kind}")
-        if expected or groups:
+        if expected or groups or (enemy_cards is not None and enemy_groups):
             raise ValueError(f"Missing results in {path}")
     return reference, matches, cards
 
