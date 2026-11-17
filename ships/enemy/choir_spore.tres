@@ -7,7 +7,7 @@
 [ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C4"]
 [ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="C5"]
 [ext_resource type="Resource" path="res://cards/08_energy_cell.tres" id="C8"]
-[ext_resource type="Resource" path="res://cards/09_hull_nanobots.tres" id="C9"]
+[ext_resource type="Resource" path="res://cards/42_overloaded_warhead.tres" id="C42"]
 [ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="C10"]
 [ext_resource type="Resource" path="res://cards/15_boarding_party.tres" id="C15"]
 [ext_resource type="Resource" path="res://cards/16_missile_team.tres" id="C16"]
@@ -47,4 +47,4 @@ strategic_class = "Light"
 minimum_defense_system = 2
 strategic_speed_multiplier = 1.2
 homeworld_damage_multiplier = 0.65
-starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C8"), ExtResource("C9"), ExtResource("C10"), ExtResource("C15"), ExtResource("C16"), ExtResource("C18"), ExtResource("C24"), ExtResource("C27"), ExtResource("C36"), ExtResource("C38"), ExtResource("C45"), ExtResource("C46"), ExtResource("C49"), ExtResource("C61"), ExtResource("C66"), ExtResource("C68")])
+starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C8"), ExtResource("C42"), ExtResource("C10"), ExtResource("C15"), ExtResource("C16"), ExtResource("C18"), ExtResource("C24"), ExtResource("C27"), ExtResource("C36"), ExtResource("C38"), ExtResource("C45"), ExtResource("C46"), ExtResource("C49"), ExtResource("C61"), ExtResource("C66"), ExtResource("C68")])

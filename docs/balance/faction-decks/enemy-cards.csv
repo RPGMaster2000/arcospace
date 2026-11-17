@@ -1,0 +1,1361 @@
+enemy,card,version,drawn,held_turns,affordable_turns,affordable_rate,played,discarded
+Marauder,Plasma Strike,before,1529,2217,2065,0.93144,1478,3
+Marauder,Energy Surge,before,1184,3522,3522,1.0,1057,0
+Marauder,Breach Charge,before,1168,3267,1612,0.49342,933,41
+Marauder,Energy Siphon,before,1037,2131,1350,0.63351,873,7
+Marauder,Boarding Party,before,947,1416,1201,0.84816,785,12
+Marauder,Pulse Repeater,before,884,2751,2512,0.91312,667,8
+Marauder,Missile Barrage,before,1255,6637,753,0.11345,637,101
+Marauder,Laser Burst,before,648,970,933,0.96186,608,0
+Marauder,Hull Nanobots,before,870,1956,1645,0.841,605,44
+Marauder,Emergency Power Cell,before,697,1938,1938,1.0,578,0
+Marauder,Tactical Assessment,before,733,1739,653,0.3755,572,42
+Marauder,Shield Collapse,before,621,1900,1873,0.98579,505,5
+Marauder,Relentless Barrage,before,474,699,698,0.99857,456,0
+Marauder,Overloaded Warhead,before,690,3055,1305,0.42717,405,43
+Marauder,Cargo Raid,before,519,1215,560,0.46091,403,21
+Marauder,Reactor Upgrade,before,748,2751,2121,0.77099,392,38
+Marauder,Industrial Repurposing,before,696,4807,2074,0.43145,382,30
+Marauder,Damage Control Teams,before,402,848,686,0.80896,348,8
+Marauder,Salvage Strike,before,532,1821,730,0.40088,344,40
+Marauder,Reactor Salvage,before,506,2241,1046,0.46676,338,15
+Marauder,Phase Lance,before,368,474,433,0.9135,336,5
+Marauder,Shield Capacitor,before,549,3249,3245,0.99877,328,0
+Marauder,Coordinated Assault,before,425,1045,336,0.32153,323,21
+Marauder,Boarding Operations,before,361,502,269,0.53586,320,9
+Marauder,Crew Capture,before,764,3697,1035,0.27996,265,51
+Marauder,Torpedo Salvo,before,361,1163,299,0.25709,264,25
+Marauder,Adaptive Command,before,340,1024,888,0.86719,263,2
+Marauder,Shield Exchange,before,353,1759,1735,0.98636,256,1
+Marauder,Power Grid Reroute,before,364,1718,1516,0.88242,243,9
+Marauder,Capacitor Overload,before,420,1100,606,0.55091,230,16
+Marauder,Polaron Burst,before,247,499,446,0.89379,193,2
+Marauder,Shield Array,before,390,1907,943,0.49449,193,30
+Marauder,Missile Team,before,249,604,237,0.39238,180,20
+Marauder,Antimatter Lance,before,302,788,168,0.2132,170,23
+Marauder,Siege Charges,before,400,2205,158,0.07166,162,63
+Marauder,Desperate Conversion,before,551,4168,2520,0.60461,142,75
+Marauder,Personnel Disruption,before,239,980,737,0.75204,140,12
+Marauder,Structural Reinforcement,before,532,2748,1021,0.37154,140,47
+Marauder,Shield Plating,before,350,1784,1517,0.85034,135,4
+Marauder,Reactive Armor,before,252,1115,360,0.32287,129,18
+Marauder,Feedback Loop,before,242,654,551,0.84251,113,6
+Marauder,System Disruption,before,296,1736,697,0.4015,107,22
+Marauder,Emergency Discharge,before,140,249,233,0.93574,104,1
+Marauder,Emergency Medical Team,before,276,1087,257,0.23643,103,30
+Marauder,Industrial Interference,before,346,2237,565,0.25257,102,25
+Marauder,Supply Diversion,before,112,225,155,0.68889,83,4
+Marauder,Shield Recharge,before,89,160,160,1.0,75,0
+Marauder,Hull Overhaul,before,448,2996,379,0.1265,74,100
+Marauder,Reactor Interference,before,111,411,329,0.80049,71,1
+Marauder,Reactor Synchronization,before,180,1521,1412,0.92834,71,3
+Marauder,Drain Beam,before,64,84,69,0.82143,61,0
+Marauder,Emergency Reserves,before,192,1459,1336,0.9157,57,0
+Marauder,Structural Reclamation,before,333,3738,171,0.04575,57,48
+Marauder,Salvage Cannibalization,before,157,1010,120,0.11881,50,31
+Marauder,Shield Disruptor,before,148,699,195,0.27897,46,18
+Marauder,Omega Overcharge,before,56,113,78,0.69027,41,1
+Marauder,Quarters Upgrade,before,53,171,92,0.53801,37,3
+Marauder,Emergency Bulkheads,before,65,608,101,0.16612,17,15
+Marauder,Shield Breachers,before,30,107,31,0.28972,17,6
+Marauder,Command Infiltration,before,231,2066,24,0.01162,12,11
+Marauder,Hull Patch,before,21,165,56,0.33939,11,6
+Marauder,Synthesizer Upgrade,before,46,592,125,0.21115,9,13
+Marauder,Boarding Specialists,before,32,181,10,0.05525,8,8
+Marauder,Auxiliary Power Link,before,7,24,9,0.375,7,0
+Marauder,Core Destabilization,before,24,93,27,0.29032,6,1
+Marauder,Damage Control,before,10,40,11,0.275,5,1
+Marauder,Demolition Crew,before,32,158,16,0.10127,5,8
+Marauder,Energy Equalizer,before,8,14,9,0.64286,5,3
+Marauder,Cataclysm Protocol,before,20,216,4,0.01852,2,7
+Marauder,Phase Inverter,before,3,30,20,0.66667,2,1
+Marauder,Sabotage Operation,before,4,6,4,0.66667,2,1
+Marauder,Industrial Sabotage,before,42,229,7,0.03057,1,6
+Marauder,Personnel Exchange,before,4,67,20,0.29851,1,0
+Marauder,Reinforced Foundations,before,22,192,2,0.01042,1,6
+Marauder,Scientific Breakthrough,before,18,89,13,0.14607,1,5
+Marauder,Siege Driver,before,124,778,1,0.00129,1,33
+Marauder,Emergency Refit,before,52,260,3,0.01154,0,8
+Marauder,Fabrication Strike,before,143,1038,2,0.00193,0,8
+Marauder,Resource Seizure,before,8,119,0,0.0,0,1
+Marauder,Sabotage Commandos,before,2,6,0,0.0,0,1
+Rustjack,Hull Patch,before,2995,16658,13325,0.79992,2426,206
+Rustjack,Shield Disruptor,before,3398,16637,13424,0.80688,2301,204
+Rustjack,Cargo Raid,before,2710,7498,2990,0.39877,2212,166
+Rustjack,Breach Charge,before,2608,5823,3634,0.62408,2152,144
+Rustjack,Salvage Cannibalization,before,2735,10515,6974,0.66324,2133,204
+Rustjack,Salvage Strike,before,2405,5424,4701,0.8667,2095,62
+Rustjack,Energy Siphon,before,2315,6875,4139,0.60204,1991,123
+Rustjack,Hull Overhaul,before,3120,19805,10006,0.50523,1846,350
+Rustjack,Overloaded Warhead,before,2233,6254,4484,0.71698,1755,121
+Rustjack,Missile Team,before,2177,7266,2843,0.39127,1724,185
+Rustjack,Shield Breachers,before,2413,10346,4473,0.43234,1666,229
+Rustjack,Reactor Salvage,before,2070,8345,5197,0.62277,1413,245
+Rustjack,Shield Plating,before,1537,4714,4653,0.98706,1382,13
+Rustjack,Boarding Party,before,1524,4770,2710,0.56813,1275,86
+Rustjack,Laser Burst,before,1243,1957,1730,0.88401,1178,7
+Rustjack,System Disruption,before,2700,33681,15376,0.45652,1025,410
+Rustjack,Supply Diversion,before,1180,6961,4984,0.71599,784,109
+Rustjack,Emergency Power Cell,before,788,1650,1650,1.0,751,0
+Rustjack,Synthesizer Upgrade,before,1923,17314,10976,0.63394,506,342
+Rustjack,Emergency Bulkheads,before,1226,9899,5788,0.58471,477,218
+Scrap Skiff,Energy Siphon,before,2613,6580,6029,0.91626,1997,12
+Scrap Skiff,Crew Capture,before,2322,9469,8073,0.85257,1478,73
+Scrap Skiff,Hull Patch,before,1978,9739,8116,0.83335,1365,87
+Scrap Skiff,Cargo Raid,before,1528,2000,1537,0.7685,1342,16
+Scrap Skiff,Salvage Cannibalization,before,1702,8038,5943,0.73936,1286,70
+Scrap Skiff,Breach Charge,before,1461,2572,1641,0.63802,1204,44
+Scrap Skiff,Laser Burst,before,1223,2321,2052,0.8841,1083,1
+Scrap Skiff,Shield Breachers,before,1378,2896,2364,0.8163,1057,24
+Scrap Skiff,Salvage Strike,before,1251,3828,3331,0.87017,995,19
+Scrap Skiff,Overloaded Warhead,before,1423,3941,3118,0.79117,916,24
+Scrap Skiff,Shield Disruptor,before,1734,7412,6363,0.85847,899,53
+Scrap Skiff,Emergency Power Cell,before,1433,6891,6891,1.0,744,0
+Scrap Skiff,Missile Team,before,848,1634,1108,0.67809,698,19
+Scrap Skiff,Boarding Party,before,631,1275,1013,0.79451,498,15
+Scrap Skiff,Reactor Salvage,before,788,5002,3821,0.76389,452,40
+Scrap Skiff,System Disruption,before,1272,8918,6393,0.71686,450,47
+Scrap Skiff,Shield Plating,before,822,5433,5383,0.9908,331,8
+Scrap Skiff,Supply Diversion,before,729,4383,4098,0.93498,193,6
+Scrap Skiff,Emergency Bulkheads,before,705,4895,3089,0.63105,102,45
+Scrap Skiff,Synthesizer Upgrade,before,1103,8775,5391,0.61436,61,106
+Wreckbreaker,Cargo Raid,before,3069,8295,4780,0.57625,2739,93
+Wreckbreaker,Crew Capture,before,2984,9953,8888,0.893,2600,60
+Wreckbreaker,Hull Patch,before,2677,17934,15749,0.87816,1946,138
+Wreckbreaker,Breach Charge,before,2347,5027,3731,0.74219,1918,90
+Wreckbreaker,Salvage Cannibalization,before,2464,9673,8051,0.83232,1875,62
+Wreckbreaker,Overloaded Warhead,before,2074,4723,3910,0.82786,1784,54
+Wreckbreaker,Salvage Strike,before,1982,4074,3528,0.86598,1781,34
+Wreckbreaker,Laser Burst,before,1922,4478,3356,0.74944,1758,6
+Wreckbreaker,Hull Overhaul,before,2324,13635,9327,0.68405,1548,175
+Wreckbreaker,Torpedo Salvo,before,2200,12343,1910,0.15474,1479,216
+Wreckbreaker,Emergency Power Cell,before,1622,6114,6114,1.0,1446,0
+Wreckbreaker,Reactor Salvage,before,1796,7177,5488,0.76466,1311,82
+Wreckbreaker,Boarding Party,before,1480,5255,3359,0.6392,1186,61
+Wreckbreaker,Missile Barrage,before,1977,16012,1349,0.08425,1177,265
+Wreckbreaker,Shield Breachers,before,1810,10696,4310,0.40295,1110,117
+Wreckbreaker,Shield Plating,before,1363,8593,8556,0.99569,966,3
+Wreckbreaker,Missile Team,before,1293,5137,2140,0.41659,939,146
+Wreckbreaker,Supply Diversion,before,877,6762,5384,0.79621,517,41
+Wreckbreaker,Synthesizer Upgrade,before,1882,17843,12345,0.69187,490,193
+Wreckbreaker,Emergency Bulkheads,before,881,8058,5976,0.74162,307,101
+Marauder Vanguard,Plasma Strike,before,1794,2413,2342,0.97058,1748,5
+Marauder Vanguard,Energy Surge,before,1222,4323,4323,1.0,1172,0
+Marauder Vanguard,Breach Charge,before,1177,2003,1817,0.90714,1151,3
+Marauder Vanguard,Energy Siphon,before,1237,3127,2449,0.78318,1118,4
+Marauder Vanguard,Boarding Party,before,1155,2480,2173,0.87621,1032,8
+Marauder Vanguard,Pulse Repeater,before,1034,3136,3029,0.96588,967,0
+Marauder Vanguard,Tactical Assessment,before,1058,1982,986,0.49748,917,16
+Marauder Vanguard,Hull Nanobots,before,940,3166,3007,0.94978,775,0
+Marauder Vanguard,Laser Burst,before,817,1424,1389,0.97542,759,0
+Marauder Vanguard,Missile Barrage,before,1332,8276,1448,0.17496,759,65
+Marauder Vanguard,Overloaded Warhead,before,801,2162,1611,0.74514,667,22
+Marauder Vanguard,Industrial Repurposing,before,759,3615,3198,0.88465,656,2
+Marauder Vanguard,Cargo Raid,before,700,1861,794,0.42665,618,18
+Marauder Vanguard,Crew Capture,before,892,4238,2871,0.67744,599,21
+Marauder Vanguard,Relentless Barrage,before,599,1094,1094,1.0,594,0
+Marauder Vanguard,Salvage Strike,before,598,1195,728,0.60921,546,4
+Marauder Vanguard,Reactor Upgrade,before,962,5201,4663,0.89656,535,1
+Marauder Vanguard,Phase Lance,before,524,446,446,1.0,512,0
+Marauder Vanguard,Emergency Power Cell,before,644,2419,2419,1.0,494,0
+Marauder Vanguard,Shield Collapse,before,643,2846,2846,1.0,471,2
+Marauder Vanguard,Siege Charges,before,514,1057,443,0.41911,471,15
+Marauder Vanguard,Reactor Salvage,before,504,1914,1770,0.92476,428,4
+Marauder Vanguard,Boarding Operations,before,467,717,355,0.49512,427,15
+Marauder Vanguard,Damage Control Teams,before,438,2066,1367,0.66167,371,17
+Marauder Vanguard,Torpedo Salvo,before,474,1887,382,0.20244,367,27
+Marauder Vanguard,Coordinated Assault,before,531,2554,466,0.18246,366,31
+Marauder Vanguard,Missile Team,before,397,1242,495,0.39855,343,19
+Marauder Vanguard,Hull Overhaul,before,578,4626,2523,0.5454,338,17
+Marauder Vanguard,Capacitor Overload,before,547,2470,1939,0.78502,325,1
+Marauder Vanguard,Shield Capacitor,before,615,4408,4408,1.0,317,0
+Marauder Vanguard,Shield Exchange,before,470,2877,2876,0.99965,301,0
+Marauder Vanguard,Shield Array,before,499,2282,1951,0.85495,300,8
+Marauder Vanguard,Structural Reinforcement,before,697,4507,3129,0.69425,300,15
+Marauder Vanguard,Industrial Interference,before,434,3208,2153,0.67113,299,12
+Marauder Vanguard,Power Grid Reroute,before,429,2174,2137,0.98298,285,0
+Marauder Vanguard,Polaron Burst,before,317,855,853,0.99766,264,0
+Marauder Vanguard,Antimatter Lance,before,399,1332,250,0.18769,254,1
+Marauder Vanguard,Emergency Discharge,before,331,613,613,1.0,251,0
+Marauder Vanguard,Adaptive Command,before,532,3519,2932,0.83319,237,10
+Marauder Vanguard,Structural Reclamation,before,402,3249,1175,0.36165,228,19
+Marauder Vanguard,Shield Plating,before,409,2371,2238,0.94391,223,5
+Marauder Vanguard,Reactive Armor,before,231,1019,658,0.64573,155,2
+Marauder Vanguard,Desperate Conversion,before,637,7304,3777,0.51711,149,41
+Marauder Vanguard,Personnel Disruption,before,266,2054,1472,0.71665,145,27
+Marauder Vanguard,Feedback Loop,before,227,664,663,0.99849,140,0
+Marauder Vanguard,Reactor Interference,before,177,869,835,0.96087,126,0
+Marauder Vanguard,Salvage Cannibalization,before,198,878,433,0.49317,120,16
+Marauder Vanguard,Command Infiltration,before,230,1921,221,0.11504,116,2
+Marauder Vanguard,Drain Beam,before,117,128,124,0.96875,107,0
+Marauder Vanguard,Shield Disruptor,before,192,488,337,0.69057,106,7
+Marauder Vanguard,Emergency Medical Team,before,293,1664,665,0.39964,99,7
+Marauder Vanguard,System Disruption,before,320,2887,1134,0.3928,88,20
+Marauder Vanguard,Supply Diversion,before,118,407,183,0.44963,87,8
+Marauder Vanguard,Shield Recharge,before,100,213,213,1.0,70,0
+Marauder Vanguard,Emergency Reserves,before,196,1722,1721,0.99942,63,0
+Marauder Vanguard,Emergency Bulkheads,before,178,1265,665,0.52569,57,8
+Marauder Vanguard,Omega Overcharge,before,63,165,136,0.82424,56,0
+Marauder Vanguard,Fabrication Strike,before,177,1997,126,0.06309,53,8
+Marauder Vanguard,Quarters Upgrade,before,90,759,162,0.21344,40,14
+Marauder Vanguard,Synthesizer Upgrade,before,52,177,79,0.44633,34,6
+Marauder Vanguard,Reactor Synchronization,before,180,2121,2120,0.99953,32,0
+Marauder Vanguard,Reinforced Foundations,before,39,123,41,0.33333,26,4
+Marauder Vanguard,Shield Breachers,before,48,278,59,0.21223,25,14
+Marauder Vanguard,Emergency Refit,before,66,644,80,0.12422,19,4
+Marauder Vanguard,Hull Patch,before,33,151,109,0.72185,19,9
+Marauder Vanguard,Core Destabilization,before,31,64,48,0.75,18,0
+Marauder Vanguard,Phase Inverter,before,18,29,29,1.0,18,0
+Marauder Vanguard,Demolition Crew,before,28,87,42,0.48276,17,4
+Marauder Vanguard,Energy Equalizer,before,20,59,59,1.0,17,0
+Marauder Vanguard,Siege Driver,before,122,597,17,0.02848,17,0
+Marauder Vanguard,Auxiliary Power Link,before,17,55,55,1.0,15,0
+Marauder Vanguard,Boarding Specialists,before,44,404,13,0.03218,8,18
+Marauder Vanguard,Industrial Sabotage,before,41,229,43,0.18777,4,1
+Marauder Vanguard,Sabotage Operation,before,11,80,8,0.1,4,1
+Marauder Vanguard,Cataclysm Protocol,before,34,410,3,0.00732,3,11
+Marauder Vanguard,Damage Control,before,7,43,8,0.18605,3,0
+Marauder Vanguard,Personnel Exchange,before,5,15,9,0.6,3,1
+Marauder Vanguard,Resource Seizure,before,14,133,80,0.6015,3,1
+Marauder Vanguard,Sabotage Commandos,before,10,80,2,0.025,2,0
+Marauder Vanguard,Scientific Breakthrough,before,4,66,7,0.10606,0,1
+Clan War Barge,Cargo Raid,before,2994,6048,5360,0.88624,2941,9
+Clan War Barge,Crew Capture,before,2641,9633,8936,0.92764,2334,44
+Clan War Barge,Missile Barrage,before,2080,5379,1845,0.343,1788,15
+Clan War Barge,Breach Charge,before,2090,4847,3865,0.7974,1780,47
+Clan War Barge,Torpedo Salvo,before,1931,5184,2089,0.40297,1766,13
+Clan War Barge,Laser Burst,before,1784,3884,3884,1.0,1754,0
+Clan War Barge,Overloaded Warhead,before,2071,5270,4398,0.83454,1741,47
+Clan War Barge,Salvage Cannibalization,before,2276,11148,9729,0.87271,1710,48
+Clan War Barge,Salvage Strike,before,1787,3644,3277,0.89929,1625,30
+Clan War Barge,Hull Overhaul,before,2175,14494,10732,0.74044,1270,97
+Clan War Barge,Emergency Power Cell,before,1501,6847,6847,1.0,1269,0
+Clan War Barge,Hull Patch,before,2341,19967,18200,0.9115,1261,91
+Clan War Barge,Boarding Party,before,1301,3117,3005,0.96407,1202,2
+Clan War Barge,Shield Breachers,before,1573,6529,5728,0.87732,1189,8
+Clan War Barge,Missile Team,before,1282,2635,1982,0.75218,1167,9
+Clan War Barge,Reactor Salvage,before,1694,8310,6730,0.80987,1144,60
+Clan War Barge,Shield Plating,before,1138,9530,9467,0.99339,703,6
+Clan War Barge,Supply Diversion,before,715,7100,6947,0.97845,417,0
+Clan War Barge,Synthesizer Upgrade,before,1799,21849,16924,0.77459,181,138
+Clan War Barge,Emergency Bulkheads,before,733,10371,8649,0.83396,56,86
+Sentinel,Shield Recharge,before,2352,3714,3651,0.98304,2293,5
+Sentinel,Polaron Burst,before,2028,8030,4191,0.52192,1784,116
+Sentinel,Shield Plating,before,1812,5302,3503,0.66069,1642,71
+Sentinel,Shield Capacitor,before,1591,2590,2353,0.90849,1552,11
+Sentinel,Laser Burst,before,1591,3652,3423,0.93729,1551,13
+Sentinel,Hull Nanobots,before,1680,5820,4497,0.77268,1541,65
+Sentinel,Drain Beam,before,1483,2245,1489,0.66325,1427,32
+Sentinel,Adaptive Command,before,1510,2794,2404,0.86042,1409,23
+Sentinel,Power Grid Reroute,before,1526,3069,1761,0.5738,1376,84
+Sentinel,Damage Control Teams,before,1464,2865,1721,0.6007,1360,48
+Sentinel,Feedback Loop,before,1664,5342,2384,0.44627,1308,164
+Sentinel,Shield Collapse,before,1389,7451,6208,0.83318,1249,54
+Sentinel,Emergency Medical Team,before,1563,9195,5624,0.61164,1247,137
+Sentinel,Shield Exchange,before,1526,10175,7193,0.70693,1175,101
+Sentinel,Hull Patch,before,2135,17579,5572,0.31697,1171,523
+Sentinel,Reactor Upgrade,before,1276,4400,3484,0.79182,1148,75
+Sentinel,Capacitor Overload,before,1386,5754,3065,0.53267,1110,110
+Sentinel,Emergency Power Cell,before,1132,3250,3250,1.0,1085,0
+Sentinel,Emergency Bulkheads,before,1689,10264,1828,0.1781,1058,349
+Sentinel,Structural Reinforcement,before,1348,6017,2250,0.37394,1027,166
+Sentinel,Energy Siphon,before,1057,2003,1484,0.74089,1006,24
+Sentinel,Energy Surge,before,1075,2158,2158,1.0,1006,0
+Sentinel,Cargo Raid,before,1017,1204,933,0.77492,972,21
+Sentinel,Plasma Strike,before,1022,1608,1202,0.74751,966,32
+Sentinel,Reactor Interference,before,1223,7037,5244,0.7452,961,92
+Sentinel,Coordinated Assault,before,1124,4571,1370,0.29972,909,106
+Sentinel,Reactive Armor,before,1052,3295,1719,0.5217,906,78
+Sentinel,Emergency Discharge,before,1053,2478,1215,0.49031,888,79
+Sentinel,Pulse Repeater,before,914,3775,3516,0.93139,873,7
+Sentinel,Industrial Repurposing,before,1282,9785,4840,0.49463,867,211
+Sentinel,Shield Disruptor,before,1180,6745,3153,0.46746,812,203
+Sentinel,Personnel Disruption,before,1018,5204,3643,0.70004,805,93
+Sentinel,Quarters Upgrade,before,988,4086,2082,0.50954,791,77
+Sentinel,Supply Diversion,before,837,4163,3815,0.91641,725,31
+Sentinel,Shield Array,before,833,1914,875,0.45716,710,74
+Sentinel,System Disruption,before,975,4235,2391,0.56458,708,97
+Sentinel,Breach Charge,before,1019,5205,1206,0.2317,676,174
+Sentinel,Phase Lance,before,694,1607,805,0.50093,611,41
+Sentinel,Salvage Strike,before,764,5100,3260,0.63922,611,98
+Sentinel,Shield Breachers,before,666,1833,1102,0.6012,578,41
+Sentinel,Boarding Operations,before,625,1193,758,0.63537,571,27
+Sentinel,Missile Team,before,606,1010,682,0.67525,563,19
+Sentinel,Torpedo Salvo,before,636,1402,589,0.42011,547,40
+Sentinel,Boarding Party,before,555,872,781,0.89564,535,8
+Sentinel,Structural Reclamation,before,1705,24146,6079,0.25176,520,622
+Sentinel,Salvage Cannibalization,before,1309,18050,6374,0.35313,467,416
+Sentinel,Hull Overhaul,before,1392,16914,3424,0.20244,459,473
+Sentinel,Synthesizer Upgrade,before,1090,11113,2381,0.21425,455,349
+Sentinel,Demolition Crew,before,1389,15839,1614,0.1019,434,464
+Sentinel,Relentless Barrage,before,421,677,492,0.72674,381,14
+Sentinel,Tactical Assessment,before,438,1131,514,0.45447,366,38
+Sentinel,Missile Barrage,before,445,1899,388,0.20432,338,36
+Sentinel,Reactor Salvage,before,479,2664,665,0.24962,322,77
+Sentinel,Desperate Conversion,before,445,3524,2612,0.7412,320,42
+Sentinel,Overloaded Warhead,before,459,2928,917,0.31318,306,65
+Sentinel,Omega Overcharge,before,362,2817,276,0.09798,283,41
+Sentinel,Command Infiltration,before,333,2025,459,0.22667,248,21
+Sentinel,Reactor Synchronization,before,301,2222,1376,0.61926,229,26
+Sentinel,Antimatter Lance,before,403,3696,231,0.0625,218,100
+Sentinel,Sabotage Operation,before,220,747,631,0.84471,209,7
+Sentinel,Industrial Interference,before,802,9857,1862,0.1889,195,284
+Sentinel,Auxiliary Power Link,before,276,1564,740,0.47315,194,31
+Sentinel,Siege Charges,before,568,5102,291,0.05704,192,213
+Sentinel,Crew Capture,before,259,1565,481,0.30735,165,44
+Sentinel,Sabotage Commandos,before,192,520,148,0.28462,151,14
+Sentinel,Reinforced Foundations,before,289,2880,169,0.05868,129,74
+Sentinel,Cataclysm Protocol,before,184,1099,126,0.11465,123,25
+Sentinel,Energy Equalizer,before,153,831,450,0.54152,121,11
+Sentinel,Personnel Exchange,before,152,1118,388,0.34705,117,15
+Sentinel,Scientific Breakthrough,before,174,820,299,0.36463,95,37
+Sentinel,Emergency Reserves,before,103,345,150,0.43478,80,11
+Sentinel,Siege Driver,before,282,3831,51,0.01331,51,141
+Sentinel,Damage Control,before,73,998,70,0.07014,38,18
+Sentinel,Phase Inverter,before,35,249,146,0.58635,25,3
+Sentinel,Fabrication Strike,before,120,1220,63,0.05164,19,45
+Sentinel,Industrial Sabotage,before,218,4210,55,0.01306,16,113
+Sentinel,Core Destabilization,before,34,300,64,0.21333,14,6
+Sentinel,Emergency Refit,before,138,1911,39,0.02041,10,58
+Sentinel,Resource Seizure,before,71,759,17,0.0224,7,26
+Sentinel,Boarding Specialists,before,5,8,4,0.5,3,2
+Reclaimer,Industrial Repurposing,before,2332,3941,3666,0.93022,2293,13
+Reclaimer,Hull Patch,before,2211,10711,9462,0.88339,1988,28
+Reclaimer,Salvage Cannibalization,before,1998,6931,6003,0.86611,1838,33
+Reclaimer,Synthesizer Upgrade,before,1853,2549,2075,0.81404,1798,13
+Reclaimer,Salvage Strike,before,1904,8586,8107,0.94421,1732,7
+Reclaimer,Shield Plating,before,1688,3093,3066,0.99127,1639,1
+Reclaimer,Reactor Upgrade,before,1706,4247,2694,0.63433,1630,25
+Reclaimer,Reactor Salvage,before,1623,1702,1545,0.90776,1600,8
+Reclaimer,Shield Disruptor,before,1811,7507,6695,0.89183,1560,44
+Reclaimer,Structural Reclamation,before,1722,5032,3633,0.72198,1558,57
+Reclaimer,Hull Nanobots,before,1647,4517,3463,0.76666,1549,15
+Reclaimer,Supply Diversion,before,1453,5415,5305,0.97969,1400,3
+Reclaimer,Siege Charges,before,1512,5193,3498,0.6736,1375,31
+Reclaimer,Structural Reinforcement,before,1441,4538,3901,0.85963,1280,23
+Reclaimer,Emergency Power Cell,before,1257,1281,1281,1.0,1241,0
+Reclaimer,Cargo Raid,before,1252,2073,1790,0.86348,1196,6
+Reclaimer,Hull Overhaul,before,1587,15297,11305,0.73903,1141,86
+Reclaimer,Shield Capacitor,before,1085,3940,3352,0.85076,1018,13
+Reclaimer,Adaptive Command,before,1063,1997,1702,0.85228,989,7
+Reclaimer,Coordinated Assault,before,1090,4444,2318,0.5216,936,51
+Reclaimer,Desperate Conversion,before,1120,4351,2032,0.46702,884,63
+Reclaimer,Damage Control Teams,before,989,3155,1340,0.42472,874,36
+Reclaimer,Quarters Upgrade,before,883,1895,894,0.47177,798,19
+Reclaimer,Power Grid Reroute,before,917,3047,1210,0.39711,764,27
+Reclaimer,Missile Barrage,before,1116,10643,4134,0.38842,755,92
+Reclaimer,Industrial Interference,before,1494,18225,14461,0.79347,753,82
+Reclaimer,Emergency Bulkheads,before,920,5392,4462,0.82752,739,12
+Reclaimer,Emergency Discharge,before,833,2576,1887,0.73253,730,18
+Reclaimer,Pulse Repeater,before,827,7505,6548,0.87249,704,6
+Reclaimer,Plasma Strike,before,912,5575,3700,0.66368,698,40
+Reclaimer,Energy Surge,before,699,691,691,1.0,687,0
+Reclaimer,Personnel Disruption,before,1096,9416,6855,0.72802,679,78
+Reclaimer,Shield Breachers,before,774,2552,1631,0.63911,668,33
+Reclaimer,Laser Burst,before,730,2414,1912,0.79205,623,14
+Reclaimer,Demolition Crew,before,1331,16055,10972,0.6834,620,116
+Reclaimer,Overloaded Warhead,before,710,2322,1971,0.84884,619,17
+Reclaimer,Energy Siphon,before,621,1230,1091,0.88699,601,4
+Reclaimer,Feedback Loop,before,810,3944,2410,0.61105,598,36
+Reclaimer,Emergency Medical Team,before,911,11712,8847,0.75538,589,52
+Reclaimer,Polaron Burst,before,797,8523,7193,0.84395,581,15
+Reclaimer,Drain Beam,before,647,1581,876,0.55408,566,23
+Reclaimer,Tactical Assessment,before,729,3026,1167,0.38566,566,50
+Reclaimer,Shield Recharge,before,574,2014,1975,0.98064,550,0
+Reclaimer,Relentless Barrage,before,595,2263,1958,0.86522,527,3
+Reclaimer,Phase Lance,before,563,1077,552,0.51253,509,9
+Reclaimer,Reactive Armor,before,556,933,834,0.89389,507,8
+Reclaimer,Reactor Interference,before,939,14641,12714,0.86838,465,20
+Reclaimer,Shield Array,before,435,659,620,0.94082,420,1
+Reclaimer,Boarding Operations,before,447,800,438,0.5475,409,12
+Reclaimer,Shield Exchange,before,506,2741,1495,0.54542,378,5
+Reclaimer,Breach Charge,before,434,1184,756,0.63851,376,23
+Reclaimer,Crew Capture,before,394,680,587,0.86324,359,7
+Reclaimer,Emergency Refit,before,451,3508,2049,0.58409,357,23
+Reclaimer,Boarding Party,before,321,557,510,0.91562,297,3
+Reclaimer,Torpedo Salvo,before,473,4006,1378,0.34398,269,63
+Reclaimer,System Disruption,before,496,8609,7124,0.82751,255,9
+Reclaimer,Missile Team,before,286,797,397,0.49812,249,12
+Reclaimer,Shield Collapse,before,376,3291,2846,0.86478,242,10
+Reclaimer,Command Infiltration,before,245,2042,1701,0.83301,176,1
+Reclaimer,Fabrication Strike,before,278,3403,2789,0.81957,150,7
+Reclaimer,Resource Seizure,before,264,7818,5964,0.76285,132,17
+Reclaimer,Siege Driver,before,241,1624,214,0.13177,128,30
+Reclaimer,Boarding Specialists,before,173,935,406,0.43422,117,12
+Reclaimer,Industrial Sabotage,before,258,5029,3184,0.63313,106,9
+Reclaimer,Capacitor Overload,before,168,1342,692,0.51565,102,24
+Reclaimer,Emergency Reserves,before,123,657,119,0.18113,92,6
+Reclaimer,Reinforced Foundations,before,105,423,96,0.22695,86,2
+Reclaimer,Antimatter Lance,before,211,3512,122,0.03474,76,31
+Reclaimer,Omega Overcharge,before,93,725,294,0.40552,76,4
+Reclaimer,Scientific Breakthrough,before,75,566,435,0.76855,58,2
+Reclaimer,Sabotage Commandos,before,78,940,58,0.0617,40,10
+Reclaimer,Phase Inverter,before,62,781,574,0.73496,33,1
+Reclaimer,Auxiliary Power Link,before,52,434,31,0.07143,27,6
+Reclaimer,Cataclysm Protocol,before,38,363,195,0.53719,24,3
+Reclaimer,Reactor Synchronization,before,23,35,30,0.85714,22,0
+Reclaimer,Core Destabilization,before,56,565,162,0.28673,16,4
+Reclaimer,Personnel Exchange,before,30,292,36,0.12329,13,7
+Reclaimer,Energy Equalizer,before,22,245,232,0.94694,10,0
+Reclaimer,Sabotage Operation,before,15,121,9,0.07438,3,5
+Reclaimer,Damage Control,before,12,84,44,0.52381,2,2
+Bastion Frigate,Shield Recharge,before,5959,7741,7658,0.98928,5859,10
+Bastion Frigate,Shield Plating,before,6354,16364,10062,0.61489,5713,309
+Bastion Frigate,Structural Reinforcement,before,6973,42921,14070,0.32781,4996,1011
+Bastion Frigate,Power Grid Reroute,before,5393,11893,7443,0.62583,4995,200
+Bastion Frigate,Missile Team,before,4698,10193,8365,0.82066,4519,39
+Bastion Frigate,Hull Nanobots,before,4935,21599,18583,0.86036,4401,192
+Bastion Frigate,Capacitor Overload,before,4950,20135,11076,0.55009,4179,317
+Bastion Frigate,Reactor Upgrade,before,4484,21976,15267,0.69471,3925,243
+Bastion Frigate,System Disruption,before,3913,17893,13072,0.73057,3419,87
+Bastion Frigate,Shield Exchange,before,4096,30500,24813,0.81354,3238,191
+Bastion Frigate,Emergency Bulkheads,before,4813,27476,4256,0.1549,3154,889
+Bastion Frigate,Energy Surge,before,3114,7993,7993,1.0,3044,0
+Bastion Frigate,Plasma Strike,before,3161,7139,4319,0.60499,2923,140
+Bastion Frigate,Emergency Power Cell,before,2819,5490,5490,1.0,2742,0
+Bastion Frigate,Laser Burst,before,2627,5067,4602,0.90823,2548,28
+Bastion Frigate,Hull Patch,before,4365,71921,26700,0.37124,1612,1113
+Bastion Frigate,Damage Control,before,1850,13280,6051,0.45565,1472,91
+Bastion Frigate,Synthesizer Upgrade,before,3212,43358,7536,0.17381,1273,963
+Bastion Frigate,Emergency Reserves,before,1094,8986,2755,0.30659,735,187
+Bastion Frigate,Siege Driver,before,1313,19105,307,0.01607,290,502
+Siege Monitor,Shield Recharge,before,6358,8844,8695,0.98315,6244,5
+Siege Monitor,Shield Plating,before,6650,15674,10604,0.67653,6000,358
+Siege Monitor,Structural Reinforcement,before,7646,35505,14449,0.40696,5936,1125
+Siege Monitor,Power Grid Reroute,before,5931,10399,7402,0.7118,5605,191
+Siege Monitor,Hull Nanobots,before,5464,16535,13130,0.79407,5094,154
+Siege Monitor,System Disruption,before,4843,20163,11664,0.57849,4203,271
+Siege Monitor,Shield Exchange,before,4478,20063,14262,0.71086,3839,241
+Siege Monitor,Reactor Upgrade,before,4128,17502,12643,0.72237,3817,139
+Siege Monitor,Emergency Bulkheads,before,5349,26864,5384,0.20042,3523,1275
+Siege Monitor,Plasma Strike,before,3482,7829,5113,0.65308,3335,93
+Siege Monitor,Laser Burst,before,3225,6199,5334,0.86046,3130,53
+Siege Monitor,Missile Barrage,before,3095,10329,2931,0.28376,2689,198
+Siege Monitor,Torpedo Salvo,before,2911,6994,3060,0.43752,2670,127
+Siege Monitor,Hull Patch,before,5232,53093,20297,0.38229,2562,1621
+Siege Monitor,Synthesizer Upgrade,before,3795,40159,8688,0.21634,1717,1394
+Siege Monitor,Damage Control,before,2343,18844,3571,0.1895,1525,427
+Siege Monitor,Emergency Reserves,before,1182,5361,2224,0.41485,1003,123
+Siege Monitor,Hull Overhaul,before,3699,52387,15492,0.29572,941,1681
+Siege Monitor,Structural Reclamation,before,4374,73348,20212,0.27556,730,2273
+Siege Monitor,Siege Driver,before,1589,18992,288,0.01516,285,917
+Sentinel Dreadnought,Shield Recharge,before,2192,4248,4171,0.98187,2112,4
+Sentinel Dreadnought,Polaron Burst,before,1978,7622,6006,0.78798,1806,13
+Sentinel Dreadnought,Hull Patch,before,2201,16964,15783,0.93038,1728,17
+Sentinel Dreadnought,Shield Plating,before,1762,4217,4167,0.98814,1645,2
+Sentinel Dreadnought,Shield Capacitor,before,1666,2479,2290,0.92376,1644,9
+Sentinel Dreadnought,Emergency Bulkheads,before,1619,2765,2471,0.89367,1575,10
+Sentinel Dreadnought,Hull Nanobots,before,1740,10634,8887,0.83572,1521,24
+Sentinel Dreadnought,Adaptive Command,before,1423,2320,2268,0.97759,1377,1
+Sentinel Dreadnought,Structural Reinforcement,before,1402,3073,2935,0.95509,1360,6
+Sentinel Dreadnought,Laser Burst,before,1369,3222,3094,0.96027,1350,5
+Sentinel Dreadnought,Reactor Upgrade,before,1450,7201,6068,0.84266,1337,12
+Sentinel Dreadnought,Drain Beam,before,1327,1616,1326,0.82054,1300,3
+Sentinel Dreadnought,Feedback Loop,before,1653,6274,3793,0.60456,1257,22
+Sentinel Dreadnought,Demolition Crew,before,1400,4713,3557,0.75472,1244,16
+Sentinel Dreadnought,Damage Control Teams,before,1271,1998,1945,0.97347,1237,3
+Sentinel Dreadnought,Power Grid Reroute,before,1301,2416,1627,0.67343,1234,16
+Sentinel Dreadnought,Capacitor Overload,before,1567,9884,7836,0.7928,1224,16
+Sentinel Dreadnought,Industrial Repurposing,before,1338,8019,7607,0.94862,1208,5
+Sentinel Dreadnought,Emergency Medical Team,before,1691,24162,23680,0.98005,1198,4
+Sentinel Dreadnought,Structural Reclamation,before,1591,21432,19702,0.91928,1159,19
+Sentinel Dreadnought,Hull Overhaul,before,1493,15327,14584,0.95152,1103,7
+Sentinel Dreadnought,Shield Collapse,before,1384,10786,10040,0.93084,1058,10
+Sentinel Dreadnought,Cargo Raid,before,1063,1167,1147,0.98286,1044,1
+Sentinel Dreadnought,Shield Disruptor,before,1270,7654,7241,0.94604,1034,5
+Sentinel Dreadnought,Emergency Power Cell,before,1114,4327,4327,1.0,1018,0
+Sentinel Dreadnought,Coordinated Assault,before,1043,2020,1366,0.67624,1011,3
+Sentinel Dreadnought,Emergency Discharge,before,1047,1760,1173,0.66648,984,16
+Sentinel Dreadnought,Reactive Armor,before,985,1518,1494,0.98419,975,1
+Sentinel Dreadnought,Plasma Strike,before,1005,1564,1136,0.72634,973,12
+Sentinel Dreadnought,System Disruption,before,1122,7414,6976,0.94092,914,15
+Sentinel Dreadnought,Synthesizer Upgrade,before,1083,5792,5353,0.92421,901,7
+Sentinel Dreadnought,Breach Charge,before,938,1679,1352,0.80524,895,4
+Sentinel Dreadnought,Energy Siphon,before,903,1470,1462,0.99456,888,1
+Sentinel Dreadnought,Energy Surge,before,956,3047,3047,1.0,861,0
+Sentinel Dreadnought,Salvage Cannibalization,before,1376,25920,24306,0.93773,856,17
+Sentinel Dreadnought,Quarters Upgrade,before,873,2576,2479,0.96234,842,0
+Sentinel Dreadnought,Personnel Disruption,before,1081,8713,8181,0.93894,822,9
+Sentinel Dreadnought,Reactor Interference,before,1157,11865,10299,0.86802,809,20
+Sentinel Dreadnought,Shield Exchange,before,1415,15601,13561,0.86924,791,15
+Sentinel Dreadnought,Pulse Repeater,before,792,4106,3905,0.95105,771,0
+Sentinel Dreadnought,Salvage Strike,before,818,4445,4363,0.98155,770,3
+Sentinel Dreadnought,Siege Charges,before,721,1042,800,0.76775,705,10
+Sentinel Dreadnought,Supply Diversion,before,791,7164,7143,0.99707,655,1
+Sentinel Dreadnought,Industrial Interference,before,885,7505,6652,0.88634,646,10
+Sentinel Dreadnought,Torpedo Salvo,before,665,836,664,0.79426,644,1
+Sentinel Dreadnought,Missile Team,before,617,797,698,0.87578,591,5
+Sentinel Dreadnought,Phase Lance,before,602,1119,660,0.58981,575,10
+Sentinel Dreadnought,Shield Array,before,565,630,592,0.93968,553,2
+Sentinel Dreadnought,Boarding Operations,before,550,692,636,0.91908,533,1
+Sentinel Dreadnought,Reactor Salvage,before,527,764,615,0.80497,508,3
+Sentinel Dreadnought,Boarding Party,before,500,809,808,0.99876,496,0
+Sentinel Dreadnought,Shield Breachers,before,525,1147,1074,0.93636,494,1
+Sentinel Dreadnought,Overloaded Warhead,before,477,1341,1308,0.97539,451,3
+Sentinel Dreadnought,Tactical Assessment,before,423,504,478,0.94841,404,2
+Sentinel Dreadnought,Missile Barrage,before,355,409,353,0.86308,342,3
+Sentinel Dreadnought,Reinforced Foundations,before,352,607,348,0.57331,338,5
+Sentinel Dreadnought,Omega Overcharge,before,362,2374,338,0.14238,337,4
+Sentinel Dreadnought,Cataclysm Protocol,before,336,571,335,0.58669,322,4
+Sentinel Dreadnought,Relentless Barrage,before,314,427,331,0.77518,303,4
+Sentinel Dreadnought,Siege Driver,before,305,440,293,0.66591,291,1
+Sentinel Dreadnought,Command Infiltration,before,282,413,397,0.96126,277,0
+Sentinel Dreadnought,Antimatter Lance,before,310,1460,305,0.2089,268,1
+Sentinel Dreadnought,Auxiliary Power Link,before,320,2809,1430,0.50908,267,6
+Sentinel Dreadnought,Sabotage Operation,before,255,1813,1746,0.96304,240,0
+Sentinel Dreadnought,Crew Capture,before,233,485,463,0.95464,216,1
+Sentinel Dreadnought,Desperate Conversion,before,369,6560,6276,0.95671,198,4
+Sentinel Dreadnought,Sabotage Commandos,before,196,200,191,0.955,195,0
+Sentinel Dreadnought,Reactor Synchronization,before,344,8694,7693,0.88486,184,9
+Sentinel Dreadnought,Damage Control,before,244,1860,1356,0.72903,181,3
+Sentinel Dreadnought,Industrial Sabotage,before,228,3750,3024,0.8064,180,4
+Sentinel Dreadnought,Personnel Exchange,before,136,516,340,0.65891,127,1
+Sentinel Dreadnought,Emergency Reserves,before,149,804,330,0.41045,122,7
+Sentinel Dreadnought,Emergency Refit,before,139,570,226,0.39649,110,2
+Sentinel Dreadnought,Fabrication Strike,before,96,435,371,0.85287,76,0
+Sentinel Dreadnought,Resource Seizure,before,114,1320,737,0.55833,70,7
+Sentinel Dreadnought,Energy Equalizer,before,160,2896,2457,0.84841,55,2
+Sentinel Dreadnought,Scientific Breakthrough,before,30,64,64,1.0,26,0
+Sentinel Dreadnought,Phase Inverter,before,26,204,149,0.73039,21,1
+Sentinel Dreadnought,Boarding Specialists,before,20,91,91,1.0,17,0
+Sentinel Dreadnought,Core Destabilization,before,17,168,25,0.14881,7,1
+AXIOM-7,Laser Burst,before,3257,5543,3479,0.62764,2863,191
+AXIOM-7,Phase Lance,before,3311,7926,3698,0.46657,2663,394
+AXIOM-7,Drain Beam,before,2997,4736,2781,0.5872,2623,182
+AXIOM-7,Shield Recharge,before,2673,4922,4832,0.98171,2522,13
+AXIOM-7,Energy Surge,before,2703,9603,9603,1.0,2420,0
+AXIOM-7,Shield Breachers,before,2629,9260,7655,0.82667,2290,24
+AXIOM-7,Emergency Power Cell,before,2436,10637,10637,1.0,2190,0
+AXIOM-7,Pulse Repeater,before,2928,12942,8304,0.64163,2132,399
+AXIOM-7,Missile Team,before,1999,2364,2052,0.86802,1895,19
+AXIOM-7,Energy Siphon,before,1721,4118,3727,0.90505,1641,19
+AXIOM-7,Hull Nanobots,before,2497,14629,9046,0.61836,1592,328
+AXIOM-7,Power Grid Reroute,before,2802,17072,8034,0.4706,1542,588
+AXIOM-7,Shield Plating,before,1610,4032,3881,0.96255,1503,4
+AXIOM-7,Plasma Strike,before,2279,8320,2967,0.35661,1498,428
+AXIOM-7,System Disruption,before,1751,8813,7021,0.79666,1477,17
+AXIOM-7,Polaron Burst,before,2644,14362,4143,0.28847,1331,584
+AXIOM-7,Shield Exchange,before,2550,16610,8326,0.50126,909,602
+AXIOM-7,Hull Patch,before,1037,4590,3885,0.84641,869,35
+AXIOM-7,Reactor Upgrade,before,2993,35841,19133,0.53383,585,990
+AXIOM-7,Capacitor Overload,before,2375,20424,5434,0.26606,529,744
+AXIOM Scout,Laser Burst,before,3453,10610,7759,0.73129,2773,227
+AXIOM Scout,Drain Beam,before,2303,4338,2547,0.58714,2001,113
+AXIOM Scout,Phase Lance,before,2428,5902,2889,0.4895,1905,177
+AXIOM Scout,Missile Team,before,1701,2719,2265,0.83303,1563,20
+AXIOM Scout,Shield Recharge,before,1834,4540,4490,0.98899,1446,3
+AXIOM Scout,Emergency Power Cell,before,1672,8087,8087,1.0,1194,0
+AXIOM Scout,Tactical Assessment,before,1266,2907,2034,0.69969,1148,31
+AXIOM Scout,Pulse Repeater,before,1907,9078,5854,0.64486,1127,214
+AXIOM Scout,System Disruption,before,1865,13833,8923,0.64505,1095,114
+AXIOM Scout,Plasma Strike,before,1539,5998,2294,0.38246,1042,222
+AXIOM Scout,Energy Siphon,before,1244,3577,3295,0.92116,1022,10
+AXIOM Scout,Shield Plating,before,1202,3972,3716,0.93555,975,14
+AXIOM Scout,Energy Surge,before,1086,3696,3696,1.0,872,0
+AXIOM Scout,Shield Exchange,before,1706,7014,3612,0.51497,866,203
+AXIOM Scout,Shield Breachers,before,978,3219,2586,0.80336,644,20
+AXIOM Scout,Polaron Burst,before,1423,7508,2306,0.30714,610,193
+AXIOM Scout,Hull Patch,before,582,1493,1169,0.78299,479,18
+AXIOM Scout,Power Grid Reroute,before,1546,11915,4422,0.37113,457,256
+AXIOM Scout,Capacitor Overload,before,1576,10771,2008,0.18643,356,344
+AXIOM Scout,Reactor Upgrade,before,1421,11753,4990,0.42457,167,193
+AXIOM Enforcer,Laser Burst,before,4510,13168,9257,0.70299,3967,325
+AXIOM Enforcer,Drain Beam,before,3415,6579,3791,0.57623,2920,305
+AXIOM Enforcer,Phase Lance,before,3544,9575,4426,0.46225,2865,499
+AXIOM Enforcer,Shield Recharge,before,3012,6882,6816,0.99041,2782,13
+AXIOM Enforcer,Tactical Assessment,before,2466,6112,4024,0.65838,2239,111
+AXIOM Enforcer,Pulse Repeater,before,2989,11142,7083,0.6357,2110,511
+AXIOM Enforcer,Shield Breachers,before,2358,5323,3896,0.73192,2089,63
+AXIOM Enforcer,Energy Siphon,before,1867,5353,4848,0.90566,1713,27
+AXIOM Enforcer,System Disruption,before,2043,9206,4468,0.48534,1543,147
+AXIOM Enforcer,Shield Exchange,before,3279,22426,10379,0.46281,1502,946
+AXIOM Enforcer,Plasma Strike,before,2370,11033,3735,0.33853,1481,543
+AXIOM Enforcer,Hull Nanobots,before,2364,17774,10054,0.56566,1170,619
+AXIOM Enforcer,Shield Plating,before,1242,4180,3889,0.93038,1081,21
+AXIOM Enforcer,Hull Patch,before,1289,4717,2711,0.57473,1035,106
+AXIOM Enforcer,Polaron Burst,before,2510,15949,4113,0.25788,1017,823
+AXIOM Enforcer,Capacitor Overload,before,2743,24111,5266,0.21841,822,907
+AXIOM Enforcer,Power Grid Reroute,before,2308,18264,5986,0.32775,788,791
+AXIOM Enforcer,Reactor Upgrade,before,2064,17474,8291,0.47448,553,856
+AXIOM Enforcer,Emergency Refit,before,1234,8918,577,0.0647,407,523
+AXIOM Enforcer,Emergency Reserves,before,1400,14932,1734,0.11613,35,638
+AXIOM Command Nexus,Laser Burst,before,5129,14591,10402,0.71291,4525,400
+AXIOM Command Nexus,Phase Lance,before,4063,11789,5248,0.44516,3524,376
+AXIOM Command Nexus,Drain Beam,before,3934,7582,4338,0.57214,3433,342
+AXIOM Command Nexus,Shield Recharge,before,3363,7534,7452,0.98912,3109,75
+AXIOM Command Nexus,Pulse Repeater,before,3565,14382,9610,0.6682,2823,400
+AXIOM Command Nexus,Tactical Assessment,before,2752,4706,4607,0.97896,2716,6
+AXIOM Command Nexus,Shield Breachers,before,2652,4466,4460,0.99866,2514,1
+AXIOM Command Nexus,Energy Siphon,before,2149,5425,5403,0.99594,2082,0
+AXIOM Command Nexus,System Disruption,before,2204,6430,6311,0.98149,2017,2
+AXIOM Command Nexus,Plasma Strike,before,3121,14937,4847,0.3245,1996,797
+AXIOM Command Nexus,Emergency Refit,before,1754,3202,3041,0.94972,1672,10
+AXIOM Command Nexus,Shield Exchange,before,3536,30515,15432,0.50572,1493,1030
+AXIOM Command Nexus,Shield Plating,before,1476,4469,4466,0.99933,1376,0
+AXIOM Command Nexus,Polaron Burst,before,3093,23080,5774,0.25017,1359,1047
+AXIOM Command Nexus,Hull Patch,before,1432,5331,5255,0.98574,1296,1
+AXIOM Command Nexus,Hull Nanobots,before,2787,26070,15184,0.58243,1208,830
+AXIOM Command Nexus,Power Grid Reroute,before,2495,19405,6788,0.34981,1078,795
+AXIOM Command Nexus,Capacitor Overload,before,3199,30781,7141,0.23199,1023,1035
+AXIOM Command Nexus,Reactor Upgrade,before,2369,21908,11112,0.50721,818,851
+AXIOM Command Nexus,Emergency Reserves,before,2161,22961,3057,0.13314,79,1186
+The Hollow Choir,Structural Reinforcement,before,3772,8608,5708,0.6631,3314,128
+The Hollow Choir,Shield Plating,before,3209,5307,4744,0.89391,3045,18
+The Hollow Choir,Coordinated Assault,before,3374,11520,4207,0.36519,2826,149
+The Hollow Choir,Emergency Power Cell,before,2754,6552,6552,1.0,2596,0
+The Hollow Choir,Hull Patch,before,3563,29879,22817,0.76365,2533,284
+The Hollow Choir,Damage Control Teams,before,2417,4742,3016,0.63602,2261,47
+The Hollow Choir,Shield Breachers,before,3060,25525,19911,0.78006,2173,152
+The Hollow Choir,Emergency Bulkheads,before,2495,5822,3201,0.54981,2147,93
+The Hollow Choir,Missile Team,before,2402,7704,6441,0.83606,2102,42
+The Hollow Choir,Torpedo Salvo,before,2417,10923,5560,0.50902,2030,166
+The Hollow Choir,Tactical Assessment,before,2008,4899,3010,0.61441,1785,41
+The Hollow Choir,Missile Barrage,before,2532,14190,4116,0.29006,1776,314
+The Hollow Choir,Boarding Party,before,2235,18689,17872,0.95628,1717,27
+The Hollow Choir,Quarters Upgrade,before,2369,17464,12958,0.74198,1696,118
+The Hollow Choir,Salvage Strike,before,2168,14500,11418,0.78745,1582,87
+The Hollow Choir,Crew Capture,before,2365,17349,12042,0.6941,1535,180
+The Hollow Choir,Synthesizer Upgrade,before,2261,12970,6536,0.50393,1397,165
+The Hollow Choir,Shield Recharge,before,1462,2484,1861,0.74919,1384,4
+The Hollow Choir,Structural Reclamation,before,2507,26384,15934,0.60393,1348,243
+The Hollow Choir,Hull Nanobots,before,1176,8955,5823,0.65025,885,21
+Choir Spore,Structural Reinforcement,before,4147,10320,7294,0.70678,3628,200
+Choir Spore,Coordinated Assault,before,2979,7205,3933,0.54587,2707,76
+Choir Spore,Shield Plating,before,2783,4812,4021,0.83562,2569,38
+Choir Spore,Quarters Upgrade,before,2681,13635,10503,0.7703,2301,57
+Choir Spore,Damage Control Teams,before,2402,5197,3214,0.61843,2239,67
+Choir Spore,Missile Team,before,2342,5401,4523,0.83744,2147,34
+Choir Spore,Salvage Strike,before,2738,17705,13059,0.73759,1993,149
+Choir Spore,Tactical Assessment,before,2069,5225,3745,0.71675,1959,34
+Choir Spore,Emergency Bulkheads,before,2317,4720,2397,0.50784,1929,144
+Choir Spore,Hull Patch,before,2997,23265,16523,0.71021,1928,230
+Choir Spore,Missile Barrage,before,2262,10765,3980,0.36972,1873,167
+Choir Spore,Boarding Party,before,2104,11253,10774,0.95743,1781,8
+Choir Spore,Emergency Power Cell,before,1622,2368,2368,1.0,1542,0
+Choir Spore,Cataclysm Protocol,before,2705,22731,3589,0.15789,1498,363
+Choir Spore,Synthesizer Upgrade,before,2442,13107,4762,0.36332,1429,325
+Choir Spore,Shield Recharge,before,1425,2352,1999,0.84991,1340,2
+Choir Spore,Crew Capture,before,2311,16823,9726,0.57814,1327,276
+Choir Spore,Structural Reclamation,before,2009,23126,14595,0.63111,749,300
+Choir Spore,Hull Nanobots,before,919,5871,3244,0.55255,726,18
+Choir Spore,Salvage Cannibalization,before,2157,29397,19621,0.66745,711,349
+Choir Guardian,Structural Reinforcement,before,4057,9768,6133,0.62787,3488,273
+Choir Guardian,Shield Plating,before,3364,5452,4593,0.84244,3159,53
+Choir Guardian,Coordinated Assault,before,3467,10136,3952,0.3899,2940,257
+Choir Guardian,Damage Control Teams,before,2701,5066,3336,0.65851,2521,41
+Choir Guardian,Boarding Party,before,2585,9257,8744,0.94458,2417,17
+Choir Guardian,Hull Patch,before,3710,27066,16139,0.59628,2383,573
+Choir Guardian,Quarters Upgrade,before,2989,18664,13065,0.70001,2374,182
+Choir Guardian,Salvage Strike,before,2796,12117,7663,0.63242,2303,178
+Choir Guardian,Missile Team,before,2453,4969,4127,0.83055,2298,39
+Choir Guardian,Torpedo Salvo,before,2484,8902,4771,0.53595,2264,133
+Choir Guardian,Missile Barrage,before,2527,9715,4118,0.42388,2167,136
+Choir Guardian,Tactical Assessment,before,2047,4474,2851,0.63724,1896,77
+Choir Guardian,Emergency Bulkheads,before,2547,8719,2654,0.30439,1740,377
+Choir Guardian,Crew Capture,before,2373,12887,7513,0.58299,1659,334
+Choir Guardian,Shield Recharge,before,1657,2933,2270,0.77395,1580,12
+Choir Guardian,Hull Overhaul,before,3342,36258,14644,0.40388,1325,785
+Choir Guardian,Hull Nanobots,before,1100,5756,2571,0.44666,878,47
+Choir Guardian,Synthesizer Upgrade,before,2141,16916,5160,0.30504,825,508
+Choir Guardian,Structural Reclamation,before,2184,27765,13311,0.47942,735,549
+Choir Guardian,Salvage Cannibalization,before,2441,32838,16945,0.51602,708,712
+Choir Leviathan,Structural Reinforcement,before,4715,8564,7364,0.85988,4456,64
+Choir Leviathan,Shield Plating,before,4128,6384,6185,0.96883,3986,25
+Choir Leviathan,Coordinated Assault,before,4021,11154,5197,0.46593,3694,77
+Choir Leviathan,Hull Patch,before,4252,35143,30920,0.87983,3410,107
+Choir Leviathan,Damage Control Teams,before,3533,6104,4442,0.72772,3351,55
+Choir Leviathan,Salvage Strike,before,3414,16432,14637,0.89076,3015,90
+Choir Leviathan,Quarters Upgrade,before,3533,20275,16074,0.7928,3011,83
+Choir Leviathan,Torpedo Salvo,before,3001,10315,6683,0.64789,2882,49
+Choir Leviathan,Missile Barrage,before,2995,10891,5145,0.47241,2759,62
+Choir Leviathan,Emergency Bulkheads,before,3086,6049,3688,0.60969,2749,116
+Choir Leviathan,Boarding Party,before,3103,19308,18641,0.96545,2708,12
+Choir Leviathan,Missile Team,before,2834,6581,5842,0.88771,2707,16
+Choir Leviathan,Hull Overhaul,before,4100,47440,38231,0.80588,2637,201
+Choir Leviathan,Tactical Assessment,before,2531,5389,3681,0.68306,2429,46
+Choir Leviathan,Crew Capture,before,2701,18309,15389,0.84052,2176,104
+Choir Leviathan,Synthesizer Upgrade,before,2690,13267,7905,0.59584,2024,156
+Choir Leviathan,Shield Recharge,before,2042,2827,2827,1.0,1968,0
+Choir Leviathan,Structural Reclamation,before,2772,39032,31927,0.81797,1547,189
+Choir Leviathan,Hull Nanobots,before,1623,5816,5816,1.0,1456,0
+Choir Leviathan,Salvage Cannibalization,before,2814,46504,40725,0.87573,1360,187
+Marauder,Plasma Strike,after,1529,2217,2065,0.93144,1478,3
+Marauder,Energy Surge,after,1184,3522,3522,1.0,1057,0
+Marauder,Breach Charge,after,1168,3267,1612,0.49342,933,41
+Marauder,Energy Siphon,after,1037,2131,1350,0.63351,873,7
+Marauder,Boarding Party,after,947,1416,1201,0.84816,785,12
+Marauder,Pulse Repeater,after,884,2751,2512,0.91312,667,8
+Marauder,Missile Barrage,after,1255,6637,753,0.11345,637,101
+Marauder,Laser Burst,after,648,970,933,0.96186,608,0
+Marauder,Hull Nanobots,after,870,1956,1645,0.841,605,44
+Marauder,Emergency Power Cell,after,697,1938,1938,1.0,578,0
+Marauder,Tactical Assessment,after,733,1739,653,0.3755,572,42
+Marauder,Shield Collapse,after,621,1900,1873,0.98579,505,5
+Marauder,Relentless Barrage,after,474,699,698,0.99857,456,0
+Marauder,Overloaded Warhead,after,690,3055,1305,0.42717,405,43
+Marauder,Cargo Raid,after,519,1215,560,0.46091,403,21
+Marauder,Reactor Upgrade,after,748,2751,2121,0.77099,392,38
+Marauder,Industrial Repurposing,after,696,4807,2074,0.43145,382,30
+Marauder,Damage Control Teams,after,402,848,686,0.80896,348,8
+Marauder,Salvage Strike,after,532,1821,730,0.40088,344,40
+Marauder,Reactor Salvage,after,506,2241,1046,0.46676,338,15
+Marauder,Phase Lance,after,368,474,433,0.9135,336,5
+Marauder,Shield Capacitor,after,549,3249,3245,0.99877,328,0
+Marauder,Coordinated Assault,after,425,1045,336,0.32153,323,21
+Marauder,Boarding Operations,after,361,502,269,0.53586,320,9
+Marauder,Crew Capture,after,764,3697,1035,0.27996,265,51
+Marauder,Torpedo Salvo,after,361,1163,299,0.25709,264,25
+Marauder,Adaptive Command,after,340,1024,888,0.86719,263,2
+Marauder,Shield Exchange,after,353,1759,1735,0.98636,256,1
+Marauder,Power Grid Reroute,after,364,1718,1516,0.88242,243,9
+Marauder,Capacitor Overload,after,420,1100,606,0.55091,230,16
+Marauder,Polaron Burst,after,247,499,446,0.89379,193,2
+Marauder,Shield Array,after,390,1907,943,0.49449,193,30
+Marauder,Missile Team,after,249,604,237,0.39238,180,20
+Marauder,Antimatter Lance,after,302,788,168,0.2132,170,23
+Marauder,Siege Charges,after,400,2205,158,0.07166,162,63
+Marauder,Desperate Conversion,after,551,4168,2520,0.60461,142,75
+Marauder,Personnel Disruption,after,239,980,737,0.75204,140,12
+Marauder,Structural Reinforcement,after,532,2748,1021,0.37154,140,47
+Marauder,Shield Plating,after,350,1784,1517,0.85034,135,4
+Marauder,Reactive Armor,after,252,1115,360,0.32287,129,18
+Marauder,Feedback Loop,after,242,654,551,0.84251,113,6
+Marauder,System Disruption,after,296,1736,697,0.4015,107,22
+Marauder,Emergency Discharge,after,140,249,233,0.93574,104,1
+Marauder,Emergency Medical Team,after,276,1087,257,0.23643,103,30
+Marauder,Industrial Interference,after,346,2237,565,0.25257,102,25
+Marauder,Supply Diversion,after,112,225,155,0.68889,83,4
+Marauder,Shield Recharge,after,89,160,160,1.0,75,0
+Marauder,Hull Overhaul,after,448,2996,379,0.1265,74,100
+Marauder,Reactor Interference,after,111,411,329,0.80049,71,1
+Marauder,Reactor Synchronization,after,180,1521,1412,0.92834,71,3
+Marauder,Drain Beam,after,64,84,69,0.82143,61,0
+Marauder,Emergency Reserves,after,192,1459,1336,0.9157,57,0
+Marauder,Structural Reclamation,after,333,3738,171,0.04575,57,48
+Marauder,Salvage Cannibalization,after,157,1010,120,0.11881,50,31
+Marauder,Shield Disruptor,after,148,699,195,0.27897,46,18
+Marauder,Omega Overcharge,after,56,113,78,0.69027,41,1
+Marauder,Quarters Upgrade,after,53,171,92,0.53801,37,3
+Marauder,Emergency Bulkheads,after,65,608,101,0.16612,17,15
+Marauder,Shield Breachers,after,30,107,31,0.28972,17,6
+Marauder,Command Infiltration,after,231,2066,24,0.01162,12,11
+Marauder,Hull Patch,after,21,165,56,0.33939,11,6
+Marauder,Synthesizer Upgrade,after,46,592,125,0.21115,9,13
+Marauder,Boarding Specialists,after,32,181,10,0.05525,8,8
+Marauder,Auxiliary Power Link,after,7,24,9,0.375,7,0
+Marauder,Core Destabilization,after,24,93,27,0.29032,6,1
+Marauder,Damage Control,after,10,40,11,0.275,5,1
+Marauder,Demolition Crew,after,32,158,16,0.10127,5,8
+Marauder,Energy Equalizer,after,8,14,9,0.64286,5,3
+Marauder,Cataclysm Protocol,after,20,216,4,0.01852,2,7
+Marauder,Phase Inverter,after,3,30,20,0.66667,2,1
+Marauder,Sabotage Operation,after,4,6,4,0.66667,2,1
+Marauder,Industrial Sabotage,after,42,229,7,0.03057,1,6
+Marauder,Personnel Exchange,after,4,67,20,0.29851,1,0
+Marauder,Reinforced Foundations,after,22,192,2,0.01042,1,6
+Marauder,Scientific Breakthrough,after,18,89,13,0.14607,1,5
+Marauder,Siege Driver,after,124,778,1,0.00129,1,33
+Marauder,Emergency Refit,after,52,260,3,0.01154,0,8
+Marauder,Fabrication Strike,after,143,1038,2,0.00193,0,8
+Marauder,Resource Seizure,after,8,119,0,0.0,0,1
+Marauder,Sabotage Commandos,after,2,6,0,0.0,0,1
+Rustjack,Hull Patch,after,2995,16658,13325,0.79992,2426,206
+Rustjack,Shield Disruptor,after,3398,16637,13424,0.80688,2301,204
+Rustjack,Cargo Raid,after,2710,7498,2990,0.39877,2212,166
+Rustjack,Breach Charge,after,2608,5823,3634,0.62408,2152,144
+Rustjack,Salvage Cannibalization,after,2735,10515,6974,0.66324,2133,204
+Rustjack,Salvage Strike,after,2405,5424,4701,0.8667,2095,62
+Rustjack,Energy Siphon,after,2315,6875,4139,0.60204,1991,123
+Rustjack,Hull Overhaul,after,3120,19805,10006,0.50523,1846,350
+Rustjack,Overloaded Warhead,after,2233,6254,4484,0.71698,1755,121
+Rustjack,Missile Team,after,2177,7266,2843,0.39127,1724,185
+Rustjack,Shield Breachers,after,2413,10346,4473,0.43234,1666,229
+Rustjack,Reactor Salvage,after,2070,8345,5197,0.62277,1413,245
+Rustjack,Shield Plating,after,1537,4714,4653,0.98706,1382,13
+Rustjack,Boarding Party,after,1524,4770,2710,0.56813,1275,86
+Rustjack,Laser Burst,after,1243,1957,1730,0.88401,1178,7
+Rustjack,System Disruption,after,2700,33681,15376,0.45652,1025,410
+Rustjack,Supply Diversion,after,1180,6961,4984,0.71599,784,109
+Rustjack,Emergency Power Cell,after,788,1650,1650,1.0,751,0
+Rustjack,Synthesizer Upgrade,after,1923,17314,10976,0.63394,506,342
+Rustjack,Emergency Bulkheads,after,1226,9899,5788,0.58471,477,218
+Scrap Skiff,Energy Siphon,after,2613,6580,6029,0.91626,1997,12
+Scrap Skiff,Crew Capture,after,2322,9469,8073,0.85257,1478,73
+Scrap Skiff,Hull Patch,after,1978,9739,8116,0.83335,1365,87
+Scrap Skiff,Cargo Raid,after,1528,2000,1537,0.7685,1342,16
+Scrap Skiff,Salvage Cannibalization,after,1702,8038,5943,0.73936,1286,70
+Scrap Skiff,Breach Charge,after,1461,2572,1641,0.63802,1204,44
+Scrap Skiff,Laser Burst,after,1223,2321,2052,0.8841,1083,1
+Scrap Skiff,Shield Breachers,after,1378,2896,2364,0.8163,1057,24
+Scrap Skiff,Salvage Strike,after,1251,3828,3331,0.87017,995,19
+Scrap Skiff,Overloaded Warhead,after,1423,3941,3118,0.79117,916,24
+Scrap Skiff,Shield Disruptor,after,1734,7412,6363,0.85847,899,53
+Scrap Skiff,Emergency Power Cell,after,1433,6891,6891,1.0,744,0
+Scrap Skiff,Missile Team,after,848,1634,1108,0.67809,698,19
+Scrap Skiff,Boarding Party,after,631,1275,1013,0.79451,498,15
+Scrap Skiff,Reactor Salvage,after,788,5002,3821,0.76389,452,40
+Scrap Skiff,System Disruption,after,1272,8918,6393,0.71686,450,47
+Scrap Skiff,Shield Plating,after,822,5433,5383,0.9908,331,8
+Scrap Skiff,Supply Diversion,after,729,4383,4098,0.93498,193,6
+Scrap Skiff,Emergency Bulkheads,after,705,4895,3089,0.63105,102,45
+Scrap Skiff,Synthesizer Upgrade,after,1103,8775,5391,0.61436,61,106
+Wreckbreaker,Cargo Raid,after,3069,8295,4780,0.57625,2739,93
+Wreckbreaker,Crew Capture,after,2984,9953,8888,0.893,2600,60
+Wreckbreaker,Hull Patch,after,2677,17934,15749,0.87816,1946,138
+Wreckbreaker,Breach Charge,after,2347,5027,3731,0.74219,1918,90
+Wreckbreaker,Salvage Cannibalization,after,2464,9673,8051,0.83232,1875,62
+Wreckbreaker,Overloaded Warhead,after,2074,4723,3910,0.82786,1784,54
+Wreckbreaker,Salvage Strike,after,1982,4074,3528,0.86598,1781,34
+Wreckbreaker,Laser Burst,after,1922,4478,3356,0.74944,1758,6
+Wreckbreaker,Hull Overhaul,after,2324,13635,9327,0.68405,1548,175
+Wreckbreaker,Torpedo Salvo,after,2200,12343,1910,0.15474,1479,216
+Wreckbreaker,Emergency Power Cell,after,1622,6114,6114,1.0,1446,0
+Wreckbreaker,Reactor Salvage,after,1796,7177,5488,0.76466,1311,82
+Wreckbreaker,Boarding Party,after,1480,5255,3359,0.6392,1186,61
+Wreckbreaker,Missile Barrage,after,1977,16012,1349,0.08425,1177,265
+Wreckbreaker,Shield Breachers,after,1810,10696,4310,0.40295,1110,117
+Wreckbreaker,Shield Plating,after,1363,8593,8556,0.99569,966,3
+Wreckbreaker,Missile Team,after,1293,5137,2140,0.41659,939,146
+Wreckbreaker,Supply Diversion,after,877,6762,5384,0.79621,517,41
+Wreckbreaker,Synthesizer Upgrade,after,1882,17843,12345,0.69187,490,193
+Wreckbreaker,Emergency Bulkheads,after,881,8058,5976,0.74162,307,101
+Marauder Vanguard,Plasma Strike,after,1794,2413,2342,0.97058,1748,5
+Marauder Vanguard,Energy Surge,after,1222,4323,4323,1.0,1172,0
+Marauder Vanguard,Breach Charge,after,1177,2003,1817,0.90714,1151,3
+Marauder Vanguard,Energy Siphon,after,1237,3127,2449,0.78318,1118,4
+Marauder Vanguard,Boarding Party,after,1155,2480,2173,0.87621,1032,8
+Marauder Vanguard,Pulse Repeater,after,1034,3136,3029,0.96588,967,0
+Marauder Vanguard,Tactical Assessment,after,1058,1982,986,0.49748,917,16
+Marauder Vanguard,Hull Nanobots,after,940,3166,3007,0.94978,775,0
+Marauder Vanguard,Laser Burst,after,817,1424,1389,0.97542,759,0
+Marauder Vanguard,Missile Barrage,after,1332,8276,1448,0.17496,759,65
+Marauder Vanguard,Overloaded Warhead,after,801,2162,1611,0.74514,667,22
+Marauder Vanguard,Industrial Repurposing,after,759,3615,3198,0.88465,656,2
+Marauder Vanguard,Cargo Raid,after,700,1861,794,0.42665,618,18
+Marauder Vanguard,Crew Capture,after,892,4238,2871,0.67744,599,21
+Marauder Vanguard,Relentless Barrage,after,599,1094,1094,1.0,594,0
+Marauder Vanguard,Salvage Strike,after,598,1195,728,0.60921,546,4
+Marauder Vanguard,Reactor Upgrade,after,962,5201,4663,0.89656,535,1
+Marauder Vanguard,Phase Lance,after,524,446,446,1.0,512,0
+Marauder Vanguard,Emergency Power Cell,after,644,2419,2419,1.0,494,0
+Marauder Vanguard,Shield Collapse,after,643,2846,2846,1.0,471,2
+Marauder Vanguard,Siege Charges,after,514,1057,443,0.41911,471,15
+Marauder Vanguard,Reactor Salvage,after,504,1914,1770,0.92476,428,4
+Marauder Vanguard,Boarding Operations,after,467,717,355,0.49512,427,15
+Marauder Vanguard,Damage Control Teams,after,438,2066,1367,0.66167,371,17
+Marauder Vanguard,Torpedo Salvo,after,474,1887,382,0.20244,367,27
+Marauder Vanguard,Coordinated Assault,after,531,2554,466,0.18246,366,31
+Marauder Vanguard,Missile Team,after,397,1242,495,0.39855,343,19
+Marauder Vanguard,Hull Overhaul,after,578,4626,2523,0.5454,338,17
+Marauder Vanguard,Capacitor Overload,after,547,2470,1939,0.78502,325,1
+Marauder Vanguard,Shield Capacitor,after,615,4408,4408,1.0,317,0
+Marauder Vanguard,Shield Exchange,after,470,2877,2876,0.99965,301,0
+Marauder Vanguard,Shield Array,after,499,2282,1951,0.85495,300,8
+Marauder Vanguard,Structural Reinforcement,after,697,4507,3129,0.69425,300,15
+Marauder Vanguard,Industrial Interference,after,434,3208,2153,0.67113,299,12
+Marauder Vanguard,Power Grid Reroute,after,429,2174,2137,0.98298,285,0
+Marauder Vanguard,Polaron Burst,after,317,855,853,0.99766,264,0
+Marauder Vanguard,Antimatter Lance,after,399,1332,250,0.18769,254,1
+Marauder Vanguard,Emergency Discharge,after,331,613,613,1.0,251,0
+Marauder Vanguard,Adaptive Command,after,532,3519,2932,0.83319,237,10
+Marauder Vanguard,Structural Reclamation,after,402,3249,1175,0.36165,228,19
+Marauder Vanguard,Shield Plating,after,409,2371,2238,0.94391,223,5
+Marauder Vanguard,Reactive Armor,after,231,1019,658,0.64573,155,2
+Marauder Vanguard,Desperate Conversion,after,637,7304,3777,0.51711,149,41
+Marauder Vanguard,Personnel Disruption,after,266,2054,1472,0.71665,145,27
+Marauder Vanguard,Feedback Loop,after,227,664,663,0.99849,140,0
+Marauder Vanguard,Reactor Interference,after,177,869,835,0.96087,126,0
+Marauder Vanguard,Salvage Cannibalization,after,198,878,433,0.49317,120,16
+Marauder Vanguard,Command Infiltration,after,230,1921,221,0.11504,116,2
+Marauder Vanguard,Drain Beam,after,117,128,124,0.96875,107,0
+Marauder Vanguard,Shield Disruptor,after,192,488,337,0.69057,106,7
+Marauder Vanguard,Emergency Medical Team,after,293,1664,665,0.39964,99,7
+Marauder Vanguard,System Disruption,after,320,2887,1134,0.3928,88,20
+Marauder Vanguard,Supply Diversion,after,118,407,183,0.44963,87,8
+Marauder Vanguard,Shield Recharge,after,100,213,213,1.0,70,0
+Marauder Vanguard,Emergency Reserves,after,196,1722,1721,0.99942,63,0
+Marauder Vanguard,Emergency Bulkheads,after,178,1265,665,0.52569,57,8
+Marauder Vanguard,Omega Overcharge,after,63,165,136,0.82424,56,0
+Marauder Vanguard,Fabrication Strike,after,177,1997,126,0.06309,53,8
+Marauder Vanguard,Quarters Upgrade,after,90,759,162,0.21344,40,14
+Marauder Vanguard,Synthesizer Upgrade,after,52,177,79,0.44633,34,6
+Marauder Vanguard,Reactor Synchronization,after,180,2121,2120,0.99953,32,0
+Marauder Vanguard,Reinforced Foundations,after,39,123,41,0.33333,26,4
+Marauder Vanguard,Shield Breachers,after,48,278,59,0.21223,25,14
+Marauder Vanguard,Emergency Refit,after,66,644,80,0.12422,19,4
+Marauder Vanguard,Hull Patch,after,33,151,109,0.72185,19,9
+Marauder Vanguard,Core Destabilization,after,31,64,48,0.75,18,0
+Marauder Vanguard,Phase Inverter,after,18,29,29,1.0,18,0
+Marauder Vanguard,Demolition Crew,after,28,87,42,0.48276,17,4
+Marauder Vanguard,Energy Equalizer,after,20,59,59,1.0,17,0
+Marauder Vanguard,Siege Driver,after,122,597,17,0.02848,17,0
+Marauder Vanguard,Auxiliary Power Link,after,17,55,55,1.0,15,0
+Marauder Vanguard,Boarding Specialists,after,44,404,13,0.03218,8,18
+Marauder Vanguard,Industrial Sabotage,after,41,229,43,0.18777,4,1
+Marauder Vanguard,Sabotage Operation,after,11,80,8,0.1,4,1
+Marauder Vanguard,Cataclysm Protocol,after,34,410,3,0.00732,3,11
+Marauder Vanguard,Damage Control,after,7,43,8,0.18605,3,0
+Marauder Vanguard,Personnel Exchange,after,5,15,9,0.6,3,1
+Marauder Vanguard,Resource Seizure,after,14,133,80,0.6015,3,1
+Marauder Vanguard,Sabotage Commandos,after,10,80,2,0.025,2,0
+Marauder Vanguard,Scientific Breakthrough,after,4,66,7,0.10606,0,1
+Clan War Barge,Cargo Raid,after,2994,6048,5360,0.88624,2941,9
+Clan War Barge,Crew Capture,after,2641,9633,8936,0.92764,2334,44
+Clan War Barge,Missile Barrage,after,2080,5379,1845,0.343,1788,15
+Clan War Barge,Breach Charge,after,2090,4847,3865,0.7974,1780,47
+Clan War Barge,Torpedo Salvo,after,1931,5184,2089,0.40297,1766,13
+Clan War Barge,Laser Burst,after,1784,3884,3884,1.0,1754,0
+Clan War Barge,Overloaded Warhead,after,2071,5270,4398,0.83454,1741,47
+Clan War Barge,Salvage Cannibalization,after,2276,11148,9729,0.87271,1710,48
+Clan War Barge,Salvage Strike,after,1787,3644,3277,0.89929,1625,30
+Clan War Barge,Hull Overhaul,after,2175,14494,10732,0.74044,1270,97
+Clan War Barge,Emergency Power Cell,after,1501,6847,6847,1.0,1269,0
+Clan War Barge,Hull Patch,after,2341,19967,18200,0.9115,1261,91
+Clan War Barge,Boarding Party,after,1301,3117,3005,0.96407,1202,2
+Clan War Barge,Shield Breachers,after,1573,6529,5728,0.87732,1189,8
+Clan War Barge,Missile Team,after,1282,2635,1982,0.75218,1167,9
+Clan War Barge,Reactor Salvage,after,1694,8310,6730,0.80987,1144,60
+Clan War Barge,Shield Plating,after,1138,9530,9467,0.99339,703,6
+Clan War Barge,Supply Diversion,after,715,7100,6947,0.97845,417,0
+Clan War Barge,Synthesizer Upgrade,after,1799,21849,16924,0.77459,181,138
+Clan War Barge,Emergency Bulkheads,after,733,10371,8649,0.83396,56,86
+Sentinel,Shield Recharge,after,2352,3714,3651,0.98304,2293,5
+Sentinel,Polaron Burst,after,2028,8030,4191,0.52192,1784,116
+Sentinel,Shield Plating,after,1812,5302,3503,0.66069,1642,71
+Sentinel,Shield Capacitor,after,1591,2590,2353,0.90849,1552,11
+Sentinel,Laser Burst,after,1591,3652,3423,0.93729,1551,13
+Sentinel,Hull Nanobots,after,1680,5820,4497,0.77268,1541,65
+Sentinel,Drain Beam,after,1483,2245,1489,0.66325,1427,32
+Sentinel,Adaptive Command,after,1510,2794,2404,0.86042,1409,23
+Sentinel,Power Grid Reroute,after,1526,3069,1761,0.5738,1376,84
+Sentinel,Damage Control Teams,after,1464,2865,1721,0.6007,1360,48
+Sentinel,Feedback Loop,after,1664,5342,2384,0.44627,1308,164
+Sentinel,Shield Collapse,after,1389,7451,6208,0.83318,1249,54
+Sentinel,Emergency Medical Team,after,1563,9195,5624,0.61164,1247,137
+Sentinel,Shield Exchange,after,1526,10175,7193,0.70693,1175,101
+Sentinel,Hull Patch,after,2135,17579,5572,0.31697,1171,523
+Sentinel,Reactor Upgrade,after,1276,4400,3484,0.79182,1148,75
+Sentinel,Capacitor Overload,after,1386,5754,3065,0.53267,1110,110
+Sentinel,Emergency Power Cell,after,1132,3250,3250,1.0,1085,0
+Sentinel,Emergency Bulkheads,after,1689,10264,1828,0.1781,1058,349
+Sentinel,Structural Reinforcement,after,1348,6017,2250,0.37394,1027,166
+Sentinel,Energy Siphon,after,1057,2003,1484,0.74089,1006,24
+Sentinel,Energy Surge,after,1075,2158,2158,1.0,1006,0
+Sentinel,Cargo Raid,after,1017,1204,933,0.77492,972,21
+Sentinel,Plasma Strike,after,1022,1608,1202,0.74751,966,32
+Sentinel,Reactor Interference,after,1223,7037,5244,0.7452,961,92
+Sentinel,Coordinated Assault,after,1124,4571,1370,0.29972,909,106
+Sentinel,Reactive Armor,after,1052,3295,1719,0.5217,906,78
+Sentinel,Emergency Discharge,after,1053,2478,1215,0.49031,888,79
+Sentinel,Pulse Repeater,after,914,3775,3516,0.93139,873,7
+Sentinel,Industrial Repurposing,after,1282,9785,4840,0.49463,867,211
+Sentinel,Shield Disruptor,after,1180,6745,3153,0.46746,812,203
+Sentinel,Personnel Disruption,after,1018,5204,3643,0.70004,805,93
+Sentinel,Quarters Upgrade,after,988,4086,2082,0.50954,791,77
+Sentinel,Supply Diversion,after,837,4163,3815,0.91641,725,31
+Sentinel,Shield Array,after,833,1914,875,0.45716,710,74
+Sentinel,System Disruption,after,975,4235,2391,0.56458,708,97
+Sentinel,Breach Charge,after,1019,5205,1206,0.2317,676,174
+Sentinel,Phase Lance,after,694,1607,805,0.50093,611,41
+Sentinel,Salvage Strike,after,764,5100,3260,0.63922,611,98
+Sentinel,Shield Breachers,after,666,1833,1102,0.6012,578,41
+Sentinel,Boarding Operations,after,625,1193,758,0.63537,571,27
+Sentinel,Missile Team,after,606,1010,682,0.67525,563,19
+Sentinel,Torpedo Salvo,after,636,1402,589,0.42011,547,40
+Sentinel,Boarding Party,after,555,872,781,0.89564,535,8
+Sentinel,Structural Reclamation,after,1705,24146,6079,0.25176,520,622
+Sentinel,Salvage Cannibalization,after,1309,18050,6374,0.35313,467,416
+Sentinel,Hull Overhaul,after,1392,16914,3424,0.20244,459,473
+Sentinel,Synthesizer Upgrade,after,1090,11113,2381,0.21425,455,349
+Sentinel,Demolition Crew,after,1389,15839,1614,0.1019,434,464
+Sentinel,Relentless Barrage,after,421,677,492,0.72674,381,14
+Sentinel,Tactical Assessment,after,438,1131,514,0.45447,366,38
+Sentinel,Missile Barrage,after,445,1899,388,0.20432,338,36
+Sentinel,Reactor Salvage,after,479,2664,665,0.24962,322,77
+Sentinel,Desperate Conversion,after,445,3524,2612,0.7412,320,42
+Sentinel,Overloaded Warhead,after,459,2928,917,0.31318,306,65
+Sentinel,Omega Overcharge,after,362,2817,276,0.09798,283,41
+Sentinel,Command Infiltration,after,333,2025,459,0.22667,248,21
+Sentinel,Reactor Synchronization,after,301,2222,1376,0.61926,229,26
+Sentinel,Antimatter Lance,after,403,3696,231,0.0625,218,100
+Sentinel,Sabotage Operation,after,220,747,631,0.84471,209,7
+Sentinel,Industrial Interference,after,802,9857,1862,0.1889,195,284
+Sentinel,Auxiliary Power Link,after,276,1564,740,0.47315,194,31
+Sentinel,Siege Charges,after,568,5102,291,0.05704,192,213
+Sentinel,Crew Capture,after,259,1565,481,0.30735,165,44
+Sentinel,Sabotage Commandos,after,192,520,148,0.28462,151,14
+Sentinel,Reinforced Foundations,after,289,2880,169,0.05868,129,74
+Sentinel,Cataclysm Protocol,after,184,1099,126,0.11465,123,25
+Sentinel,Energy Equalizer,after,153,831,450,0.54152,121,11
+Sentinel,Personnel Exchange,after,152,1118,388,0.34705,117,15
+Sentinel,Scientific Breakthrough,after,174,820,299,0.36463,95,37
+Sentinel,Emergency Reserves,after,103,345,150,0.43478,80,11
+Sentinel,Siege Driver,after,282,3831,51,0.01331,51,141
+Sentinel,Damage Control,after,73,998,70,0.07014,38,18
+Sentinel,Phase Inverter,after,35,249,146,0.58635,25,3
+Sentinel,Fabrication Strike,after,120,1220,63,0.05164,19,45
+Sentinel,Industrial Sabotage,after,218,4210,55,0.01306,16,113
+Sentinel,Core Destabilization,after,34,300,64,0.21333,14,6
+Sentinel,Emergency Refit,after,138,1911,39,0.02041,10,58
+Sentinel,Resource Seizure,after,71,759,17,0.0224,7,26
+Sentinel,Boarding Specialists,after,5,8,4,0.5,3,2
+Reclaimer,Industrial Repurposing,after,2332,3941,3666,0.93022,2293,13
+Reclaimer,Hull Patch,after,2211,10711,9462,0.88339,1988,28
+Reclaimer,Salvage Cannibalization,after,1998,6931,6003,0.86611,1838,33
+Reclaimer,Synthesizer Upgrade,after,1853,2549,2075,0.81404,1798,13
+Reclaimer,Salvage Strike,after,1904,8586,8107,0.94421,1732,7
+Reclaimer,Shield Plating,after,1688,3093,3066,0.99127,1639,1
+Reclaimer,Reactor Upgrade,after,1706,4247,2694,0.63433,1630,25
+Reclaimer,Reactor Salvage,after,1623,1702,1545,0.90776,1600,8
+Reclaimer,Shield Disruptor,after,1811,7507,6695,0.89183,1560,44
+Reclaimer,Structural Reclamation,after,1722,5032,3633,0.72198,1558,57
+Reclaimer,Hull Nanobots,after,1647,4517,3463,0.76666,1549,15
+Reclaimer,Supply Diversion,after,1453,5415,5305,0.97969,1400,3
+Reclaimer,Siege Charges,after,1512,5193,3498,0.6736,1375,31
+Reclaimer,Structural Reinforcement,after,1441,4538,3901,0.85963,1280,23
+Reclaimer,Emergency Power Cell,after,1257,1281,1281,1.0,1241,0
+Reclaimer,Cargo Raid,after,1252,2073,1790,0.86348,1196,6
+Reclaimer,Hull Overhaul,after,1587,15297,11305,0.73903,1141,86
+Reclaimer,Shield Capacitor,after,1085,3940,3352,0.85076,1018,13
+Reclaimer,Adaptive Command,after,1063,1997,1702,0.85228,989,7
+Reclaimer,Coordinated Assault,after,1090,4444,2318,0.5216,936,51
+Reclaimer,Desperate Conversion,after,1120,4351,2032,0.46702,884,63
+Reclaimer,Damage Control Teams,after,989,3155,1340,0.42472,874,36
+Reclaimer,Quarters Upgrade,after,883,1895,894,0.47177,798,19
+Reclaimer,Power Grid Reroute,after,917,3047,1210,0.39711,764,27
+Reclaimer,Missile Barrage,after,1116,10643,4134,0.38842,755,92
+Reclaimer,Industrial Interference,after,1494,18225,14461,0.79347,753,82
+Reclaimer,Emergency Bulkheads,after,920,5392,4462,0.82752,739,12
+Reclaimer,Emergency Discharge,after,833,2576,1887,0.73253,730,18
+Reclaimer,Pulse Repeater,after,827,7505,6548,0.87249,704,6
+Reclaimer,Plasma Strike,after,912,5575,3700,0.66368,698,40
+Reclaimer,Energy Surge,after,699,691,691,1.0,687,0
+Reclaimer,Personnel Disruption,after,1096,9416,6855,0.72802,679,78
+Reclaimer,Shield Breachers,after,774,2552,1631,0.63911,668,33
+Reclaimer,Laser Burst,after,730,2414,1912,0.79205,623,14
+Reclaimer,Demolition Crew,after,1331,16055,10972,0.6834,620,116
+Reclaimer,Overloaded Warhead,after,710,2322,1971,0.84884,619,17
+Reclaimer,Energy Siphon,after,621,1230,1091,0.88699,601,4
+Reclaimer,Feedback Loop,after,810,3944,2410,0.61105,598,36
+Reclaimer,Emergency Medical Team,after,911,11712,8847,0.75538,589,52
+Reclaimer,Polaron Burst,after,797,8523,7193,0.84395,581,15
+Reclaimer,Drain Beam,after,647,1581,876,0.55408,566,23
+Reclaimer,Tactical Assessment,after,729,3026,1167,0.38566,566,50
+Reclaimer,Shield Recharge,after,574,2014,1975,0.98064,550,0
+Reclaimer,Relentless Barrage,after,595,2263,1958,0.86522,527,3
+Reclaimer,Phase Lance,after,563,1077,552,0.51253,509,9
+Reclaimer,Reactive Armor,after,556,933,834,0.89389,507,8
+Reclaimer,Reactor Interference,after,939,14641,12714,0.86838,465,20
+Reclaimer,Shield Array,after,435,659,620,0.94082,420,1
+Reclaimer,Boarding Operations,after,447,800,438,0.5475,409,12
+Reclaimer,Shield Exchange,after,506,2741,1495,0.54542,378,5
+Reclaimer,Breach Charge,after,434,1184,756,0.63851,376,23
+Reclaimer,Crew Capture,after,394,680,587,0.86324,359,7
+Reclaimer,Emergency Refit,after,451,3508,2049,0.58409,357,23
+Reclaimer,Boarding Party,after,321,557,510,0.91562,297,3
+Reclaimer,Torpedo Salvo,after,473,4006,1378,0.34398,269,63
+Reclaimer,System Disruption,after,496,8609,7124,0.82751,255,9
+Reclaimer,Missile Team,after,286,797,397,0.49812,249,12
+Reclaimer,Shield Collapse,after,376,3291,2846,0.86478,242,10
+Reclaimer,Command Infiltration,after,245,2042,1701,0.83301,176,1
+Reclaimer,Fabrication Strike,after,278,3403,2789,0.81957,150,7
+Reclaimer,Resource Seizure,after,264,7818,5964,0.76285,132,17
+Reclaimer,Siege Driver,after,241,1624,214,0.13177,128,30
+Reclaimer,Boarding Specialists,after,173,935,406,0.43422,117,12
+Reclaimer,Industrial Sabotage,after,258,5029,3184,0.63313,106,9
+Reclaimer,Capacitor Overload,after,168,1342,692,0.51565,102,24
+Reclaimer,Emergency Reserves,after,123,657,119,0.18113,92,6
+Reclaimer,Reinforced Foundations,after,105,423,96,0.22695,86,2
+Reclaimer,Antimatter Lance,after,211,3512,122,0.03474,76,31
+Reclaimer,Omega Overcharge,after,93,725,294,0.40552,76,4
+Reclaimer,Scientific Breakthrough,after,75,566,435,0.76855,58,2
+Reclaimer,Sabotage Commandos,after,78,940,58,0.0617,40,10
+Reclaimer,Phase Inverter,after,62,781,574,0.73496,33,1
+Reclaimer,Auxiliary Power Link,after,52,434,31,0.07143,27,6
+Reclaimer,Cataclysm Protocol,after,38,363,195,0.53719,24,3
+Reclaimer,Reactor Synchronization,after,23,35,30,0.85714,22,0
+Reclaimer,Core Destabilization,after,56,565,162,0.28673,16,4
+Reclaimer,Personnel Exchange,after,30,292,36,0.12329,13,7
+Reclaimer,Energy Equalizer,after,22,245,232,0.94694,10,0
+Reclaimer,Sabotage Operation,after,15,121,9,0.07438,3,5
+Reclaimer,Damage Control,after,12,84,44,0.52381,2,2
+Bastion Frigate,Shield Recharge,after,5959,7741,7658,0.98928,5859,10
+Bastion Frigate,Shield Plating,after,6354,16364,10062,0.61489,5713,309
+Bastion Frigate,Structural Reinforcement,after,6973,42921,14070,0.32781,4996,1011
+Bastion Frigate,Power Grid Reroute,after,5393,11893,7443,0.62583,4995,200
+Bastion Frigate,Missile Team,after,4698,10193,8365,0.82066,4519,39
+Bastion Frigate,Hull Nanobots,after,4935,21599,18583,0.86036,4401,192
+Bastion Frigate,Capacitor Overload,after,4950,20135,11076,0.55009,4179,317
+Bastion Frigate,Reactor Upgrade,after,4484,21976,15267,0.69471,3925,243
+Bastion Frigate,System Disruption,after,3913,17893,13072,0.73057,3419,87
+Bastion Frigate,Shield Exchange,after,4096,30500,24813,0.81354,3238,191
+Bastion Frigate,Emergency Bulkheads,after,4813,27476,4256,0.1549,3154,889
+Bastion Frigate,Energy Surge,after,3114,7993,7993,1.0,3044,0
+Bastion Frigate,Plasma Strike,after,3161,7139,4319,0.60499,2923,140
+Bastion Frigate,Emergency Power Cell,after,2819,5490,5490,1.0,2742,0
+Bastion Frigate,Laser Burst,after,2627,5067,4602,0.90823,2548,28
+Bastion Frigate,Hull Patch,after,4365,71921,26700,0.37124,1612,1113
+Bastion Frigate,Damage Control,after,1850,13280,6051,0.45565,1472,91
+Bastion Frigate,Synthesizer Upgrade,after,3212,43358,7536,0.17381,1273,963
+Bastion Frigate,Emergency Reserves,after,1094,8986,2755,0.30659,735,187
+Bastion Frigate,Siege Driver,after,1313,19105,307,0.01607,290,502
+Siege Monitor,Shield Recharge,after,5768,8420,8304,0.98622,5653,10
+Siege Monitor,Shield Plating,after,5719,14978,9747,0.65075,5034,389
+Siege Monitor,Power Grid Reroute,after,5200,8582,7023,0.81834,4996,122
+Siege Monitor,Structural Reinforcement,after,6870,35346,13208,0.37368,4736,1382
+Siege Monitor,Reactor Upgrade,after,4039,17778,12495,0.70283,3552,206
+Siege Monitor,Shield Exchange,after,3935,10798,9064,0.83941,3551,122
+Siege Monitor,System Disruption,after,3976,18033,11020,0.6111,3405,211
+Siege Monitor,Plasma Strike,after,3097,6077,5016,0.82541,2982,69
+Siege Monitor,Laser Burst,after,2902,5600,5324,0.95071,2851,17
+Siege Monitor,Torpedo Salvo,after,2989,6705,3001,0.44758,2710,146
+Siege Monitor,Emergency Bulkheads,after,4898,29827,4541,0.15224,2706,1443
+Siege Monitor,Iron Counterbattery,after,2428,4083,3325,0.81435,2301,54
+Siege Monitor,Missile Barrage,after,2659,10101,2585,0.25592,2244,212
+Siege Monitor,Hull Patch,after,5138,49905,15919,0.31899,2152,1878
+Siege Monitor,Damage Control,after,1824,13528,2230,0.16484,1179,308
+Siege Monitor,Synthesizer Upgrade,after,3037,31282,6018,0.19238,1026,1364
+Siege Monitor,Emergency Reserves,after,1105,4559,1912,0.41939,914,138
+Siege Monitor,Hull Overhaul,after,3182,40443,8991,0.22231,672,1575
+Siege Monitor,Structural Reclamation,after,4006,62146,12630,0.20323,338,2310
+Siege Monitor,Siege Driver,after,1413,17413,138,0.00793,138,838
+Sentinel Dreadnought,Shield Recharge,after,2192,4248,4171,0.98187,2112,4
+Sentinel Dreadnought,Polaron Burst,after,1978,7622,6006,0.78798,1806,13
+Sentinel Dreadnought,Hull Patch,after,2201,16964,15783,0.93038,1728,17
+Sentinel Dreadnought,Shield Plating,after,1762,4217,4167,0.98814,1645,2
+Sentinel Dreadnought,Shield Capacitor,after,1666,2479,2290,0.92376,1644,9
+Sentinel Dreadnought,Emergency Bulkheads,after,1619,2765,2471,0.89367,1575,10
+Sentinel Dreadnought,Hull Nanobots,after,1740,10634,8887,0.83572,1521,24
+Sentinel Dreadnought,Adaptive Command,after,1423,2320,2268,0.97759,1377,1
+Sentinel Dreadnought,Structural Reinforcement,after,1402,3073,2935,0.95509,1360,6
+Sentinel Dreadnought,Laser Burst,after,1369,3222,3094,0.96027,1350,5
+Sentinel Dreadnought,Reactor Upgrade,after,1450,7201,6068,0.84266,1337,12
+Sentinel Dreadnought,Drain Beam,after,1327,1616,1326,0.82054,1300,3
+Sentinel Dreadnought,Feedback Loop,after,1653,6274,3793,0.60456,1257,22
+Sentinel Dreadnought,Demolition Crew,after,1400,4713,3557,0.75472,1244,16
+Sentinel Dreadnought,Damage Control Teams,after,1271,1998,1945,0.97347,1237,3
+Sentinel Dreadnought,Power Grid Reroute,after,1301,2416,1627,0.67343,1234,16
+Sentinel Dreadnought,Capacitor Overload,after,1567,9884,7836,0.7928,1224,16
+Sentinel Dreadnought,Industrial Repurposing,after,1338,8019,7607,0.94862,1208,5
+Sentinel Dreadnought,Emergency Medical Team,after,1691,24162,23680,0.98005,1198,4
+Sentinel Dreadnought,Structural Reclamation,after,1591,21432,19702,0.91928,1159,19
+Sentinel Dreadnought,Hull Overhaul,after,1493,15327,14584,0.95152,1103,7
+Sentinel Dreadnought,Shield Collapse,after,1384,10786,10040,0.93084,1058,10
+Sentinel Dreadnought,Cargo Raid,after,1063,1167,1147,0.98286,1044,1
+Sentinel Dreadnought,Shield Disruptor,after,1270,7654,7241,0.94604,1034,5
+Sentinel Dreadnought,Emergency Power Cell,after,1114,4327,4327,1.0,1018,0
+Sentinel Dreadnought,Coordinated Assault,after,1043,2020,1366,0.67624,1011,3
+Sentinel Dreadnought,Emergency Discharge,after,1047,1760,1173,0.66648,984,16
+Sentinel Dreadnought,Reactive Armor,after,985,1518,1494,0.98419,975,1
+Sentinel Dreadnought,Plasma Strike,after,1005,1564,1136,0.72634,973,12
+Sentinel Dreadnought,System Disruption,after,1122,7414,6976,0.94092,914,15
+Sentinel Dreadnought,Synthesizer Upgrade,after,1083,5792,5353,0.92421,901,7
+Sentinel Dreadnought,Breach Charge,after,938,1679,1352,0.80524,895,4
+Sentinel Dreadnought,Energy Siphon,after,903,1470,1462,0.99456,888,1
+Sentinel Dreadnought,Energy Surge,after,956,3047,3047,1.0,861,0
+Sentinel Dreadnought,Salvage Cannibalization,after,1376,25920,24306,0.93773,856,17
+Sentinel Dreadnought,Quarters Upgrade,after,873,2576,2479,0.96234,842,0
+Sentinel Dreadnought,Personnel Disruption,after,1081,8713,8181,0.93894,822,9
+Sentinel Dreadnought,Reactor Interference,after,1157,11865,10299,0.86802,809,20
+Sentinel Dreadnought,Shield Exchange,after,1415,15601,13561,0.86924,791,15
+Sentinel Dreadnought,Pulse Repeater,after,792,4106,3905,0.95105,771,0
+Sentinel Dreadnought,Salvage Strike,after,818,4445,4363,0.98155,770,3
+Sentinel Dreadnought,Siege Charges,after,721,1042,800,0.76775,705,10
+Sentinel Dreadnought,Supply Diversion,after,791,7164,7143,0.99707,655,1
+Sentinel Dreadnought,Industrial Interference,after,885,7505,6652,0.88634,646,10
+Sentinel Dreadnought,Torpedo Salvo,after,665,836,664,0.79426,644,1
+Sentinel Dreadnought,Missile Team,after,617,797,698,0.87578,591,5
+Sentinel Dreadnought,Phase Lance,after,602,1119,660,0.58981,575,10
+Sentinel Dreadnought,Shield Array,after,565,630,592,0.93968,553,2
+Sentinel Dreadnought,Boarding Operations,after,550,692,636,0.91908,533,1
+Sentinel Dreadnought,Reactor Salvage,after,527,764,615,0.80497,508,3
+Sentinel Dreadnought,Boarding Party,after,500,809,808,0.99876,496,0
+Sentinel Dreadnought,Shield Breachers,after,525,1147,1074,0.93636,494,1
+Sentinel Dreadnought,Overloaded Warhead,after,477,1341,1308,0.97539,451,3
+Sentinel Dreadnought,Tactical Assessment,after,423,504,478,0.94841,404,2
+Sentinel Dreadnought,Missile Barrage,after,355,409,353,0.86308,342,3
+Sentinel Dreadnought,Reinforced Foundations,after,352,607,348,0.57331,338,5
+Sentinel Dreadnought,Omega Overcharge,after,362,2374,338,0.14238,337,4
+Sentinel Dreadnought,Cataclysm Protocol,after,336,571,335,0.58669,322,4
+Sentinel Dreadnought,Relentless Barrage,after,314,427,331,0.77518,303,4
+Sentinel Dreadnought,Siege Driver,after,305,440,293,0.66591,291,1
+Sentinel Dreadnought,Command Infiltration,after,282,413,397,0.96126,277,0
+Sentinel Dreadnought,Antimatter Lance,after,310,1460,305,0.2089,268,1
+Sentinel Dreadnought,Auxiliary Power Link,after,320,2809,1430,0.50908,267,6
+Sentinel Dreadnought,Sabotage Operation,after,255,1813,1746,0.96304,240,0
+Sentinel Dreadnought,Crew Capture,after,233,485,463,0.95464,216,1
+Sentinel Dreadnought,Desperate Conversion,after,369,6560,6276,0.95671,198,4
+Sentinel Dreadnought,Sabotage Commandos,after,196,200,191,0.955,195,0
+Sentinel Dreadnought,Reactor Synchronization,after,344,8694,7693,0.88486,184,9
+Sentinel Dreadnought,Damage Control,after,244,1860,1356,0.72903,181,3
+Sentinel Dreadnought,Industrial Sabotage,after,228,3750,3024,0.8064,180,4
+Sentinel Dreadnought,Personnel Exchange,after,136,516,340,0.65891,127,1
+Sentinel Dreadnought,Emergency Reserves,after,149,804,330,0.41045,122,7
+Sentinel Dreadnought,Emergency Refit,after,139,570,226,0.39649,110,2
+Sentinel Dreadnought,Fabrication Strike,after,96,435,371,0.85287,76,0
+Sentinel Dreadnought,Resource Seizure,after,114,1320,737,0.55833,70,7
+Sentinel Dreadnought,Energy Equalizer,after,160,2896,2457,0.84841,55,2
+Sentinel Dreadnought,Scientific Breakthrough,after,30,64,64,1.0,26,0
+Sentinel Dreadnought,Phase Inverter,after,26,204,149,0.73039,21,1
+Sentinel Dreadnought,Boarding Specialists,after,20,91,91,1.0,17,0
+Sentinel Dreadnought,Core Destabilization,after,17,168,25,0.14881,7,1
+AXIOM-7,Laser Burst,after,3257,5543,3479,0.62764,2863,191
+AXIOM-7,Phase Lance,after,3311,7926,3698,0.46657,2663,394
+AXIOM-7,Drain Beam,after,2997,4736,2781,0.5872,2623,182
+AXIOM-7,Shield Recharge,after,2673,4922,4832,0.98171,2522,13
+AXIOM-7,Energy Surge,after,2703,9603,9603,1.0,2420,0
+AXIOM-7,Shield Breachers,after,2629,9260,7655,0.82667,2290,24
+AXIOM-7,Emergency Power Cell,after,2436,10637,10637,1.0,2190,0
+AXIOM-7,Pulse Repeater,after,2928,12942,8304,0.64163,2132,399
+AXIOM-7,Missile Team,after,1999,2364,2052,0.86802,1895,19
+AXIOM-7,Energy Siphon,after,1721,4118,3727,0.90505,1641,19
+AXIOM-7,Hull Nanobots,after,2497,14629,9046,0.61836,1592,328
+AXIOM-7,Power Grid Reroute,after,2802,17072,8034,0.4706,1542,588
+AXIOM-7,Shield Plating,after,1610,4032,3881,0.96255,1503,4
+AXIOM-7,Plasma Strike,after,2279,8320,2967,0.35661,1498,428
+AXIOM-7,System Disruption,after,1751,8813,7021,0.79666,1477,17
+AXIOM-7,Polaron Burst,after,2644,14362,4143,0.28847,1331,584
+AXIOM-7,Shield Exchange,after,2550,16610,8326,0.50126,909,602
+AXIOM-7,Hull Patch,after,1037,4590,3885,0.84641,869,35
+AXIOM-7,Reactor Upgrade,after,2993,35841,19133,0.53383,585,990
+AXIOM-7,Capacitor Overload,after,2375,20424,5434,0.26606,529,744
+AXIOM Scout,Laser Burst,after,3453,10610,7759,0.73129,2773,227
+AXIOM Scout,Drain Beam,after,2303,4338,2547,0.58714,2001,113
+AXIOM Scout,Phase Lance,after,2428,5902,2889,0.4895,1905,177
+AXIOM Scout,Missile Team,after,1701,2719,2265,0.83303,1563,20
+AXIOM Scout,Shield Recharge,after,1834,4540,4490,0.98899,1446,3
+AXIOM Scout,Emergency Power Cell,after,1672,8087,8087,1.0,1194,0
+AXIOM Scout,Tactical Assessment,after,1266,2907,2034,0.69969,1148,31
+AXIOM Scout,Pulse Repeater,after,1907,9078,5854,0.64486,1127,214
+AXIOM Scout,System Disruption,after,1865,13833,8923,0.64505,1095,114
+AXIOM Scout,Plasma Strike,after,1539,5998,2294,0.38246,1042,222
+AXIOM Scout,Energy Siphon,after,1244,3577,3295,0.92116,1022,10
+AXIOM Scout,Shield Plating,after,1202,3972,3716,0.93555,975,14
+AXIOM Scout,Energy Surge,after,1086,3696,3696,1.0,872,0
+AXIOM Scout,Shield Exchange,after,1706,7014,3612,0.51497,866,203
+AXIOM Scout,Shield Breachers,after,978,3219,2586,0.80336,644,20
+AXIOM Scout,Polaron Burst,after,1423,7508,2306,0.30714,610,193
+AXIOM Scout,Hull Patch,after,582,1493,1169,0.78299,479,18
+AXIOM Scout,Power Grid Reroute,after,1546,11915,4422,0.37113,457,256
+AXIOM Scout,Capacitor Overload,after,1576,10771,2008,0.18643,356,344
+AXIOM Scout,Reactor Upgrade,after,1421,11753,4990,0.42457,167,193
+AXIOM Enforcer,Laser Burst,after,4510,13168,9257,0.70299,3967,325
+AXIOM Enforcer,Drain Beam,after,3415,6579,3791,0.57623,2920,305
+AXIOM Enforcer,Phase Lance,after,3544,9575,4426,0.46225,2865,499
+AXIOM Enforcer,Shield Recharge,after,3012,6882,6816,0.99041,2782,13
+AXIOM Enforcer,Tactical Assessment,after,2466,6112,4024,0.65838,2239,111
+AXIOM Enforcer,Pulse Repeater,after,2989,11142,7083,0.6357,2110,511
+AXIOM Enforcer,Shield Breachers,after,2358,5323,3896,0.73192,2089,63
+AXIOM Enforcer,Energy Siphon,after,1867,5353,4848,0.90566,1713,27
+AXIOM Enforcer,System Disruption,after,2043,9206,4468,0.48534,1543,147
+AXIOM Enforcer,Shield Exchange,after,3279,22426,10379,0.46281,1502,946
+AXIOM Enforcer,Plasma Strike,after,2370,11033,3735,0.33853,1481,543
+AXIOM Enforcer,Hull Nanobots,after,2364,17774,10054,0.56566,1170,619
+AXIOM Enforcer,Shield Plating,after,1242,4180,3889,0.93038,1081,21
+AXIOM Enforcer,Hull Patch,after,1289,4717,2711,0.57473,1035,106
+AXIOM Enforcer,Polaron Burst,after,2510,15949,4113,0.25788,1017,823
+AXIOM Enforcer,Capacitor Overload,after,2743,24111,5266,0.21841,822,907
+AXIOM Enforcer,Power Grid Reroute,after,2308,18264,5986,0.32775,788,791
+AXIOM Enforcer,Reactor Upgrade,after,2064,17474,8291,0.47448,553,856
+AXIOM Enforcer,Emergency Refit,after,1234,8918,577,0.0647,407,523
+AXIOM Enforcer,Emergency Reserves,after,1400,14932,1734,0.11613,35,638
+AXIOM Command Nexus,Laser Burst,after,5129,14591,10402,0.71291,4525,400
+AXIOM Command Nexus,Phase Lance,after,4063,11789,5248,0.44516,3524,376
+AXIOM Command Nexus,Drain Beam,after,3934,7582,4338,0.57214,3433,342
+AXIOM Command Nexus,Shield Recharge,after,3363,7534,7452,0.98912,3109,75
+AXIOM Command Nexus,Pulse Repeater,after,3565,14382,9610,0.6682,2823,400
+AXIOM Command Nexus,Tactical Assessment,after,2752,4706,4607,0.97896,2716,6
+AXIOM Command Nexus,Shield Breachers,after,2652,4466,4460,0.99866,2514,1
+AXIOM Command Nexus,Energy Siphon,after,2149,5425,5403,0.99594,2082,0
+AXIOM Command Nexus,System Disruption,after,2204,6430,6311,0.98149,2017,2
+AXIOM Command Nexus,Plasma Strike,after,3121,14937,4847,0.3245,1996,797
+AXIOM Command Nexus,Emergency Refit,after,1754,3202,3041,0.94972,1672,10
+AXIOM Command Nexus,Shield Exchange,after,3536,30515,15432,0.50572,1493,1030
+AXIOM Command Nexus,Shield Plating,after,1476,4469,4466,0.99933,1376,0
+AXIOM Command Nexus,Polaron Burst,after,3093,23080,5774,0.25017,1359,1047
+AXIOM Command Nexus,Hull Patch,after,1432,5331,5255,0.98574,1296,1
+AXIOM Command Nexus,Hull Nanobots,after,2787,26070,15184,0.58243,1208,830
+AXIOM Command Nexus,Power Grid Reroute,after,2495,19405,6788,0.34981,1078,795
+AXIOM Command Nexus,Capacitor Overload,after,3199,30781,7141,0.23199,1023,1035
+AXIOM Command Nexus,Reactor Upgrade,after,2369,21908,11112,0.50721,818,851
+AXIOM Command Nexus,Emergency Reserves,after,2161,22961,3057,0.13314,79,1186
+The Hollow Choir,Shield Plating,after,2691,4020,3680,0.91542,2493,11
+The Hollow Choir,Coordinated Assault,after,2793,8130,3495,0.42989,2342,101
+The Hollow Choir,Hull Patch,after,3037,20661,14825,0.71754,2289,120
+The Hollow Choir,Emergency Power Cell,after,2475,6231,6231,1.0,2228,0
+The Hollow Choir,Quarters Upgrade,after,2999,21145,16042,0.75867,1990,108
+The Hollow Choir,Missile Team,after,2288,7019,6187,0.88146,1969,42
+The Hollow Choir,Torpedo Salvo,after,2109,8255,4439,0.53773,1774,117
+The Hollow Choir,Damage Control Teams,after,1723,2737,2042,0.74607,1635,14
+The Hollow Choir,Emergency Bulkheads,after,1887,5704,2649,0.46441,1539,66
+The Hollow Choir,Tactical Assessment,after,1616,4582,2761,0.60258,1402,22
+The Hollow Choir,Structural Reclamation,after,2204,18255,10387,0.56899,1350,102
+The Hollow Choir,Missile Barrage,after,1905,12659,3058,0.24157,1322,130
+The Hollow Choir,Siege Charges,after,1995,10143,2285,0.22528,1218,283
+The Hollow Choir,Salvage Strike,after,1820,12608,10240,0.81218,1183,129
+The Hollow Choir,Crew Capture,after,1816,15116,11105,0.73465,1137,72
+The Hollow Choir,Shield Recharge,after,1199,2056,1594,0.77529,1121,7
+The Hollow Choir,Boarding Party,after,1371,8332,8143,0.97732,1116,3
+The Hollow Choir,Shield Breachers,after,1755,11747,10205,0.86873,1112,50
+The Hollow Choir,Hull Nanobots,after,1296,5550,3965,0.71441,1084,14
+The Hollow Choir,Synthesizer Upgrade,after,1949,12066,6647,0.55089,985,156
+Choir Spore,Structural Reinforcement,after,3987,10151,7136,0.70298,3453,204
+Choir Spore,Coordinated Assault,after,2804,6944,3735,0.53787,2543,74
+Choir Spore,Shield Plating,after,2554,4563,3791,0.83081,2346,41
+Choir Spore,Quarters Upgrade,after,2559,13124,10197,0.77697,2203,60
+Choir Spore,Damage Control Teams,after,2184,4713,3000,0.63654,2017,62
+Choir Spore,Missile Team,after,2089,4953,4159,0.83969,1898,31
+Choir Spore,Tactical Assessment,after,1953,5110,3634,0.71115,1844,29
+Choir Spore,Boarding Party,after,2164,11614,11194,0.96384,1792,6
+Choir Spore,Hull Patch,after,2823,21084,14003,0.66415,1766,269
+Choir Spore,Emergency Bulkheads,after,2198,4896,2250,0.45956,1760,175
+Choir Spore,Salvage Strike,after,2555,17314,12533,0.72387,1760,171
+Choir Spore,Missile Barrage,after,2140,10263,3715,0.36198,1741,167
+Choir Spore,Emergency Power Cell,after,1466,2209,2209,1.0,1377,0
+Choir Spore,Cataclysm Protocol,after,2528,20859,2766,0.1326,1298,368
+Choir Spore,Synthesizer Upgrade,after,2329,12994,4581,0.35255,1240,357
+Choir Spore,Crew Capture,after,2197,16310,9306,0.57057,1207,286
+Choir Spore,Shield Recharge,after,1293,2252,1804,0.80107,1202,1
+Choir Spore,Salvage Cannibalization,after,2066,25507,15305,0.60003,650,382
+Choir Spore,Overloaded Warhead,after,897,3730,2047,0.54879,640,84
+Choir Spore,Structural Reclamation,after,1834,19918,11146,0.55959,581,333
+Choir Guardian,Structural Reinforcement,after,4057,9768,6133,0.62787,3488,273
+Choir Guardian,Shield Plating,after,3364,5452,4593,0.84244,3159,53
+Choir Guardian,Coordinated Assault,after,3467,10136,3952,0.3899,2940,257
+Choir Guardian,Damage Control Teams,after,2701,5066,3336,0.65851,2521,41
+Choir Guardian,Boarding Party,after,2585,9257,8744,0.94458,2417,17
+Choir Guardian,Hull Patch,after,3710,27066,16139,0.59628,2383,573
+Choir Guardian,Quarters Upgrade,after,2989,18664,13065,0.70001,2374,182
+Choir Guardian,Salvage Strike,after,2796,12117,7663,0.63242,2303,178
+Choir Guardian,Missile Team,after,2453,4969,4127,0.83055,2298,39
+Choir Guardian,Torpedo Salvo,after,2484,8902,4771,0.53595,2264,133
+Choir Guardian,Missile Barrage,after,2527,9715,4118,0.42388,2167,136
+Choir Guardian,Tactical Assessment,after,2047,4474,2851,0.63724,1896,77
+Choir Guardian,Emergency Bulkheads,after,2547,8719,2654,0.30439,1740,377
+Choir Guardian,Crew Capture,after,2373,12887,7513,0.58299,1659,334
+Choir Guardian,Shield Recharge,after,1657,2933,2270,0.77395,1580,12
+Choir Guardian,Hull Overhaul,after,3342,36258,14644,0.40388,1325,785
+Choir Guardian,Hull Nanobots,after,1100,5756,2571,0.44666,878,47
+Choir Guardian,Synthesizer Upgrade,after,2141,16916,5160,0.30504,825,508
+Choir Guardian,Structural Reclamation,after,2184,27765,13311,0.47942,735,549
+Choir Guardian,Salvage Cannibalization,after,2441,32838,16945,0.51602,708,712
+Choir Leviathan,Structural Reinforcement,after,4715,8564,7364,0.85988,4456,64
+Choir Leviathan,Shield Plating,after,4128,6384,6185,0.96883,3986,25
+Choir Leviathan,Coordinated Assault,after,4021,11154,5197,0.46593,3694,77
+Choir Leviathan,Hull Patch,after,4252,35143,30920,0.87983,3410,107
+Choir Leviathan,Damage Control Teams,after,3533,6104,4442,0.72772,3351,55
+Choir Leviathan,Salvage Strike,after,3414,16432,14637,0.89076,3015,90
+Choir Leviathan,Quarters Upgrade,after,3533,20275,16074,0.7928,3011,83
+Choir Leviathan,Torpedo Salvo,after,3001,10315,6683,0.64789,2882,49
+Choir Leviathan,Missile Barrage,after,2995,10891,5145,0.47241,2759,62
+Choir Leviathan,Emergency Bulkheads,after,3086,6049,3688,0.60969,2749,116
+Choir Leviathan,Boarding Party,after,3103,19308,18641,0.96545,2708,12
+Choir Leviathan,Missile Team,after,2834,6581,5842,0.88771,2707,16
+Choir Leviathan,Hull Overhaul,after,4100,47440,38231,0.80588,2637,201
+Choir Leviathan,Tactical Assessment,after,2531,5389,3681,0.68306,2429,46
+Choir Leviathan,Crew Capture,after,2701,18309,15389,0.84052,2176,104
+Choir Leviathan,Synthesizer Upgrade,after,2690,13267,7905,0.59584,2024,156
+Choir Leviathan,Shield Recharge,after,2042,2827,2827,1.0,1968,0
+Choir Leviathan,Structural Reclamation,after,2772,39032,31927,0.81797,1547,189
+Choir Leviathan,Hull Nanobots,after,1623,5816,5816,1.0,1456,0
+Choir Leviathan,Salvage Cannibalization,after,2814,46504,40725,0.87573,1360,187
