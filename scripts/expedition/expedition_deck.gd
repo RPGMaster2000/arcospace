@@ -114,7 +114,7 @@ func available_reward_cards(profile: Resource, minimum_tier: int = 1, include_pr
 func random_card_offers(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int = 1) -> Array[Resource]:
 	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier, false)
 	var offers: Array[Resource] = []
-	for slot in range(mini(3, candidates.size())):
+	for slot in range(mini(5, candidates.size())):
 		var preferred_tier := 2 if rng.randf() < rules.reward_tier_two_chance else 1
 		var bucket: Array[Resource] = []
 		for card in candidates:
