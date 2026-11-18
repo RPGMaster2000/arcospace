@@ -74,8 +74,11 @@ func run_tests() -> void:
 				check(run.encounters[0].completed and run.pressure == 1 and not run.ftl_access and not run.resolve_approach(0, slot, roll) and run.pressure == 1, "Ordinary encounter increases pressure once without granting access")
 				check(not run.last_outcome.is_empty(), "Outcome text")
 				if expected.card_reward:
-					check(run.card_offers.size() == 3, "Every card reward offers three distinct choices")
-					check(run.card_offers[0] != run.card_offers[1] and run.card_offers[1] != run.card_offers[2] and run.card_offers[0] != run.card_offers[2], "No duplicate offers")
+					check(run.card_offers.size() == mini(5, run.available_reward_cards(expected.minimum_card_tier).size()), "Card rewards offer up to five choices")
+					var offered_ids: Dictionary = {}
+					for offered in run.card_offers:
+						check(not offered_ids.has(offered.identity_key()), "No duplicate offers")
+						offered_ids[offered.identity_key()] = true
 					for card in run.card_offers: check(card.tier >= expected.minimum_card_tier, "Rarity floor")
 					check(not run.generate_system(), "Cannot lose a paid choice by jumping")
 					check(run.choose_card(1) and not run.choose_card(1), "Select exactly once")
