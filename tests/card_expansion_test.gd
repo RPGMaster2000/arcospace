@@ -27,7 +27,7 @@ func custom(values: Dictionary, family: String = "energy", cost: int = 0) -> Res
 func expect(actual: Dictionary, wanted: Dictionary, context: String) -> void:
 	for key in wanted: check(actual[key] == wanted[key], context + " " + key + " expected " + str(wanted[key]) + " got " + str(actual[key]))
 func run() -> void:
-	check(Library.CARDS.size() == 80, "74 distinct resources")
+	check(Library.CARDS.size() == 88, "88 distinct resources")
 	var identities: Dictionary = {}
 	var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 	# Per-level outcomes from the prototype specification, with the same public combat state.
@@ -240,11 +240,11 @@ func test_decks() -> void:
 	for ship in range(6):
 		var run = State.new()
 		run.start(ship,Rules,1707)
-		check(run.player_pool().size() == 29 and run.deck_limit() == 36, "Expanded starting pool and capacity")
+		check(run.player_pool().size() == 29 and run.deck_limit() == 34, "Expanded starting pool and capacity")
 		check(run.player_pool() == run.ship().starting_cards, "New runs use their complete authored starting pool in order")
-		for n in range(7):
+		for n in range(5):
 			run.pending_choice = "card"; run.card_offers = run.random_card_offers()
-			check(run.choose_card(0) and run.player_pool().size()==30+n and run.pending_choice.is_empty(), "Eight normal acquisitions")
+			check(run.choose_card(0) and run.player_pool().size()==30+n and run.pending_choice.is_empty(), "Five normal acquisitions")
 		var retained: Resource = run.player_pool()[1]
 		var removed: Resource = run.player_pool()[0]
 		run.start_upgrade_event(2)
@@ -254,7 +254,7 @@ func test_decks() -> void:
 		var incoming: Resource = run.card_offers[0]
 		check(run.choose_card(0) and run.pending_choice == "replace" and run.pending_card == incoming and run.player_pool() == pool_before, "Full deck fixes incoming without mutation")
 		check(not run.can_jump() and not run.replace_card("unowned") and not run.choose_card(0), "Pending/stale safeguards")
-		check(run.replace_card(removed.identity_key()) and run.player_pool().size() == 36 and not run.replace_card(retained.identity_key()), "Replacement atomic and single use")
+		check(run.replace_card(removed.identity_key()) and run.player_pool().size() == 34 and not run.replace_card(retained.identity_key()), "Replacement atomic and single use")
 		var keys: Array = []
 		for card in run.player_pool():
 			keys.append(card.identity_key())
@@ -266,13 +266,13 @@ func test_decks() -> void:
 		run.pending_choice = "card"; run.card_offers = reacquired_offer
 		run.choose_card(0)
 		check(run.pending_card == removed, "Removed starting card can be reacquired")
-		check(run.replace_card(incoming.identity_key()) and run.player_pool().size() == 36, "Can replace acquired identity too")
+		check(run.replace_card(incoming.identity_key()) and run.player_pool().size() == 34, "Can replace acquired identity too")
 		for card in run.player_pool():
 			if card.identity_key() == removed.identity_key(): check(card.upgrade_level == 0, "Reacquisition starts at base")
 		pool_before = run.player_pool()
 		run.pending_choice = "card"; run.card_offers = run.random_card_offers(); run.choose_card(0)
 		check(run.decline_card() and not run.decline_card() and run.player_pool() == pool_before, "Decline single use, no mutation")
-		check(run.shared_pool().size()==80, "Enemy pool unaffected by capacity")
+		check(run.shared_pool().size()==88, "Enemy pool unaffected by capacity")
 		var hand = preload("res://scripts/cards/card_hand.gd").new()
 		hand.card_pool=run.player_pool()
 		var evicted: Resource = run.player_pool()[0]
@@ -287,13 +287,11 @@ func test_decks() -> void:
 		var weights_before_jump: Dictionary=run.acquired_draw_weights()
 		run.ftl_access = true
 		check(run.generate_system() and run.player_pool()==deck_before_jump and run.acquired_draw_weights()==weights_before_jump, "Ownership, upgrades and weights survive system transition")
-		# A paid station card reward uses the same fixed replacement/decline flow without refund.
+		# A full deck blocks the paid card service before payment.
 		run.service={"kind":"service","poi":Rules.trading_outpost,"completed":false}
 		run.salvage=100
-		var price: int=run.service_cost(2)
-		check(run.purchase_service(2,run.service_revision), "Full-deck station reward can be purchased")
-		run.choose_card(0)
-		check(run.pending_choice=="replace" and run.decline_card() and run.salvage==100-price and run.player_pool()==deck_before_jump, "Declining paid card keeps deck and spent Salvage")
+		check(not run.purchase_service(2,run.service_revision,0,0), "Full deck prevents purchase")
+		check(run.salvage == 100 and run.player_pool() == deck_before_jump, "Rejected purchase changes nothing")
 		var config: Resource = Rules.duplicate(true)
 		config.max_deck_identities = 29
 		run.start(ship,config,1708)

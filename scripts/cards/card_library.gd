@@ -84,4 +84,12 @@ const CARDS = [
 	preload("res://cards/78_industrial_repurposing.tres"),
 	preload("res://cards/79_shield_capacitor.tres"),
 	preload("res://cards/80_boarding_operations.tres"),
+	preload("res://cards/81_emergency_refit_mkii.tres"),
+	preload("res://cards/82_power_siphon.tres"),
+	preload("res://cards/83_boarding_raid.tres"),
+	preload("res://cards/84_fortified_reactor.tres"),
+	preload("res://cards/85_siege_lance.tres"),
+	preload("res://cards/86_salvage_blitz.tres"),
+	preload("res://cards/87_fortress_protocol.tres"),
+	preload("res://cards/88_reactor_gambit.tres"),
 ]

@@ -154,7 +154,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data.get("seed") is String or not data.seed.is_valid_int(): return null
 	for key in ["system_name", "last_outcome", "pending_choice", "pending_card"]:
 		if not data.get(key) is String or data[key].length() > 65536: return null
-	if data.pending_choice not in ["", "card", "card_batch", "upgrade", "replace", "resource", "production"]: return null
+	if data.pending_choice not in ["", "card", "card_batch", "battle_reward", "upgrade", "replace", "resource", "production"]: return null
 	for key in COUNTERS:
 		var minimum: int = -3 if key in ["navigation_origin", "travel_destination", "pending_destination"] else (-1 if key in ["chasedown_index", "last_poi_success"] else 0)
 		if not _integer(data.get(key), minimum): return null
@@ -171,7 +171,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			seen[id] = true
 	if data.pending_card != "" and not cards.has(data.pending_card): return null
 	if data.pending_choice == "replace" and data.pending_card == "": return null
-	if data.pending_choice == "card" and data.offers.is_empty(): return null
+	if data.pending_choice in ["card", "battle_reward"] and data.offers.is_empty(): return null
 	if not data.get("upgrades") is Dictionary: return null
 	for id in data.upgrades:
 		if not cards.has(id) or not _integer(data.upgrades[id], 1, mini(cards[id].max_upgrades, cards[id].upgrade_effects.size())): return null
@@ -301,7 +301,6 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not owned.has(id): return null
 	for id in data.upgraded_this_event:
 		if not owned.has(id): return null
-	if state.player_pool().size() > state.deck_limit(): return null
 	for key in ["rng", "station_rng", "chasedown_rng"]:
 		var generator: RandomNumberGenerator = state.get(key)
 		generator.seed = int(data.rng[key].seed)
@@ -422,6 +421,8 @@ func _read(candidate: String) -> Dictionary:
 
 # Optional additive marker data; old markers use their saved encounter modifier.
 static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> bool:
+	if battle.has("combat") and not preload("res://scripts/combat/progression_checkpoint.gd").valid(battle.combat):
+		return false
 	if not battle.has("environment"): return true
 	var snapshot: Variant = battle.environment
 	if not EnvironmentData.valid_snapshot(snapshot): return false

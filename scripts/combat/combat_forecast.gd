@@ -30,7 +30,9 @@ class Draws extends RefCounted:
 # Outcomes are attainable detached states, not expected values or equally weighted samples.
 # complete=false means a bounded subset only; never infer guarantees from that subset.
 static func predict(card: Resource, actor: Dictionary, target: Dictionary, context: Dictionary = {}) -> Dictionary:
-	var result: Dictionary = {"affordable":card != null and actor.get(card.family,0) >= card.cost,"outcomes":[],"complete":true,"uncertain":false,"possible_win":false,"guaranteed_win":false,"possible_self_destruction":false,"guaranteed_self_destruction":false,"limitations":[],"replays":0}
+	var result: Dictionary = {"affordable":preload("res://scripts/cards/card_effects.gd").can_pay(card, actor),"outcomes":[],"complete":true,"uncertain":false,"possible_win":false,"guaranteed_win":false,"possible_self_destruction":false,"guaranteed_self_destruction":false,"limitations":[],"replays":0}
+	if context.get("kind", 0) == 3 and context.get("active", false) and card != null and card.effects.has("shield_sacrifice"):
+		result.affordable = false
 	if not result.affordable: return result
 	var miss_rate: float = float(context.get("miss_rate",30)) / 100.0 if context.get("kind",0) == 4 and Modifier.is_combat(card.effects) else 0.0
 	result["miss_probability"] = miss_rate

@@ -254,6 +254,8 @@ func run_tests() -> void:
 	battle._check_winner()
 	battle.refresh_display()
 	battle._continue_encounter()
+	if host.state.pending_choice == "battle_reward":
+		host.state.choose_battle_reward(false)
 	check(host.state.pending_choice == "upgrade", "Victory offers card upgrades before returning")
 	while host.state.pending_choice == "upgrade":
 		host.state.choose_upgrade(host.state.upgrade_candidates()[0].identity_key())

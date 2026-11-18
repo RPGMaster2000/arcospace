@@ -33,7 +33,7 @@ func run() -> void:
 		if row.size() == 4:
 			rows[int(row[0])] = row
 	check(
-		Cards.CARDS.size() == 80 and rows.size() == 80 and Motifs.ASSIGNMENTS.size() == 81,
+		Cards.CARDS.size() == 88 and rows.size() == 80 and Motifs.ASSIGNMENTS.size() == 81,
 		"All 80 shared identities plus one private enemy entry"
 	)
 	var view = Scene.instantiate()
@@ -41,6 +41,9 @@ func run() -> void:
 	var used := {}
 	for base in Cards.CARDS:
 		var number: int = base.resource_path.get_file().get_slice("_", 0).to_int()
+		if not rows.has(number):
+			check(Motifs.texture_for(base) == null, "New unmapped cards keep placeholder")
+			continue
 		var expected: PackedStringArray = rows[number]
 		check(
 			Motifs.ASSIGNMENTS[base.identity_key()] == expected[2],

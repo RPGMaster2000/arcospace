@@ -55,9 +55,9 @@ func run() -> void:
 		trade.ftl_access = true
 		trade.generate_system()
 	trade.salvage = 100
-	check(trade.purchase_service(2, trade.service_revision) and not trade.card_offers.is_empty(),
-		"Open the Trading Outpost card purchase")
-	check(verifies_exclusion(trade.card_offers), "Enemy card in a purchased Trading Outpost offer")
+	var offers: Array = trade.service_card_offers(2)
+	check(offers.size() == 6 and verifies_exclusion(offers), "No enemy exclusives in six shop offers")
+	check(trade.purchase_service(2, trade.service_revision, 0, 0), "Selected shop card can be purchased")
 	var hand := Hand.new()
 	hand.rng.seed = 20
 	hand.current_round = 12

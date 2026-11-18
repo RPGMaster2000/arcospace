@@ -1,7 +1,7 @@
 extends VBoxContainer
 # RESPONSIBILITY: Own service tiles, selection and the outpost purchase confirmation.
 # DOES NOT: Spend Salvage, change Hull or resolve rewards; emit intent to Expedition.
-signal purchase_requested(slot: int, amount: int, revision: int)
+signal purchase_requested(slot: int, amount: int, revision: int, card_index: int)
 signal selection_changed(slot: int)
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Text = preload("res://scripts/ui/expedition_text.gd")
@@ -15,6 +15,9 @@ var footer: HBoxContainer
 var note: Label
 var preview: VBoxContainer
 var selector: HSlider
+var card_picker: OptionButton
+var card_details: Label
+var shop_cards: Array[Resource] = []
 var confirm_button: Button
 var selected_slot: int = -1
 var revision: int = -1
@@ -54,6 +57,17 @@ func _ready() -> void:
 	selector.value_changed.connect(update_quantity)
 	footer.add_child(selector)
 	selector.hide()
+	card_picker = OptionButton.new()
+	card_picker.custom_minimum_size.y = 48
+	card_picker.item_selected.connect(_browse_card)
+	confirmation.column.add_child(card_picker)
+	confirmation.column.move_child(card_picker, 2)
+	card_details = Label.new()
+	card_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	confirmation.column.add_child(card_details)
+	confirmation.column.move_child(card_details, 3)
+	card_picker.hide()
+	card_details.hide()
 	confirm_button = confirmation.initiate
 	confirm_button.text = "Confirm"
 	confirm_button.disabled = true
@@ -141,9 +155,27 @@ func select_service(slot: int) -> void:
 			"Cost %d Salvage · Balance after purchase: %d"
 			% [_state.service_cost(slot), _state.salvage - _state.service_cost(slot)]
 		)
+	shop_cards = _state.service_card_offers(slot)
+	card_picker.clear()
+	card_picker.add_item("Select a card")
+	card_picker.set_item_disabled(0, true)
+	for card in shop_cards:
+		card_picker.add_item("%s · Tier %d" % [card.card_name, card.tier])
+	card_picker.selected = 0
+	card_picker.visible = not shop_cards.is_empty()
+	card_details.hide()
+	if card_picker.visible: confirm_button.disabled = true
 	confirmation.present(
 		_state.station_hull_title() if repairing else _state.service.poi.approaches[slot].title
 	)
+
+
+func _browse_card(index: int) -> void:
+	if index < 1 or index > shop_cards.size(): return
+	var card: Resource = shop_cards[index - 1]
+	card_details.text = "%d %s · %s" % [card.cost, card.family.capitalize(), card.description]
+	card_details.show()
+	confirm_button.disabled = revision != _state.service_revision
 
 
 func update_quantity(_value: float) -> void:
@@ -195,7 +227,7 @@ func confirm_purchase() -> void:
 		return
 	confirm_button.disabled = true
 	confirmation.dismiss()
-	purchase_requested.emit(selected_slot, int(selector.value), revision)
+	purchase_requested.emit(selected_slot, int(selector.value), revision, card_picker.selected - 1 if card_picker.visible else -1)
 
 
 func show_purchase_complete() -> void:

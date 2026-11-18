@@ -25,13 +25,16 @@ func save_progress(state: Resource, battle: Node) -> bool:
 	if state.run_ended or state.hull <= 0:
 		return store.clear_run()
 	if is_instance_valid(battle) and not battle.result_recorded:
-		return store.save_data(battle_checkpoint, battle_marker)
+		var marker := battle_marker.duplicate(true)
+		if not battle.settled_combat.is_empty():
+			marker.combat = battle.settled_combat
+		return store.save_data(battle_checkpoint, marker)
 	return store.save_run(state)
 
 
 # Encode and select the seed before setup consumes bonuses. Failed writes retain the
 # previous checkpoint, while returning the attempted seed for the existing retry UI.
-func checkpoint_battle(state: Resource, index: int, battle_seed: int, environment: Dictionary = {}) -> Dictionary:
+func checkpoint_battle(state: Resource, index: int, battle_seed: int, environment: Dictionary = {}, combat: Dictionary = {}) -> Dictionary:
 	# A restored/retried marker is authoritative: do not evaluate the world again.
 	var snapshot: Dictionary = state.battle_environment(index) if environment.is_empty() else EnvironmentData.frozen(environment)
 	if not EnvironmentData.valid_snapshot(snapshot):
@@ -44,6 +47,7 @@ func checkpoint_battle(state: Resource, index: int, battle_seed: int, environmen
 		generator.randomize()
 		battle_seed = generator.randi()
 	var marker: Dictionary = {"index": index, "seed": str(battle_seed), "environment": snapshot}
+	if not combat.is_empty(): marker.combat = combat
 	if enabled and not store.save_data(checkpoint, marker):
 		return {"saved": false, "seed": battle_seed, "environment": snapshot}
 	battle_checkpoint = checkpoint

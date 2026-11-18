@@ -201,6 +201,10 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 
 
 static func card_text(card: Resource) -> String:
+	if card != null and (card.effects.has("shield_sacrifice") or card.effects.has("hull_sacrifice")
+		or card.effects.has("energy_on_shield_break") or card.effects.has("materials_from_shields")):
+		return Data.describe_effects(card.effects).replace("; ", "\n")
+
 	var text := rows(card.effects, card.family)
 	if card.play_again:
 		text.append("Play again.")

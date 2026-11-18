@@ -20,9 +20,12 @@ func _initialize() -> void:
 func snapshot() -> Dictionary:
 	return {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func run() -> void:
-	check(Cards.CARDS.size() == 80, "Expanded library has 74 identities")
+	check(Cards.CARDS.size() == 88, "Expanded library has 88 identities")
 	for card in Cards.CARDS:
 		var original: Dictionary = card.effects.duplicate(true)
+		if Cards.CARDS.find(card) >= 80:
+			check(card.max_upgrades == 0 and card.with_upgrade(2).upgrade_level == 0, "Prototype uses authored base effects: " + card.card_name)
+			continue
 		check(card.upgrade_effects.size() == 2 and card.upgrade_level == 0, "Two upgrade definitions: " + card.card_name)
 		for level in [1, 2]:
 			var upgraded: Resource = card.with_upgrade(level)
@@ -66,7 +69,7 @@ func run() -> void:
 		for card in state.random_card_offers(2): check(card.tier >= 2, "Minimum rarity honored")
 		var enemy_before: Array[Resource] = state.shared_pool()
 		state.pending_choice = "card"
-		state.card_offers = state.random_card_offers()
+		state.card_offers = state.available_reward_cards().filter(func(card): return card.max_upgrades > 0).slice(0, 3)
 		check(state.choose_card(0) and not state.choose_card(0), "Acquisition single use")
 		check(state.player_pool().size() == 30 and state.shared_pool() == enemy_before, "Separate pools")
 		var acquired: Resource = state.acquired_cards[0]
@@ -93,7 +96,7 @@ func run() -> void:
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
 			board.enemy_timer.stop()
-			check(board.hand.card_pool.size() == 30 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 80), "Real battle uses separate pools")
+			check(board.hand.card_pool.size() == 30 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 88), "Real battle uses separate pools")
 			for pooled in board.hand.card_pool:
 				if pooled.identity_key() == acquired.identity_key(): check(pooled.upgrade_level == 2, "Upgrades persist into successive battles")
 			for pooled in board.enemy_hand.card_pool: check(pooled.upgrade_level == 0, "Real enemy pool remains base")
@@ -116,6 +119,8 @@ func run() -> void:
 			if card.tier == 2 and not identities.has(card.identity_key()): unowned_t2.append(card)
 		var limited: Array[Resource] = []
 		for slot in range(unowned_t2.size() - 2): limited.append(unowned_t2[slot])
+		for card in Cards.CARDS:
+			if card.tier == 3 and not identities.has(card.identity_key()): limited.append(card)
 		state.acquired_cards = limited
 		check(state.random_card_offers(2).size() == 2, "Two remaining rewards show two choices")
 	check(absf(reward_t2 / 1000.0 - 0.6) < 0.06, "60/40 reward tier weighting")
@@ -155,7 +160,8 @@ func test_enemies() -> void:
 			check(card.upgrade_level == 0 and card in Cards.CARDS, "Enemy draws base library")
 			if card.effects.has("damage"): attack += 1
 			if card.effects.has("hull") or card.effects.has("shields"): defense += 1
-		check(seen.size() == 74, "Soft weights retain full library: " + profile.ship_name)
+		var eligible := Cards.CARDS.filter(func(card): return card.signature_ship < 0 and card.tier < 3)
+		check(seen.size() == eligible.size(), "Soft weights retain the eligible library: " + profile.ship_name)
 		print("%s seeded draw sample: attacks %.1f%%; repairs/shields %.1f%%" % [profile.ship_name, attack / 200.0, defense / 200.0])
 		var ai = AI.new()
 		ai.rng.seed = 100

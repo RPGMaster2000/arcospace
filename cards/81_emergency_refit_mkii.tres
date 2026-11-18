@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Emergency Refit Mk II"
+tier = 2
+family = "materials"
+cost = 12
+allocation_category = "defense"
+max_upgrades = 0
+description = "Spend 6 Shields. Repair 14 Hull."
+effects = {"shield_sacrifice": 6, "hull": 14}

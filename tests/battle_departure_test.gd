@@ -118,6 +118,9 @@ func finish_upgrades(host: Node) -> void:
 		host.state.active_battle == -1 and host.battle == null,
 		"Existing result confirmation removes the completed board once"
 	)
+	if host.state.pending_choice == "battle_reward":
+		host.state.choose_battle_reward(false)
+	host.show_outcome()
 	check(
 		host.state.pending_choice == "upgrade" and host.card_management.shade.visible,
 		"Existing upgrade UI follows result confirmation"

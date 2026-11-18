@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Reactor Gambit"
+tier = 3
+family = "energy"
+cost = 24
+allocation_category = "systems"
+max_upgrades = 0
+description = "Spend 8 Hull (must survive). Gain 12 Materials and 12 Crew."
+effects = {"hull_sacrifice": 8, "materials": 12, "crew": 12}

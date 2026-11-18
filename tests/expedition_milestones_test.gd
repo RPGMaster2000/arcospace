@@ -155,6 +155,8 @@ func run_tests() -> void:
 			run.record_battle(result)
 			check(run.system_number == system and run.pressure == after, "Boss result awards once and never transitions systems")
 			run.active_battle = -1
+			if run.pending_choice == "battle_reward":
+				run.choose_battle_reward(false)
 			if run.pending_choice == "upgrade":
 				check(not run.can_jump(), "Pending combat upgrades block departure until resolved or finished")
 				while run.pending_choice == "upgrade":

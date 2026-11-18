@@ -71,6 +71,14 @@ static func visit(effects: Dictionary, family: String, actor: Dictionary, enemy:
 		mark(result, "player", "shields", difference, uncertain)
 		mark(result, "enemy", "shields", -difference, uncertain)
 		target.shields = actor.shields
+	var hit: int = int(effects.get("damage", 0))
+	var blocked := mini(int(target.shields), maxi(0, hit - floori(hit * float(effects.get("pierce", 0.0)))))
+	if not flare and blocked > 0 and blocked == int(target.shields):
+		mark(result, "player", "energy", effects.get("energy_on_shield_break", 0), true)
+	if not flare:
+		mark(result, "player", "materials", mini(blocked, int(effects.get("materials_from_shields", 0))), true)
+	mark(result, "player", "shields", -float(effects.get("shield_sacrifice", 0)), uncertain)
+	mark(result, "player", "hull", -float(effects.get("hull_sacrifice", 0)), uncertain)
 	damage(result, "enemy", target, effects.get("damage", 0), effects.get("pierce", 0.0), uncertain, flare)
 	mark(result, "player", "hull", -float(effects.get("self_damage", 0)), uncertain and not top_level)
 	damage(result, "player", actor, effects.get("self_damage_regular", 0), 0.0, uncertain, flare)

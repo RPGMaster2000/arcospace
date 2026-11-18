@@ -105,8 +105,8 @@ func run() -> void:
 		check(Save.encode(state) == saved,"Animation, Skip and refresh never mutate authoritative state")
 		check(result.summary.upgrades == 0 if outcome.ends_with("emp") else true,"EMP invents no upgrade availability")
 		if outcome == "maxed":
-			check(result.summary.upgrades == 0 and state.pending_choice.is_empty(),"Exhausted upgrade pool creates no nonexistent reward")
-			check(result.get_node("Panel/Continue").text == "Star System","Primary action does not advertise unavailable upgrades")
+			check(result.summary.upgrades == 0 and state.pending_choice == "battle_reward","Exhausted upgrade pool still offers acquisition")
+			check(result.get_node("Panel/Continue").text == "Choose Reward","Primary action shows the remaining acquisition choice")
 		await capture("final-"+outcome)
 		board.queue_free()
 		for frame in range(4): await process_frame

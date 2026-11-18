@@ -48,8 +48,8 @@ func run() -> void:
 		host.show_system()
 		await settle()
 		check(host.view_kind == "replacement" and host.state.pending_card == incoming and host.incoming_portrait.card_data == incoming, "Fixed incoming survives screen reconstruction")
-		check(host.card_management.heading.text == "Replace Card — Deck full: 36/36 cards" and host.replace_button.disabled, "Capacity and no-selection safeguard")
-		check(host.card_gallery.cards.size() == 36 and host.state.player_pool() == original, "Gallery contains owned identities without removal")
+		check(host.card_management.heading.text == "Replace Card — Deck full: 34/34 cards" and host.replace_button.disabled, "Capacity and no-selection safeguard")
+		check(host.card_gallery.cards.size() == 34 and host.state.player_pool() == original, "Gallery contains owned identities without removal")
 		check(host.card_gallery.scroll.get_v_scroll_bar().max_value > host.card_gallery.scroll.get_v_scroll_bar().page, "Owned gallery scrolls")
 		host.card_gallery.scroll.scroll_vertical = 500
 		await settle()
@@ -71,12 +71,12 @@ func run() -> void:
 	var remove_key: String = host.replacement_key
 	host.replace_button.pressed.emit()
 	host._replace_card()
-	check(host.state.pending_choice.is_empty() and host.state.player_pool().size()==36, "Replace completes once")
+	check(host.state.pending_choice.is_empty() and host.state.player_pool().size()==34, "Replace completes once")
 	for card in host.state.player_pool(): check(card.identity_key() != remove_key, "Exactly selected identity removed")
 	check(host.state.acquired_draw_weights()[incoming.identity_key()] == 3.0, "Incoming is weighted acquisition")
 	while host.card_management.closing: await process_frame
 	host._show_current_deck()
-	check(host.current_deck_viewer.title.text.contains("Deck: 36 / 36") and host.current_deck_viewer.gallery.cards.size()==36, "Deck viewer reflects current capacity")
+	check(host.current_deck_viewer.title.text.contains("Deck: 34 / 34") and host.current_deck_viewer.gallery.cards.size()==34, "Deck viewer reflects current capacity")
 	host.current_deck_viewer.dismiss()
 	var retained: Array = host.state.player_pool()
 	host.state.pending_choice = "card"

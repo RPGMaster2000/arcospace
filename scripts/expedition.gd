@@ -74,6 +74,7 @@ var transition: CanvasLayer
 # Ephemeral presentation only; authoritative travel/rewards remain in State/Deck.
 enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, INTRO, EXITED }
 var phase: Phase = Phase.OVERVIEW
+var _deck_trim_previous_phase := -1
 var _presentation_revision: int = 0
 var transitioning: bool:
 	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL, Phase.INTRO]
@@ -173,7 +174,11 @@ func _ready() -> void:
 	card_management.closed.connect(func():
 		screen.process_mode = Node.PROCESS_MODE_INHERIT
 		_card_owner = null
-		_card_revision = -1)
+		_card_revision = -1
+		if _deck_trim_previous_phase >= 0:
+			if phase == Phase.REWARD:
+				phase = _deck_trim_previous_phase as Phase
+			_deck_trim_previous_phase = -1)
 	current_deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(current_deck_viewer)
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
@@ -196,7 +201,7 @@ func _ready() -> void:
 		if marker.is_empty():
 			show_system()
 		else:
-			start_battle(int(marker.index), int(marker.seed), marker.get("environment", {}))
+			start_battle(int(marker.index), int(marker.seed), marker.get("environment", {}), marker.get("combat", {}))
 
 	if play_system_intro and not resume_data.is_empty() and view_kind == "system" and _uses_3d_map(): _introduce_system()
 
@@ -949,7 +954,7 @@ func _confirm_approach() -> void:
 
 
 func _purchase_outpost_service(
-	slot: int, amount: int, revision: int, source: OutpostScreen
+	slot: int, amount: int, revision: int, card_index: int, source: OutpostScreen
 ) -> void:
 	if (
 		inspecting
@@ -959,7 +964,7 @@ func _purchase_outpost_service(
 		or source != outpost_screen
 	):
 		return
-	if state.purchase_service(slot, revision, amount):
+	if state.purchase_service(slot, revision, amount, card_index):
 		return_to_outpost = true
 		_purchase_finished()
 
@@ -991,7 +996,7 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 		return
 	if index == state.SERVICE_INDEX:
 		if is_instance_valid(outpost_screen):
-			_purchase_outpost_service(slot, int(repair_selector.value), service_confirmation_revision, outpost_screen)
+			_purchase_outpost_service(slot, int(repair_selector.value), service_confirmation_revision, -1, outpost_screen)
 		return
 	if state.resolve_approach(index, slot):
 		var guaranteed: bool = state.is_defense() and state.defense_poi_version == 1
@@ -1009,13 +1014,34 @@ func show_outcome() -> void:
 		return
 	if transitioning or phase == Phase.EXITED:
 		return
+	if state.pending_choice == "battle_reward":
+		_clear("outcome")
+		view.add_child(_label("Victory reward", 28))
+		_button("Upgrade Ship · Upgrade %d cards" % state.upgrades_remaining, _select_battle_reward.bind(false), state.upgrade_candidates().is_empty())
+		_button("Acquire a Card · Choose 1 of %d" % state.card_offers.size(), _select_battle_reward.bind(true))
+		return
 	if state.pending_choice == "upgrade" and (state.upgrades_remaining <= 0 or state.upgrade_candidates().is_empty()):
 		state.finish_upgrades()
+	if state.pending_choice in ["card", "card_batch", "replace"] and state.player_pool().size() > state.deck_limit():
+		_clear("outcome")
+		view.add_child(_label("Deck exceeds the current limit. Keep your existing cards."))
+		_button("Decline Reward", _decline_over_limit_reward)
+		return
 	if state.pending_choice in ["card", "card_batch", "upgrade", "replace"]:
 		_present_card_management()
 		return
 	_clear("outcome")
 	screen.present_rewards(state, visual_settings, _uses_3d_map(), _attribute, show_system)
+
+
+func _decline_over_limit_reward() -> void:
+	if state.decline_over_limit_reward():
+		_purchase_finished()
+
+
+func _select_battle_reward(acquire: bool) -> void:
+	if state.choose_battle_reward(acquire):
+		show_outcome()
 
 
 func _choose_card(index: int) -> void:
@@ -1052,7 +1078,9 @@ func _present_card_management() -> void:
 func _management_current(revision: int) -> bool:
 	return (
 		_presentation_current(_card_revision, _card_owner) and phase == Phase.REWARD
-		and revision == card_management.revision and state.pending_choice == card_management.mode
+		and revision == card_management.revision
+		and (state.pending_choice == card_management.mode
+			or (card_management.mode == "trim" and state.pending_choice.is_empty()))
 	)
 
 
@@ -1065,21 +1093,43 @@ func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
 			if state.confirm_card_batch(): _purchase_finished()
 		"upgrade": _upgrade(card.identity_key())
 		"replace": _replace_card()
+		"trim":
+			if state.trim_deck(card.identity_key()):
+				if state.player_pool().size() > state.deck_limit():
+					_present_legacy_deck_trim()
+				else:
+					card_management.dismiss()
 
 
 func _management_declined(revision: int) -> void:
 	if _management_current(revision):
-		_decline_card()
+		if card_management.mode == "trim":
+			card_management.dismiss()
+		else:
+			_decline_card()
 
 
 func _preview_card(card: Resource) -> void:
 	card_management.select_card(card)
 
 
+func _present_legacy_deck_trim() -> void:
+	if _deck_trim_previous_phase < 0:
+		_deck_trim_previous_phase = phase
+	phase = Phase.REWARD
+	_card_owner = state
+	_card_revision = _presentation_revision
+	screen.process_mode = Node.PROCESS_MODE_DISABLED
+	card_management.present("trim", state.player_pool(), 0, null, state.deck_limit())
+
+
 func _show_current_deck() -> void:
 	if transitioning or presenting_outcome or card_management.shade.visible:
 		return
 	resource_bar.overlay.dismiss()
+	if state.pending_choice.is_empty() and state.player_pool().size() > state.deck_limit():
+		_present_legacy_deck_trim()
+		return
 	current_deck_viewer.show_cards(
 		state.player_pool(),
 		(
@@ -1141,19 +1191,19 @@ func _enter_battle(index: int) -> void:
 	await _reveal_presentation(revision, entering_state, Phase.BATTLE if is_instance_valid(battle) else Phase.DESTINATION)
 
 
-func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {}) -> void:
+func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {}, combat: Dictionary = {}) -> void:
 	if is_instance_valid(battle) or presenting_outcome or phase in [Phase.FTL, Phase.EXITED]:
 		return
 	if not state.can_engage(index) or state.encounters[index].kind != "battle":
 		return
-	var checkpoint: Dictionary = persistence.checkpoint_battle(state, index, battle_seed, environment)
+	var checkpoint: Dictionary = persistence.checkpoint_battle(state, index, battle_seed, environment, combat)
 	battle_seed = checkpoint.seed
 	if not checkpoint.saved:
 		_show_save_error()
 		if view_kind.is_empty():
 			_clear("save_error")
 			view.add_child(_label("The battle could not be resumed until its checkpoint can be saved."))
-			_button("Retry Battle", start_battle.bind(index, battle_seed, checkpoint.environment))
+			_button("Retry Battle", start_battle.bind(index, battle_seed, checkpoint.environment, combat))
 		return
 	state.field_repairs_open = false
 	screen.hide_for_battle()
@@ -1163,6 +1213,7 @@ func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {
 		star_map.set_active(false)
 	battle_session.create(BOARD, state, index, battle_seed,
 		_battle_finished, _restart_from_battle, _exit_from_battle, checkpoint.environment)
+	battle.resume_combat = combat
 	add_child(battle)
 	if persistence_enabled:
 		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)

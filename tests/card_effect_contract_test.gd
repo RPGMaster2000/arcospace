@@ -117,6 +117,10 @@ func consumer_cases() -> void:
 	# Each supported key has an executable fixture and a meaningful target expectation.
 	# Companion keys belong in the SAME dictionary (e.g. pierce modifies damage).
 	var samples: Dictionary = {
+		"shield_sacrifice":[{"shield_sacrifice":6},"player_shields"],
+		"hull_sacrifice":[{"hull_sacrifice":8},"player_hull"],
+		"energy_on_shield_break":[{"damage":12,"energy_on_shield_break":6},"player_energy"],
+		"materials_from_shields":[{"damage":12,"materials_from_shields":12},"player_materials"],
 		"hull":[{"hull":2},"player_hull"], "shields":[{"shields":2},"player_shields"],
 		"materials":[{"materials":2},"player_materials"], "energy":[{"energy":2},"player_energy"], "crew":[{"crew":2},"player_crew"],
 		"synthesizer":[{"synthesizer":1},"player_synthesizer"], "reactor":[{"reactor":1},"player_reactor"], "quarters":[{"quarters":1},"player_quarters"],
