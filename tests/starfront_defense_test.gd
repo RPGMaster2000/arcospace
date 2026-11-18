@@ -107,7 +107,10 @@ func run() -> void:
 		check(setup.emp_requirement_bonus == 2, "Mothership flat EMP modifier")
 		state.active_battle = -1
 		win(state, 2, emp)
-		check(state.can_jump() and state.defense.complete and state.defense.units[1].status == "secured", "Mothership neutralization secures remaining fleet and unlocks voluntary FTL")
+		check(not state.can_jump() and not state.defense.complete and state.defense.units[1].status == "active", "Mothership defeat leaves surviving enemy active and FTL locked")
+		check(Save.new().decode(Save.encode(state)) != null, "Mothership-down defense save validates")
+		win(state, 1, emp)
+		check(state.can_jump() and state.defense.complete and state.defense.secured_reward_claimed, "Clearing remaining forces liberates the system and unlocks FTL")
 		check(Save.new().decode(Save.encode(state)) != null, "Completed defense save validates")
 		var number: int = state.system_number
 		var salvage: int = state.salvage
