@@ -205,6 +205,10 @@ func turret_checks() -> void:
 	restored.defense.mothership_advancing = true
 	restored.defense.pressure = 100
 	restored.defense.neutralize(2)
+	check(not restored.can_jump(), "Defeating mothership does not yet unlock FTL")
+	for unit in restored.defense.units:
+		if unit.status == "active": restored.defense.neutralize(unit.encounter)
+	restored._secure_defense()
 	var balance: int = restored.salvage
 	check(restored.generate_system() and restored.defense.pressure == 0 and restored.defense.turrets.is_empty()
 		and not restored.defense.mothership_advancing and restored.salvage == balance, "FTL clears system-local pressure and installations")
