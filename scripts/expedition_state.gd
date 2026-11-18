@@ -1340,7 +1340,7 @@ func _offer_battle_reward(count: int) -> void:
 		var card: Resource = bucket[reward_rng.randi_range(0, bucket.size() - 1)]
 		offers.append(card)
 		candidates.erase(card)
-	while not candidates.is_empty() and offers.size() < 3:
+	while not candidates.is_empty() and offers.size() < 5:
 		offers.append(candidates.pop_at(reward_rng.randi_range(0, candidates.size() - 1)))
 	if offers.is_empty():
 		start_upgrade_event(count)
