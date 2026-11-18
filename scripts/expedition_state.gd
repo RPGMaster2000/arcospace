@@ -52,6 +52,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
 		rifts.advance_span.bind(defense, environmental_instances))
+	_secure_defense()
 	var extraction_salvage: int = poi_effects.advance_extraction(events.elapsed)
 	salvage += extraction_salvage
 	events.extraction_salvage = extraction_salvage
@@ -267,7 +268,9 @@ func resolve_missile(index: int, approach: String) -> bool:
 		_: return false
 	defense.missiles.active.erase(index)
 	defense.missiles.pending = -1
+	defense.update_clear()
 	_commit_activity_time(seconds)
+	_secure_defense()
 	progress_committed.emit()
 	return true
 
@@ -615,7 +618,8 @@ func objective_marker(index: int) -> String:
 
 func ftl_status() -> String:
 	if is_defense():
-		if defense.complete: return "FTL READY"
+		if defense.complete: return "FTL READY · SYSTEM LIBERATED"
+		if defense.mothership_destroyed(): return "MOTHERSHIP DESTROYED · CLEAR REMAINING FORCES"
 		if defense.mothership_advancing:
 			return "MOTHERSHIP ADVANCING · ETA %.1fs" % (defense.unit_for(defense.mothership_index()).position.distance_to(defense.home) / defense.tuning.mothership_speed)
 		if defense.v2:
@@ -1527,6 +1531,17 @@ func elite_resource_reward(result: BattleResult) -> int:
 	return rules.elite_resource_bonus if _elite_defeated(result) else 0
 
 
+# The secured reward is granted once, including when the final threat is a missile.
+func _secure_defense(result: BattleResult = null) -> void:
+	if not is_defense() or defense == null or not defense.complete or defense.secured_reward_claimed:
+		return
+	defense.secured_reward_claimed = true
+	poi_effects.leave_system()
+	salvage += defense.tuning.secured_salvage
+	if result != null:
+		result.salvage_rewards.secured = defense.tuning.secured_salvage
+
+
 # Persist a result and complete the encounter once; escape resolves Boss navigation too.
 # Defense currency is owned here. The result returns its committed balance and breakdown.
 func record_battle(result: BattleResult) -> bool:
@@ -1568,12 +1583,7 @@ func record_battle(result: BattleResult) -> bool:
 		encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
 		if is_defense():
 			defense.neutralize(active_battle)
-			if defense.complete:
-				poi_effects.leave_system()
-				if not defense.secured_reward_claimed:
-					defense.secured_reward_claimed = true
-					result.salvage_rewards.secured = defense.tuning.secured_salvage
-					salvage += result.salvage_rewards.secured
+			_secure_defense(result)
 			for remaining in defense.units:
 				if remaining.status == "secured": encounters[remaining.encounter].completed = true
 			defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})
