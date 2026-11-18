@@ -114,6 +114,11 @@ func scheduling_checks() -> int:
 	advance(departed, 12.0)
 	departed.defense.neutralize(0)
 	departed.defense.neutralize(departed.defense.mothership_index())
+	for unit in departed.defense.units:
+		if unit.status == "active": departed.defense.neutralize(unit.encounter)
+	departed.defense.missiles.active.clear()
+	departed.defense.missiles.pending = -1
+	departed.defense.update_clear()
 	check(departed.generate_system() and departed.system_number == 2 and live(departed).is_empty()
 		and departed.rifts.evaluation == 0 and departed.rifts.remaining == 12.0,
 		"Jumping to a new system resets the active rift and schedule")
