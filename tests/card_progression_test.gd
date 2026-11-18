@@ -60,7 +60,7 @@ func run() -> void:
 			if card.signature_ship < 0 and not identities.has(card.identity_key()): excluded[card.identity_key()] = false
 		for trial in range(1000):
 			var offers: Array[Resource] = state.random_card_offers()
-			check(offers.size() == 3 and offers[0] != offers[1] and offers[1] != offers[2] and offers[0] != offers[2], "Three distinct rewards")
+			check(offers.size() == 5 and offers[0] != offers[1] and offers[1] != offers[2] and offers[2] != offers[3] and offers[3] != offers[4], "Five distinct rewards")
 			for offer in offers:
 				check(not identities.has(offer.identity_key()), "Rewards exclude owned")
 				excluded[offer.identity_key()] = true
