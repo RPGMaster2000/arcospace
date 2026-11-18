@@ -188,6 +188,10 @@ func update_clear() -> void:
 		if not unit.mothership and unit.status in ["active", "reserve"]:
 			return
 	complete = missiles.active.is_empty() and missiles.pending < 0
+	if complete:
+		# Terminal saves must not retain missile launch or turret cooldown clocks.
+		missiles.countdown = 0.0
+		missiles.cooldowns.clear()
 
 func neutralized_attackers() -> int:
 	var count: int = 0
