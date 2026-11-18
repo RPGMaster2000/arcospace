@@ -66,7 +66,11 @@ func run() -> void:
 	checkpoint(state)
 	victory(state, 2)
 	checkpoint(state)
-	check(state.can_jump(), "Restored completion is eligible for voluntary FTL")
+	check(not state.can_jump() and state.defense.mothership_destroyed(), "Mothership defeat leaves FTL locked")
+	for unit in state.defense.units:
+		if unit.status == "active": victory(state, unit.encounter)
+	checkpoint(state)
+	check(state.can_jump(), "Restored liberation is eligible for voluntary FTL")
 	state.generate_system()
 	checkpoint(state)
 	check(not state.defense.revealed and state.defense.integrity == 100 and state.navigation.position == State.Defense.wire(state.defense.start), "FTL checkpoint contains fresh fleet and player deployment")
