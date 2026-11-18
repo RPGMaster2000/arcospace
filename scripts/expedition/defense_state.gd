@@ -620,7 +620,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if reveal_pending or revealed != (pressure >= reveal_threshold() - 0.00000001 or complete): return false
 	else:
 		if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
-		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or complete): return false
+		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or mothership_destroyed() or complete): return false
 	if contact >= 0 and (unit_for(contact).is_empty() or not available(unit_for(contact))): return false
 	var expected: Dictionary = {}
 	for index in encounters.size():
