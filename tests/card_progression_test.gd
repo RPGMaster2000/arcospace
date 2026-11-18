@@ -60,7 +60,7 @@ func run() -> void:
 			if card.signature_ship < 0 and not identities.has(card.identity_key()): excluded[card.identity_key()] = false
 		for trial in range(1000):
 			var offers: Array[Resource] = state.random_card_offers()
-			check(offers.size() == 3 and offers[0] != offers[1] and offers[1] != offers[2] and offers[0] != offers[2], "Three distinct rewards")
+			check(offers.size() == 5 and offers[0] != offers[1] and offers[1] != offers[2] and offers[2] != offers[3] and offers[3] != offers[4], "Five distinct rewards")
 			for offer in offers:
 				check(not identities.has(offer.identity_key()), "Rewards exclude owned")
 				excluded[offer.identity_key()] = true
@@ -120,7 +120,7 @@ func run() -> void:
 		var limited: Array[Resource] = []
 		for slot in range(unowned_t2.size() - 2): limited.append(unowned_t2[slot])
 		state.acquired_cards = limited
-		check(state.random_card_offers(2).size() == 2, "Two remaining rewards show two choices")
+		check(state.random_card_offers(2).size() == mini(5, state.available_reward_cards(2).size()), "Higher-tier rewards include remaining prototype cards")
 	check(absf(reward_t2 / 1000.0 - 0.6) < 0.06, "60/40 reward tier weighting")
 	var draw = Hand.new()
 	draw.rng.seed = 720

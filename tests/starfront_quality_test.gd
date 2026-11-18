@@ -119,7 +119,7 @@ func run() -> void:
 	check(copy.reinforcements_spawned == 4 and is_equal_approx(copy.reinforcement_remaining,state.defense.reinforcement_remaining), "Reinforcement countdown and count survive restoration")
 	state.defense.neutralize(2)
 	state.defense.advance_time(100, away, away, true)
-	check(state.defense.complete and state.defense.reinforcements_spawned == 4, "Mothership victory cancels future reinforcements")
+	check(state.defense.mothership_destroyed() and state.defense.reinforcements_spawned == 4, "Mothership victory cancels future reinforcements")
 	state = fresh()
 	result = result_for(state, 0)
 	state.record_battle(result)

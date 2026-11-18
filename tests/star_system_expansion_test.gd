@@ -123,6 +123,8 @@ func verify_save(state: Resource) -> void:
 	if restored.is_defense() and restored.layout_expansion == 0.0:
 		restored.defense.neutralize(0)
 		restored.defense.neutralize(2)
+		for unit in restored.defense.units:
+			if unit.status == "active": restored.defense.neutralize(unit.encounter)
 		check(restored.generate_system() and restored.layout_expansion == 1.2, "The next system from a legacy save uses the new layout")
 
 func generation_checks() -> void:

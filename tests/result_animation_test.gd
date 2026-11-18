@@ -66,7 +66,7 @@ func run() -> void:
 		var saved := Save.encode(state)
 		check(result.running,"Battle VFX disabled retains basic result UI animation")
 		check(result.banner.modulate.a < 1.0 or result.banner.scale != Vector2.ONE,"Title begins in a visibly distinct state")
-		var heading: String = "SYSTEM SECURED" if boss else ({"emp":"VESSEL DISABLED","defeat":"DEFEAT","draw":"DRAW"}.get(outcome,"VICTORY"))
+		var heading: String = "MOTHERSHIP DESTROYED" if boss else ({"emp":"VESSEL DISABLED","defeat":"DEFEAT","draw":"DRAW"}.get(outcome,"VICTORY"))
 		check(result.banner.text == heading,"Correct actual outcome heading: "+outcome)
 		check(result.burst.electronic == outcome.ends_with("emp"),"EMP uses electronic arcs, never destruction rays")
 		if outcome == "systems_failure": check(result.subtitle.text == "Enemy Systems Disabled","Systems Failure keeps correct identity")

@@ -87,13 +87,13 @@ func combat_checks() -> void:
 			finish(board, method)
 			var combat_reward: int = [3, 6, 10][rank] if method == "emp" else (
 				profile.destruction_salvage_reward * (state.rules.elite_salvage_multiplier if rank == 1 else 1) + [5, 10, 20][rank])
-			var expected := 7 + combat_reward + (10 if rank == 2 else 0)
+			var expected := 7 + combat_reward
 			check(board.winner == "player" and state.salvage == expected and board.salvage == expected, "Committed and displayed balance for %d/%s" % [rank, method])
 			check(state.encounters[index].completed and state.defense.unit_for(index).status == "neutralized", "All valid wins neutralize the encounter")
-			check(state.defense.complete == (rank == 2) and state.defense.secured_reward_claimed == (rank == 2), "Only the mothership secures the system")
+			check(not state.defense.complete and not state.defense.secured_reward_claimed and (rank != 2 or state.defense.mothership_destroyed()), "Mothership defeat alone does not liberate the system")
 			check(state.poi_effects.production.reactor.battles == 2, "Temporary production charge consumed once")
 			var rewards: String = board.victory_description()
-			check(rewards.contains("System secured") == (rank == 2), "Completion reward shown only when committed")
+			check(not rewards.contains("System secured") and (rank != 2 or rewards.contains("Destroy the remaining forces")), "Completion reward waits for remaining forces")
 			if method == "emp":
 				check(state.pending_choice.is_empty() and rewards.contains("Allied EMP recovery") and not rewards.contains("Defense victory bonus"), "EMP grants recovery without combat upgrades or destruction bonus")
 			else:
@@ -105,18 +105,15 @@ func combat_checks() -> void:
 			check(not checkpoint.is_empty() and checkpoint.battle.is_empty(), "Completed result is saved without a battle restart marker")
 			if not checkpoint.is_empty():
 				var restored: ExpeditionState = checkpoint.state
-				check(restored.salvage == expected and restored.defense.secured_reward_claimed == (rank == 2), "Disk restoration preserves total and completion claim")
+				check(restored.salvage == expected and not restored.defense.secured_reward_claimed, "Disk restoration preserves mothership-down reward state")
 				restored.active_battle = index
 				replay.result_id += 1
 				check(not restored.record_battle(replay) and restored.salvage == expected, "A fresh stale result cannot replay after reload")
 				if rank == 2:
-					var legacy := Save.encode(restored)
-					legacy.defense.erase("secured_reward_claimed")
-					var old: ExpeditionState = Save.new().decode(legacy, restored.rules)
-					check(old != null and old.defense.secured_reward_claimed and old.salvage == expected, "Previously secured legacy saves never receive a retroactive reward")
+					check(restored.defense.mothership_destroyed() and not restored.can_jump(), "Mothership-down checkpoint keeps FTL locked")
 					restored.active_battle = 0
 					replay.encounter_index = 0
-					check(not restored.record_battle(replay) and restored.salvage == expected, "A different encounter cannot pay after the system is secured")
+					check(not restored.record_battle(replay) and restored.salvage == expected, "A stale encounter cannot replay after the mothership is defeated")
 			save.store.clear_run()
 			board.free()
 	for method in ["loss", "draw"]:
@@ -189,11 +186,21 @@ func mining_checks() -> void:
 	reveal(partial)
 	board = begin_battle(partial, partial.defense.mothership_index())
 	finish(board, "emp")
-	check(partial.salvage == 20 and partial.poi_effects.extraction_source < 0, "Mothership EMP secures the system before any further extraction")
+	check(partial.defense.mothership_destroyed() and not partial.defense.complete
+		and partial.poi_effects.extraction_source >= 0, "Mothership defeat leaves extraction and remaining forces active")
 	board.free()
 	partial.active_battle = -1
+	for unit in partial.defense.units:
+		if unit.status == "active":
+			partial.defense.neutralize(unit.encounter)
+			partial.encounters[unit.encounter].completed = true
+	partial._secure_defense()
+	var liberated_balance: int = partial.salvage
+	check(partial.can_jump() and partial.poi_effects.extraction_source < 0, "System liberation stops extraction and enables FTL")
 	partial._commit_activity_time(80)
-	check(partial.salvage == 20 and partial.generate_system() and partial.poi_effects.extraction_source < 0 and partial.salvage == 20, "Secured time and leaving the system cannot pay unused extraction")
+	check(partial.salvage == liberated_balance and partial.generate_system()
+		and partial.poi_effects.extraction_source < 0 and partial.salvage == liberated_balance,
+		"Secured time and leaving the system cannot pay unused extraction")
 
 func run() -> void:
 	combat_checks()

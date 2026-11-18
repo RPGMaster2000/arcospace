@@ -188,7 +188,9 @@ func run() -> void:
 		"Empty slots never show stale motifs"
 	)
 	view.free()
-	var board = load("res://scenes/board_3d.tscn").instantiate()
+	# Motifs exercise the shared production hand; a 3D battlefield adds unrelated
+	# Vulkan work and can stall software-renderer teardown after the checks finish.
+	var board = load("res://scenes/board.tscn").instantiate()
 	board.setup_settings = {
 		"player_ship": 0, "enemy_data": preload("res://ships/enemy/sentinel.tres"), "modifier": 0
 	}

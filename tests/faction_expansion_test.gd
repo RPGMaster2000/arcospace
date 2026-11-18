@@ -162,8 +162,8 @@ func run() -> void:
 			result.player_hull = battle_state.hull
 			result.battles_won = battle_state.battles_won + 1
 			check(
-				battle_state.record_battle(result) and battle_state.defense.complete,
-				"Destruction and EMP secure every faction system"
+				battle_state.record_battle(result) and battle_state.defense.mothership_destroyed() and not battle_state.defense.complete,
+				"Destruction and EMP defeat the faction mothership without clearing other forces"
 			)
 			check(not battle_state.record_battle(result), "Faction boss rewards cannot duplicate")
 		var arrival_state := fresh(faction)

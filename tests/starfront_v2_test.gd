@@ -152,7 +152,11 @@ func timing_checks() -> void:
 	fleet.contact = fleet.mothership_index()
 	check(state.prepare_battle(fleet.mothership_index()) != null, "Mothership still enters ordinary boss combat")
 	fleet.neutralize(fleet.mothership_index())
-	check(fleet.complete and fleet.missiles.active.is_empty() and fleet.missiles.pending == -1, "Boss neutralization secures remaining missiles")
+	check(not fleet.complete and not fleet.missiles.active.is_empty() and fleet.missiles.pending == -1, "Mothership defeat leaves missiles in flight and FTL locked")
+	check(fleet.mothership_destroyed(), "Mothership down state is distinct from system liberation")
+	fleet.missiles.active.clear()
+	fleet.update_clear()
+	check(fleet.complete, "System becomes liberated after remaining missiles are cleared")
 
 func defense_checks() -> void:
 	var state := fresh(1042, true, 0)

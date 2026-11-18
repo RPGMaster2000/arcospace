@@ -822,6 +822,7 @@ func activate_overdrive(action: int, payment: String) -> bool:
 		return false
 	progression_actions.overdrive_used = true
 	overdrive_triggered = true
+	resolving_card = true
 	if modifier.shields_disabled() and action == 1:
 		var unshielded: Dictionary = before.enemy.duplicate()
 		unshielded.shields = 0
@@ -835,7 +836,20 @@ func activate_overdrive(action: int, payment: String) -> bool:
 	battle_effects.play_changes(before, _both_states(), "player", payment, ProgressionActions.OVERDRIVE[action].cost)
 	_check_winner()
 	refresh_display()
+	_complete_overdrive_turn()
 	return true
+
+
+func _complete_overdrive_turn() -> void:
+	if battle_effects.busy:
+		await battle_effects.finished
+	if battle_effects.cancelling or checkpoint_exit or is_queued_for_deletion():
+		return
+	resolving_card = false
+	if not _check_winner():
+		await _finish_turn("player")
+	else:
+		refresh_display()
 
 
 func _checkpoint_prototype_turn() -> void:
@@ -1134,6 +1148,9 @@ func _display_snapshot() -> Dictionary:
 		"upgrades_available": mini(expedition.upgrades_remaining,expedition.upgrade_candidates().size()) if expedition != null and expedition.pending_choice == "upgrade" else 0,
 		"defense_recovery": salvage_rewards.has("recovery"),
 		"system_secured": salvage_rewards.has("secured"),
+		"mothership_destroyed": (expedition != null and expedition.is_defense()
+			and expedition.defense != null and winner == "player"
+			and expedition.defense.unit_for(expedition.active_battle).get("mothership", false)),
 		"in_expedition": expedition != null,
 		"pending_choice": expedition.pending_choice if expedition != null else "",
 		"next_modifier_name": modifier.NAMES[next_modifier] if next_modifier >= 0 else "",
@@ -1273,6 +1290,9 @@ func victory_description() -> String:
 		else:
 			lines.append("Next battle")
 		lines.append_array(bonuses)
+	if expedition != null and expedition.is_defense() and expedition.defense != null:
+		if expedition.defense.mothership_destroyed() and not expedition.defense.complete and expedition.defense.unit_for(expedition.active_battle).get("mothership", false):
+			lines.append("Destroy the remaining forces to liberate the system.")
 	return "\n".join(lines)
 
 

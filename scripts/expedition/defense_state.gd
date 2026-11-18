@@ -176,6 +176,23 @@ func mothership_index() -> int:
 	return -1
 func available(unit: Dictionary) -> bool:
 	return unit.status == "active" and (not unit.mothership or revealed) and not complete
+func mothership_destroyed() -> bool:
+	return unit_for(mothership_index()).get("status", "") == "neutralized"
+
+# FTL unlocks only once the mothership and all deployed forces are gone.
+# Undeployed reserves are stood down when their mothership falls.
+func update_clear() -> void:
+	if not mothership_destroyed():
+		return
+	for unit in units:
+		if not unit.mothership and unit.status in ["active", "reserve"]:
+			return
+	complete = missiles.active.is_empty() and missiles.pending < 0
+	if complete:
+		# Terminal saves must not retain missile launch or turret cooldown clocks.
+		missiles.countdown = 0.0
+		missiles.cooldowns.clear()
+
 func neutralized_attackers() -> int:
 	var count: int = 0
 	for unit in units:
@@ -200,16 +217,18 @@ func neutralize(index: int) -> bool:
 	contact = -1
 	if unit.mothership:
 		clear_decoy()
-		complete = true
 		mothership_advancing = false
 		deferred_seconds = 0.0
-		missiles = Missiles.new()
+		missiles.countdown = 0.0
+		# Existing enemies and in-flight missiles survive. Cancel only reserves
+		# which have not entered the system; do not create new hostiles.
 		for remaining in units:
-			if remaining.status in ["active", "reserve"]: remaining.status = "secured"
+			if remaining.status == "reserve": remaining.status = "secured"
 	elif not v2 and not revealed and neutralized_attackers() >= 1:
 		reinforcement_remaining = tuning.first_reinforcement_seconds
 		revealed = true
 		reveal_pending = true
+	update_clear()
 	return true
 # Earliest swept relative-sphere contact, independent of sample length/frame rate.
 static func hit_time(relative: Vector3, velocity: Vector3, radius: float, limit: float) -> float:
@@ -307,6 +326,7 @@ func reveal_threshold() -> float:
 	return minf(tuning.mothership_reveal_pressure, tuning.pressure_maximum)
 
 func _advance_pressure(seconds: float) -> bool:
+	if mothership_destroyed(): return false
 	pressure = minf(tuning.pressure_maximum, pressure + seconds * pressure_rate())
 	if v2 and not revealed and pressure >= reveal_threshold() - 0.00000001:
 		revealed = true
@@ -346,14 +366,14 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			if unit.status == "reserve":
 				reserve = unit
 				break
-		var reinforcement_clock: bool = not reserve.is_empty() if v2 else revealed and not reveal_pending and reinforcements_spawned < tuning.maximum_reinforcements
+		var reinforcement_clock: bool = (not mothership_destroyed() and not reserve.is_empty()) if v2 else (not mothership_destroyed() and revealed and not reveal_pending and reinforcements_spawned < tuning.maximum_reinforcements)
 		var active_limit: int = 2 if v2 else tuning.maximum_active_attackers
 		var can_spawn: bool = reinforcement_clock and active_attackers() < active_limit
 		if can_spawn and not spawn_blocked and reinforcement_remaining <= event_time:
 			event_time = maxf(0.0, reinforcement_remaining)
 			event_kind = "spawn"
 		var rate := pressure_rate()
-		if not mothership_advancing and rate > 0:
+		if not mothership_destroyed() and not mothership_advancing and rate > 0:
 			var limit: float = reveal_threshold() if v2 and not revealed else tuning.pressure_maximum
 			var threshold: float = (limit - pressure) / rate
 			if threshold <= event_time:
@@ -465,6 +485,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			result.position = from + player_velocity * elapsed
 			break
 	result.elapsed = elapsed
+	update_clear()
 	return result
 
 # Predict a meeting in distance travelled by the player. Enemy speed is per
@@ -549,12 +570,12 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if not Navigation.valid_point(unit.get("position"), false): return false
 		if not Navigation.valid_point(unit.get("route_origin", unit.position), false): return false
 		if absf(float(unit.position[0])) > limit or absf(float(unit.position[2])) > limit: return false
-		if unit.status == "secured" and not data.complete: return false
+		if unit.status == "secured" and not data.complete and not unit.get("reinforcement", false): return false
 		if data.complete and unit.status in ["active", "reserve"]: return false
 		if encounters[index].completed != (unit.status not in ["active", "reserve"]): return false
 		if unit.mothership:
 			bosses += 1
-			if unit.status == "arrived" or data.complete != (unit.status == "neutralized"): return false
+			if unit.status == "arrived" or (data.complete and unit.status != "neutralized"): return false
 		seen[index] = true
 	if bosses != 1 or initial_count < 2 or initial_count > (4 if v2 else 2) or not number(data.get("contact"), -1, encounters.size()-1): return false
 	if v2 and (reserve_count > 3 or (reserve_count > 0 and initial_count > 3)): return false
@@ -599,7 +620,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if reveal_pending or revealed != (pressure >= reveal_threshold() - 0.00000001 or complete): return false
 	else:
 		if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
-		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or complete): return false
+		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or mothership_destroyed() or complete): return false
 	if contact >= 0 and (unit_for(contact).is_empty() or not available(unit_for(contact))): return false
 	var expected: Dictionary = {}
 	for index in encounters.size():

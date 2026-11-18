@@ -88,11 +88,11 @@ func pressure_checks() -> void:
 		var duration: float = restored.defense.start.distance_to(target) * restored.defense.tuning.seconds_per_distance
 		var event: Dictionary = restored.defense.advance_time(duration, restored.defense.start, target)
 		check(event.contact == 2 and restored.can_engage(2), "Existing swept contact can engage the advancing mothership")
-		check(restored.defense.neutralize(2) and restored.defense.complete and not restored.defense.mothership_advancing,
-			"Neutralizing the advancing mothership secures the system")
+		check(restored.defense.neutralize(2) and restored.defense.mothership_destroyed() and not restored.defense.complete and not restored.defense.mothership_advancing,
+			"Neutralizing the advancing mothership leaves surviving forces in play")
 		for unit in restored.defense.units:
-			restored.encounters[unit.encounter].completed = true
-		check(roundtrip(restored) != null, "Early-reveal victory restores without an attacker kill")
+			restored.encounters[unit.encounter].completed = unit.status not in ["active", "reserve"]
+		check(roundtrip(restored) != null, "Mothership-down save restores with surviving enemies")
 	var integrity: int = state.defense.integrity
 	state._commit_activity_time(100.0)
 	check(state.run_ended and state.defense.mothership_arrived() and not state.can_jump(), "Mothership arrival ends the expedition")
@@ -205,6 +205,10 @@ func turret_checks() -> void:
 	restored.defense.mothership_advancing = true
 	restored.defense.pressure = 100
 	restored.defense.neutralize(2)
+	check(not restored.can_jump(), "Defeating mothership does not yet unlock FTL")
+	for unit in restored.defense.units:
+		if unit.status == "active": restored.defense.neutralize(unit.encounter)
+	restored._secure_defense()
 	var balance: int = restored.salvage
 	check(restored.generate_system() and restored.defense.pressure == 0 and restored.defense.turrets.is_empty()
 		and not restored.defense.mothership_advancing and restored.salvage == balance, "FTL clears system-local pressure and installations")

@@ -155,7 +155,18 @@ func run() -> void:
 			board._warp_out()
 			board._continue_encounter()
 			await process_frame
-			check(host.state.can_jump() and host.state.defense.complete and not host.jump_button.disabled, "Mothership EMP unlocks voluntary FTL in actual HUD")
+			check(not host.state.can_jump() and host.state.defense.mothership_destroyed(), "Mothership EMP leaves remaining forces and FTL locked")
+			# Complete the remaining objective in this presentation fixture.
+			for unit in host.state.defense.units:
+				if not unit.mothership and unit.status == "active":
+					host.state.defense.neutralize(unit.encounter)
+					host.state.encounters[unit.encounter].completed = true
+			host.state.defense.missiles.active.clear()
+			host.state.defense.missiles.pending = -1
+			host.state.defense.update_clear()
+			host.state._secure_defense()
+			host.show_system()
+			check(host.state.can_jump() and host.state.defense.complete, "FTL becomes available after all remaining threats are cleared")
 			var departure_origin: Vector3 = map.ship.position
 			host._jump()
 			await create_timer(2.4).timeout

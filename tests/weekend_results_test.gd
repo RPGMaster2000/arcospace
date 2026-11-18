@@ -54,7 +54,7 @@ func run() -> void:
 			await process_frame
 			continue
 		result.skip()
-		var heading := "SYSTEM SECURED" if boss else ("VESSEL DISABLED" if outcome == "emp" else "VICTORY")
+		var heading := "MOTHERSHIP DESTROYED" if boss else ("VESSEL DISABLED" if outcome == "emp" else "VICTORY")
 		check(result.banner.text == heading,"Correct heading for "+outcome)
 		check(result.summary.earned == state.salvage-balance and result.summary.balance == state.salvage,"Summary uses committed earned reward and balance")
 		if outcome == "systems_failure": check(result.subtitle.text == "Enemy Systems Disabled","Systems Failure does not imply hull destruction")

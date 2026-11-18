@@ -124,12 +124,12 @@ func refresh_results(data: Dictionary) -> void:
 		not data.winner.is_empty() and data.result_recorded and not data.resolving_card and (not data.effects_busy or nodes["MatchResult"].started)
 	)
 	nodes["MatchResult/Panel/Title"].text = (
-		"SYSTEM SECURED" if data.system_secured else "VESSEL DISABLED"
+		"SYSTEM SECURED" if data.system_secured else ("MOTHERSHIP DESTROYED" if data.get("mothership_destroyed", false) else "VESSEL DISABLED")
 		if data.escaped_by_ftl
 		else (
 			"DRAW"
 			if data.winner == "draw"
-			else (("SYSTEM SECURED" if data.system_secured else "VICTORY") if data.winner == "player" else "DEFEAT")
+			else (("SYSTEM SECURED" if data.system_secured else ("MOTHERSHIP DESTROYED" if data.get("mothership_destroyed", false) else "VICTORY")) if data.winner == "player" else "DEFEAT")
 		)
 	)
 	var visible_now: bool = nodes["MatchResult"].visible

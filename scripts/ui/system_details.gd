@@ -115,13 +115,13 @@ static func text(state: Resource) -> String:
 		)
 	)
 	var boss := (
-		"Neutralized — system secured"
+		"Neutralized — system liberated"
 		if state.defense.complete
-		else (
+		else ("Destroyed — clear remaining forces" if state.defense.mothership_destroyed() else (
 			"Advancing"
 			if state.defense.mothership_advancing
 			else ("Revealed" if state.defense.revealed else "Unrevealed")
-		)
+		))
 	)
 	rows.append_array(
 		[
