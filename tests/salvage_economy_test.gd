@@ -186,11 +186,21 @@ func mining_checks() -> void:
 	reveal(partial)
 	board = begin_battle(partial, partial.defense.mothership_index())
 	finish(board, "emp")
-	check(partial.salvage == 20 and partial.poi_effects.extraction_source < 0, "Mothership EMP secures the system before any further extraction")
+	check(partial.defense.mothership_destroyed() and not partial.defense.complete
+		and partial.poi_effects.extraction_source >= 0, "Mothership defeat leaves extraction and remaining forces active")
 	board.free()
 	partial.active_battle = -1
+	for unit in partial.defense.units:
+		if unit.status == "active":
+			partial.defense.neutralize(unit.encounter)
+			partial.encounters[unit.encounter].completed = true
+	partial._secure_defense()
+	var liberated_balance: int = partial.salvage
+	check(partial.can_jump() and partial.poi_effects.extraction_source < 0, "System liberation stops extraction and enables FTL")
 	partial._commit_activity_time(80)
-	check(partial.salvage == 20 and partial.generate_system() and partial.poi_effects.extraction_source < 0 and partial.salvage == 20, "Secured time and leaving the system cannot pay unused extraction")
+	check(partial.salvage == liberated_balance and partial.generate_system()
+		and partial.poi_effects.extraction_source < 0 and partial.salvage == liberated_balance,
+		"Secured time and leaving the system cannot pay unused extraction")
 
 func run() -> void:
 	combat_checks()
