@@ -160,7 +160,7 @@ func _draw_weight(card: Resource) -> float:
 
 # Count identities excluding the replaced slot; upgrades keep original rarity and duplicate identity.
 func _eligible(card: Resource, excluded_slot: int) -> bool:
-	if card.tier == 2 and current_round <= tier_two_locked_turns:
+	if card.tier > 1 and current_round <= tier_two_locked_turns:
 		return false
 	var copies: int = 0
 	for slot in range(cards.size()):

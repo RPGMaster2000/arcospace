@@ -9,6 +9,7 @@ const Ship = preload("res://scripts/combat/ship_combat_state.gd")
 const Checkpoint = preload("res://scripts/combat/progression_checkpoint.gd")
 const Adapter = preload("res://scripts/combat/battle_adapter.gd")
 const Persistence = preload("res://scripts/expedition/expedition_persistence.gd")
+const Hand = preload("res://scripts/cards/card_hand.gd")
 const Board = preload("res://scenes/board_3d.tscn")
 var failures := 0
 
@@ -96,6 +97,17 @@ func card_checks() -> void:
 			check(target.hull == (30 if action == 0 else 16), "Overdrive damage goes through Shields")
 	check(Actions.interrupt_chance(6, 30) > Actions.interrupt_chance(3, 30)
 		and is_equal_approx(Actions.interrupt_chance(25, 30), 0.85), "Interruption scales with actual Hull loss")
+
+
+func high_tier_draw_checks() -> void:
+	var hand := Hand.new()
+	hand.card_pool.assign([card(1), card(85)])
+	hand.tier_three_chance = 1.0
+	hand.current_round = hand.tier_two_locked_turns
+	check(hand.draw_card() == card(1), "Tier 3 respects the opening-round gate")
+	hand.current_round += 1
+	check(hand.draw_card() == card(85), "Owned Tier 3 cards are drawable after the opening rounds")
+	hand.free()
 
 
 func make_run(mode: String) -> Resource:
@@ -239,6 +251,7 @@ func combat_checks() -> void:
 
 func run() -> void:
 	card_checks()
+	high_tier_draw_checks()
 	reward_checks()
 	shop_checks()
 	await combat_checks()
