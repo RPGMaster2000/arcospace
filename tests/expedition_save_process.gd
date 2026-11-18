@@ -35,7 +35,11 @@ func run() -> void:
 			scene.state.salvage = 200
 			scene.state.hull = scene.state.ship().hull_capacity - 5
 			scene.state.pending_choice = "card"
-			scene.state.card_offers = scene.state.random_card_offers()
+			# This persistence fixture acquires and upgrades the same reward.
+			# Prototype rewards with max_upgrades == 0 are covered separately.
+			scene.state.card_offers = scene.state.available_reward_cards().filter(
+				func(card): return card.max_upgrades > 0
+			).slice(0, 3)
 			scene.state.progress_committed.emit()
 			var file = FileAccess.open(EXPECTED, FileAccess.WRITE)
 			file.store_string(JSON.stringify(Save.encode(scene.state))); file.close()
