@@ -129,7 +129,7 @@ func refresh_results(data: Dictionary) -> void:
 		else (
 			"DRAW"
 			if data.winner == "draw"
-			else (("SYSTEM SECURED" if data.system_secured else "VICTORY") if data.winner == "player" else "DEFEAT")
+			else (("SYSTEM SECURED" if data.system_secured else ("MOTHERSHIP DESTROYED" if data.get("mothership_destroyed", false) else "VICTORY")) if data.winner == "player" else "DEFEAT")
 		)
 	)
 	var visible_now: bool = nodes["MatchResult"].visible
