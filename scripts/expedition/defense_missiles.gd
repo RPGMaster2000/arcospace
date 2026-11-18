@@ -24,7 +24,7 @@ func speed(tuning: Resource) -> float:
 func event(fleet: RefCounted, player: Vector3, velocity: Vector3, span: float, carry: bool,
 		sweep: Callable) -> Dictionary:
 	var best := {"time": span, "kind": ""}
-	if fleet.revealed and speed(fleet.tuning) > 0.0 and countdown <= span + EPSILON:
+	if fleet.revealed and not fleet.mothership_destroyed() and speed(fleet.tuning) > 0.0 and countdown <= span + EPSILON:
 		best = {"time": minf(span, countdown), "kind": "launch"}
 	var missile_speed := speed(fleet.tuning)
 	var sites: Array = fleet.turrets.keys()
