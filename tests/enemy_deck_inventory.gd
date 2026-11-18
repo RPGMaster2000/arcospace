@@ -22,7 +22,7 @@ func run() -> void:
 	var definitions := {}
 	var profiles := {}
 	for profile in roster():
-		var pool: Array = profile.starting_cards if not profile.starting_cards.is_empty() else Cards.CARDS
+		var pool: Array = profile.starting_cards if not profile.starting_cards.is_empty() else Cards.BASE_CARDS
 		var cards: Array[String] = []
 		for card in pool:
 			var id: String = card.identity_key()

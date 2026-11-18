@@ -130,6 +130,7 @@ func economy_checks(ship_index: int) -> void:
 	revision = run.service_revision
 	check(not run.purchase_service(1, revision) and run.salvage == 6 and run.service_revision == revision, "Unaffordable supply does not spend or consume confirmation")
 	run.salvage = 100
+	var enemy_pool_before: Array[Resource] = run.shared_pool()
 	for n in range(3):
 		revision = run.service_revision
 		var rng_before: int = run.rng.state
@@ -139,9 +140,9 @@ func economy_checks(ship_index: int) -> void:
 		check(run.purchase_service(2, revision, 0, n) and run.salvage == 100 - 15 * (n + 1), "One atomic purchase")
 		check(run.acquired_cards.has(offers[n]) and not run.purchase_service(2, revision, 0, n), "Selected card granted once")
 		check(run.rng.state == rng_before, "Shop randomness has a private stream")
-	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == 88 and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
+	check(run.acquired_cards.size() == 3 and run.shared_pool() == enemy_pool_before and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
 	run.salvage = 14
-	check(not run.purchase_service(2, run.service_revision) and run.salvage == 14, "Card affordability verified before spending")
+	check(not run.purchase_service(2, run.service_revision, 0, 0) and run.salvage == 14, "Card affordability verified before spending")
 	run.salvage = 1000
 	for n in range(7):
 		var price: int = [35,50,70,95,125,160,200][n]
