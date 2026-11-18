@@ -133,7 +133,7 @@ func reward_checks() -> void:
 	result.player_hull = state.hull
 	result.battles_won = 1
 	check(state.record_battle(result) and not state.record_battle(result), "Victory creates reward once")
-	check(state.pending_choice == "battle_reward" and state.card_offers.size() == 3, "Three victory offers")
+	check(state.pending_choice == "battle_reward" and state.card_offers.size() == 5, "Five victory offers")
 	check(state.card_offers.any(func(c): return c.tier == 3), "Tier 3 appears in victory offers")
 	var restored := Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state))), state.rules)
 	check(restored != null and restored.pending_choice == "battle_reward", "Reward choice survives JSON save")
