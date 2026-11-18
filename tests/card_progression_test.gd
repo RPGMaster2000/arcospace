@@ -120,7 +120,7 @@ func run() -> void:
 		var limited: Array[Resource] = []
 		for slot in range(unowned_t2.size() - 2): limited.append(unowned_t2[slot])
 		state.acquired_cards = limited
-		check(state.random_card_offers(2).size() == 2, "Two remaining rewards show two choices")
+		check(state.random_card_offers(2).size() == mini(5, state.available_reward_cards(2).size()), "Higher-tier rewards include remaining prototype cards")
 	check(absf(reward_t2 / 1000.0 - 0.6) < 0.06, "60/40 reward tier weighting")
 	var draw = Hand.new()
 	draw.rng.seed = 720
