@@ -54,7 +54,11 @@ func check_tables() -> void:
 					if key == "next_battle":
 						var modifiers: Dictionary = values.get(key, {})
 						check(outcome.next_battle.size() == modifiers.size(), "Exact modifier keys")
-						for attribute in modifiers: check(outcome.next_battle.get(attribute) == modifiers[attribute], "Exact reward modifier")
+						for attribute in modifiers:
+							var amount := int(modifiers[attribute])
+							if attribute in ["materials", "energy", "crew"] and amount > 0:
+								amount = ceili(amount * 1.5)
+							check(outcome.next_battle.get(attribute) == amount, "Exact rebalanced reward modifier")
 					else: check(outcome.get(key) == values.get(key, fallback), "Exact reward " + key)
 				for key in State.PRODUCTION: check(not outcome.next_battle.has(key), "No temporary production effects")
 				var run = fresh()

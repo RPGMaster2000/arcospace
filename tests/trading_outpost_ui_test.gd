@@ -78,18 +78,23 @@ func run_tests() -> void:
 				host.approach_buttons[slot].pressed.emit()
 				if slot == 0: host.repair_selector.value = 1
 				if slot == 2:
-					var picker: OptionButton = host.outpost_screen.card_picker
-					check(picker.item_count == 7 and host.confirm_button.disabled, "Six cards require a selection")
-					host.confirm_button.pressed.emit()
+					var modal = host.card_management
+					check(modal.gallery.cards.size() == 6 and modal.confirm_button.disabled
+						and modal.context.text.contains("%d Salvage" % price), "Six cards and price are shown before selection")
+					modal.confirm_button.pressed.emit()
 					check(host.state.salvage == balance, "No confirmation before selection")
-					host.outpost_screen.cancel_selection()
-					check(host.state.salvage == balance, "Cancelling the card picker is free")
+					modal.decline_button.pressed.emit()
+					while modal.closing: await process_frame
+					check(host.state.salvage == balance and not modal.shade.visible, "Cancelling the card gallery is free")
 					host.approach_buttons[slot].pressed.emit()
-					picker.select(1)
-					picker.item_selected.emit(1)
-					check(host.state.salvage == balance and not host.confirm_button.disabled, "Selection alone is free")
-				host.confirm_button.pressed.emit()
-				host.confirm_button.pressed.emit()
+					modal.gallery.grid.get_child(0).pressed.emit()
+					check(host.state.salvage == balance and not modal.confirm_button.disabled, "Selection alone is free")
+					modal.confirm_button.pressed.emit()
+					modal.confirm_button.pressed.emit()
+					while modal.closing: await process_frame
+				else:
+					host.confirm_button.pressed.emit()
+					host.confirm_button.pressed.emit()
 				if slot in [1, 3]:
 					check(host.view_kind == "outcome" and not host.state.pending_choice.is_empty(), "Existing paid non-card choice")
 					var stale_choice: Button = host.grid.get_child(0)

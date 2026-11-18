@@ -1,6 +1,7 @@
 extends VBoxContainer
 # RESPONSIBILITY: Preview Hull gain and Salvage cost; never spend or modify game state.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
+const Repairs = preload("res://scripts/repair_rules.gd")
 const HullBar = preload("res://scripts/hull_bar.gd")
 var hull_text: Label
 var bar: Control
@@ -26,10 +27,10 @@ func _init() -> void:
 
 
 func show_repair(
-	hull: int, capacity: int, salvage: int, amount: int, unit_cost: int, plating: bool = false
+	hull: int, capacity: int, salvage: int, amount: int, unit_cost: int, plating: bool = false, points_per_unit: int = 1
 ) -> void:
 	var gain: int = maxi(0, amount)
-	var cost: int = gain * unit_cost
+	var cost: int = Repairs.quantity_cost(gain, unit_cost, points_per_unit)
 	var result: int = hull + gain
 	hull_text.text = (
 		"%s %d → %d/%d   (+%d %s)"
@@ -42,11 +43,11 @@ func show_repair(
 	bar.update_hull(hull, capacity)
 	bar.tooltip_text = "Red: current Hull · Green: repair gain · Amber: plating"
 	cost_text.text = (
-		"🪨 Salvage %d → %d   (−%d) · %d / %s"
-		% [salvage, salvage - cost, cost, unit_cost, "plating" if plating else "Hull"]
+		"🪨 Salvage %d → %d   (−%d) · %d / %d %s"
+		% [salvage, salvage - cost, cost, unit_cost, points_per_unit, "plating" if plating else "Hull"]
 	)
 	cost_text.add_theme_color_override("font_color", Color(.95, .78, .46))
 	tooltip_text = (
-		"%d Salvage restores 1 %s. Preview only; confirm to spend."
-		% [unit_cost, "plating" if plating else "Hull"]
+		"%d Salvage restores up to %d %s. Preview only; confirm to spend."
+		% [unit_cost, points_per_unit, "plating" if plating else "Hull"]
 	)

@@ -75,6 +75,8 @@ var transition: CanvasLayer
 enum Phase { OVERVIEW, TRAVELING, CHASEDOWN, DESTINATION, RESOLVING, REWARD, BATTLE_ENTRY, BATTLE, FTL, INTRO, EXITED }
 var phase: Phase = Phase.OVERVIEW
 var _deck_trim_previous_phase := -1
+var _shop_slot := -1
+var _shop_revision := -1
 var _presentation_revision: int = 0
 var transitioning: bool:
 	get: return phase in [Phase.BATTLE_ENTRY, Phase.FTL, Phase.INTRO]
@@ -144,7 +146,8 @@ var approach_buttons: Array[Button]:
 	get: return outpost_screen.buttons if is_instance_valid(outpost_screen) else screen.approach_buttons
 var view_kind: String:
 	get:
-		if is_instance_valid(card_management) and card_management.shade.visible and not card_management.closing:
+		if (is_instance_valid(card_management) and card_management.shade.visible
+			and not card_management.closing and card_management.mode != "purchase"):
 			return "replacement" if card_management.mode == "replace" else "outcome"
 		return screen.kind if is_instance_valid(screen) else ""
 var selected_encounter: int = -1
@@ -170,11 +173,13 @@ func _ready() -> void:
 	card_management.declined.connect(_management_declined)
 	card_management.save_quit_button.visible = persistence_enabled
 	card_management.save_quit_requested.connect(func():
-		if phase == Phase.REWARD and not card_management.closing: _save_and_quit())
+		if (phase == Phase.REWARD or card_management.mode == "purchase") and not card_management.closing: _save_and_quit())
 	card_management.closed.connect(func():
 		screen.process_mode = Node.PROCESS_MODE_INHERIT
 		_card_owner = null
 		_card_revision = -1
+		_shop_slot = -1
+		_shop_revision = -1
 		if _deck_trim_previous_phase >= 0:
 			if phase == Phase.REWARD:
 				phase = _deck_trim_previous_phase as Phase
@@ -875,6 +880,7 @@ func show_outpost() -> void:
 	outpost_screen.compact = _uses_3d_map()
 	view.add_child(outpost_screen)
 	outpost_screen.configure(state, screen.allows_activation)
+	outpost_screen.card_purchase_requested.connect(_present_shop_cards.bind(outpost_screen))
 	outpost_screen.purchase_requested.connect(_purchase_outpost_service.bind(outpost_screen))
 	if inspecting:
 		for button in outpost_screen.buttons: button.disabled = true
@@ -951,6 +957,31 @@ func _confirm_approach() -> void:
 		_survey(selected_encounter)
 	elif selected_approach >= 0:
 		_approach(selected_encounter, selected_approach, _uses_3d_map())
+
+
+func _present_shop_cards(slot: int, revision: int, source: OutpostScreen) -> void:
+	if (inspecting or transitioning or presenting_outcome or phase == Phase.EXITED
+		or source != outpost_screen or revision != state.service_revision
+		or card_management.shade.visible or not state.service_locked_reason(slot).is_empty()):
+		return
+	var offers: Array[Resource] = state.service_card_offers(slot)
+	if offers.is_empty():
+		return
+	_shop_slot = slot
+	_shop_revision = revision
+	_card_owner = state
+	_card_revision = _presentation_revision
+	source.cancel_selection()
+	screen.process_mode = Node.PROCESS_MODE_DISABLED
+	var price: int = state.service_cost(slot)
+	card_management.present("purchase", offers, 0, null, state.deck_limit(),
+		"%d Salvage · Balance after purchase: %d" % [price, state.salvage - price])
+
+
+func _shop_choice_current(revision: int) -> bool:
+	return (card_management.mode == "purchase" and revision == card_management.revision
+		and _presentation_current(_card_revision, _card_owner) and view_kind == "poi"
+		and is_instance_valid(outpost_screen) and _shop_slot >= 0)
 
 
 func _purchase_outpost_service(
@@ -1085,6 +1116,14 @@ func _management_current(revision: int) -> bool:
 
 
 func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
+	if mode == "purchase":
+		if _shop_choice_current(revision):
+			var slot := _shop_slot
+			var shop_revision := _shop_revision
+			var offers: Array[Resource] = state.service_card_offers(slot)
+			card_management.dismiss(true)
+			_purchase_outpost_service(slot, 0, shop_revision, offers.find(card), outpost_screen)
+		return
 	if not _management_current(revision):
 		return
 	match mode:
@@ -1102,6 +1141,9 @@ func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
 
 
 func _management_declined(revision: int) -> void:
+	if _shop_choice_current(revision):
+		card_management.dismiss()
+		return
 	if _management_current(revision):
 		if card_management.mode == "trim":
 			card_management.dismiss()

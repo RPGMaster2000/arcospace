@@ -81,7 +81,7 @@ script = ExtResource("Outcome")
 blurb = "Relief work earns valuable equipment."
 salvage = 8
 next_battle = {
-"crew": 3,
+"crew": 5,
 "materials": -4
 }
 
@@ -90,7 +90,7 @@ script = ExtResource("Outcome")
 blurb = "Relief work earns valuable equipment."
 salvage = 8
 next_battle = {
-"crew": 3,
+"crew": 5,
 "materials": -4
 }
 

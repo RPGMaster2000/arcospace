@@ -41,8 +41,10 @@ static func reward_requirement(state: Resource, approach: Resource) -> RefCounte
 		and (not state.poi_effects.mothership.is_empty() or state.defense.complete)
 	):
 		reason = "Mothership research is already active or the system is secured"
-	if state.defense.complete and (reward.has("pause") or reward.has("reduction")):
+	if state.defense.complete and (reward.has("pause") or reward.has("reduction") or reward.has("pressure_relief")):
 		reason = "System secured; Pressure effects are no longer needed"
+	if int(reward.get("hull", 0)) < 0 and state.hull <= -int(reward.hull):
+		reason = "Requires more than %d Hull" % -int(reward.hull)
 	if reward.has("cards"):
 		if _tier_one_count(state) < 2:
 			reason = "Fewer than two eligible unowned Tier 1 cards remain"
@@ -90,6 +92,7 @@ static func _apply_reward(state: Resource, index: int, approach: Resource) -> vo
 	var generator := reward_rng(state, index)
 	state.last_poi_success = 1
 	state.last_outcome = approach.get_meta("strategic_description")
+	state.salvage -= approach.salvage_cost
 	_apply_salvage(state, reward, generator)
 	_apply_effects(state, reward)
 	_apply_inventory(state, index, reward, generator)
@@ -106,6 +109,8 @@ static func _apply_salvage(
 
 
 static func _apply_effects(state: Resource, reward: Dictionary) -> void:
+	if reward.has("pressure_relief"):
+		state.defense.relieve_pressure(reward.pressure_relief)
 	if reward.has("production"):
 		var boost: Dictionary = reward.production
 		state.poi_effects.grant_production(boost.category, boost.amount, boost.battles)
@@ -127,7 +132,8 @@ static func _apply_inventory(
 	if reward.has("next_battle"):
 		state.add_modifiers(reward.next_battle)
 	if reward.has("hull"):
-		state.hull = mini(state.ship().hull_capacity, state.hull + int(reward.hull))
+		state.hull += int(reward.hull)
+		if reward.hull > 0: state.hull = mini(state.ship().hull_capacity, state.hull)
 	if reward.has("turret"):
 		state._install_poi_turret(index)
 	if reward.has("decoy"):

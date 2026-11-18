@@ -27,41 +27,47 @@ static func definitions(id: String) -> Array:
 	match id:
 		"mining_operation": return [
 			row("Strip the Facility", "+12 Salvage", 2, {"salvage":12}),
-			row("Recover Industrial Equipment", "+1 Materials production · 3 battles", 4, production("synthesizer",1,3)),
+			row("Recover Industrial Equipment", "+2 Materials production · 3 battles", 4, production("synthesizer",2,3)),
 			row("Restore Defense Platform", "Free Kinetic Turret at this location", 5, {"turret":true}),
 			row("Automated Extraction", "+18 Salvage", 6, {"salvage":18}, "synthesizer"),
 			row("Reactivate Extraction", "Extraction online · +%d Salvage every %d strategic seconds · Maximum %d"
 				% [Effects.EXTRACTION_PAYOUT, Effects.EXTRACTION_INTERVAL, Effects.EXTRACTION_CAP], 4, {"extraction":true})]
 		"research_station": return [
 			row("Recover Card Schematics", "Two random Tier 1 cards · keep both", 4, {"cards":2}),
-			row("Experimental Weapons", "+1 Energy production · 3 battles", 4, production("reactor",1,3)),
+			row("Experimental Weapons", "+2 Energy production · 3 battles", 4, production("reactor",2,3)),
 			row("Analyze Mothership Defenses", "Player card damage bypasses mothership Shields · this system", 6, {"mothership":"penetration"}),
-			row("Extract Targeting Algorithms", "+50% player card damage against mothership · this system", 6, {"mothership":"damage"}, "reactor")]
+			row("Extract Targeting Algorithms", "+50% player card damage against mothership · this system", 6, {"mothership":"damage"}, "reactor"),
+			row("Deploy Signal Mask", "Spend 15 Salvage · Pause Pressure for 25 strategic seconds", 5,
+				{"pause":Effects.MAX_PRESSURE_PAUSE}, "", 15)]
 		"spatial_anomaly": return [
-			row("Stabilize Temporal Field", "Pause Pressure accumulation · 15 strategic seconds", 3, {"pause":15.0}),
-			row("Dilate Local Time", "Half Pressure accumulation · 30 strategic seconds", 3, {"reduction":30.0}),
+			row("Stabilize Temporal Field", "Pause Pressure accumulation · 12 strategic seconds", 3, {"pause":12.0}),
+			row("Dilate Local Time", "Half Pressure accumulation · 18 strategic seconds", 3, {"reduction":18.0}),
 			row("Harvest Exotic Fuel", "+50% map travel speed · 30 distance units", 3, {"fuel":30.0}),
-			row("Reactor Synchronization", "+2 Energy production · 2 battles", 5, production("reactor",2,2), "reactor")]
+			row("Reactor Synchronization", "+3 Energy production · 2 battles", 5, production("reactor",3,2), "reactor")]
 		"gas_giant": return [
-			row("Atmospheric Sampling", "+6 Energy next battle", 2, {"next_battle":{"energy":6}}),
-			row("Gas Harvesting", "+1 Energy production · 2 battles", 4, production("reactor",1,2)),
-			row("Precision Skimming", "+8 Energy next battle · +4 Salvage", 4, {"next_battle":{"energy":8},"salvage":4}, "reactor")]
+			row("Atmospheric Sampling", "+9 Energy next battle", 2, {"next_battle":{"energy":9}}),
+			row("Gas Harvesting", "+2 Energy production · 2 battles", 4, production("reactor",2,2)),
+			row("Precision Skimming", "+12 Energy next battle · +4 Salvage", 4, {"next_battle":{"energy":12},"salvage":4}, "reactor")]
 		"distress_signal": return [
 			row("Recover Supplies", "+8 Salvage", 2, {"salvage":8}),
-			row("Rescue Crew", "+1 Crew production · 2 battles", 4, production("quarters",1,2)),
-			row("Salvage Equipment", "Two random Tier 1 cards · keep both", 4, {"cards":2}, "quarters")]
+			row("Rescue Crew", "+2 Crew production · 2 battles", 4, production("quarters",2,2)),
+			row("Salvage Equipment", "Two random Tier 1 cards · keep both", 4, {"cards":2}, "quarters"),
+			row("Silence the Distress Beacon", "−8 Pressure · −3 Energy next battle", 3,
+				{"pressure_relief":8.0, "next_battle":{"energy":-3}})]
 		"derelict_starship": return [
 			row("External Salvage", "+10 Salvage", 2, {"salvage":10}),
 			row("Recover Armaments", "Two random Tier 1 cards · keep both", 4, {"cards":2}),
-			row("Engineering Recovery", "+1 Materials production · 2 battles", 4, production("synthesizer",1,2), "synthesizer"),
+			row("Engineering Recovery", "+2 Materials production · 2 battles", 4, production("synthesizer",2,2), "synthesizer"),
 			row("Recover Tactical Decoy", "+1 Tactical Decoy Beacon", 3, {"decoy":true})]
 		"radiation_nebula": return [
 			row("Collect Isotopes", "+6–10 Salvage", 3, {"salvage_range":[6,10]}),
-			row("Charge Capacitors", "+8 Energy next battle", 3, {"next_battle":{"energy":8}}),
-			row("Shielded Sampling", "+1 Energy production · 2 battles", 4, production("reactor",1,2), "reactor")]
+			row("Charge Capacitors", "+12 Energy next battle", 3, {"next_battle":{"energy":12}}),
+			row("Shielded Sampling", "+2 Energy production · 2 battles", 4, production("reactor",2,2), "reactor"),
+			row("Ground the Tracking Field", "Sacrifice 5 Hull · −18 Pressure", 4,
+				{"pressure_relief":18.0, "hull":-5})]
 		"pirate_debris_field": return [
 			row("Recover Cargo", "+8–12 Salvage", 3, {"salvage_range":[8,12]}),
-			row("Recover Munitions", "+8 Materials next battle", 3, {"next_battle":{"materials":8}}),
+			row("Recover Munitions", "+12 Materials next battle", 3, {"next_battle":{"materials":12}}),
 			row("Sort Wreckage", "Two random Tier 1 cards · keep both", 4, {"cards":2}, "synthesizer")]
 		"raider_cache": return [
 			row("Open Supply Crates", "+8–12 Salvage", 3, {"salvage_range":[8,12]}),
@@ -69,26 +75,28 @@ static func definitions(id: String) -> Array:
 			row("Restore EMP Cells", "+2 EMP Pulse charge next battle", 4, {"next_battle":{"emp_pulse_charge":2}}, "reactor")]
 		"quarantined_colony": return [
 			row("Recover Emergency Stores", "+8 Salvage", 3, {"salvage":8}),
-			row("Recruit Specialists", "+1 Crew production · 2 battles", 4, production("quarters",1,2)),
+			row("Recruit Specialists", "+2 Crew production · 2 battles", 4, production("quarters",2,2)),
 			row("Medical Assistance", "Repair 8 Hull", 4, {"hull":8}, "quarters")]
 		"fuel_depot": return [
 			row("Recover Fuel Reserves", "+6–10 Salvage", 2, {"salvage_range":[6,10]}),
-			row("Refill Capacitors", "+8 Energy next battle", 3, {"next_battle":{"energy":8}})]
+			row("Refill Capacitors", "+12 Energy next battle", 3, {"next_battle":{"energy":12}})]
 		"sensor_relay", "ancient_navigation_array": return [
 			row("Recover Navigation Archives", "+8 Salvage", 2, {"salvage":8}),
-			row("Decode Tactical Archives", "Two random Tier 1 cards · keep both", 4, {"cards":2}, "quarters")]
+			row("Decode Tactical Archives", "Two random Tier 1 cards · keep both", 4, {"cards":2}, "quarters"),
+			row("Jam the Pursuit Channel", "−6 Pressure", 3, {"pressure_relief":6.0})]
 		"unstable_wormhole": return [
 			row("Recover Displaced Cargo", "+8–12 Salvage", 3, {"salvage_range":[8,12]}),
-			row("Tap Exotic Energy", "+8 Energy next battle", 3, {"next_battle":{"energy":8}})]
+			row("Tap Exotic Energy", "+12 Energy next battle", 3, {"next_battle":{"energy":12}})]
 	return []
 
 static func production(category: String, amount: int, battles: int) -> Dictionary:
 	return {"production":{"category":category,"amount":amount,"battles":battles}}
 
-static func row(title: String, description: String, seconds: int, reward: Dictionary, requirement: String = "") -> Dictionary:
+static func row(title: String, description: String, seconds: int, reward: Dictionary, requirement: String = "", salvage_cost: int = 0) -> Dictionary:
 	var approach := Approach.new()
 	approach.title = title
 	approach.requirement = requirement
+	approach.salvage_cost = salvage_cost
 	approach.minimum_production = 3
 	approach.success_chance = 1.0
 	approach.success = Outcome.new()

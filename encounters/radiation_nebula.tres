@@ -62,7 +62,7 @@ script = ExtResource("Outcome")
 blurb = "Energy-rich particles are recovered at the expense of shielding."
 salvage = 10
 next_battle = {
-"energy": 5,
+"energy": 8,
 "shields": -4
 }
 
@@ -86,7 +86,7 @@ blurb = "Specialist shielding limits the damage to your salvage team."
 salvage = 12
 hull = -2
 next_battle = {
-"energy": 5
+"energy": 8
 }
 
 [sub_resource type="Resource" id="Approach3"]

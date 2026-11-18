@@ -111,6 +111,7 @@ func matrix() -> void:
 				var state := fresh(id, seed_value)
 				var index: int = state.navigation_origin
 				var approach: Resource = state.poi_approaches(index)[slot]
+				state.salvage = approach.salvage_cost
 				var label := "%s:%d:%d" % [id, slot, seed_value]
 				var loaded := roundtrip(state, label + " before")
 				var result := attempt(state, slot, label)
@@ -142,7 +143,8 @@ func matrix() -> void:
 					)
 				check(
 					is_equal_approx(
-						state.defense.pressure, float(approach.get_meta("strategic_seconds"))
+						state.defense.pressure, maxf(0.0, float(approach.get_meta("strategic_seconds"))
+							- float(approach.get_meta("strategic_reward").get("pressure_relief", 0.0)))
 					),
 					label + ": exact strategic cost"
 				)
@@ -232,7 +234,7 @@ func timing() -> void:
 	state = fresh("spatial_anomaly")
 	state.poi_effects.pause = 5
 	check(
-		attempt(state, 0, "pause refresh").ok and state.poi_effects.pause == 15,
+		attempt(state, 0, "pause refresh").ok and state.poi_effects.pause == 12,
 		"Existing duration consumed before reward refresh"
 	)
 	state = fresh("research_station")

@@ -137,7 +137,7 @@ func present(
 	consumed = false
 	closing = false
 	confirm_button.disabled = true
-	decline_button.visible = mode in ["replace", "trim"]
+	decline_button.visible = mode in ["replace", "trim", "purchase"]
 	decline_button.text = "Keep Current Deck" if mode == "replace" else "Back"
 	decline_button.disabled = false
 	match mode:
@@ -146,6 +146,11 @@ func present(
 			instruction.text = "Choose one reward. Select a card to compare its details."
 			context.text = "One card reward"
 			confirm_button.text = "Acquire Card"
+		"purchase":
+			heading.text = "Trading Outpost · Buy a Card"
+			instruction.text = "Select a card to preview it. Salvage is spent on confirmation."
+			context.text = result_context
+			confirm_button.text = "Confirm Purchase"
 		"card_batch":
 			heading.text = "Two Tier 1 Cards"
 			instruction.text = "Keep both rewards. Select either card to inspect it; confirmation awards both."
@@ -166,9 +171,9 @@ func present(
 			instruction.text = "Select an owned card to remove in exchange for the reward."
 			context.text = "Keep or replace"
 			confirm_button.text = "Replace Selected Card"
-	if not result_context.is_empty():
+	if mode != "purchase" and not result_context.is_empty():
 		instruction.text = result_context + " · " + instruction.text
-	gallery.show_toolbar = mode not in ["card","card_batch"]
+	gallery.show_toolbar = mode not in ["card","card_batch","purchase"]
 	gallery.filters.visible = gallery.show_toolbar
 	gallery.category = "All"
 	gallery.sort_mode = 0
@@ -291,7 +296,7 @@ func _confirm() -> void:
 	confirmed.emit(mode, selected_card, revision)
 
 func _decline() -> void:
-	if consumed or closing or not shade.visible or mode not in ["replace", "trim"] or not decline_button.visible:
+	if consumed or closing or not shade.visible or mode not in ["replace", "trim", "purchase"] or not decline_button.visible:
 		return
 	consumed = true
 	confirm_button.disabled = true
@@ -348,7 +353,8 @@ func _input(event: InputEvent) -> void:
 	if inspection != null and inspection.is_open():
 		return
 	if shade.visible and event.is_action_pressed("ui_cancel"):
-		# Mandatory rewards have no new cancel path; replacement has its explicit decline.
+		if mode == "purchase":
+			_decline()
 		get_viewport().set_input_as_handled()
 
 func _exit_tree() -> void:

@@ -319,6 +319,11 @@ func moving_route(unit: Dictionary) -> Dictionary:
 
 var poi_effects: RefCounted # Borrowed state-owned ledger, never copied or serialized here.
 
+func relieve_pressure(amount: float) -> void:
+	# Escalation and reveal are latched. Relief only adjusts the current meter.
+	pressure = maxf(0.0, pressure - maxf(0.0, amount))
+
+
 func pressure_rate() -> float:
 	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0) * (poi_effects.pressure_multiplier() if poi_effects != null else 1.0)
 
@@ -617,7 +622,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		copy.spawned = bool(copy.get("spawned", false))
 		units.append(copy)
 	if v2:
-		if reveal_pending or revealed != (pressure >= reveal_threshold() - 0.00000001 or complete): return false
+		if reveal_pending or (not revealed and (pressure >= reveal_threshold() - 0.00000001 or complete)): return false
 	else:
 		if not revealed and (neutralized_attackers() >= 1 or complete or reveal_pending): return false
 		if revealed and not (neutralized_attackers() >= 1 or mothership_advancing or mothership_destroyed() or complete): return false

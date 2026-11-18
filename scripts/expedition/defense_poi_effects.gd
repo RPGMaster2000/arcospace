@@ -2,6 +2,8 @@ extends RefCounted
 ## Compact duration ledger owned by ExpeditionState. No clocks, RNG or scene nodes.
 ## Callers supply completed battles, committed strategic seconds and actual distance.
 const CATEGORIES = ["synthesizer", "reactor", "quarters"]
+const MAX_PRESSURE_PAUSE := 25.0
+const MAX_PRODUCTION_BONUS := 3
 const EXTRACTION_INTERVAL := 15.0
 const EXTRACTION_PAYOUT := 3
 const EXTRACTION_CAP := 12
@@ -25,13 +27,13 @@ func restore(value: Variant) -> bool:
 	if not value is Dictionary or value.size() != (6 if value.has("extraction") else 5): return false
 	if not value.get("production") is Dictionary or value.production.size() > 3: return false
 	if value.get("mothership") not in ["", "penetration", "damage"]: return false
-	var limits := {"pause":15.0,"reduction":30.0,"fuel":30.0}
+	var limits := {"pause":MAX_PRESSURE_PAUSE,"reduction":30.0,"fuel":30.0}
 	for key in limits:
 		if not number(value.get(key), 0, limits[key]): return false
 	for category in value.production:
 		var item: Variant = value.production[category]
 		if category not in CATEGORIES or not item is Dictionary or item.size() != 2: return false
-		if not integer(item.get("amount"), 1, 2) or not integer(item.get("battles"), 1, 3): return false
+		if not integer(item.get("amount"), 1, MAX_PRODUCTION_BONUS) or not integer(item.get("battles"), 1, 3): return false
 	stop_extraction()
 	if value.has("extraction"):
 		var extraction: Variant = value.extraction
@@ -60,7 +62,7 @@ static func integer(value: Variant, minimum: int, maximum: int) -> bool:
 	return number(value, minimum, maximum) and value == floor(float(value))
 
 func grant_production(category: String, amount: int, battles: int) -> void:
-	assert(category in CATEGORIES and amount >= 1 and amount <= 2 and battles >= 1 and battles <= 3)
+	assert(category in CATEGORIES and amount >= 1 and amount <= MAX_PRODUCTION_BONUS and battles >= 1 and battles <= 3)
 	var existing: Dictionary = production.get(category, {"amount":0,"battles":0})
 	# One bounded entry per category. Retain stronger magnitude and longer duration.
 	production[category] = {"amount":maxi(amount, existing.amount),"battles":maxi(battles, existing.battles)}

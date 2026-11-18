@@ -8,14 +8,14 @@
 script = ExtResource("Outcome")
 blurb = "Fuel samples are safely condensed."
 next_battle = {
-"energy": 3
+"energy": 5
 }
 
 [sub_resource type="Resource" id="Success0"]
 script = ExtResource("Outcome")
 blurb = "Fuel samples are safely condensed."
 next_battle = {
-"energy": 3
+"energy": 5
 }
 
 [sub_resource type="Resource" id="Approach0"]
@@ -28,7 +28,7 @@ failure = SubResource("Failure0")
 script = ExtResource("Outcome")
 blurb = "Turbulence strains the shields, but fuel is recovered."
 next_battle = {
-"energy": 2,
+"energy": 3,
 "shields": -3
 }
 
@@ -36,7 +36,7 @@ next_battle = {
 script = ExtResource("Outcome")
 blurb = "High-grade fuel replenishes your energy reserves."
 next_battle = {
-"energy": 6
+"energy": 9
 }
 
 [sub_resource type="Resource" id="Approach1"]
@@ -50,7 +50,7 @@ failure = SubResource("Failure1")
 script = ExtResource("Outcome")
 blurb = "The skimmer gathers fuel but stresses the shields."
 next_battle = {
-"energy": 3,
+"energy": 5,
 "shields": -4
 }
 
@@ -59,7 +59,7 @@ script = ExtResource("Outcome")
 blurb = "Precise skimming captures a clean fuel stream."
 salvage = 2
 next_battle = {
-"energy": 8
+"energy": 12
 }
 
 [sub_resource type="Resource" id="Approach2"]
@@ -75,7 +75,7 @@ script = ExtResource("Outcome")
 blurb = "Fuel is recovered, but crews need time to recover."
 next_battle = {
 "crew": -5,
-"energy": 4
+"energy": 6
 }
 
 [sub_resource type="Resource" id="Success3"]
@@ -83,7 +83,7 @@ script = ExtResource("Outcome")
 blurb = "Your crews secure exceptional reactor fuel."
 salvage = 5
 next_battle = {
-"energy": 12
+"energy": 18
 }
 
 [sub_resource type="Resource" id="Approach3"]
