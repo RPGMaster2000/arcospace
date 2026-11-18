@@ -25,7 +25,53 @@ func fresh(id: String, seed_value: int = 1042) -> Resource:
 			state.navigation_origin = index
 			break
 	return state
+func check_rebalance() -> void:
+	var state := fresh("distress_signal")
+	var index: int = state.navigation_origin
+	state.defense.pressure = 20.0
+	check(state.resolve_approach(index, 3) and state.defense.pressure == 15.0
+		and state.modifier_value("energy") == -3, "Common relief pays time and a next-battle penalty")
+	state = fresh("research_station")
+	index = state.navigation_origin
+	state.salvage = 14
+	check(not state.resolve_approach(index, 4) and state.defense.pressure == 0.0,
+		"Unfunded pressure pause spends nothing")
+	state.salvage = 15
+	check(state.resolve_approach(index, 4) and state.salvage == 0 and state.defense.pressure == 5.0
+		and state.poi_effects.pause == 25.0, "Signal mask spends Salvage and activates after its time cost")
+	state = fresh("radiation_nebula")
+	index = state.navigation_origin
+	state.hull = 5
+	check(not state.resolve_approach(index, 3) and state.hull == 5, "Nebula refuses lethal Hull sacrifice")
+	state.hull = 12
+	state.defense.pressure = state.defense.reveal_threshold()
+	state.defense.revealed = true
+	check(state.resolve_approach(index, 3) and state.hull == 7
+		and state.defense.pressure == state.defense.reveal_threshold() - 14.0
+		and state.defense.revealed, "Large relief costs Hull and keeps the mothership revealed")
+	var restored: Resource = Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state))), state.rules)
+	check(restored != null and restored.defense.revealed and restored.defense.pressure == state.defense.pressure,
+		"Pressure below the reveal threshold can be saved after reveal")
+	state.defense.mothership_advancing = true
+	state.defense.relieve_pressure(1000.0)
+	check(state.defense.mothership_advancing and state.defense.pressure == 0.0,
+		"Relief clamps to zero and never stops an advancing mothership")
+	state = fresh("gas_giant")
+	check(state.resolve_approach(state.navigation_origin, 0) and state.modifier_value("energy") == 9,
+		"Atmospheric sampling grants nine Energy")
+	state = fresh("pirate_debris_field")
+	check(state.resolve_approach(state.navigation_origin, 1) and state.modifier_value("materials") == 12,
+		"Munitions grant twelve Materials")
+	state = fresh("spatial_anomaly")
+	state.production_upgrades.reactor = 1
+	var permanent: int = state.production("reactor")
+	check(state.resolve_approach(state.navigation_origin, 3)
+		and state.poi_effects.production.get("reactor", {}) == {"amount": 3, "battles": 2}
+		and state.production("reactor") == permanent, "Reactor synchronization grants temporary +3 production")
+
+
 func run_resolution_checks() -> void:
+	check_rebalance()
 	var state := fresh("mining_operation")
 	var index: int = state.navigation_origin
 	var rng: int = state.rng.state
@@ -36,7 +82,7 @@ func run_resolution_checks() -> void:
 	state = fresh("spatial_anomaly")
 	index = state.navigation_origin
 	check(state.resolve_approach(index,0), "Pressure pause resolves")
-	check(state.defense.pressure == 3 and state.poi_effects.pause == 15, "Acquisition cost occurs before the new effect activates")
+	check(state.defense.pressure == 3 and state.poi_effects.pause == 12, "Acquisition cost occurs before the new effect activates")
 	state = fresh("mining_operation")
 	index = state.navigation_origin
 	check(state.resolve_approach(index,2), "Free turret resolves through ordinary PoI entry")

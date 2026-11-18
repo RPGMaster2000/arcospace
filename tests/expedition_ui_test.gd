@@ -55,14 +55,14 @@ func run() -> void:
 	check(host.approach_note.text.contains("No pressure"), "Service identified separately")
 	var outpost = host.outpost_screen
 	outpost.select_service(2)
-	check(outpost.card_picker.visible and outpost.card_picker.item_count == 7, "Six card offers plus selector prompt")
+	var modal = host.card_management
+	check(modal.shade.visible and modal.mode == "purchase" and modal.gallery.cards.size() == 6, "Six cards appear in the standard purchase gallery")
 	await snapshot("cards")
 	var before: int = host.state.acquired_cards.size()
 	var salvage_before: int = host.state.salvage
-	outpost.card_picker.select(1)
-	outpost.card_picker.item_selected.emit(1)
+	modal.gallery.grid.get_child(0).pressed.emit()
 	check(host.state.acquired_cards.size() == before and host.state.salvage == salvage_before, "Preview requires confirmation")
-	outpost.confirm_button.pressed.emit()
+	modal.confirm_button.pressed.emit()
 	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real confirmation button grants exactly one card")
 	check(host.view_kind == "poi" and host.selected_encounter == host.state.SERVICE_INDEX, "Card purchase returns directly to station")
 	await snapshot("outcome")

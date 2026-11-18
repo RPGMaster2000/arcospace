@@ -22,7 +22,7 @@ ModifierDisplay Inspector ftl_offline_seconds (1.45) and ftl_online_seconds (0.6
 
 On the **star-system screen**, tap the existing Hull status button. Its existing
 information overlay now includes quantity controls (minus/slider/plus), affordable
-maximum, resulting Hull and total cost. **Confirm** spends **1 Salvage/Hull** and
+maximum, resulting Hull and total cost. **Confirm** spends **1 Salvage per two Hull**, rounding the total up for odd quantities, and
 repairs permanent Hull only, never past the selected ship's normal capacity. Merely
 changing a quantity does not spend. Full Hull and insufficient Salvage retain the
 information with disabled controls and an explanation. Repairs are unavailable in
@@ -42,7 +42,7 @@ in place, using the same confirmation and quantity selector:
 amount, funds and confirmation revision before spending; successful transactions
 consume that revision. Field UI clears its selected amount after confirmation, so
 repeated signals cannot repeat the same purchase. Station availability, escalating
-production prices and other services are unchanged. The star-map field repair and station Hull repair both cost **1 Salvage/Hull**.
+production prices and other services are unchanged.
 
 ### Plating handoff and the agreed PoI rule
 
@@ -84,4 +84,4 @@ desktop rendering do not establish physical Android behavior/performance.
 
 ### Repair previews
 
-Field and station selectors share `scripts/ui/repair_preview.gd`: current Hull → resulting Hull, a red current-Hull bar with a green repair segment (amber for plating), and Salvage before → after with total cost and unit rate. Selection is preview-only until Confirm. The map selector caps field repairs at available Salvage and missing permanent Hull. `RepairRules.FIELD_SALVAGE_PER_HULL` controls the rate. Combat repair cards are unchanged.
+Field and station selectors share `scripts/ui/repair_preview.gd`: current Hull → resulting Hull, a red current-Hull bar with a green repair segment (amber for plating), and Salvage before → after with total cost and unit rate. Selection is preview-only until Confirm. The map selector caps field repairs at available Salvage and missing permanent Hull. Field repairs restore up to two Hull per Salvage and round the price of odd quantities up. Station repair and plating retain their existing rates. Combat repair cards are unchanged.

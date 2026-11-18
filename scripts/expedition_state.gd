@@ -1104,14 +1104,14 @@ func pending_description() -> String:
 func field_repair_limit() -> int:
 	if not field_repairs_open or active_battle >= 0 or not pending_choice.is_empty() or hull <= 0:
 		return 0
-	return Repairs.max_quantity(hull, ship().hull_capacity, salvage, Repairs.FIELD_SALVAGE_PER_HULL)
+	return Repairs.max_quantity(hull, ship().hull_capacity, salvage * Repairs.FIELD_HULL_PER_SALVAGE, 1)
 
 
 # A confirmation is consumed once. A second purchase requires a fresh revision/selection.
 func field_repair(amount: int, revision: int) -> bool:
 	if revision != service_revision or amount <= 0 or amount > field_repair_limit():
 		return false
-	salvage -= Repairs.quantity_cost(amount, Repairs.FIELD_SALVAGE_PER_HULL)
+	salvage -= Repairs.quantity_cost(amount, 1, Repairs.FIELD_HULL_PER_SALVAGE)
 	hull += amount
 	service_revision += 1
 	progress_committed.emit()

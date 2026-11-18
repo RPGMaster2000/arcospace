@@ -100,6 +100,29 @@ func run() -> void:
 	host.show_poi(0) if host.state.encounter_at(0).kind == "poi" else host.show_system()
 	active.purchase_requested.emit(0, 1, host.state.service_revision, -1)
 	check(host.state.salvage == 98, "Navigation invalidates an old purchase request")
+	host.show_outpost()
+	host.outpost_screen.select_service(2)
+	var gallery = host.card_management
+	check(gallery.mode == "purchase" and gallery.confirm_button.disabled,
+		"Trading Outpost opens the shared gallery without an automatic purchase")
+	await capture("card-gallery")
+	check(root.get_visible_rect().encloses(gallery.confirm_button.get_global_rect()),
+		"Purchase confirmation fits the narrow viewport")
+	gallery.gallery.grid.get_child(0).pressed.emit()
+	var price: int = host.state.service_cost(2)
+	var balance: int = host.state.salvage
+	var count: int = host.state.acquired_cards.size()
+	host.state.service_revision += 1
+	gallery.confirm_button.pressed.emit()
+	check(not gallery.shade.visible and host.state.salvage == balance and host.state.acquired_cards.size() == count,
+		"A stale gallery confirmation is rejected without spending")
+	host.show_outpost()
+	host.outpost_screen.select_service(2)
+	gallery.gallery.grid.get_child(0).pressed.emit()
+	gallery.confirm_button.pressed.emit()
+	gallery.confirm_button.pressed.emit()
+	check(host.state.salvage == balance - price and host.state.acquired_cards.size() == count + 1,
+		"A fresh gallery confirmation pays once and awards one selected card")
 	host.free()
 	await process_frame
 	print("Outpost component: %d checks, %d failures" % [checks, failures])

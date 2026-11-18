@@ -28,12 +28,12 @@ func run() -> void:
 		state.salvage = 5
 		check(state.field_repair_limit() == 0 and not state.field_repair(1,state.service_revision), "Closed system view refuses field repair")
 		state.field_repairs_open = true
-		check(state.field_repair_limit() == 5, "Field quantity uses one Salvage per Hull")
+		check(state.field_repair_limit() == 9, "Field quantity caps at missing Hull")
 		var revision: int = state.service_revision
-		for amount in [-1,0,6]: check(not state.field_repair(amount,revision), "Reject invalid field quantity")
+		for amount in [-1,0,10]: check(not state.field_repair(amount,revision), "Reject invalid field quantity")
 		check(state.salvage == 5 and state.hull == cap - 9, "Rejected field repair never spends")
-		check(state.field_repair(4,revision) and state.salvage == 1 and state.hull == cap - 5, "Four Hull costs four Salvage")
-		check(not state.field_repair(1,revision) and state.salvage == 1, "Duplicate field confirmation refused")
+		check(state.field_repair(4,revision) and state.salvage == 3 and state.hull == cap - 5, "Four Hull costs two Salvage")
+		check(not state.field_repair(1,revision) and state.salvage == 3, "Duplicate field confirmation refused")
 		state.active_battle = 0
 		check(not state.field_repair(1,state.service_revision), "No field repairs in combat")
 		state.active_battle = -1
@@ -41,11 +41,11 @@ func run() -> void:
 		check(not state.field_repair(1,state.service_revision), "No repairs during pending choices")
 		state.pending_choice = ""
 		state.salvage = 100
-		check(state.field_repair(5,state.service_revision) and state.hull == cap, "Field repair reaches capacity")
+		check(state.field_repair(5,state.service_revision) and state.hull == cap and state.salvage == 97, "Field repair reaches capacity")
 		check(not state.field_repair(1,state.service_revision), "Field repair cannot create plating")
 		state.salvage = 1
-		state.hull -= 1
-		check(state.field_repair(1,state.service_revision) and state.salvage == 0 and state.hull == cap, "One Salvage buys one field point")
+		state.hull -= 2
+		check(state.field_repair(2,state.service_revision) and state.salvage == 0 and state.hull == cap, "One Salvage buys two field points")
 		state.salvage = 1
 		state.hull -= 1
 		# Same service slot changes state/rate without another action or resource.

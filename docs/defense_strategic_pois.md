@@ -1,7 +1,7 @@
 # Strategic Points of Interest — Defense Phase 1
 
 New Starfront Defense systems replace approach success rolls with guaranteed rewards
-and explicit strategic-time costs. Exploration resources and resolution remain intact.
+and explicit strategic-time costs. Exploration retains its approach probabilities and penalties and shares the increased positive next-battle resource payouts.
 Existing saved systems without `defense_poi_version: 1` retain their old choices until
 entering a newly generated system. No PoI count, layout, orbit, fleet or environmental
 placement rule is changed; opting in consumes no generation RNG.
@@ -10,50 +10,54 @@ placement rule is changed; opting in consumes no generation RNG.
 
 The following table is generated from the reviewed Defense-only catalogue. Requirements
 use permanent production, not temporary combat bonuses. A listed prerequisite means
-level 3. Trading Outpost retains its separate service interface.
+level 3. Trading Outpost retains separate service prices and eligibility. The card service opens the shared card gallery with a purchase price and confirmation.
 
 | PoI | Approach | Guaranteed reward | Strategic seconds | Prerequisite |
 |---|---|---|---:|---|
 | mining_operation | Strip the Facility | +12 Salvage | 2 | — |
-| mining_operation | Recover Industrial Equipment | +1 Materials production · 3 battles | 4 | — |
+| mining_operation | Recover Industrial Equipment | +2 Materials production · 3 battles | 4 | — |
 | mining_operation | Restore Defense Platform | Free Kinetic Turret at this location | 5 | — |
 | mining_operation | Automated Extraction | +18 Salvage | 6 | synthesizer ≥3 |
 | mining_operation | Reactivate Extraction | +3 Salvage every 15 strategic seconds, maximum +12 | 4 | — |
 | research_station | Recover Card Schematics | Two random Tier 1 cards · keep both | 4 | — |
-| research_station | Experimental Weapons | +1 Energy production · 3 battles | 4 | — |
+| research_station | Experimental Weapons | +2 Energy production · 3 battles | 4 | — |
 | research_station | Analyze Mothership Defenses | Player card damage bypasses mothership Shields · this system | 6 | — |
 | research_station | Extract Targeting Algorithms | +50% player card damage against mothership · this system | 6 | reactor ≥3 |
-| spatial_anomaly | Stabilize Temporal Field | Pause Pressure accumulation · 15 strategic seconds | 3 | — |
-| spatial_anomaly | Dilate Local Time | Half Pressure accumulation · 30 strategic seconds | 3 | — |
+| research_station | Deploy Signal Mask | Pause Pressure for 25 strategic seconds | 5 | 15 Salvage |
+| spatial_anomaly | Stabilize Temporal Field | Pause Pressure accumulation · 12 strategic seconds | 3 | — |
+| spatial_anomaly | Dilate Local Time | Half Pressure accumulation · 18 strategic seconds | 3 | — |
 | spatial_anomaly | Harvest Exotic Fuel | +50% map travel speed · 30 distance units | 3 | — |
-| spatial_anomaly | Reactor Synchronization | +2 Energy production · 2 battles | 5 | reactor ≥3 |
-| gas_giant | Atmospheric Sampling | +6 Energy next battle | 2 | — |
-| gas_giant | Gas Harvesting | +1 Energy production · 2 battles | 4 | — |
-| gas_giant | Precision Skimming | +8 Energy next battle · +4 Salvage | 4 | reactor ≥3 |
+| spatial_anomaly | Reactor Synchronization | +3 Energy production · 2 battles | 5 | reactor ≥3 |
+| gas_giant | Atmospheric Sampling | +9 Energy next battle | 2 | — |
+| gas_giant | Gas Harvesting | +2 Energy production · 2 battles | 4 | — |
+| gas_giant | Precision Skimming | +12 Energy next battle · +4 Salvage | 4 | reactor ≥3 |
 | distress_signal | Recover Supplies | +8 Salvage | 2 | — |
-| distress_signal | Rescue Crew | +1 Crew production · 2 battles | 4 | — |
+| distress_signal | Rescue Crew | +2 Crew production · 2 battles | 4 | — |
 | distress_signal | Salvage Equipment | Two random Tier 1 cards · keep both | 4 | quarters ≥3 |
+| distress_signal | Silence the Distress Beacon | −8 Pressure · −3 Energy next battle | 3 | — |
 | derelict_starship | External Salvage | +10 Salvage | 2 | — |
 | derelict_starship | Recover Armaments | Two random Tier 1 cards · keep both | 4 | — |
-| derelict_starship | Engineering Recovery | +1 Materials production · 2 battles | 4 | synthesizer ≥3 |
+| derelict_starship | Engineering Recovery | +2 Materials production · 2 battles | 4 | synthesizer ≥3 |
 | radiation_nebula | Collect Isotopes | +6–10 Salvage | 3 | — |
-| radiation_nebula | Charge Capacitors | +8 Energy next battle | 3 | — |
-| radiation_nebula | Shielded Sampling | +1 Energy production · 2 battles | 4 | reactor ≥3 |
+| radiation_nebula | Charge Capacitors | +12 Energy next battle | 3 | — |
+| radiation_nebula | Shielded Sampling | +2 Energy production · 2 battles | 4 | reactor ≥3 |
+| radiation_nebula | Ground the Tracking Field | −18 Pressure at the cost of 5 Hull | 4 | More than 5 Hull |
 | pirate_debris_field | Recover Cargo | +8–12 Salvage | 3 | — |
-| pirate_debris_field | Recover Munitions | +8 Materials next battle | 3 | — |
+| pirate_debris_field | Recover Munitions | +12 Materials next battle | 3 | — |
 | pirate_debris_field | Sort Wreckage | Two random Tier 1 cards · keep both | 4 | synthesizer ≥3 |
 | raider_cache | Open Supply Crates | +8–12 Salvage | 3 | — |
 | raider_cache | Recover Weapons | Two random Tier 1 cards · keep both | 4 | — |
 | raider_cache | Restore EMP Cells | +2 EMP Pulse charge next battle | 4 | reactor ≥3 |
 | quarantined_colony | Recover Emergency Stores | +8 Salvage | 3 | — |
-| quarantined_colony | Recruit Specialists | +1 Crew production · 2 battles | 4 | — |
+| quarantined_colony | Recruit Specialists | +2 Crew production · 2 battles | 4 | — |
 | quarantined_colony | Medical Assistance | Repair 8 Hull | 4 | quarters ≥3 |
 | fuel_depot | Recover Fuel Reserves | +6–10 Salvage | 2 | — |
-| fuel_depot | Refill Capacitors | +8 Energy next battle | 3 | — |
+| fuel_depot | Refill Capacitors | +12 Energy next battle | 3 | — |
 | sensor_relay, ancient_navigation_array | Recover Navigation Archives | +8 Salvage | 2 | — |
 | sensor_relay, ancient_navigation_array | Decode Tactical Archives | Two random Tier 1 cards · keep both | 4 | quarters ≥3 |
+| sensor_relay, ancient_navigation_array | Jam the Pursuit Channel | −6 Pressure | 3 | — |
 | unstable_wormhole | Recover Displaced Cargo | +8–12 Salvage | 3 | — |
-| unstable_wormhole | Tap Exotic Energy | +8 Energy next battle | 3 | — |
+| unstable_wormhole | Tap Exotic Energy | +12 Energy next battle | 3 | — |
 
 ## Ownership and transaction order
 
@@ -61,7 +65,7 @@ level 3. Trading Outpost retains its separate service interface.
 same ledger for Pressure rates/expiry; neither map nor combat owns a mutable copy.
 `DefensePoiApproaches` builds fresh existing EncounterApproach resources with typed
 reward metadata. State, controller and existing PoI screen use the same mode-aware
-accessor. Shared `.tres` files are unchanged.
+accessor.
 
 Selection validates requirements and reward eligibility before completion. It marks
 the encounter resolved, spends its time through the existing authoritative strategic
@@ -88,11 +92,13 @@ flowchart LR
 
 ## Durations and stacking
 
+Immediate relief is applied after strategic time passes. The meter stops at zero. Relief leaves mothership reveal and advancement active once triggered.
+
 Production bonuses apply to detached player battle setup, leaving permanent ship and
 upgrade eligibility unchanged. Idempotent card-battle result recording
 consumes one duration charge; entry, Retry, missile interception and ordinary PoIs do
 not. Production and fuel survive FTL. Effects in separate production categories coexist.
-The same category retains the greater magnitude and remaining duration, capped at +2
+The same category retains the greater magnitude and remaining duration, capped at +3
 and three battles; bonuses do not add or multiply. Battle completion includes the
 existing card-battle escape resolution. A lost expedition cannot reuse its charges.
 
