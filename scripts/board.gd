@@ -1148,6 +1148,9 @@ func _display_snapshot() -> Dictionary:
 		"upgrades_available": mini(expedition.upgrades_remaining,expedition.upgrade_candidates().size()) if expedition != null and expedition.pending_choice == "upgrade" else 0,
 		"defense_recovery": salvage_rewards.has("recovery"),
 		"system_secured": salvage_rewards.has("secured"),
+		"mothership_destroyed": (expedition != null and expedition.is_defense()
+			and expedition.defense != null and winner == "player"
+			and expedition.defense.unit_for(expedition.active_battle).get("mothership", false)),
 		"in_expedition": expedition != null,
 		"pending_choice": expedition.pending_choice if expedition != null else "",
 		"next_modifier_name": modifier.NAMES[next_modifier] if next_modifier >= 0 else "",
@@ -1287,6 +1290,9 @@ func victory_description() -> String:
 		else:
 			lines.append("Next battle")
 		lines.append_array(bonuses)
+	if expedition != null and expedition.is_defense() and expedition.defense != null:
+		if expedition.defense.mothership_destroyed() and not expedition.defense.complete and expedition.defense.unit_for(expedition.active_battle).get("mothership", false):
+			lines.append("Destroy the remaining forces to liberate the system.")
 	return "\n".join(lines)
 
 
