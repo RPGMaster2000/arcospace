@@ -59,7 +59,8 @@ func run() -> void:
 	state.pending_penalties = {"shields": -4}
 	state.rng.seed = 9223372036854775807
 	state.rng.randf()
-	var offers: Array[Resource] = state.random_card_offers()
+	var offers: Array[Resource] = state.random_card_offers().filter(func(card): return card.max_upgrades > 0)
+	check(not offers.is_empty(), "An upgradeable reward is available for the save test")
 	state.pending_choice = "card"
 	state.card_offers = offers
 	check(store.save_run(state), "Pending offers save")
