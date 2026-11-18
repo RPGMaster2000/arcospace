@@ -67,7 +67,7 @@ func set_summary(data: Dictionary) -> void:
 	if data.winner != "player":
 		cause = "Both ships lost" if data.winner == "draw" else "Your vessel was lost"
 		symbol = "◇"
-	if data.system_secured:
+	if data.system_secured or data.get("mothership_destroyed", false):
 		cause = "Mothership neutralized · allied recovery" if data.escaped_by_ftl else ("Mothership Systems Disabled" if data.result_cause == "systems_failure" else "Mothership Destroyed")
 		if not data.escaped_by_ftl: symbol = "✦"
 	summary = {"cause":cause,"symbol":symbol,"emp":bool(data.escaped_by_ftl),"victory":data.winner == "player",
