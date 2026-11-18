@@ -61,11 +61,12 @@ SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 # modifier preview. Allow software GL to finish the full matrix with global dust.
 # Full real-input upgrade transactions render three production expeditions.
 # Keep every assertion; allow measured software-Vulkan frame/render overhead.
+# The card-motif suite also needs time to tear down the rendered battle on llvmpipe.
 # The fleet case renders eleven combat assemblies plus four viewport/input cases.
 
 # Camera cases retain production-length shots and render three hull classes plus
 # four real-input viewport sizes; budget for software-renderer frame overhead.
-TIMEOUTS = {"enemy_identity_test": 180,"atmospheric_accents_render_test": 240,"modifier_environment_test": 360,"system_variety_render_test": 300,"beam_depth_test": 240,"battlefield_depth_test": 240,"battle_cinematic_test": 360, "battle_departure_test": 240,"faction_expansion_visual_test": 240,"power_allocation_test": 300, "unified_hud_test": 300,
+TIMEOUTS = {"card_motifs_test": 180, "enemy_identity_test": 180,"atmospheric_accents_render_test": 240,"modifier_environment_test": 360,"system_variety_render_test": 300,"beam_depth_test": 240,"battlefield_depth_test": 240,"battle_cinematic_test": 360, "battle_departure_test": 240,"faction_expansion_visual_test": 240,"power_allocation_test": 300, "unified_hud_test": 300,
             "result_upgrade_input_test": 240, "result_animation_test": 180}
 
 

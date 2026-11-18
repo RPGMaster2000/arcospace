@@ -1252,7 +1252,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_ind
 ## Compatibility name: always the unmodified enemy library, never expedition acquisitions.
 func shared_pool() -> Array[Resource]:
 	var pool: Array[Resource] = []
-	pool.assign(Cards.CARDS)
+	pool.assign(Cards.BASE_CARDS)
 	return pool
 
 

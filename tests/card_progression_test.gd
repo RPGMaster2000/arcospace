@@ -56,7 +56,7 @@ func run() -> void:
 		check(production.size() == 3, "Each ship can improve every production type")
 		check(identities.size() == 29, "No duplicate starting identities")
 		var excluded: Dictionary = {}
-		for card in Cards.CARDS:
+		for card in Cards.BASE_CARDS:
 			if card.signature_ship < 0 and not identities.has(card.identity_key()): excluded[card.identity_key()] = false
 		for trial in range(1000):
 			var offers: Array[Resource] = state.random_card_offers()
@@ -96,7 +96,7 @@ func run() -> void:
 			board.get_node("BattleEffects").enabled = false
 			root.add_child(board)
 			board.enemy_timer.stop()
-			check(board.hand.card_pool.size() == 30 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else 88), "Real battle uses separate pools")
+			check(board.hand.card_pool.size() == 30 and board.enemy_hand.card_pool.size() == (board.enemy_ship_data.starting_cards.size() if not board.enemy_ship_data.starting_cards.is_empty() else Cards.BASE_CARDS.size()), "Real battle uses separate pools")
 			for pooled in board.hand.card_pool:
 				if pooled.identity_key() == acquired.identity_key(): check(pooled.upgrade_level == 2, "Upgrades persist into successive battles")
 			for pooled in board.enemy_hand.card_pool: check(pooled.upgrade_level == 0, "Real enemy pool remains base")
@@ -115,12 +115,10 @@ func run() -> void:
 		exhausted.clear()
 		state.acquired_cards = exhausted
 		var unowned_t2: Array[Resource] = []
-		for card in Cards.CARDS:
+		for card in Cards.BASE_CARDS:
 			if card.tier == 2 and not identities.has(card.identity_key()): unowned_t2.append(card)
 		var limited: Array[Resource] = []
 		for slot in range(unowned_t2.size() - 2): limited.append(unowned_t2[slot])
-		for card in Cards.CARDS:
-			if card.tier == 3 and not identities.has(card.identity_key()): limited.append(card)
 		state.acquired_cards = limited
 		check(state.random_card_offers(2).size() == 2, "Two remaining rewards show two choices")
 	check(absf(reward_t2 / 1000.0 - 0.6) < 0.06, "60/40 reward tier weighting")
@@ -160,7 +158,7 @@ func test_enemies() -> void:
 			check(card.upgrade_level == 0 and card in Cards.CARDS, "Enemy draws base library")
 			if card.effects.has("damage"): attack += 1
 			if card.effects.has("hull") or card.effects.has("shields"): defense += 1
-		var eligible := Cards.CARDS.filter(func(card): return card.signature_ship < 0 and card.tier < 3)
+		var eligible := Cards.BASE_CARDS.filter(func(card): return card.signature_ship < 0 and card.tier < 3)
 		check(seen.size() == eligible.size(), "Soft weights retain the eligible library: " + profile.ship_name)
 		print("%s seeded draw sample: attacks %.1f%%; repairs/shields %.1f%%" % [profile.ship_name, attack / 200.0, defense / 200.0])
 		var ai = AI.new()

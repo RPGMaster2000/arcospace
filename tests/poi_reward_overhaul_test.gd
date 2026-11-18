@@ -162,7 +162,7 @@ func services_and_navigation() -> void:
 		run.salvage = 40
 		run.hull = run.ship().hull_capacity - 5
 		var price: int = [5,7,15,35][slot]
-		check(run.purchase_service(slot, run.service_revision, 5), "Purchase service")
+		check(run.purchase_service(slot, run.service_revision, 5, 0 if slot == 2 else -1), "Purchase service")
 		check(run.salvage == 40 - price and run.pressure == 0 and run.ftl_access == access_before and run.encounters == encounters_before, "Service exact price; zero pressure/access change")
 		if slot == 0: check(run.hull == run.ship().hull_capacity, "Repair five")
 		if slot == 1:

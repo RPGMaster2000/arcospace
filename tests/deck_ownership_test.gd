@@ -114,7 +114,10 @@ func _initialize() -> void:
 			check(migrated[field] == baseline.saves[kind][field], "Historic %s ledger survives metagame migration: %s" % [kind, field])
 		if kind == "replacement":
 			var identity: String = loaded.player_pool()[0].identity_key()
-			check(loaded.replace_card(identity) and not loaded.replace_card(identity), "Resumed replacement consumed once")
+			var owned_before: Array[Resource] = loaded.player_pool()
+			check(owned_before.size() == 36 and not loaded.replace_card(identity), "Legacy replacement cannot add a card above the new cap")
+			check(loaded.decline_over_limit_reward() and not loaded.decline_over_limit_reward()
+				and loaded.player_pool() == owned_before, "Declining the legacy replacement preserves every owned card")
 		else:
 			var already: String = loaded.upgraded_this_event.keys()[0]
 			check(not loaded.choose_upgrade(already), "Resumed event retains chosen identities")

@@ -3,7 +3,7 @@ extends RefCounted
 # RESPONSIBILITY: List the Inspector-editable card resources.
 # DOES NOT: Apply effects or manage a hand.
 # EXTEND: Run tools/validate_cards.gd after registering definitions; no runtime validation needed.
-const CARDS = [
+const BASE_CARDS = [
 	preload("res://cards/01_shield_plating.tres"),
 	preload("res://cards/02_shield_array.tres"),
 	preload("res://cards/03_hull_patch.tres"),
@@ -84,6 +84,10 @@ const CARDS = [
 	preload("res://cards/78_industrial_repurposing.tres"),
 	preload("res://cards/79_shield_capacitor.tres"),
 	preload("res://cards/80_boarding_operations.tres"),
+]
+
+# Prototype cards are awarded through victory and the outpost.
+const CARDS = BASE_CARDS + [
 	preload("res://cards/81_emergency_refit_mkii.tres"),
 	preload("res://cards/82_power_siphon.tres"),
 	preload("res://cards/83_boarding_raid.tres"),

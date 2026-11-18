@@ -272,7 +272,7 @@ func test_decks() -> void:
 		pool_before = run.player_pool()
 		run.pending_choice = "card"; run.card_offers = run.random_card_offers(); run.choose_card(0)
 		check(run.decline_card() and not run.decline_card() and run.player_pool() == pool_before, "Decline single use, no mutation")
-		check(run.shared_pool().size()==88, "Enemy pool unaffected by capacity")
+		check(run.shared_pool().size()==Library.BASE_CARDS.size(), "Enemy pool unaffected by capacity")
 		var hand = preload("res://scripts/cards/card_hand.gd").new()
 		hand.card_pool=run.player_pool()
 		var evicted: Resource = run.player_pool()[0]

@@ -100,25 +100,22 @@ func acquired_draw_weights(rules: Resource) -> Dictionary:
 	return result
 
 
-func available_reward_cards(profile: Resource, minimum_tier: int = 1) -> Array[Resource]:
+func available_reward_cards(profile: Resource, minimum_tier: int = 1, include_prototype: bool = true) -> Array[Resource]:
 	var owned: Dictionary = {}
 	for card in player_pool(profile):
 		owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
-	for card in Cards.CARDS:
+	for card in (Cards.CARDS if include_prototype else Cards.BASE_CARDS):
 		if card.tier >= minimum_tier and card.signature_ship < 0 and not owned.has(card.identity_key()):
 			candidates.append(card)
 	return candidates
 
 
 func random_card_offers(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int = 1) -> Array[Resource]:
-	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier)
+	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier, false)
 	var offers: Array[Resource] = []
 	for slot in range(mini(3, candidates.size())):
-		var roll := rng.randf()
-		var preferred_tier := 2 if roll < rules.reward_tier_two_chance else 1
-		if roll >= 0.9 and preferred_tier == 1 and candidates.any(func(card): return card.tier == 3):
-			preferred_tier = 3
+		var preferred_tier := 2 if rng.randf() < rules.reward_tier_two_chance else 1
 		var bucket: Array[Resource] = []
 		for card in candidates:
 			if card.tier == preferred_tier:

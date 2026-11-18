@@ -101,7 +101,7 @@ func deal_player_opening() -> void:
 # Filter eligibility first, roll rarity, then weight identities within that rarity; cost is not a draw filter.
 # EXTEND: New draw weights must preserve _eligible, tier fallback and player/enemy separation.
 func draw_card(excluded_slot: int = -1, required_family: String = "") -> Resource:
-	var pool: Array = card_pool if not card_pool.is_empty() else CardLibrary.CARDS
+	var pool: Array = card_pool if not card_pool.is_empty() else CardLibrary.BASE_CARDS
 	var buckets: Dictionary = {1: [], 2: [], 3: []}
 	for card in pool:
 		# Custom repeated entries are weights, not extra hand slots; acquisitions use identity_weights.
