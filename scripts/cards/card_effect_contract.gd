@@ -12,6 +12,11 @@ const TARGETS = ["self", "enemy"]
 const CATEGORIES = ["offense", "defense", "systems"]
 # Value forms, not runtime dispatch. Every key needs a reviewed consumer decision and parity case.
 const FORMS = {
+	"shield_sacrifice": "number",
+	"hull_sacrifice": "number",
+	"energy_on_shield_break": "number",
+	"materials_from_shields": "number",
+
 	"hull":"number", "shields":"number", "materials":"number", "energy":"number",
 	"crew":"number", "synthesizer":"number", "reactor":"number", "quarters":"number",
 	"damage":"number", "pierce":"fraction", "break_shields":"number",
@@ -25,6 +30,11 @@ const FORMS = {
 # Review ledger: execution, descriptions, targets, modifiers, AI, upgrade inspection.
 # Not a second registry: no cards or handlers are registered here. Details are in the coverage table.
 const COVERAGE = {
+	"shield_sacrifice": "atomic-cost/special/signed/fixed/simulation/special",
+	"hull_sacrifice": "atomic-cost/special/signed/fixed/simulation/special",
+	"energy_on_shield_break": "on-shield-hit/special/conditional/storm/simulation/special",
+	"materials_from_shields": "on-shield-hit/special/conditional/storm/simulation/special",
+
 	"hull":"direct/generic/signed/ion/simulation/generic",
 	"shields":"direct/generic/signed/ion+flare/simulation/generic",
 	"materials":"direct/generic/signed/ion/simulation/generic",

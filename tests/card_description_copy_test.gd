@@ -12,7 +12,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	check(Library.CARDS.size() == 80, "All registered cards included in copy audit")
+	check(Library.CARDS.size() == 88, "All registered cards included in copy audit")
 	for card in Library.CARDS:
 		check(not card.description.strip_edges().is_empty(), "%s has readable base copy" % card.card_name)
 		check(not card.description.contains("\n"), "%s keeps one concise description" % card.card_name)

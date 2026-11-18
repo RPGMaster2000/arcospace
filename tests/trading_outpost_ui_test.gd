@@ -43,10 +43,10 @@ func run_tests() -> void:
 	root.add_child(host)
 	for ship_index in range(preload("res://scripts/ships/ship_library.gd").PLAYERS.size()):
 		host.selected_ship = ship_index
-		host.start_expedition()
-		# Station geometry is independent of procedural station probability.
-		host.state.service = {"kind":"service", "poi":host.rules.trading_outpost, "title":"Trading Outpost", "completed":false}
 		for window_size in [Vector2i(1280,720),Vector2i(1560,720),Vector2i(960,540),Vector2i(1280,480),Vector2i(686,384)]:
+			host.start_expedition()
+			# Station geometry is independent of procedural station probability.
+			host.state.service = {"kind":"service", "poi":host.rules.trading_outpost, "title":"Trading Outpost", "completed":false}
 			root.size = window_size
 			host.state.salvage = 1000
 			host.state.hull = host.state.ship().hull_capacity - 18
@@ -77,18 +77,23 @@ func run_tests() -> void:
 				var card_count: int = host.state.acquired_cards.size()
 				host.approach_buttons[slot].pressed.emit()
 				if slot == 0: host.repair_selector.value = 1
+				if slot == 2:
+					var picker: OptionButton = host.outpost_screen.card_picker
+					check(picker.item_count == 7 and host.confirm_button.disabled, "Six cards require a selection")
+					host.confirm_button.pressed.emit()
+					check(host.state.salvage == balance, "No confirmation before selection")
+					host.outpost_screen.cancel_selection()
+					check(host.state.salvage == balance, "Cancelling the card picker is free")
+					host.approach_buttons[slot].pressed.emit()
+					picker.select(1)
+					picker.item_selected.emit(1)
+					check(host.state.salvage == balance and not host.confirm_button.disabled, "Selection alone is free")
 				host.confirm_button.pressed.emit()
 				host.confirm_button.pressed.emit()
-				if slot > 0:
-					check(host.view_kind == "outcome" and not host.state.pending_choice.is_empty(), "Paid choice presented before another purchase")
-					var stale_choice: Button = host.card_gallery.grid.get_child(0) if slot == 2 else host.grid.get_child(0)
+				if slot in [1, 3]:
+					check(host.view_kind == "outcome" and not host.state.pending_choice.is_empty(), "Existing paid non-card choice")
+					var stale_choice: Button = host.grid.get_child(0)
 					stale_choice.pressed.emit()
-					if slot == 2:
-						host.card_management.confirm_button.pressed.emit()
-						if host.state.pending_choice == "replace":
-							check(host.view_kind == "replacement" and host.state.player_pool().size()==host.state.deck_limit(), "Paid full-deck reward opens replacement")
-							host._select_replacement(host.state.player_pool()[0])
-							host.replace_button.pressed.emit()
 					stale_choice.pressed.emit()
 				check(host.state.salvage == balance - price and host.view_kind == "poi" and host.state.pending_choice.is_empty(), "Each service spends once and returns to station")
 				if slot == 1: check(host.state.modifier_value("materials") == material_bonus + 5, "UI supplies add five exactly once")

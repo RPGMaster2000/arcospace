@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Salvage Blitz"
+tier = 3
+family = "crew"
+cost = 25
+allocation_category = "offense"
+max_upgrades = 0
+description = "Deal 16 damage. Gain Materials equal to Shields hit, up to 12."
+effects = {"damage": 16, "materials_from_shields": 12}

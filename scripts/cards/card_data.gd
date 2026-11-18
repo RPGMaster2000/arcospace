@@ -73,6 +73,10 @@ static func describe_effects(values: Dictionary) -> String:
 	for key in values:
 		var value = values[key]
 		match key:
+			"shield_sacrifice": parts.append("Spend %d Shields" % int(value))
+			"hull_sacrifice": parts.append("Spend %d Hull (must survive)" % int(value))
+			"energy_on_shield_break": parts.append("If hit clears Shields: +%d Energy" % int(value))
+			"materials_from_shields": parts.append("Gain Materials per Shield damage (max %d)" % int(value))
 			"conditional":
 				var subject: String = "Own" if value.get("target", "self") == "self" else "Enemy"
 				var symbols: Dictionary = {

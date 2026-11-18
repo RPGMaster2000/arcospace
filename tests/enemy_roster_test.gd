@@ -53,8 +53,8 @@ func run() -> void:
 			root.add_child(board)
 			check(board.enemy_hull == Ships.ENEMIES[enemy].hull_capacity and board.enemy_shields == Ships.ENEMIES[enemy].shields, "Enemy stats loaded")
 			check(board.hand.card_pool.size() == 29 and board.hand.cards.size() == 6, "Player pool and hand unchanged")
-			var pool: Array = Ships.ENEMIES[enemy].starting_cards if enemy >= 3 else Cards.CARDS
-			check(board.enemy_hand.card_pool == pool, "Expedition respects optional enemy deck and full-library fallback")
+			var pool: Array = Ships.ENEMIES[enemy].starting_cards if enemy >= 3 else Cards.BASE_CARDS
+			check(board.enemy_hand.card_pool == pool, "Expedition respects authored enemy decks and the original fallback pool")
 			check(board.enemy_ai.tactical_weights == Ships.ENEMIES[enemy].tactical_weights, "AI preferences loaded")
 			for card in board.enemy_hand.cards: check(card in pool, "Opening enemy hand uses profile pool")
 			var model = board.get_node("BattleView/Viewport/Battlefield/EnemyShip")

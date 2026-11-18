@@ -80,7 +80,7 @@ func seeded_trace(ship_index: int, seed_value: int) -> Array:
 				settle(state)
 		if not state.service.is_empty():
 			for slot in [2, 3]:
-				state.purchase_service(slot, state.service_revision)
+				state.purchase_service(slot, state.service_revision, 0, 0 if slot == 2 else -1)
 				mark(state, trace, "service/%s" % slot)
 				settle(state)
 		state.hull = state.ship().hull_capacity
@@ -138,6 +138,7 @@ func ids(cards: Array[Resource]) -> Array:
 func settle(state: Resource) -> void:
 	while not state.pending_choice.is_empty():
 		match state.pending_choice:
+			"battle_reward": state.choose_battle_reward(true)
 			"card": state.choose_card(0)
 			"replace": state.decline_card()
 			"upgrade": state.choose_upgrade(state.upgrade_candidates()[0].identity_key())

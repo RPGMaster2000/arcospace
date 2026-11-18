@@ -16,6 +16,8 @@ func check(ok: bool, message: String) -> void:
 		if failures < 20: push_error(message)
 
 func settle_choice(run: Resource) -> void:
+	if run.pending_choice == "battle_reward":
+		run.choose_battle_reward(false)
 	match run.pending_choice:
 		"card": check(run.choose_card(0), "Card reward can be selected")
 		"upgrade":

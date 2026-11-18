@@ -76,7 +76,7 @@ func run() -> void:
 	old.selector.value = 2
 	host.show_outpost()
 	check(old.get_parent() == null, "Old view detached before deferred deletion")
-	old.purchase_requested.emit(0, 2, host.state.service_revision)
+	old.purchase_requested.emit(0, 2, host.state.service_revision, -1)
 	old.selection_changed.emit(3)
 	check(
 		host.state.salvage == 100 and host.selected_approach == -1,
@@ -98,7 +98,7 @@ func run() -> void:
 		"Successful purchase creates a fresh unselected view"
 	)
 	host.show_poi(0) if host.state.encounter_at(0).kind == "poi" else host.show_system()
-	active.purchase_requested.emit(0, 1, host.state.service_revision)
+	active.purchase_requested.emit(0, 1, host.state.service_revision, -1)
 	check(host.state.salvage == 98, "Navigation invalidates an old purchase request")
 	host.free()
 	await process_frame

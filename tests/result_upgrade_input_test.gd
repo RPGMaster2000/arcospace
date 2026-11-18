@@ -92,12 +92,12 @@ func run() -> void:
 			check(skips[0] == 1,"Native touch reaches Skip exactly once")
 		while result.running and Time.get_ticks_msec() < deadline: await process_frame
 		var button: Button = result.get_node("Panel/Continue")
-		check(state.pending_choice == "upgrade" and state.upgrades_remaining > 0,"Real victory commits pending upgrade event")
+		check(state.pending_choice == "battle_reward" and state.upgrades_remaining > 0,"Real victory commits both reward branches")
 		var remaining: int = state.upgrades_remaining
 		var committed: Dictionary = Save.encode(state)
 		var calls := [0]
 		button.pressed.connect(func(): calls[0] += 1)
-		check(button.visible and not button.disabled and button.text == "Upgrade Cards","Upgrade Cards is visible and enabled after "+input)
+		check(button.visible and not button.disabled and button.text == "Choose Reward","Choose Reward is visible and enabled after "+input)
 		for dimensions in [Vector2i(1920,1080),Vector2i(1280,720),Vector2i(960,540),Vector2i(900,600)]:
 			root.size = dimensions
 			await settle()
@@ -108,6 +108,13 @@ func run() -> void:
 		await activate(button,input)
 		await settle()
 		check(calls[0] == 1,"Real "+input+" reaches existing button handler exactly once")
+		var upgrade_button: Button
+		for child in host.view.find_children("*", "Button", true, false):
+			if child.text.begins_with("Upgrade Ship"): upgrade_button = child
+		check(is_instance_valid(upgrade_button), "Victory presents an Upgrade Ship action")
+		if is_instance_valid(upgrade_button):
+			await activate(upgrade_button,input)
+			await settle()
 		check(host.card_management.shade.visible and state.pending_choice == "upgrade" and state.upgrades_remaining == remaining,"Existing upgrade interface preserves authoritative event")
 		check(state.salvage == committed.salvage,"Continuation does not grant rewards again")
 		var modal = host.card_management

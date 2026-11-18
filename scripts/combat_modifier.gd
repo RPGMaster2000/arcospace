@@ -194,7 +194,7 @@ static func _scaled(effects: Dictionary, factor: float) -> Dictionary:
 		elif result[key] is Dictionary:
 			result[key] = _scaled(result[key], factor)
 		elif (
-			key not in ["pierce", "shield_collapse_below", "threshold", "chance"]
+			key not in ["pierce", "shield_collapse_below", "threshold", "chance", "shield_sacrifice", "hull_sacrifice"]
 			and (result[key] is int or result[key] is float)
 		):
 			# TUNE: Half effects round down, including +1 production becoming zero.
@@ -211,7 +211,9 @@ func forecast_context() -> Dictionary:
 static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionary, context: Dictionary,
 	generator: RandomNumberGenerator, report: Dictionary, forecast_draws: RefCounted = null,
 	missed: bool = false, attack_advantage: String = "") -> bool:
-	if actor[card.family] < card.cost:
+	if not Effects.can_pay(card, actor):
+		return false
+	if context.get("kind", 0) == 3 and context.get("active", false) and card.effects.has("shield_sacrifice"):
 		return false
 	var modified: Resource = card.duplicate(true)
 	if missed:
@@ -236,7 +238,7 @@ static func resolve_effects(card: Resource, actor: Dictionary, target: Dictionar
 
 # Live scheduler/RNG and notices stay here; forecast never calls this Node method.
 func play(card: Resource, actor: Dictionary, target: Dictionary, roll: float = -1.0, attack_advantage: String = "") -> String:
-	if actor[card.family] < card.cost:
+	if not Effects.can_pay(card, actor) or (shields_disabled() and card.effects.has("shield_sacrifice")):
 		return ""
 	var chance: float = rng.randf() if roll < 0.0 else roll
 	var missed: bool = kind == 4 and is_combat(card.effects) and chance < miss_rate / 100.0

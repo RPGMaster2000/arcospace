@@ -220,7 +220,7 @@ func test_gallery() -> void:
 	touch(point,true)
 	await create_timer(.48).timeout
 	touch(point,false)
-	check(overlay().is_open() and host.replacement_key==selected_key and host.state.pending_card==incoming and host.state.player_pool().size()==36,"Replacement hold preserves selection, fixed incoming and ownership")
+	check(overlay().is_open() and host.replacement_key==selected_key and host.state.pending_card==incoming and host.state.player_pool().size()==host.state.deck_limit(),"Replacement hold preserves selection, fixed incoming and ownership")
 	click(Vector2(5,5),MOUSE_BUTTON_LEFT,true)
 	click(Vector2(5,5),MOUSE_BUTTON_LEFT,false)
 	await create_timer(.25).timeout

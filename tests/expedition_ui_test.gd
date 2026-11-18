@@ -53,14 +53,17 @@ func run() -> void:
 	host.state.service = {"kind":"service", "poi":host.rules.trading_outpost, "title":"Trading Outpost", "completed":false}
 	host.show_poi(host.state.SERVICE_INDEX)
 	check(host.approach_note.text.contains("No pressure"), "Service identified separately")
-	host._approach(host.state.SERVICE_INDEX, 2)
-	check(host.state.pending_choice == "card", "Card selection visible after reward")
+	var outpost = host.outpost_screen
+	outpost.select_service(2)
+	check(outpost.card_picker.visible and outpost.card_picker.item_count == 7, "Six card offers plus selector prompt")
 	await snapshot("cards")
 	var before: int = host.state.acquired_cards.size()
-	host.card_gallery.grid.get_child(1).pressed.emit()
-	check(host.state.acquired_cards.size() == before, "Preview requires confirmation")
-	host.card_management.confirm_button.pressed.emit()
-	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real selection button grants exactly one card")
+	var salvage_before: int = host.state.salvage
+	outpost.card_picker.select(1)
+	outpost.card_picker.item_selected.emit(1)
+	check(host.state.acquired_cards.size() == before and host.state.salvage == salvage_before, "Preview requires confirmation")
+	outpost.confirm_button.pressed.emit()
+	check(host.state.acquired_cards.size() == before + 1 and host.state.pending_choice.is_empty(), "Real confirmation button grants exactly one card")
 	check(host.view_kind == "poi" and host.selected_encounter == host.state.SERVICE_INDEX, "Card purchase returns directly to station")
 	await snapshot("outcome")
 	host.state.start_upgrade_event(1)

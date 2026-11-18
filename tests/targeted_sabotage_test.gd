@@ -54,7 +54,7 @@ func snapshot() -> Dictionary:
 
 
 func run() -> void:
-	check(Library.CARDS.size() == 80, "80 registered identities")
+	check(Library.CARDS.size() == 88, "88 registered identities")
 	var occurrences: Dictionary = {}
 	for index in range(6):
 		var base: Resource = Library.CARDS[68 + index]
@@ -209,10 +209,10 @@ func run() -> void:
 		run_state.start(ship_index, Rules, 8123)
 		check(
 			(
-				run_state.deck_limit() == 36
-				and run_state.deck_limit() - run_state.player_pool().size() == 7
+				run_state.deck_limit() == 34
+				and run_state.deck_limit() - run_state.player_pool().size() == 5
 			),
-			"Seven acquisition slots"
+			"Five acquisition slots"
 		)
 		# Each identity is either owned or available for acquisition; both paths support two upgrades.
 		for card in Library.CARDS.slice(68, 74):

@@ -79,7 +79,7 @@ func run_tests() -> void:
 					for card in run.card_offers: check(card.tier >= expected.minimum_card_tier, "Rarity floor")
 					check(not run.generate_system(), "Cannot lose a paid choice by jumping")
 					check(run.choose_card(1) and not run.choose_card(1), "Select exactly once")
-					check(run.shared_pool().size() == Library.CARDS.size(), "Acquisition never changes enemy pool")
+					check(run.shared_pool() == Library.BASE_CARDS, "Acquisition never changes enemy pool")
 				elif expected.upgrade_card:
 					var card: Resource = run.upgrade_candidates()[0]
 					var before_cost: int = card.cost
@@ -254,6 +254,8 @@ func run_tests() -> void:
 	battle._check_winner()
 	battle.refresh_display()
 	battle._continue_encounter()
+	if host.state.pending_choice == "battle_reward":
+		host.state.choose_battle_reward(false)
 	check(host.state.pending_choice == "upgrade", "Victory offers card upgrades before returning")
 	while host.state.pending_choice == "upgrade":
 		host.state.choose_upgrade(host.state.upgrade_candidates()[0].identity_key())

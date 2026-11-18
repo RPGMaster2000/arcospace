@@ -30,7 +30,7 @@ func _initialize() -> void:
 	var combat_rng: int = Effects.combat_rng.state
 	var actor: Dictionary = ship()
 	actor.hull = 17
-	actor.shields = 5
+	actor.shields = 6
 	actor.systems_failure_remaining = 1
 	var enemy: Dictionary = ship()
 	enemy.shields = 12
@@ -38,7 +38,7 @@ func _initialize() -> void:
 	var modifier = Modifier.new()
 	var combinations: int = 0
 	for base in Cards.CARDS:
-		for level in range(3):
+		for level in range(base.max_upgrades + 1):
 			var card: Resource = base if level == 0 else base.with_upgrade(level)
 			for mode in range(7):
 				modifier.configure([0,1,2,2,3,4,5][mode],123)
@@ -47,7 +47,14 @@ func _initialize() -> void:
 				var context: Dictionary = modifier.forecast_context()
 				var before: Array = [actor.duplicate(true),enemy.duplicate(true),card.effects.duplicate(true),card.description,context.duplicate(),modifier.rng.state,modifier.last_hull_damage.duplicate(true)]
 				var prediction: Dictionary = Forecast.predict(card,actor,enemy,context)
-				check(prediction.affordable and prediction.complete,"All authored cards fit enumeration budget")
+				if mode == 4 and card.effects.has("shield_sacrifice"):
+					check(not prediction.affordable and prediction.outcomes.is_empty(), "Offline Shields cannot pay a sacrifice")
+					var a: Dictionary = actor.duplicate()
+					var b: Dictionary = enemy.duplicate()
+					check(modifier.play(card, a, b, 0.0).is_empty() and a == actor and b == enemy,
+						"Live combat also declines the offline Shield payment")
+					continue
+				check(prediction.affordable and prediction.complete,"All playable authored cards fit enumeration budget")
 				check(prediction == Forecast.predict(card,actor,enemy,context),"Deterministic repeated forecast")
 				check(before == [actor,enemy,card.effects,card.description,context,modifier.rng.state,modifier.last_hull_damage],"Forecast leaves inputs and modifier untouched")
 				for roll in [0.0,1.0]:

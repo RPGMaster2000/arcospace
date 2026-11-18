@@ -12,7 +12,7 @@ class Resolution extends RefCounted:
 
 
 static func can_play(card: Resource, discard: bool, actor: Dictionary) -> bool:
-	return card != null and (discard or actor[card.family] >= card.cost)
+	return card != null and (discard or Effects.can_pay(card, actor))
 
 
 # Resolve into caller-owned snapshots. Live combat may stage Hull loss before committing them.

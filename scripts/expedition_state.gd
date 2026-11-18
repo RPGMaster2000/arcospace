@@ -1162,6 +1162,27 @@ func service_cost(slot: int, repair_amount: int = 1) -> int:
 	return approach.salvage_cost
 
 
+func service_card_offers(slot: int) -> Array[Resource]:
+	var candidates: Array[Resource] = []
+	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size():
+		return candidates
+	var reward: Resource = service.poi.approaches[slot].success
+	if not reward.card_reward: return candidates
+	candidates = available_reward_cards(reward.minimum_card_tier)
+	var shop_rng := RandomNumberGenerator.new()
+	shop_rng.seed = hash([seed_used, system_number, service_revision, slot, "outpost_cards"])
+	var offers: Array[Resource] = []
+	for tier in [2, 3]:
+		var bucket := candidates.filter(func(card): return card.tier == tier)
+		if bucket.is_empty(): continue
+		var card: Resource = bucket[shop_rng.randi_range(0, bucket.size() - 1)]
+		offers.append(card)
+		candidates.erase(card)
+	while not candidates.is_empty() and offers.size() < 6:
+		offers.append(candidates.pop_at(shop_rng.randi_range(0, candidates.size() - 1)))
+	return offers
+
+
 func service_locked_reason(slot: int) -> String:
 	if not can_visit(SERVICE_INDEX):
 		return "Station unavailable or resolve pending choice first"
@@ -1173,6 +1194,8 @@ func service_locked_reason(slot: int) -> String:
 		and available_reward_cards(approach.success.minimum_card_tier).is_empty()
 	):
 		return "No unowned cards meet this reward's minimum tier"
+	if approach.success.card_reward and player_pool().size() >= deck_limit():
+		return "Deck full"
 	if approach.success.hull > 0 and hull >= station_hull_ceiling():
 		return "Ablative Plating Full"
 	var cost: int = service_cost(slot)
@@ -1182,12 +1205,17 @@ func service_locked_reason(slot: int) -> String:
 
 
 # Use a confirmation revision to reject stale purchases; services never complete a progression PoI.
-func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
+func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_index: int = -1) -> bool:
 	if revision != service_revision or not service_locked_reason(slot).is_empty():
 		return false
 	var outcome: Resource = service.poi.approaches[slot].success
 	if outcome.hull > 0 and (repair_amount <= 0 or repair_amount > station_repair_limit()):
 		return false
+	var chosen: Resource
+	if outcome.card_reward:
+		var offers := service_card_offers(slot)
+		if card_index < 0 or card_index >= offers.size(): return false
+		chosen = offers[card_index]
 	var cost: int = service_cost(slot, repair_amount)
 	if cost < 0 or cost > salvage:
 		return false
@@ -1196,7 +1224,10 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 	salvage -= cost
 	service_revision += 1
 	last_outcome = "Spent %d Salvage. " % cost
-	if outcome.hull > 0:
+	if chosen != null:
+		last_outcome += _deck._acquire_card(chosen, rules)
+		deck_changed.emit()
+	elif outcome.hull > 0:
 		var plating: bool = station_plating_mode()
 		hull += repair_amount
 		last_outcome += (
@@ -1221,7 +1252,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0) -> bool:
 ## Compatibility name: always the unmodified enemy library, never expedition acquisitions.
 func shared_pool() -> Array[Resource]:
 	var pool: Array[Resource] = []
-	pool.assign(Cards.CARDS)
+	pool.assign(Cards.BASE_CARDS)
 	return pool
 
 
@@ -1259,6 +1290,60 @@ func card_batch_active() -> bool:
 
 func choose_card(index: int) -> bool:
 	return _commit_deck_choice(_deck.choose_card(index, ship(), rules))
+
+
+func decline_over_limit_reward() -> bool:
+	if pending_choice not in ["card", "card_batch", "replace"] or player_pool().size() <= deck_limit():
+		return false
+	_deck.batch_active = false
+	_deck.batch_queue.clear()
+	_deck.batch_protected.clear()
+	_deck.pending_card = null
+	card_offers = []
+	pending_choice = ""
+	progress_committed.emit()
+	return true
+
+
+func trim_deck(key: String) -> bool:
+	return _commit_deck_choice(_deck.trim_deck(key, ship(), rules))
+
+
+func choose_battle_reward(acquire: bool) -> bool:
+	if pending_choice != "battle_reward": return false
+	if acquire:
+		if card_offers.is_empty() or player_pool().size() > deck_limit(): return false
+		upgrades_remaining = 0
+		pending_choice = "card"
+	else:
+		card_offers = []
+		start_upgrade_event(upgrades_remaining)
+	progress_committed.emit()
+	return true
+
+
+func _offer_battle_reward(count: int) -> void:
+	if player_pool().size() > deck_limit():
+		start_upgrade_event(count)
+		return
+	var candidates := available_reward_cards(2)
+	var offers: Array[Resource] = []
+	var reward_rng := RandomNumberGenerator.new()
+	reward_rng.seed = hash([seed_used, system_number, active_battle, "victory_cards"])
+	for tier in [2, 3]:
+		var bucket := candidates.filter(func(card): return card.tier == tier)
+		if bucket.is_empty(): continue
+		var card: Resource = bucket[reward_rng.randi_range(0, bucket.size() - 1)]
+		offers.append(card)
+		candidates.erase(card)
+	while not candidates.is_empty() and offers.size() < 3:
+		offers.append(candidates.pop_at(reward_rng.randi_range(0, candidates.size() - 1)))
+	if offers.is_empty():
+		start_upgrade_event(count)
+		return
+	card_offers = offers
+	upgrades_remaining = count
+	pending_choice = "battle_reward"
 
 
 func deck_limit() -> int:
@@ -1508,8 +1593,11 @@ func record_battle(result: BattleResult) -> bool:
 			add_modifiers({"shields": result.strategic_shields})
 		var count: int = battle_upgrade_count(result)
 		if count > 0:
-			last_outcome = "Combat victory — upgrade %d different cards." % count
-			start_upgrade_event(count)
+			last_outcome = "Combat victory. Choose your reward."
+			if enemy_profile(encounters[active_battle]).enemy_rank == 0 and not encounters[active_battle].get("chasedown", false):
+				_offer_battle_reward(count)
+			else:
+				start_upgrade_event(count)
 
 	var before_activity := salvage
 	_commit_activity_time(rules.defense_tuning.battle_seconds)

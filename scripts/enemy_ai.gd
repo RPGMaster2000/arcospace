@@ -27,7 +27,7 @@ func choose(cards: Array, actor: Dictionary, enemy: Dictionary, context: Diction
 		var card: Resource = cards[slot]
 		if card != null:
 			held.append(slot)
-			if actor[card.family] >= card.cost:
+			if Effects.can_pay(card, actor) and not (context.get("kind", 0) == 3 and context.get("active", false) and card.effects.has("shield_sacrifice")):
 				affordable.append(slot)
 	if held.is_empty():
 		return {}

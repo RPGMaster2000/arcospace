@@ -19,7 +19,7 @@ func _initialize() -> void:
 # Frozen pre-allocation selection formula: compare the actual seeded identity sequence.
 func legacy_draw(hand: Node) -> Resource:
 	var buckets: Dictionary = {1:[], 2:[], 3:[]}
-	var pool: Array = hand.card_pool if not hand.card_pool.is_empty() else Cards.CARDS
+	var pool: Array = hand.card_pool if not hand.card_pool.is_empty() else Cards.BASE_CARDS
 	for card in pool:
 		if card != null and hand._eligible(card, -1) and (not hand.card_pool.is_empty() or card.signature_ship < 0): buckets[card.tier].append(card)
 	var roll: float = hand.rng.randf()

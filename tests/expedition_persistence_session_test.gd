@@ -25,6 +25,7 @@ class Store extends RefCounted:
 
 class Board extends Node:
 	var result_recorded: bool = false
+	var settled_combat: Dictionary = {}
 
 func check(ok: bool, message: String) -> void:
 	if not ok:

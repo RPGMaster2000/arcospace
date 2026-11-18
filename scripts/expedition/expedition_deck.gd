@@ -100,22 +100,22 @@ func acquired_draw_weights(rules: Resource) -> Dictionary:
 	return result
 
 
-func available_reward_cards(profile: Resource, minimum_tier: int = 1) -> Array[Resource]:
+func available_reward_cards(profile: Resource, minimum_tier: int = 1, include_prototype: bool = true) -> Array[Resource]:
 	var owned: Dictionary = {}
 	for card in player_pool(profile):
 		owned[card.identity_key()] = true
 	var candidates: Array[Resource] = []
-	for card in Cards.CARDS:
+	for card in (Cards.CARDS if include_prototype else Cards.BASE_CARDS):
 		if card.tier >= minimum_tier and card.signature_ship < 0 and not owned.has(card.identity_key()):
 			candidates.append(card)
 	return candidates
 
 
 func random_card_offers(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int = 1) -> Array[Resource]:
-	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier)
+	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier, false)
 	var offers: Array[Resource] = []
 	for slot in range(mini(3, candidates.size())):
-		var preferred_tier: int = 2 if rng.randf() < rules.reward_tier_two_chance else 1
+		var preferred_tier := 2 if rng.randf() < rules.reward_tier_two_chance else 1
 		var bucket: Array[Resource] = []
 		for card in candidates:
 			if card.tier == preferred_tier:
@@ -162,7 +162,7 @@ func start_card_batch(profile: Resource, rng: RandomNumberGenerator) -> bool:
 	return true
 
 func confirm_card_batch(profile: Resource, rules: Resource) -> Dictionary:
-	if not batch_active or pending_choice != "card_batch" or card_offers.size() != 2: return {}
+	if not batch_active or pending_choice != "card_batch" or card_offers.size() != 2 or player_pool(profile).size() > deck_limit(profile, rules): return {}
 	batch_queue.assign(card_offers)
 	card_offers.clear()
 	pending_choice = ""
@@ -185,6 +185,8 @@ func advance_card_batch(profile: Resource, rules: Resource) -> Dictionary:
 
 func choose_card(index: int, profile: Resource, rules: Resource) -> Dictionary:
 	if pending_choice != "card" or index < 0 or index >= card_offers.size():
+		return {}
+	if player_pool(profile).size() > deck_limit(profile, rules):
 		return {}
 	var chosen: Resource = card_offers[index]
 	for card in player_pool(profile):
@@ -220,17 +222,31 @@ func replace_card(key: String, profile: Resource, rules: Resource) -> Dictionary
 	var owned: Dictionary = {}
 	for card in player_pool(profile):
 		owned[card.identity_key()] = card
-	if not owned.has(key) or owned.has(pending_card.identity_key()) or key in batch_protected:
+	if player_pool(profile).size() > deck_limit(profile, rules) or not owned.has(key) or owned.has(pending_card.identity_key()) or key in batch_protected:
 		return {}
 	# No mutation until the explicit confirmation reaches this validated method.
+	_remove_identity(key)
+	message += "\nRemoved %s." % owned[key].card_name
+	message += _acquire_card(pending_card, rules)
+	return {"message": message, "deck_changed": true}
+
+
+func trim_deck(key: String, profile: Resource, rules: Resource) -> Dictionary:
+	if not pending_choice.is_empty() or player_pool(profile).size() <= deck_limit(profile, rules):
+		return {}
+	for card in player_pool(profile):
+		if card.identity_key() == key:
+			_remove_identity(key)
+			return {"message": "\nRemoved %s." % card.card_name, "deck_changed": true}
+	return {}
+
+
+func _remove_identity(key: String) -> void:
 	removed_starting_cards[key] = true
 	for index in range(acquired_cards.size() - 1, -1, -1):
 		if acquired_cards[index].identity_key() == key:
 			acquired_cards.remove_at(index)
 	upgraded_cards.erase(key)
-	message += "\nRemoved %s." % owned[key].card_name
-	message += _acquire_card(pending_card, rules)
-	return {"message": message, "deck_changed": true}
 
 
 func decline_card() -> Dictionary:

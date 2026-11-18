@@ -61,6 +61,15 @@ var result_cause: String = ""
 @export_range(1, 1000, 1) var enemy_hull_capacity: int = 30:
 	get: return _enemy_state.hull_capacity
 	set(value): _enemy_state.hull_capacity = value
+const ProgressionActions = preload("res://scripts/combat/progression_actions.gd")
+var progression_actions := ProgressionActions.new()
+const ProgressionCheckpoint = preload("res://scripts/combat/progression_checkpoint.gd")
+var resume_combat: Dictionary = {}
+var settled_combat: Dictionary = {}
+var overdrive_triggered := false
+var overdrive_button: MenuButton
+var overdrive_choices: Array[Dictionary] = []
+var beam_notice: Label
 var current_actor: String = "player"
 var turn_number: int = 1
 var last_turret_round: int = 0
@@ -285,6 +294,7 @@ func _ready() -> void:
 		starting_player_hull = player_hull
 	modifier.configure(int(setup_settings.get("modifier", 0)), battle_setup.battle_seed if battle_setup != null else -1)
 	if battle_setup != null and battle_setup.battle_seed >= 0:
+		hand.tier_three_chance = 0.10 if hand.card_pool.any(func(card): return card.tier == 3) else 0.0
 		hand.rng.seed = battle_setup.battle_seed ^ 101
 		enemy_hand.rng.seed = battle_setup.battle_seed ^ 103
 		enemy_ai.rng.seed = battle_setup.battle_seed ^ 107
@@ -319,7 +329,20 @@ func _ready() -> void:
 		button.discard_requested.connect(_discard_card.bind(slot))
 	# TUNE in the scene: EnemyThinkTimer > Wait Time sets the AI pause in seconds.
 	enemy_timer.timeout.connect(_on_enemy_timeout)
-	_begin_battle_presentation()
+	if expedition != null:
+		progression_actions.rng.seed = battle_setup.battle_seed ^ 0x42524159
+		_setup_progression_actions()
+	if not resume_combat.is_empty():
+		ProgressionCheckpoint.restore(self, resume_combat)
+		settled_combat = resume_combat.duplicate(true)
+		overdrive_triggered = true
+		if progression_actions.beam == ProgressionActions.Beam.CHARGING:
+			_show_beam_notice("BEAM CHARGING · 25 damage next enemy turn")
+		elif progression_actions.beam == ProgressionActions.Beam.DISRUPTED:
+			_show_beam_notice("BEAM DISRUPTED · Enemy will skip its next turn")
+		refresh_display()
+	else:
+		_begin_battle_presentation()
 
 
 # Presentation hooks; the 2D board keeps the original immediate flow.
@@ -384,6 +407,13 @@ func _begin_turn(side: String) -> void:
 		active_hand.current_round = turn_number
 	current_actor = side
 	extra_action_requested = false
+	if side == "player":
+		progression_actions.overdrive_used = false
+	elif progression_actions.beam == ProgressionActions.Beam.DISRUPTED:
+		progression_actions.beam = ProgressionActions.Beam.SPENT
+		_show_beam_notice("BEAM DISRUPTED · Enemy turn skipped")
+		await _finish_turn("enemy")
+		return
 	if _check_winner():
 		refresh_display()
 		return
@@ -422,10 +452,10 @@ func _begin_turn(side: String) -> void:
 			apply_ship_snapshot("player", player)
 			apply_ship_snapshot("enemy", enemy)
 			if pending.is_empty():
-				_apply_hull_report(report, "player", true)
+				_apply_hull_report(report, "player", true, false)
 			else:
 				battle_effects.play_changes(before, _both_states(), "", "", 0, true, true)
-				_arm_pending_damage(pending, report, "player")
+				_arm_pending_damage(pending, report, "player", false)
 				refresh_display()
 				await damage_timeline.damage_applied
 				if damage_timeline.closing or is_queued_for_deletion():
@@ -466,6 +496,8 @@ func _begin_turn(side: String) -> void:
 	refresh_display()
 	if winner.is_empty() and side == "enemy":
 		enemy_timer.start()
+	elif winner.is_empty():
+		_checkpoint_prototype_turn()
 
 
 # Round 3 opens after two completed rounds. Latch before effects to prevent re-entry.
@@ -485,6 +517,11 @@ func _fire_turret_support() -> bool:
 
 # Guard legality and lock input while CardMotion invokes _resolve_card at its animation cue.
 # After all presentation finishes, either retain the extra action or advance the actor/round.
+func _can_play_card(card: Resource, discard: bool, side: String) -> bool:
+	return Execution.can_play(card, discard, ship_snapshot(side)) and (
+		discard or not modifier.shields_disabled() or not card.effects.has("shield_sacrifice"))
+
+
 func _act(side: String, slot: int, discard: bool) -> bool:
 	if (
 		resolving_card
@@ -503,7 +540,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	var card: Resource = active_hand.cards[slot]
 	if card == null:
 		return false
-	if not Execution.can_play(card, discard, ship_snapshot(side)):
+	if not _can_play_card(card, discard, side):
 		return false
 	resolving_card = true
 	enemy_timer.stop()
@@ -549,6 +586,7 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 			enemy_timer.start()
 	else:
 		await _finish_turn(side)
+	if not resolving_card and current_actor == "player": _checkpoint_prototype_turn()
 	action_finished.emit(side, discard)
 	return true
 
@@ -696,6 +734,17 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 func _on_enemy_timeout() -> void:
 	if resolving_card or current_actor != "enemy" or not winner.is_empty():
 		return
+	if progression_actions.beam == ProgressionActions.Beam.CHARGING:
+		await _fire_charged_beam()
+		return
+	if (expedition != null and expedition.battles_won >= 4 and expedition.system_number > 1
+		and expedition.battles_won % 2 == 0 and turn_number >= 2
+		and progression_actions.beam == ProgressionActions.Beam.READY):
+		progression_actions.beam = ProgressionActions.Beam.CHARGING
+		progression_actions.charge_hull = enemy_hull
+		_show_beam_notice("BEAM CHARGING · 25 damage next enemy turn")
+		await _finish_turn("enemy")
+		return
 	var move: Dictionary = enemy_ai.choose(
 		enemy_hand.cards, _ai_state("enemy"), _ai_state("player"), modifier.forecast_context()
 	)
@@ -705,6 +754,135 @@ func _on_enemy_timeout() -> void:
 		_finish_turn("enemy")
 		return
 	_act("enemy", move.slot, move.discard)
+
+
+func _setup_progression_actions() -> void:
+	overdrive_button = MenuButton.new()
+	overdrive_button.text = "Resource Overdrive"
+	overdrive_button.position = Vector2(145, 62)
+	overdrive_button.custom_minimum_size.y = 42
+	ResultPresentation.action(overdrive_button)
+	add_child(overdrive_button)
+	var menu := overdrive_button.get_popup()
+	for action in ProgressionActions.OVERDRIVE.size():
+		var option: Dictionary = ProgressionActions.OVERDRIVE[action]
+		for payment in option.payments:
+			var effect := "+%d Shields" % option.shields if option.shields > 0 else "%d damage" % option.damage
+			overdrive_choices.append({"action": action, "payment": payment})
+			menu.add_item("%s · %s · %d %s" % [option.title, effect, option.cost, payment.capitalize()])
+	menu.id_pressed.connect(func(index: int):
+		var choice: Dictionary = overdrive_choices[index]
+		activate_overdrive(choice.action, choice.payment))
+	beam_notice = Label.new()
+	beam_notice.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	beam_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	beam_notice.offset_left = -225
+	beam_notice.offset_right = 225
+	beam_notice.offset_top = 20
+	beam_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	beam_notice.add_theme_color_override("font_color", Color("ffcd82"))
+	add_child(beam_notice)
+
+
+func _show_beam_notice(value: String) -> void:
+	if is_instance_valid(beam_notice):
+		beam_notice.text = value
+
+
+func _update_overdrive() -> void:
+	if not is_instance_valid(overdrive_button): return
+	var locked := not _overdrive_available()
+	var menu := overdrive_button.get_popup()
+	var available := false
+	for index in menu.item_count:
+		var choice: Dictionary = overdrive_choices[index]
+		var option: Dictionary = ProgressionActions.OVERDRIVE[choice.action]
+		var enabled: bool = (not locked and not (option.shields > 0 and modifier.shields_disabled())
+			and int(get("player_" + choice.payment)) >= option.cost)
+		menu.set_item_disabled(index, not enabled)
+		available = available or enabled
+	overdrive_button.visible = winner.is_empty() and not _presentation_locked()
+	overdrive_button.disabled = not available
+	overdrive_button.tooltip_text = "Once per player turn · 30 Materials, Energy or Crew"
+
+
+func _overdrive_available() -> bool:
+	return (expedition != null and current_actor == "player" and winner.is_empty()
+		and not progression_actions.overdrive_used and not resolving_card and not _presentation_locked()
+		and not battle_effects.busy and damage_timeline.pending.is_empty())
+
+
+func activate_overdrive(action: int, payment: String) -> bool:
+	if not _overdrive_available() or (action == 0 and modifier.shields_disabled()):
+		return false
+	var before := _both_states()
+	var player: Dictionary = before.player.duplicate()
+	var enemy: Dictionary = before.enemy.duplicate()
+	if not ProgressionActions.overdrive(action, payment, player, enemy):
+		return false
+	progression_actions.overdrive_used = true
+	overdrive_triggered = true
+	if modifier.shields_disabled() and action == 1:
+		var unshielded: Dictionary = before.enemy.duplicate()
+		unshielded.shields = 0
+		ProgressionActions.Modifier.shielded_hit(unshielded, ProgressionActions.OVERDRIVE[action].damage)
+		enemy.hull = unshielded.hull
+		enemy.shields = before.enemy.shields
+	apply_ship_snapshot("player", player)
+	apply_ship_snapshot("enemy", enemy)
+	_interrupt_charged_beam(before.enemy.hull - enemy.hull)
+	_checkpoint_prototype_turn()
+	battle_effects.play_changes(before, _both_states(), "player", payment, ProgressionActions.OVERDRIVE[action].cost)
+	_check_winner()
+	refresh_display()
+	return true
+
+
+func _checkpoint_prototype_turn() -> void:
+	if (expedition != null and current_actor == "player" and winner.is_empty()
+		and player_hull > 0 and enemy_hull > 0
+		and (overdrive_triggered or progression_actions.beam != ProgressionActions.Beam.READY)):
+		settled_combat = ProgressionCheckpoint.capture(self)
+
+
+func _interrupt_charged_beam(amount: int) -> void:
+	if enemy_hull > 0 and progression_actions.interrupt(amount):
+		_show_beam_notice("BEAM DISRUPTED · Enemy will skip its next turn")
+
+
+func _fire_charged_beam() -> void:
+	resolving_card = true
+	progression_actions.beam = ProgressionActions.Beam.SPENT
+	_show_beam_notice("CHARGED BEAM · Firing")
+	refresh_display()
+	var travel := 0.0
+	if battle_effects.enabled and battle_effects.Preferences.battle_vfx():
+		var shot := preload("res://scripts/cards/card_data.gd").new()
+		shot.family = "energy"
+		shot.effects = {"damage": ProgressionActions.BEAM_DAMAGE}
+		travel = await _prepare_beam_presentation("enemy", shot)
+		if checkpoint_exit or is_queued_for_deletion() or battle_effects.cancelling: return
+	await battle_effects.fire_before_impact("enemy", travel)
+	if checkpoint_exit or is_queued_for_deletion() or battle_effects.cancelling: return
+	_beam_reached_target()
+	var before := _both_states()
+	var player: Dictionary = before.player.duplicate()
+	var shields: int = player.shields
+	if modifier.shields_disabled(): player.shields = 0
+	ProgressionActions.Modifier.shielded_hit(player, ProgressionActions.BEAM_DAMAGE)
+	if modifier.shields_disabled(): player.shields = shields
+	apply_ship_snapshot("player", player)
+	_apply_hull_report({"target": before.player.hull - player.hull, "target_before": before.player.hull}, "enemy", true)
+	battle_effects.play_changes(before, _both_states(), "enemy", "", 0, true)
+	_check_winner()
+	_card_resolution_presented("enemy", ProgressionActions.BEAM_DAMAGE, false)
+	refresh_display()
+	if battle_effects.busy: await battle_effects.finished
+	await _wait_action_presentation()
+	if checkpoint_exit or is_queued_for_deletion() or battle_effects.cancelling: return
+	resolving_card = false
+	_show_beam_notice("")
+	await _finish_turn("enemy")
 
 
 func _stage_overflow(
@@ -730,13 +908,13 @@ func _stage_overflow(
 	return events
 
 
-func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: String) -> void:
+func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: String, can_interrupt: bool = true) -> void:
 	var settings: Resource = battle_effects.visual_settings.shield_shatter
 	damage_timeline.arm(
 		events,
 		settings.shatter_burst_start,
 		settings.shatter_total_duration,
-		_apply_pending_hull.bind(report, side),
+		_apply_pending_hull.bind(report, side, can_interrupt),
 		battle_effects.shatter_updates,
 		func():
 			return (
@@ -747,9 +925,10 @@ func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: St
 	)
 
 
-func _apply_hull_report(report: Dictionary, side: String, visuals: bool) -> void:
+func _apply_hull_report(report: Dictionary, side: String, visuals: bool, can_interrupt: bool = true) -> void:
 	var key: String = "actor" if side == "player" else "target"
 	var amount: int = int(report.get(key, 0))
+	if can_interrupt and side == "player": _interrupt_charged_beam(int(report.get("target", 0)))
 	player_hull_damage_taken += amount
 	var before: int = int(report.get(key + "_before", player_hull))
 	var permanent: int = permanent_damage(before, before - amount, player_hull_capacity)
@@ -760,13 +939,13 @@ func _apply_hull_report(report: Dictionary, side: String, visuals: bool) -> void
 
 
 func _apply_pending_hull(
-	events: Array[Dictionary], visuals: bool, report: Dictionary, side: String
+	events: Array[Dictionary], visuals: bool, report: Dictionary, side: String, can_interrupt: bool
 ) -> void:
 	visuals = visuals and is_instance_valid(battle_effects) and not battle_effects.cancelling
 	var before: Dictionary = _both_states()
 	for event in events:
 		set(event.side + "_hull", maxi(0, int(get(event.side + "_hull")) - event.amount))
-	_apply_hull_report(report, side, visuals)
+	_apply_hull_report(report, side, visuals, can_interrupt)
 	if visuals and battle_effects.enabled and not battle_effects.cancelling:
 		battle_effects.play_changes(before, _both_states())
 	_check_winner()
@@ -884,6 +1063,7 @@ func _continue_encounter() -> void:
 # Render detached state; combat transitions and rewards are committed by their owners.
 # Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
 func refresh_display() -> void:
+	_update_overdrive()
 	$ModifierDisplay.refresh(modifier, turn_number)
 	hud.refresh(_display_snapshot())
 	# HUD affordability refresh resets self_modulate; hide unfilled slots after it.
@@ -927,7 +1107,7 @@ func _display_snapshot() -> Dictionary:
 			{
 				"preview": modifier.preview(card),
 				"present": card != null,
-				"affordable": card != null and get("player_" + card.family) >= card.cost,
+				"affordable": _can_play_card(card, false, "player"),
 				"ion_glow":
 				modifier.affects_card(card),
 				"storm_color": modifier.storm_color(modifier.kind,true)

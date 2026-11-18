@@ -68,7 +68,7 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	if player.has_meta("legacy_draws"): hands[0].anti_repeat_enabled = false
 	hands[1].family_weights = enemy.card_family_weights
 	if audit.get("expedition_pool", false) and enemy.starting_cards.is_empty():
-		hands[1].card_pool.assign(Cards.CARDS)
+		hands[1].card_pool.assign(Cards.BASE_CARDS)
 	hands[1].effect_weights = enemy.card_effect_weights
 	brains[1].tactical_weights = enemy.tactical_weights
 	brains[1].tactical_variation = enemy.tactical_variation

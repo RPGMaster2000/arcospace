@@ -12,6 +12,14 @@ static var combat_rng: RandomNumberGenerator = _new_rng()
 #region Effect resolution
 
 
+static func can_pay(card: Resource, actor: Dictionary) -> bool:
+	if card == null or actor.get(card.family, 0) < card.cost:
+		return false
+	var effects: Dictionary = card.effects
+	return (int(actor.shields) >= int(effects.get("shield_sacrifice", 0))
+		and (not effects.has("hull_sacrifice") or int(actor.hull) > int(effects.hull_sacrifice)))
+
+
 # Mutate the supplied state dictionaries; Board writes them back, while EnemyAI passes copies.
 # EXTEND: Add the key to card_effect_contract.gd and its executable consumer coverage first.
 # See docs/card_effect_contract.md; this resolver remains authoritative for ordering and RNG.
@@ -28,9 +36,10 @@ static func play(
 ) -> bool:
 	damage_report.clear()
 	damage_report.merge({"actor": 0, "target": 0})
-	if actor[card.family] < card.cost:
+	if not can_pay(card, actor):
 		return false
 	actor[card.family] -= card.cost
+	actor.shields -= int(card.effects.get("shield_sacrifice", 0))
 	_apply_effects(
 		card.effects,
 		card.family,
@@ -124,6 +133,9 @@ static func _apply_effects(
 	var direct: int = int(floor(damage * (1.0 if attack_advantage == "penetration" else float(effects.get("pierce", 0.0)))))
 	var blocked: int = mini(enemy.shields, damage - direct)
 	enemy.shields -= blocked
+	if blocked > 0 and enemy.shields == 0:
+		actor.energy += int(effects.get("energy_on_shield_break", 0))
+	actor.materials += mini(blocked, int(effects.get("materials_from_shields", 0)))
 	# Presentation only: count ordinary opposing damage at the actual resolution site.
 	# Includes shield absorption, selected conditional branches and modified/upgraded effects.
 	damage_report["direct_damage"] = int(damage_report.get("direct_damage", 0)) + maxi(0, blocked) + mini(enemy.hull, maxi(0, damage - blocked))
@@ -156,7 +168,7 @@ static func _apply_effects(
 	var regular_self: int = maxi(0, int(effects.get("self_damage_regular", 0))) + backlash
 	var self_blocked: int = mini(actor.shields, regular_self)
 	actor.shields -= self_blocked
-	var hull_loss: int = regular_self - self_blocked + maxi(0, int(effects.get("self_damage", 0)))
+	var hull_loss: int = regular_self - self_blocked + maxi(0, int(effects.get("self_damage", 0))) + int(effects.get("hull_sacrifice", 0))
 	damage_report.actor += mini(actor.hull, hull_loss)
 	actor.hull = maxi(0, actor.hull - hull_loss)
 	var condition: Dictionary = effects.get("conditional", {})

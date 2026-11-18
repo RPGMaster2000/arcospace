@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Fortified Reactor"
+tier = 2
+family = "materials"
+cost = 16
+allocation_category = "defense"
+max_upgrades = 0
+description = "Gain 12 Shields and 6 Energy."
+effects = {"shields": 12, "energy": 6}

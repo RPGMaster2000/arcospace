@@ -39,6 +39,8 @@ func win(state: Resource, index: int, emp: bool) -> void:
 	state.record_battle(result)
 	check(state.salvage == total, "Duplicate result cannot award twice")
 	state.active_battle = -1
+	if state.pending_choice == "battle_reward":
+		state.choose_battle_reward(false)
 	while state.pending_choice == "upgrade" and state.upgrades_remaining > 0 and not state.upgrade_candidates().is_empty():
 		state.choose_upgrade(state.upgrade_candidates()[0].identity_key())
 	state.finish_upgrades()

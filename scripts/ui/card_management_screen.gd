@@ -137,7 +137,8 @@ func present(
 	consumed = false
 	closing = false
 	confirm_button.disabled = true
-	decline_button.visible = mode == "replace"
+	decline_button.visible = mode in ["replace", "trim"]
+	decline_button.text = "Keep Current Deck" if mode == "replace" else "Back"
 	decline_button.disabled = false
 	match mode:
 		"card":
@@ -155,6 +156,11 @@ func present(
 			instruction.text = "Choose different cards. All available upgrades must be spent."
 			context.text = "%d remaining" % remaining
 			confirm_button.text = "Apply Upgrade"
+		"trim":
+			heading.text = "Reduce Deck · %d / %d" % [cards.size(), capacity]
+			instruction.text = "Choose one card to remove from this legacy deck."
+			context.text = "Card acquisition resumes when the deck reaches the limit."
+			confirm_button.text = "Remove Selected Card"
 		"replace":
 			heading.text = "Replace Card — Deck full: %d/%d cards" % [cards.size(), capacity]
 			instruction.text = "Select an owned card to remove in exchange for the reward."
@@ -285,7 +291,7 @@ func _confirm() -> void:
 	confirmed.emit(mode, selected_card, revision)
 
 func _decline() -> void:
-	if consumed or closing or not shade.visible or mode != "replace" or not decline_button.visible:
+	if consumed or closing or not shade.visible or mode not in ["replace", "trim"] or not decline_button.visible:
 		return
 	consumed = true
 	confirm_button.disabled = true

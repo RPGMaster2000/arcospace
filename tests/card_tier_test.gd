@@ -36,9 +36,12 @@ func run() -> void:
 		counts[card.family] += 1
 		var actor = {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":3,"reactor":3,"quarters":3}
 		var target = actor.duplicate()
-		Effects.play(card, actor, target)
-		check(target.hull < 30 or actor.hull > 30 or actor.shields > 10 or actor.materials > 100 or actor.energy > 100 or actor.crew > 100 or actor.synthesizer > 3 or actor.reactor > 3 or actor.quarters > 3 or target.synthesizer < 3 or target.reactor < 3 or target.quarters < 3, "Tier 2 changes combat/economy state")
-	check(counts == {"materials":6,"energy":8,"crew":8}, "Twenty-two Tier 2 cards including targeted sabotage")
+		var payment_only: Dictionary = actor.duplicate()
+		payment_only[card.family] -= card.cost
+		var target_before: Dictionary = target.duplicate()
+		check(Effects.play(card, actor, target) and (actor != payment_only or target != target_before),
+			"Tier 2 changes combat/economy state beyond payment: " + card.card_name)
+	check(counts == {"materials":8,"energy":9,"crew":9}, "Twenty-six Tier 2 cards including the prototypes")
 	hand.free()
 	var board = load("res://scenes/board_3d.tscn").instantiate()
 	board.setup_settings = {"modifier":5}

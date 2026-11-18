@@ -86,12 +86,10 @@ func schedule_checks() -> void:
 		if not shopping.service.is_empty():
 			shopping.salvage = 100
 			for n in range(2):
-				if shopping.available_reward_cards().is_empty():
-					check(not shopping.purchase_service(2, shopping.service_revision), "Exhausted card service cannot spend Salvage")
+				if shopping.service_locked_reason(2).is_empty():
+					check(shopping.purchase_service(2, shopping.service_revision, 0, 0), "Selected card can be purchased")
 				else:
-					check(shopping.purchase_service(2, shopping.service_revision) and shopping.choose_card(0), "Shopping consumes loot RNG independently")
-					if shopping.pending_choice == "replace":
-						check(shopping.decline_card() and shopping.player_pool().size() == 36, "Full-deck shopping resolves by declining before travel")
+					check(not shopping.purchase_service(2, shopping.service_revision, 0, 0), "Locked shop never spends")
 		advance(shopping)
 		advance(ignoring)
 
@@ -132,18 +130,19 @@ func economy_checks(ship_index: int) -> void:
 	revision = run.service_revision
 	check(not run.purchase_service(1, revision) and run.salvage == 6 and run.service_revision == revision, "Unaffordable supply does not spend or consume confirmation")
 	run.salvage = 100
+	var enemy_pool_before: Array[Resource] = run.shared_pool()
 	for n in range(3):
 		revision = run.service_revision
 		var rng_before: int = run.rng.state
-		check(run.purchase_service(2, revision) and run.card_offers.size() == 3 and run.salvage == 100 - 15 * (n + 1), "Repeated card price and offers")
-		check(run.rng.state != rng_before, "Every card purchase draws fresh offers; random repeats remain legal")
-		check(run.card_offers[0] != run.card_offers[1] and run.card_offers[1] != run.card_offers[2] and run.card_offers[0] != run.card_offers[2], "Three distinct offers")
-		check(not run.purchase_service(1, run.service_revision) and not run.generate_system(), "Card selection blocks spending and departure")
-		check(not run.choose_card(3) and run.pending_choice == "card", "Invalid card choice leaves selection pending")
-		check(run.choose_card(n % 3) and not run.choose_card(n % 3) and not run.purchase_service(2, revision), "Card selection and confirmation cannot duplicate")
-	check(run.acquired_cards.size() == 3 and run.shared_pool().size() == 80 and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
+		var offers: Array = run.service_card_offers(2)
+		check(offers.size() == 6 and offers == run.service_card_offers(2), "Six deterministic browsable cards")
+		check(not run.purchase_service(2, revision) and run.salvage == 100 - 15 * n, "No payment without selection")
+		check(run.purchase_service(2, revision, 0, n) and run.salvage == 100 - 15 * (n + 1), "One atomic purchase")
+		check(run.acquired_cards.has(offers[n]) and not run.purchase_service(2, revision, 0, n), "Selected card granted once")
+		check(run.rng.state == rng_before, "Shop randomness has a private stream")
+	check(run.acquired_cards.size() == 3 and run.shared_pool() == enemy_pool_before and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
 	run.salvage = 14
-	check(not run.purchase_service(2, run.service_revision) and run.salvage == 14, "Card affordability verified before spending")
+	check(not run.purchase_service(2, run.service_revision, 0, 0) and run.salvage == 14, "Card affordability verified before spending")
 	run.salvage = 1000
 	for n in range(7):
 		var price: int = [35,50,70,95,125,160,200][n]
