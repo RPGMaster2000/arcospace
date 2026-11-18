@@ -452,10 +452,10 @@ func _begin_turn(side: String) -> void:
 			apply_ship_snapshot("player", player)
 			apply_ship_snapshot("enemy", enemy)
 			if pending.is_empty():
-				_apply_hull_report(report, "player", true)
+				_apply_hull_report(report, "player", true, false)
 			else:
 				battle_effects.play_changes(before, _both_states(), "", "", 0, true, true)
-				_arm_pending_damage(pending, report, "player")
+				_arm_pending_damage(pending, report, "player", false)
 				refresh_display()
 				await damage_timeline.damage_applied
 				if damage_timeline.closing or is_queued_for_deletion():
@@ -908,13 +908,13 @@ func _stage_overflow(
 	return events
 
 
-func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: String) -> void:
+func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: String, can_interrupt: bool = true) -> void:
 	var settings: Resource = battle_effects.visual_settings.shield_shatter
 	damage_timeline.arm(
 		events,
 		settings.shatter_burst_start,
 		settings.shatter_total_duration,
-		_apply_pending_hull.bind(report, side),
+		_apply_pending_hull.bind(report, side, can_interrupt),
 		battle_effects.shatter_updates,
 		func():
 			return (
@@ -925,10 +925,10 @@ func _arm_pending_damage(events: Array[Dictionary], report: Dictionary, side: St
 	)
 
 
-func _apply_hull_report(report: Dictionary, side: String, visuals: bool) -> void:
+func _apply_hull_report(report: Dictionary, side: String, visuals: bool, can_interrupt: bool = true) -> void:
 	var key: String = "actor" if side == "player" else "target"
 	var amount: int = int(report.get(key, 0))
-	if side == "player": _interrupt_charged_beam(int(report.get("target", 0)))
+	if can_interrupt and side == "player": _interrupt_charged_beam(int(report.get("target", 0)))
 	player_hull_damage_taken += amount
 	var before: int = int(report.get(key + "_before", player_hull))
 	var permanent: int = permanent_damage(before, before - amount, player_hull_capacity)
@@ -939,13 +939,13 @@ func _apply_hull_report(report: Dictionary, side: String, visuals: bool) -> void
 
 
 func _apply_pending_hull(
-	events: Array[Dictionary], visuals: bool, report: Dictionary, side: String
+	events: Array[Dictionary], visuals: bool, report: Dictionary, side: String, can_interrupt: bool
 ) -> void:
 	visuals = visuals and is_instance_valid(battle_effects) and not battle_effects.cancelling
 	var before: Dictionary = _both_states()
 	for event in events:
 		set(event.side + "_hull", maxi(0, int(get(event.side + "_hull")) - event.amount))
-	_apply_hull_report(report, side, visuals)
+	_apply_hull_report(report, side, visuals, can_interrupt)
 	if visuals and battle_effects.enabled and not battle_effects.cancelling:
 		battle_effects.play_changes(before, _both_states())
 	_check_winner()

@@ -236,6 +236,10 @@ func combat_checks() -> void:
 		"No enemy card consumed; next player turn resets Overdrive")
 	resumed.progression_actions.beam = Actions.Beam.CHARGING
 	resumed.progression_actions.charge_hull = 30
+	var rng_before: int = resumed.progression_actions.rng.state
+	resumed._apply_hull_report({"target": 15}, "player", false, false)
+	check(resumed.progression_actions.beam == Actions.Beam.CHARGING
+		and resumed.progression_actions.rng.state == rng_before, "Environmental damage does not roll interruption")
 	for seed_value in range(100):
 		resumed.progression_actions.rng.seed = seed_value
 		resumed._interrupt_charged_beam(30)
