@@ -822,6 +822,7 @@ func activate_overdrive(action: int, payment: String) -> bool:
 		return false
 	progression_actions.overdrive_used = true
 	overdrive_triggered = true
+	resolving_card = true
 	if modifier.shields_disabled() and action == 1:
 		var unshielded: Dictionary = before.enemy.duplicate()
 		unshielded.shields = 0
@@ -835,7 +836,20 @@ func activate_overdrive(action: int, payment: String) -> bool:
 	battle_effects.play_changes(before, _both_states(), "player", payment, ProgressionActions.OVERDRIVE[action].cost)
 	_check_winner()
 	refresh_display()
+	_complete_overdrive_turn()
 	return true
+
+
+func _complete_overdrive_turn() -> void:
+	if battle_effects.busy:
+		await battle_effects.finished
+	if battle_effects.cancelling or checkpoint_exit or is_queued_for_deletion():
+		return
+	resolving_card = false
+	if not _check_winner():
+		await _finish_turn("player")
+	else:
+		refresh_display()
 
 
 func _checkpoint_prototype_turn() -> void:
