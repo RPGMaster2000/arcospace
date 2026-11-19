@@ -262,6 +262,11 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 				or outcome.maximum_integrity != state.defense.tuning.base_integrity):
 			return null
 		state.homeworld_outcome = outcome.duplicate(true)
+		for key in ["integrity", "maximum_integrity", "player_hull", "salvage"]:
+			state.homeworld_outcome[key] = int(outcome[key])
+		for key in ["production_upgrades", "card_upgrades"]:
+			for id in outcome[key]:
+				state.homeworld_outcome[key][id] = int(outcome[key][id])
 	if data.has("defense_poi_effects"):
 		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
 		var source: int = state.poi_effects.extraction_source
