@@ -14,5 +14,6 @@ var salvage_rewards: Dictionary = {}
 var battles_won: int = 0
 var earned_tactical: bool = false
 var earned_strategic: bool = false
+var allied_support: bool = false
 var tactical_resources: int = TACTICAL_RESOURCES
 var strategic_shields: int = STRATEGIC_SHIELDS

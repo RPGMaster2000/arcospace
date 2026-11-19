@@ -18,6 +18,7 @@ func fresh(seed_value: int, configuration: Resource = null) -> Resource:
 	var state := State.new()
 	var rules: Resource = configuration if configuration != null else Rules.duplicate(true)
 	rules.game_mode = "defense"
+	rules.warzone_campaign_enabled = false
 	rules.log_rolls = false
 	state.start(0, rules, seed_value)
 	return state

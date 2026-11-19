@@ -111,6 +111,8 @@ static func snapshot(value: Dictionary) -> Dictionary:
 	if not copy.get("friendly_support", {}).is_empty():
 		copy.friendly_support.damage = int(copy.friendly_support.damage)
 		copy.friendly_support.interval = int(copy.friendly_support.interval)
+		if copy.friendly_support.get("source") == "allied_fleet":
+			copy.friendly_support.strength = int(copy.friendly_support.strength)
 	var location: Array = []
 	for coordinate in copy.location: location.append(float(coordinate))
 	copy.location = location
@@ -123,7 +125,11 @@ static func valid_snapshot(value: Variant) -> bool:
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
 	if value.get("mothership_advantage", "") not in ["", "penetration", "damage"]: return false
-	if not Installations.valid_support(value.get("friendly_support", {})): return false
+	var support: Variant = value.get("friendly_support", {})
+	if not Installations.valid_support(support): return false
+	if support.has("source") and (
+		support.source != "allied_fleet" or not Installations._positive_integer(support.get("strength"), 1000000)
+	): return false
 	if value.type == NONE and (value.instance_id != "" or value.intensity != 0): return false
 	if not Navigation.valid_point(value.get("location")): return false
 	if not value.get("run_seed") is String or not value.run_seed.is_valid_int(): return false

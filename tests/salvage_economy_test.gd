@@ -25,6 +25,7 @@ func check(ok: bool, message: String) -> void:
 func fresh() -> ExpeditionState:
 	var config: Resource = Rules.duplicate(true)
 	config.game_mode = "defense"
+	config.warzone_campaign_enabled = false
 	config.defense_tuning.enemy_speed = 0.0
 	config.defense_tuning.pressure_per_second = 0.0
 	var state := State.new()

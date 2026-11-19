@@ -511,7 +511,9 @@ func _fire_turret_support() -> bool:
 	var enemy: Dictionary = ship_snapshot("enemy")
 	modifier.shielded_hit(enemy, int(support.damage))
 	apply_ship_snapshot("enemy", enemy)
-	$ModifierDisplay.announce("FRIENDLY TURRET SUPPORT · %d DAMAGE" % int(support.damage), Color("64d7ad"))
+	var allied: bool = support.get("source") == "allied_fleet"
+	var title := "ALLIED FLEET SUPPORT" if allied else "FRIENDLY TURRET SUPPORT"
+	$ModifierDisplay.announce("%s · %d DAMAGE" % [title, support.damage], Color("7dc6ff") if allied else Color("64d7ad"))
 	return true
 
 
@@ -1192,6 +1194,17 @@ func _display_snapshot() -> Dictionary:
 func _battle_system_overview() -> String:
 	if expedition == null:
 		return "Standalone battle"
+	if expedition.is_warzone():
+		var lines := PackedStringArray(["Warzone · Objectives %d / %d" % [
+			expedition.warzone.controlled(), expedition.Warzone.REQUIRED_OBJECTIVES],
+			"Hostile fleets %d" % expedition.warzone.fleet_count("hostile")])
+		var allied: Dictionary = battle_environment.get("friendly_support", {})
+		if allied.get("source") == "allied_fleet":
+			var next_round: int = turn_number + posmod(1 - turn_number, allied.interval)
+			if next_round <= maxi(1, last_turret_round): next_round += allied.interval
+			lines.append("Allied strength %d · %d damage on round %d" % [allied.strength, allied.damage, next_round])
+			lines.append("Direct combat rewards ×0.5")
+		return "\n".join(lines)
 	var lines := PackedStringArray([expedition.system_name])
 	if expedition.is_defense() and expedition.defense != null:
 		var defense = expedition.defense
@@ -1315,8 +1328,8 @@ func victory_description() -> String:
 		return ""
 	var lines: PackedStringArray = []
 	var bonuses: PackedStringArray = []
+	var result := battle_result()
 	if expedition != null:
-		var result: BattleResult = battle_result()
 		if expedition.is_defense():
 			if salvage_rewards.has("standard"):
 				lines.append("Standard reward · +%d Salvage" % salvage_rewards.standard)
@@ -1330,6 +1343,8 @@ func victory_description() -> String:
 				lines.append("Mining extraction · +%d Salvage" % salvage_rewards.extraction)
 		else:
 			lines.append("🪨 +%d Salvage" % expedition.victory_salvage(result))
+			if salvage_rewards.has("operation"):
+				lines.append("Warzone secured · +%d Salvage" % salvage_rewards.operation)
 		var upgrades: int = expedition.battle_upgrade_count(result)
 		if upgrades > 0 and not lines.is_empty():
 			lines[0] += " · Upgrade %d cards" % upgrades
@@ -1339,9 +1354,9 @@ func victory_description() -> String:
 	elif not escaped_by_ftl:
 		lines.append("🪨 +%d Salvage" % DESTRUCTION_SALVAGE)
 	if tactical_victory():
-		bonuses.append("Tactical: " + _resource_reward_text(TACTICAL_RESOURCES))
+		bonuses.append("Tactical: " + _resource_reward_text(result.tactical_resources))
 	if strategic_victory():
-		bonuses.append("Strategic: 🛡️ +%d" % STRATEGIC_SHIELDS)
+		bonuses.append("Strategic: 🛡️ +%d" % result.strategic_shields)
 	if not bonuses.is_empty():
 		if expedition != null:
 			bonuses[0] = "Next battle · " + bonuses[0]

@@ -19,6 +19,7 @@ func fresh(seed_value: int = 42) -> Resource:
 	var state = State.new()
 	var rules = Rules.duplicate(true)
 	rules.game_mode = "defense"
+	rules.warzone_campaign_enabled = false
 	rules.defense_v2 = false
 	state.start(0, rules, seed_value)
 	return state

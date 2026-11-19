@@ -91,6 +91,9 @@ var interception_pending := false
 var traveling := false
 var travel_duration := 1.4
 var defense_view: Dictionary = {}
+var warzone_view: RefCounted
+var warzone_presentation: Node3D
+const WarzonePresentation = preload("res://scripts/presentation/star_system/warzone_presentation.gd")
 var physical_speed: float = 0.0
 var defense_effects: Node3D
 var motion: Tween
@@ -196,6 +199,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 				markers[entry.index].set_objective(entry.get("objective_marker",""))
 				markers[entry.index].tooltip_text = entry.tooltip
 		if not defense_view.is_empty(): sync_defense(defense_view)
+		if warzone_view != null: sync_warzone(warzone_view)
 		overview()
 		return
 	if motion and motion.is_valid():
@@ -220,7 +224,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	if defense_view.is_empty():
 		for entry in entries:
 			var at: Array = entry.get("world_position", [])
-			if at.size() == 3 and entry.get("profile") != null:
+			if at.size() == 3 and (warzone_view != null or entry.get("profile") != null):
 				visual_data.anchors[entry.index] = Vector3(at[0], at[1], at[2])
 	for layer in [visual_root,destination_root,background]:
 		if is_instance_valid(layer):
@@ -330,8 +334,10 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.contrast = not defense_view.is_empty() and entry.get("profile") != null
+		button.contrast = warzone_view != null or (not defense_view.is_empty() and entry.get("profile") != null)
 		button.style_tag(entry.color)
+		if warzone_view != null:
+			button.add_theme_font_override("font", ThemeDB.fallback_font)
 		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index) or entry.get("profile") != null)
 		button.set_objective(entry.get("objective_marker",""))
 		button.hit_allowed = func(point): return not point_is_reserved(point)
@@ -399,14 +405,19 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	orbit_index = last_destination if objects.has(last_destination) else -1
 	if orbit_index != -1:
 		ship.position = objects[orbit_index].position + Vector3(_orbit_radius(orbit_index), 0, 0)
+	if is_instance_valid(defense_effects):
+		world.remove_child(defense_effects)
+		defense_effects.queue_free()
+		defense_effects = null
 	if not defense_view.is_empty():
-		if is_instance_valid(defense_effects):
-			world.remove_child(defense_effects)
-			defense_effects.queue_free()
 		defense_effects = preload("res://scripts/presentation/star_system/defense_presentation.gd").new()
 		world.add_child(defense_effects)
 		defense_effects.configure(self)
 		sync_defense(defense_view)
+	if warzone_view != null:
+		warzone_presentation = WarzonePresentation.new()
+		destination_root.add_child(warzone_presentation)
+		sync_warzone(warzone_view)
 	if is_instance_valid(storm_legend):
 		storm_legend.hide()
 		storm_legend.queue_free()
@@ -420,7 +431,7 @@ func _process(delta: float) -> void:
 		hold_fired = true
 		gesture = Gesture.HOLD
 		inspect_requested.emit(hold_index)
-	if not defense_view.is_empty() and interactive and traveling and motion and motion.is_valid():
+	if (not defense_view.is_empty() or warzone_view != null) and interactive and traveling and motion and motion.is_valid():
 		if input_allowed.is_valid() and not input_allowed.call(): motion.pause()
 		elif not motion.is_running(): motion.play()
 	if focus_orbit_enabled and camera.viewing == &"destination" and not (camera.motion and camera.motion.is_running()):
@@ -447,7 +458,7 @@ func _process(delta: float) -> void:
 		planet_nodes[p.index].get_node("Surface").rotate_y(delta*p.rotation_speed)
 	if traveling and travel_direction.length_squared() > 0.0:
 		_face(travel_direction, delta * 7.0)
-	if orbit_index != -1 and not traveling and defense_view.is_empty():
+	if orbit_index != -1 and not traveling and defense_view.is_empty() and warzone_view == null:
 		orbit_angle += delta * settings.orbit_speed
 		var center: Vector3 = objects[orbit_index].position
 		var next: Vector3 = center + Vector3(cos(orbit_angle), 0.15, sin(orbit_angle)) * _orbit_radius(orbit_index)
@@ -474,14 +485,19 @@ func _process(delta: float) -> void:
 		selection_rings[index].sync(button, objects[index])
 		button.anchor_point = center-button.position
 		button.queue_redraw()
-	# Keep the two high-priority enemy names readable when their projections overlap.
+	# Keep high-priority names readable when projections overlap. Warzone
+	# places objective names before the smaller hostile contact markers.
 	var placed_enemies: Array[Control] = []
-	for index in markers:
+	var label_order: Array = markers.keys()
+	if warzone_view != null:
+		label_order.reverse()
+	for index in label_order:
 		var button = markers[index]
 		if not button.visible or not button.contrast: continue
 		for other in placed_enemies:
 			if button.get_global_rect().intersects(other.get_global_rect().grow(4)):
-				button.position.x = other.position.x + other.size.x + 5.0
+				var right: float = other.position.x + other.size.x + 5.0
+				button.position.x = other.position.x - button.size.x - 5.0 if warzone_view != null and right + button.size.x > size.x else right
 				button.anchor_point = camera.unproject_position(objects[index].position) - button.position
 		placed_enemies.append(button)
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
@@ -1135,6 +1151,38 @@ func _ship_extent(model: Node3D) -> float:
 
 static func _defense_point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
+
+
+func sync_warzone(operation: RefCounted) -> void:
+	if not is_instance_valid(warzone_presentation) or operation == null:
+		return
+	warzone_presentation.refresh(operation)
+	for fleet in operation.fleets:
+		if fleet.side != "hostile": continue
+		var index: int = fleet.id - operation.ALLIED_GROUPS
+		if not objects.has(index): continue
+		objects[index].position = fleet.position
+		objects[index].visible = operation.active(fleet)
+		markers[index].disabled = not operation.active(fleet) or operation.complete
+		markers[index].set_label("", "×" if fleet.engaged >= 0 else "H", false)
+		markers[index].tooltip_text = "Hostile %s · Strength %d\nBound for %s" % [fleet.role, fleet.strength, operation.OBJECTIVES[fleet.destination]]
+	for offset in operation.objectives.size():
+		var index: int = operation.HOSTILE_GROUPS + offset
+		if not markers.has(index): continue
+		var objective: Dictionary = operation.objectives[offset]
+		var marker: Button = markers[index]
+		var tint := WarzonePresentation.objective_color(objective)
+		if marker.get_meta("warzone_tint", Color.TRANSPARENT) != tint:
+			marker.set_meta("warzone_tint", tint)
+			# Only the accent changes after creation. Reuse the marker's input bindings.
+			marker.accent = tint
+			marker._refresh_state()
+		var status := WarzonePresentation.objective_status(objective)
+		marker.set_label(operation.OBJECTIVES[offset], "◇", true)
+		marker.set_objective("Contested" if objective.contested else objective.owner.capitalize())
+		marker.tooltip_text = status
+
+
 func _defense_hostile(index: int) -> bool:
 	if missile_ids.has(index): return true
 	for unit in defense_view.get("units", []):

@@ -18,6 +18,7 @@ func check(ok: bool, message: String) -> void:
 func fresh(faction: Resource, seed_value: int = 42) -> Resource:
 	var config := Rules.duplicate(true)
 	config.game_mode = "defense"
+	config.warzone_campaign_enabled = false
 	config.log_rolls = false
 	config.factions.assign([faction])
 	var state := State.new()

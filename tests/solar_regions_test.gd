@@ -84,6 +84,7 @@ func run() -> void:
 		for seed_value in [17,1042,65537]:
 			rules = rules.duplicate(true)
 			rules.game_mode = mode
+			rules.warzone_campaign_enabled = false
 			rules.system_expansion = 0.0
 			rules.defense_v2 = false
 			state = State.new()
@@ -99,6 +100,9 @@ func run() -> void:
 				for data in [actual,expected]:
 					data.erase("temporal_rift_schedule")
 					data.erase("environmental_instances")
+					# The historical reference predates campaign outcome records.
+					data.erase("homeworld_outcome")
+					data.erase("warzone_campaign_enabled")
 				check(actual == expected,"New phenomena and clearance preserve PR #50 encounters, anchors, progression and every RNG stream")
 				var clearance := preload("res://scripts/expedition/environment_clearance.gd")
 				var invalid_old := false

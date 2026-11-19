@@ -38,6 +38,7 @@ func run() -> void:
 	store.clear_run()
 	var state = State.new()
 	var rules: Resource = preload("res://encounters/expedition_rules.tres").duplicate(true)
+	rules.warzone_campaign_enabled = false
 	rules.defense_v2 = false
 	state.start(0, rules, 81)
 	var start: Vector3 = state.defense.start
