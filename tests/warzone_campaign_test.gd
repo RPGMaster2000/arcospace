@@ -72,14 +72,19 @@ func run() -> void:
 		check(restored.homeworld_outcome.integrity == 19 and restored.homeworld_outcome.production_upgrades.reactor == 2, "History preserves integrity and production upgrades across saves")
 		check(restored.homeworld_outcome.card_upgrades.get(card.identity_key()) == 1, "History preserves card upgrades across saves")
 		restored.salvage += 7
-		check(restored.generate_system() and restored.system_number == 2, "Campaign transition uses the existing jump gate")
-		check(restored.homeworld_outcome.integrity == 19 and restored.homeworld_outcome.salvage == restored.salvage, "Departure preserves Homeworld and records the final player inventory")
+		var departing_salvage: int = restored.salvage
+		var package: Dictionary = restored.warzone_support_package()
+		check(restored.generate_system() and restored.system_number == 2 and restored.is_warzone(), "Campaign transition uses the existing jump gate to enter Warzone")
+		check(restored.homeworld_outcome.integrity == 19 and restored.homeworld_outcome.salvage == departing_salvage, "Departure preserves Homeworld and records the final player inventory")
+		check(restored.salvage == departing_salvage + package.salvage and restored.pending_bonuses.shields == package.shields,
+			"Entry grants the historical support package once")
 		var post_jump: Dictionary = Save.encode(restored)
 		check(store.decode(post_jump, rules) != null, "History survives in a later-system checkpoint")
 		post_jump.homeworld_outcome.integrity = 101
 		check(store.decode(post_jump, rules) == null, "Impossible historical integrity is rejected")
-		post_jump.erase("homeworld_outcome")
-		check(store.decode(post_jump, rules) != null, "Legacy System 2 Defense saves stay loadable")
+		var legacy: Dictionary = Save.encode(state)
+		legacy.erase("homeworld_outcome")
+		check(store.decode(legacy, rules) != null, "Legacy Defense saves stay loadable")
 	store.clear_run()
 
 	rules.game_mode = "exploration"

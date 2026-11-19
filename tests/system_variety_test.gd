@@ -37,6 +37,7 @@ func fresh(seed_value: int, enabled: bool = true, mode: String = "defense") -> R
 	rules.system_variety.enabled = enabled
 	rules.log_rolls = false
 	rules.game_mode = mode
+	rules.warzone_campaign_enabled = false
 	var state := State.new()
 	state.start(0, rules, seed_value)
 	return state

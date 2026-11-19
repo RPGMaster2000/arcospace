@@ -166,6 +166,7 @@ func _ready() -> void:
 			state.navigation.rebase_movement(state.navigation.position))
 	_build_ui()
 	screen.overview_hud.system_details_requested.connect(_show_system_details)
+	screen.overview_hud.warzone_wait_requested.connect(_wait_in_warzone)
 	_setup_decoy_controls()
 	card_management = CardManagement.new()
 	add_child(card_management)
@@ -278,7 +279,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 			star_map.queue_free()
 			screen.map_layer = null
 		star_map = null
-	screen.reset_view(kind, state, use_star_map or state.is_defense(), _icon)
+	screen.reset_view(kind, state, use_star_map or state.is_defense() or state.is_warzone(), _icon)
 	if _uses_3d_map() and kind == "outcome" and not is_instance_valid(star_map) and state.navigation_origin != -1:
 		_show_star_map(false)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
@@ -361,6 +362,7 @@ func _abort_presentation(revision: int, owner: Resource, next: Phase) -> void:
 func _travel_started() -> void:
 	if phase == Phase.OVERVIEW:
 		phase = Phase.TRAVELING
+		if state.is_warzone(): screen.set_warzone_status(state)
 
 
 #endregion
@@ -395,12 +397,14 @@ func start_expedition() -> bool:
 
 func _bind_progress() -> void:
 	if not state.defense_advanced.is_connected(_defense_updated): state.defense_advanced.connect(_defense_updated)
+	if not state.warzone_advanced.is_connected(_warzone_updated): state.warzone_advanced.connect(_warzone_updated)
 	if not state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.connect(_progress_committed)
 
 
 func _progress_committed() -> void:
 	if state.is_defense(): _refresh_defense_hud()
+	if state.is_warzone(): screen.set_warzone_status(state)
 	if is_instance_valid(battle) and battle.result_recorded:
 		battle.settings_button.menu.battle_restart_notice = false
 	if persistence_enabled and not _save_progress():
@@ -514,7 +518,7 @@ func show_system(preserve_transition: bool = false) -> void:
 		_show_star_map(false)
 		_show_missile(state.defense.missiles.pending)
 		return
-	if use_star_map or state.is_defense():
+	if use_star_map or state.is_defense() or state.is_warzone():
 		_show_star_map()
 		return
 	screen.present_system_grid(state, _icon, _grid_travel)
@@ -546,7 +550,7 @@ func _map_input_allowed(block_construction: bool = true) -> bool:
 
 
 func _uses_3d_map() -> bool:
-	return (state != null and state.is_defense()) or (use_star_map and use_3d_star_map)
+	return (state != null and (state.is_defense() or state.is_warzone())) or (use_star_map and use_3d_star_map)
 
 
 func _show_star_map(resume_travel: bool = true) -> void:
@@ -571,6 +575,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.system_profile = state.system_profile
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
+		star_map.warzone_view = state.warzone
 		star_map.locator_exclusions = func():
 			var areas: Array = []
 			for panel in screen.overview_hud.panels:
@@ -580,10 +585,10 @@ func _show_star_map(resume_travel: bool = true) -> void:
 					areas.append(rect)
 			return areas
 		star_map.speed_profile = state.travel_speed_profile
-		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() else 0.0
+		star_map.physical_speed = state.rules.defense_tuning.player_speed if state.is_defense() or state.is_warzone() else 0.0
 		star_map.hold_threshold_msec = roundi(state.rules.defense_tuning.inspection_hold_seconds * 1000.0)
 		star_map.double_tap_msec = roundi(state.rules.defense_tuning.double_tap_seconds * 1000.0)
-		star_map.touch_confirmation_required = state.is_defense()
+		star_map.touch_confirmation_required = state.is_defense() or state.is_warzone()
 		star_map.input_allowed = _map_input_allowed
 		star_map.turret_options = _turret_options if state.is_defense() else Callable()
 		star_map.turret_requested = _deploy_turret if state.is_defense() else Callable()
@@ -605,7 +610,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.overview_hud.attach_zoom(star_map)
 		screen._sync_map_rect()
 		if new_system: star_map.fit_overview()
-	if _uses_3d_map() and state.navigation.position.size() == 3 and (state.is_defense() or new_map or state.navigation.leg_active or state.navigation_origin == state.FREE_DESTINATION or not state.intercepted_position().is_empty()):
+	if _uses_3d_map() and state.navigation.position.size() == 3 and (state.is_defense() or state.is_warzone() or new_map or state.navigation.leg_active or state.navigation_origin == state.FREE_DESTINATION or not state.intercepted_position().is_empty()):
 		var at: Array = state.navigation.position
 		star_map.apply_navigation_position(Vector3(at[0], at[1], at[2]))
 	var stopped: Array = state.intercepted_position()
@@ -642,6 +647,9 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
 		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
+	elif state.is_warzone():
+		screen.set_system_name(state.system_name)
+		screen.set_warzone_status(state)
 	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
 		_resume_navigation.call_deferred(destination, _presentation_revision, state, weakref(star_map))
@@ -656,8 +664,17 @@ func visit(index: int) -> void:
 	var moving_hostile: bool = state.is_defense() and not state.defense.unit_for(index).is_empty()
 	if not moving_hostile and not state.can_visit(index) and not state.objective_locked(index): return
 	_sample_navigation_position(true)
+	if state.is_warzone() and (phase != Phase.TRAVELING or not state.can_visit(index)):
+		return
 	if phase != Phase.TRAVELING and state.is_defense(): return
 	_checkpoint_navigation_position()
+	if state.is_warzone() and not state.warzone_fleet(index).is_empty() and not state.can_engage(index):
+		if state.warzone.complete:
+			state.cancel_travel()
+			show_system()
+		else:
+			star_map.travel(index)
+		return
 	if moving_hostile:
 		# The target has moved or arrived. Only a swept contact opens combat.
 		state.arrive_destination(index)
@@ -811,9 +828,16 @@ func show_battle_preview(index: int) -> void:
 	if inspecting: view.add_child(_label("INSPECTION · Tap outside to close", 15))
 	if _uses_3d_map() and not inspecting: star_map.tactical_focus(index)
 	_add_tactical_briefing(encounter, enemy, false, index)
-	var support: Dictionary = state.turret_support(index)
+	if state.is_warzone():
+		var fleet: Dictionary = state.warzone_fleet(index)
+		view.add_child(_label("Hostile %s · Strength %d · Bound for %s" % [
+			fleet.role, fleet.strength, State.Warzone.OBJECTIVES[fleet.destination]], 16))
+	var support: Dictionary = state.battle_support(index)
 	if not support.is_empty():
-		view.add_child(_label("Friendly Turret Support · %d damage every %d rounds" % [support.damage, support.interval], 15))
+		if state.is_warzone():
+			view.add_child(_label("Allied fleet engaged · Strength %d\nSupport deals %d damage every %d rounds. Direct combat rewards ×0.5." % [support.strength, support.damage, support.interval], 16))
+		else:
+			view.add_child(_label("Friendly Turret Support · %d damage every %d rounds" % [support.damage, support.interval], 15))
 	# Inspection only shows enemy information; entering combat requires arrival.
 	if not inspecting:
 		var enter = _button("Enter Combat", _enter_battle.bind(index))
@@ -857,7 +881,32 @@ func show_poi(index: int) -> void:
 		return
 	selected_encounter = index
 	_clear("poi")
+	if state.is_warzone():
+		_show_warzone_objective(index)
+		return
 	screen.present_poi(state, index, _uses_3d_map(), inspecting, _icon, _select_approach)
+
+
+func _show_warzone_objective(index: int) -> void:
+	var objective: Dictionary = state.warzone_objective(index)
+	if objective.is_empty(): return
+	header.hide()
+	var presentation := preload("res://scripts/presentation/star_system/warzone_presentation.gd")
+	view.add_child(_label(state.encounters[index].title, 26))
+	view.add_child(_label(presentation.objective_status(objective), 19))
+	if objective.progress > 0:
+		view.add_child(_label("%s capture · %ds / %ds" % [
+			objective.capturing.capitalize(), objective.progress, state.warzone.tuning.capture_seconds], 16))
+	if not inspecting and not state.warzone.complete:
+		view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
+		_button("Hold position · %ds" % state.warzone.tuning.wait_seconds, _wait_in_warzone)
+
+
+func _wait_in_warzone() -> void:
+	if state == null or phase not in [Phase.OVERVIEW, Phase.DESTINATION] or not _map_input_allowed():
+		return
+	if state.wait_in_warzone():
+		show_system()
 
 
 func show_outpost() -> void:
@@ -1437,6 +1486,18 @@ func _free_arrived() -> void:
 	_clear("system")
 
 # Simulation decides events; coordinator cancels presentation and routes existing UI.
+func _warzone_updated(target_lost: bool) -> void:
+	if not state.is_warzone() or not is_instance_valid(star_map):
+		return
+	star_map.sync_warzone(state.warzone)
+	screen.set_warzone_status(state)
+	if target_lost and phase == Phase.TRAVELING:
+		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+		star_map._select_destination(-1)
+		map_destination = -1
+		_clear("system")
+
+
 func _defense_updated(events: Dictionary) -> void:
 	homeworld_sequence.record(state,events)
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
@@ -1525,7 +1586,7 @@ func _refresh_defense_hud() -> void:
 # or move the camera. A hold never commits a visit or encounter.
 func _inspect_marker(index: int) -> void:
 	if not decoy_camera.is_empty(): return
-	if not state.is_defense() or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not state.can_visit(index): return
+	if not (state.is_defense() or state.is_warzone()) or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not state.can_visit(index): return
 	if phase == Phase.TRAVELING:
 		_sample_navigation_position()
 		if phase != Phase.TRAVELING: return
@@ -1733,9 +1794,12 @@ func _dismiss_inspection() -> void:
 
 
 func _faction_profile() -> Resource:
-	if not state.is_defense() or state.faction_id.is_empty(): return null
+	if not (state.is_defense() or state.is_warzone()) or state.faction_id.is_empty(): return null
 	return preload("res://scripts/expedition/faction_catalog.gd").find(state.rules, state.faction_id)
 
 func _show_system_details() -> void:
-	if state == null or not state.is_defense() or phase not in [Phase.OVERVIEW,Phase.TRAVELING] or not _map_input_allowed(): return
-	screen.present_system_details(state)
+	if state == null or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not _map_input_allowed(): return
+	if state.is_defense():
+		screen.present_system_details(state)
+	elif state.is_warzone():
+		screen.system_details_overlay.show_text("[b]Warzone reports[/b]\n\n" + "\n".join(state.warzone.events))

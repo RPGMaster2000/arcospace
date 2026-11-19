@@ -368,9 +368,11 @@ func reset_view(kind: String, state: Resource, map_enabled: bool, icon: Callable
 	overview_hud.hull_bar.value = state.hull
 	if state.is_defense():
 		set_defense_status(state)
+	elif state.is_warzone():
+		set_warzone_status(state)
 	else:
 		overview_hud.set_metagame(state.profile_name(), state.pressure, state.ftl_status())
-	jump_button.text = ("FTL READY" if state.can_jump() else "FTL LOCKED") if state.is_defense() else state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
+	jump_button.text = ("FTL READY" if state.can_jump() else "FTL LOCKED") if state.is_defense() or state.is_warzone() else state.ftl_status().replace("FTL OBJECTIVE AVAILABLE", "FTL OBJECTIVE\nAVAILABLE")
 	if state.mandatory_boss_pending():
 		jump_button.tooltip_text = "Defeat the mandatory Boss or escape by EMP Pulse before leaving this system."
 	else:
@@ -649,6 +651,10 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 			elif encounter.get("mandatory_boss", false):
 				detail = "Mandatory Boss · " + detail
 		var tooltip: String = detail
+		if state.is_warzone():
+			var objective: Dictionary = state.warzone_objective(index)
+			detail = "Hostile fleet" if objective.is_empty() else "Capture objective"
+			tooltip = detail
 		var modifier: int = state.preview_modifier(index) if encounter.kind == "battle" else 0
 		if encounter.kind == "battle" and modifier != 0:
 			tooltip += "\n" + state.Modifiers.NAMES[modifier]
@@ -659,7 +665,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 				"name": encounter.title,
 				"model_kind": key,
 				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
-				"world_position": state.battle_location(index),
+				"world_position": state.Defense.wire(state.navigation_destination(index, Vector3.ZERO, Vector3.ZERO)) if state.is_warzone() else state.battle_location(index),
 				"text":
 				(
 					("✓ " if encounter.completed else icon.call(key) + " ")
@@ -795,6 +801,14 @@ func set_defense_status(state: Resource) -> void:
 	overview_hud.set_defense_status(state)
 	if system_details_overlay.shade.visible:
 		system_details_overlay.body.text = preload("res://scripts/ui/system_details.gd").text(state)
+
+
+func set_warzone_status(state: Resource) -> void:
+	overview_hud.set_warzone_status(state)
+	jump_button.text = "FTL READY" if state.can_jump() else "FTL LOCKED"
+	jump_button.tooltip_text = state.ftl_status()
+	jump_button.disabled = not state.can_jump()
+	jump_button.modulate = Color("a3f3e5") if state.can_jump() else Color.WHITE
 
 func present_system_details(state: Resource) -> void:
 	system_details_overlay.show_text(preload("res://scripts/ui/system_details.gd").text(state))

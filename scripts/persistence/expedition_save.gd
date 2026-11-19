@@ -58,6 +58,19 @@ static func _valid_homeworld_outcome(value: Variant, cards: Dictionary, hull_cap
 	return true
 
 
+static func _valid_warzone_outcome(value: Variant) -> bool:
+	if not value is Dictionary or not value.get("secured") is bool or not value.secured:
+		return false
+	if value.get("grade") not in ["Decisive Victory", "Hard-Fought Victory", "Pyrrhic Victory"]:
+		return false
+	for key in ["allied_fleets", "allied_strength", "hostile_strength", "player_victories", "clock_ms", "salvage"]:
+		if not _integer(value.get(key), 0): return false
+	if not _integer(value.get("objective_count"), State.Warzone.REQUIRED_OBJECTIVES, State.Warzone.OBJECTIVES.size()):
+		return false
+	var survival: Variant = value.get("survival")
+	return (survival is float or survival is int) and is_finite(survival) and survival >= 0 and survival <= 1
+
+
 static func _entry(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for key in ENTRY_FIELDS:
@@ -92,7 +105,11 @@ static func encode(state: Resource) -> Dictionary:
 	for key in COUNTERS: data[key] = state.get(key)
 	if not state.homeworld_outcome.is_empty():
 		data.homeworld_outcome = state.homeworld_outcome.duplicate(true)
-	if state.is_defense(): data.faction_id = state.faction_id
+	if state.is_warzone() or not state.warzone_campaign_enabled:
+		data.warzone_campaign_enabled = state.warzone_campaign_enabled
+	if state.is_defense() or state.is_warzone(): data.faction_id = state.faction_id
+	if state.is_warzone(): data.warzone = state.warzone.snapshot()
+	if not state.warzone_outcome.is_empty(): data.warzone_outcome = state.warzone_outcome.duplicate(true)
 	if state.ship() in [State.Deck.GANYMEDE, State.Deck.THUNDERBOLT] and deck.revised_starting_decks:
 		data.revised_starting_decks = true
 	if state.is_defense() and state.defense_poi_version > 0: data.defense_poi_version = state.defense_poi_version
@@ -161,12 +178,12 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not (orbit_clearance is float or orbit_clearance is int) or not is_finite(float(orbit_clearance)) or orbit_clearance < 0.0 or orbit_clearance > 1.0: return null
 	if data.metagame_version >= 2 and (not data.get("game_mode") is String or not data.get("defense") is Dictionary): return null
 	var mode: String = data.game_mode if data.metagame_version >= 2 else "exploration"
-	if mode == "exploration" and data.metagame_version >= 2 and not data.defense.is_empty(): return null
-	if mode not in ["exploration", "defense"]: return null
+	if mode != "defense" and data.metagame_version >= 2 and not data.defense.is_empty(): return null
+	if mode not in ["exploration", "defense", "warzone"] or data.has("warzone") != (mode == "warzone"): return null
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
 	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()] + preload("res://scripts/expedition/faction_catalog.gd").ships(configuration))
-	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS)
+	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS + State.WarzoneOperation.OBJECTIVE_MODELS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
 	if not data.get("revised_starting_decks", false) is bool: return null
@@ -233,6 +250,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			reserve.erase("resolution")
 			entries.append(reserve)
 	state.game_mode = mode
+	if not data.get("warzone_campaign_enabled", configuration.warzone_campaign_enabled) is bool:
+		return null
+	state.warzone_campaign_enabled = data.get("warzone_campaign_enabled", configuration.warzone_campaign_enabled)
+	if mode == "warzone" and not state.warzone_campaign_enabled: return null
 	if data.has("decoys"):
 		if mode != "defense" or not _integer(data.decoys, 0, State.DECOY_CAPACITY): return null
 		state.decoys = int(data.decoys)
@@ -256,9 +277,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
 	if data.has("homeworld_outcome"):
 		var outcome: Variant = data.homeworld_outcome
-		if mode != "defense" or not _valid_homeworld_outcome(outcome, cards, players[data.ship_id].hull_capacity):
+		if mode == "exploration" or not _valid_homeworld_outcome(outcome, cards, players[data.ship_id].hull_capacity):
 			return null
-		if data.system_number == 1 and (not state.defense.complete or outcome.integrity != state.defense.integrity
+		if data.system_number == 1 and (mode != "defense" or not state.defense.complete or outcome.integrity != state.defense.integrity
 				or outcome.maximum_integrity != state.defense.tuning.base_integrity):
 			return null
 		state.homeworld_outcome = outcome.duplicate(true)
@@ -267,6 +288,28 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for key in ["production_upgrades", "card_upgrades"]:
 			for id in outcome[key]:
 				state.homeworld_outcome[key][id] = int(outcome[key][id])
+	if mode == "warzone":
+		if data.system_number != State.CampaignSupport.WARZONE_SYSTEM or data.navigation.position.size() != 3:
+			return null
+		state.warzone = State.Warzone.new()
+		if not state.warzone.restore(data.warzone, configuration.warzone_tuning) or state.warzone.complete != data.ftl_access:
+			return null
+		if entries.size() != State.Warzone.HOSTILE_GROUPS + State.Warzone.OBJECTIVES.size():
+			return null
+		for index in entries.size():
+			if index < State.Warzone.HOSTILE_GROUPS:
+				if entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index)):
+					return null
+			elif entries[index].kind != "poi" or entries[index].completed:
+				return null
+		if data.has("warzone_outcome") != state.warzone.complete:
+			return null
+	if data.has("warzone_outcome"):
+		if mode == "exploration" or data.system_number < State.CampaignSupport.WARZONE_SYSTEM or not _valid_warzone_outcome(data.warzone_outcome):
+			return null
+		state.warzone_outcome = data.warzone_outcome.duplicate(true)
+		for key in ["objective_count", "allied_fleets", "allied_strength", "hostile_strength", "player_victories", "clock_ms", "salvage"]:
+			state.warzone_outcome[key] = int(data.warzone_outcome[key])
 	if data.has("defense_poi_effects"):
 		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
 		var source: int = state.poi_effects.extraction_source
@@ -458,7 +501,10 @@ static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> b
 	if not battle.has("environment"): return true
 	var snapshot: Variant = battle.environment
 	if not EnvironmentData.valid_snapshot(snapshot): return false
-	if not snapshot.get("friendly_support", {}).is_empty() and data.get("game_mode") != "defense": return false
+	var support: Dictionary = snapshot.get("friendly_support", {})
+	if not support.is_empty():
+		var required_mode := "warzone" if support.get("source") == "allied_fleet" else "defense"
+		if data.get("game_mode") != required_mode: return false
 	var index: int = int(battle.get("index", -1))
 	if not snapshot.get("mothership_advantage", "").is_empty():
 		if data.get("game_mode") != "defense": return false

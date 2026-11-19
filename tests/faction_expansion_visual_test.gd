@@ -115,6 +115,7 @@ func run() -> void:
 	host.play_system_intro = false
 	host.rules = host.rules.duplicate(true)
 	host.rules.game_mode = "defense"
+	host.rules.warzone_campaign_enabled = false
 	host.rules.factions.assign([Catalog.DEFAULTS[2]])
 	host.rules.debug_seed = 42
 	root.add_child(host)

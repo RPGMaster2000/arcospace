@@ -3,6 +3,7 @@ extends Control
 signal settled
 signal geometry_changed
 signal system_details_requested
+signal warzone_wait_requested
 
 enum Mode { HIDDEN, OVERVIEW, FOCUS }
 var mode: Mode = Mode.HIDDEN
@@ -19,6 +20,8 @@ var status: VBoxContainer
 var utilities: HBoxContainer
 var metagame: Label
 var defense_mode := false
+var warzone_mode := false
+var wait_button: Button
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
 var pressure_gap: Control
@@ -122,6 +125,13 @@ func _ready() -> void:
 	turret_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	status_actions.add_child(turret_count)
 	status_actions.add_child(details_button)
+	wait_button = Button.new()
+	wait_button.name = "WarzoneWait"
+	wait_button.custom_minimum_size = Vector2(96, 48)
+	preload("res://scripts/ui/encounter_presentation.gd").action(wait_button)
+	wait_button.pressed.connect(warzone_wait_requested.emit)
+	status_actions.add_child(wait_button)
+	wait_button.hide()
 	for node in [pressure_bar,pressure_gap,details_button,turret_count]: node.hide()
 	hull_bar = ProgressBar.new()
 	hull_bar.custom_minimum_size.y = 4
@@ -404,6 +414,7 @@ func _release_zoom() -> void:
 # Read-only facts from the expedition screen; no gameplay state is stored here.
 func set_metagame(profile: String, pressure: int, access: String) -> void:
 	defense_mode = false
+	warzone_mode = false
 	_sync_strategic_controls()
 	metagame.text = "%s · PRESSURE %d / 12\n%s" % [profile, pressure, access]
 	metagame.add_theme_color_override("font_color", Color("ff8e9b") if pressure >= 7 else (Color("e3bb6b") if pressure >= 4 else Color("9ad8e5")))
@@ -412,6 +423,7 @@ func set_metagame(profile: String, pressure: int, access: String) -> void:
 # Presentation only: use the same pressure denominator as the strategic simulation.
 func set_defense_status(state: Resource) -> void:
 	defense_mode = true
+	warzone_mode = false
 	var ratio := clampf(state.defense.pressure / maxf(1.0,state.defense.tuning.pressure_maximum),0,1)
 	metagame.text = "PRESSURE %d / %d" % [int(state.defense.pressure),int(state.defense.tuning.pressure_maximum)]
 	if state.defense.mothership_advancing: metagame.text += "\nMOTHERSHIP ADVANCING"
@@ -422,6 +434,34 @@ func set_defense_status(state: Resource) -> void:
 	_sync_strategic_controls()
 	queue_layout()
 
+
+func set_warzone_status(state: Resource) -> void:
+	defense_mode = false
+	warzone_mode = true
+	var operation = state.warzone
+	metagame.text = "WARZONE · OBJECTIVES %d / %d\nAllied fleets %d · Enemy fleets %d" % [
+		operation.controlled(), state.Warzone.REQUIRED_OBJECTIVES,
+		operation.fleet_count("allied"), operation.fleet_count("hostile")]
+	if operation.complete:
+		metagame.text += "\n" + state.warzone_outcome.grade
+	elif operation.consolidation > 0:
+		metagame.text += "\nHolding · %ds / %ds" % [operation.consolidation, operation.tuning.consolidation_seconds]
+	else:
+		metagame.text += "\nCapture and hold two objectives"
+	if not operation.events.is_empty():
+		var latest: String = operation.events.back()
+		metagame.text += "\n" + (latest.left(40) + "…" if latest.length() > 40 else latest)
+	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
+	wait_button.text = "Wait %ds" % operation.tuning.wait_seconds
+	wait_button.disabled = operation.complete or state.navigation.leg_active or not state.can_navigate()
+	_sync_strategic_controls()
+	queue_layout()
+
+
 func _sync_strategic_controls() -> void:
-	for node in [pressure_bar,pressure_gap,details_button,turret_count,panels[1]]:
+	for node in [pressure_bar,pressure_gap,turret_count]:
 		if is_instance_valid(node): node.visible = defense_mode and mode == Mode.OVERVIEW
+	var show_actions: bool = mode == Mode.OVERVIEW and (defense_mode or warzone_mode)
+	panels[1].visible = show_actions
+	details_button.visible = show_actions
+	wait_button.visible = show_actions and warzone_mode
