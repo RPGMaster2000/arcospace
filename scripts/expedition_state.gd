@@ -7,6 +7,7 @@ signal deck_changed
 signal progress_committed
 signal defense_advanced(events: Dictionary)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
+const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
 const RouteEnvironments = preload("res://scripts/expedition/route_environments.gd")
@@ -16,6 +17,7 @@ var orbit_clearance: float = 0.0
 var system_variation: Dictionary = {}
 var game_mode: String = "exploration"
 var defense: RefCounted
+var homeworld_outcome: Dictionary = {}
 var rifts := TemporalRift.new()
 const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
 var poi_effects := PoiEffects.new()
@@ -365,6 +367,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	faction_id = ""
 	system_variation = {}
 	run_ended = false
+	homeworld_outcome.clear()
 	poi_effects = PoiEffects.new()
 	defense_poi_version = 0
 	decoys = 0
@@ -444,6 +447,14 @@ func system_objective_complete() -> bool:
 	return defense != null and defense.complete if is_defense() else ftl_access and not mandatory_boss_pending()
 
 
+func next_campaign_operation() -> String:
+	return CampaignSupport.operation_for(game_mode, system_number + 1)
+
+
+func warzone_support_package() -> Dictionary:
+	return CampaignSupport.homeworld_package(homeworld_outcome, rules.warzone_tuning)
+
+
 func mandatory_boss_pending() -> bool:
 	if is_defense(): return false
 	var found: bool = false
@@ -505,6 +516,8 @@ func generate_system() -> bool:
 		return false
 	if system_number > 0 and not can_jump():
 		return false
+	# Snapshot outgoing Homeworld before the generator replaces DefenseState.
+	_remember_homeworld()
 	_recorded_results.clear()
 	environmental_instances.clear()
 	layout_expansion = rules.system_expansion
@@ -1538,8 +1551,14 @@ func _secure_defense(result: BattleResult = null) -> void:
 	defense.secured_reward_claimed = true
 	poi_effects.leave_system()
 	salvage += defense.tuning.secured_salvage
+	_remember_homeworld()
 	if result != null:
 		result.salvage_rewards.secured = defense.tuning.secured_salvage
+
+
+func _remember_homeworld() -> void:
+	if system_number == 1 and is_defense() and defense != null and defense.complete and defense.integrity > 0:
+		homeworld_outcome = CampaignSupport.homeworld_outcome(self)
 
 
 # Persist a result and complete the encounter once; escape resolves Boss navigation too.

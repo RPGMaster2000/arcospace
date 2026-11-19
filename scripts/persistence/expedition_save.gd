@@ -41,6 +41,23 @@ static func _int_map(value: Variant, keys: Array, low: int) -> bool:
 	return true
 
 
+static func _valid_homeworld_outcome(value: Variant, cards: Dictionary, hull_capacity: int) -> bool:
+	if not value is Dictionary or not value.get("secured") is bool or not value.secured:
+		return false
+	if not _integer(value.get("maximum_integrity"), 1, 200):
+		return false
+	if not _integer(value.get("integrity"), 1, int(value.maximum_integrity)):
+		return false
+	if not _integer(value.get("player_hull"), 1, hull_capacity + State.Repairs.STATION_PLATING_LIMIT) or not _integer(value.get("salvage"), 0):
+		return false
+	if not _int_map(value.get("production_upgrades"), State.PRODUCTION, 0) or not value.get("card_upgrades") is Dictionary:
+		return false
+	for id in value.card_upgrades:
+		if not cards.has(id) or not _integer(value.card_upgrades[id], 1, mini(cards[id].max_upgrades, cards[id].upgrade_effects.size())):
+			return false
+	return true
+
+
 static func _entry(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for key in ENTRY_FIELDS:
@@ -73,6 +90,8 @@ static func encode(state: Resource) -> Dictionary:
 		"pending_card": deck.pending_card,
 		"encounters": [], "service": _entry(state.service) if not state.service.is_empty() else {}, "rng": {}}
 	for key in COUNTERS: data[key] = state.get(key)
+	if not state.homeworld_outcome.is_empty():
+		data.homeworld_outcome = state.homeworld_outcome.duplicate(true)
 	if state.is_defense(): data.faction_id = state.faction_id
 	if state.ship() in [State.Deck.GANYMEDE, State.Deck.THUNDERBOLT] and deck.revised_starting_decks:
 		data.revised_starting_decks = true
@@ -235,6 +254,14 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
+	if data.has("homeworld_outcome"):
+		var outcome: Variant = data.homeworld_outcome
+		if mode != "defense" or not _valid_homeworld_outcome(outcome, cards, players[data.ship_id].hull_capacity):
+			return null
+		if data.system_number == 1 and (not state.defense.complete or outcome.integrity != state.defense.integrity
+				or outcome.maximum_integrity != state.defense.tuning.base_integrity):
+			return null
+		state.homeworld_outcome = outcome.duplicate(true)
 	if data.has("defense_poi_effects"):
 		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
 		var source: int = state.poi_effects.extraction_source
