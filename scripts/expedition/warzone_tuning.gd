@@ -30,3 +30,12 @@ extends Resource
 @export_range(1, 20, 1) var support_minimum_damage := 6
 @export_range(1, 20, 1) var support_maximum_damage := 9
 @export_range(1, 30, 1) var wait_seconds := 6
+
+@export_group("Lattice operations")
+@export_range(20, 150, 1) var effort_goal := 60
+@export_range(1, 30, 1) var capture_effort := 8
+@export_range(1, 30, 1) var operation_effort := 14
+@export_range(1, 30, 1) var victory_effort := 10
+@export_range(1, 15, 1) var repair_cost := 4
+@export_range(10, 90, 1) var sabotage_seconds := 35
+@export_range(8, 60, 1) var convoy_seconds := 18

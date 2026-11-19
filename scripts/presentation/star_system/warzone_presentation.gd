@@ -1,5 +1,5 @@
 extends Node3D
-## Read-only presentation. Rebuilt only when committed fleet positions change.
+## Read-only presentation of committed strategic positions and network state.
 
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
 const ALLIED := Color("65dee9")
@@ -13,6 +13,14 @@ var allies: Dictionary = {}
 var models: Dictionary = {}
 var formations: Dictionary = {}
 var motion: Dictionary = {}
+var last_motion_tick := -1
+var overlay_enabled := false
+var influence: ShaderMaterial
+var influence_target := PackedVector4Array()
+var influence_display := PackedVector4Array()
+var routes_signature := 0
+var convoy_model: Node3D
+var convoy_target := Vector3.ZERO
 var displayed: Dictionary = {}
 var cosmetic_contacts: Array[Vector2i] = []
 var fx: Node3D
@@ -41,25 +49,37 @@ func _ready() -> void:
 
 func refresh(operation: RefCounted, objects: Dictionary) -> void:
 	beam_range = maxf(4.0, operation.tuning.engagement_radius * 1.35)
-	paths.clear_surfaces()
-	var moving: Array = operation.fleets.filter(func(fleet):
-		var target: Vector3 = operation.objectives[fleet.destination].position
-		return operation.active(fleet) and (fleet.position as Vector3).distance_squared_to(target) > 0.1)
-	if not moving.is_empty():
-		paths.surface_begin(Mesh.PRIMITIVE_LINES)
-		for fleet in moving:
+	if operation.is_lattice():
+		_refresh_lattice(operation)
+	else:
+		paths.clear_surfaces()
+		var moving: Array = operation.fleets.filter(func(fleet):
 			var target: Vector3 = operation.objectives[fleet.destination].position
-			var tint := ALLIED if fleet.side == "allied" else HOSTILE
-			paths.surface_set_color(Color(tint, 0.72))
-			paths.surface_add_vertex(fleet.position + Vector3.UP * 0.1)
-			paths.surface_set_color(Color(tint, 0.25))
-			paths.surface_add_vertex(target + Vector3.UP * 0.1)
-		paths.surface_end()
+			return operation.active(fleet) and (fleet.position as Vector3).distance_squared_to(target) > 0.1)
+		if not moving.is_empty():
+			paths.surface_begin(Mesh.PRIMITIVE_LINES)
+			for fleet in moving:
+				var target: Vector3 = operation.objectives[fleet.destination].position
+				var tint := ALLIED if fleet.side == "allied" else HOSTILE
+				paths.surface_set_color(Color(tint, 0.72))
+				paths.surface_add_vertex(fleet.position + Vector3.UP * 0.1)
+				paths.surface_set_color(Color(tint, 0.25))
+				paths.surface_add_vertex(target + Vector3.UP * 0.1)
+			paths.surface_end()
 	cosmetic_contacts.clear()
 	for fleet in operation.fleets:
 		_refresh_fleet(fleet, operation, objects)
 		if operation.active(fleet) and fleet.engaged >= 0:
 			cosmetic_contacts.append(Vector2i(fleet.id, fleet.engaged))
+	if last_motion_tick >= 0:
+		for sample in operation.motion_samples:
+			if sample.tick <= last_motion_tick: continue
+			for fleet in operation.fleets:
+				if operation.active(fleet):
+					_queue_position(fleet.id, sample.positions[fleet.id])
+	for fleet in operation.fleets:
+		if operation.active(fleet): _queue_position(fleet.id, fleet.position)
+	last_motion_tick = operation.clock_ms - posmod(operation.clock_ms, operation.STEP_MS)
 	if operation.volley_tick > last_volley:
 		last_volley = operation.volley_tick
 		_fire(operation.volley)
@@ -89,15 +109,141 @@ func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionar
 	escorts[1].visible = fleet.strength >= 5
 	if allies.has(id):
 		allies[id].text = "ALLIED · %s%s" % [fleet.role, " · ENGAGED" if fleet.engaged >= 0 else ""]
-	if model.visible and (prior.get("position", next) != next or not is_equal_approx(prior.get("heading", heading), heading)):
-		var existing: Tween = motion.get(id)
-		if existing: existing.kill()
-		var duration := clampf(0.36 + model.position.distance_to(next) * 0.10, 0.42, 0.95)
-		var easing := model.create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		easing.tween_property(model, "position", next, duration)
-		easing.tween_property(model, "rotation:y", model.rotation.y + angle_difference(model.rotation.y, heading), duration)
-		motion[id] = easing
 	displayed[id] = {"position": next, "strength": fleet.strength, "heading": heading}
+
+
+func _queue_position(id: int, next: Vector3) -> void:
+	var pending: Array = motion.get(id, [])
+	var previous: Vector3 = pending.back() if not pending.is_empty() else models[id].position
+	if previous.is_equal_approx(next): return
+	pending.append(next)
+	motion[id] = pending
+
+
+func animate_movement(delta: float) -> void:
+	for id in models:
+		var model: Node3D = models[id]
+		var pending: Array = motion.get(id, [])
+		# Consume a bounded backlog at a higher constant speed. Refreshes append
+		# committed waypoints without restarting or cutting the current segment.
+		var budget := delta * maxf(2.8, pending.size() * 0.72)
+		while budget > 0.0 and not pending.is_empty() and model.visible:
+			var target: Vector3 = pending.front()
+			var distance := model.position.distance_to(target)
+			if distance > 0.001:
+				var facing := target - model.position
+				model.rotation.y = lerp_angle(model.rotation.y, atan2(-facing.z, facing.x), minf(1.0, delta * 8.0))
+			model.position = model.position.move_toward(target, budget)
+			budget -= distance
+			if model.position.distance_squared_to(target) <= 0.000001:
+				model.position = target
+				pending.pop_front()
+		if not model.visible: pending.clear()
+		if pending.is_empty() and displayed.has(id):
+			model.rotation.y = lerp_angle(model.rotation.y, displayed[id].heading, minf(1.0, delta * 8.0))
+	if is_instance_valid(convoy_model) and convoy_model.visible:
+		convoy_model.position = convoy_model.position.move_toward(convoy_target, delta * 2.8)
+	if influence != null and influence_display != influence_target:
+		for index in influence_display.size():
+			var gap := influence_display[index].distance_to(influence_target[index])
+			influence_display[index] = influence_display[index].lerp(influence_target[index], minf(1.0, delta * 1.6 / maxf(0.001, gap)))
+		influence.set_shader_parameter("sources", influence_display)
+
+
+func _refresh_lattice(operation: RefCounted) -> void:
+	_refresh_convoy(operation)
+	if influence == null:
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(140, 140)
+		var field := MeshInstance3D.new()
+		field.name = "TerritorialInfluence"
+		field.mesh = plane
+		field.position.y = -0.8
+		field.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		influence = ShaderMaterial.new()
+		influence.shader = preload("res://shaders/warzone_influence.gdshader")
+		influence.render_priority = -40
+		influence.set_shader_parameter("source_count", operation.objectives.size())
+		field.material_override = influence
+		add_child(field)
+		influence_display.resize(12)
+	var strengths := {}
+	for fleet in operation.fleets:
+		if operation.active(fleet):
+			var key: Vector2i = Vector2i(fleet.at, int(fleet.side == "hostile"))
+			strengths[key] = minf(0.45, strengths.get(key, 0.0) + fleet.strength * 0.035)
+	var sources := PackedVector4Array()
+	sources.resize(12)
+	for index in operation.objectives.size():
+		var node: Dictionary = operation.objectives[index]
+		var weight := 1.0 if operation.is_supplied(index) else 0.40
+		if node.contested: weight *= 0.62
+		sources[index] = Vector4(node.position.x, node.position.z,
+			(weight if node.owner == "allied" else 0.0) + strengths.get(Vector2i(index, 0), 0.0),
+			(weight if node.owner == "hostile" else 0.0) + strengths.get(Vector2i(index, 1), 0.0))
+		if influence_display[index] == Vector4.ZERO:
+			influence_display[index] = sources[index]
+	if sources != influence_target:
+		influence_target = sources
+		influence.set_shader_parameter("sources", influence_display)
+	var signature := hash([operation.links, operation.disrupted.keys(),
+		operation.objectives.map(func(node): return [node.owner, node.contested]),
+		overlay_enabled, operation.fleets.map(func(fleet): return fleet.destination) if overlay_enabled else []])
+	if signature == routes_signature: return
+	routes_signature = signature
+	paths.clear_surfaces()
+	paths.surface_begin(Mesh.PRIMITIVE_LINES)
+	for edge in operation.links:
+		var first: Dictionary = operation.objectives[edge.x]
+		var second: Dictionary = operation.objectives[edge.y]
+		var live: bool = operation.link_active(edge)
+		var tint := CONTESTED if first.owner != second.owner else objective_color(first)
+		var alpha := 0.78 if overlay_enabled else 0.26
+		if not live:
+			_line(first.position, first.position.lerp(second.position, 0.32), Color(NEUTRAL, alpha * 0.65))
+			_line(second.position, second.position.lerp(first.position, 0.32), Color(NEUTRAL, alpha * 0.65))
+		else:
+			_line(first.position, second.position, Color(tint, alpha))
+	if overlay_enabled:
+		for fleet in operation.fleets:
+			if operation.active(fleet) and fleet.at != fleet.destination:
+				_line(operation.objectives[fleet.at].position + Vector3.UP * 0.15,
+					operation.objectives[fleet.destination].position + Vector3.UP * 0.15,
+					ALLIED if fleet.side == "allied" else HOSTILE)
+	paths.surface_end()
+
+
+func _refresh_convoy(operation: RefCounted) -> void:
+	if operation.convoy.is_empty():
+		if is_instance_valid(convoy_model): convoy_model.hide()
+		return
+	convoy_target = operation.convoy_position()
+	if not is_instance_valid(convoy_model):
+		convoy_model = Node3D.new()
+		convoy_model.name = "SupplyConvoy"
+		add_child(convoy_model)
+		_escort(convoy_model, Vector3.ZERO, ALLIED, 0.85)
+		var badge := Label3D.new()
+		badge.name = "Badge"
+		badge.position.y = 0.50
+		badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		badge.font_size = 30
+		badge.pixel_size = 0.017
+		convoy_model.add_child(badge)
+		convoy_model.hide()
+	if not convoy_model.visible: convoy_model.position = convoy_target
+	var side: String = operation.convoy.side
+	var badge: Label3D = convoy_model.get_node("Badge")
+	badge.text = "A · Convoy" if side == "allied" else "H · Convoy"
+	badge.modulate = ALLIED if side == "allied" else HOSTILE
+	convoy_model.get_child(0).material_override = escort_materials[side]
+	convoy_model.show()
+
+
+func _line(from: Vector3, to: Vector3, tint: Color) -> void:
+	for point in [from, to]:
+		paths.surface_set_color(tint)
+		paths.surface_add_vertex(point - Vector3.UP * 0.12)
 
 
 func _create_fleet(fleet: Dictionary, objects: Dictionary) -> Node3D:

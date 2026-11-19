@@ -7,6 +7,7 @@ class_name ExpeditionRules
 @export var warzone_tuning: Resource = preload("res://scripts/expedition/warzone_tuning.gd").new()
 ## Defense-only campaigns retain Starfront Defense in every system.
 @export var warzone_campaign_enabled: bool = true
+@export var warzone_lattice_enabled: bool = true
 @export_range(1.0, 1.5, 0.01) var system_expansion: float = 1.20
 @export var defense_v2: bool = true
 @export var system_variety: Resource = preload("res://scripts/expedition/system_variety_settings.gd").new()

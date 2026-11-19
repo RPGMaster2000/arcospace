@@ -13,7 +13,7 @@ const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
 	"completed", "chasedown", "response", "resolution", "intercept_position",
-	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive"]
+	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank"]
 const OBJECTIVE_POIS = [preload("res://encounters/fuel_depot.tres"),
 	preload("res://encounters/sensor_relay.tres"), preload("res://encounters/ancient_navigation_array.tres")]
 const PROFILE_IDS = ["quiet", "industrial", "hostile", "ancient"]
@@ -65,8 +65,23 @@ static func _valid_warzone_outcome(value: Variant) -> bool:
 		return false
 	for key in ["allied_fleets", "allied_strength", "hostile_strength", "player_victories", "clock_ms", "salvage"]:
 		if not _integer(value.get(key), 0): return false
-	if not _integer(value.get("objective_count"), State.Warzone.REQUIRED_OBJECTIVES, State.Warzone.OBJECTIVES.size()):
-		return false
+	if value.has("effort"):
+		if not _integer(value.effort, 1, 1000) or not _integer(value.get("objective_count"), 2, 12):
+			return false
+		if not value.get("infrastructure") is Array or value.infrastructure.size() > 60:
+			return false
+		for key in value.infrastructure:
+			if not key is String or key.length() > 40: return false
+		for field in ["disruptions", "command_positions"]:
+			if not value.get(field) is Array or value[field].size() > 12: return false
+			for id in value[field]:
+				if not _integer(id, 0, 11): return false
+		if value.command_positions.is_empty() or not value.get("node_owners") is Array 			or value.node_owners.size() not in [9, 12]: return false
+		for owner in value.node_owners:
+			if owner not in State.Warzone.OWNER: return false
+	else:
+		if not _integer(value.get("objective_count"), State.Warzone.REQUIRED_OBJECTIVES, State.Warzone.OBJECTIVES.size()):
+			return false
 	var survival: Variant = value.get("survival")
 	return (survival is float or survival is int) and is_finite(survival) and survival >= 0 and survival <= 1
 
@@ -146,9 +161,10 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 	if value.has("objective_role") and value.objective_role not in ["", "access", "prerequisite"]: return {}
 	var result: Dictionary = value.duplicate(true)
 	result.erase("charge_awarded")
-	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance"]:
+	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance", "warzone_rank"]:
 		if result.has(key): result[key] = int(result[key])
 	if value.kind == "battle":
+		if value.has("warzone_rank") and not _integer(value.warzone_rank, 1, 2): return {}
 		if not ships.has(value.get("enemy_id")): return {}
 		if not _integer(value.get("modifier"), 0, State.Modifiers.NAMES.size() - 1): return {}
 		result.enemy_data = ships[value.enemy_id]
@@ -293,14 +309,16 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if mode == "warzone":
 		if data.system_number != State.CampaignSupport.WARZONE_SYSTEM or data.navigation.position.size() != 3:
 			return null
-		state.warzone = State.Warzone.new()
+		if not data.warzone is Dictionary: return null
+		state.warzone = State.WarzoneOperation.Sector.new() if data.warzone.has("lattice") else State.Warzone.new()
 		if not state.warzone.restore(data.warzone, configuration.warzone_tuning) or state.warzone.complete != data.ftl_access:
 			return null
-		if entries.size() != State.Warzone.HOSTILE_GROUPS + State.Warzone.OBJECTIVES.size():
+		if entries.size() != State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size():
 			return null
 		for index in entries.size():
 			if index < State.Warzone.HOSTILE_GROUPS:
-				if entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index)):
+				if (entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index))
+					or entries[index].has("warzone_rank") != state.warzone.is_lattice()):
 					return null
 			elif entries[index].kind != "poi" or entries[index].completed:
 				return null
@@ -312,6 +330,10 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		state.warzone_outcome = data.warzone_outcome.duplicate(true)
 		for key in ["objective_count", "allied_fleets", "allied_strength", "hostile_strength", "player_victories", "clock_ms", "salvage"]:
 			state.warzone_outcome[key] = int(data.warzone_outcome[key])
+		if state.warzone_outcome.has("effort"):
+			state.warzone_outcome.effort = int(state.warzone_outcome.effort)
+			for field in ["disruptions", "command_positions"]:
+				state.warzone_outcome[field] = state.warzone_outcome[field].map(func(id): return int(id))
 	if data.has("defense_poi_effects"):
 		if mode != "defense" or not state.poi_effects.restore(data.defense_poi_effects): return null
 		var source: int = state.poi_effects.extraction_source

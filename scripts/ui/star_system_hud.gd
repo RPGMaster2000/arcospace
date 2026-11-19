@@ -4,6 +4,7 @@ signal settled
 signal geometry_changed
 signal system_details_requested
 signal warzone_wait_requested
+signal lattice_overlay_changed(enabled: bool)
 
 enum Mode { HIDDEN, OVERVIEW, FOCUS }
 var mode: Mode = Mode.HIDDEN
@@ -21,6 +22,9 @@ var utilities: HBoxContainer
 var metagame: Label
 var defense_mode := false
 var warzone_mode := false
+var lattice_mode := false
+var lattice_button: Button
+var war_effort_bar: ProgressBar
 var wait_button: Button
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
@@ -87,6 +91,18 @@ func _ready() -> void:
 	metagame.add_theme_font_size_override("font_size", 14)
 	metagame.mouse_filter = MOUSE_FILTER_IGNORE
 	status.add_child(metagame)
+	war_effort_bar = ProgressBar.new()
+	war_effort_bar.custom_minimum_size.y = 6
+	war_effort_bar.show_percentage = false
+	war_effort_bar.mouse_filter = MOUSE_FILTER_IGNORE
+	var effort_fill := StyleBoxFlat.new()
+	effort_fill.bg_color = Color("69b6f5")
+	war_effort_bar.add_theme_stylebox_override("fill", effort_fill)
+	var effort_track := StyleBoxFlat.new()
+	effort_track.bg_color = Color("20364b")
+	war_effort_bar.add_theme_stylebox_override("background", effort_track)
+	status.add_child(war_effort_bar)
+	war_effort_bar.hide()
 	pressure_bar = ProgressBar.new()
 	pressure_bar.name = "StrategicPressure"
 	pressure_bar.custom_minimum_size = Vector2(210,6)
@@ -131,6 +147,14 @@ func _ready() -> void:
 	preload("res://scripts/ui/encounter_presentation.gd").action(wait_button)
 	wait_button.pressed.connect(warzone_wait_requested.emit)
 	status_actions.add_child(wait_button)
+	lattice_button = Button.new()
+	lattice_button.text = "Lattice"
+	lattice_button.custom_minimum_size = Vector2(96, 48)
+	lattice_button.toggle_mode = true
+	lattice_button.toggled.connect(lattice_overlay_changed.emit)
+	preload("res://scripts/ui/encounter_presentation.gd").action(lattice_button)
+	status_actions.add_child(lattice_button)
+	lattice_button.hide()
 	wait_button.hide()
 	for node in [pressure_bar,pressure_gap,details_button,turret_count]: node.hide()
 	hull_bar = ProgressBar.new()
@@ -439,6 +463,26 @@ func set_warzone_status(state: Resource) -> void:
 	defense_mode = false
 	warzone_mode = true
 	var operation = state.warzone
+	lattice_mode = operation.is_lattice()
+	if lattice_mode:
+		war_effort_bar.max_value = operation.tuning.effort_goal
+		war_effort_bar.value = operation.effort
+		metagame.text = "WAR EFFORT %d / %d" % [operation.effort, operation.tuning.effort_goal]
+		if operation.complete: metagame.text += "\n" + state.warzone_outcome.grade
+		elif operation.consolidation > 0: metagame.text += "\nConsolidating · %ds" % operation.consolidation
+		else: metagame.text += "\n%d engagements · %d allied sites" % [operation.engagement_count(), operation.controlled()]
+		if not operation.events.is_empty() and operation.events.back().begins_with("+"):
+			metagame.text += "\n" + operation.events.back().left(46)
+	else:
+		_set_legacy_warzone_text(state, operation)
+	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
+	wait_button.text = "Wait %ds" % operation.tuning.wait_seconds
+	wait_button.disabled = operation.complete or state.navigation.leg_active or not state.can_navigate()
+	_sync_strategic_controls()
+	queue_layout()
+
+
+func _set_legacy_warzone_text(state: Resource, operation: RefCounted) -> void:
 	metagame.text = "WARZONE · OBJECTIVES %d / %d\nFleets · Allied %d / Hostile %d · %d fights" % [
 		operation.controlled(), state.Warzone.REQUIRED_OBJECTIVES,
 		operation.fleet_count("allied"), operation.fleet_count("hostile"), operation.engagement_count()]
@@ -452,11 +496,7 @@ func set_warzone_status(state: Resource) -> void:
 	if not operation.events.is_empty():
 		var latest: String = operation.events.back()
 		metagame.text += "\n" + (latest.left(40) + "…" if latest.length() > 40 else latest)
-	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
-	wait_button.text = "Wait %ds" % operation.tuning.wait_seconds
-	wait_button.disabled = operation.complete or state.navigation.leg_active or not state.can_navigate()
-	_sync_strategic_controls()
-	queue_layout()
+
 
 
 func _sync_strategic_controls() -> void:
@@ -466,3 +506,5 @@ func _sync_strategic_controls() -> void:
 	panels[1].visible = show_actions
 	details_button.visible = show_actions
 	wait_button.visible = show_actions and warzone_mode
+	lattice_button.visible = show_actions and warzone_mode and lattice_mode
+	war_effort_bar.visible = show_actions and warzone_mode and lattice_mode

@@ -20,6 +20,24 @@ static func orbit_point(planet: Dictionary, angle: float) -> Vector3:
 	var point = Vector3(a * (cos(angle) - e), 0, a * sqrt(1.0 - e * e) * sin(angle))
 	return Basis(Vector3.UP, planet.orientation) * Basis(Vector3.RIGHT, planet.inclination) * point
 
+static func generate_sector(seed_value: int, number: int, entries: Array, operation: RefCounted) -> Dictionary:
+	var result := {"name": "Vela Sector %d" % number, "starless": true, "planets": [],
+		"anchors": {}, "assignments": {}, "placement": {}, "poi_orbits": {},
+		"star_color": Color.WHITE, "atmosphere_strength": 0.88}
+	for entry in entries:
+		var point: Array = entry.world_position
+		result.anchors[entry.index] = Vector3(point[0], point[1], point[2])
+		result.placement[entry.index] = {"radius": 0.55}
+	var rng := random_for(seed_value, number, "rogue-body")
+	if rng.randf() < 0.38:
+		var origin: Vector3 = operation.outpost_position(1.0)
+		var outward: Vector3 = (origin - operation.objectives[1].position).normalized()
+		result.planets.append({"index": 0, "encounter": -1, "name": "Rogue Moon",
+			"type": "barren", "radius": 1.65, "rotation": 0.0, "rotation_speed": 0.0,
+			"position": origin + outward * 10.0 - Vector3.UP * 2.5, "material_seed": rng.randi()})
+	return result
+
+
 static func generate(seed_value: int, number: int, entries: Array, settings: Resource,
 		profile: String = "industrial", expansion: float = 0.0, orbit_clearance: float = 0.0, solar_clearance: float = 0.0) -> Dictionary:
 	var rng = random_for(seed_value, number, "planets")

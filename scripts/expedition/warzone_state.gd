@@ -29,6 +29,24 @@ var complete := false
 ## Transient presentation cues from the most recent committed volley.
 var volley_tick := 0
 var volley: Array[Vector2i] = []
+## Recent committed positions for display only. Saves use current coordinates.
+var motion_samples: Array[Dictionary] = []
+
+
+func is_lattice() -> bool:
+	return false
+
+
+func objective_name(index: int) -> String:
+	return OBJECTIVES[index]
+
+
+func start_position(expansion: float) -> Vector3:
+	return START * maxf(1.0, expansion)
+
+
+func outpost_position(expansion: float) -> Vector3:
+	return OUTPOST * maxf(1.0, expansion)
 
 
 func setup(configuration: Resource, strength: int, expansion: float = 1.0) -> void:
@@ -112,10 +130,10 @@ func main_threat() -> String:
 	for index in objectives.size():
 		var objective: Dictionary = objectives[index]
 		if objective.contested or objective.progress > 0:
-			return "%s · %s" % [OBJECTIVES[index], objective_brief(index)]
+			return "%s · %s" % [objective_name(index), objective_brief(index)]
 	for index in objectives.size():
 		if objective_brief(index).contains("approaching"):
-			return OBJECTIVES[index] + " · Hostiles approaching"
+			return objective_name(index) + " · Hostiles approaching"
 	return ""
 
 
@@ -143,6 +161,8 @@ func advance(milliseconds: float, from: Vector3, to: Vector3, allow_victory: boo
 		clock_ms = tick_ms
 		travel_ms_remainder = 0.0
 		_tick(from.lerp(to, clampf((tick_ms - start_ms) / milliseconds, 0.0, 1.0)), allow_victory)
+		motion_samples.append({"tick": tick_ms, "positions": fleets.map(func(fleet): return fleet.position)})
+		if motion_samples.size() > 90: motion_samples.pop_front()
 		if complete:
 			return
 		tick_ms += STEP_MS
@@ -195,7 +215,7 @@ func _assign_engagements(announce: bool = false) -> void:
 				nearest = distance
 				fleet.engaged = other.id
 		if announce and previous < 0 and fleet.engaged >= 0 and fleet.side == "allied":
-			_notice("Allied %s engaged near %s." % [fleet.role, OBJECTIVES[fleet.destination]])
+			_notice("Allied %s engaged near %s." % [fleet.role, objective_name(fleet.destination)])
 
 
 func _exchange_damage() -> void:
@@ -232,7 +252,7 @@ func _capture(index: int, player: Vector3) -> void:
 		hostile = hostile or fleet.side == "hostile"
 	var contested := allied and hostile
 	if contested and not objective.contested:
-		_notice(OBJECTIVES[index] + " contested.")
+		_notice(objective_name(index) + " contested.")
 	objective.contested = contested
 	var side := "neutral"
 	if allied != hostile:
@@ -247,7 +267,7 @@ func _capture(index: int, player: Vector3) -> void:
 		objective.owner = side
 		objective.capturing = "neutral"
 		objective.progress = 0
-		_notice("%s captured %s." % [side.capitalize(), OBJECTIVES[index]])
+		_notice("%s captured %s." % [side.capitalize(), objective_name(index)])
 		if side == "allied":
 			_counterattack(index)
 
@@ -296,7 +316,7 @@ func _counterattack(index: int) -> void:
 			fleet.destination = index
 			redirected = true
 	if redirected:
-		_notice("Hostile counterattack launched toward %s." % OBJECTIVES[index])
+		_notice("Hostile counterattack launched toward %s." % objective_name(index))
 
 
 func allied_support(hostile_id: int) -> Dictionary:
@@ -338,7 +358,7 @@ func intervention_summary(hostile_id: int, ally_id: int, prior_strength: int, ev
 	if ally_id >= 0:
 		var ally := fleet_at(ally_id)
 		lines.append("Allied %s · %d → %d strength" % [ally.role, prior_strength, ally.strength])
-	lines.append("%s · %s" % [OBJECTIVES[hostile.destination], objective_brief(hostile.destination)])
+	lines.append("%s · %s" % [objective_name(hostile.destination), objective_brief(hostile.destination)])
 	for event in events_since(event_start).slice(-2 if event_revision - event_start >= 2 else 0):
 		if event != "Hostile %s destroyed." % hostile.role:
 			lines.append(event)
@@ -381,13 +401,23 @@ func snapshot() -> Dictionary:
 	return data
 
 
+func _valid_objective_count(count: int) -> bool:
+	return count == OBJECTIVES.size()
+
+
+func _valid_consolidation(objective_records: Array[Dictionary], saved: int) -> bool:
+	var held := objective_records.map(func(objective): return objective.held)
+	held.sort()
+	return held[-REQUIRED_OBJECTIVES] == saved
+
+
 func restore(data: Variant, configuration: Resource) -> bool:
 	if not data is Dictionary or not data.get("complete") is bool:
 		return false
 	for key in ["clock_ms", "consolidation", "player_victories", "initial_allied_strength"]:
 		if not Defense.number(data.get(key), 0, 1000000000):
 			return false
-	if not data.get("objectives") is Array or data.objectives.size() != OBJECTIVES.size():
+	if not data.get("objectives") is Array or not _valid_objective_count(data.objectives.size()):
 		return false
 	if not data.get("fleets") is Array or data.fleets.size() != ALLIED_GROUPS + HOSTILE_GROUPS:
 		return false
@@ -418,9 +448,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		copy.progress = int(copy.progress)
 		copy.held = int(copy.held)
 		restored_objectives.append(copy)
-	var saved_hold := restored_objectives.map(func(objective): return objective.held)
-	saved_hold.sort()
-	if saved_hold[-REQUIRED_OBJECTIVES] != data.consolidation:
+	if not _valid_consolidation(restored_objectives, int(data.consolidation)):
 		return false
 	var restored_fleets: Array[Dictionary] = []
 	for fleet in data.fleets:
@@ -429,7 +457,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		var expected_side := "allied" if restored_fleets.size() < ALLIED_GROUPS else "hostile"
 		if fleet.get("id") != restored_fleets.size() or fleet.get("side") != expected_side or fleet.get("role") not in ROLES:
 			return false
-		if not Defense.number(fleet.get("destination"), 0, OBJECTIVES.size() - 1) or not Defense.number(fleet.get("engaged"), -1, data.fleets.size() - 1):
+		if not Defense.number(fleet.get("destination"), 0, restored_objectives.size() - 1) or not Defense.number(fleet.get("engaged"), -1, data.fleets.size() - 1):
 			return false
 		if not Defense.number(fleet.get("strength"), 0, 1000000):
 			return false

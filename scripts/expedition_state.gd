@@ -578,12 +578,13 @@ func generate_system() -> bool:
 	bind_defense_movement()
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
-	var influence := solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
+	var influence := {} if is_warzone() and warzone.is_lattice() else solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
 		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, preload("res://scripts/expedition/system_variety_environments.gd").solar_range(self),
 		0.8 if layout_expansion > 0.0 else 1.0)
-	influence.generation.celestial_clearance = true
-	influence.generation.visual_margin = rules.defense_tuning.environment_visual_margin
-	influence = JSON.parse_string(JSON.stringify(influence))
+	if not influence.is_empty():
+		influence.generation.celestial_clearance = true
+		influence.generation.visual_margin = rules.defense_tuning.environment_visual_margin
+		influence = JSON.parse_string(JSON.stringify(influence))
 	if is_defense():
 		# Navigable gas PoIs already have authoritative orbit anchors. Preserve them
 		# and omit optional stellar influence if no safe volume fits that layout.
@@ -608,12 +609,15 @@ func generate_system() -> bool:
 			environmental_instances.clear()
 			preview.clear()
 	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
-	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
+	encounter_positions = {} if is_defense() or is_warzone() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
 	var routed: bool = is_defense() and defense.v2
 	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
 	if is_warzone():
 		encounter_positions.clear()
 		route_points = warzone.fleets.map(func(fleet): return Defense.wire(fleet.position))
+		if warzone.is_lattice():
+			for node in warzone.objectives:
+				route_points.append(Defense.wire(node.position))
 	var solar_records := environmental_instances.duplicate(true)
 	environmental_instances = RouteEnvironments.asteroid(seed_used, system_number, defense, route_points) if routed \
 		else EnvironmentData.Asteroids.generate(seed_used, system_number, route_points, layout_expansion)
@@ -632,7 +636,7 @@ func generate_system() -> bool:
 
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
-	if is_warzone(): navigation.checkpoint_position(Defense.wire(Warzone.START * maxf(1.0, layout_expansion)))
+	if is_warzone(): navigation.checkpoint_position(Defense.wire(warzone.start_position(layout_expansion)))
 	# A new system ends the leg but preserves the exploration risk cooldown.
 	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
@@ -652,9 +656,26 @@ func warzone_fleet(index: int) -> Dictionary:
 
 func warzone_objective(index: int) -> Dictionary:
 	var objective := index - Warzone.HOSTILE_GROUPS
-	if not is_warzone() or objective < 0 or objective >= Warzone.OBJECTIVES.size():
+	if not is_warzone() or objective < 0 or objective >= warzone.objectives.size():
 		return {}
 	return warzone.objectives[objective]
+
+
+func warzone_operate(index: int, id: String) -> bool:
+	if (not is_warzone() or not warzone.is_lattice() or not can_visit(index)
+		or navigation.leg_active or navigation.position.size() != 3):
+		return false
+	var site := warzone_objective(index)
+	if site.is_empty() or Defense.point(navigation.position).distance_to(site.position) > warzone.tuning.objective_radius:
+		return false
+	var offset := index - Warzone.HOSTILE_GROUPS
+	for action in warzone.operations(offset, salvage):
+		if action.id != id or not action.enabled: continue
+		salvage += warzone.operate(offset, action) - action.cost
+		_commit_activity_time(action.seconds)
+		progress_committed.emit()
+		return true
+	return false
 
 
 func wait_in_warzone() -> bool:
@@ -669,7 +690,7 @@ func _sync_warzone() -> void:
 	for index in Warzone.HOSTILE_GROUPS:
 		if not warzone.active(warzone_fleet(index)):
 			encounters[index].completed = true
-	var lost: bool = travel_destination >= 0 and encounters[travel_destination].completed
+	var lost: bool = travel_destination >= 0 and travel_destination < encounters.size() and encounters[travel_destination].completed
 	if warzone.complete and not ftl_access:
 		warzone_outcome = warzone.outcome()
 		salvage += warzone_outcome.salvage
@@ -690,6 +711,9 @@ func _roll_battle_modifier() -> int:
 
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
+	if is_warzone() and encounter.has("warzone_rank") and base.enemy_rank != int(encounter.warzone_rank):
+		base = base.duplicate(false)
+		base.enemy_rank = int(encounter.warzone_rank)
 	var scaled: Resource = rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)), is_defense())
 	return scaled if is_defense() or is_warzone() else Pressure.scaled_enemy(scaled, pressure)
 
@@ -727,7 +751,8 @@ func objective_marker(index: int) -> String:
 
 func ftl_status() -> String:
 	if is_warzone():
-		return warzone_outcome.grade.to_upper() + " · FTL READY" if warzone.complete else "CAPTURE AND HOLD TWO OBJECTIVES"
+		if warzone.complete: return warzone_outcome.grade.to_upper() + " · FTL READY"
+		return "SECURE A CONNECTED COMMAND POST" if warzone.is_lattice() else "CAPTURE AND HOLD TWO OBJECTIVES"
 	if is_defense():
 		if defense.complete: return "FTL READY · SYSTEM LIBERATED"
 		if defense.mothership_destroyed(): return "MOTHERSHIP DESTROYED · CLEAR REMAINING FORCES"
@@ -827,6 +852,7 @@ func cancel_travel() -> void:
 
 func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> Vector3:
 	if is_warzone():
+		if index == SERVICE_INDEX: return warzone.outpost_position(layout_expansion)
 		var objective := warzone_objective(index)
 		if not objective.is_empty(): return objective.position
 		var fleet := warzone_fleet(index)
