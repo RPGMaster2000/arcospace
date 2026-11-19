@@ -206,6 +206,10 @@ func _assign_engagements(announce: bool = false) -> void:
 		fleet.engaged = -1
 		if not active(fleet):
 			continue
+		var existing := fleet_at(previous)
+		if is_lattice() and active(existing) and fleet.position.distance_squared_to(existing.position) < radius_squared:
+			fleet.engaged = previous
+			continue
 		var nearest := radius_squared
 		for other in fleets:
 			if fleet.side == other.side or not active(other):

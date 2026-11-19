@@ -110,6 +110,52 @@ func supply_combat() -> void:
 			"Autonomous fleet orders use only neighboring lattice waypoints")
 
 
+func fleet_routing_and_convoys() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var convoy_origin: Vector3 = op.convoy_position()
+	state.wait_in_warzone()
+	check(not op.convoy.is_empty() and not op.convoy_position().is_equal_approx(convoy_origin),
+		"The convoy advances along its supplied route")
+	var protected_contact: int = op.fleets[2].engaged
+	op.objectives[4].owner = "allied"
+	op._refresh_supply()
+	op._counterattack(4)
+	check(op.fleets[2].counter_target == -1 and op.fleets[2].engaged == protected_contact,
+		"An ongoing engagement keeps its target during a counterattack")
+	check(op.fleets.any(func(fleet): return fleet.counter_target == 4),
+		"A reachable capture draws a routed hostile counterattack")
+	var fleet: Dictionary = op.fleets[0]
+	fleet.at = 4
+	fleet.position = op.objectives[4].position
+	fleet.destination = 4
+	fleet.strength = 8
+	op._move_fleet(fleet)
+	check(fleet.destination != 4 and fleet.destination in Sector.Lattice.neighbors(4, op.links),
+		"Allied fleets advance to a neighboring frontier after a capture")
+
+
+func battle_progression() -> void:
+	var state := fresh(19)
+	var entry := State.Defense.point(state.navigation.position)
+	check(state.can_engage(0), "Opening Tier 2 engagement is reachable")
+	var setup = state.prepare_battle(0)
+	check(setup != null and setup.enemy_profile.enemy_rank == 1
+		and setup.environment.get("friendly_support", {}).get("source") == "allied_fleet",
+		"The new Tier 2 contact uses existing supported battle setup")
+	var result := preload("res://scripts/combat/battle_result.gd").new()
+	result.encounter_index = 0
+	result.system_number = 2
+	result.winner = "player"
+	result.player_hull = state.hull
+	result.battles_won = 1
+	result.allied_support = true
+	check(state.record_battle(result) and state.pending_choice == "battle_reward"
+		and state.warzone.player_victories == 1 and state.warzone.effort > 0,
+		"An elite lattice victory keeps card progression and awards War Effort")
+	check(State.Defense.point(state.navigation.position).is_equal_approx(entry), "Battle preserves the player position")
+
+
 func scenario(seed_value: int, strategy: String) -> void:
 	var state := fresh(seed_value, 75 if strategy == "infrastructure" else 1)
 	if strategy == "infrastructure":
@@ -138,6 +184,8 @@ func run() -> void:
 	generation()
 	logistics()
 	supply_combat()
+	fleet_routing_and_convoys()
+	battle_progression()
 	scenario(19, "infrastructure")
 	scenario(27, "repair and raids")
 	print("Warzone lattice: %d checks, %d failures" % [checks, failures])

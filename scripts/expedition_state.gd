@@ -1783,7 +1783,9 @@ func record_battle(result: BattleResult) -> bool:
 		var count: int = battle_upgrade_count(result)
 		if count > 0:
 			last_outcome = "Combat victory. Choose your reward."
-			if enemy_profile(encounters[active_battle]).enemy_rank == 0 and not encounters[active_battle].get("chasedown", false):
+			var rank: int = enemy_profile(encounters[active_battle]).enemy_rank
+			var lattice_interception: bool = is_warzone() and warzone.is_lattice() and rank == 1
+			if (rank == 0 or lattice_interception) and not encounters[active_battle].get("chasedown", false):
 				_offer_battle_reward(count)
 			else:
 				start_upgrade_event(count)
