@@ -33,9 +33,8 @@ func operation(integrity: int) -> Resource:
 
 func fight(supported: bool) -> void:
 	var state := operation(100)
-	if supported: state._commit_activity_time(10)
 	var index := 0 if supported else 3
-	check(not state.can_engage(index), "Remote players cannot initiate a battle")
+	check(state.can_engage(index) == supported, "Opening allied contact is immediately accessible and the distant patrol is not")
 	state.update_navigation_position(state.battle_location(index))
 	check(state.can_engage(index), "The player can intercept a hostile fleet at its live position")
 	var session := Persistence.new()
@@ -70,8 +69,36 @@ func fight(supported: bool) -> void:
 	var upgrades: int = Rules.standard_upgrades
 	check(state.battle_upgrade_count(board.battle_result()) == (maxi(1, upgrades / 2) if supported else upgrades), "Supported combat reduces card upgrades without losing the reward choice")
 	check(state.warzone.player_victories == 1 and state.encounters[index].completed and state.battles_won == 1, "Winning records the intervention and ordinary campaign progress")
+	check(board.victory_description().contains("Hostile fleet defeated") and
+		(board.victory_description().contains("Allied Defender") if supported else true),
+		"The combat result explains the strategic outcome")
 	board.free()
 	session.store.clear_run()
+
+
+func failed_intervention() -> void:
+	var state := operation(100)
+	var veteran: int = state.warzone.fleets[0].strength
+	state._commit_activity_time(3)
+	var board := Board.instantiate()
+	board.expedition = state
+	board.expedition_encounter = 0
+	board.battle_setup = state.prepare_battle(0)
+	board.get_node("BattleEffects").enabled = false
+	root.add_child(board)
+	var balance: int = state.salvage
+	board.enemy_hull = board.enemy_hull_capacity / 2
+	board.player_hull = 0
+	board.winner = "enemy"
+	board._record_result()
+	check(state.run_ended and not state.can_jump() and state.warzone.player_victories == 0 and state.salvage == balance,
+		"An unsuccessful intervention grants no victory or reward")
+	check(state.warzone.fleets[2].strength < Rules.warzone_tuning.hostile_strength and state.warzone.fleets[0].strength < veteran,
+		"Defeat commits the damage inflicted and the NPC casualties from the battle interval")
+	check(board.victory_description().contains("Hostile fleet remains") and board.victory_description().contains("Allied Defender"),
+		"The defeat screen reports both sides of the intervention")
+	check(not state.record_battle(board.battle_result()), "The failed battle cannot resolve twice")
+	board.free()
 
 
 func pyrrhic_campaign() -> void:
@@ -80,7 +107,8 @@ func pyrrhic_campaign() -> void:
 	check(state.warzone.fleet_count("allied") == 0, "The emergency opening can lose both autonomous allies")
 	for index in [0, 1]:
 		for fleet in state.warzone.fleets:
-			if fleet.side == "hostile" and fleet.destination == index: state.warzone.player_victory(fleet.id)
+			if fleet.side == "hostile" and (fleet.destination == index or (index == 1 and fleet.role != "Defender")):
+				state.warzone.player_victory(fleet.id)
 		state.update_navigation_position(State.Defense.wire(state.warzone.objectives[index].position))
 		state._commit_activity_time(state.warzone.tuning.capture_seconds)
 	check(not state.can_jump(), "Two recently captured objectives still require consolidation")
@@ -97,9 +125,27 @@ func pyrrhic_campaign() -> void:
 		check(resumed.warzone_outcome == saved and resumed.salvage > state.salvage, "The next system retains the outcome and grants emergency support")
 
 
+func contact_resolved_en_route() -> void:
+	var state := operation(100)
+	state.warzone.fleets[2].strength = 1
+	state.begin_travel(0)
+	check(state.navigation.leg_active and state.travel_destination == 0, "The player can pursue an engaged contact")
+	state._commit_activity_time(4)
+	check(state.encounters[0].completed and not state.navigation.leg_active and state.travel_destination == -1,
+		"An allied victory cancels travel to the destroyed contact")
+	var store = Persistence.new().store
+	var old: Dictionary = store.encode(state)
+	old.service = {}
+	var resumed = store.decode(old)
+	check(resumed != null and not resumed.service.is_empty() and resumed.warzone.snapshot() == state.warzone.snapshot(),
+		"An older Warzone save gains the protected service without changing its fleet state")
+
+
 func run() -> void:
 	fight(false)
 	fight(true)
+	failed_intervention()
 	pyrrhic_campaign()
+	contact_resolved_en_route()
 	print("Warzone integration: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

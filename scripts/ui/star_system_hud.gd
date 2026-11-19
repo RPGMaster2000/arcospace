@@ -439,15 +439,16 @@ func set_warzone_status(state: Resource) -> void:
 	defense_mode = false
 	warzone_mode = true
 	var operation = state.warzone
-	metagame.text = "WARZONE · OBJECTIVES %d / %d\nAllied fleets %d · Enemy fleets %d" % [
+	metagame.text = "WARZONE · OBJECTIVES %d / %d\nFleets · Allied %d / Hostile %d · %d fights" % [
 		operation.controlled(), state.Warzone.REQUIRED_OBJECTIVES,
-		operation.fleet_count("allied"), operation.fleet_count("hostile")]
+		operation.fleet_count("allied"), operation.fleet_count("hostile"), operation.engagement_count()]
 	if operation.complete:
 		metagame.text += "\n" + state.warzone_outcome.grade
 	elif operation.consolidation > 0:
 		metagame.text += "\nHolding · %ds / %ds" % [operation.consolidation, operation.tuning.consolidation_seconds]
 	else:
-		metagame.text += "\nCapture and hold two objectives"
+		var threat: String = operation.main_threat()
+		metagame.text += "\n" + (threat if not threat.is_empty() else "Capture and hold two objectives")
 	if not operation.events.is_empty():
 		var latest: String = operation.events.back()
 		metagame.text += "\n" + (latest.left(40) + "…" if latest.length() > 40 else latest)

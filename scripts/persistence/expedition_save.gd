@@ -223,6 +223,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data.service.is_empty():
 		service = _decode_entry(data.service, enemies, pois)
 		if service.is_empty() or service.kind != "service": return null
+	elif mode == "warzone":
+		service = State.WarzoneOperation.protected_outpost(configuration)
 	for key in ["navigation_origin", "pending_destination", "chasedown_index", "travel_destination"]:
 		if data[key] >= entries.size(): return null
 	if data.chasedown_index >= 0 and not entries[int(data.chasedown_index)].get("chasedown", false): return null

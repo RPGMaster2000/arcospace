@@ -46,6 +46,7 @@ static func result(board: Node) -> Result:
 	data.strategic_shields = board.STRATEGIC_SHIELDS
 	var support: Dictionary = board.battle_environment.get("friendly_support", {})
 	data.allied_support = support.get("source") == "allied_fleet"
+	data.enemy_hull_fraction = float(board.enemy_hull) / maxi(1, board.enemy_hull_capacity)
 	if data.allied_support:
 		data.tactical_resources /= 2
 		data.strategic_shields /= 2

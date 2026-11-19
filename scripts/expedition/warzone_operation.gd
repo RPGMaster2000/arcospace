@@ -11,14 +11,19 @@ const OBJECTIVE_MODELS := [
 ]
 
 
+static func protected_outpost(rules: Resource) -> Dictionary:
+	var outpost: Resource = rules.trading_outpost if rules.trading_outpost != null else OBJECTIVE_MODELS[1]
+	return {"kind": "service", "poi": outpost, "title": outpost.title, "completed": false}
+
+
 static func generate(state: Resource, support: Dictionary) -> void:
 	state.system_number += 1
 	state.system_name = "Vela %d" % state.system_number
 	state.system_profile = "hostile"
 	state.system_variation = {}
 	state.warzone = Warzone.new()
-	state.warzone.setup(state.rules.warzone_tuning, support.fleet_strength, state.layout_expansion)
-	state.warzone.events.append("%s Homeworld support · +%d Salvage · +%d Shields next battle." % [
+	state.warzone.setup(state.rules.warzone_tuning, support.fleet_strength, maxf(1.0, state.layout_expansion))
+	state.warzone._notice("%s Homeworld support · +%d Salvage · +%d Shields next battle." % [
 		support.tier.capitalize(), support.salvage, support.shields])
 	state.defense = null
 	state.defense_poi_version = 0
@@ -31,7 +36,7 @@ static func generate(state: Resource, support: Dictionary) -> void:
 	state.chasedown_index = -1
 	state.chasedowns_this_system = 0
 	state.encounters.clear()
-	state.service = {}
+	state.service = protected_outpost(state.rules)
 	state.station_production_purchases = 0
 	state.service_revision += 1
 	var faction := Factions.select(state)

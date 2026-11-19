@@ -25,10 +25,11 @@ fallback package is Standard.
 
 ## Playing Warzone
 
-Two allied groups start near the Communications Relay. Five hostile groups
-hold the Shipyard and Defense Array or are moving to reinforce or capture
-objectives. Follow their routes, inspect contacts, and travel to the
-engagements you want to enter.
+Two allied groups are fighting at the Communications Relay and the Shipyard
+when the player arrives. Five hostile groups hold the Shipyard and Defense
+Array or are moving to reinforce the front. The Relay engagement is within
+intervention range at entry. Inspect the contacts to see the participants,
+strengths, objectives and reward terms before committing.
 
 Travel, finished battles and the **Wait** or **Hold position** actions advance
 strategic time. Reading a report, opening a menu or standing idle consumes no
@@ -36,6 +37,15 @@ time. Both autonomous sides exchange damage every four strategic seconds.
 Uncontested presence captures an opposing objective in six seconds. Two
 objectives must each stay uncontested and allied for 15 seconds to unlock FTL.
 The System Status button shows recent captures, engagements and losses.
+Unengaged hostile groups can redirect when an allied capture succeeds. Up to
+two respond at once. A lone defender can stay at its station. Active
+engagements keep their assignments, and offensive groups reassess their next
+objective after they finish a capture.
+
+The protected Trading Outpost is near the entry point behind the Relay.
+It uses the standard repairs, Salvage prices, card offers and shipyard
+purchases. Existing Warzone saves without a service gain the outpost when
+loaded, with their fleet positions and orders intact.
 
 Entering an ongoing allied engagement snapshots the supporting fleet's
 strength. It fires for 6–9 damage every two combat rounds while participating.
@@ -43,6 +53,10 @@ Supported combat awards half direct Salvage and half of numeric resource and
 upgrade rewards, rounded down with at least one upgrade when normally
 eligible. Solo battles keep their normal rewards. Objective rewards are
 independent of combat support.
+The battle result shows the immediate outcome and surviving allied strength.
+Its Details panel includes contested objectives and other events from the
+battle's committed strategic time. Defeat can leave an enemy fleet weakened
+and grant no rewards.
 
 ## Campaign consequences
 
@@ -63,4 +77,7 @@ player inventory and upgrades carry over as usual.
 `WarzoneState` advances at fixed strategic-second boundaries and saves partial
 time, fleet and route state, capture and holding progress, and reports.
 Combat commits through the existing battle checkpoint and result paths.
-The 3D map draws low-cost route lines and fleet markers from the live state.
+The 3D map routes and ship formations reflect the live state. The ship models
+interpolate between authoritative positions. Cosmetic beam exchanges remain
+visible on an idle overview. Committed volleys drive damage flashes and
+formation losses.

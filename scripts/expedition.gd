@@ -830,14 +830,22 @@ func show_battle_preview(index: int) -> void:
 	_add_tactical_briefing(encounter, enemy, false, index)
 	if state.is_warzone():
 		var fleet: Dictionary = state.warzone_fleet(index)
-		view.add_child(_label("Hostile %s · Strength %d · Bound for %s" % [
-			fleet.role, fleet.strength, State.Warzone.OBJECTIVES[fleet.destination]], 16))
+		var operation = state.warzone
+		view.add_child(_label("Hostile %s · Strength %d · %s\nObjective · %s" % [
+			fleet.role, fleet.strength, operation.fleet_status(fleet), State.Warzone.OBJECTIVES[fleet.destination]], 16))
+		var ally: Dictionary = operation.allied_support(fleet.id)
+		if not ally.is_empty():
+			view.add_child(_label("Allied %s engaged · Strength %d" % [ally.role, ally.strength], 16))
+		if inspecting:
+			view.add_child(_label("In range to intervene" if state.can_engage(index) else "Travel here to intervene", 15))
 	var support: Dictionary = state.battle_support(index)
 	if not support.is_empty():
 		if state.is_warzone():
-			view.add_child(_label("Allied fleet engaged · Strength %d\nSupport deals %d damage every %d rounds. Direct combat rewards ×0.5." % [support.strength, support.damage, support.interval], 16))
+			view.add_child(_label("Allied support · %d damage every %d rounds\nDirect combat rewards ×0.5" % [support.damage, support.interval], 16))
 		else:
 			view.add_child(_label("Friendly Turret Support · %d damage every %d rounds" % [support.damage, support.interval], 15))
+	elif state.is_warzone():
+		view.add_child(_label("No supporting fire · Standard direct rewards", 15))
 	# Inspection only shows enemy information; entering combat requires arrival.
 	if not inspecting:
 		var enter = _button("Enter Combat", _enter_battle.bind(index))
@@ -1802,4 +1810,10 @@ func _show_system_details() -> void:
 	if state.is_defense():
 		screen.present_system_details(state)
 	elif state.is_warzone():
-		screen.system_details_overlay.show_text("[b]Warzone reports[/b]\n\n" + "\n".join(state.warzone.events))
+		var operation = state.warzone
+		var lines := PackedStringArray(["[b]Warzone reports[/b]", ""])
+		for index in State.Warzone.OBJECTIVES.size():
+			lines.append("%s · %s" % [State.Warzone.OBJECTIVES[index], operation.objective_brief(index)])
+		lines.append("")
+		lines.append_array(PackedStringArray(operation.events))
+		screen.system_details_overlay.show_text("\n".join(lines))

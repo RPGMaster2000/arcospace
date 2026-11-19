@@ -195,7 +195,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			if markers.has(entry.index):
 				markers[entry.index].disabled = entry.completed
 				markers[entry.index].set_state(entry.completed,false,false)
-				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index) or entry.get("profile") != null)
+				markers[entry.index].set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(entry.index) or entry.get("profile") != null or entry.get("protected_service", false))
 				markers[entry.index].set_objective(entry.get("objective_marker",""))
 				markers[entry.index].tooltip_text = entry.tooltip
 		if not defense_view.is_empty(): sync_defense(defense_view)
@@ -338,7 +338,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.style_tag(entry.color)
 		if warzone_view != null:
 			button.add_theme_font_override("font", ThemeDB.fallback_font)
-		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index) or entry.get("profile") != null)
+		button.set_label(_marker_text(entry),_marker_icon(entry),visual_data.assignments.has(index) or entry.get("profile") != null or entry.get("protected_service", false))
+		if entry.get("protected_service", false):
+			button.set_meta("protected_service", true)
 		button.set_objective(entry.get("objective_marker",""))
 		button.hit_allowed = func(point): return not point_is_reserved(point)
 		button.nearest_hit = func(point): return nearest_marker(point) == index
@@ -451,6 +453,8 @@ func _process(delta: float) -> void:
 	sun_lens.update(is_visible_in_tree(), viewport, camera, objects.get(-100), visual_data.get("star_color", Color.WHITE))
 	if not is_instance_valid(ship):
 		return
+	if warzone_view != null and is_instance_valid(warzone_presentation) and not focused and not introducing:
+		warzone_presentation.animate_engagements(delta)
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
 	if is_instance_valid(feedback): feedback.suppressed = introducing or presentation_blocked
 	for p in visual_data.get("planets",[]):
@@ -478,6 +482,8 @@ func _process(delta: float) -> void:
 			if rect.intersects(button.get_global_rect().grow(14)):
 				if button.contrast and rect.position.y < get_viewport_rect().size.y * 0.5:
 					button.position.y = rect.end.y + 15.0
+				elif button.has_meta("protected_service"):
+					button.position.y = rect.position.y - button.size.y - 15.0
 				else:
 					button.visible = false
 		if inspection_active and inspection_area.is_valid() and inspection_area.call().intersects(button.get_global_rect().grow(14)):
@@ -1019,6 +1025,7 @@ func _marker_text(entry: Dictionary) -> String:
 	return entry.get("name",entry.text)
 
 func _marker_icon(entry: Dictionary) -> String:
+	if entry.get("protected_service", false): return "T"
 	return preload("res://scripts/presentation/star_system/poi_marker.gd").icon_for("battle" if entry.get("profile")!=null else entry.get("model_kind","unknown"))
 
 func _initial_ship_position() -> Vector3:
@@ -1156,16 +1163,17 @@ static func _defense_point(value: Array) -> Vector3:
 func sync_warzone(operation: RefCounted) -> void:
 	if not is_instance_valid(warzone_presentation) or operation == null:
 		return
-	warzone_presentation.refresh(operation)
+	warzone_presentation.refresh(operation, objects)
 	for fleet in operation.fleets:
 		if fleet.side != "hostile": continue
 		var index: int = fleet.id - operation.ALLIED_GROUPS
 		if not objects.has(index): continue
-		objects[index].position = fleet.position
-		objects[index].visible = operation.active(fleet)
 		markers[index].disabled = not operation.active(fleet) or operation.complete
-		markers[index].set_label("", "×" if fleet.engaged >= 0 else "H", false)
-		markers[index].tooltip_text = "Hostile %s · Strength %d\nBound for %s" % [fleet.role, fleet.strength, operation.OBJECTIVES[fleet.destination]]
+		var glyph := "×" if fleet.engaged >= 0 else "H"
+		if markers[index].text != glyph:
+			markers[index].set_label("", glyph, false)
+		markers[index].tooltip_text = "Hostile %s · Strength %d · %s\nObjective: %s" % [
+			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.OBJECTIVES[fleet.destination]]
 	for offset in operation.objectives.size():
 		var index: int = operation.HOSTILE_GROUPS + offset
 		if not markers.has(index): continue
@@ -1177,10 +1185,10 @@ func sync_warzone(operation: RefCounted) -> void:
 			# Only the accent changes after creation. Reuse the marker's input bindings.
 			marker.accent = tint
 			marker._refresh_state()
-		var status := WarzonePresentation.objective_status(objective)
-		marker.set_label(operation.OBJECTIVES[offset], "◇", true)
+		if marker.text != "◇":
+			marker.set_label(operation.OBJECTIVES[offset], "◇", true)
 		marker.set_objective("Contested" if objective.contested else objective.owner.capitalize())
-		marker.tooltip_text = status
+		marker.tooltip_text = operation.objective_brief(offset)
 
 
 func _defense_hostile(index: int) -> bool:
