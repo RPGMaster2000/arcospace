@@ -1,5 +1,5 @@
 extends SceneTree
-# Integration contract: navigation, authoritative modifier facts and unobstructed battle geometry.
+# Integration contract: navigation, tactical drawers and unobstructed battle geometry.
 var failures: int = 0
 var checks: int = 0
 
@@ -21,6 +21,10 @@ func settle() -> void:
 
 
 func activate(control: Control, touch: bool = false) -> void:
+	await tap(control.get_global_rect().get_center(), touch)
+
+
+func tap(point: Vector2, touch: bool = false) -> void:
 	for pressed in [true, false]:
 		var event: InputEvent
 		if touch:
@@ -28,7 +32,7 @@ func activate(control: Control, touch: bool = false) -> void:
 		else:
 			event = InputEventMouseButton.new()
 			event.button_index = MOUSE_BUTTON_LEFT
-		event.position = control.get_global_rect().get_center()
+		event.position = point
 		event.pressed = pressed
 		root.push_input(event, true)
 		await process_frame
@@ -56,13 +60,15 @@ func run() -> void:
 	for dimensions in [Vector2i(1280, 720), Vector2i(1560, 720), Vector2i(1680, 720)]:
 		root.size = dimensions
 		var board = load("res://scenes/board_3d.tscn").instantiate()
+		board.setup_settings = {"player_ship": 0, "enemy_data": preload("res://ships/enemy/siege_monitor.tres"), "seed": 2026}
 		root.add_child(board)
 		board.enemy_timer.stop()
 		await settle()
 		board._fit_board_lines()
 		await settle()
 		var menu = board.settings_button
-		var panel: Control = board.get_node("ModifierDisplay/Meter")
+		var player_panel: Control = board.hud.player_panel
+		var enemy_panel: Control = board.hud.enemy_panel
 		var hand: Control = board.get_node(board.card_slots[0])
 		var crew: Control = board.get_node("PlayerResource3")
 		check(
@@ -82,19 +88,9 @@ func run() -> void:
 		check(subtitle.global_position.y == board.get_node("SalvageLabel").global_position.y, "Header second rows align")
 		for resource_index in range(1, 4):
 			check(board.get_node("PlayerResource%d" % resource_index).position.y == board.get_node("EnemyResource%d" % resource_index).position.y, "Resource rows mirror")
-		check(panel.get_global_rect().end.y < hand.position.y, "Modifier clears card hand")
-		for path in [
-			"PlayerHullBar",
-			"EnemyHullBar",
-			"PlayerHullLabel",
-			"EnemyHullLabel",
-			"PlayerShieldsLabel",
-			"EnemyShieldsLabel"
-		]:
-			check(
-				not panel.get_global_rect().intersects(board.get_node(path).get_global_rect()),
-				"Modifier clears " + path
-			)
+		check(not player_panel.drawer.visible and not enemy_panel.drawer.visible, "Drawers start closed")
+		for panel in [player_panel, enemy_panel]:
+			check(panel.drawer.get_global_rect().end.y < hand.position.y, "Drawer clears the card hand")
 		var poses: Array = []
 		for path in board.card_slots:
 			var card: Control = board.get_node(path)
@@ -152,63 +148,85 @@ func run() -> void:
 			board.hand.allocation_mode == "offense" and not board.allocation_popup.shade.visible,
 			"Existing allocation selection works"
 		)
-		var display = board.get_node("ModifierDisplay")
-		for kind in range(6):
+		var touch: bool = dimensions.x == 1560
+		await activate(crew, touch)
+		check(player_panel.open and not enemy_panel.open, "Resource tile opens the player drawer")
+		check(board.hud._boons.text == "No active boons", "Empty boons have an explicit state")
+		check(board.hud._system.text == "Standalone battle", "Standalone battle has no system pressure")
+		for kind in range(board.modifier.NAMES.size()):
 			board.modifier.configure(kind)
 			board.modifier.next_round = 7
 			board.modifier.ends_round = 8
 			board.modifier.miss_rate = 30
+			board.turn_number = 4
 			var rng_state: int = board.modifier.rng.state
 			var before: Dictionary = board._both_states()
-			display.refresh(board.modifier, 4)
-			var text: String = display.get_node("Meter/Text").text
-			if kind in [1, 2, 3]:
+			board.refresh_display()
+			var text: String = board.hud._modifier.text
+			check(text.contains(board.modifier.description(kind)), "Player drawer has canonical modifier rules")
+			check((kind == 0 and board.hud._enemy_modifier.text.is_empty()) or
+				(kind != 0 and board.hud._enemy_modifier.text == text), "Enemy drawer shows applicable shared effects")
+			if kind in [1, 2, 3, 6, 7]:
 				check(text.contains("3 rounds"), "Inactive countdown reads actual state")
-				display.refresh(board.modifier, 5)
-				check(
-					display.get_node("Meter/Text").text.contains("2 rounds"),
-					"Countdown advances with round"
-				)
-			else:
-				check(not text.contains("rounds"), "Permanent modifier has no countdown")
+				board.turn_number = 5
+				board.refresh_display()
+				check(board.hud._modifier.text.contains("2 rounds"), "Countdown advances with round")
+			if kind in [2, 3, 6, 7]:
+				board.modifier.active = true
+				board.turn_number = 6
+				board.refresh_display()
+				text = board.hud._modifier.text
+				check(text.contains("2 rounds left"), "Active duration reads actual state")
+				check(text.contains("Shields disabled" if kind == 3 else "effects doubled"), "Active effect is explicit")
 			if kind == 4:
 				check(text.contains("Targeting accuracy: 70%"), "Nebula displays hit probability")
 			if kind == 5:
-				check(
-					text.contains("Uncommon card chance doubled"),
-					"Rift displays actual draw multiplier"
-				)
-			if kind in [2, 3]:
-				board.modifier.active = true
-				board.modifier.ion_factor = 2.0
-				display.refresh(board.modifier, 6)
-				check(
-					display.get_node("Meter/Text").text.contains("2 rounds left"),
-					"Active duration reads actual state"
-				)
-				check(
-					display.get_node("Meter/Text").text.contains(
-						"doubled" if kind == 2 else "Shields disabled"
-					),
-					"Active effect is explicit"
-				)
-			if kind == 0:
-				check(not panel.visible and text.is_empty(), "Neutral battle has no modifier label or details target")
-			else:
-				await activate(panel.get_node("Text"), true)
-				check(
-					(
-						panel.details.shade.visible
-						and panel.details.body.text.contains(board.modifier.description(kind))
-					),
-					"Expanded modifier shows original full rules"
-				)
-				panel.details.dismiss()
+				check(text.contains("Uncommon card chance doubled"), "Rift displays actual draw multiplier")
 			check(
 				board._both_states() == before and board.modifier.rng.state == rng_state,
 				"HUD cannot change combat state or random sequence"
 			)
-			await capture("%d-modifier-%d" % [dimensions.x, kind])
+		await create_timer(0.25).timeout
+		var behind := Button.new()
+		behind.position = player_panel.drawer.position + Vector2(20, 8)
+		behind.size = Vector2(80, 28)
+		board.add_child(behind)
+		board.move_child(behind, player_panel.get_index())
+		behind.pressed.connect(func(): check(false, "Drawer leaked an input to the battlefield"))
+		await activate(behind, touch)
+		check(player_panel.open, "Tapping the panel background keeps it open")
+		behind.free()
+		await capture("%d-player-tactics" % dimensions.x)
+		await activate(board.get_node("EnemyResource2"), touch)
+		check(enemy_panel.open and not player_panel.drawer.visible, "Enemy resource tap switches drawers")
+		check(board.hud._identity.text.contains(board.enemy_ship_data.summary), "Enemy drawer explains the vessel's tactics")
+		check(board.hud._abilities.text.contains("Counter Volley"), "Enemy drawer describes its special card")
+		await create_timer(0.25).timeout
+		await capture("%d-enemy-tactics" % dimensions.x)
+		await activate(enemy_panel.handle, touch)
+		check(not enemy_panel.open, "Tapping again closes the enemy drawer")
+		await activate(player_panel.handle, touch)
+		board.cinematic_director._begin("heavy_beam", false)
+		check(not player_panel.drawer.visible and enemy_panel.handle.disabled, "Cinematic closes and locks both drawers")
+		board.cinematic_director.cancel()
+		board.modifier.configure(0)
+		board.refresh_display()
+		await activate(player_panel.handle, touch)
+		await board._finish_turn("enemy")
+		check(not player_panel.open, "Ending a turn closes the drawer")
+		for resource in ["materials", "energy", "crew"]:
+			board.set("player_" + resource, 100)
+		board.refresh_display()
+		await activate(player_panel.handle, touch)
+		var playable: int = -1
+		for slot in range(board.hand.cards.size()):
+			if board._can_play_card(board.hand.cards[slot], false, "player"):
+				playable = slot
+				break
+		check(playable >= 0, "Fixture has a playable card")
+		if playable >= 0:
+			await activate(board.get_node(board.card_slots[playable]), touch)
+			check(not player_panel.open, "Playing a card closes the player drawer")
 		for index in range(6):
 			var card: Control = board.get_node(board.card_slots[index])
 			check(

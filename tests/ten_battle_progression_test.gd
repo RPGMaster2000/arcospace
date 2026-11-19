@@ -205,7 +205,18 @@ func combat_checks() -> void:
 	check(board.progression_actions.beam == Actions.Beam.CHARGING and board.current_actor == "player"
 		and board.player_hull == 30 and board.enemy_hand.cards == original_hand, "Charge replaces enemy card play")
 	board.player_materials = 35
-	check(board.activate_overdrive(0, "materials") and not board.activate_overdrive(0, "materials"),
+	board.refresh_display()
+	board.hud.player_panel.handle.pressed.emit()
+	var menu: PopupMenu = board.overdrive_button.get_popup()
+	check(board.overdrive_button.is_visible_in_tree() and not menu.is_item_disabled(0),
+		"Opening the player drawer exposes the available Overdrive")
+	check(board.hud._system.text.contains("Pressure") and board.hud._system.text.contains("Hostile ships")
+		and board.hud._beam.text.contains("25 damage next enemy turn"),
+		"Player drawer shows defense context and enemy drawer tracks the charged beam")
+	menu.id_pressed.emit(menu.get_item_id(0))
+	check(board.player_materials == 5 and not board.hud.player_panel.open,
+		"Overdrive menu pays for the existing ability and closes the drawer")
+	check(not board.activate_overdrive(0, "materials"),
 		"Only one Overdrive use per player turn")
 	var persistence := Persistence.new()
 	persistence.store.path = "user://ten_battle_progression_checkpoint.json"

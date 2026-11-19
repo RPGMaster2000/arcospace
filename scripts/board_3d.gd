@@ -183,6 +183,9 @@ func _ready() -> void:
 	cinematic_director.settings = cinematic_settings
 	add_child(cinematic_director)
 	cinematic_director.configure(self,camera,backdrop,$BattleView)
+	cinematic_director.started.connect(func():
+		if hud != null:
+			hud.set_panels_locked(true, true))
 	battle_effects.weapon_presented.connect(func(_side, weapon):
 		if weapon == "beam" and _beam_choreographed: cinematic_director.beam_launched())
 	cinematic_director.settled.connect(func():

@@ -100,6 +100,12 @@ func run() -> void:
 	for eligible in host.card_gallery.cards: check(eligible.identity_key() != card.identity_key(), "Maximum upgrades excluded")
 	host._upgrade(host.state.upgrade_candidates()[0].identity_key())
 	host.show_system()
+	# Ship selection runs on its own. Finish the reward overlay's dismissal
+	# before suspending the retained expedition fixture.
+	host.card_management.dismiss(true)
+	var expedition_process_mode: Node.ProcessMode = host.process_mode
+	host.process_mode = Node.PROCESS_MODE_DISABLED
+	host.hide()
 	var setup = load("res://scenes/battle_setup.tscn").instantiate()
 	root.add_child(setup)
 	setup.showcase._stop_tween()
@@ -182,7 +188,7 @@ func run() -> void:
 		# is handled by the engine and cannot be called as _gui_input from GDScript.
 		scroll.get_viewport().push_input(wheel, true)
 		await settle()
-		check(scroll.scroll_vertical > 0, "Mouse wheel moves card gallery")
+		check(scroll.scroll_vertical > 0, "Mouse wheel moves card gallery at %s" % dimensions)
 		var touch = InputEventScreenTouch.new()
 		touch.index = 1
 		touch.position = scroll.get_global_rect().get_center()
@@ -206,6 +212,8 @@ func run() -> void:
 		viewer.dismiss()
 		await screenshot("ships-" + str(dimensions.x))
 	setup.free()
+	host.process_mode = expedition_process_mode
+	host.show()
 	for dimensions in [Vector2i(1280,720),Vector2i(1680,720),Vector2i(960,540),Vector2i(800,450)]:
 		root.size = dimensions
 		host.state.encounters[0] = {"kind":"poi","poi":host.rules.pois[0],"title":"Test","completed":false}

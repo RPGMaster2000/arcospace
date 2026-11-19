@@ -2,6 +2,7 @@ extends Node
 ## One camera owner; no combat, reward, RNG or expedition-state references.
 ## Existing scene nodes are borrowed, never cloned. All edits are restored on exit.
 signal settled
+signal started
 signal stage_changed(stage: String)
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
@@ -153,6 +154,7 @@ func _begin(mode: String, fullscreen: bool) -> int:
 	cancel()
 	kind = mode
 	active = true
+	started.emit()
 	skipped = false
 	external_destruction = false
 	_camera_rest = camera.global_transform

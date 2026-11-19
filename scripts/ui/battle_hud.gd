@@ -6,6 +6,9 @@ const Sound = preload("res://scripts/audio/sfx.gd")
 # EXTEND: Add display facts to Board._display_snapshot(), then update the relevant refresh method.
 const ResultPresentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Effects = preload("res://scripts/visual/visual_effects.gd")
+const SidePanel = preload("res://scripts/ui/battle_side_panel.gd")
+const ModifierPanel = preload("res://scripts/ui/battle_modifier_panel.gd")
+const EnemyCardFlavor = preload("res://scripts/ui/enemy_card_flavor.gd")
 var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
 var result_visible: bool = false
 var _emp_charge: int = -1
@@ -15,6 +18,15 @@ var nodes: Dictionary = {}
 var cards: Array[Control] = []
 var card_slots: Array[NodePath] = []
 var tactical: Control
+var player_panel: Control
+var enemy_panel: Control
+var _boons: Label
+var _modifier: Label
+var _system: Label
+var _identity: Label
+var _abilities: Label
+var _beam: Label
+var _enemy_modifier: Label
 
 
 func _init(board_view: Control) -> void:
@@ -84,18 +96,106 @@ func _init(board_view: Control) -> void:
 		"player_shields": [nodes["PlayerShip/ShieldPlaceholder"]],
 		"enemy_shields": [nodes["EnemyShip/ShieldPlaceholder"]]
 	}
-	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade, board_view.get_node("ModifierDisplay/Meter").details.shade])
+	tactical.bind(cards, [board_view.settings_button.popup, board_view.settings_button.menu.shade, board_view.settings_button.information.shade, nodes["allocation_popup"].shade])
 	var reference: Node = board_view.settings_button.information
 	for side in ["player", "enemy"]:
 		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
-			bind_reference(nodes[side + "_" + attribute + "_label"], reference, "resources" if attribute not in ["hull", "shields"] else "defenses")
+			if attribute in ["hull", "shields"]:
+				bind_reference(nodes[side + "_" + attribute + "_label"], reference, "defenses")
 	bind_reference(nodes["FTLPanel/Charge"], reference, "emp")
 	for column in nodes["SystemsFailureDisplay"].columns.values():
 		for label in column.get_children(): bind_reference(label, reference, "failure")
 
+	player_panel = SidePanel.new(true)
+	enemy_panel = SidePanel.new(false)
+	for panel in [player_panel, enemy_panel]:
+		board_view.add_child(panel)
+	player_panel.handle.pressed.connect(_toggle_panel.bind(player_panel, enemy_panel))
+	enemy_panel.handle.pressed.connect(_toggle_panel.bind(enemy_panel, player_panel))
+	_boons = player_panel.add_section("ACTIVE BOONS")
+	_system = player_panel.add_section("STAR SYSTEM")
+	_modifier = player_panel.add_section("BATTLE MODIFIER")
+	_identity = enemy_panel.add_section("COMBAT PROFILE")
+	_abilities = enemy_panel.add_section("SPECIAL ABILITIES")
+	_beam = enemy_panel.add_section("CHARGED BEAM")
+	_enemy_modifier = enemy_panel.add_section("ENVIRONMENT")
+	_abilities.get_parent().hide()
+	describe_enemy(board_view.enemy_ship_data)
+
+
+func add_overdrive(button: MenuButton) -> void:
+	player_panel.content.add_child(button)
+	player_panel.content.move_child(button, 0)
+	player_panel.closing.connect(button.get_popup().hide)
+
+
+func _toggle_panel(panel: Control, other: Control) -> void:
+	tactical.dismiss(true)
+	other.set_open(false, true)
+	panel.set_open(not panel.open)
+
+
+func close_panels(immediate: bool = false) -> void:
+	player_panel.set_open(false, immediate)
+	enemy_panel.set_open(false, immediate)
+
+
+func set_panels_locked(locked: bool, immediate: bool = false) -> void:
+	if locked:
+		close_panels(immediate)
+	player_panel.handle.disabled = locked
+	enemy_panel.handle.disabled = locked
+
+
+func fit_side_panels(view: Control) -> void:
+	for side in ["Player", "Enemy"]:
+		var panel: Control = player_panel if side == "Player" else enemy_panel
+		panel.fit(
+			view.get_node(side + "Resource1").get_rect(),
+			view.get_node(side + "Resource3").get_rect(),
+			cards[0].position.y,
+			view.size.x
+		)
+
+
+func describe_enemy(profile: Resource) -> void:
+	if profile == null:
+		_identity.text = "Unknown vessel"
+		return
+	_identity.text = "\n".join(PackedStringArray([profile.ship_name, profile.subtitle, profile.summary])).strip_edges()
+	var traits := PackedStringArray()
+	if profile.signature_card != null:
+		var card: Resource = profile.signature_card
+		traits.append("%s · %s" % [EnemyCardFlavor.title(card, profile), card.description])
+	for card in profile.starting_cards:
+		if card != profile.signature_card and card.resource_path.begins_with("res://cards/enemy/"):
+			traits.append("%s · %s" % [EnemyCardFlavor.title(card, profile), card.description])
+	_abilities.text = "\n".join(traits)
+	_abilities.get_parent().visible = not traits.is_empty()
+
+
+func refresh_panels(data: Dictionary) -> void:
+	var immediate: bool = data.presentation_locked or not data.winner.is_empty()
+	set_panels_locked(immediate or data.resolving_card or data.effects_busy, immediate)
+	var boons: PackedStringArray = data.active_boons
+	_boons.text = "No active boons" if boons.is_empty() else "\n".join(boons)
+	_modifier.text = data.modifier
+	_modifier.get_parent().get_child(0).modulate = data.modifier_tint
+	_system.text = data.system_overview
+	_beam.text = data.enemy_beam
+	_beam.get_parent().visible = not _beam.text.is_empty()
+	_enemy_modifier.text = data.enemy_modifier
+	_enemy_modifier.get_parent().visible = not _enemy_modifier.text.is_empty()
+
+
+static func modifier_status(modifier: Node, round_number: int) -> String:
+	var status := ModifierPanel.compact_status(modifier, round_number)
+	var separator := status.find(" · ")
+	return status if separator == -1 else status.substr(separator + 3)
 
 
 func refresh(data: Dictionary) -> void:
+	refresh_panels(data)
 	tactical.update_context(data)
 	nodes["SystemsFailureDisplay"].refresh(data.systems_failure)
 	refresh_results(data)
