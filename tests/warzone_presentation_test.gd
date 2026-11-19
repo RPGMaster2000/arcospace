@@ -34,10 +34,17 @@ func run() -> void:
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false
 	host.play_system_intro = false
+	host.star_system_settings = host.star_system_settings.duplicate(true)
+	host.star_system_settings.departure_turn_duration = 0.1
+	host.star_system_settings.departure_duration = 0.1
+	host.star_system_settings.camera_duration = 0.1
+	host.star_system_settings.white_fade_duration = 0.05
+	host.star_system_settings.introduction_duration = 0.15
 	root.add_child(host)
 	host.state.defense.complete = true
-	check(host.state.generate_system(), "Homeworld transition opens a Warzone")
-	host.show_system()
+	await host._jump()
+	check(host.state.is_warzone() and host.state.system_number == 2 and not host.transitioning,
+		"The live Homeworld FTL transition lands in an interactive Warzone")
 	await settle()
 	var hud = host.screen.overview_hud
 	var map = host.star_map
