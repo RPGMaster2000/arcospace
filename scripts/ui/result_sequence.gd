@@ -70,6 +70,9 @@ func set_summary(data: Dictionary) -> void:
 	if data.system_secured or data.get("mothership_destroyed", false):
 		cause = "Mothership neutralized · allied recovery" if data.escaped_by_ftl else ("Mothership Systems Disabled" if data.result_cause == "systems_failure" else "Mothership Destroyed")
 		if not data.escaped_by_ftl: symbol = "✦"
+	var intervention: String = data.get("strategic_summary", "")
+	if not intervention.is_empty():
+		cause += "\n" + intervention.get_slice("\n", 1)
 	summary = {"cause":cause,"symbol":symbol,"emp":bool(data.escaped_by_ftl),"victory":data.winner == "player",
 		"earned":int(data.get("salvage_earned",0)),"balance":int(data.salvage),
 		"hull":int(data.result_hull if data.result_recorded else data.player.hull),"battles":int(data.battles_won),
@@ -122,7 +125,7 @@ func play() -> void:
 	identity_icon = label(summary.symbol,30)
 	identity_icon.add_theme_color_override("font_color",burst.accent)
 	add_child(identity_icon)
-	subtitle = label(summary.cause,24)
+	subtitle = label(summary.cause,20 if str(summary.cause).contains("\n") else 24)
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(subtitle)
 	rewards = GridContainer.new()

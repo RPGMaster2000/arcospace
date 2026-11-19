@@ -43,6 +43,13 @@ func run() -> void:
 			"Opening integrity %d gives the enemy two objectives and a numerical advantage" % integrity)
 		check(state.initial_allied_strength >= 10 and state.outcome().hostile_strength > state.initial_allied_strength,
 			"Each support package starts with working fleets and an enemy advantage")
+		check(state.engagement_count() == 2 and state.objectives[1].contested and not state.allied_support(2).is_empty(),
+			"Each support package opens with two real engagements and an allied contact")
+	for scale in [1.0, 1.2, 1.5]:
+		var scaled := Warzone.new()
+		scaled.setup(tuning, 9, scale)
+		check(scaled.engagement_count() == 2 and (scaled.fleets[2].position as Vector3).distance_to(Warzone.START * scale) <= Warzone.INTERCEPT_RADIUS,
+			"System expansion preserves the two engagements and accessible contact")
 
 	var whole = opening(1, tuning)
 	var divided = opening(1, tuning)
@@ -54,7 +61,7 @@ func run() -> void:
 	divided.advance(14999.75, waypoint, destination)
 	check(whole.snapshot() == divided.snapshot(), "Travel, engagements and captures agree across time partitions")
 	check(whole.outcome().allied_strength < whole.initial_allied_strength, "NPCs exchange damage without player involvement")
-	check(whole.events.any(func(event): return event.contains("contested")), "NPC conflict can contest an objective")
+	check(whole.volley_tick > 0 and not whole.volley.is_empty(), "Actual NPC exchanges emit presentation cues")
 	check(whole.fleets[3].position != opening(1, tuning).fleets[3].position, "Fleets advance along their objective orders")
 
 	var engaged = opening(80, tuning)
@@ -70,11 +77,35 @@ func run() -> void:
 	payload.fleets[0].destination = 3
 	check(not resumed.restore(payload, tuning), "An invalid route is rejected")
 
+	var reaction = opening(100, tuning)
+	player_capture(reaction, 1)
+	check(reaction.objectives[1].owner == "allied" and reaction.fleets[3].destination == 1,
+		"Player capture redirects an unengaged hostile group")
+	check(reaction.fleets[2].engaged == 0 and reaction.fleets[2].destination == 0,
+		"An ongoing hostile engagement keeps its assignment during a counterattack")
+	check(reaction.events.any(func(event): return event.contains("counterattack")) and reaction.fleets.size() == 7,
+		"The counterattack is reported and reuses the existing fleet")
+	while reaction.fleets[1].engaged >= 0:
+		reaction.player_victory(reaction.fleets[1].engaged)
+	reaction.advance(12000, origin, origin)
+	check(reaction.fleets[1].destination != 1 or reaction.fleet_status(reaction.fleets[1]) in ["Defending", "Engaged", "Destroyed"],
+		"The victorious vanguard may hold against the counterattack")
+	var assault = opening(100, tuning)
+	for fleet in assault.fleets:
+		if fleet.id != 2: assault._damage(fleet, fleet.strength)
+	assault.fleets[2].position = assault.objectives[0].position
+	assault.objectives[2].owner = "allied"
+	assault.advance((tuning.capture_seconds + 1) * Warzone.STEP_MS, Vector3.ZERO, Vector3.ZERO)
+	check(assault.objectives[0].owner == "hostile" and assault.fleets[2].destination == 2,
+		"A hostile assault continues toward another allied objective after capturing the Relay")
+
 	var pyrrhic = opening(1, tuning)
 	pyrrhic.advance(120000, origin, origin)
 	check(pyrrhic.fleet_count("allied") == 0 and not pyrrhic.complete, "NPCs can destroy every ally without ending the operation")
 	player_capture(pyrrhic, 0)
 	check(pyrrhic.controlled() == 1 and pyrrhic.consolidation == 0, "One objective alone cannot start consolidation")
+	for fleet in pyrrhic.fleets:
+		if fleet.side == "hostile" and fleet.role != "Defender": pyrrhic.player_victory(fleet.id)
 	player_capture(pyrrhic, 1)
 	# If the enemy retasked, securing the second objective still leaves its defender at the Array.
 	check(pyrrhic.controlled() == 2 and not pyrrhic.complete, "The player can capture two objectives without allies")

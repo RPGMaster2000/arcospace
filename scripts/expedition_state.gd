@@ -632,7 +632,7 @@ func generate_system() -> bool:
 
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
-	if is_warzone(): navigation.checkpoint_position(Defense.wire(Warzone.START * layout_expansion))
+	if is_warzone(): navigation.checkpoint_position(Defense.wire(Warzone.START * maxf(1.0, layout_expansion)))
 	# A new system ends the leg but preserves the exploration risk cooldown.
 	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
@@ -1696,6 +1696,15 @@ func record_battle(result: BattleResult) -> bool:
 		if result.escaped_by_ftl and result.winner != "player": return false
 	if is_warzone() and not warzone.active(warzone_fleet(active_battle)):
 		return false
+	var warzone_contact := warzone_fleet(active_battle)
+	var ally_id := -1
+	var ally_strength := 0
+	var report_start := 0
+	if is_warzone():
+		var ally: Dictionary = warzone.allied_support(warzone_contact.id)
+		ally_id = ally.get("id", -1)
+		ally_strength = ally.get("strength", 0)
+		report_start = warzone.event_revision
 	if result.winner == "player" and active_battle >= 0 and not _complete_encounter(active_battle):
 		return false
 	_recorded_results[result.result_id] = true
@@ -1710,6 +1719,14 @@ func record_battle(result: BattleResult) -> bool:
 	battles_won = result.battles_won
 	if result.winner != "player":
 		run_ended = true
+		if is_warzone():
+			warzone.player_defeat(warzone_contact.id, result.enemy_hull_fraction, result.winner == "draw")
+			# NPCs still finish the time committed by the encounter. A lost
+			# player contributes neither capture presence nor a victory.
+			var absent := Vector3.UP * 10000
+			warzone.advance(rules.defense_tuning.battle_seconds * Warzone.STEP_MS, absent, absent, false)
+			_sync_warzone()
+			result.strategic_summary = warzone.intervention_summary(warzone_contact.id, ally_id, ally_strength, report_start, false, false)
 		poi_effects.stop_extraction()
 		progress_committed.emit()
 		return true
@@ -1747,6 +1764,8 @@ func record_battle(result: BattleResult) -> bool:
 
 	var before_activity := salvage
 	_commit_activity_time(rules.defense_tuning.battle_seconds)
+	if is_warzone():
+		result.strategic_summary = warzone.intervention_summary(warzone_contact.id, ally_id, ally_strength, report_start, true, result.escaped_by_ftl)
 	if salvage > before_activity:
 		result.salvage_rewards["operation" if is_warzone() else "extraction"] = salvage - before_activity
 	result.salvage = salvage

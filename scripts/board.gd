@@ -81,6 +81,7 @@ var encounter_number: int = 1
 var next_modifier: int = -1
 var salvage: int = 0
 var salvage_rewards: Dictionary = {}
+var strategic_summary := ""
 var battles_won: int = 0
 var result_recorded: bool = false
 var result_salvage_gained: int = 0
@@ -1164,6 +1165,7 @@ func _display_snapshot() -> Dictionary:
 		"shields_disabled": modifier.shields_disabled(),
 		"nebula_miss_rate": modifier.miss_rate if modifier.kind == 4 else 0,
 		"rewards_text": victory_description(),
+		"strategic_summary": strategic_summary,
 		"salvage_earned": result_salvage_gained,
 		"upgrades_available": mini(expedition.upgrades_remaining,expedition.upgrade_candidates().size()) if expedition != null and expedition.pending_choice == "upgrade" else 0,
 		"defense_recovery": salvage_rewards.has("recovery"),
@@ -1325,7 +1327,7 @@ func strategic_victory() -> bool:
 
 func victory_description() -> String:
 	if winner != "player":
-		return ""
+		return strategic_summary
 	var lines: PackedStringArray = []
 	var bonuses: PackedStringArray = []
 	var result := battle_result()
@@ -1366,6 +1368,8 @@ func victory_description() -> String:
 	if expedition != null and expedition.is_defense() and expedition.defense != null:
 		if expedition.defense.mothership_destroyed() and not expedition.defense.complete and expedition.defense.unit_for(expedition.active_battle).get("mothership", false):
 			lines.append("Destroy the remaining forces to liberate the system.")
+	if not strategic_summary.is_empty():
+		lines.append(strategic_summary)
 	return "\n".join(lines)
 
 
@@ -1393,6 +1397,7 @@ func _record_result() -> void:
 		if expedition.record_battle(result):
 			salvage = result.salvage
 			salvage_rewards = result.salvage_rewards
+			strategic_summary = result.strategic_summary
 	result_salvage_gained = maxi(0,salvage-salvage_before)
 	if winner == "player" and player_hull > 0 and expedition == null and next_modifier < 0:
 		next_modifier = randi_range(1, modifier.NAMES.size() - 1)

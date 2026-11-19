@@ -680,13 +680,16 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 			}
 		)
 	if not state.service.is_empty():
+		var warzone: bool = state.is_warzone()
 		entries.append(
 			{
 				"index": state.SERVICE_INDEX,
 				"name": "Trading Outpost",
 				"model_kind": "trading_outpost",
-				"text": icon.call("trading_outpost") + " Trading Outpost\nFree return · No pressure",
-				"tooltip": "Independent service station",
+				"text": icon.call("trading_outpost") + " Trading Outpost\n" + ("Protected allied service" if warzone else "Free return · No pressure"),
+				"tooltip": "Protected allied service" if warzone else "Independent service station",
+				"protected_service": warzone,
+				"world_position": state.Defense.wire(state.Warzone.OUTPOST * maxf(1.0, state.layout_expansion)) if warzone else [],
 				"color": Color("8fcab7"),
 				"completed": false
 			}
