@@ -1,5 +1,5 @@
 extends Control
-# RESPONSIBILITY: Show modifier countdown and activation feedback; never change rules.
+# RESPONSIBILITY: Show modifier activation feedback; never change rules.
 ## TUNE: Seconds for the central message to remain visible before fading.
 @export var hold_seconds: float = 1.2
 const Modifier = preload("res://scripts/combat_modifier.gd")
@@ -9,14 +9,6 @@ var flash_tween: Tween
 func _ready() -> void:
 	$Flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$FTLFlash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-
-func fit_panel(board_size: Vector2, safe_inset: float = 0, hand_top: float = 414) -> void:
-	$Meter.fit_panel(board_size, safe_inset, hand_top)
-
-
-func refresh(modifier: Node, round_number: int) -> void:
-	$Meter.refresh(modifier, round_number)
 
 
 func announce(message: String, tint: Color = Color.WHITE) -> void:

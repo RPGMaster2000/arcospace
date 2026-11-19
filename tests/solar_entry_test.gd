@@ -70,8 +70,7 @@ func run() -> void:
 	var snapshot: Dictionary = node.battle.battle_environment
 	check(EnvironmentData.valid_snapshot(snapshot) and snapshot.type == EnvironmentData.SOLAR_INTERFERENCE and snapshot.legacy_modifier == 0 and state.rng.state == rng, "Physical entry is separate from legacy IDs and gameplay RNG is untouched")
 	check(node.battle.modifier.kind == 3 and node.battle.hand.drop_multiplier == 1.0, "Existing Solar Flare has normal draw rules")
-	var panel = node.battle.get_node("ModifierDisplay/Meter")
-	check(panel.visible and not panel.get_node("Text").text.is_empty(), "Existing modifier panel presents Solar Flare")
+	check(node.battle._display_snapshot().modifier.contains("Solar Flare"), "Tactical HUD describes the entry modifier")
 	check(node.battle.get_node("BattleView/Viewport/Battlefield").scene_file_path == "res://scenes/battlefield_solar_flare.tscn", "Existing solar arena reused")
 	check(store.load_run().battle.environment == snapshot, "Marker saves exact entry snapshot before combat")
 	state.navigation.checkpoint_position([8, 0, 9])
@@ -123,7 +122,7 @@ func run() -> void:
 	node = host(store, loaded)
 	node.battle.enemy_timer.stop()
 	check(node.battle.modifier.kind == 4 and node.battle.battle_environment.legacy_modifier == 4, "Legacy unfinished battle restores original effect")
-	check(node.battle.get_node("ModifierDisplay/Meter").visible, "Legacy effect still has its label")
+	check(node.battle._display_snapshot().modifier.begins_with("Nebula"), "Legacy effect is described in the tactical HUD")
 	node.free()
 	await process_frame
 	# A failed write returns the same snapshot to the retry adapter.

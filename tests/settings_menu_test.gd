@@ -121,7 +121,6 @@ func run() -> void:
 		check(root.get_visible_rect().encloses(gear), "Battle gear fits landscape")
 		check(not gear.intersects(board.get_node("TurnLabel").get_global_rect()), "Gear clears turn counter")
 		check(not gear.intersects(board.get_node("ModeLabel").get_global_rect()), "Gear clears enemy name")
-		check(not gear.intersects(board.get_node("ModifierDisplay/Meter").get_global_rect()), "Gear clears hazard countdown")
 		await capture("battle-%d" % dimensions.x)
 		await activate(board.settings_button, dimensions.x == 960)
 		await activate(board.settings_button.settings_option, dimensions.x == 960)

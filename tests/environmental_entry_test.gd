@@ -63,8 +63,7 @@ func run() -> void:
 	var snapshot: Dictionary = node.battle.battle_environment
 	check(EnvironmentData.valid_snapshot(snapshot) and snapshot.legacy_modifier == 0 and state.rng.state == rng, "Entry snapshot is neutral and gameplay RNG is untouched")
 	check(node.battle.modifier.kind == 0 and node.battle.hand.drop_multiplier == 1.0, "Neutral combat has normal draw rules")
-	var panel = node.battle.get_node("ModifierDisplay/Meter")
-	check(not panel.visible and panel.get_node("Text").text.is_empty(), "Neutral combat has no environmental label")
+	check(node.battle._display_snapshot().modifier.contains("No environmental battle modifier"), "Tactical HUD describes the entry modifier")
 	check(store.load_run().battle.environment == snapshot, "Marker saves exact entry snapshot before combat")
 	state.navigation.checkpoint_position([8, 0, 9])
 	state.environmental_instances.append(EnvironmentData.instance("future", EnvironmentData.TEMPORAL_RIFT))
@@ -101,7 +100,7 @@ func run() -> void:
 	node = host(store, loaded)
 	node.battle.enemy_timer.stop()
 	check(node.battle.modifier.kind == 4 and node.battle.battle_environment.legacy_modifier == 4, "Legacy unfinished battle restores original effect")
-	check(node.battle.get_node("ModifierDisplay/Meter").visible, "Legacy effect still has its label")
+	check(node.battle._display_snapshot().modifier.begins_with("Nebula"), "Legacy effect is described in the tactical HUD")
 	node.free()
 	await process_frame
 	# A failed write returns the same snapshot to the retry adapter.

@@ -12,9 +12,9 @@ allocation weights or expedition state were changed.
 | `scripts/ui/battle_menu.gd` | Compact upper-left navigation; Settings, existing icon legend under Game Information, Close/outside-tap/Escape dismissal. Add future working utility entries using `_entry`. |
 | `scripts/ui/settings_menu.gd` | Existing Settings, music toggle, Main Menu, Quit and pause ownership; reused unchanged. |
 | `scripts/ui/battle_layout.gd` | Place navigation beside Turn/Salvage and allocation below Crew; convert supported mobile safe-area margins to logical HUD coordinates. Does not move ships/cards. |
-| `scripts/ui/battle_modifier_panel.gd` | Bottom strip, compact live state and full-rule overlay. Reads `CombatModifier`; owns no clocks or combat state. |
-| `scripts/modifier_display.gd` | Existing warning/impact/EMP presentation, forwarding HUD refresh/layout to the strip. |
-| `scenes/modifier_display.tscn` | Existing strip converted to a tappable Button with a reusable panel script. |
+| `scripts/ui/battle_side_panel.gd` and `scripts/ui/battle_hud.gd` | Tactical drawers and resource handles, action access and read-only battle summaries. |
+| `scripts/ui/battle_modifier_panel.gd` | Formats live modifier status from the combat clock. |
+| `scripts/modifier_display.gd` and `scenes/modifier_display.tscn` | Transient warning, impact and EMP presentation. |
 | `scripts/ui/power_allocation_popup.gd` | Existing choices and selection behavior; four-column presentation in the viewscreen above the hand. |
 | `scripts/board.gd`, `scripts/board_3d.gd` | Connect navigation and shared layout; remove the old ship-relative allocation placement. The legacy `settings_button` property now refers to Battle Menu, preserving existing callers. |
 
@@ -31,15 +31,13 @@ shows the current hit probability (`100 - miss_rate`). Temporal Rift shows the
 existing uncommon draw multiplier without a countdown. Deep Space explicitly
 reports that there is no environmental modifier.
 
-Tap the strip for `CombatModifier.description(kind)`, including probabilities,
-durations, exclusions and rounding rules from the existing definitions. No second
-modifier schedule is maintained by the UI.
+Open the player drawer to read the current status and the explanation from
+`CombatModifier.description(kind)`. The enemy drawer also shows shared effects
+when applicable.
 
 ## Tuning
 
-Select `ModifierDisplay/Meter` in Godot's Inspector to edit maximum width, panel
-height, font size and side padding. Text wraps to a second line in the reserved
-48-pixel strip, six pixels above the existing hand. The menu exposes its width and inward offset; its open panel clears the resource column.
+The menu exposes its width and inward offset. Its open panel clears the resource column.
 Resource icons/numbers, production badges, ship scale and card dimensions are
 preserved. The allocation popup keeps its original choices, hints and controls;
 a single horizontal row lets those controls clear the hand.
@@ -71,16 +69,10 @@ no production animation code was changed. Existing ObjectDB shutdown warnings re
 
 Screenshots at all three requested aspect ratios were inspected. Actual Android
 hardware, system-bar behavior and device cutouts remain unverified. The optional
-2D fallback action log moves above the viewscreen strip to avoid sharing its space;
+2D fallback keeps a visible action log;
 the 3D action log remains hidden as before.
 
 ## Follow-up visual adjustments
-
-The modifier background is now 50% opaque, without a hard outline. Native vertex
-colors fade its ends over 24 logical pixels, starting eight pixels beyond the text.
-Text stays fully opaque. The text and slim 28-pixel background move up ten pixels,
-while the original 48-pixel touch area stays clear of Hull/Shield controls. Opacity,
-fade width, text padding, bar height and vertical offset are Inspector properties.
 
 The left column now uses the content-edge margins (menu 16, resources 23 logical
 pixels), without adding the display's horizontal safe-area inset a second time.
@@ -103,3 +95,14 @@ retaining the shorter height. Resource rows start at y=90 with 78 px spacing on
 both sides. Salvage starts at y=44, 29 px below Turn; the right-aligned enemy
 header mirrors those rows at the 23 px right margin (plus mobile safe inset).
 The old 64 px enemy-header displacement is removed. Ship/model settings are unchanged.
+
+## Expandable tactical HUD
+
+The player and enemy resource columns now act as tactical panel handles. Tap the column or its chevron to slide the panel inward. Only one panel can be open at a time. The card hand and resource counters remain visible. The panel body scrolls on shorter displays.
+
+The player panel places Resource Overdrive first in expedition battles and uses the existing payment menu and availability rules. It shows current-system pressure, known hostile forces and available turret support where applicable. Active boons have an empty state until a boon source is available. The enemy panel uses the current ship profile and any signature or enemy-exclusive cards, and shows charged-beam status when applicable.
+
+Modifier descriptions and live countdowns are inside the panels. Temporary battlefield warnings and effects still appear at their existing cues. Accepted battle actions, turn transitions and cinematic starts retract the panels.
+
+The battle layout regression exercises mouse and simulated touch input in 16:9, 19.5:9 and 21:9. Both GL Compatibility and Mobile Vulkan runs capture the drawers under
+`.godot/testlogs`. The ten-battle progression regression checks Overdrive payment and dismissal through the relocated menu.

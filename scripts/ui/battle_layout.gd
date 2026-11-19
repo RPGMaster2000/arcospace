@@ -54,7 +54,7 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	allocation.size = BUTTON_SIZE
 	var resources: Control = view.get_node("PlayerResource3")
 	allocation.position = Vector2(resources.position.x, resources.position.y + resources.size.y + 8)
-	# The optional 2D fallback has a visible action log in the newly occupied strip.
+	# The optional 2D fallback has a visible action log.
 	# Its 3D counterpart is already hidden; leave that presentation unchanged.
 	var action_log: Control = view.get_node("LastActionLabel")
 	if action_log.visible:
@@ -62,8 +62,4 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 		action_log.size.x = view.size.x - 280 - inset.x - inset.z
 	view.get_node("SystemsFailureDisplay").fit(
 		view.size, resources.position.y + resources.size.y + 6
-	)
-	var modifier: Control = view.get_node("ModifierDisplay")
-	modifier.fit_panel(
-		view.size, maxf(inset.x, inset.z), view.get_node(view.card_slots[0]).position.y
 	)

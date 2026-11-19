@@ -24,7 +24,6 @@ func run() -> void:
 			var mod = board.modifier
 			var display = board.get_node("ModifierDisplay")
 			display.cinematic_enabled = false
-			var meter = display.get_node("Meter")
 			check(mod.kind == kind,"Board retains appended modifier ID")
 			var field = board.get_node("BattleView/Viewport/Battlefield")
 			check(field.scene_file_path == preload("res://scripts/board_3d.gd").BATTLEFIELDS[kind].resource_path,"Both storms select their explicit arena, never a normal/planetary arena")
@@ -57,10 +56,11 @@ func run() -> void:
 
 				board.turn_number = 2
 				board.refresh_display()
-				check(meter.get_node("Text").text.contains(Mod.storm_family(kind).capitalize()),"HUD affected family")
-				check(meter.get_node("Text").text.contains("doubled"),"HUD multiplier")
-				check(meter.get_node("Text").modulate == Mod.storm_color(kind),"Amber/violet HUD identity")
-				check(meter.current_rules.contains("×2") and meter.current_rules.to_lower().contains("costs stay unchanged"),"Pre-battle/full rules explain shared mechanics")
+				var details: Label = board.hud._modifier
+				check(details.text.contains(Mod.storm_family(kind).capitalize()),"HUD affected family")
+				check(details.text.contains("doubled"),"HUD multiplier")
+				check(details.get_parent().get_child(0).modulate == Mod.storm_color(kind),"Amber/violet HUD identity")
+				check(details.text.contains("×2") and details.text.to_lower().contains("costs stay unchanged"),"Tactical panel rules explain shared mechanics")
 				var snapshot: Dictionary = board._display_snapshot()
 				for index in range(snapshot.cards.size()):
 					var original: Resource = board.hand.cards[index]

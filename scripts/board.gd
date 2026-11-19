@@ -616,6 +616,7 @@ func _ai_state(side: String) -> Dictionary:
 
 
 func _finish_turn(side: String) -> void:
+	hud.close_panels()
 	_announce_failure(Execution.end_turn(_both_states(), systems_failure, side, systems_failure_turns))
 	if _check_winner():
 		refresh_display()
@@ -737,8 +738,7 @@ func _on_enemy_timeout() -> void:
 	if progression_actions.beam == ProgressionActions.Beam.CHARGING:
 		await _fire_charged_beam()
 		return
-	if (expedition != null and expedition.battles_won >= 4 and expedition.system_number > 1
-		and expedition.battles_won % 2 == 0 and turn_number >= 2
+	if (_enemy_can_charge_beam() and turn_number >= 2
 		and progression_actions.beam == ProgressionActions.Beam.READY):
 		progression_actions.beam = ProgressionActions.Beam.CHARGING
 		progression_actions.charge_hull = enemy_hull
@@ -756,13 +756,18 @@ func _on_enemy_timeout() -> void:
 	_act("enemy", move.slot, move.discard)
 
 
+func _enemy_can_charge_beam() -> bool:
+	return (expedition != null and expedition.battles_won >= 4 and expedition.system_number > 1
+		and expedition.battles_won % 2 == 0)
+
+
 func _setup_progression_actions() -> void:
 	overdrive_button = MenuButton.new()
+	overdrive_button.name = "ResourceOverdrive"
 	overdrive_button.text = "Resource Overdrive"
-	overdrive_button.position = Vector2(145, 62)
-	overdrive_button.custom_minimum_size.y = 42
+	overdrive_button.custom_minimum_size.y = 48
 	ResultPresentation.action(overdrive_button)
-	add_child(overdrive_button)
+	hud.add_overdrive(overdrive_button)
 	var menu := overdrive_button.get_popup()
 	for action in ProgressionActions.OVERDRIVE.size():
 		var option: Dictionary = ProgressionActions.OVERDRIVE[action]
@@ -1032,6 +1037,7 @@ func _warp_out() -> void:
 	if _check_winner() or not ftl.can_warp():
 		refresh_display()
 		return
+	hud.close_panels(true)
 	winner = "player"
 	escaped_by_ftl = true
 	_record_result()
@@ -1078,7 +1084,6 @@ func _continue_encounter() -> void:
 # Layout helpers below override scene offsets on resize, so inspect them before moving scene controls.
 func refresh_display() -> void:
 	_update_overdrive()
-	$ModifierDisplay.refresh(modifier, turn_number)
 	hud.refresh(_display_snapshot())
 	# HUD affordability refresh resets self_modulate; hide unfilled slots after it.
 	# Preserve the one-second delayed reveal for newly drawn replacement cards.
@@ -1127,11 +1132,24 @@ func _display_snapshot() -> Dictionary:
 				"storm_color": modifier.storm_color(modifier.kind,true)
 			}
 		)
+	var modifier_name: String = modifier.NAMES[modifier.kind].capitalize()
+	var modifier_status: String = BattleHUD.modifier_status(modifier, turn_number)
+	var modifier_details: String = modifier_name + "\n"
+	if not modifier_status.is_empty():
+		modifier_details += modifier_status + "\n"
+	modifier_details += modifier.description(modifier.kind)
 	return {
 		"player": ship_snapshot("player"),
 		"enemy": ship_snapshot("enemy"),
 		"enemy_name": enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship",
 		"enemy_subtitle": enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel",
+		"active_boons": PackedStringArray(),
+		"modifier": modifier_details,
+		"modifier_tint": modifier.storm_color(modifier.kind) if modifier.kind in [6, 7] else Color.WHITE,
+		"system_overview": _battle_system_overview(),
+		"enemy_beam": _enemy_beam_overview(),
+		"enemy_modifier": "" if modifier.kind == 0 else modifier_details,
+		"presentation_locked": _presentation_locked(),
 		"emp":
 		{
 			"charge": ftl.charge,
@@ -1171,6 +1189,41 @@ func _display_snapshot() -> Dictionary:
 	}
 
 
+func _battle_system_overview() -> String:
+	if expedition == null:
+		return "Standalone battle"
+	var lines := PackedStringArray([expedition.system_name])
+	if expedition.is_defense() and expedition.defense != null:
+		var defense = expedition.defense
+		var contacts := 0
+		for unit in defense.units:
+			if defense.available(unit):
+				contacts += 1
+		lines.append("Pressure %d / %d · Hostile ships %d" % [int(defense.pressure), int(defense.tuning.pressure_maximum), contacts])
+	else:
+		var remaining := 0
+		for encounter in expedition.encounters:
+			if encounter.kind == "battle" and not encounter.completed:
+				remaining += 1
+		lines.append("Pressure %d · Hostile encounters %d" % [expedition.pressure, remaining])
+	var support: Dictionary = battle_environment.get("friendly_support", {})
+	if not support.is_empty():
+		lines.append("Turret support · %d damage every %d rounds" % [support.damage, support.interval])
+	return "\n".join(lines).strip_edges()
+
+
+func _enemy_beam_overview() -> String:
+	match progression_actions.beam:
+		ProgressionActions.Beam.CHARGING:
+			return "%d damage next enemy turn. Hull damage can disrupt the charge." % ProgressionActions.BEAM_DAMAGE
+		ProgressionActions.Beam.DISRUPTED:
+			return "Charge disrupted. The enemy will skip its next turn."
+		ProgressionActions.Beam.SPENT:
+			return "The enemy has used its charge attempt."
+	return ("Can charge a %d-damage beam. Hull damage can disrupt the charge." % ProgressionActions.BEAM_DAMAGE
+		if _enemy_can_charge_beam() else "")
+
+
 # Control nodes use editor-visible anchors; these decorative lines are Node2Ds.
 func _fit_board_lines() -> void:
 	hud.fit_board_lines(size, mode_rule_origin, hand_rule_origin)
@@ -1187,6 +1240,7 @@ func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
 	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button)
+	hud.fit_side_panels(self)
 
 
 func _setup_allocation() -> void:
@@ -1209,7 +1263,9 @@ func _setup_allocation() -> void:
 	add_child(allocation_button)
 	allocation_popup.mode_selected.connect(_select_allocation)
 	allocation_button.pressed.connect(
-		func(): allocation_popup.present(hand.allocation_mode, hand._allocation_multiplier)
+		func():
+			hud.close_panels()
+			allocation_popup.present(hand.allocation_mode, hand._allocation_multiplier)
 	)
 	_select_allocation("balanced")
 
@@ -1219,6 +1275,8 @@ func _select_allocation(mode: String) -> void:
 		return
 	if not hand.select_allocation(mode):
 		return
+	if hud != null:
+		hud.close_panels()
 	var index: int = allocation_popup.MODES.find(mode)
 	allocation_button.text = allocation_popup.ICONS[index]
 	allocation_button.tooltip_text = "Power Allocation · " + allocation_popup.NAMES[index]
