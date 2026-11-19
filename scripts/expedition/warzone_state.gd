@@ -286,6 +286,8 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			return false
 		if not Defense.number(objective.get("held"), 0, configuration.consolidation_seconds):
 			return false
+		if objective.held > 0 and (objective.owner != "allied" or objective.contested):
+			return false
 		var copy: Dictionary = objective.duplicate()
 		copy.position = Defense.point(copy.position)
 		copy.progress = int(copy.progress)

@@ -279,7 +279,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		var outcome: Variant = data.homeworld_outcome
 		if mode == "exploration" or not _valid_homeworld_outcome(outcome, cards, players[data.ship_id].hull_capacity):
 			return null
-		if data.system_number == 1 and (not state.defense.complete or outcome.integrity != state.defense.integrity
+		if data.system_number == 1 and (mode != "defense" or not state.defense.complete or outcome.integrity != state.defense.integrity
 				or outcome.maximum_integrity != state.defense.tuning.base_integrity):
 			return null
 		state.homeworld_outcome = outcome.duplicate(true)
