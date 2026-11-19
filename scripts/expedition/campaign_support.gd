@@ -8,7 +8,7 @@ const WARZONE_SYSTEM := 2
 static func operation_for(campaign_mode: String, system: int) -> String:
 	if campaign_mode == "defense" and system == WARZONE_SYSTEM:
 		return "warzone"
-	return campaign_mode
+	return "defense" if campaign_mode == "warzone" else campaign_mode
 
 
 static func homeworld_outcome(state: Resource) -> Dictionary:
@@ -32,6 +32,19 @@ static func homeworld_package(outcome: Dictionary, tuning: Resource) -> Dictiona
 		for threshold in [tuning.limited_integrity, tuning.standard_integrity, tuning.strong_integrity]:
 			if fraction >= threshold:
 				tier += 1
+	return _package(tuning, tier)
+
+
+static func victory_package(outcome: Dictionary, tuning: Resource) -> Dictionary:
+	var tier := 0
+	if outcome.grade == "Decisive Victory":
+		tier = 3
+	elif outcome.grade == "Hard-Fought Victory":
+		tier = 2
+	return _package(tuning, tier)
+
+
+static func _package(tuning: Resource, tier: int) -> Dictionary:
 	return {
 		"tier": TIERS[tier],
 		"fleet_strength": _package_value(tuning.allied_fleet_strength, tier, 5),

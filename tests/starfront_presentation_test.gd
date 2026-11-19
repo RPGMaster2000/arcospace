@@ -10,6 +10,7 @@ func run() -> void:
 	host.persistence_enabled = false
 	host.play_system_intro = false
 	host.rules = host.rules.duplicate(true)
+	host.rules.warzone_campaign_enabled = false
 	host.rules.defense_v2 = false
 	host.rules.debug_seed = 42042
 	root.add_child(host)

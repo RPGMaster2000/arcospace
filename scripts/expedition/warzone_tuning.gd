@@ -23,3 +23,10 @@ extends Resource
 @export_range(0, 100, 1) var decisive_salvage := 15
 @export_range(0, 100, 1) var hard_fought_salvage := 8
 @export_range(0, 100, 1) var pyrrhic_salvage := 3
+
+@export_group("Player intervention")
+@export_range(1, 10, 1) var support_round_interval := 2
+@export_range(1, 30, 1) var support_minimum_strength := 2
+@export_range(1, 20, 1) var support_minimum_damage := 6
+@export_range(1, 20, 1) var support_maximum_damage := 9
+@export_range(1, 30, 1) var wait_seconds := 6

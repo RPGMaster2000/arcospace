@@ -49,9 +49,9 @@ func run() -> void:
 	var origin := Warzone.START
 	var destination := Vector3(-20, 0, 20)
 	whole.advance(19500, origin, destination)
-	var waypoint := origin.lerp(destination, 4500.0 / 19500.0)
-	divided.advance(4500, origin, waypoint)
-	divided.advance(15000, waypoint, destination)
+	var waypoint := origin.lerp(destination, 4500.25 / 19500.0)
+	divided.advance(4500.25, origin, waypoint)
+	divided.advance(14999.75, waypoint, destination)
 	check(whole.snapshot() == divided.snapshot(), "Travel, engagements and captures agree across time partitions")
 	check(whole.outcome().allied_strength < whole.initial_allied_strength, "NPCs exchange damage without player involvement")
 	check(whole.events.any(func(event): return event.contains("contested")), "NPC conflict can contest an objective")

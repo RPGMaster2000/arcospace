@@ -6,8 +6,11 @@ class_name ExpeditionState
 signal deck_changed
 signal progress_committed
 signal defense_advanced(events: Dictionary)
+signal warzone_advanced(target_lost: bool)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
+const Warzone = preload("res://scripts/expedition/warzone_state.gd")
+const WarzoneOperation = preload("res://scripts/expedition/warzone_operation.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
 const RouteEnvironments = preload("res://scripts/expedition/route_environments.gd")
@@ -16,8 +19,11 @@ var orbit_clearance: float = 0.0
 ## Sole owner of the optional new-system profile; absent in historical systems.
 var system_variation: Dictionary = {}
 var game_mode: String = "exploration"
+var warzone_campaign_enabled := true
 var defense: RefCounted
 var homeworld_outcome: Dictionary = {}
+var warzone_outcome: Dictionary = {}
+var warzone: RefCounted
 var rifts := TemporalRift.new()
 const PoiEffects = preload("res://scripts/expedition/defense_poi_effects.gd")
 var poi_effects := PoiEffects.new()
@@ -31,6 +37,9 @@ var decoys := 0
 func is_defense() -> bool:
 	return game_mode == "defense"
 
+func is_warzone() -> bool:
+	return game_mode == "warzone"
+
 func consume_defense_reveal() -> bool:
 	if not is_defense() or not defense.reveal_pending: return false
 	defense.reveal_pending = false
@@ -43,7 +52,15 @@ func bind_defense_movement() -> void:
 		navigation.movement_advanced.connect(_advance_defense)
 
 func _advance_defense(distance: float) -> void:
-	if not is_defense() or defense == null or not can_navigate(): return
+	if not can_navigate(): return
+	if is_warzone():
+		var previous_tick: int = warzone.clock_ms / Warzone.STEP_MS
+		warzone.advance(distance * rules.defense_tuning.seconds_per_distance * Warzone.STEP_MS,
+			Defense.point(navigation.movement_origin), Defense.point(navigation.position))
+		if warzone.clock_ms / Warzone.STEP_MS != previous_tick:
+			_sync_warzone()
+		return
+	if not is_defense() or defense == null: return
 	_advance_strategy(distance * rules.defense_tuning.seconds_per_distance,
 		Defense.point(navigation.movement_origin), Defense.point(navigation.position), false)
 
@@ -84,6 +101,11 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 		progress_committed.emit()
 
 func _commit_activity_time(seconds: float) -> void:
+	if is_warzone() and not run_ended:
+		var at: Vector3 = Defense.point(navigation.position)
+		warzone.advance(roundi(seconds * Warzone.STEP_MS), at, at)
+		_sync_warzone()
+		return
 	if not is_defense() or defense == null or defense.complete or run_ended: return
 	if navigation.position.size() != 3: return
 	var total: float = seconds + defense.deferred_seconds
@@ -291,6 +313,9 @@ func refresh_defense_bodies() -> void:
 
 func battle_location(index: int) -> Array:
 	if index < 0 or index >= encounters.size() or encounters[index].kind != "battle": return []
+	if is_warzone():
+		var hostile := warzone_fleet(index)
+		return Defense.wire(hostile.position) if warzone.active(hostile) else []
 	if is_defense():
 		var unit: Dictionary = defense.unit_for(index)
 		# Battle is located at the visible hostile, including at swept contact.
@@ -306,6 +331,18 @@ func battle_location(index: int) -> Array:
 func turret_support(index: int) -> Dictionary:
 	if not is_defense() or defense == null: return {}
 	return Defense.Installations.support_at(defense.turrets, battle_location(index))
+
+
+func battle_support(index: int) -> Dictionary:
+	if not is_warzone(): return turret_support(index)
+	var hostile := warzone_fleet(index)
+	if hostile.is_empty(): return {}
+	var settings: Resource = rules.warzone_tuning
+	var ally: Dictionary = warzone.allied_support(hostile.id)
+	if ally.is_empty() or ally.strength < settings.support_minimum_strength: return {}
+	return {"type": Defense.Installations.KINETIC, "source": "allied_fleet", "strength": ally.strength,
+		"damage": clampi(ally.strength, settings.support_minimum_damage, settings.support_maximum_damage),
+		"interval": settings.support_round_interval}
 
 func can_deploy_turret(site: String) -> bool:
 	return is_defense() and defense != null and can_navigate() and not navigation.leg_active \
@@ -343,7 +380,7 @@ func _install_poi_turret(index: int) -> void:
 func battle_environment(index: int) -> Dictionary:
 	var snapshot: Dictionary = EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
-	var support := turret_support(index)
+	var support := battle_support(index)
 	var advantage: String = poi_effects.mothership if is_defense() and defense.unit_for(index).get("mothership",false) else ""
 	if support.is_empty() and advantage.is_empty(): return snapshot
 	var combined := snapshot.duplicate(true)
@@ -368,11 +405,14 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	system_variation = {}
 	run_ended = false
 	homeworld_outcome.clear()
+	warzone_outcome.clear()
+	warzone = null
 	poi_effects = PoiEffects.new()
 	defense_poi_version = 0
 	decoys = 0
 	rules = configuration
 	game_mode = rules.game_mode
+	warzone_campaign_enabled = rules.warzone_campaign_enabled
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
 	hull = ship().hull_capacity
 	salvage = 0
@@ -444,11 +484,12 @@ func can_jump() -> bool:
 # Persistent system objective boundary, independent of transient UI/battle readiness.
 # Future objective modes change this condition, while every Jump caller keeps can_jump().
 func system_objective_complete() -> bool:
+	if is_warzone(): return warzone.complete
 	return defense != null and defense.complete if is_defense() else ftl_access and not mandatory_boss_pending()
 
 
 func next_campaign_operation() -> String:
-	return CampaignSupport.operation_for(game_mode, system_number + 1)
+	return CampaignSupport.operation_for(game_mode, system_number + 1) if warzone_campaign_enabled else game_mode
 
 
 func warzone_support_package() -> Dictionary:
@@ -456,7 +497,7 @@ func warzone_support_package() -> Dictionary:
 
 
 func mandatory_boss_pending() -> bool:
-	if is_defense(): return false
+	if is_defense() or is_warzone(): return false
 	var found: bool = false
 	for encounter in encounters:
 		if encounter.get("mandatory_boss", false):
@@ -518,12 +559,22 @@ func generate_system() -> bool:
 		return false
 	# Snapshot outgoing Homeworld before the generator replaces DefenseState.
 	_remember_homeworld()
+	var post_warzone: bool = is_warzone()
+	game_mode = next_campaign_operation()
 	_recorded_results.clear()
 	environmental_instances.clear()
 	layout_expansion = rules.system_expansion
 	orbit_clearance = rules.planet_orbit_clearance if rules.defense_v2 and layout_expansion > 0.0 else 0.0
 	poi_effects.leave_system()
-	SystemGenerator.generate(self)
+	if is_warzone():
+		var support := warzone_support_package()
+		WarzoneOperation.generate(self, support)
+		_grant_campaign_support(support)
+	else:
+		warzone = null
+		SystemGenerator.generate(self)
+		if post_warzone:
+			_grant_campaign_support(CampaignSupport.victory_package(warzone_outcome, rules.warzone_tuning))
 	bind_defense_movement()
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
@@ -560,6 +611,9 @@ func generate_system() -> bool:
 	encounter_positions = {} if is_defense() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
 	var routed: bool = is_defense() and defense.v2
 	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
+	if is_warzone():
+		encounter_positions.clear()
+		route_points = warzone.fleets.map(func(fleet): return Defense.wire(fleet.position))
 	var solar_records := environmental_instances.duplicate(true)
 	environmental_instances = RouteEnvironments.asteroid(seed_used, system_number, defense, route_points) if routed \
 		else EnvironmentData.Asteroids.generate(seed_used, system_number, route_points, layout_expansion)
@@ -578,10 +632,52 @@ func generate_system() -> bool:
 
 	navigation.reset_system()
 	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
+	if is_warzone(): navigation.checkpoint_position(Defense.wire(Warzone.START * layout_expansion))
 	# A new system ends the leg but preserves the exploration risk cooldown.
 	chasedown_roll_policy.reset_leg()
 	progress_committed.emit()
 	return true
+
+
+func _grant_campaign_support(package: Dictionary) -> void:
+	salvage += package.salvage
+	add_modifiers({"shields": package.shields})
+
+
+func warzone_fleet(index: int) -> Dictionary:
+	if not is_warzone() or index < 0 or index >= Warzone.HOSTILE_GROUPS:
+		return {}
+	return warzone.fleet_at(index + Warzone.ALLIED_GROUPS)
+
+
+func warzone_objective(index: int) -> Dictionary:
+	var objective := index - Warzone.HOSTILE_GROUPS
+	if not is_warzone() or objective < 0 or objective >= Warzone.OBJECTIVES.size():
+		return {}
+	return warzone.objectives[objective]
+
+
+func wait_in_warzone() -> bool:
+	if not is_warzone() or warzone.complete or navigation.leg_active or not can_navigate():
+		return false
+	_commit_activity_time(rules.warzone_tuning.wait_seconds)
+	progress_committed.emit()
+	return true
+
+
+func _sync_warzone() -> void:
+	for index in Warzone.HOSTILE_GROUPS:
+		if not warzone.active(warzone_fleet(index)):
+			encounters[index].completed = true
+	var lost: bool = travel_destination >= 0 and encounters[travel_destination].completed
+	if warzone.complete and not ftl_access:
+		warzone_outcome = warzone.outcome()
+		salvage += warzone_outcome.salvage
+		ftl_access = true
+		progress_committed.emit()
+	if lost:
+		cancel_travel()
+	warzone_advanced.emit(lost)
 
 
 # Preserve the historical draw exactly: deleting it shifts enemies, objectives,
@@ -595,7 +691,7 @@ func _roll_battle_modifier() -> int:
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
 	var scaled: Resource = rules.progression.scaled_enemy(base, int(encounter.get("system_number", system_number)), is_defense())
-	return scaled if is_defense() else Pressure.scaled_enemy(scaled, pressure)
+	return scaled if is_defense() or is_warzone() else Pressure.scaled_enemy(scaled, pressure)
 
 
 func profile_name() -> String:
@@ -630,6 +726,8 @@ func objective_marker(index: int) -> String:
 
 
 func ftl_status() -> String:
+	if is_warzone():
+		return warzone_outcome.grade.to_upper() + " · FTL READY" if warzone.complete else "CAPTURE AND HOLD TWO OBJECTIVES"
 	if is_defense():
 		if defense.complete: return "FTL READY · SYSTEM LIBERATED"
 		if defense.mothership_destroyed(): return "MOTHERSHIP DESTROYED · CLEAR REMAINING FORCES"
@@ -662,7 +760,7 @@ func _complete_encounter(index: int) -> bool:
 	if index < 0 or index >= encounters.size() or encounters[index].completed or objective_locked(index): return false
 	var risk: bool = encounter_pressure_risk(index)
 	encounters[index].completed = true
-	if not is_defense() and not encounters[index].get("chasedown", false): pressure += 1
+	if not is_defense() and not is_warzone() and not encounters[index].get("chasedown", false): pressure += 1
 	if encounters[index].get("objective_role", "") == "access": ftl_access = true
 	for entry in encounters:
 		if int(entry.get("objective_prerequisite", -1)) == index: entry.objective_known = true
@@ -728,6 +826,11 @@ func cancel_travel() -> void:
 
 
 func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> Vector3:
+	if is_warzone():
+		var objective := warzone_objective(index)
+		if not objective.is_empty(): return objective.position
+		var fleet := warzone_fleet(index)
+		return fleet.get("position", fallback)
 	if not is_defense(): return fallback
 	var unit: Dictionary = defense.unit_for(index)
 	return defense.intercept_point(index, player) if has_missile(index) or (not unit.is_empty() and defense.available(unit)) else fallback
@@ -735,6 +838,10 @@ func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> V
 
 func can_engage(index: int) -> bool:
 	if not can_visit(index) or has_missile(index): return false
+	if is_warzone():
+		var fleet := warzone_fleet(index)
+		return not warzone.complete and warzone.active(fleet) and navigation.position.size() == 3 \
+			and Defense.point(navigation.position).distance_to(fleet.position) <= Warzone.INTERCEPT_RADIUS
 	if not is_defense(): return true
 	var unit: Dictionary = defense.unit_for(index)
 	return unit.is_empty() or defense.contact == index
@@ -793,7 +900,7 @@ func arrive_free_destination() -> void:
 
 
 func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
-	if is_defense(): return false
+	if is_defense() or is_warzone(): return false
 	if not can_navigate(): return false
 	if destination != FREE_DESTINATION and (not can_visit(destination) or destination < 0 or encounters[destination].kind != "poi"): return false
 	if navigation_origin == destination and destination != FREE_DESTINATION: return false
@@ -902,7 +1009,9 @@ func arrive_destination(index: int) -> void:
 	if index == travel_destination: travel_destination = -1
 	if index == pending_destination and not chasedown_unresolved():
 		pending_destination = -1
-	progress_committed.emit()
+		progress_committed.emit()
+	elif is_warzone():
+		progress_committed.emit()
 
 
 #endregion
@@ -1435,9 +1544,10 @@ func battle_upgrade_count(result: BattleResult) -> int:
 	if encounter.get("chasedown", false):
 		return maxi(0, rules.chasedown_upgrades)
 	var rank: int = enemy_profile(encounter).enemy_rank
-	return maxi(
+	var count: int = maxi(
 		0, [rules.standard_upgrades, rules.elite_upgrades, rules.boss_upgrades][clampi(rank, 0, 2)]
 	)
+	return maxi(1, count / 2) if count > 0 and is_warzone() and result.allied_support else count
 
 
 # One event upgrades each identity at most once; a later event may upgrade it again.
@@ -1458,6 +1568,7 @@ func finish_upgrades() -> void:
 # Produce one encounter's data, consuming temporary bonuses once at entry.
 func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: Dictionary = {}) -> BattleSetup:
 	if index >= Defense.Missiles.FIRST_ID: return null
+	if is_warzone() and not can_engage(index): return null
 	if is_defense() and not defense.unit_for(index).is_empty() and not can_engage(index):
 		return null
 	last_poi_success = -1
@@ -1518,7 +1629,8 @@ func victory_salvage(result: BattleResult) -> int:
 	):
 		destruction = enemy_profile(encounters[active_battle]).destruction_salvage_reward
 	var reward: int = destruction
-	return reward * rules.elite_salvage_multiplier if _elite_defeated(result) else reward
+	if _elite_defeated(result): reward *= rules.elite_salvage_multiplier
+	return reward / 2 if is_warzone() and result.allied_support else reward
 
 
 func _defense_salvage(result: BattleResult, unit: Dictionary) -> Dictionary:
@@ -1541,7 +1653,8 @@ func _elite_defeated(result: BattleResult) -> bool:
 
 
 func elite_resource_reward(result: BattleResult) -> int:
-	return rules.elite_resource_bonus if _elite_defeated(result) else 0
+	var amount: int = rules.elite_resource_bonus if _elite_defeated(result) else 0
+	return amount / 2 if is_warzone() and result.allied_support else amount
 
 
 # The secured reward is granted once, including when the final threat is a missile.
@@ -1581,6 +1694,8 @@ func record_battle(result: BattleResult) -> bool:
 		unit = defense.unit_for(active_battle)
 		if unit.is_empty() or not defense.available(unit) or defense.contact != active_battle: return false
 		if result.escaped_by_ftl and result.winner != "player": return false
+	if is_warzone() and not warzone.active(warzone_fleet(active_battle)):
+		return false
 	if result.winner == "player" and active_battle >= 0 and not _complete_encounter(active_battle):
 		return false
 	_recorded_results[result.result_id] = true
@@ -1600,6 +1715,8 @@ func record_battle(result: BattleResult) -> bool:
 		return true
 	if active_battle >= 0:
 		encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
+		if is_warzone():
+			warzone.player_victory(warzone_fleet(active_battle).id)
 		if is_defense():
 			defense.neutralize(active_battle)
 			_secure_defense(result)
@@ -1631,7 +1748,7 @@ func record_battle(result: BattleResult) -> bool:
 	var before_activity := salvage
 	_commit_activity_time(rules.defense_tuning.battle_seconds)
 	if salvage > before_activity:
-		result.salvage_rewards.extraction = salvage - before_activity
+		result.salvage_rewards["operation" if is_warzone() else "extraction"] = salvage - before_activity
 	result.salvage = salvage
 	progress_committed.emit()
 	return true

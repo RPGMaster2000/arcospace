@@ -170,6 +170,7 @@ func run() -> void:
 	var actual_counts := {}
 	for seed_value in range(1, 101):
 		var rules: Resource = Rules.duplicate(true)
+		rules.warzone_campaign_enabled = false
 		rules.log_rolls = false
 		var state := State.new()
 		state.start(0, rules, seed_value)
@@ -177,8 +178,11 @@ func run() -> void:
 			var encoded := Save.encode(state)
 			var signature := JSON.stringify(encoded)
 			if not baseline.is_empty():
+				var historical := encoded.duplicate()
+				historical.erase("warzone_campaign_enabled")
+				historical.erase("homeworld_outcome")
 				check(
-					signature.sha256_text() == baseline["%d:%d" % [seed_value, number]],
+					JSON.stringify(historical).sha256_text() == baseline["%d:%d" % [seed_value, number]],
 					"Exact main gameplay/save signature seed %d system %d" % [seed_value, number]
 				)
 			var visual := Accents.Visual.generate(seed_value, number, [], calibration)
