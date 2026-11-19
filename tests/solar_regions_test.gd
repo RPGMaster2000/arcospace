@@ -99,6 +99,8 @@ func run() -> void:
 				for data in [actual,expected]:
 					data.erase("temporal_rift_schedule")
 					data.erase("environmental_instances")
+					# The historical reference predates campaign outcome records.
+					data.erase("homeworld_outcome")
 				check(actual == expected,"New phenomena and clearance preserve PR #50 encounters, anchors, progression and every RNG stream")
 				var clearance := preload("res://scripts/expedition/environment_clearance.gd")
 				var invalid_old := false

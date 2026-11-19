@@ -4,6 +4,7 @@ class_name ExpeditionRules
 ## Central mode selection; old saves explicitly restore exploration.
 @export_enum("exploration", "defense") var game_mode: String = "defense"
 @export var defense_tuning: Resource = preload("res://resources/starfront_defense_tuning.tres")
+@export var warzone_tuning: Resource = preload("res://scripts/expedition/warzone_tuning.gd").new()
 @export_range(1.0, 1.5, 0.01) var system_expansion: float = 1.20
 @export var defense_v2: bool = true
 @export var system_variety: Resource = preload("res://scripts/expedition/system_variety_settings.gd").new()
