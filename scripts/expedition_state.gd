@@ -458,7 +458,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0, tes
 		for point in range(floori(system_number / 2.0)):
 			var key: String = PRODUCTION[point % PRODUCTION.size()]
 			production_upgrades[key] = production_upgrades.get(key, 0) + 1
-	_generate_system(not developer_test.is_empty())
+		_generate_system(true)
+	else:
+		generate_system()
 
 
 func ship() -> Resource:
