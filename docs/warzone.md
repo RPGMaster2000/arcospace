@@ -56,9 +56,49 @@ influence on the map. The Skip button and Skip Cinematics preference both
 bypass the presentation. Completed saves resume with FTL available. The allied
 rendezvous remains a supply foothold and all three grades unlock System 3.
 
+## Procedural sectors and discoveries
+
+A dedicated seed stream generates 9–12 installations with two active opening
+engagements. The seven graph families vary orientation, ownership, branch lengths,
+and the number and importance of connections. Bottleneck and corridor sectors
+route hostile supply through their depot. Encirclement places an isolated allied
+outpost inside hostile territory. Generation rejects crossing links and links
+that pass too close to unrelated installations. A larger sector can have one
+more discovery, and some sectors have none.
+
+Military objectives use stable semantic roles, including the supply roots, forward
+command, depot and shipyard. A role determines the installation's operation and
+appearance. The saved node ID resolves its position, links and current owner.
+Reserve flights start beyond the boundary on the side of their faction's command.
+The normal camera centers on mission objects and keeps off-map reserves out of
+its initial framing. Strategic Time continues to follow the player and local combat.
+
+Independent derelicts, debris fields, abandoned research stations and anomalies
+reuse standard PoI interactions, including their costs, rewards and Strategic
+Time. Explore them through neutral markers. They have no ownership, supply
+connections, or War Effort rewards. Their positions and completion state reload
+with the encounter. Lattice version 3 saves roles explicitly. Version 2 and the
+original three-objective saves continue using their stored layouts and IDs.
+
+The normal map shows subtle territorial color. Toggle **Lattice** for stronger
+influence and a `+` marker on a chokepoint. The shared influence shader retains
+a single visual layer in both renderers.
+
+**Warzone Tuning → Lattice Operations → Battle Modifier Chance** defaults to 54%.
+Contacts draw from six existing modifiers without repeating a planned modifier
+in the same sector. Logistics encounters favor asteroid or metal effects when
+available. A contact without an assigned effect still uses physical hazards at
+its location. One modifier applies at a time. The encounter preview identifies
+it before battle. Solar Flare stays out of the starless assignment pool.
+
+Normal expeditions and Developer Test Launch both randomize when
+`ExpeditionRules.debug_seed` is zero. Set that resource field or pass a nonzero
+`seed_override` to reproduce a sector. Saves preserve the chosen seed and the
+committed layout, discoveries and encounter modifiers.
+
 ## Ownership and tuning
 
-`WarzoneLattice` derives one of six connected patterns from an independent seed.
+`WarzoneLattice` derives seven graph families from an independent seed.
 `WarzoneSector` owns the graph, routes, supply, fleets, operational ledger and victory.
 `WarzoneOperations` supplies operation quotes and applies effects after the expedition
 validates proximity and available Salvage. The sector checks facility ownership, recharge and eligibility. `ExpeditionState` owns the
@@ -93,8 +133,13 @@ A single transparent mesh shows weighted territorial influence. Connected nodes
 have stronger influence, and fleets and disruption change the field. The 3D
 map reuses the existing sky and scenery and uses one non-shadowing fill light.
 
-`warzone_lattice_test` exercises all six patterns across 64 seeds, save round trips,
-zero-card-battle logistics and fleet-support wins, per-facility cooldowns, actual volley effects and final consolidation.
+`warzone_lattice_test` audits 512 networks and 128 full expeditions for graph
+variety, modifier frequency and discovery placement. The audit found 163 distinct
+degree signatures and a supplied victory path in every sampled network. Opening
+fronts were about 8–20 world units apart. Including physical hazards, 62% of the
+768 sampled contacts had a modifier, compared with 17% using physical hazards
+alone on the same layouts. The suite also covers save round trips,
+zero-card-battle wins, per-facility cooldowns and final consolidation.
 `warzone_lattice_presentation_test` exercises the live System 2 handoff, touch
 overlay, facility layout, influence updates, withdrawal and touch skip under both renderers.
 

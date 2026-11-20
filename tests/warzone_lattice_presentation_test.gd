@@ -29,7 +29,15 @@ func run() -> void:
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
 	var before_clock: int = operation.clock_ms
+	var normal_strength: float = presentation.influence.get_shader_parameter("projection_strength")
 	await touch(hud.lattice_button)
+	check(normal_strength >= 0.5 and normal_strength < 0.7 \
+		and is_equal_approx(presentation.influence.get_shader_parameter("projection_strength"), 1.0),
+		"The overlay strengthens the same subtle territorial projection")
+	var discovery: int = int(host.state.encounter_positions.keys().front())
+	check(map.markers.has(discovery) and not map.markers[discovery].lattice_tag \
+		and map.markers[discovery].tooltip_text == "Independent discovery",
+		"Discoveries use neutral map markers instead of territorial controls")
 	check(presentation.overlay_enabled and operation.clock_ms == before_clock,
 		"Touch toggles the overlay while strategic time stays paused")
 	check(hud.warzone_counts[0].text == "A %d" % operation.fleet_count("allied") and
@@ -70,7 +78,7 @@ func run() -> void:
 	host.screen.system_details_overlay.dismiss()
 	check(presentation.fx.emitted_beams > 0, "Opening NPC engagements show beam exchanges")
 	var before_influence: PackedVector4Array = presentation.influence_target.duplicate()
-	var depot := 5
+	var depot: int = operation.site("depot")
 	var index: int = depot + operation.HOSTILE_GROUPS
 	var point: Vector3 = operation.objectives[depot].position
 	host.state.update_navigation_position(host.state.Defense.wire(point))
@@ -108,6 +116,13 @@ func run() -> void:
 		check(not overlaps, "Station names leave moving map controls unobstructed")
 	await capture("lattice-cutoff")
 	await _watch_aftermath(host, operation, presentation)
+	root.size = Vector2i(1344, 576)
+	await settle()
+	for offset in operation.objectives.size():
+		var anchor: Vector3 = operation.objectives[offset].position
+		check(map.get_rect().size.x > 0 and root.get_visible_rect().has_point(map.camera.unproject_position(anchor)),
+			"The ultrawide overview frames the generated objectives")
+
 	host.free()
 	await process_frame
 	print("Warzone lattice presentation: %d checks, %d failures" % [checks, failures])
@@ -123,17 +138,17 @@ func _watch_aftermath(host: Node, operation: RefCounted, presentation: Node3D) -
 		fleet.engaged = -1
 		fleet.destination = fleet.at
 	allies.strength = 1
-	allies.position = operation.objectives[operation.ALLIED_ROOT].position
+	allies.position = operation.objectives[operation.root("allied")].position
 	hostile.strength = 4
 	hostile.position = Vector3(17, 0, -8)
-	hostile.at = 8
-	hostile.destination = 8
-	operation.final_command = 6
+	hostile.at = operation.site("shipyard")
+	hostile.destination = hostile.at
+	operation.final_command = operation.site("forward_command")
 	operation.player_intervened = true
 	operation.disrupted.clear()
 	operation._award("aftermath:1", 40, "Final offensive fixture")
 	operation._award("aftermath:2", 25, "Final offensive fixture")
-	for site in [3, 4, 5, 6, 7]:
+	for site in operation.objectives.size():
 		operation.objectives[site].owner = "allied"
 	operation._refresh_supply()
 	operation.consolidation = operation.tuning.consolidation_seconds - 1
@@ -169,7 +184,7 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	var fleet: Dictionary = operation.fleets[4]
 	# Start a real supplied fleet down an uncontested corridor long enough to
 	# detect the old one-second stop/start cycle in the actual moving model.
-	var origin: int = operation.HOSTILE_ROOT
+	var origin: int = operation.root("hostile")
 	var target: int = operation.Lattice.neighbors(origin, operation.links).back()
 	fleet.at = origin
 	fleet.destination = target

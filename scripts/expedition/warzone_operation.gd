@@ -5,6 +5,7 @@ const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
 const Sector = preload("res://scripts/expedition/warzone_sector.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
+const Discoveries = preload("res://scripts/expedition/warzone_discoveries.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const OBJECTIVE_MODELS := [
 	preload("res://encounters/sensor_relay.tres"),
@@ -55,7 +56,7 @@ static func generate(state: Resource, support: Dictionary) -> void:
 		_add_contact(state, faction, escalated, index, false)
 	for index in state.warzone.objectives.size():
 		state.encounters.append({"kind": "poi", "title": state.warzone.objective_name(index),
-			"poi": OBJECTIVE_MODELS[index % OBJECTIVE_MODELS.size()], "completed": false})
+			"poi": OBJECTIVE_MODELS[state.warzone.role_index(index) % OBJECTIVE_MODELS.size()] if state.warzone.is_lattice() else OBJECTIVE_MODELS[index], "completed": false})
 
 	if state.warzone.is_lattice() and state.warzone.has_reserves():
 		_add_contact(state, faction, escalated, Warzone.HOSTILE_GROUPS, true)
@@ -79,3 +80,24 @@ static func _sector_enemy(state: Resource, faction: Resource, index: int) -> Res
 	var roster := Factions.roster(faction, state.system_number)
 	roster.sort_custom(func(a, b): return a.hull_capacity > b.hull_capacity)
 	return roster[index % mini(2, roster.size())] if not roster.is_empty() else Factions.enemy(state, faction, index)
+
+
+# These are existing modifiers. Solar Flare is excluded in this starless sector.
+# Physical hazards still apply to contacts without an assigned modifier.
+static func assign_modifiers(state: Resource) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%d:%d:warzone-battle-modifiers:v1" % [state.seed_used, state.system_number])
+	var available := [1, 2, 4, 5, 6, 7]
+	for index in state.encounters.size():
+		var encounter: Dictionary = state.encounters[index]
+		if encounter.kind != "battle" or rng.randf() >= state.rules.warzone_tuning.battle_modifier_chance:
+			continue
+		var fleet: Dictionary = state.warzone_fleet(index)
+		# A contact deployed around industrial logistics leans toward debris
+		# or material storms, but draws from the same single-modifier pool.
+		var industrial: bool = state.warzone.facility(fleet.at) in ["sabotage", "deploy"]
+		var preferred := available.filter(func(id): return id in [1, 6])
+		var pool := preferred if industrial and not preferred.is_empty() and rng.randf() < 0.45 else available
+		var choice: int = pool[rng.randi_range(0, pool.size() - 1)]
+		available.erase(choice)
+		encounter.modifier = choice

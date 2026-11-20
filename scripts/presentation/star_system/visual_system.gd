@@ -31,7 +31,7 @@ static func generate_sector(seed_value: int, number: int, entries: Array, operat
 	var rng := random_for(seed_value, number, "rogue-body")
 	if rng.randf() < 0.38:
 		var origin: Vector3 = operation.outpost_position(1.0)
-		var outward: Vector3 = (origin - operation.objectives[1].position).normalized()
+		var outward: Vector3 = (origin - operation.objectives[operation.root("allied")].position).normalized()
 		result.planets.append({"index": 0, "encounter": -1, "name": "Rogue Moon",
 			"type": "barren", "radius": 1.65, "rotation": 0.0, "rotation_speed": 0.0,
 			"position": origin + outward * 10.0 - Vector3.UP * 2.5, "material_seed": rng.randi()})

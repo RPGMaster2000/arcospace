@@ -39,3 +39,5 @@ extends Resource
 @export_range(1, 15, 1) var repair_cost := 4
 @export_range(10, 90, 1) var sabotage_seconds := 35
 @export_range(8, 60, 1) var convoy_seconds := 18
+
+@export_range(0.0, 1.0, 0.01) var battle_modifier_chance := 0.54

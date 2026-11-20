@@ -4,13 +4,7 @@ extends RefCounted
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const REPAIR_STRENGTH := 5
 const EFFECT_SECONDS := 20
-const TYPES := ["repair", "coordinate", "fortify", "jam", "fortify", "sabotage",
-	"coordinate", "coordinate", "deploy", "sabotage", "fortify", "sabotage"]
 const COOLDOWNS := {"repair": 18, "coordinate": 28, "fortify": 16, "jam": 25, "sabotage": 42, "deploy": 35}
-
-
-static func operation_kind(index: int) -> String:
-	return TYPES[index]
 
 
 static func cooldown(kind: String) -> int:
@@ -19,7 +13,7 @@ static func cooldown(kind: String) -> int:
 
 static func options(sector: RefCounted, index: int, salvage: int) -> Array[Dictionary]:
 	if sector.complete or index < 0 or index >= sector.objectives.size(): return []
-	var kind := operation_kind(index)
+	var kind: String = sector.facility(index)
 	var hostile_only := kind == "sabotage"
 	var can_infiltrate := kind == "jam"
 	var owner: String = sector.objectives[index].owner

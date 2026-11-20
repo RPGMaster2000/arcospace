@@ -700,6 +700,9 @@ func _generate_system(initial_test_launch: bool) -> bool:
 		if not location.is_empty(): hostile_positions.append(location)
 	environmental_instances.append_array(preload("res://scripts/expedition/system_variety_environments.gd").storms(self,
 		route_points if routed else hostile_positions, environmental_instances))
+	if is_warzone() and warzone.is_lattice():
+		WarzoneOperation.Discoveries.populate(self)
+		WarzoneOperation.assign_modifiers(self)
 	if is_defense(): environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
 	if is_defense() and not preview.is_empty() and preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances) == preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(solar_records):
 		defense.decorative_bodies = preview.planets.slice(1)
@@ -734,6 +737,18 @@ func warzone_objective(index: int) -> Dictionary:
 	if not is_warzone() or objective < 0 or objective >= warzone.objectives.size():
 		return {}
 	return warzone.objectives[objective]
+
+
+func warzone_discovery(index: int) -> Array:
+	if not is_warzone() or not warzone.is_lattice(): return []
+	var first: int = Warzone.HOSTILE_GROUPS + warzone.objectives.size() + int(warzone.has_reserves())
+	return encounter_positions.get(str(index), []) if index >= first else []
+
+
+func _at_warzone_discovery(index: int) -> bool:
+	var point := warzone_discovery(index)
+	return not point.is_empty() and not navigation.leg_active and navigation.position.size() == 3 \
+		and Defense.point(navigation.position).distance_to(Defense.point(point)) <= warzone.tuning.objective_radius
 
 
 func warzone_operate(index: int, id: String, present: Callable = Callable()) -> bool:
@@ -892,6 +907,7 @@ func _complete_encounter(index: int) -> bool:
 
 
 func can_survey(index: int) -> bool:
+	if is_warzone() and not _at_warzone_discovery(index): return false
 	if is_defense() and defense_poi_version == 1: return false
 	if not can_visit(index) or index == SERVICE_INDEX or objective_locked(index) or encounters[index].kind != "poi":
 		return false
@@ -951,6 +967,8 @@ func navigation_destination(index: int, player: Vector3, fallback: Vector3) -> V
 		if index == SERVICE_INDEX: return warzone.outpost_position(layout_expansion)
 		var objective := warzone_objective(index)
 		if not objective.is_empty(): return objective.position
+		var discovery := warzone_discovery(index)
+		if not discovery.is_empty(): return Defense.point(discovery)
 		var fleet := warzone_fleet(index)
 		return fleet.get("position", fallback)
 	if not is_defense(): return fallback
@@ -1202,6 +1220,7 @@ func locked_reason(approach: Resource) -> String:
 func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0, present: Callable = Callable()) -> bool:
 	if index == SERVICE_INDEX or not can_visit(index) or objective_locked(index) or encounter_at(index).kind != "poi":
 		return false
+	if is_warzone() and not _at_warzone_discovery(index): return false
 	if is_defense() and defense_poi_version == 1:
 		return _resolve_defense_poi(index, approach_index, present)
 	var poi: Resource = encounter_at(index).poi

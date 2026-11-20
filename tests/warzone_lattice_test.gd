@@ -59,7 +59,7 @@ func generation() -> void:
 		var op: RefCounted = state.warzone
 		patterns[op.pattern] = true
 		check(op.is_lattice() and state.system_number == 2, "System 2 uses the lattice")
-		check(op.objectives.size() in [9, 12] and op.controlled() == 3, "Hostile starts with majority")
+		check(op.objectives.size() in range(9, 13) and op.controlled() in range(2, 5), "Hostile starts with majority")
 		check(state.can_engage(0) and op.engagement_count() == 2, "Opening fights and accessible contact")
 		check(state.enemy_profile(state.encounters[0]).enemy_rank == 1
 			and state.enemy_profile(state.encounters[2]).enemy_rank == 2, "Lattice uses Tier 2 and optional Tier 3 opposition")
@@ -67,13 +67,149 @@ func generation() -> void:
 		check(not state.environmental_instances.any(func(region): return region.type == "SOLAR_INTERFERENCE"), "No solar influence in the sector")
 		check(op.snapshot() == fresh(seed_value).warzone.snapshot(), "Same seed reproduces geometry and deployments")
 		check(roundtrip(state) != null, "Generated sector reloads")
-	check(patterns.size() == Sector.Lattice.PATTERNS.size(), "All six pattern families occur")
+	check(patterns.size() == Sector.Lattice.PATTERNS.size(), "All seven pattern families occur")
+
+
+func graph_audit() -> void:
+	var graph_shapes := {}
+	var counts := {}
+	var territories := {}
+	var orientations := {}
+	var bottleneck_maps := 0
+	var length := Vector2(INF, 0)
+	var playable := 0
+	const SAMPLE := 512
+	for seed_value in range(1, SAMPLE + 1):
+		var op := Sector.new()
+		op.setup_sector(Rules.warzone_tuning, 9, 1.0, seed_value, 2)
+		counts[op.objectives.size()] = counts.get(op.objectives.size(), 0) + 1
+		territories[op.controlled()] = true
+		var side: Vector3 = op.objectives[op.root("allied")].position
+		orientations[floori((atan2(side.z, side.x) + PI) * 4.0 / PI)] = true
+		var degrees := []
+		for index in op.objectives.size(): degrees.append(Sector.Lattice.neighbors(index, op.links).size())
+		degrees.sort()
+		graph_shapes[str(degrees)] = true
+		if not Sector.Lattice.bottlenecks(op.objectives, op.links).is_empty(): bottleneck_maps += 1
+		var clear := op.links.all(func(edge): return not Sector.Lattice._crosses(edge, op.links, op.objectives))
+		var contact: float = op.fleets[0].position.distance_to(op.fleets[1].position)
+		length = Vector2(minf(length.x, contact), maxf(length.y, contact))
+		if clear and op.engagement_count() == 2 and op.supplied.allied.size() >= 2 and op.supplied.hostile.size() >= 5:
+			# Verify an actual capture path through supplied territory before
+			# consolidating a deep command. Interceptions are resolved directly
+			# here, so hundreds of cases do not require full card battles.
+			for fleet in op.fleets:
+				if fleet.side == "hostile" and op.active(fleet): op.player_victory(fleet.id)
+			op.reserve_launched[Sector.HOSTILE_RESERVE] = true
+			for round_index in op.objectives.size():
+				if op.complete: break
+				var frontier := false
+				for index in op.objectives.size():
+					if op.objectives[index].owner == "allied" or not op._capture_connected(index, "allied"): continue
+					var at: Vector3 = op.objectives[index].position
+					op.advance(op.tuning.capture_seconds * 1000, at, at)
+					frontier = true
+				if not frontier: break
+			if op.final_command >= 0:
+				var command: Vector3 = op.objectives[op.final_command].position
+				op.advance(op.tuning.consolidation_seconds * 1000, command, command)
+			if op.complete: playable += 1
+	print("Warzone graph audit: ", SAMPLE, " seeds · ", counts, " · ", graph_shapes.size(),
+		" degree patterns · ", bottleneck_maps, " with chokepoints · frontline spacing ", length)
+	check(playable == SAMPLE, "Every sampled Warzone supports opening engagements and a supplied final victory")
+	check(counts.size() == 4 and territories.size() == 3 and orientations.size() == 8 and graph_shapes.size() >= 100,
+		"Counts, ownership, orientation and actual graph structure vary across the seed sample")
+	check(bottleneck_maps > 100 and bottleneck_maps < SAMPLE and length.y - length.x >= 5.0,
+		"Chokepoints and frontline spacing vary meaningfully")
+
+
+func discoveries_and_modifiers() -> void:
+	var authored := 0
+	var feature_count := 0
+	var physical_baseline := 0
+	var total := 0
+	var counts := {}
+	var pool := {}
+	var find_state: Resource
+	for seed_value in range(1, 129):
+		var state := fresh(seed_value)
+		var already := {}
+		for index in state.encounters.size():
+			var entry: Dictionary = state.encounters[index]
+			var location := state.warzone_discovery(index) as Array
+			if not location.is_empty():
+				check(state.warzone_objective(index).is_empty() and state.warzone_fleet(index).is_empty()
+					and state.Defense.point(location) == state.navigation_destination(index, Vector3.ZERO, Vector3.INF),
+					"Discovery is a real navigation destination outside the lattice and fleet registries")
+				if find_state == null: find_state = state
+			if entry.kind != "battle": continue
+			total += 1
+			if state.preview_modifier(index) > 0: feature_count += 1
+			if entry.modifier > 0:
+				check(not already.has(entry.modifier), "Contact modifier assignments do not repeat within the sector")
+				already[entry.modifier] = true
+				pool[entry.modifier] = true
+				authored += 1
+			if State.EnvironmentData.modifier_id(State.EnvironmentData.evaluate(state, state.battle_location(index),
+					state.environmental_instances, index)) > 0: physical_baseline += 1
+		counts[state.encounter_positions.size()] = true
+	print("Warzone encounters: ", authored, "/", total, " assigned · ", feature_count, "/", total,
+		" visible including hazards · ", physical_baseline, "/", total, " physical-only")
+	check(counts.size() == 4 and pool.size() == 6 and float(feature_count) / total >= 0.50
+		and float(feature_count) / total <= 0.65 and feature_count > physical_baseline,
+		"Discovery counts and modifier variety meet the intended distribution")
+	if find_state == null: return
+	var state := find_state
+	var saved := roundtrip(state)
+	if saved == null: return
+	var index := int(state.encounter_positions.keys().front())
+	var cost: int = state.rules.defense_tuning.poi_seconds
+	var elapsed: int = state.warzone.clock_ms
+	check(not state.resolve_approach(index, 0, 0.0), "Discoveries require the player to arrive")
+	state.update_navigation_position(state.warzone_discovery(index))
+	state.arrive_destination(index)
+	var transaction := {}
+	var approach: Resource = state.poi_approaches(index).front()
+	var prior: int = state.salvage
+	var valid: bool = state.resolve_approach(index, 0, 0.0, func(activity, finish):
+		transaction.activity = activity
+		transaction.finish = finish)
+	check(valid and not transaction.is_empty() and state.warzone.clock_ms == elapsed,
+		"A discovery offers the shared Strategic Time activity before spending time")
+	if not valid or transaction.is_empty(): return
+	transaction.activity.advance_to(cost)
+	transaction.finish.call()
+	check(state.warzone.clock_ms == elapsed + cost * 1000 and state.salvage == prior + approach.success.salvage - approach.salvage_cost
+		and state.encounters[index].completed and not state.resolve_approach(index, 0, 0.0),
+		"Existing discovery rewards and time apply exactly once")
+	check(roundtrip(state) != null and state.warzone.effort == 0 and not state.can_jump(),
+		"Completed discoveries persist without awarding War Effort or FTL access")
+	var malformed := Store.encode(saved)
+	malformed.encounter_positions[str(index)] = State.Defense.wire(saved.warzone.objectives[0].position)
+	check(Store.new().decode(malformed, saved.rules) == null, "A discovery on a lattice objective is rejected")
+
+
+func seed_replay() -> void:
+	var a := State.new()
+	var b := State.new()
+	a.start(0, Rules)
+	b.start(0, Rules)
+	check(a.seed_used != b.seed_used, "Normal expeditions choose a fresh seed by default")
+	var launch := {"mode": "warzone", "stage": 2, "rank": -1}
+	a.start(0, Rules, 0, launch)
+	b.start(0, Rules, 0, launch)
+	check(a.seed_used != b.seed_used and a.warzone.links != b.warzone.links,
+		"Developer Launch selects a fresh Warzone graph by default")
+	var replay := State.new()
+	replay.start(0, Rules, a.seed_used, launch)
+	check(a.warzone.snapshot() == replay.warzone.snapshot() and a.encounter_positions == replay.encounter_positions
+		and a.encounters == replay.encounters, "An explicit Developer Launch seed reproduces encounters, discoveries and modifiers")
 
 
 func logistics() -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
-	var index := 5
+	var index: int = op.site("depot")
 	var hostile_before: int = op.supplied.hostile.size()
 	var start_clock: int = op.clock_ms
 	check(act(state, index, "sabotage"), "A hostile depot can be sabotaged behind the front")
@@ -98,8 +234,8 @@ func logistics() -> void:
 func supply_combat() -> void:
 	var baseline := fresh(19, 1)
 	var cutoff := fresh(19, 1)
-	var index := Sector.HOSTILE_ROOT
 	var op: RefCounted = cutoff.warzone
+	var index: int = op.root("hostile")
 	op.disrupted[index] = op.tuning.sabotage_seconds
 	op._refresh_supply()
 	for second in baseline.warzone.tuning.exchange_seconds:
@@ -119,21 +255,22 @@ func fleet_routing_and_convoys() -> void:
 	state.wait_in_warzone()
 	check(not op.convoy.is_empty() and not op.convoy_position().is_equal_approx(convoy_origin),
 		"The convoy advances along its supplied route")
+	var junction: int = op.site("junction")
 	var protected_contact: int = op.fleets[2].engaged
-	op.objectives[4].owner = "allied"
+	op.objectives[junction].owner = "allied"
 	op._refresh_supply()
-	op._counterattack(4)
+	op._counterattack(junction)
 	check(op.fleets[2].counter_target == -1 and op.fleets[2].engaged == protected_contact,
 		"An ongoing engagement keeps its target during a counterattack")
-	check(op.fleets.any(func(fleet): return fleet.counter_target == 4),
+	check(op.fleets.any(func(fleet): return fleet.counter_target == junction),
 		"A reachable capture draws a routed hostile counterattack")
 	var fleet: Dictionary = op.fleets[0]
-	fleet.at = 4
-	fleet.position = op.objectives[4].position
-	fleet.destination = 4
+	fleet.at = junction
+	fleet.position = op.objectives[junction].position
+	fleet.destination = junction
 	fleet.strength = 8
 	op._move_fleet(fleet)
-	check(fleet.destination != 4 and op.route_valid(fleet.side, 4, fleet.destination),
+	check(fleet.destination != junction and op.route_valid(fleet.side, junction, fleet.destination),
 		"Allied fleets advance to a connected frontier after a capture")
 
 
@@ -141,8 +278,9 @@ func battle_progression() -> void:
 	var state := fresh(19)
 	var entry := State.Defense.point(state.navigation.position)
 	check(state.can_engage(0), "Opening Tier 2 engagement is reachable")
+	var preview: int = state.preview_modifier(0)
 	var setup = state.prepare_battle(0)
-	check(setup != null and setup.enemy_profile.enemy_rank == 1
+	check(setup != null and setup.enemy_profile.enemy_rank == 1 and setup.modifier == preview
 		and setup.environment.get("friendly_support", {}).get("source") == "allied_fleet",
 		"The new Tier 2 contact uses existing supported battle setup")
 	var result := preload("res://scripts/combat/battle_result.gd").new()
@@ -161,33 +299,38 @@ func battle_progression() -> void:
 func facilities() -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
+	var repair: int = op.site("repair")
+	var command: int = op.root("allied")
+	var relay: int = op.site("relay")
 	for site in op.objectives.size():
 		check(op.operations(site, 100).size() == 1, "Each installation quotes exactly one signature operation")
-	check(not op.operations(7, 100).front().enabled, "Hostile command cannot direct allied fleets")
-	check(not op.operations(0, 0).front().enabled, "Repair Dock enforces its Salvage cost")
-	check(not op.operations(0, 20).front().enabled, "Undamaged fleets cannot buy repairs")
+	check(not op.operations(op.root("hostile"), 100).front().enabled, "Hostile command cannot direct allied fleets")
+	check(not op.operations(repair, 0).front().enabled, "Repair Dock enforces its Salvage cost")
+	check(not op.operations(repair, 20).front().enabled, "Undamaged fleets cannot buy repairs")
 	op.fleets[0].strength -= 5
 	op.fleets[1].strength -= 1
-	check(act(state, 0, "repair"), "Repair Dock restores the weakest allied formation")
-	check(op.facility_cooldowns.has(0) and not op.facility_cooldowns.has(1)
-		and not op.operations(0, 20).front().enabled, "Recharge is local to the facility instance")
-	var cooling: int = op.facility_cooldowns[0]
+	check(act(state, repair, "repair"), "Repair Dock restores the weakest allied formation")
+	check(op.facility_cooldowns.has(repair) and not op.facility_cooldowns.has(command)
+		and not op.operations(repair, 20).front().enabled, "Recharge is local to the facility instance")
+	var cooling: int = op.facility_cooldowns[repair]
 	var restored := roundtrip(state)
 	if restored != null:
-		check(restored.warzone.facility_cooldowns[0] == cooling, "Save preserves the exact remaining recharge")
+		check(restored.warzone.facility_cooldowns[repair] == cooling, "Save preserves the exact remaining recharge")
 		restored.wait_in_warzone()
-		check(restored.warzone.facility_cooldowns[0] == cooling - 1, "One-second Wait spends one recharge second")
+		check(restored.warzone.facility_cooldowns[repair] == cooling - 1, "One-second Wait spends one recharge second")
 	var start_effort: int = op.effort
-	check(act(state, 3, "jam") and op.jam_until > op.clock_ms and not op.disrupted.has(3),
+	check(act(state, relay, "jam") and op.jam_until > op.clock_ms and not op.disrupted.has(relay),
 		"Communications jamming delays orders without severing the supply graph")
 	check(op.effort == start_effort, "Facility activation alone grants no War Effort")
 	check(roundtrip(state) != null, "Active communications disruption persists")
 	var deploy := fresh(19)
 	var sector: RefCounted = deploy.warzone
-	sector.objectives[8].owner = "allied"
-	sector.links.append(Vector2i(1, 8))
+	var yard: int = sector.site("shipyard")
+	sector.objectives[yard].owner = "allied"
+	var edge := _edge(sector.root("allied"), yard)
+	if edge not in sector.links: sector.links.append(edge)
 	sector._refresh_supply()
-	check(act(deploy, 8, "deploy") and sector.fleets[Sector.ALLIED_RESERVE].arriving,
+	check(act(deploy, yard, "deploy") and sector.fleets[Sector.ALLIED_RESERVE].arriving,
 		"Supplied Shipyard dispatches an off-map allied reserve")
 	check(not sector.can_deploy_allied() and roundtrip(deploy) != null, "Shipyard cannot exceed the fleet cap")
 
@@ -195,36 +338,43 @@ func facilities() -> void:
 func facility_effects() -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
-	var command: Dictionary = op.operations(1, 20).front()
+	var root: int = op.root("allied")
+	var fort: int = op.site("outpost")
+	var depot: int = op.site("depot")
+	var command: Dictionary = op.operations(root, 20).front()
 	check(command.enabled, "Supplied command can coordinate a reachable offensive")
-	op.operate(1, command)
+	op.operate(root, command)
 	var allied: Dictionary = op.fleets[0]
 	var hostile: Dictionary = op.fleets[2]
 	allied.position = op.objectives[op.offensive_target].position
 	var boosted: int = op._shot_damage(allied)
 	op.offensive_until = 0
 	check(boosted == op._shot_damage(allied) + 1, "Coordinated volleys change strategic attrition")
-	var fortify: Dictionary = op.operations(2, 20).front()
-	allied.position = op.objectives[2].position
+	op.objectives[fort].owner = "allied"
+	var edge := _edge(root, fort)
+	if edge not in op.links: op.links.append(edge)
+	op._refresh_supply()
+	var fortify: Dictionary = op.operations(fort, 20).front()
+	allied.position = op.objectives[fort].position
 	hostile.engaged = allied.id
 	var unfortified: int = op._shot_damage(hostile)
-	op.operate(2, fortify)
+	op.operate(fort, fortify)
 	check(op._shot_damage(hostile) == unfortified - 1, "Fortifications mitigate hostile volleys at their own site")
-	op.facility_cooldowns.erase(2)
+	op.facility_cooldowns.erase(fort)
 	check(op._shot_damage(hostile) == unfortified, "Expired fortifications stop mitigating volleys")
-	var cut: Dictionary = op.operations(5, 20).front()
-	op.operate(5, cut)
+	var cut: Dictionary = op.operations(depot, 20).front()
+	op.operate(depot, cut)
 	var reward: int = op.effort
-	op.facility_cooldowns.erase(5)
+	op.facility_cooldowns.erase(depot)
 	op.disrupted.clear()
 	op._refresh_supply()
-	op.operate(5, op.operations(5, 20).front())
+	op.operate(depot, op.operations(depot, 20).front())
 	check(reward > 0 and op.effort == reward, "Recharged logistics disruption cannot pay the same cutoff twice")
 	var recovery := fresh(19, 1)
 	for fleet in recovery.warzone.fleets:
 		if fleet.side == "allied": fleet.strength = 0
 	recovery.salvage = 0
-	check(act(recovery, 0, "repair") and recovery.warzone.fleet_count("allied") > 0,
+	check(act(recovery, recovery.warzone.site("repair"), "repair") and recovery.warzone.fleet_count("allied") > 0,
 		"An emergency recovery is possible after a rout with no Salvage")
 
 
@@ -245,17 +395,26 @@ func scenario(seed_value: int, strategy: String) -> void:
 	var clock_before_visit := 0
 	for round_index in 12:
 		if op.complete: break
-		var route := [3, 5, 8, 0, 1] if strategy == "infrastructure" else [1, 0, 2, 3, 5, 8]
-		for site in route:
+		var route := ["relay", "depot", "shipyard", "repair", "allied_command"] if strategy == "infrastructure" \
+			else ["allied_command", "repair", "outpost", "relay", "depot", "shipyard"]
+		for role in ["west_hub", "east_hub"]:
+			if op.site(role) >= 0: route.append(role)
+		for role in route:
+			var site: int = op.site(role)
 			if op.complete: break
-			if strategy == "infrastructure" and round_index == 0 and site == 1: continue
+			if strategy == "infrastructure" and round_index == 0 and role == "allied_command": continue
 			var action: Dictionary = op.operations(site, state.salvage).front()
 			if not action.enabled: continue
 			approach(state, site)
 			if not op.complete and state.warzone_operate(site + State.Warzone.HOSTILE_GROUPS, action.id):
 				visited[site] = true
 		if op.complete: break
-		for site in range(3, op.objectives.size()):
+		var targets: Array = range(op.objectives.size())
+		targets.sort_custom(func(a, b): return op.role_index(a) < op.role_index(b))
+		if op.final_command >= 0:
+			targets.erase(op.final_command)
+			targets.push_front(op.final_command)
+		for site in targets:
 			var eligible: bool = op._capture_connected(site, "allied") and op.objectives[site].owner != "allied"
 			var defended: bool = op.fleets.any(func(fleet): return fleet.side == "hostile" and op.active(fleet) \
 				and not fleet.withdrawing and fleet.position.distance_to(op.objectives[site].position) <= op.tuning.objective_radius)
@@ -269,7 +428,7 @@ func scenario(seed_value: int, strategy: String) -> void:
 	check(state.can_jump() and op.player_victories == 0, strategy + " wins with zero direct battles")
 	check(visited.size() >= 4, strategy + " uses multiple strategic locations")
 	if state.can_jump():
-		check(op.final_command in Sector.FINAL_COMMANDS and op._command_ready(), "Victory requires a supplied deep command")
+		check(op.final_command in op.command_sites() and op._command_ready(), "Victory requires a supplied deep command")
 		var next := roundtrip(state)
 		if next != null:
 			check(next.generate_system() and next.system_number == 3
@@ -282,15 +441,15 @@ func final_offensive() -> void:
 	var away := Vector3(25, 0, 25)
 	op._award("fixture", 50, "Opening gains")
 	op._award("fixture:2", 10, "Second gains")
-	op.objectives[4].owner = "allied"
+	op.objectives[op.site("junction")].owner = "allied"
 	op._refresh_supply()
 	op.advance(20000, away, away)
 	check(op.final_command == -1 and not op.complete, "NPC-only War Effort cannot end the operation")
 	op.player_intervened = true
 	op._update_final_offensive(true)
-	check(op.final_command in Sector.FINAL_COMMANDS and op.consolidation == 0, "War Effort unlocks a deep command offensive")
+	check(op.final_command in op.command_sites() and op.consolidation == 0, "War Effort unlocks a deep command offensive")
 	if roundtrip(state) == null: return
-	for site in [3, 4, 5, 6, 7]:
+	for site in op.objectives.size():
 		op.objectives[site].owner = "allied"
 	op._refresh_supply()
 	op._update_final_offensive(true)
@@ -308,16 +467,20 @@ func _edge(a: int, b: int) -> Vector2i:
 func capture_cutoff(side: String) -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
-	var site := 4
-	var origin := Sector.ALLIED_ROOT if side == "allied" else Sector.HOSTILE_ROOT
-	var other := Sector.HOSTILE_ROOT if side == "allied" else Sector.ALLIED_ROOT
+	var site: int = op.site("junction")
+	var left: int = op.site("repair")
+	var right: int = op.site("outpost")
+	var origin: int = op.root(side)
+	var other: int = op.root("hostile") if side == "allied" else op.root("allied")
 	var owner := "hostile" if side == "allied" else "allied"
-	op.links.assign([_edge(origin, 0), _edge(origin, 2), _edge(0, site), _edge(2, site), _edge(other, origin)])
+	op.links.assign([_edge(origin, left), _edge(origin, right), _edge(left, site), _edge(right, site), _edge(other, origin)])
 	for node in op.objectives.size():
-		if node not in [origin, other, 0, 2, site]: op.links.append(_edge(other, node))
-	op.objectives[0].owner = side
-	op.objectives[2].owner = side
+		if node not in [origin, other, left, right, site]: op.links.append(_edge(other, node))
+	op.objectives[left].owner = side
+	op.objectives[right].owner = side
 	op.objectives[site].owner = owner
+	state.encounter_positions.clear()
+	state.encounters.resize(State.Warzone.HOSTILE_GROUPS + op.objectives.size() + 1)
 	op.convoy.clear()
 	for fleet in op.fleets:
 		fleet.strength = 0
@@ -325,7 +488,7 @@ func capture_cutoff(side: String) -> void:
 	var attacker_id := 0 if side == "allied" else 2
 	var attacker: Dictionary = op.fleets[attacker_id]
 	attacker.strength = 4
-	attacker.at = 0
+	attacker.at = left
 	attacker.destination = site
 	attacker.position = op.objectives[site].position
 	var absent := Vector3(300, 0, 300)
@@ -334,10 +497,10 @@ func capture_cutoff(side: String) -> void:
 	op._capture(site, absent)
 	op._capture(site, absent)
 	check(op.objectives[site].progress == 2, side + " begins capture through supplied routes")
-	op.disrupted[0] = 5
+	op.disrupted[left] = 5
 	op._refresh_supply()
 	check(op.objectives[site].progress == 2, side + " retains progress through an alternate supplied route")
-	op.disrupted[2] = 5
+	op.disrupted[right] = 5
 	op._refresh_supply()
 	check(op.objectives[site].progress == 0 and op.objectives[site].capturing == "neutral"
 		and op.objectives[site].owner == owner and op.capture_cutoffs.has(site),
@@ -358,7 +521,7 @@ func capture_cutoff(side: String) -> void:
 	op._capture(site, absent)
 	check(op.objectives[site].progress == 0, side + " restored supply cannot restart the same interrupted capture")
 	attacker = op.fleets[attacker_id]
-	attacker.position = op.objectives[0].position
+	attacker.position = op.objectives[left].position
 	op._capture(site, absent)
 	attacker.position = op.objectives[site].position
 	op._capture(site, absent)
@@ -374,28 +537,31 @@ func capture_cutoff(side: String) -> void:
 func direct_movement() -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
-	op.links.assign([Vector2i(0, 1), Vector2i(0, 4)])
-	op.objectives[0].position = Vector3(0, 0, 10)
-	op.objectives[1].position = Vector3.ZERO
-	op.objectives[4].position = Vector3(10, 0, 0)
+	var origin: int = op.root("allied")
+	var mid: int = op.site("repair")
+	var goal: int = op.site("junction")
+	op.links.assign([_edge(origin, mid), _edge(mid, goal)])
+	op.objectives[mid].position = Vector3(0, 0, 10)
+	op.objectives[origin].position = Vector3.ZERO
+	op.objectives[goal].position = Vector3(10, 0, 0)
 	var fleet: Dictionary = op.fleets[0]
-	fleet.at = 1
-	fleet.destination = 1
+	fleet.at = origin
+	fleet.destination = origin
 	fleet.position = Vector3.ZERO
 	op._refresh_supply()
 	op._move_fleet(fleet)
-	check(fleet.destination == 4 and fleet.position.x > 0.5 and is_zero_approx(fleet.position.z),
+	check(fleet.destination == goal and fleet.position.x > 0.5 and is_zero_approx(fleet.position.z),
 		"Fleet flies directly to a connected target beyond an intermediate node")
 	var position: Vector3 = fleet.position
-	op.disrupted[0] = 5
+	op.disrupted[mid] = 5
 	op._refresh_supply()
 	op._move_fleet(fleet, 0.1)
-	check(fleet.destination == 1 and fleet.position.x < position.x,
+	check(fleet.destination == origin and fleet.position.x < position.x,
 		"A severed route immediately redirects the ship without snapping")
 	op.disrupted.clear()
-	op.objectives[0].owner = "hostile"
+	op.objectives[mid].owner = "hostile"
 	op._refresh_supply()
-	check(not op.route_valid(fleet.side, 1, 4), "Ownership changes also invalidate direct orders")
+	check(not op.route_valid(fleet.side, origin, goal), "Ownership changes also invalidate direct orders")
 
 
 func reinforces_and_forecasts() -> void:
@@ -413,7 +579,7 @@ func reinforces_and_forecasts() -> void:
 		var at: Vector3 = reserve.position
 		check(not bounds.has_point(Vector2(at.x, at.z)) and not op.active(reserve),
 			"Each reserve starts dormant beyond the navigable boundary")
-	op.disrupted[Sector.HOSTILE_ROOT] = 45
+	op.disrupted[op.root("hostile")] = 45
 	op._refresh_supply()
 	state._commit_activity_time(31)
 	var allied: Dictionary = op.fleet_at(Sector.ALLIED_RESERVE)
@@ -423,8 +589,8 @@ func reinforces_and_forecasts() -> void:
 	op.disrupted.clear()
 	op._refresh_supply()
 	state._commit_activity_time(2)
-	check(op.active(hostile) and hostile.position.distance_to(op.objectives[Sector.HOSTILE_ROOT].position)
-		< from.distance_to(op.objectives[Sector.HOSTILE_ROOT].position), "Restored supply admits a moving hostile wave")
+	check(op.active(hostile) and hostile.position.distance_to(op.objectives[op.root("hostile")].position)
+		< from.distance_to(op.objectives[op.root("hostile")].position), "Restored supply admits a moving hostile wave")
 	var encounter: int = op.encounter_for_fleet(hostile)
 	check(state.can_visit(encounter) and not state.encounters[encounter].completed
 		and state.warzone_fleet(encounter).id == hostile.id, "Hostile reserve opens its own interceptable contact")
@@ -433,14 +599,39 @@ func reinforces_and_forecasts() -> void:
 
 func historical_roster() -> void:
 	var state := fresh(19)
+	while state.warzone.objectives.size() != 12:
+		state = fresh(state.seed_used + 1)
 	var historical := Store.encode(state)
+	var lattice: Dictionary = historical.warzone.lattice
+	var order: Array = lattice.roles
+	var canonical := func(index): return Sector.Lattice.ROLES.find(order[int(index)])
+	var objectives := []
+	objectives.resize(order.size())
+	var encounters: Array = historical.encounters.slice(0, State.Warzone.HOSTILE_GROUPS)
+	encounters.resize(State.Warzone.HOSTILE_GROUPS + order.size())
+	for index in order.size():
+		objectives[canonical.call(index)] = historical.warzone.objectives[index]
+		encounters[State.Warzone.HOSTILE_GROUPS + canonical.call(index)] = historical.encounters[State.Warzone.HOSTILE_GROUPS + index]
+	historical.warzone.objectives = objectives
+	historical.encounters = encounters
+	historical.encounter_positions = {}
+	lattice.links = lattice.links.map(func(edge):
+		var a: int = canonical.call(edge[0])
+		var b: int = canonical.call(edge[1])
+		return [mini(a, b), maxi(a, b)])
+	lattice.version = 2
+	lattice.pattern = mini(5, lattice.pattern)
+	lattice.erase("roles")
+	lattice.erase("reserve_launched")
+	lattice.erase("capture_cutoffs")
+	lattice.convoy.clear()
 	historical.warzone.fleets.resize(Sector.ALLIED_RESERVE)
-	historical.encounters.pop_back()
-	historical.warzone.lattice.erase("reserve_launched")
-	historical.warzone.lattice.erase("capture_cutoffs")
+	for fleet in historical.warzone.fleets:
+		fleet.at = canonical.call(fleet.at)
+		fleet.destination = canonical.call(fleet.destination)
 	var restored := Store.new().decode(JSON.parse_string(JSON.stringify(historical)), state.rules)
-	check(restored != null and not restored.warzone.has_reserves(),
-		"Existing lattice saves retain their original roster and encounter indices")
+	check(restored != null and not restored.warzone.has_reserves() and restored.warzone.root("hostile") == 7,
+		"Version 2 lattice saves retain their original roles, roster and encounter indices")
 
 
 func continuous_clock() -> void:
@@ -485,6 +676,9 @@ func run() -> void:
 	historical_roster()
 	continuous_clock()
 	generation()
+	graph_audit()
+	discoveries_and_modifiers()
+	seed_replay()
 	logistics()
 	supply_combat()
 	fleet_routing_and_convoys()

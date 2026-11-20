@@ -81,7 +81,7 @@ func check_inspection() -> void:
 	var state := fresh("warzone")
 	var host := mount(state)
 	await settle()
-	var index: int = state.warzone.HOSTILE_ROOT + state.warzone.HOSTILE_GROUPS
+	var index: int = state.warzone.root("hostile") + state.warzone.HOSTILE_GROUPS
 	host._inspect_marker(index)
 	await settle()
 	var titles: Array[Node] = host.view.find_children("*", "Label", true, false).filter(

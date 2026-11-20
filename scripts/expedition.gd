@@ -996,7 +996,7 @@ func show_poi(index: int) -> void:
 		return
 	selected_encounter = index
 	_clear("poi")
-	if state.is_warzone():
+	if state.is_warzone() and not state.warzone_objective(index).is_empty():
 		_show_warzone_objective(index)
 		return
 	screen.present_poi(state, index, _uses_3d_map(), inspecting, _icon, _select_approach)
