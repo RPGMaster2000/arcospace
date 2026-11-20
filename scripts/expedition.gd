@@ -929,10 +929,8 @@ func show_battle_preview(index: int) -> void:
 
 func _add_fleet_readout(fleet: Dictionary, operation: RefCounted) -> void:
 	var tint := WarzoneIcons.tint(fleet.side)
-	var row := HBoxContainer.new()
-	row.add_child(WarzoneIcons.icon("combat" if fleet.engaged >= 0 else "fleet", tint))
-	row.add_child(_label("%s %s · %s" % [fleet.side.capitalize(), fleet.role, operation.fleet_status(fleet)], 16))
-	view.add_child(row)
+	_add_warzone_inspection_row(WarzoneIcons.icon("combat" if fleet.engaged >= 0 else "fleet", tint),
+		"%s %s · %s" % [fleet.side.capitalize(), fleet.role, operation.fleet_status(fleet)], 16)
 	var gauge := WarzoneIcons.bar(tint)
 	gauge.name = "%sFleetStrength" % fleet.side.capitalize()
 	gauge.max_value = fleet.get("strength_limit", operation.tuning.hostile_strength if fleet.side == "hostile"
@@ -941,6 +939,17 @@ func _add_fleet_readout(fleet: Dictionary, operation: RefCounted) -> void:
 	gauge.accessibility_name = "%s fleet strength %d of %d" % [fleet.side.capitalize(), fleet.strength, gauge.max_value]
 	view.add_child(gauge)
 	view.add_child(_label("→ " + operation.objective_name(fleet.destination), 15))
+
+
+func _add_warzone_inspection_row(icon: Control, title: String, font_size: int) -> void:
+	var row := HBoxContainer.new()
+	row.add_child(icon)
+	var label := _label(title, font_size)
+	# Wrapped Labels report a zero minimum width. Give the text the space
+	# left after the badge so a rebuild cannot collapse it to a narrow column.
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	view.add_child(row)
 
 
 func _style_combat_entry(button: Button) -> void:
@@ -989,13 +998,11 @@ func _show_warzone_objective(index: int) -> void:
 	var presentation := preload("res://scripts/presentation/star_system/warzone_presentation.gd")
 	var operation = state.warzone
 	var offset := index - State.Warzone.HOSTILE_GROUPS
-	var heading := HBoxContainer.new()
-	view.add_child(heading)
 	var tint := presentation.objective_color(objective)
 	var badge := _label(operation.objective_glyph(offset) if operation.is_lattice() else "◇", 25)
+	badge.autowrap_mode = TextServer.AUTOWRAP_OFF
 	badge.add_theme_color_override("font_color", tint)
-	heading.add_child(badge)
-	heading.add_child(_label(state.encounters[index].title, 25))
+	_add_warzone_inspection_row(badge, state.encounters[index].title, 25)
 	var status: String = presentation.objective_status(objective)
 	if operation.is_lattice():
 		status += " · Disrupted" if operation.disrupted.has(offset) else (

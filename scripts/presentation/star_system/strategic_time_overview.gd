@@ -2,6 +2,7 @@ extends CanvasLayer
 ## Presents a committed strategic activity. Only the activity advances game state.
 signal finished
 
+const Framing = preload("res://scripts/presentation/star_system/strategic_activity_framing.gd")
 const Activity = preload("res://scripts/expedition/strategic_activity.gd")
 var active := false
 var activity: Activity
@@ -14,6 +15,8 @@ var _map: Control
 var _screen: Control
 var _restore := {}
 var _return_motion: Tween
+var _framing := Framing.new()
+var _timer_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -25,6 +28,7 @@ func _ready() -> void:
 	layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(layout)
 	var panel := PanelContainer.new()
+	_timer_panel = panel
 	var presentation = preload("res://scripts/ui/encounter_presentation.gd")
 	panel.add_theme_stylebox_override("panel", presentation.style(presentation.COLORS.special))
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -66,11 +70,11 @@ func begin(span: Activity, settle: Callable, map: Control, screen: Control) -> v
 	screen.return_button.hide()
 	screen.overview_hud.set_mode(screen.EdgeHUD.Mode.OVERVIEW)
 	screen._sync_map_rect()
-	map.fit_overview()
 	camera.viewing = &"strategic_time"
 	progress.max_value = span.duration
 	_update_progress()
 	show()
+	_framing.begin(map, framing_bounds())
 	rebase_clock()
 	set_process(true)
 
@@ -94,9 +98,27 @@ func advance(seconds: float) -> void:
 	var fraction := clampf((_clock - activity.elapsed) / Activity.STEP, 0.0, 1.0)
 	_map.blend_strategic_defense(fraction)
 	_update_progress()
+	if not done: _framing.update(_map, framing_bounds, seconds)
 	if done:
 		_commit()
 		_return_camera()
+
+
+# Use a clear band between the timer and edge controls. Transform to normalized
+# map coordinates, leaving room for fleet tags and beam impacts.
+func framing_bounds() -> Rect2:
+	var rect: Rect2 = _map.get_global_rect()
+	var height := maxf(1.0, rect.size.y)
+	var top := maxf(136.0, _timer_panel.get_global_rect().end.y + 10.0 - rect.position.y) / height
+	var bottom := 0.88
+	for region in _screen.overview_hud.regions():
+		if region.get_center().y < rect.get_center().y:
+			top = maxf(top, (region.end.y + 8.0 - rect.position.y) / height)
+		else:
+			bottom = minf(bottom, (region.position.y - 8.0 - rect.position.y) / height)
+	top = clampf(top, 0.12, 0.34)
+	bottom = clampf(bottom, top + 0.34, 0.92)
+	return Rect2(0.09, top, 0.82, bottom - top)
 
 
 func _update_progress() -> void:

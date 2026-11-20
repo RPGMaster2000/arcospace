@@ -46,7 +46,7 @@ func check_warzone(wall_clock: bool) -> void:
 	check(display.active and state.warzone.clock_ms == 0 and display.activity.duration == 10.0,
 		"Accepting Wait cuts to the system before spending strategic time")
 	check(camera.viewing == &"strategic_time" and camera.transform != before and not host.star_map.interactive,
-		"The overview immediately frames the sector and locks navigation")
+		"The overview immediately frames the battlefield and locks navigation")
 	check(root.get_visible_rect().encloses(display.progress.get_global_rect()), "Progress bar fits a narrow landscape viewport")
 	var time_used := 0.0
 	if wall_clock:
@@ -75,6 +75,97 @@ func check_warzone(wall_clock: bool) -> void:
 	check(camera.pan_offset == pan and camera.transform.is_equal_approx(before), "Return restores camera pan and orientation")
 	host.queue_free()
 	await process_frame
+
+
+func check_inspection() -> void:
+	var state := fresh("warzone")
+	var host := mount(state)
+	await settle()
+	var index: int = state.warzone.HOSTILE_ROOT + state.warzone.HOSTILE_GROUPS
+	host._inspect_marker(index)
+	await settle()
+	var titles: Array[Node] = host.view.find_children("*", "Label", true, false).filter(
+		func(label): return label.text == "Hostile Command")
+	check(titles.size() == 1, "Inspection displays the original Hostile Command title")
+	if not titles.is_empty():
+		var title := titles[0] as Label
+		for resolution in [Vector2i(960, 540), Vector2i(1344, 576), Vector2i(1280, 720)]:
+			root.size = resolution
+			await settle()
+			var single_line := title.get_theme_font("font").get_string_size(title.text,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, title.get_theme_font_size("font_size"))
+			check(title.size.x >= single_line.x and title.get_line_count() == 1
+				and title.get_parent().get_global_rect().encloses(title.get_global_rect()),
+				"Hostile Command uses the inspection row at %s" % resolution)
+		title.text = "Long Hostile Command title for natural word wrapping at narrow viewport sizes"
+		await settle()
+		check(title.get_line_count() > 1 and title.get_line_count() <= title.text.split(" ").size(),
+			"Long headings wrap by words in the inspection column")
+		title.text = "Hostile Command"
+		await capture("warzone-inspection")
+	host._dismiss_inspection()
+	await create_timer(0.26).timeout
+	var key: int = host.star_map.WARZONE_ALLY_MARKER_BASE
+	host._inspect_marker(key)
+	await settle()
+	var names: Array[Node] = host.view.find_children("*", "Label", true, false).filter(
+		func(label): return label.text.begins_with("Allied Vanguard"))
+	check(names.size() == 1 and names[0].get_line_count() == 1, "Fleet inspection uses the same horizontal layout")
+	host.queue_free()
+	await process_frame
+
+
+func check_battlefield_framing() -> void:
+	root.size = Vector2i(960, 540)
+	var state := fresh("warzone")
+	var operation: RefCounted = state.warzone
+	# Two genuine contacts well apart. Distant formations and scenery must
+	# not expand the frame for the selected contact.
+	for i in operation.fleets.size():
+		operation.fleets[i].position = Vector3(48.0 + i * 5.0, 0, 31.0)
+	for pair in [[0, 2, Vector3(-20, 0, -4)], [1, 3, Vector3(24, 0, -4)]]:
+		operation.fleets[pair[0]].position = pair[2]
+		operation.fleets[pair[1]].position = pair[2] + Vector3(1.2, 0, 0)
+	var host := mount(state)
+	await settle()
+	var display = host.strategic_overview
+	var camera: Camera3D = host.star_map.camera
+	host._wait_in_warzone()
+	display.set_process(false)
+	var id: int = display._framing._anchor
+	check(id in [2, 3], "The hard cut prioritizes one of the actual engagements")
+	var contact: Dictionary = operation.fleets[id]
+	var ally: Dictionary = operation.fleets[contact.engaged]
+	var other: Vector3 = operation.fleets[5 - id].position
+	check(_in_frame(display, camera, contact.position) and _in_frame(display, camera, ally.position),
+		"Both participants fit in the HUD-safe view immediately")
+	check(not _in_frame(display, camera, other), "A separate distant engagement does not zoom out the view")
+	await settle()
+	check(host.star_map.warzone_presentation.fx.emitted_beams > 0, "NPC beams still display during the overview")
+	await capture("strategic-battlefield")
+	var before := camera.global_position
+	var movement := camera.global_basis.x * 6.0
+	contact.position += movement
+	ally.position += movement
+	display._framing.update(host.star_map, display.framing_bounds, 0.2)
+	check(camera.global_position.distance_to(before) > 0.3 and camera.global_position.distance_to(before) < 5.0,
+		"Camera tracking applies only part of the new target displacement per update")
+	for frame in 24:
+		display._framing.update(host.star_map, display.framing_bounds, 0.1)
+	check(_in_frame(display, camera, contact.position) and display._framing._anchor == id,
+		"The camera follows the same engagement and recovers its margins")
+	for fleet in operation.fleets: fleet.strength = 0
+	for frame in 24:
+		display._framing.update(host.star_map, display.framing_bounds, 0.1)
+	check(_in_frame(display, camera, host.star_map.ship.position), "No-hostile fallback keeps the player visible")
+	display.finish_immediately()
+	host.queue_free()
+	await process_frame
+
+
+func _in_frame(display: CanvasLayer, camera: Camera3D, point: Vector3) -> bool:
+	var size := camera.get_viewport().get_visible_rect().size
+	return not camera.is_position_behind(point) and display.framing_bounds().has_point(camera.unproject_position(point) / size)
 
 
 func check_defense() -> void:
@@ -162,6 +253,8 @@ func run() -> void:
 	check(Preferences.set_strategic_time_overview(true) == OK and Preferences.strategic_time_overview(),
 		"Enabled preference roundtrips through the existing settings file")
 	await check_warzone(true)
+	await check_inspection()
+	await check_battlefield_framing()
 	await check_defense()
 	await check_disabled()
 	print("Strategic time overview: %d checks, %d failures" % [checks, failures])
