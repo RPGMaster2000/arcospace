@@ -53,9 +53,11 @@ menus pause strategic time. Lattice movement and engagement contact use fixed
 second-based timing.
 
 **Strategic Time Overview** in Settings is on by default for timed noncombat
-actions in Warzone and Starfront Defense. Confirmed actions cut to the full map
-and spend one strategic second per active second. The progress bar displays
-consumed time, and returning the camera spends none. Turning the setting off
+actions in Warzone and Starfront Defense. Confirmed actions cut to a local
+cluster of hostile fleets, favoring active engagements and keeping the camera
+with its current group while priorities are tied. With no hostiles, it frames
+the player and a nearby objective. The progress bar displays one strategic
+second per active second, and returning the camera spends none. Turning the setting off
 settles the same fixed steps immediately. An orderly quit or application
 suspension settles any confirmed remainder before saving.
 
