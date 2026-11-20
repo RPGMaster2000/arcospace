@@ -2,6 +2,7 @@ extends RefCounted
 ## PoI quotes and operation effects; ExpeditionState owns proximity, currency and time.
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const OPERATION_SECONDS := 4
+const REPAIR_STRENGTH := 5
 
 
 static func _operation_id(index: int, kind: String) -> String:
@@ -41,7 +42,8 @@ static func _action(sector: RefCounted, index: int, kind: String, title: String,
 		var reserve: bool = not sector.recovered and sector.fleet_count("allied") == 0
 		enabled = enabled and (damaged or reserve)
 	return {"id": kind, "title": title, "details": details, "cost": cost, "seconds": OPERATION_SECONDS,
-		"effort": 0 if kind in ["raid", "salvage"] else sector.tuning.operation_effort, "enabled": enabled}
+		"effort": 0 if kind in ["raid", "salvage"] else sector.tuning.operation_effort, "enabled": enabled,
+		"repair_strength": REPAIR_STRENGTH if kind == "repair" else 0}
 
 
 static func apply(sector: RefCounted, index: int, action: Dictionary) -> int:
@@ -59,11 +61,11 @@ static func apply(sector: RefCounted, index: int, action: Dictionary) -> int:
 	if kind == "repair":
 		for fleet in sector.fleets:
 			if sector.active(fleet) and fleet.side == "allied":
-				fleet.strength = mini(fleet.strength_limit, fleet.strength + 5)
+				fleet.strength = mini(fleet.strength_limit, fleet.strength + REPAIR_STRENGTH)
 		if sector.fleet_count("allied") == 0 and not sector.recovered:
 			sector.recovered = true
 			var reserve: Dictionary = sector.fleets[0]
-			reserve.strength = mini(reserve.strength_limit, 5)
+			reserve.strength = mini(reserve.strength_limit, REPAIR_STRENGTH)
 			reserve.at = index
 			reserve.destination = index
 			reserve.counter_target = -1

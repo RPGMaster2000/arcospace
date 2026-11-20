@@ -1,6 +1,7 @@
 extends Control
 
 const Sound = preload("res://scripts/audio/sfx.gd")
+const WarzoneIcons = preload("res://scripts/ui/warzone_indicators.gd")
 # RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
 # DOES NOT: Calculate rewards, generate encounters or implement combat rules.
 # EXTEND: Route choices to State; _clear resets UI only, never the expedition ledger.
@@ -452,6 +453,8 @@ func _save_and_quit() -> bool:
 
 
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED: _warzone_suspended = true
+	elif what == NOTIFICATION_APPLICATION_RESUMED: _warzone_suspended = false
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
 		_navigation_clock = Time.get_ticks_msec()
 		if state != null: state.navigation.rebase_movement()
@@ -852,21 +855,17 @@ func show_battle_preview(index: int) -> void:
 	if state.is_warzone():
 		var fleet: Dictionary = state.warzone_fleet(index)
 		var operation = state.warzone
-		view.add_child(_label("Hostile %s · Strength %d · %s\nObjective · %s" % [
-			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.objective_name(fleet.destination)], 16))
+		_add_fleet_readout(fleet, operation)
 		var ally: Dictionary = operation.allied_support(fleet.id)
-		if not ally.is_empty():
-			view.add_child(_label("Allied %s engaged · Strength %d" % [ally.role, ally.strength], 16))
+		if not ally.is_empty(): _add_fleet_readout(operation.fleet_at(ally.id), operation)
 		if inspecting:
-			view.add_child(_label("In range to intervene" if state.can_engage(index) else "Travel here to intervene", 15))
+			view.add_child(_label("In range to intervene" if state.can_engage(index) else "Travel to engage", 15))
 	var support: Dictionary = state.battle_support(index)
 	if not support.is_empty():
 		if state.is_warzone():
-			view.add_child(_label("Allied support · %d damage every %d rounds\nDirect combat rewards ×0.5" % [support.damage, support.interval], 16))
+			view.add_child(_label("Support · %d damage / %d rounds · Half rewards" % [support.damage, support.interval], 15))
 		else:
 			view.add_child(_label("Friendly Turret Support · %d damage every %d rounds" % [support.damage, support.interval], 15))
-	elif state.is_warzone():
-		view.add_child(_label("No supporting fire · Standard direct rewards", 15))
 	# Inspection only shows enemy information; entering combat requires arrival.
 	if not inspecting:
 		var enter = _button("Enter Combat", _enter_battle.bind(index))
@@ -875,6 +874,22 @@ func show_battle_preview(index: int) -> void:
 			enter.reparent(screen.sidebar)
 		_style_combat_entry(enter)
 	if not _uses_3d_map(): _button("Return", show_system)
+
+
+func _add_fleet_readout(fleet: Dictionary, operation: RefCounted) -> void:
+	var tint := WarzoneIcons.tint(fleet.side)
+	var row := HBoxContainer.new()
+	row.add_child(WarzoneIcons.icon("combat" if fleet.engaged >= 0 else "fleet", tint))
+	row.add_child(_label("%s %s · %s" % [fleet.side.capitalize(), fleet.role, operation.fleet_status(fleet)], 16))
+	view.add_child(row)
+	var gauge := WarzoneIcons.bar(tint)
+	gauge.name = "%sFleetStrength" % fleet.side.capitalize()
+	gauge.max_value = fleet.get("strength_limit", operation.tuning.hostile_strength if fleet.side == "hostile"
+		else operation.initial_allied_strength / operation.ALLIED_GROUPS)
+	gauge.value = fleet.strength
+	gauge.accessibility_name = "%s fleet strength %d of %d" % [fleet.side.capitalize(), fleet.strength, gauge.max_value]
+	view.add_child(gauge)
+	view.add_child(_label("→ " + operation.objective_name(fleet.destination), 15))
 
 
 func _style_combat_entry(button: Button) -> void:
@@ -921,21 +936,50 @@ func _show_warzone_objective(index: int) -> void:
 	if objective.is_empty(): return
 	header.hide()
 	var presentation := preload("res://scripts/presentation/star_system/warzone_presentation.gd")
-	view.add_child(_label(state.encounters[index].title, 26))
-	view.add_child(_label(presentation.objective_status(objective), 19))
+	var operation = state.warzone
+	var offset := index - State.Warzone.HOSTILE_GROUPS
+	var heading := HBoxContainer.new()
+	view.add_child(heading)
+	var tint := presentation.objective_color(objective)
+	var badge := _label(operation.objective_glyph(offset) if operation.is_lattice() else "◇", 25)
+	badge.add_theme_color_override("font_color", tint)
+	heading.add_child(badge)
+	heading.add_child(_label(state.encounters[index].title, 25))
+	var status: String = presentation.objective_status(objective)
+	if operation.is_lattice():
+		status += " · Disrupted" if operation.disrupted.has(offset) else (
+			" · Supplied" if operation.is_supplied(offset) else " · Isolated")
+	view.add_child(_label(status, 15))
 	if objective.progress > 0:
-		view.add_child(_label("%s capture · %ds / %ds" % [
-			objective.capturing.capitalize(), objective.progress, state.warzone.tuning.capture_seconds], 16))
-	if not inspecting and not state.warzone.complete:
-		if state.warzone.is_lattice():
-			var offset := index - State.Warzone.HOSTILE_GROUPS
-			for action in state.warzone.operations(offset, state.salvage):
-				var info: String = "%s · %ds · +%d War Effort" % [action.details, action.seconds, action.effort]
-				if action.cost > 0: info += " · %d Salvage" % action.cost
-				_tile(view, action.title, info, Color("75cfe8"), _warzone_operation.bind(index, action.id), not action.enabled)
-		else:
-			view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
-		_button("Hold position · %ds" % state.warzone.tuning.wait_seconds, _wait_in_warzone)
+		var capture := WarzoneIcons.bar(WarzoneIcons.tint(objective.capturing))
+		capture.max_value = operation.tuning.capture_seconds
+		capture.value = objective.progress
+		capture.accessibility_name = "%s capture progress %d of %d" % [objective.capturing, objective.progress, capture.max_value]
+		view.add_child(capture)
+	if inspecting or operation.complete: return
+	if operation.is_lattice():
+		var details := PackedStringArray()
+		for action in operation.operations(offset, state.salvage):
+			var quote := "%ds" % action.seconds
+			if action.cost > 0: quote += " · %d Salvage" % action.cost
+			if action.effort > 0: quote += " · +%d War Effort" % action.effort
+			if action.id == "repair":
+				quote += " · Up to +%d strength" % action.repair_strength
+			var tile := _tile(view, action.title, quote, tint, _warzone_operation.bind(index, action.id), not action.enabled)
+			var title_row := HBoxContainer.new()
+			title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var column: Node = tile.heading.get_parent()
+			column.add_child(title_row)
+			column.move_child(title_row, 0)
+			title_row.add_child(WarzoneIcons.icon(action.id, tint))
+			tile.heading.reparent(title_row, false)
+			tile.heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			details.append("%s · %s" % [action.title, action.details])
+		if not details.is_empty():
+			_button("Operation Details", func(): screen.system_details_overlay.show_text("\n\n".join(details)))
+	else:
+		view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
+	_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
 
 
 func _warzone_operation(index: int, id: String) -> void:
@@ -1462,8 +1506,9 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 
 # The legacy roll policy receives active gameplay time; navigation receives actual movement.
 var _navigation_clock: int = 0
+var _warzone_suspended := false
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if is_instance_valid(settings_button): settings_button.disabled = homeworld_sequence.active
 	if is_instance_valid(deck_button): deck_button.disabled = homeworld_sequence.active
 	_update_decoy_controls()
@@ -1476,7 +1521,19 @@ func _process(_delta: float) -> void:
 		return
 	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
 		state.advance_chasedown_cooldown(elapsed)
+	var warzone_live: bool = not _warzone_suspended and is_instance_valid(star_map) and state.is_warzone() and state.warzone.is_lattice() \
+		and phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed()
+	var from := State.Defense.point(state.navigation.position) if warzone_live else Vector3.ZERO
 	_sample_navigation_position()
+	if warzone_live:
+		state.advance_warzone_map(delta, from, State.Defense.point(state.navigation.position))
+		# Meet the currently committed position, even if the original travel waypoint
+		# is now behind the target. The card battle still requires actual proximity.
+		if phase == Phase.TRAVELING and star_map.traveling and state.travel_destination >= 0 \
+			and state.can_engage(state.travel_destination):
+			var contact: int = state.travel_destination
+			star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+			visit(contact)
 	_present_homeworld_damage()
 
 func _sample_navigation_position(arriving: bool = false) -> void:
@@ -1627,7 +1684,13 @@ func _refresh_defense_hud() -> void:
 # or move the camera. A hold never commits a visit or encounter.
 func _inspect_marker(index: int) -> void:
 	if not decoy_camera.is_empty(): return
-	if not (state.is_defense() or state.is_warzone()) or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING] or not state.can_visit(index): return
+	if not (state.is_defense() or state.is_warzone()) or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING]: return
+	var fleet: Dictionary = {}
+	if state.is_warzone() and star_map.markers.has(index) and star_map.markers[index].has_meta("warzone_ally"):
+		fleet = state.warzone.fleet_at(star_map.markers[index].get_meta("warzone_ally"))
+		if not state.warzone.active(fleet): return
+	elif not state.can_visit(index):
+		return
 	if phase == Phase.TRAVELING:
 		_sample_navigation_position()
 		if phase != Phase.TRAVELING: return
@@ -1639,7 +1702,15 @@ func _inspect_marker(index: int) -> void:
 	backing.bg_color.a = 0.97
 	star_map.inspection_active = true
 	map_destination = index
-	if state.has_missile(index): _show_missile(index)
+	if not fleet.is_empty():
+		_clear("preview")
+		_add_fleet_readout(fleet, state.warzone)
+		var contact: int = fleet.engaged - State.Warzone.ALLIED_GROUPS
+		if contact >= 0:
+			view.add_child(_label("In range to assist" if state.can_engage(contact) else "Intercept the hostile fleet to assist", 15))
+		else:
+			view.add_child(_label("No hostile contact", 15))
+	elif state.has_missile(index): _show_missile(index)
 	elif state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
 	return_button.hide()

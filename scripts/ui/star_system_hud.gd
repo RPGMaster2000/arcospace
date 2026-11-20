@@ -7,6 +7,7 @@ signal warzone_wait_requested
 signal lattice_overlay_changed(enabled: bool)
 
 enum Mode { HIDDEN, OVERVIEW, FOCUS }
+const WarzoneIcons = preload("res://scripts/ui/warzone_indicators.gd")
 var mode: Mode = Mode.HIDDEN
 var _resource_bar: Control
 var _jump_button: Button
@@ -25,6 +26,17 @@ var warzone_mode := false
 var lattice_mode := false
 var lattice_button: Button
 var war_effort_bar: ProgressBar
+var war_effort_gain: Label
+var warzone_summary: HBoxContainer
+var warzone_counts: Array[Label] = []
+var territory_bar: ProgressBar
+var warzone_warning: HBoxContainer
+var warzone_warning_text: Label
+var _warzone_instance := 0
+var _warzone_effort := 0
+var _warzone_event := 0
+var _gain_fade: Tween
+var _warning_fade: Tween
 var wait_button: Button
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
@@ -91,18 +103,43 @@ func _ready() -> void:
 	metagame.add_theme_font_size_override("font_size", 14)
 	metagame.mouse_filter = MOUSE_FILTER_IGNORE
 	status.add_child(metagame)
-	war_effort_bar = ProgressBar.new()
-	war_effort_bar.custom_minimum_size.y = 6
-	war_effort_bar.show_percentage = false
-	war_effort_bar.mouse_filter = MOUSE_FILTER_IGNORE
-	var effort_fill := StyleBoxFlat.new()
-	effort_fill.bg_color = Color("69b6f5")
-	war_effort_bar.add_theme_stylebox_override("fill", effort_fill)
-	var effort_track := StyleBoxFlat.new()
-	effort_track.bg_color = Color("20364b")
-	war_effort_bar.add_theme_stylebox_override("background", effort_track)
+	war_effort_bar = WarzoneIcons.bar(WarzoneIcons.ALLIED, 8)
 	status.add_child(war_effort_bar)
-	war_effort_bar.hide()
+	war_effort_gain = Label.new()
+	war_effort_gain.mouse_filter = MOUSE_FILTER_IGNORE
+	war_effort_gain.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	war_effort_gain.add_theme_color_override("font_color", WarzoneIcons.ALLIED)
+	war_effort_gain.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
+	war_effort_gain.position = Vector2(-48, -27)
+	war_effort_gain.size.x = 46
+	war_effort_bar.add_child(war_effort_gain)
+	warzone_summary = HBoxContainer.new()
+	warzone_summary.mouse_filter = MOUSE_FILTER_IGNORE
+	warzone_summary.add_theme_constant_override("separation", 7)
+	status.add_child(warzone_summary)
+	for group in ["allied", "hostile", "combat"]:
+		var tint: Color = Color("ffdc85") if group == "combat" else WarzoneIcons.tint(group)
+		var icon := WarzoneIcons.icon("combat" if group == "combat" else "fleet", tint)
+		warzone_summary.add_child(icon)
+		var count := Label.new()
+		count.accessibility_name = "Engagements" if group == "combat" else group.capitalize() + " fleets"
+		count.add_theme_color_override("font_color", tint)
+		count.mouse_filter = MOUSE_FILTER_IGNORE
+		warzone_summary.add_child(count)
+		warzone_counts.append(count)
+	territory_bar = WarzoneIcons.bar(WarzoneIcons.ALLIED, 4)
+	var hostile_track := territory_bar.get_theme_stylebox("background") as StyleBoxFlat
+	hostile_track.bg_color = WarzoneIcons.HOSTILE
+	status.add_child(territory_bar)
+	warzone_warning = HBoxContainer.new()
+	warzone_warning.mouse_filter = MOUSE_FILTER_IGNORE
+	warzone_warning.add_child(WarzoneIcons.icon("warning", Color("ffdc85"), 18))
+	warzone_warning_text = Label.new()
+	warzone_warning_text.mouse_filter = MOUSE_FILTER_IGNORE
+	warzone_warning_text.add_theme_font_size_override("font_size", 13)
+	warzone_warning.add_child(warzone_warning_text)
+	status.add_child(warzone_warning)
+	for control in [war_effort_bar, warzone_summary, territory_bar, warzone_warning]: control.hide()
 	pressure_bar = ProgressBar.new()
 	pressure_bar.name = "StrategicPressure"
 	pressure_bar.custom_minimum_size = Vector2(210,6)
@@ -465,14 +502,7 @@ func set_warzone_status(state: Resource) -> void:
 	var operation = state.warzone
 	lattice_mode = operation.is_lattice()
 	if lattice_mode:
-		war_effort_bar.max_value = operation.tuning.effort_goal
-		war_effort_bar.value = operation.effort
-		metagame.text = "WAR EFFORT %d / %d" % [operation.effort, operation.tuning.effort_goal]
-		if operation.complete: metagame.text += "\n" + state.warzone_outcome.grade
-		elif operation.consolidation > 0: metagame.text += "\nConsolidating · %ds" % operation.consolidation
-		else: metagame.text += "\n%d engagements · %d allied sites" % [operation.engagement_count(), operation.controlled()]
-		if not operation.events.is_empty() and operation.events.back().begins_with("+"):
-			metagame.text += "\n" + operation.events.back().left(46)
+		_present_lattice_status(state, operation)
 	else:
 		_set_legacy_warzone_text(state, operation)
 	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
@@ -480,6 +510,64 @@ func set_warzone_status(state: Resource) -> void:
 	wait_button.disabled = operation.complete or state.navigation.leg_active or not state.can_navigate()
 	_sync_strategic_controls()
 	queue_layout()
+
+
+func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
+	var goal: int = operation.tuning.effort_goal
+	var percent := clampi(roundi(100.0 * operation.effort / goal), 0, 100)
+	war_effort_bar.max_value = goal
+	war_effort_bar.value = operation.effort
+	war_effort_bar.accessibility_name = "War Effort %d of %d" % [operation.effort, goal]
+	metagame.text = "WAR EFFORT  %d%%" % percent
+	if operation.complete:
+		metagame.text = state.warzone_outcome.grade + " · FTL Ready"
+	elif operation.consolidation > 0:
+		metagame.text += "\nHolding  %d/%ds" % [operation.consolidation, operation.tuning.consolidation_seconds]
+	elif percent == 100:
+		metagame.text += "\nSecure a command post"
+	var counts := [operation.fleet_count("allied"), operation.fleet_count("hostile"), operation.engagement_count()]
+	for i in warzone_counts.size():
+		warzone_counts[i].text = ["A %d", "H %d", "%d"][i] % counts[i]
+	var allied: int = operation.objectives.filter(func(site): return site.owner == "allied").size()
+	var hostile: int = operation.objectives.filter(func(site): return site.owner == "hostile").size()
+	territory_bar.max_value = maxi(1, allied + hostile)
+	territory_bar.value = allied
+	territory_bar.accessibility_name = "Territory · %d allied, %d hostile" % [allied, hostile]
+	if _warzone_instance != operation.get_instance_id():
+		_warzone_instance = operation.get_instance_id()
+		_warzone_effort = operation.effort
+		_warzone_event = operation.event_revision
+		war_effort_gain.text = ""
+		warzone_warning_text.text = ""
+	if operation.effort > _warzone_effort:
+		if _gain_fade != null: _gain_fade.kill()
+		war_effort_gain.text = "+%d" % (operation.effort - _warzone_effort)
+		war_effort_gain.modulate.a = 1.0
+		_gain_fade = create_tween()
+		_gain_fade.tween_property(war_effort_gain, "modulate:a", 0.0, 0.4).set_delay(1.0)
+	_warzone_effort = operation.effort
+	if operation.event_revision != _warzone_event:
+		for event in operation.events_since(_warzone_event):
+			if event.begins_with("Hostile counterattack"):
+				_flash_warzone_warning("Counterattack")
+			elif event.begins_with("Allied") and event.ends_with("destroyed."):
+				_flash_warzone_warning("Allied fleet lost")
+			elif event.contains("captured"):
+				_flash_warzone_warning("Site captured" if event.begins_with("Allied") else "Site lost")
+			elif event.contains("Severed hostile supply"):
+				_flash_warzone_warning("Hostile supply cut")
+		_warzone_event = operation.event_revision
+
+
+func _flash_warzone_warning(message: String) -> void:
+	if _warning_fade != null: _warning_fade.kill()
+	warzone_warning_text.text = message
+	warzone_warning.modulate.a = 1.0
+	_warning_fade = create_tween()
+	_warning_fade.tween_property(warzone_warning, "modulate:a", 0.0, 0.35).set_delay(2.5)
+	_warning_fade.tween_callback(func():
+		warzone_warning_text.text = ""
+		warzone_warning.hide())
 
 
 func _set_legacy_warzone_text(state: Resource, operation: RefCounted) -> void:
@@ -507,4 +595,6 @@ func _sync_strategic_controls() -> void:
 	details_button.visible = show_actions
 	wait_button.visible = show_actions and warzone_mode
 	lattice_button.visible = show_actions and warzone_mode and lattice_mode
-	war_effort_bar.visible = show_actions and warzone_mode and lattice_mode
+	var show_lattice := show_actions and warzone_mode and lattice_mode
+	for control in [war_effort_bar, warzone_summary, territory_bar]: control.visible = show_lattice
+	warzone_warning.visible = show_lattice and not warzone_warning_text.text.is_empty()

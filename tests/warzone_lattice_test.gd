@@ -180,7 +180,38 @@ func scenario(seed_value: int, strategy: String) -> void:
 				and next.warzone_outcome.effort == op.effort, "Victory survives the campaign transition")
 
 
+func continuous_clock() -> void:
+	var slow := fresh(19)
+	var fast := fresh(19)
+	var origin := State.Defense.point(slow.navigation.position)
+	var target := origin + Vector3(10.0, 0.0, 6.0)
+	for state in [slow, fast]:
+		var partitions := 30 if state == slow else 144
+		for frame in partitions:
+			var from := origin.lerp(target, float(frame) / partitions)
+			var to := origin.lerp(target, float(frame + 1) / partitions)
+			state.advance_warzone_map(3.25 / partitions, from, to)
+	check(slow.warzone.snapshot() == fast.warzone.snapshot(), "Same movement and combat at different frame rates")
+	var before: int = slow.warzone.clock_ms
+	slow.begin_free_travel(State.Defense.wire(target))
+	slow.navigation.report_movement(State.Defense.wire(target))
+	check(slow.warzone.clock_ms == before, "Sampling the player position does not count live travel time twice")
+	slow.cancel_travel()
+	slow.active_battle = 0
+	slow.advance_warzone_map(0.5, target, target)
+	check(slow.warzone.clock_ms == before, "An active card battle blocks live strategic time")
+	slow.active_battle = -1
+	check(slow.wait_in_warzone() and slow.warzone.clock_ms == before + slow.warzone.tuning.wait_seconds * 1000,
+		"Explicit waiting advances exactly its quoted strategic time")
+	var restored := roundtrip(slow)
+	if restored != null:
+		slow.advance_warzone_map(0.75, target, target)
+		restored.advance_warzone_map(0.75, target, target)
+		check(slow.warzone.snapshot() == restored.warzone.snapshot(), "Resume from a fractional tick continues identically")
+
+
 func run() -> void:
+	continuous_clock()
 	generation()
 	logistics()
 	supply_combat()

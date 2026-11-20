@@ -1,5 +1,5 @@
 extends RefCounted
-## Fleet and objective state. Advances only on committed strategic time.
+## Fleet and objective state. Both map and committed activities use the same clock.
 
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
@@ -62,6 +62,7 @@ func setup(configuration: Resource, strength: int, expansion: float = 1.0) -> vo
 	complete = false
 	volley_tick = 0
 	volley.clear()
+	motion_samples.clear()
 	initial_allied_strength = 2 * strength
 	for point in [Vector3(-15, 0, 8), Vector3(12, 0, -13), Vector3(14, 0, 13)]:
 		objectives.append({"position": point * expansion, "owner": "allied" if objectives.is_empty() else "hostile",
@@ -110,10 +111,17 @@ func engagement_count() -> int:
 func fleet_status(fleet: Dictionary) -> String:
 	if not active(fleet): return "Destroyed"
 	if fleet.engaged >= 0: return "Engaged"
+	if fleet.get("withdrawing", false): return "Retreating"
 	var objective := objectives[fleet.destination]
-	if (fleet.position as Vector3).distance_squared_to(objective.position) > 0.01: return "Moving"
+	var needs_recovery: bool = is_lattice() and fleet.strength <= 2
+	if (fleet.position as Vector3).distance_squared_to(objective.position) > 0.01:
+		return "Retreating" if needs_recovery else "Moving"
 	if objective.owner != fleet.side: return "Capturing"
-	return "Defending"
+	return "Resupplying" if needs_recovery and _fleet_supplied(fleet) else "Defending"
+
+
+func _fleet_supplied(_fleet: Dictionary) -> bool:
+	return false
 
 
 func objective_brief(index: int) -> String:
@@ -148,7 +156,15 @@ func events_since(revision: int) -> Array[String]:
 	return events.slice(maxi(0, events.size() - (event_revision - revision)))
 
 
-# Evaluate positions at fixed one-second boundaries along committed movement.
+func motion_step_ms() -> int:
+	return STEP_MS
+
+
+func _advance_step(player: Vector3, allow_victory: bool) -> void:
+	_tick(player, allow_victory)
+
+
+# Evaluate movement and events at fixed clock boundaries.
 # The full clock includes the sub-second remainder and survives a save.
 func advance(milliseconds: float, from: Vector3, to: Vector3, allow_victory: bool = true) -> void:
 	if complete or milliseconds <= 0:
@@ -156,18 +172,28 @@ func advance(milliseconds: float, from: Vector3, to: Vector3, allow_victory: boo
 	var start_ms := clock_ms + travel_ms_remainder
 	var end_ms := start_ms + milliseconds
 	var committed := floori(end_ms + 0.0000001)
-	var tick_ms := clock_ms - posmod(clock_ms, STEP_MS) + STEP_MS
+	var step := motion_step_ms()
+	var tick_ms := clock_ms - posmod(clock_ms, step) + step
+	if motion_samples.is_empty() and tick_ms <= committed:
+		_record_motion(tick_ms - step)
 	while tick_ms <= committed:
 		clock_ms = tick_ms
 		travel_ms_remainder = 0.0
-		_tick(from.lerp(to, clampf((tick_ms - start_ms) / milliseconds, 0.0, 1.0)), allow_victory)
-		motion_samples.append({"tick": tick_ms, "positions": fleets.map(func(fleet): return fleet.position)})
-		if motion_samples.size() > 90: motion_samples.pop_front()
+		_advance_step(from.lerp(to, clampf((tick_ms - start_ms) / milliseconds, 0.0, 1.0)), allow_victory)
+		_record_motion(tick_ms)
 		if complete:
 			return
-		tick_ms += STEP_MS
+		tick_ms += step
 	clock_ms = committed
-	travel_ms_remainder = maxf(0.0, end_ms - committed)
+	var remainder := end_ms - committed
+	# Normalize errors at the integer boundary so equal spans encode identically.
+	travel_ms_remainder = remainder if remainder > 0.0000001 else 0.0
+
+
+func _record_motion(tick_ms: int) -> void:
+	motion_samples.append({"tick": tick_ms, "positions": fleets.map(func(fleet): return fleet.position)})
+	if motion_samples.size() > 90:
+		motion_samples.pop_front()
 
 
 func _tick(player: Vector3, allow_victory: bool) -> void:
@@ -204,15 +230,15 @@ func _assign_engagements(announce: bool = false) -> void:
 	for fleet in fleets:
 		var previous: int = fleet.engaged
 		fleet.engaged = -1
-		if not active(fleet):
+		if not active(fleet) or fleet.get("withdrawing", false):
 			continue
 		var existing := fleet_at(previous)
-		if is_lattice() and active(existing) and fleet.position.distance_squared_to(existing.position) < radius_squared:
+		if is_lattice() and active(existing) and not existing.get("withdrawing", false) and fleet.position.distance_squared_to(existing.position) < radius_squared:
 			fleet.engaged = previous
 			continue
 		var nearest := radius_squared
 		for other in fleets:
-			if fleet.side == other.side or not active(other):
+			if fleet.side == other.side or not active(other) or other.get("withdrawing", false):
 				continue
 			var distance: float = (fleet.position as Vector3).distance_squared_to(other.position)
 			if distance < nearest:
@@ -250,7 +276,7 @@ func _capture(index: int, player: Vector3) -> void:
 	var allied: bool = player.distance_to(objective.position) <= tuning.objective_radius
 	var hostile := false
 	for fleet in fleets:
-		if not active(fleet) or (fleet.position as Vector3).distance_to(objective.position) > tuning.objective_radius:
+		if not active(fleet) or fleet.get("withdrawing", false) or (fleet.position as Vector3).distance_to(objective.position) > tuning.objective_radius:
 			continue
 		allied = allied or fleet.side == "allied"
 		hostile = hostile or fleet.side == "hostile"
@@ -487,5 +513,6 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	initial_allied_strength = int(data.initial_allied_strength)
 	complete = data.complete
 	volley.clear()
+	motion_samples.clear()
 	volley_tick = 0
 	return true

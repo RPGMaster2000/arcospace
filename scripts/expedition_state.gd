@@ -56,6 +56,7 @@ func bind_defense_movement() -> void:
 func _advance_defense(distance: float) -> void:
 	if not can_navigate(): return
 	if is_warzone():
+		if warzone.is_lattice(): return # The active map owns the lattice clock, including travel.
 		var previous_tick: int = warzone.clock_ms / Warzone.STEP_MS
 		warzone.advance(distance * rules.defense_tuning.seconds_per_distance * Warzone.STEP_MS,
 			Defense.point(navigation.movement_origin), Defense.point(navigation.position))
@@ -706,11 +707,25 @@ func wait_in_warzone() -> bool:
 	return true
 
 
+# Map time and committed activity share fixed ticks. Map time is only submitted
+# during overview/travel, so a wait, operation or battle cannot accrue it twice.
+func advance_warzone_map(seconds: float, from: Vector3, to: Vector3) -> void:
+	if not is_warzone() or not warzone.is_lattice() or warzone.complete or not can_navigate():
+		return
+	var previous_tick: int = warzone.clock_ms / Warzone.STEP_MS
+	var previous_event: int = warzone.event_revision
+	warzone.advance(seconds * Warzone.STEP_MS, from, to)
+	if warzone.clock_ms / Warzone.STEP_MS != previous_tick or warzone.event_revision != previous_event or warzone.complete:
+		_sync_warzone()
+
+
 func _sync_warzone() -> void:
 	for index in Warzone.HOSTILE_GROUPS:
 		if not warzone.active(warzone_fleet(index)):
 			encounters[index].completed = true
 	var lost: bool = travel_destination >= 0 and travel_destination < encounters.size() and encounters[travel_destination].completed
+	if warzone.is_lattice() and warzone.complete and navigation.leg_active:
+		lost = true
 	if warzone.complete and not ftl_access:
 		warzone_outcome = warzone.outcome()
 		salvage += warzone_outcome.salvage

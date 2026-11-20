@@ -8,6 +8,7 @@ const HOSTILE_ROOT := 7
 const COMMANDS := [4, 6]
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
 const FLEET_LIMIT := 40
+const MOVEMENT_STEP_MS := 100
 
 var pattern := 0
 var links: Array[Vector2i] = []
@@ -81,6 +82,10 @@ func is_supplied(index: int) -> bool:
 	return index in supplied.get(owner, [])
 
 
+func _fleet_supplied(fleet: Dictionary) -> bool:
+	return fleet.at in supplied[fleet.side]
+
+
 func link_active(link: Vector2i) -> bool:
 	return not disrupted.has(link.x) and not disrupted.has(link.y)
 
@@ -99,16 +104,27 @@ func _award(key: String, amount: int, reason: String) -> void:
 	_notice("+%d War Effort · %s" % [amount, reason])
 
 
-func _tick(player: Vector3, allow_victory: bool) -> void:
-	for site in disrupted.keys():
-		disrupted[site] -= 1
-		if disrupted[site] <= 0: disrupted.erase(site)
-	_refresh_supply()
+func motion_step_ms() -> int:
+	return MOVEMENT_STEP_MS
+
+
+func _advance_step(player: Vector3, allow_victory: bool) -> void:
+	var second := clock_ms % STEP_MS == 0
+	if second:
+		for site in disrupted.keys():
+			disrupted[site] -= 1
+			if disrupted[site] <= 0: disrupted.erase(site)
+		_refresh_supply()
 	_assign_engagements(true)
 	for fleet in fleets:
-		if not active(fleet) or fleet.engaged >= 0: continue
-		_move_fleet(fleet)
+		if active(fleet) and fleet.engaged < 0:
+			_move_fleet(fleet, float(MOVEMENT_STEP_MS) / STEP_MS)
 	_assign_engagements(true)
+	if second:
+		_tick(player, allow_victory)
+
+
+func _tick(player: Vector3, allow_victory: bool) -> void:
 	if (clock_ms / STEP_MS) % maxi(1, tuning.exchange_seconds) == 0:
 		_exchange_damage()
 		_assign_engagements()
@@ -139,23 +155,29 @@ func _command_ready() -> bool:
 	return COMMANDS.any(func(id): return id in supplied.allied and not objectives[id].contested)
 
 
-func _move_fleet(fleet: Dictionary) -> void:
-	var at: int = fleet.at
-	var next: int = fleet.destination
-	var position: Vector3 = fleet.position
-	if at != next and not fleet.withdrawing and next not in Lattice.neighbors(at, links, disrupted):
-		# Ships already in a severed corridor backtrack to their last waypoint.
-		next = at
-		fleet.destination = at
-	if position.distance_squared_to(objectives[next].position) <= 0.001:
-		at = next
-		fleet.at = at
-		fleet.withdrawing = false
-		if objectives[at].owner != fleet.side and not disrupted.has(at) and fleet.strength > 2: return
-		next = _next_hop(fleet)
-		fleet.destination = next
-	var speed: float = tuning.fleet_speed * (1.0 if at in supplied[fleet.side] else 0.72)
-	fleet.position = position.move_toward(objectives[next].position, speed)
+func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
+	while seconds > 0.00001:
+		var at: int = fleet.at
+		var next: int = fleet.destination
+		var position: Vector3 = fleet.position
+		if at != next and not fleet.withdrawing and next not in Lattice.neighbors(at, links, disrupted):
+			# A severed corridor sends ships back along the same segment.
+			next = at
+			fleet.destination = at
+		var target: Vector3 = objectives[next].position
+		var distance := position.distance_to(target)
+		if distance <= 0.00001:
+			fleet.at = next
+			fleet.withdrawing = false
+			if objectives[next].owner != fleet.side and not disrupted.has(next) and fleet.strength > 2:
+				return
+			fleet.destination = _next_hop(fleet)
+			if fleet.destination == next:
+				return
+			continue
+		var speed: float = tuning.fleet_speed * (1.0 if at in supplied[fleet.side] else 0.72)
+		fleet.position = position.move_toward(target, speed * seconds)
+		seconds -= distance / speed
 
 
 func _next_hop(fleet: Dictionary) -> int:
@@ -209,7 +231,7 @@ func _exchange_damage() -> void:
 	damage.resize(fleets.size())
 	for fleet in fleets:
 		if not active(fleet): continue
-		var supplied_fleet: bool = fleet.at in supplied[fleet.side]
+		var supplied_fleet := _fleet_supplied(fleet)
 		if fleet.engaged < 0:
 			if supplied_fleet and fleet.strength < fleet.strength_limit and fleet.destination == fleet.at:
 				fleet.strength += 1
@@ -328,9 +350,6 @@ func _scatter_garrison(index: int) -> void:
 		var exits := Lattice.neighbors(index, links)
 		if exits.is_empty(): continue
 		var destination: int = exits[-1]
-		var origin: Vector3 = objectives[index].position
-		var target: Vector3 = objectives[destination].position
-		fleet.position = origin.move_toward(target, tuning.objective_radius + 1.2)
 		fleet.at = index
 		fleet.destination = destination
 		fleet.withdrawing = true
