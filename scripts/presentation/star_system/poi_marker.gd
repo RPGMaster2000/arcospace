@@ -31,6 +31,7 @@ var accent := Color("a6e9ff")
 var contrast: bool = false
 var lattice_tag := false
 var lattice_show_name := false
+var lattice_name_occluded := false
 var capture_ratio := 0.0
 var capture_tint := Color.WHITE
 var in_clash := false
@@ -142,7 +143,7 @@ func _refresh_state() -> void:
 	if planet_name != null:
 		planet_name.add_theme_color_override("font_color",Color.WHITE if contrast else foreground)
 		if lattice_tag:
-			planet_name.visible = not planet_name.text.is_empty() and (emphasis or lattice_show_name)
+			planet_name.visible = not planet_name.text.is_empty() and (emphasis or (lattice_show_name and not lattice_name_occluded))
 	z_index = priority()*10
 	queue_redraw()
 
@@ -188,6 +189,12 @@ func set_lattice_name_visible(value: bool) -> void:
 	lattice_show_name = value
 	_refresh_state()
 
+
+
+func set_lattice_name_occluded(value: bool) -> void:
+	if lattice_name_occluded == value: return
+	lattice_name_occluded = value
+	planet_name.visible = not planet_name.text.is_empty() and (highlighted() or (lattice_show_name and not value))
 
 func _draw() -> void:
 	if lattice_tag:

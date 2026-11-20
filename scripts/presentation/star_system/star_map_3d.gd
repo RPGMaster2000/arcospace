@@ -525,6 +525,8 @@ func _process(delta: float) -> void:
 				button.position.x = other.position.x - button.size.x - 5.0 if warzone_view != null and right + button.size.x > size.x else right
 				button.anchor_point = camera.unproject_position(objects[index].position) - button.position
 		placed_enemies.append(button)
+	if warzone_view != null and warzone_view.is_lattice():
+		_space_lattice_names(placed_enemies)
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -536,6 +538,30 @@ func _process(delta: float) -> void:
 				behind = true
 				break
 		button.set_secondary(behind)
+
+
+# The map keeps compact icons selectable when nearby labels would overlap.
+func _space_lattice_names(visible_markers: Array[Control]) -> void:
+	var occupied_names: Array[Rect2] = []
+	for marker in visible_markers:
+		if not marker.lattice_tag or not marker.lattice_show_name:
+			continue
+		var name_rect: Rect2 = marker.planet_name.get_global_rect()
+		var blocked: bool = not get_global_rect().encloses(name_rect)
+		for rect in hud_regions:
+			if rect.intersects(name_rect):
+				blocked = true
+				break
+		for other in visible_markers:
+			if other != marker and other.get_global_rect().grow(4).intersects(name_rect):
+				blocked = true
+				break
+		for area in occupied_names:
+			if area.intersects(name_rect):
+				blocked = true
+				break
+		marker.set_lattice_name_occluded(blocked)
+		if not blocked or marker.highlighted(): occupied_names.append(name_rect)
 
 
 func _select_destination(index: int) -> void:

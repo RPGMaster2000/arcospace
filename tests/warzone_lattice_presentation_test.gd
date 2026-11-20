@@ -85,6 +85,13 @@ func run() -> void:
 	await settle()
 	for control in [hud.lattice_button, hud.war_effort_bar, hud.territory_bar, hud.warzone_summary]:
 		check(root.get_visible_rect().encloses(control.get_global_rect()), "Warzone HUD fits Android landscape")
+	for marker in map.markers.values():
+		if not marker.lattice_show_name or not marker.planet_name.is_visible_in_tree() or marker.highlighted():
+			continue
+		var name_rect: Rect2 = marker.planet_name.get_global_rect()
+		var overlaps: bool = map.markers.values().any(func(other):
+			return (other != marker and other.is_visible_in_tree() and other.get_global_rect().intersects(name_rect)))
+		check(not overlaps, "Station names leave moving map controls unobstructed")
 	await capture("lattice-cutoff")
 	host.free()
 	await process_frame
