@@ -182,7 +182,16 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	await create_timer(0.3).timeout
 	check(model.position == idle and operation.clock_ms == idle_clock, "Idle maps hold the fleet and clock")
 	var player: Vector3 = host.star_map.ship.position
-	host.star_map.travel_to_position(player + Vector3(0, 0, 30))
+	# Keep real travel active through 12 samples even if a software-rendered
+	# frame overruns a quarter-second timer.
+	var bounds: Rect2 = host.State.SystemLayout.bounds(host.state.layout_expansion).grow(-1.0)
+	var destination := player
+	for x in [bounds.position.x, bounds.end.x]:
+		for z in [bounds.position.y, bounds.end.y]:
+			var corner := Vector3(x, 0, z)
+			if player.distance_squared_to(corner) > player.distance_squared_to(destination):
+				destination = corner
+	host.star_map.travel_to_position(destination)
 	var watched := 0
 	for interval in 12:
 		var before: Vector3 = model.position
