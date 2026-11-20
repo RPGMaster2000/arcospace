@@ -6,6 +6,7 @@ const ALLIED := Color("65dee9")
 const HOSTILE := Color("ff817c")
 const CONTESTED := Color("ffdc85")
 const NEUTRAL := Color("c6d2e0")
+const Aftermath = preload("res://scripts/ui/warzone_victory_banner.gd")
 const BattleFX = preload("res://scripts/presentation/star_system/warzone_battle_fx.gd")
 
 var paths := ImmediateMesh.new()
@@ -22,6 +23,9 @@ var _replay_start := 0.0
 var _replay_positions: Dictionary = {}
 var overlay_enabled := false
 var influence: ShaderMaterial
+var aftermath_started := false
+var aftermath_elapsed := 0.0
+var aftermath_routes := {}
 var influence_target := PackedVector4Array()
 var influence_display := PackedVector4Array()
 var routes_signature := 0
@@ -76,7 +80,7 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 	cosmetic_contacts.clear()
 	for fleet in operation.fleets:
 		_refresh_fleet(fleet, operation, objects)
-		if operation.active(fleet) and fleet.engaged >= 0:
+		if not operation.complete and operation.active(fleet) and fleet.engaged >= 0:
 			cosmetic_contacts.append(Vector2i(fleet.id, fleet.engaged))
 	if lattice_operation == null:
 		if last_motion_tick >= 0:
@@ -113,7 +117,7 @@ func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionar
 		model.position = next
 	if fleet.strength < previous_strength:
 		fx.impact(model.position, fleet.strength == 0)
-	model.visible = operation.active(fleet)
+	if not aftermath_started: model.visible = operation.active(fleet)
 	var escorts: Array = formations[id]
 	escorts[0].visible = fleet.strength >= 3
 	escorts[1].visible = fleet.strength >= 5
@@ -132,7 +136,9 @@ func _queue_position(id: int, next: Vector3) -> void:
 
 
 func animate_movement(delta: float) -> void:
-	if lattice_operation != null:
+	if aftermath_started:
+		_animate_aftermath(delta)
+	elif lattice_operation != null:
 		_interpolate_lattice(delta)
 	else:
 		_play_committed_routes(delta)
@@ -143,6 +149,68 @@ func animate_movement(delta: float) -> void:
 			var gap := influence_display[index].distance_to(influence_target[index])
 			influence_display[index] = influence_display[index].lerp(influence_target[index], minf(1.0, delta * 1.6 / maxf(0.001, gap)))
 		influence.set_shader_parameter("sources", influence_display)
+
+
+func begin_aftermath(operation: RefCounted, grade: String, bounds: Rect2) -> void:
+	if aftermath_started: return
+	aftermath_started = true
+	cosmetic_contacts.clear()
+	paths.clear_surfaces()
+	if is_instance_valid(convoy_model): convoy_model.hide()
+	var command: Vector3 = operation.objectives[operation.final_command if operation.final_command >= 0 else operation.ALLIED_ROOT].position
+	var center := Vector3(bounds.get_center().x, 0, bounds.get_center().y)
+	var costly := grade == "Pyrrhic Victory"
+	for fleet in operation.fleets:
+		if not operation.active(fleet): continue
+		var model: Node3D = models[fleet.id]
+		var start := model.position
+		var hostile: bool = fleet.side == "hostile"
+		var target: Vector3
+		if hostile:
+			# Withdraw away from the secured command toward the first sector edge.
+			var heading := (start - command).normalized()
+			if heading.length_squared() < 0.001: heading = Vector3.RIGHT
+			var x_edge := bounds.end.x if heading.x > 0.0 else bounds.position.x
+			var z_edge := bounds.end.y if heading.z > 0.0 else bounds.position.y
+			var x_distance := (x_edge - start.x) / heading.x if absf(heading.x) > 0.01 else INF
+			var z_distance := (z_edge - start.z) / heading.z if absf(heading.z) > 0.01 else INF
+			target = start + heading * (maxf(0.0, minf(x_distance, z_distance)) + 5.0)
+			if not bounds.has_point(Vector2(start.x, start.z)):
+				target = start + (start - center).normalized() * 5.0
+		else:
+			var slot := Vector3(cos(fleet.id * 2.4), 0, sin(fleet.id * 2.4)) * 1.65
+			target = start.move_toward(command + slot, 3.5 if costly else 6.5)
+		aftermath_routes[fleet.id] = {"start": start, "target": target, "hostile": hostile}
+	_stabilize_influence(costly)
+
+
+func _stabilize_influence(costly: bool) -> void:
+	for index in influence_target.size():
+		var source := influence_target[index]
+		source.w *= 0.44 if costly else 0.16
+		if source.z > 0.0: source.z *= 1.04 if costly else 1.22
+		influence_target[index] = source
+
+
+func _animate_aftermath(delta: float) -> void:
+	if aftermath_elapsed >= Aftermath.DURATION: return
+	aftermath_elapsed = minf(Aftermath.DURATION, aftermath_elapsed + delta)
+	var fraction := aftermath_elapsed / Aftermath.DURATION
+	for id in aftermath_routes:
+		var route: Dictionary = aftermath_routes[id]
+		var model: Node3D = models[id]
+		var direction: Vector3 = route.target - route.start
+		var weight := pow(fraction, 1.6) if route.hostile else smoothstep(0.0, 1.0, fraction)
+		model.position = route.start + direction * weight
+		if direction.length_squared() > 0.001:
+			model.rotation.y = lerp_angle(model.rotation.y, atan2(-direction.z, direction.x), 1.0 - exp(-4.0 * delta))
+		if fraction >= 1.0 and route.hostile: model.hide()
+
+
+func finish_aftermath() -> void:
+	_animate_aftermath(Aftermath.DURATION)
+	influence_display = influence_target.duplicate()
+	if influence != null: influence.set_shader_parameter("sources", influence_display)
 
 
 func _interpolate_lattice(delta: float) -> void:
@@ -215,6 +283,7 @@ func _play_committed_routes(delta: float) -> void:
 
 
 func _refresh_lattice(operation: RefCounted) -> void:
+	if aftermath_started: return
 	_refresh_convoy(operation)
 	if influence == null:
 		var plane := PlaneMesh.new()

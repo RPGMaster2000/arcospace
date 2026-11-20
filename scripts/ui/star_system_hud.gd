@@ -522,10 +522,14 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 	if operation.complete:
 		metagame.text = state.warzone_outcome.grade + " · FTL Ready"
 	elif operation.consolidation > 0:
-		metagame.text += "\nHolding  %d/%ds" % [operation.consolidation, operation.tuning.consolidation_seconds]
+		metagame.text += "\nHolding %s · %d/%ds" % [operation.objective_name(operation.final_command),
+			operation.consolidation, operation.tuning.consolidation_seconds]
+	elif operation.final_command >= 0:
+		metagame.text += "\nSecure " + operation.objective_name(operation.final_command)
 	elif percent == 100:
-		metagame.text += "\nSecure a command post"
-	var counts := [operation.fleet_count("allied"), operation.fleet_count("hostile"), operation.engagement_count()]
+		metagame.text += "\nSupport the offensive"
+	var counts := [operation.fleet_count("allied"), operation.fleet_count("hostile"),
+		0 if operation.complete else operation.engagement_count()]
 	for i in warzone_counts.size():
 		warzone_counts[i].text = ["A %d", "H %d", "%d"][i] % counts[i]
 	var allied: int = operation.objectives.filter(func(site): return site.owner == "allied").size()

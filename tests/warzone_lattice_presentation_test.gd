@@ -70,19 +70,29 @@ func run() -> void:
 	host.screen.system_details_overlay.dismiss()
 	check(presentation.fx.emitted_beams > 0, "Opening NPC engagements show beam exchanges")
 	var before_influence: PackedVector4Array = presentation.influence_target.duplicate()
-	var index: int = operation.HOSTILE_ROOT + operation.HOSTILE_GROUPS
-	var point: Vector3 = operation.objectives[operation.HOSTILE_ROOT].position
+	var depot := 5
+	var index: int = depot + operation.HOSTILE_GROUPS
+	var point: Vector3 = operation.objectives[depot].position
 	host.state.update_navigation_position(host.state.Defense.wire(point))
 	host.state.arrive_destination(index)
 	host.show_poi(index)
+	root.size = Vector2i(960, 540)
+	await settle()
+	var titles: Array[String] = []
+	for control in host.view.get_children():
+		if control is Label: titles.append(control.text)
+	check("Territorial Control" in titles and "Facility Operation" in titles,
+		"Territory and the signature operation have separate sections")
+	await capture("facility-operation")
 	host._warzone_operation(index, "sabotage")
 	await settle()
-	check(operation.disrupted.has(operation.HOSTILE_ROOT) and presentation.influence_target != before_influence,
+	check(operation.disrupted.has(depot) and presentation.influence_target != before_influence,
 		"Real sabotage updates territory and link presentation")
 	check(hud.war_effort_bar.value == minf(operation.effort, operation.tuning.effort_goal)
 		and operation.effort > 0 and hud.war_effort_gain.text.begins_with("+"),
 		"Operation updates the effort bar and gain indicator")
 	check(map.markers[index].objective_value.contains("!"), "Disruption is identifiable without color")
+	check(map.markers[index].recharge_ratio >= 0.0, "The facility marker shows its own recharge ring")
 	check(presentation.fx.emitted_impacts > 0, "Strategic volleys produce visible damage feedback")
 	host.show_system()
 	root.size = Vector2i(960, 540)
@@ -97,10 +107,62 @@ func run() -> void:
 			return (other != marker and other.is_visible_in_tree() and other.get_global_rect().intersects(name_rect)))
 		check(not overlaps, "Station names leave moving map controls unobstructed")
 	await capture("lattice-cutoff")
+	await _watch_aftermath(host, operation, presentation)
 	host.free()
 	await process_frame
 	print("Warzone lattice presentation: %d checks, %d failures" % [checks, failures])
 	quit(int(failures > 0))
+
+
+func _watch_aftermath(host: Node, operation: RefCounted, presentation: Node3D) -> void:
+	Preferences.set_skip_cinematics(false)
+	var allies: Dictionary = operation.fleets[0]
+	var hostile: Dictionary = operation.fleets[4]
+	for fleet in operation.fleets:
+		fleet.strength = 0
+		fleet.engaged = -1
+		fleet.destination = fleet.at
+	allies.strength = 1
+	allies.position = operation.objectives[operation.ALLIED_ROOT].position
+	hostile.strength = 4
+	hostile.position = Vector3(17, 0, -8)
+	hostile.at = 8
+	hostile.destination = 8
+	operation.final_command = 6
+	operation.player_intervened = true
+	operation.disrupted.clear()
+	operation._award("aftermath:1", 40, "Final offensive fixture")
+	operation._award("aftermath:2", 25, "Final offensive fixture")
+	for site in [3, 4, 5, 6, 7]:
+		operation.objectives[site].owner = "allied"
+	operation._refresh_supply()
+	operation.consolidation = operation.tuning.consolidation_seconds - 1
+	var salvage_before: int = host.state.salvage
+	host.state._commit_activity_time(1)
+	check(operation.complete and host.state.warzone_outcome.grade == "Pyrrhic Victory"
+		and host.state.salvage == salvage_before + host.state.warzone_outcome.salvage,
+		"The simulation commits pyrrhic victory and rewards before presentation")
+	for attempt in 20:
+		if host.warzone_victory_banner.active: break
+		await process_frame
+	check(host.warzone_victory_banner.active and host.screen.jump_button.disabled,
+		"A skippable aftermath temporarily holds the FTL control")
+	var ledger: Dictionary = operation.snapshot()
+	var hostile_model: Node3D = presentation.models[hostile.id]
+	var allied_model: Node3D = presentation.models[allies.id]
+	var retreat: Vector3 = hostile_model.position
+	var regroup: Vector3 = allied_model.position
+	for frame in 8:
+		presentation.animate_movement(0.1)
+	check(hostile_model.visible and hostile_model.position.distance_to(retreat) > 0.1,
+		"The hostile formation visibly withdraws before leaving the scene")
+	check(allied_model.position.distance_to(regroup) > 0.05, "Allied ships visibly regroup")
+	await capture("pyrrhic-aftermath")
+	await touch(host.warzone_victory_banner._skip)
+	check(not hostile_model.visible and not host.warzone_victory_banner.active and not host.screen.jump_button.disabled,
+		"Skipping completes withdrawal and releases FTL")
+	check(operation.snapshot() == ledger and host.state.salvage == salvage_before + host.state.warzone_outcome.salvage,
+		"The aftermath never advances strategic time or pays the reward twice")
 
 
 func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> void:

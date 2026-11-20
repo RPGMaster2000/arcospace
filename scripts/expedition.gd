@@ -1,5 +1,6 @@
 extends Control
 
+const WarzoneVictoryBanner = preload("res://scripts/ui/warzone_victory_banner.gd")
 const StrategicOverview = preload("res://scripts/presentation/star_system/strategic_time_overview.gd")
 const MenuPreferences = preload("res://scripts/ui/menu_preferences.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
@@ -21,6 +22,8 @@ var persistence_enabled: bool:
 	set(value): persistence.enabled = value
 var resume_data: Dictionary = {}
 var strategic_overview: StrategicOverview
+var warzone_victory_banner: WarzoneVictoryBanner
+var _warzone_victory_seen := 0
 var _strategic_shutdown := false
 var _application_suspended := false
 var developer_test: Dictionary = {}
@@ -178,6 +181,9 @@ func _ready() -> void:
 	_build_ui()
 	strategic_overview = StrategicOverview.new()
 	add_child(strategic_overview)
+	warzone_victory_banner = WarzoneVictoryBanner.new()
+	add_child(warzone_victory_banner)
+	warzone_victory_banner.dismissed.connect(_finish_warzone_aftermath)
 	screen.overview_hud.system_details_requested.connect(_show_system_details)
 	screen.overview_hud.warzone_wait_requested.connect(_wait_in_warzone)
 	screen.overview_hud.lattice_overlay_changed.connect(func(enabled: bool):
@@ -218,6 +224,7 @@ func _ready() -> void:
 		start_expedition()
 	else:
 		state = resume_data.state
+		if state.is_warzone() and state.warzone.complete: _warzone_victory_seen = state.warzone.get_instance_id()
 		selected_ship = state.player_ship
 		_bind_progress()
 		var marker: Dictionary = resume_data.get("battle", {})
@@ -341,6 +348,7 @@ func _presentation_current(revision: int, owner: Resource) -> bool:
 
 
 func _cancel_presentation() -> void:
+	if is_instance_valid(warzone_victory_banner): warzone_victory_banner.finish()
 	homeworld_sequence.cancel()
 	if state != null: state.navigation.rebase_movement()
 	# Invalidate first: cancellation wakes waiters synchronously.
@@ -503,6 +511,9 @@ func _notification(what: int) -> void:
 		_strategic_shutdown = false
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(strategic_overview) and strategic_overview.active:
 		return
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(warzone_victory_banner) and warzone_victory_banner.active:
+		warzone_victory_banner.finish()
+		return
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED] and is_instance_valid(strategic_overview):
 		strategic_overview.rebase_clock()
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
@@ -615,7 +626,7 @@ func _map_input_allowed(block_construction: bool = true) -> bool:
 		var construction: Control = _construction_panel()
 		if is_instance_valid(construction) and construction.visible: return false
 	return (
-		phase != Phase.EXITED and not _application_suspended and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not _application_suspended and not warzone_victory_banner.active and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and (not is_instance_valid(decoy_confirmation) or not decoy_confirmation.shade.visible)
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
@@ -768,7 +779,7 @@ func visit(index: int) -> void:
 
 func _jump() -> void:
 	if not decoy_camera.is_empty(): return
-	if transitioning or presenting_outcome or not state.can_jump():
+	if transitioning or presenting_outcome or warzone_victory_banner.active or not state.can_jump():
 		return
 	if not _uses_3d_map() or not is_instance_valid(star_map):
 		if state.generate_system():
@@ -1007,37 +1018,47 @@ func _show_warzone_objective(index: int) -> void:
 	if operation.is_lattice():
 		status += " · Disrupted" if operation.disrupted.has(offset) else (
 			" · Supplied" if operation.is_supplied(offset) else " · Isolated")
+	view.add_child(_label("Territorial Control", 17))
 	view.add_child(_label(status, 15))
+	if operation.is_lattice() and not operation.complete and objective.owner != "allied":
+		var capture_status := "Clear the garrison and hold position."
+		if not operation._capture_connected(offset, "allied"):
+			capture_status = "Capture requires a supplied allied link."
+		elif operation.capture_cutoffs.has(offset) and operation.capture_cutoffs[offset].side == "allied":
+			capture_status = "Capture interrupted. Leave and return to retry."
+		view.add_child(_label(capture_status, 14))
 	if objective.progress > 0:
 		var capture := WarzoneIcons.bar(WarzoneIcons.tint(objective.capturing))
 		capture.max_value = operation.tuning.capture_seconds
 		capture.value = objective.progress
 		capture.accessibility_name = "%s capture progress %d of %d" % [objective.capturing, objective.progress, capture.max_value]
 		view.add_child(capture)
-	if inspecting or operation.complete: return
+	if operation.complete: return
+	if not inspecting:
+		_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
 	if operation.is_lattice():
-		var details := PackedStringArray()
-		for action in operation.operations(offset, state.salvage):
-			var quote := "%ds" % action.seconds
-			if action.cost > 0: quote += " · %d Salvage" % action.cost
-			if action.effort > 0: quote += " · +%d War Effort" % action.effort
-			if action.id == "repair":
-				quote += " · Up to +%d strength" % action.repair_strength
-			var tile := _tile(view, action.title, quote, tint, _warzone_operation.bind(index, action.id), not action.enabled)
-			var title_row := HBoxContainer.new()
-			title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			var column: Node = tile.heading.get_parent()
-			column.add_child(title_row)
-			column.move_child(title_row, 0)
-			title_row.add_child(WarzoneIcons.icon(action.id, tint))
-			tile.heading.reparent(title_row, false)
-			tile.heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			details.append("%s · %s" % [action.title, action.details])
-		if not details.is_empty():
-			_button("Operation Details", func(): screen.system_details_overlay.show_text("\n\n".join(details)))
-	else:
+		var choices: Array[Dictionary] = operation.operations(offset, state.salvage)
+		if choices.is_empty(): return
+		var action: Dictionary = choices.front()
+		view.add_child(HSeparator.new())
+		view.add_child(_label("Facility Operation", 17))
+		_add_warzone_inspection_row(WarzoneIcons.icon(action.id, tint), action.title, 19)
+		view.add_child(_label(action.details, 14))
+		var quote := "%ds" % action.seconds
+		if action.cost > 0: quote += " · %d Salvage" % action.cost
+		if not action.reason.is_empty(): quote += " · " + action.reason
+		view.add_child(_label(quote, 15))
+		if action.remaining > 0:
+			var recharge := WarzoneIcons.bar(tint)
+			recharge.max_value = action.cooldown
+			recharge.value = action.cooldown - action.remaining
+			recharge.accessibility_name = "Facility recharges in %ds" % action.remaining
+			view.add_child(recharge)
+		if not inspecting:
+			var activate := _button("Activate Operation", _warzone_operation.bind(index, action.id))
+			activate.disabled = not action.enabled
+	elif not inspecting:
 		view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
-	_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
 
 
 func _warzone_operation(index: int, id: String) -> void:
@@ -1588,6 +1609,7 @@ func _process(_delta: float) -> void:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
 		visit(contact)
 	_present_homeworld_damage()
+	_present_warzone_aftermath()
 
 func _sample_navigation_position(arriving: bool = false) -> void:
 	if state == null: return
@@ -1642,11 +1664,38 @@ func _warzone_updated(target_lost: bool) -> void:
 		return
 	star_map.set_lattice_overlay(screen.overview_hud.lattice_button.button_pressed)
 	screen.set_warzone_status(state)
+	if warzone_victory_banner.active: screen.jump_button.disabled = true
 	if target_lost and phase == Phase.TRAVELING:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
 		star_map._select_destination(-1)
 		map_destination = -1
 		_clear("system")
+
+
+func _present_warzone_aftermath() -> void:
+	if phase != Phase.OVERVIEW or not state.is_warzone() or not state.warzone.is_lattice() \
+		or not state.warzone.complete or state.warzone_outcome.is_empty() or not _map_input_allowed() \
+		or not is_instance_valid(star_map) or not is_instance_valid(star_map.warzone_presentation):
+		return
+	var operation: RefCounted = state.warzone
+	var presentation: Node3D = star_map.warzone_presentation
+	if presentation.aftermath_started: return
+	presentation.begin_aftermath(operation, state.warzone_outcome.grade, State.SystemLayout.bounds(state.layout_expansion))
+	if MenuPreferences.skip_cinematics() or _warzone_victory_seen == operation.get_instance_id():
+		_finish_warzone_aftermath()
+		return
+	_warzone_victory_seen = operation.get_instance_id()
+	warzone_victory_banner.begin(state.warzone_outcome)
+	get_node("/root/Music").play_result(true, 0 if state.warzone_outcome.grade == "Pyrrhic Victory" else 1)
+	screen.jump_button.disabled = true
+	resource_bar.exploration(state)
+
+
+func _finish_warzone_aftermath() -> void:
+	if not is_instance_valid(star_map) or not is_instance_valid(star_map.warzone_presentation): return
+	star_map.warzone_presentation.finish_aftermath()
+	screen.set_warzone_status(state)
+	resource_bar.exploration(state)
 
 
 func _defense_span_committed(events: Dictionary) -> void:

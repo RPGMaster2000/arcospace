@@ -5,7 +5,8 @@ extends "res://scripts/expedition/warzone_state.gd"
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const ALLIED_ROOT := 1
 const HOSTILE_ROOT := 7
-const COMMANDS := [4, 6]
+const COMMANDS := [1, 6, 7]
+const FINAL_COMMANDS := [6, 7]
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
 const FLEET_LIMIT := 40
 const MOVEMENT_STEP_MS := 100
@@ -23,9 +24,15 @@ var planned := {}
 var effort := 0
 var convoy := {}
 var recovered := false
-var wreckage := {}
+var wreckage := {}  # Older saves may still have pending wrecks.
 var capture_cutoffs := {}
 var reserve_launched := {}
+var facility_cooldowns := {}
+var final_command := -1
+var player_intervened := false
+var jam_until := 0
+var offensive_target := -1
+var offensive_until := 0
 var _player_position := Vector3.INF
 var _route_cache := {}
 
@@ -173,18 +180,38 @@ func _dispatch_reserves() -> void:
 	for order in [[ALLIED_RESERVE, 22, ALLIED_ROOT], [HOSTILE_RESERVE, 30, HOSTILE_ROOT]]:
 		var id: int = order[0]
 		if reserve_launched.has(id) or clock_ms < order[1] * STEP_MS: continue
+		if id == HOSTILE_RESERVE and clock_ms < jam_until: continue
 		var fleet := fleet_at(id)
 		var network: Array = supplied[fleet.side]
 		if network.size() < 2: continue
-		# A connected shipyard or additional supplied sites make a stronger wave.
-		var strength := mini(6, 2 + network.size() + int(8 in network))
-		fleet.strength = strength
-		fleet.strength_limit = strength
-		fleet.at = order[2]
-		fleet.destination = order[2]
-		fleet.arriving = true
-		reserve_launched[id] = true
-		_notice("%s reinforcements entering the sector." % fleet.side.capitalize())
+		_launch_reserve(fleet, order[2], network)
+
+
+func can_deploy_allied() -> bool:
+	return has_reserves() and not active(fleets[ALLIED_RESERVE]) and supplied.allied.size() >= 2
+
+
+func deploy_allied() -> void:
+	var fleet := fleet_at(ALLIED_RESERVE)
+	# Later waves also begin beyond the largest navigable sector.
+	var entry_x := Layout.bounds(Layout.MAX_EXPANSION).position.x - 5.0
+	if not reserve_launched.has(ALLIED_RESERVE): entry_x = fleet.position.x
+	fleet.position = Vector3(entry_x, 0, objectives[ALLIED_ROOT].position.z)
+	_launch_reserve(fleet, ALLIED_ROOT, supplied.allied)
+
+
+func _launch_reserve(fleet: Dictionary, root: int, network: Array) -> void:
+	var strength := mini(6, 2 + network.size() + int(8 in network))
+	fleet.strength = strength
+	fleet.strength_limit = strength
+	fleet.at = root
+	fleet.destination = root
+	fleet.arriving = true
+	fleet.withdrawing = false
+	fleet.counter_target = -1
+	fleet.engaged = -1
+	reserve_launched[fleet.id] = true
+	_notice("%s reinforcements entering the sector." % fleet.side.capitalize())
 
 
 func is_supplied(index: int) -> bool:
@@ -203,7 +230,6 @@ func link_active(link: Vector2i) -> bool:
 func objective_brief(index: int) -> String:
 	var status := super.objective_brief(index)
 	if disrupted.has(index): return status + " · disrupted %ds" % disrupted[index]
-	if wreckage.has(index): status += " · wreckage"
 	return status + (" · supplied" if is_supplied(index) else " · isolated")
 
 
@@ -224,6 +250,9 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 		_refresh_capture_presence(index, player)
 	var second := clock_ms % STEP_MS == 0
 	if second:
+		for site in facility_cooldowns.keys():
+			facility_cooldowns[site] -= 1
+			if facility_cooldowns[site] <= 0: facility_cooldowns.erase(site)
 		for site in disrupted.keys():
 			disrupted[site] -= 1
 			if disrupted[site] <= 0: disrupted.erase(site)
@@ -250,7 +279,9 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 		if before != objectives[index].owner:
 			_refresh_supply()
 			if objectives[index].owner == "allied":
-				var value: int = tuning.capture_effort + (4 if index in COMMANDS else 0)
+				if player.distance_to(objectives[index].position) <= tuning.objective_radius:
+					player_intervened = true
+				var value: int = tuning.capture_effort + (4 if index in FINAL_COMMANDS else 0)
 				_award("capture:%d" % index, value, "Captured " + objective_name(index))
 				if supplied.allied.size() > prior.size() + 1:
 					_award("reconnect:%d" % index, 6, "Reconnected allied installations")
@@ -258,15 +289,32 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 	for site in wreckage.keys():
 		wreckage[site] -= 1
 		if wreckage[site] <= 0: wreckage.erase(site)
-	var can_hold: bool = effort >= tuning.effort_goal and _command_ready()
-	consolidation = mini(tuning.consolidation_seconds, consolidation + 1) if can_hold else 0
+	_update_final_offensive(allow_victory)
+
+
+func _update_final_offensive(allow_victory: bool) -> void:
+	if final_command < 0 and player_intervened and effort >= tuning.effort_goal:
+		# A deep command facility anchors the last offensive. Prefer one we
+		# already hold or can approach from supplied territory.
+		var next: int = FINAL_COMMANDS.front()
+		for site in FINAL_COMMANDS:
+			if site in supplied.allied or _capture_connected(site, "allied"):
+				next = site
+				break
+		final_command = next
+		_notice("Final offensive · Secure " + objective_name(final_command) + ".")
+		_counterattack(final_command)
+	var can_hold := final_command >= 0 and _command_ready()
+	# Battle time may advance the offensive, but victory commits only on the map.
+	var limit: int = tuning.consolidation_seconds if allow_victory else tuning.consolidation_seconds - 1
+	consolidation = mini(limit, consolidation + 1) if can_hold else 0
 	if allow_victory and consolidation >= tuning.consolidation_seconds:
 		complete = true
 		_notice(outcome().grade + " · Sector secured.")
 
 
 func _command_ready() -> bool:
-	return COMMANDS.any(func(id): return id in supplied.allied and not objectives[id].contested)
+	return final_command in supplied.allied and not objectives[final_command].contested
 
 
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
@@ -309,7 +357,13 @@ func _direct_target(fleet: Dictionary) -> int:
 	var at: int = fleet.at
 	var side: String = fleet.side
 	var retreat: bool = fleet.strength <= 2 or at not in supplied[side]
-	var goal: int = fleet.counter_target
+	var goal: int = -1 if side == "hostile" and clock_ms < jam_until else fleet.counter_target
+	if not retreat and side == "allied":
+		var priority := offensive_target if clock_ms < offensive_until else final_command
+		if priority >= 0 and priority != at and route_valid(side, at, priority):
+			return priority
+		if priority >= 0 and priority == at and objectives[at].owner == side:
+			return at
 	if not retreat and goal >= 0 and goal != at and route_valid(side, at, goal):
 		return goal
 	if goal >= 0: fleet.counter_target = -1
@@ -351,7 +405,10 @@ func _counterattack(index: int) -> void:
 	for fleet in candidates.slice(0, 2):
 		fleet.counter_target = index
 	if not candidates.is_empty():
-		_notice("Hostile counterattack toward " + objective_name(index) + ".")
+		if clock_ms < jam_until:
+			_notice("Hostile counterattack orders delayed.")
+		else:
+			_notice("Hostile counterattack toward " + objective_name(index) + ".")
 
 
 func _exchange_damage() -> void:
@@ -372,11 +429,22 @@ func _exchange_damage() -> void:
 		if damage[fleet.id] <= 0: continue
 		_damage(fleet, damage[fleet.id])
 		if not active(fleet) and fleet.side == "hostile":
-			_award("fleet:%d" % fleet.id, tuning.victory_effort, "Allied strategic victory")
+			_award("fleet:%d" % fleet.id, tuning.npc_victory_effort, "Allied strategic victory")
 
 
 func _shot_damage(fleet: Dictionary) -> int:
-	return 2 if _fleet_supplied(fleet) and (fleet.side == "hostile" or fleet.strength >= tuning.heavy_damage_strength) else 1
+	var supported := _fleet_supplied(fleet)
+	var damage := 2 if supported and (fleet.side == "hostile" or fleet.strength >= tuning.heavy_damage_strength) else 1
+	if supported and fleet.side == "allied" and clock_ms < offensive_until:
+		if (fleet.position as Vector3).distance_to(objectives[offensive_target].position) <= tuning.objective_radius * 2.0:
+			damage += 1
+	var target := fleet_at(fleet.engaged)
+	if fleet.side == "hostile" and not target.is_empty():
+		for site in facility_cooldowns:
+			if Operations.operation_kind(site) == "fortify" and site in supplied.allied \
+				and (target.position as Vector3).distance_to(objectives[site].position) <= tuning.objective_radius:
+				return maxi(1, damage - 1)
+	return damage
 
 
 # One forecast per connected fight. Estimate from the same per-target attrition
@@ -417,15 +485,9 @@ func engagement_predictions() -> Dictionary:
 	return predictions
 
 
-func _damage(fleet: Dictionary, damage: int) -> void:
-	var was_active := active(fleet)
-	super._damage(fleet, damage)
-	if was_active and not active(fleet):
-		wreckage[int(fleet.destination)] = 30
-
-
 func player_victory(hostile_id: int) -> bool:
 	if not super.player_victory(hostile_id): return false
+	player_intervened = true
 	_award("fleet:%d" % hostile_id, tuning.victory_effort, "Hostile formation defeated")
 	return true
 
@@ -510,8 +572,8 @@ func operations(index: int, salvage: int) -> Array[Dictionary]:
 	return Operations.options(self, index, salvage)
 
 
-func operate(index: int, action: Dictionary) -> int:
-	return Operations.apply(self, index, action)
+func operate(index: int, action: Dictionary) -> void:
+	Operations.apply(self, index, action)
 
 
 func _scatter_garrison(index: int) -> void:
@@ -539,7 +601,7 @@ func outcome() -> Dictionary:
 	disruptions.sort()
 	value.infrastructure = infrastructure
 	value.disruptions = disruptions
-	value.command_positions = COMMANDS.filter(func(id): return id in supplied.allied)
+	value.command_positions = [final_command] if final_command >= 0 and complete else FINAL_COMMANDS.filter(func(id): return id in supplied.allied)
 	value.node_owners = objectives.map(func(node): return node.owner)
 	return value
 
@@ -549,7 +611,10 @@ func snapshot() -> Dictionary:
 	value.lattice = {"version": 2, "pattern": pattern, "links": links.map(func(edge): return [edge.x, edge.y]),
 		"effort": effort, "accomplishments": accomplishments.duplicate(), "planned": planned.duplicate(),
 		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {},
-		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {}}
+		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
+		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
+		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until}
+	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
 	for key in wreckage: value.lattice.wreckage[str(key)] = wreckage[key]
 	for key in capture_cutoffs: value.lattice.capture_cutoffs[str(key)] = capture_cutoffs[key].duplicate(true)
@@ -629,10 +694,41 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		accomplishments[key] = int(saved.accomplishments[key])
 	planned = saved.planned.duplicate()
 	recovered = saved.recovered
-	if not _restore_logistics(saved): return false
+	if not _restore_logistics(saved) or not _restore_facilities(saved): return false
 	_refresh_supply(false)
 	if not convoy.is_empty() and not _convoy_route_valid(convoy.side, convoy.route): return false
+	if not saved.has("final_command"):
+		# Older active operations must secure a deep command; earned victories
+		# already have a committed campaign outcome.
+		if not complete: consolidation = 0
+		return true
+	if complete and final_command == -1: return true  # Previously earned legacy victory.
 	return consolidation == 0 or (effort >= tuning.effort_goal and _command_ready())
+
+
+func _restore_facilities(saved: Dictionary) -> bool:
+	var cooldowns: Variant = saved.get("facility_cooldowns", {})
+	if not cooldowns is Dictionary or cooldowns.size() > objectives.size(): return false
+	for key in cooldowns:
+		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1): return false
+		var site := int(key)
+		if not Defense.number(cooldowns[key], 1, Operations.cooldown(Operations.operation_kind(site))): return false
+		facility_cooldowns[site] = int(cooldowns[key])
+	var intervened: Variant = saved.get("player_intervened", player_victories > 0 or not planned.is_empty())
+	var command: Variant = saved.get("final_command", -1)
+	var target: Variant = saved.get("offensive_target", -1)
+	if not intervened is bool or not Defense.number(command, -1, objectives.size() - 1) \
+		or (int(command) != -1 and (int(command) not in FINAL_COMMANDS or not intervened or effort < tuning.effort_goal)) \
+		or not Defense.number(target, -1, objectives.size() - 1): return false
+	for field in ["jam_until", "offensive_until"]:
+		if not Defense.number(saved.get(field, 0), 0, clock_ms + 35 * STEP_MS): return false
+	if int(saved.get("offensive_until", 0)) > clock_ms and int(target) < 0: return false
+	player_intervened = intervened
+	final_command = int(command)
+	offensive_target = int(target)
+	jam_until = int(saved.get("jam_until", 0))
+	offensive_until = int(saved.get("offensive_until", 0))
+	return true
 
 
 func _restore_logistics(saved: Dictionary) -> bool:

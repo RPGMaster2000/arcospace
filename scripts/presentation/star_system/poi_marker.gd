@@ -32,6 +32,7 @@ var contrast: bool = false
 var lattice_tag := false
 var lattice_show_name := false
 var lattice_name_occluded := false
+var recharge_ratio := -1.0
 var capture_ratio := 0.0
 var capture_tint := Color.WHITE
 var in_clash := false
@@ -46,6 +47,12 @@ func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: fl
 	in_clash = clash
 	fleet_strength = strength
 	set_process(clash)
+	queue_redraw()
+
+
+func set_recharge(value: float) -> void:
+	if is_equal_approx(recharge_ratio, value): return
+	recharge_ratio = value
 	queue_redraw()
 
 
@@ -206,6 +213,10 @@ func set_lattice_name_occluded(value: bool) -> void:
 func _draw() -> void:
 	if lattice_tag:
 		var ring := minf(size.x, size.y) * 0.5 - 4.0
+		if recharge_ratio >= 0.0:
+			draw_arc(icon_center, ring - 4.0, 0, TAU, 24, Color("20364b"), 2.0, true)
+			if recharge_ratio > 0.0:
+				draw_arc(icon_center, ring - 4.0, -PI / 2, -PI / 2 + TAU * recharge_ratio, 24, Color("b4d8e6"), 2.0, true)
 		if in_clash:
 			draw_arc(icon_center, ring, 0, TAU, 24, Color(capture_tint, 0.5 + sin(_pulse) * 0.19), 2.0, true)
 		elif capture_ratio > 0:
