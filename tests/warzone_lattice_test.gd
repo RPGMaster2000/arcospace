@@ -192,10 +192,14 @@ func continuous_clock() -> void:
 			var to := origin.lerp(target, float(frame + 1) / partitions)
 			state.advance_warzone_map(3.25 / partitions, from, to)
 	check(slow.warzone.snapshot() == fast.warzone.snapshot(), "Same movement and combat at different frame rates")
-	var before: int = slow.warzone.clock_ms
+	var start_clock: int = slow.warzone.clock_ms
 	slow.begin_free_travel(State.Defense.wire(target))
 	slow.navigation.report_movement(State.Defense.wire(target))
-	check(slow.warzone.clock_ms == before, "Sampling the player position does not count live travel time twice")
+	var before: int = slow.warzone.clock_ms
+	var expected := floori(origin.distance_to(target) * 1000.0 / slow.rules.defense_tuning.player_speed)
+	check(absi(before - start_clock - expected) <= 1, "Travel charges exactly the elapsed motion at the ship's speed")
+	slow.navigation.report_movement(State.Defense.wire(target))
+	check(slow.warzone.clock_ms == before, "Repeated stationary samples spend no time")
 	slow.cancel_travel()
 	slow.active_battle = 0
 	slow.advance_warzone_map(0.5, target, target)

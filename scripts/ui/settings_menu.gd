@@ -19,6 +19,7 @@ var sfx_volume: HSlider
 var music_toggle: CheckButton
 var cinematics_toggle: CheckButton
 var battle_vfx_toggle: CheckButton
+var strategic_time_toggle: CheckButton
 var main_menu_button: Button
 var quit_button: Button
 # Future settings belong here; the body already scrolls on compact displays.
@@ -114,6 +115,22 @@ func _ready() -> void:
 			add_child(notice)
 			notice.confirmed.connect(notice.queue_free)
 			notice.popup_centered(Vector2i(460, 160)))
+	strategic_time_toggle = CheckButton.new()
+	strategic_time_toggle.text = "Strategic Time Overview"
+	strategic_time_toggle.custom_minimum_size.y = 52
+	strategic_time_toggle.add_theme_font_size_override("font_size", 22)
+	strategic_time_toggle.tooltip_text = "Watch timed map actions unfold in real time"
+	strategic_time_toggle.set_pressed_no_signal(Preferences.strategic_time_overview())
+	extra_settings.add_child(strategic_time_toggle)
+	strategic_time_toggle.toggled.connect(func(value: bool):
+		if Preferences.set_strategic_time_overview(value) != OK:
+			strategic_time_toggle.set_pressed_no_signal(Preferences.strategic_time_overview())
+			var notice := AcceptDialog.new()
+			notice.dialog_text = "Could not save the Strategic Time Overview preference."
+			notice.process_mode = Node.PROCESS_MODE_ALWAYS
+			add_child(notice)
+			notice.confirmed.connect(notice.queue_free)
+			notice.popup_centered(Vector2i(460, 160)))
 	var lens_toggle := CheckButton.new()
 	lens_toggle.text = "Star-map lens effects (experimental)"
 	lens_toggle.custom_minimum_size.y = 52
@@ -190,6 +207,7 @@ func present() -> void:
 	_sync_music(_music.enabled)
 	cinematics_toggle.set_pressed_no_signal(Preferences.skip_cinematics())
 	battle_vfx_toggle.set_pressed_no_signal(Preferences.battle_vfx())
+	strategic_time_toggle.set_pressed_no_signal(Preferences.strategic_time_overview())
 	music_volume.set_value_no_signal(_music.volume)
 	sfx_volume.set_value_no_signal(_sfx.volume)
 	shade.show()

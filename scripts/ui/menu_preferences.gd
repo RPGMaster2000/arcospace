@@ -49,3 +49,16 @@ static func set_battle_vfx(enabled: bool) -> Error:
 	if error == OK:
 		events.battle_vfx_changed.emit(enabled)
 	return error
+
+
+static func strategic_time_overview() -> bool:
+	var settings := ConfigFile.new()
+	settings.load(PATH)
+	return bool(settings.get_value("presentation", "strategic_time_overview", true))
+
+
+static func set_strategic_time_overview(enabled: bool) -> Error:
+	var settings := ConfigFile.new()
+	settings.load(PATH)
+	settings.set_value("presentation", "strategic_time_overview", enabled)
+	return settings.save(PATH)

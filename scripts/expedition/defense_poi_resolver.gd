@@ -4,13 +4,6 @@ extends RefCounted
 const Requirement = preload("res://scripts/expedition/approach_requirement.gd")
 
 
-class Resolution:
-	extends RefCounted
-	# Detached transaction facts, not a second reward/expedition ledger.
-	var resolved := false
-	var interrupted := false
-
-
 static func _tier_one_count(state: Resource) -> int:
 	var count := 0
 	for card in state.available_reward_cards():
@@ -64,27 +57,24 @@ static func reward_rng(state: Resource, index: int) -> RandomNumberGenerator:
 
 # The facade checks encounter/mode access first. Its shared approach gate calls
 # reward_requirement above; that pure query never recurses into resolution.
-static func resolve(state: Resource, index: int, slot: int) -> Resolution:
-	var result := Resolution.new()
+static func resolve(state: Resource, index: int, slot: int, present: Callable) -> bool:
 	var approaches: Array = state.poi_approaches(index)
 	if slot < 0 or slot >= approaches.size():
-		return result
+		return false
 	var approach: Resource = approaches[slot]
 	if not state.locked_reason(approach).is_empty():
-		return result
+		return false
 	# All eligibility checks precede the encounter's only completion mutation.
 	if not state._complete_encounter(index):
-		return result
-	state._commit_activity_time(float(approach.get_meta("strategic_seconds")))
-	result.resolved = true
-	if state.run_ended:
-		result.interrupted = true
-		state.last_outcome = "The invasion ended the expedition during this operation."
-		return result
-	# No RNG construction, success marker or reward before this boundary. Effects
-	# activate after their acquisition cost, including interrupted strategic spans.
-	_apply_reward(state, index, approach)
-	return result
+		return false
+	state._spend_activity_time(float(approach.get_meta("strategic_seconds")), func():
+		if state.run_ended:
+			state.last_outcome = "The invasion ended the expedition during this operation."
+		else:
+			# Rewards and their RNG only become available after an uninterrupted span.
+			_apply_reward(state, index, approach)
+		state.progress_committed.emit(), present)
+	return true
 
 
 static func _apply_reward(state: Resource, index: int, approach: Resource) -> void:
