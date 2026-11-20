@@ -226,6 +226,22 @@ func configure_save_quit(action: Callable, in_battle: bool = false) -> void:
 	close_button.text = "Resume"
 
 
+func configure_developer_testing(action: Callable) -> void:
+	main_menu_button.disabled = false
+	main_menu_button.text = "Developer Testing"
+	main_menu_button.tooltip_text = "Set up an unsaved expedition test"
+	main_menu_button.pressed.disconnect(_request_main_menu)
+	main_menu_button.pressed.connect(func():
+		dismiss()
+		action.call())
+
+
+func configure_test_exit(action: Callable) -> void:
+	configure_save_quit(action)
+	main_menu_button.text = "Exit Developer Test"
+	main_menu_button.tooltip_text = "Return to the main menu without saving"
+
+
 func _request_main_menu() -> void:
 	if save_quit_action.is_valid():
 		if battle_restart_notice:

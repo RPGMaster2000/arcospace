@@ -1,5 +1,7 @@
 extends RefCounted
 
+const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
+
 # Encounter construction only. ExpeditionState validates transitions and owns all generated state.
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const Profiles = preload("res://scripts/expedition/system_profile.gd")
@@ -104,6 +106,7 @@ static func generate(state: Resource) -> void:
 				entry = available.pop_at(state._enemy_index(available) if category == "battle" else _poi_index(available, profile, rng))
 			var encounter: Dictionary
 			if category == "battle":
+				entry = DeveloperLaunch.enemy(state, entry, slot)
 				encounter = {"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(entry)),
 					"enemy_data": entry, "system_number": state.system_number, "mandatory_boss": mandatory,
 					"modifier": state._roll_battle_modifier(), "title": entry.ship_name, "completed": false}
@@ -196,6 +199,7 @@ static func _generate_defense(state: Resource) -> void:
 		var profile: Resource = legacy if mother else Factions.enemy(state, faction, i)
 		if mother and state.system_number >= faction.mothership_minimum_system and faction.mothership is ShipData and faction.mothership.enemy_rank == 2 and not faction.mothership.resource_path.is_empty():
 			profile = faction.mothership
+		profile = DeveloperLaunch.enemy(state, profile, i, faction)
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": "Mothership" if mother else profile.ship_name, "completed": false})
 	var pois: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() != "unstable_wormhole")
@@ -225,7 +229,8 @@ static func _generate_defense(state: Resource) -> void:
 	var reserve_count: int = clampi(state.rules.defense_tuning.v2_maximum_reinforcements, 0, 3) if v2 else state.rules.defense_tuning.maximum_reinforcements
 	for i in range(reserve_count):
 		state._enemy_index(ordinary) # Preserve the historical reserve selection draw.
-		var profile: Resource = Factions.enemy(state, faction, attackers + 1 + i)
+		var slot: int = attackers + 1 + i
+		var profile := DeveloperLaunch.enemy(state, Factions.enemy(state, faction, slot), slot, faction)
 		reserves.append(state.encounters.size())
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": profile.ship_name, "completed": false})

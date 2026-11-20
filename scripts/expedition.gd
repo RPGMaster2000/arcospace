@@ -17,6 +17,7 @@ var persistence_enabled: bool:
 	get: return persistence.enabled
 	set(value): persistence.enabled = value
 var resume_data: Dictionary = {}
+var developer_test: Dictionary = {}
 var save_error: AcceptDialog
 var _battle_checkpoint: Dictionary:
 	get: return persistence.battle_checkpoint
@@ -159,6 +160,10 @@ var homeworld_sequence = preload("res://scripts/presentation/star_system/homewor
 var homeworld_previous_phase: Phase = Phase.OVERVIEW
 
 func _ready() -> void:
+	if resume_data.has("state"):
+		developer_test = resume_data.state.developer_test
+	if not developer_test.is_empty():
+		persistence_enabled = false
 	add_child(homeworld_sequence)
 	homeworld_sequence.finished.connect(func():
 		if state != null and not state.run_ended and phase == Phase.INTRO:
@@ -174,7 +179,9 @@ func _ready() -> void:
 	add_child(card_management)
 	card_management.confirmed.connect(_management_confirmed)
 	card_management.declined.connect(_management_declined)
-	card_management.save_quit_button.visible = persistence_enabled
+	card_management.save_quit_button.visible = persistence_enabled or not developer_test.is_empty()
+	if not developer_test.is_empty():
+		card_management.save_quit_button.text = "Exit Test"
 	card_management.save_quit_requested.connect(func():
 		if (phase == Phase.REWARD or card_management.mode == "purchase") and not card_management.closing: _save_and_quit())
 	card_management.closed.connect(func():
@@ -193,12 +200,12 @@ func _ready() -> void:
 	outcome_flash.visual_settings = visual_settings
 	add_child(outcome_flash)
 	_setup_field_repairs()
-	if persistence_enabled:
+	if persistence_enabled or not developer_test.is_empty():
 		_previous_auto_quit = get_tree().auto_accept_quit
 		get_tree().auto_accept_quit = false
 		_previous_back_quit = get_tree().quit_on_go_back
 		get_tree().quit_on_go_back = false
-		settings_button.menu.configure_save_quit(_save_and_quit)
+		_configure_settings_exit(settings_button.menu)
 	if resume_data.is_empty():
 		start_expedition()
 	else:
@@ -285,7 +292,7 @@ func _clear(kind: String, preserve_transition: bool = false) -> void:
 	if _uses_3d_map() and kind == "outcome" and not is_instance_valid(star_map) and state.navigation_origin != -1:
 		_show_star_map(false)
 	if _uses_3d_map() and is_instance_valid(star_map) and not star_map.visual_data.is_empty():
-		screen.set_system_name(star_map.visual_data.name)
+		_set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 	if not preserve_transition:
 		phase = {"system": Phase.OVERVIEW, "chasedown": Phase.CHASEDOWN,
@@ -374,7 +381,7 @@ func _travel_started() -> void:
 
 func start_expedition() -> bool:
 	var candidate = State.new()
-	candidate.start(selected_ship, rules)
+	candidate.start(selected_ship, rules, 0, developer_test)
 	if not persistence.save_candidate(candidate):
 		_show_save_error()
 		return false
@@ -427,10 +434,17 @@ func _show_save_error() -> void:
 	save_error.popup_centered(Vector2i(520, 180))
 
 
+func _configure_settings_exit(menu: CanvasLayer, in_battle: bool = false) -> void:
+	if not developer_test.is_empty():
+		menu.configure_test_exit(_save_and_quit)
+	elif persistence_enabled:
+		menu.configure_save_quit(_save_and_quit, in_battle)
+
+
 func _save_and_quit() -> bool:
 	if phase == Phase.EXITED:
 		return true
-	if not _save_progress():
+	if developer_test.is_empty() and not _save_progress():
 		_show_save_error()
 		return false
 	_go_to_menu()
@@ -441,7 +455,7 @@ func _notification(what: int) -> void:
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
 		_navigation_clock = Time.get_ticks_msec()
 		if state != null: state.navigation.rebase_movement()
-	if not persistence_enabled or state == null: return
+	if (not persistence_enabled and developer_test.is_empty()) or state == null: return
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		var cinematic_board = battle
 		if is_instance_valid(cinematic_board) and cinematic_board.has_method("_presentation_locked") and cinematic_board._presentation_locked():
@@ -464,9 +478,9 @@ func _notification(what: int) -> void:
 		var menu = battle.settings_button.menu if is_instance_valid(battle) else settings_button.menu
 		menu.present()
 	elif what == NOTIFICATION_APPLICATION_PAUSED:
-		if not _save_progress(): _show_save_error()
+		if persistence_enabled and not _save_progress(): _show_save_error()
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
-		if _save_progress():
+		if not persistence_enabled or _save_progress():
 			_prepare_departure()
 			get_tree().quit()
 		else: _show_save_error()
@@ -476,9 +490,13 @@ func _exit_tree() -> void:
 	if is_instance_valid(card_management): card_management.dismiss(true)
 	_cancel_presentation()
 	phase = Phase.EXITED
-	if persistence_enabled:
+	if persistence_enabled or not developer_test.is_empty():
 		get_tree().auto_accept_quit = _previous_auto_quit
 		get_tree().quit_on_go_back = _previous_back_quit
+
+
+func _set_system_name(value: String) -> void:
+	screen.set_system_name(value if developer_test.is_empty() else "Test · " + value)
 
 
 func show_system(preserve_transition: bool = false) -> void:
@@ -524,6 +542,7 @@ func show_system(preserve_transition: bool = false) -> void:
 		_show_star_map()
 		return
 	screen.present_system_grid(state, _icon, _grid_travel)
+	if not developer_test.is_empty(): _set_system_name(state.system_name)
 
 	var destination: int = state.travel_destination
 	if destination != -1:
@@ -606,7 +625,7 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		hash("%d:%d:sky" % [state.seed_used, state.system_number])
 	)
 	if _uses_3d_map():
-		screen.set_system_name(star_map.visual_data.name)
+		_set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 	if _uses_3d_map():
 		screen.overview_hud.attach_zoom(star_map)
@@ -645,12 +664,12 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.arrived.connect(func(index: int):
 			if star_map == source_map and phase == Phase.TRAVELING: visit(index))
 	if state.is_defense():
-		screen.set_system_name(star_map.visual_data.name)
+		_set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
 		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
 	elif state.is_warzone():
-		screen.set_system_name(state.system_name)
+		_set_system_name(state.system_name)
 		screen.set_warzone_status(state)
 	var destination: int = state.travel_destination
 	if resume_travel and destination != -1:
@@ -1329,8 +1348,7 @@ func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {
 		_battle_finished, _restart_from_battle, _exit_from_battle, checkpoint.environment)
 	battle.resume_combat = combat
 	add_child(battle)
-	if persistence_enabled:
-		battle.settings_button.menu.configure_save_quit(_save_and_quit, true)
+	_configure_settings_exit(battle.settings_button.menu, true)
 
 
 # The result transaction already committed Hull and Salvage.
@@ -1583,7 +1601,7 @@ func _reveal_mothership() -> void:
 	await get_tree().create_timer(1.2).timeout
 	if _presentation_current(revision, owner):
 		phase = Phase.OVERVIEW
-		screen.set_system_name(star_map.visual_data.name)
+		_set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
 

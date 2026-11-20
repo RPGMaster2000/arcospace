@@ -26,6 +26,7 @@ var signature_portrait
 var deck_viewer: CanvasLayer
 var info_overlay: CanvasLayer
 var settings_button: Button
+var developer_menu: CanvasLayer
 @onready var showcase = $World/Viewport/MainMenu3D
 @onready var deck_button: Button = $Selection/Actions/ViewDeck
 @onready var begin_button: Button = $Selection/Actions/Begin
@@ -43,6 +44,7 @@ func _ready() -> void:
 	settings_button = preload("res://scripts/ui/settings_button.gd").new()
 	settings_button.is_main_menu = true
 	add_child(settings_button)
+	settings_button.menu.configure_developer_testing(_open_developer_testing)
 	settings_button.menu.cinematics_changed.connect(func(enabled: bool):
 		showcase.skip_cinematics = enabled
 		if enabled and showcase.phase in [showcase.Phase.INTRO_BACKGROUND, showcase.Phase.INTRO_LOGO]: showcase.advance())
@@ -252,6 +254,21 @@ func _start() -> void:
 	_set_actions_enabled(false)
 	showcase.select_ship(selected_ship, true)
 	showcase.depart()
+
+
+func _open_developer_testing() -> void:
+	if is_instance_valid(developer_menu):
+		return
+	developer_menu = preload("res://scripts/ui/developer_test_menu.gd").new()
+	developer_menu.ship_name = Ships.PLAYERS[selected_ship].ship_name
+	developer_menu.launch_requested.connect(_launch_developer_test)
+	add_child(developer_menu)
+
+
+func _launch_developer_test(configuration: Dictionary) -> void:
+	var candidate = preload("res://scripts/expedition_state.gd").new()
+	candidate.start(selected_ship, preload("res://encounters/expedition_rules.tres"), 0, configuration)
+	_fade_to_game({"state": candidate, "battle": {}}, continue_fade_duration)
 
 
 func _continue_expedition() -> void:
