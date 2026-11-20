@@ -68,7 +68,8 @@ func run() -> void:
 		await activate(menu.settings_button, dimensions.x == 960)
 		var settings = menu.settings_button.menu
 		check(settings.shade.visible and paused, "Settings opens and pauses gameplay")
-		check(settings.main_menu_button.disabled, "Main Menu is disabled in the menu itself")
+		check(not settings.main_menu_button.disabled and settings.main_menu_button.text == "Developer Testing",
+			"Title settings offer Developer Testing instead of returning to the same menu")
 		check(music.player.can_process(), "Music remains active while gameplay is paused")
 		check(is_instance_valid(settings.extra_settings), "Future settings have a dedicated container")
 		await settle()

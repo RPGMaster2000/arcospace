@@ -19,6 +19,8 @@ var orbit_clearance: float = 0.0
 ## Sole owner of the optional new-system profile; absent in historical systems.
 var system_variation: Dictionary = {}
 var game_mode: String = "exploration"
+const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
+var developer_test: Dictionary = {}
 var warzone_campaign_enabled := true
 var defense: RefCounted
 var homeworld_outcome: Dictionary = {}
@@ -400,7 +402,7 @@ func encounter_at(index: int) -> Dictionary:
 	return service if index == SERVICE_INDEX else encounters[index]
 
 
-func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> void:
+func start(ship_index: int, configuration: Resource, seed_override: int = 0, test_launch: Dictionary = {}) -> void:
 	faction_id = ""
 	system_variation = {}
 	run_ended = false
@@ -411,7 +413,9 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	defense_poi_version = 0
 	decoys = 0
 	rules = configuration
-	game_mode = rules.game_mode
+	developer_test = DeveloperLaunch.configuration(test_launch.get("mode", ""),
+		test_launch.get("stage", 0), test_launch.get("rank", -1))
+	game_mode = developer_test.get("mode", rules.game_mode)
 	warzone_campaign_enabled = rules.warzone_campaign_enabled
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
 	hull = ship().hull_capacity
@@ -446,7 +450,17 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0) -> 
 	# Retain this legacy station-stream draw: removing it changes seeded profile outposts.
 	# The saved counter is compatibility data; profile probabilities now choose actual stations.
 	next_outpost_system = _station_interval()
-	generate_system()
+	if not developer_test.is_empty():
+		# A modest head start for skipped systems. The selected ship keeps its real starter deck.
+		system_number = int(developer_test.stage) - 1
+		salvage = 4 * system_number
+		battles_won = 2 * system_number
+		for point in range(floori(system_number / 2.0)):
+			var key: String = PRODUCTION[point % PRODUCTION.size()]
+			production_upgrades[key] = production_upgrades.get(key, 0) + 1
+		_generate_system(true)
+	else:
+		generate_system()
 
 
 func ship() -> Resource:
@@ -553,14 +567,20 @@ func _station_interval() -> int:
 # Generate encounters from one rules registry; both map and grid read this same array.
 # Transition eligibility stays here; the generator replaces mandatory Boss slots independently of presentation.
 func generate_system() -> bool:
+	return _generate_system(false)
+
+
+func _generate_system(initial_test_launch: bool) -> bool:
 	if not pending_choice.is_empty() or active_battle >= 0 or hull <= 0:
 		return false
-	if system_number > 0 and not can_jump():
+	if not initial_test_launch and system_number > 0 and not can_jump():
 		return false
-	# Snapshot outgoing Homeworld before the generator replaces DefenseState.
-	_remember_homeworld()
-	var post_warzone: bool = is_warzone()
-	game_mode = next_campaign_operation()
+	var post_warzone := false
+	if not initial_test_launch:
+		# Snapshot outgoing Homeworld before the generator replaces DefenseState.
+		_remember_homeworld()
+		post_warzone = is_warzone()
+		game_mode = next_campaign_operation()
 	_recorded_results.clear()
 	environmental_instances.clear()
 	layout_expansion = rules.system_expansion
@@ -707,6 +727,12 @@ func _sync_warzone() -> void:
 func _roll_battle_modifier() -> int:
 	Modifiers.roll_encounter(rng)
 	return 0
+
+
+func developer_enemy_rank() -> int:
+	if system_number == int(developer_test.get("stage", 0)):
+		return int(developer_test.get("rank", -1))
+	return -1
 
 
 func enemy_profile(encounter: Dictionary) -> Resource:
@@ -962,6 +988,7 @@ func try_chasedown(destination: int, forced_roll: float = -1.0) -> bool:
 	pending_destination = destination
 	chasedowns_this_system += 1
 	chasedown_index = encounters.size()
+	enemy = DeveloperLaunch.enemy(self, enemy, chasedown_index)
 	# Existing encounter/result pipeline; pursuit grants no FTL access or pressure.
 	encounters.append(
 		{

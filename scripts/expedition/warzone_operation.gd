@@ -1,6 +1,7 @@
 extends RefCounted
 ## Build ordinary encounter identities backed by the Warzone simulation.
 
+const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
 const Sector = preload("res://scripts/expedition/warzone_sector.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
@@ -47,12 +48,16 @@ static func generate(state: Resource, support: Dictionary) -> void:
 	state.service_revision += 1
 	var faction := Factions.select(state)
 	state.faction_id = faction.id
+	# Normal campaign Warzone begins at System 2. An earlier test uses the standard roster.
+	var early_test: bool = state.system_number == 1 and not state.developer_test.is_empty()
+	var escalated: bool = state.warzone.is_lattice() and not early_test
 	for index in Warzone.HOSTILE_GROUPS:
-		var enemy := _sector_enemy(state, faction, index) if state.warzone.is_lattice() else Factions.enemy(state, faction, index)
+		var enemy := _sector_enemy(state, faction, index) if escalated else Factions.enemy(state, faction, index)
+		enemy = DeveloperLaunch.enemy(state, enemy, index, faction)
 		state.encounters.append({"kind": "battle", "title": enemy.ship_name,
 			"enemy": maxi(0, Ships.ENEMIES.find(enemy)), "enemy_data": enemy, "modifier": 0,
 			"system_number": state.system_number, "completed": false})
-		if state.warzone.is_lattice():
+		if escalated and state.developer_enemy_rank() < 0:
 			state.encounters.back().warzone_rank = maxi(1, enemy.enemy_rank)
 	for index in state.warzone.objectives.size():
 		state.encounters.append({"kind": "poi", "title": state.warzone.objective_name(index),
