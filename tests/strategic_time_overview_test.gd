@@ -140,6 +140,7 @@ func check_battlefield_framing() -> void:
 	check(_in_frame(display, camera, contact.position) and _in_frame(display, camera, ally.position),
 		"Both participants fit in the HUD-safe view immediately")
 	check(not _in_frame(display, camera, other), "A separate distant engagement does not zoom out the view")
+	check(_in_frame(display, camera, host.star_map.ship.position), "The player remains in the same strategic-time frame")
 	await settle()
 	check(host.star_map.warzone_presentation.fx.emitted_beams > 0, "NPC beams still display during the overview")
 	await capture("strategic-battlefield")
@@ -228,6 +229,25 @@ func check_defense() -> void:
 	store.clear_run()
 
 
+func check_one_second_wait() -> void:
+	var state := fresh("warzone")
+	state.rules.warzone_tuning.wait_seconds = Rules.warzone_tuning.wait_seconds
+	var host := mount(state)
+	await settle()
+	check(host.screen.overview_hud.wait_button.text == "Wait 1s", "The default Wait HUD offers one second")
+	host._wait_in_warzone()
+	var display = host.strategic_overview
+	display.set_process(false)
+	display.advance(0.9)
+	check(display.activity != null and state.warzone.clock_ms < 1000, "One-second Wait retains real-time presentation")
+	display.advance(0.1)
+	check(display.activity == null and state.warzone.clock_ms == 1000, "The full Wait spends exactly one second")
+	await display.finished
+	check(state.warzone.clock_ms == 1000, "Camera return spends none of the next second")
+	host.queue_free()
+	await process_frame
+
+
 func check_disabled() -> void:
 	var state := fresh("warzone")
 	var host := mount(state)
@@ -255,6 +275,7 @@ func run() -> void:
 	await check_warzone(true)
 	await check_inspection()
 	await check_battlefield_framing()
+	await check_one_second_wait()
 	await check_defense()
 	await check_disabled()
 	print("Strategic time overview: %d checks, %d failures" % [checks, failures])

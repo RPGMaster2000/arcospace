@@ -36,6 +36,7 @@ var capture_ratio := 0.0
 var capture_tint := Color.WHITE
 var in_clash := false
 var fleet_strength := -1.0
+var forecast: Dictionary = {}
 var _pulse := 0.0
 
 
@@ -45,6 +46,12 @@ func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: fl
 	in_clash = clash
 	fleet_strength = strength
 	set_process(clash)
+	queue_redraw()
+
+
+func set_forecast(value: Dictionary) -> void:
+	if forecast == value: return
+	forecast = value
 	queue_redraw()
 
 
@@ -208,6 +215,17 @@ func _draw() -> void:
 			draw_rect(track, Color("20364b"))
 			track.size.x *= clampf(fleet_strength, 0.0, 1.0)
 			draw_rect(track, accent)
+	if not forecast.is_empty():
+		var plate := Rect2(Vector2(1, size.y - 16), Vector2(size.x - 2, 15))
+		draw_rect(plate, Color("101a28"))
+		var strip := Rect2(plate.position + Vector2(2, 1), Vector2(plate.size.x - 4, 3))
+		draw_rect(strip, Color("ff817c"))
+		strip.size.x *= forecast.allied_share
+		draw_rect(strip, Color("65dee9"))
+		var eta := "~%ds" % forecast.seconds
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size(eta, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+		draw_string(font, Vector2((size.x - width) * 0.5, size.y - 2), eta, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
 	if not Rect2(Vector2.ZERO,size).has_point(anchor_point):
 		var direction := anchor_point - size * 0.5
 		var ratio: float = minf(size.x * 0.5 / maxf(absf(direction.x), 0.001), size.y * 0.5 / maxf(absf(direction.y), 0.001))

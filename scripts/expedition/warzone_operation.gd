@@ -52,16 +52,23 @@ static func generate(state: Resource, support: Dictionary) -> void:
 	var early_test: bool = state.system_number == 1 and not state.developer_test.is_empty()
 	var escalated: bool = state.warzone.is_lattice() and not early_test
 	for index in Warzone.HOSTILE_GROUPS:
-		var enemy := _sector_enemy(state, faction, index) if escalated else Factions.enemy(state, faction, index)
-		enemy = DeveloperLaunch.enemy(state, enemy, index, faction)
-		state.encounters.append({"kind": "battle", "title": enemy.ship_name,
-			"enemy": maxi(0, Ships.ENEMIES.find(enemy)), "enemy_data": enemy, "modifier": 0,
-			"system_number": state.system_number, "completed": false})
-		if escalated and state.developer_enemy_rank() < 0:
-			state.encounters.back().warzone_rank = maxi(1, enemy.enemy_rank)
+		_add_contact(state, faction, escalated, index, false)
 	for index in state.warzone.objectives.size():
 		state.encounters.append({"kind": "poi", "title": state.warzone.objective_name(index),
 			"poi": OBJECTIVE_MODELS[index % OBJECTIVE_MODELS.size()], "completed": false})
+
+	if state.warzone.is_lattice() and state.warzone.has_reserves():
+		_add_contact(state, faction, escalated, Warzone.HOSTILE_GROUPS, true)
+
+
+static func _add_contact(state: Resource, faction: Resource, escalated: bool, slot: int, dormant: bool) -> void:
+	var enemy := _sector_enemy(state, faction, slot) if escalated else Factions.enemy(state, faction, slot)
+	enemy = DeveloperLaunch.enemy(state, enemy, slot, faction)
+	state.encounters.append({"kind": "battle", "title": enemy.ship_name,
+		"enemy": maxi(0, Ships.ENEMIES.find(enemy)), "enemy_data": enemy, "modifier": 0,
+		"system_number": state.system_number, "completed": dormant})
+	if escalated and state.developer_enemy_rank() < 0:
+		state.encounters.back().warzone_rank = maxi(1, enemy.enemy_rank)
 
 
 static func _sector_enemy(state: Resource, faction: Resource, index: int) -> Resource:

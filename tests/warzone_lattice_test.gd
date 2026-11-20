@@ -101,13 +101,14 @@ func supply_combat() -> void:
 	var op: RefCounted = cutoff.warzone
 	var order: Dictionary = op.operations(index, cutoff.salvage).front()
 	op.operate(index, order)
-	baseline.wait_in_warzone()
-	cutoff.wait_in_warzone()
+	for second in baseline.warzone.tuning.exchange_seconds:
+		baseline.wait_in_warzone()
+		cutoff.wait_in_warzone()
 	check(op.fleets[0].strength > baseline.warzone.fleets[0].strength,
 		"Disrupting hostile supply improves actual allied combat survival")
 	for fleet in op.fleets:
-		check(fleet.destination == fleet.at or fleet.destination in Sector.Lattice.neighbors(fleet.at, op.links),
-			"Autonomous fleet orders use only neighboring lattice waypoints")
+		check(fleet.withdrawing or fleet.engaged >= 0 or op.route_valid(fleet.side, fleet.at, fleet.destination),
+			"Autonomous fleet orders remain backed by usable lattice routes")
 
 
 func fleet_routing_and_convoys() -> void:
@@ -131,8 +132,8 @@ func fleet_routing_and_convoys() -> void:
 	fleet.destination = 4
 	fleet.strength = 8
 	op._move_fleet(fleet)
-	check(fleet.destination != 4 and fleet.destination in Sector.Lattice.neighbors(4, op.links),
-		"Allied fleets advance to a neighboring frontier after a capture")
+	check(fleet.destination != 4 and op.route_valid(fleet.side, 4, fleet.destination),
+		"Allied fleets advance to a connected frontier after a capture")
 
 
 func battle_progression() -> void:
@@ -168,7 +169,7 @@ func scenario(seed_value: int, strategy: String) -> void:
 		act(state, 7, "sabotage")
 	act(state, 4, "breach")
 	var op: RefCounted = state.warzone
-	for wait_index in 12:
+	for wait_index in 72:
 		if state.can_jump(): break
 		state.wait_in_warzone()
 	print(strategy, ": ", op.effort, " effort, ", op.supplied, " ", op.events)
@@ -178,6 +179,148 @@ func scenario(seed_value: int, strategy: String) -> void:
 		if next != null:
 			check(next.generate_system() and next.system_number == 3
 				and next.warzone_outcome.effort == op.effort, "Victory survives the campaign transition")
+
+
+func _edge(a: int, b: int) -> Vector2i:
+	return Vector2i(mini(a, b), maxi(a, b))
+
+
+func capture_cutoff(side: String) -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var site := 4
+	var origin := Sector.ALLIED_ROOT if side == "allied" else Sector.HOSTILE_ROOT
+	var other := Sector.HOSTILE_ROOT if side == "allied" else Sector.ALLIED_ROOT
+	var owner := "hostile" if side == "allied" else "allied"
+	op.links.assign([_edge(origin, 0), _edge(origin, 2), _edge(0, site), _edge(2, site), _edge(other, origin)])
+	for node in op.objectives.size():
+		if node not in [origin, other, 0, 2, site]: op.links.append(_edge(other, node))
+	op.objectives[0].owner = side
+	op.objectives[2].owner = side
+	op.objectives[site].owner = owner
+	op.convoy.clear()
+	for fleet in op.fleets:
+		fleet.strength = 0
+		fleet.engaged = -1
+	var attacker_id := 0 if side == "allied" else 2
+	var attacker: Dictionary = op.fleets[attacker_id]
+	attacker.strength = 4
+	attacker.at = 0
+	attacker.destination = site
+	attacker.position = op.objectives[site].position
+	var absent := Vector3(300, 0, 300)
+	op.note_player_position(absent)
+	op._refresh_supply()
+	op._capture(site, absent)
+	op._capture(site, absent)
+	check(op.objectives[site].progress == 2, side + " begins capture through supplied routes")
+	op.disrupted[0] = 5
+	op._refresh_supply()
+	check(op.objectives[site].progress == 2, side + " retains progress through an alternate supplied route")
+	op.disrupted[2] = 5
+	op._refresh_supply()
+	check(op.objectives[site].progress == 0 and op.objectives[site].capturing == "neutral"
+		and op.objectives[site].owner == owner and op.capture_cutoffs.has(site),
+		side + " cutoff immediately resets progress and preserves ownership")
+	var opponent: Dictionary = op.fleets[2 if side == "allied" else 0]
+	opponent.strength = 4
+	opponent.position = attacker.position + Vector3(1.0, 0, 0)
+	op._assign_engagements()
+	check(attacker.engaged == opponent.id, side + " fleets may still fight at the disconnected objective")
+	opponent.strength = 0
+	op._assign_engagements()
+	state._sync_warzone()
+	var restored := roundtrip(state)
+	if restored == null: return
+	op = restored.warzone
+	op.disrupted.clear()
+	op._refresh_supply()
+	op._capture(site, absent)
+	check(op.objectives[site].progress == 0, side + " restored supply cannot restart the same interrupted capture")
+	attacker = op.fleets[attacker_id]
+	attacker.position = op.objectives[0].position
+	op._capture(site, absent)
+	attacker.position = op.objectives[site].position
+	op._capture(site, absent)
+	check(op.objectives[site].progress == 1, side + " can start a fresh capture after re-entering")
+	for second in range(1, op.tuning.capture_seconds):
+		op._capture(site, absent)
+	op.disrupted[origin] = 5
+	op._refresh_supply()
+	check(op.objectives[site].owner == side and op.objectives[site].progress == 0,
+		side + " ownership survives a cutoff after capture completes")
+
+
+func direct_movement() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	op.links.assign([Vector2i(0, 1), Vector2i(0, 4)])
+	op.objectives[0].position = Vector3(0, 0, 10)
+	op.objectives[1].position = Vector3.ZERO
+	op.objectives[4].position = Vector3(10, 0, 0)
+	var fleet: Dictionary = op.fleets[0]
+	fleet.at = 1
+	fleet.destination = 1
+	fleet.position = Vector3.ZERO
+	op._refresh_supply()
+	op._move_fleet(fleet)
+	check(fleet.destination == 4 and fleet.position.x > 0.5 and is_zero_approx(fleet.position.z),
+		"Fleet flies directly to a connected target beyond an intermediate node")
+	var position: Vector3 = fleet.position
+	op.disrupted[0] = 5
+	op._refresh_supply()
+	op._move_fleet(fleet, 0.1)
+	check(fleet.destination == 1 and fleet.position.x < position.x,
+		"A severed route immediately redirects the ship without snapping")
+	op.disrupted.clear()
+	op.objectives[0].owner = "hostile"
+	op._refresh_supply()
+	check(not op.route_valid(fleet.side, 1, 4), "Ownership changes also invalidate direct orders")
+
+
+func reinforces_and_forecasts() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var forecasts: Dictionary = op.engagement_predictions()
+	check(forecasts.has(2) and forecasts[2].seconds > 0, "Active engagement has a positive resolution estimate")
+	op.fleets[2].strength = 2
+	var changed: Dictionary = op.engagement_predictions()[2]
+	check(changed.allied_share > forecasts[2].allied_share and changed.seconds < forecasts[2].seconds,
+		"Estimated odds and time respond to real attrition")
+	var bounds := Sector.Layout.bounds(state.layout_expansion)
+	for id in [Sector.ALLIED_RESERVE, Sector.HOSTILE_RESERVE]:
+		var reserve: Dictionary = op.fleet_at(id)
+		var at: Vector3 = reserve.position
+		check(not bounds.has_point(Vector2(at.x, at.z)) and not op.active(reserve),
+			"Each reserve starts dormant beyond the navigable boundary")
+	op.disrupted[Sector.HOSTILE_ROOT] = 45
+	op._refresh_supply()
+	state._commit_activity_time(31)
+	var allied: Dictionary = op.fleet_at(Sector.ALLIED_RESERVE)
+	var hostile: Dictionary = op.fleet_at(Sector.HOSTILE_RESERVE)
+	check(op.active(allied) and not op.active(hostile), "A severed supply root delays its reinforcements only")
+	var from: Vector3 = hostile.position
+	op.disrupted.clear()
+	op._refresh_supply()
+	state._commit_activity_time(2)
+	check(op.active(hostile) and hostile.position.distance_to(op.objectives[Sector.HOSTILE_ROOT].position)
+		< from.distance_to(op.objectives[Sector.HOSTILE_ROOT].position), "Restored supply admits a moving hostile wave")
+	var encounter: int = op.encounter_for_fleet(hostile)
+	check(state.can_visit(encounter) and not state.encounters[encounter].completed
+		and state.warzone_fleet(encounter).id == hostile.id, "Hostile reserve opens its own interceptable contact")
+	check(op.reserve_launched.size() == 2 and roundtrip(state) != null, "Bounded reinforcements persist without respawning")
+
+
+func historical_roster() -> void:
+	var state := fresh(19)
+	var historical := Store.encode(state)
+	historical.warzone.fleets.resize(Sector.ALLIED_RESERVE)
+	historical.encounters.pop_back()
+	historical.warzone.lattice.erase("reserve_launched")
+	historical.warzone.lattice.erase("capture_cutoffs")
+	var restored := Store.new().decode(JSON.parse_string(JSON.stringify(historical)), state.rules)
+	check(restored != null and not restored.warzone.has_reserves(),
+		"Existing lattice saves retain their original roster and encounter indices")
 
 
 func continuous_clock() -> void:
@@ -215,6 +358,11 @@ func continuous_clock() -> void:
 
 
 func run() -> void:
+	direct_movement()
+	capture_cutoff("allied")
+	capture_cutoff("hostile")
+	reinforces_and_forecasts()
+	historical_roster()
 	continuous_clock()
 	generation()
 	logistics()

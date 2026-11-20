@@ -721,9 +721,12 @@ func _grant_campaign_support(package: Dictionary) -> void:
 
 
 func warzone_fleet(index: int) -> Dictionary:
-	if not is_warzone() or index < 0 or index >= Warzone.HOSTILE_GROUPS:
-		return {}
-	return warzone.fleet_at(index + Warzone.ALLIED_GROUPS)
+	if not is_warzone() or index < 0: return {}
+	if index < Warzone.HOSTILE_GROUPS:
+		return warzone.fleet_at(index + Warzone.ALLIED_GROUPS)
+	if warzone.is_lattice() and index == Warzone.HOSTILE_GROUPS + warzone.objectives.size():
+		return warzone.fleet_at(WarzoneOperation.Sector.HOSTILE_RESERVE)
+	return {}
 
 
 func warzone_objective(index: int) -> Dictionary:
@@ -743,6 +746,7 @@ func warzone_operate(index: int, id: String, present: Callable = Callable()) -> 
 	var offset := index - Warzone.HOSTILE_GROUPS
 	for action in warzone.operations(offset, salvage):
 		if action.id != id or not action.enabled: continue
+		warzone.note_player_position(Defense.point(navigation.position))
 		salvage += warzone.operate(offset, action) - action.cost
 		_spend_activity_time(action.seconds, progress_committed.emit, present)
 		return true
@@ -772,9 +776,9 @@ func _advance_warzone_clock(seconds: float, from: Vector3, to: Vector3) -> void:
 
 
 func _sync_warzone() -> void:
-	for index in Warzone.HOSTILE_GROUPS:
-		if not warzone.active(warzone_fleet(index)):
-			encounters[index].completed = true
+	for fleet in warzone.fleets:
+		var index: int = warzone.encounter_for_fleet(fleet)
+		if index >= 0: encounters[index].completed = not warzone.active(fleet)
 	var lost: bool = travel_destination >= 0 and travel_destination < encounters.size() and encounters[travel_destination].completed
 	if warzone.is_lattice() and warzone.complete and navigation.leg_active:
 		lost = true

@@ -58,6 +58,10 @@ func run() -> void:
 		if host._map_input_allowed(): break
 		await create_timer(0.025).timeout
 	await _watch_fleet(host, operation, presentation)
+	var forecast: Dictionary = map.markers[0].forecast
+	check(not forecast.is_empty() and forecast.seconds > 0
+		and is_equal_approx(forecast.allied_share, operation.engagement_predictions()[2].allied_share),
+		"The map shows the simulated engagement estimate and allied share")
 	await capture("lattice-overview")
 	host._show_system_details()
 	var paused_clock: int = operation.clock_ms

@@ -95,8 +95,9 @@ func run() -> void:
 	var reinforcement: Node3D = presentation.models[3]
 	var origin := reinforcement.position
 	var before_shots: int = presentation.fx.emitted_beams
-	# Emit the real button action and inspect the tween before the first frame.
-	hud.wait_button.pressed.emit()
+	# Exercise legacy multi-step interpolation using the same committed cost
+	# as the historical fixture. The real Wait button below still spends 1s.
+	host.state._commit_activity_time(6)
 	var goal: Vector3 = host.state.warzone.fleets[3].position
 	check(reinforcement.position == origin and goal != origin,
 		"The authoritative move commits before visible interpolation")

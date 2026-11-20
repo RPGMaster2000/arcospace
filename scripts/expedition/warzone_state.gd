@@ -271,6 +271,10 @@ func _damage(fleet: Dictionary, damage: int) -> void:
 		_notice("%s %s destroyed." % [fleet.side.capitalize(), fleet.role])
 
 
+func _capture_allowed(_index: int, _side: String, _player: Vector3) -> bool:
+	return true
+
+
 func _capture(index: int, player: Vector3) -> void:
 	var objective := objectives[index]
 	var allied: bool = player.distance_to(objective.position) <= tuning.objective_radius
@@ -287,7 +291,7 @@ func _capture(index: int, player: Vector3) -> void:
 	var side := "neutral"
 	if allied != hostile:
 		side = "allied" if allied else "hostile"
-	if side == "neutral" or side == objective.owner:
+	if side == "neutral" or side == objective.owner or not _capture_allowed(index, side, player):
 		objective.progress = 0
 		objective.capturing = "neutral"
 		return
@@ -441,6 +445,18 @@ func _valid_consolidation(objective_records: Array[Dictionary], saved: int) -> b
 	return held[-REQUIRED_OBJECTIVES] == saved
 
 
+func _valid_fleet_count(count: int) -> bool:
+	return count == ALLIED_GROUPS + HOSTILE_GROUPS
+
+
+func _fleet_side(id: int) -> String:
+	return "allied" if id < ALLIED_GROUPS else "hostile"
+
+
+func encounter_for_fleet(fleet: Dictionary) -> int:
+	return int(fleet.id) - ALLIED_GROUPS if fleet.side == "hostile" else -1
+
+
 func restore(data: Variant, configuration: Resource) -> bool:
 	if not data is Dictionary or not data.get("complete") is bool:
 		return false
@@ -449,7 +465,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			return false
 	if not data.get("objectives") is Array or not _valid_objective_count(data.objectives.size()):
 		return false
-	if not data.get("fleets") is Array or data.fleets.size() != ALLIED_GROUPS + HOSTILE_GROUPS:
+	if not data.get("fleets") is Array or not _valid_fleet_count(data.fleets.size()):
 		return false
 	if not data.get("events") is Array or data.events.size() > MAX_EVENTS:
 		return false
@@ -484,7 +500,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	for fleet in data.fleets:
 		if not fleet is Dictionary or not Navigation.valid_point(fleet.get("position"), false):
 			return false
-		var expected_side := "allied" if restored_fleets.size() < ALLIED_GROUPS else "hostile"
+		var expected_side := _fleet_side(restored_fleets.size())
 		if fleet.get("id") != restored_fleets.size() or fleet.get("side") != expected_side or fleet.get("role") not in ROLES:
 			return false
 		if not Defense.number(fleet.get("destination"), 0, restored_objectives.size() - 1) or not Defense.number(fleet.get("engaged"), -1, data.fleets.size() - 1):

@@ -23,6 +23,18 @@ The player can use free navigation, including behind hostile lines.
 - **Fleet wreckage** is briefly recoverable at the associated lattice position.
   The protected Trading Outpost keeps its existing service and is outside the lattice.
 
+Fleets fly a direct course to lattice-connected objectives. Cutting a route can
+redirect them and immediately resets any capture that loses its last supplied
+link. Restoring the link permits a new attack when an attacker enters the site.
+The previous owner retains control until a fresh capture succeeds.
+
+New sectors have one reserve formation per side. They approach from outside the
+sector once their supply network can support them. Their strength depends on
+connected installations, and a cutoff can delay their entry. Historical sectors
+retain their existing fleet roster. The fleet marker at each engagement shows an
+attrition estimate based on current strength and incoming fire. **Wait** spends
+one strategic second.
+
 Wars end after reaching the War Effort threshold and holding a supplied command
 objective through consolidation. War Effort credits operations, captures, cutoffs,
 reconnections and destroyed hostile formations by stable accomplishment keys.
@@ -54,8 +66,8 @@ second-based timing.
 
 **Strategic Time Overview** in Settings is on by default for timed noncombat
 actions in Warzone and Starfront Defense. Confirmed actions cut to a local
-cluster of hostile fleets, favoring active engagements and keeping the camera
-with its current group while priorities are tied. With no hostiles, it frames
+cluster of hostile fleets and the player, favoring active engagements and keeping the camera
+with its current group while priorities are tied. A 12% framing margin leaves room around the ships. With no hostiles, it frames
 the player and a nearby objective. The progress bar displays one strategic
 second per active second, and returning the camera spends none. Turning the setting off
 settles the same fixed steps immediately. An orderly quit or application

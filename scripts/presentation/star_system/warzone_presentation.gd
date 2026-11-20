@@ -105,10 +105,12 @@ func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionar
 	var model: Node3D = models.get(id)
 	var next: Vector3 = fleet.position
 	if model == null:
-		model = _create_fleet(fleet, objects)
+		model = _create_fleet(fleet, operation, objects)
 		model.position = next
 		model.rotation.y = heading
 	var previous_strength: int = prior.get("strength", fleet.strength)
+	if previous_strength == 0 and fleet.strength > 0:
+		model.position = next
 	if fleet.strength < previous_strength:
 		fx.impact(model.position, fleet.strength == 0)
 	model.visible = operation.active(fleet)
@@ -315,7 +317,7 @@ func _line(from: Vector3, to: Vector3, tint: Color) -> void:
 		paths.surface_add_vertex(point - Vector3.UP * 0.12)
 
 
-func _create_fleet(fleet: Dictionary, objects: Dictionary) -> Node3D:
+func _create_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionary) -> Node3D:
 	var id: int = fleet.id
 	var model: Node3D
 	if fleet.side == "allied":
@@ -333,7 +335,7 @@ func _create_fleet(fleet: Dictionary, objects: Dictionary) -> Node3D:
 		model.add_child(label)
 		allies[id] = label
 	else:
-		model = objects[id - Warzone.ALLIED_GROUPS]
+		model = objects[operation.encounter_for_fleet(fleet)]
 	var frame := Node3D.new()
 	model.add_child(frame)
 	frame.scale = Vector3.ONE / maxf(0.001, model.scale.x)

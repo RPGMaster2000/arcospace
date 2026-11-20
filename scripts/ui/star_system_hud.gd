@@ -554,6 +554,10 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 				_flash_warzone_warning("Allied fleet lost")
 			elif event.contains("captured"):
 				_flash_warzone_warning("Site captured" if event.begins_with("Allied") else "Site lost")
+			elif event.contains("reinforcements entering the sector."):
+				_flash_warzone_warning(event.get_slice(" ", 0) + " reinforcements")
+			elif event.begins_with("Capture link severed"):
+				_flash_warzone_warning("Capture link severed")
 			elif event.contains("Severed hostile supply"):
 				_flash_warzone_warning("Hostile supply cut")
 		_warzone_event = operation.event_revision

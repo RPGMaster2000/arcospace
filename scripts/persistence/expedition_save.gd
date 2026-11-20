@@ -313,10 +313,12 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		state.warzone = State.WarzoneOperation.Sector.new() if data.warzone.has("lattice") else State.Warzone.new()
 		if not state.warzone.restore(data.warzone, configuration.warzone_tuning) or state.warzone.complete != data.ftl_access:
 			return null
-		if entries.size() != State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size():
+		var reserve: bool = state.warzone.is_lattice() and state.warzone.has_reserves()
+		var expected_count: int = State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size() + int(reserve)
+		if entries.size() != expected_count:
 			return null
 		for index in entries.size():
-			if index < State.Warzone.HOSTILE_GROUPS:
+			if index < State.Warzone.HOSTILE_GROUPS or (reserve and index == expected_count - 1):
 				if (entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index))
 					or entries[index].has("warzone_rank") != state.warzone.is_lattice()):
 					return null

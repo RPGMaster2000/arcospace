@@ -49,16 +49,22 @@ func _choose_frame(map: Control, safe: Rect2) -> Transform3D:
 		candidates.sort_custom(func(a, b):
 			if a.priority != b.priority: return a.priority > b.priority
 			if (a.id == _anchor) != (b.id == _anchor): return a.id == _anchor
+			var first: float = (a.points[0] as Vector3).distance_squared_to(map.ship.position)
+			var second: float = (b.points[0] as Vector3).distance_squared_to(map.ship.position)
+			if a.priority == 3 and not is_equal_approx(first, second): return first < second
 			return a.distance < b.distance if a.distance != b.distance else a.id < b.id)
 		var anchor: Dictionary = candidates.front()
 		_anchor = anchor.id
 		points.assign(anchor.points)
+		points.append(map.ship.position)
+		var required: float = _fit(points, axes, slopes, safe).distance
+		var limit := maxf(MAX_DISTANCE, required * 1.13)
 		for candidate in candidates.slice(1):
 			if (candidate.points[0] as Vector3).distance_to(anchor.points[0]) > CLUSTER_RADIUS:
 				continue
 			var expanded: Array[Vector3] = points.duplicate()
 			expanded.append_array(candidate.points)
-			if _fit(expanded, axes, slopes, safe).distance <= MAX_DISTANCE:
+			if _fit(expanded, axes, slopes, safe).distance <= limit:
 				points = expanded
 	var result := _fit(points, axes, slopes, safe)
 	return result.pose
@@ -141,5 +147,6 @@ static func _fit(points: Array[Vector3], axes: Basis, slopes: Vector2, safe: Rec
 			upper = upper.min(plane - Vector2.ONE * SHIP_MARGIN + low * z)
 	var span := (lower - upper) / (high - low)
 	var distance := maxf(MIN_DISTANCE, maxf(closest + 4.0, maxf(span.x, span.y)))
+	distance *= 1.12
 	var shifted := 0.5 * (lower + upper - (high + low) * distance)
 	return {"distance": distance, "pose": Transform3D(axes, pivot + axes * Vector3(shifted.x, shifted.y, distance))}
