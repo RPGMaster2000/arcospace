@@ -29,7 +29,7 @@ extends Resource
 @export_range(1, 30, 1) var support_minimum_strength := 2
 @export_range(1, 20, 1) var support_minimum_damage := 6
 @export_range(1, 20, 1) var support_maximum_damage := 9
-@export_range(1, 30, 1) var wait_seconds := 6
+@export_range(1, 30, 1) var wait_seconds := 1
 
 @export_group("Lattice operations")
 @export_range(20, 150, 1) var effort_goal := 60

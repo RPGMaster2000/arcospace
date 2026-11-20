@@ -1768,8 +1768,9 @@ func _inspect_marker(index: int) -> void:
 	if not fleet.is_empty():
 		_clear("preview")
 		_add_fleet_readout(fleet, state.warzone)
-		var contact: int = fleet.engaged - State.Warzone.ALLIED_GROUPS
-		if contact >= 0:
+		var hostile: Dictionary = state.warzone.fleet_at(fleet.engaged)
+		if not hostile.is_empty() and state.warzone.active(hostile):
+			var contact: int = state.warzone.encounter_for_fleet(hostile)
 			view.add_child(_label("In range to assist" if state.can_engage(contact) else "Intercept the hostile fleet to assist", 15))
 		else:
 			view.add_child(_label("No hostile contact", 15))

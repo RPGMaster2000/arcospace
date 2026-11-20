@@ -1231,10 +1231,11 @@ func sync_warzone(operation: RefCounted) -> void:
 	if not is_instance_valid(warzone_presentation) or operation == null:
 		return
 	warzone_presentation.refresh(operation, objects)
+	var forecasts: Dictionary = operation.engagement_predictions() if operation.is_lattice() else {}
 	for fleet in operation.fleets:
 		var allied: bool = fleet.side == "allied"
 		if allied and not operation.is_lattice(): continue
-		var index: int = WARZONE_ALLY_MARKER_BASE + fleet.id if allied else fleet.id - operation.ALLIED_GROUPS
+		var index: int = WARZONE_ALLY_MARKER_BASE + fleet.id if allied else operation.encounter_for_fleet(fleet)
 		if allied and not markers.has(index):
 			_add_warzone_ally(index, fleet.id)
 		if not objects.has(index): continue
@@ -1254,6 +1255,11 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.set_label("", glyph, false)
 		marker.tooltip_text = "%s %s · Strength %d · %s\nObjective: %s" % [
 			fleet.side.capitalize(), fleet.role, fleet.strength, status, operation.objective_name(fleet.destination)]
+		marker.set_forecast(forecasts.get(fleet.id, {}))
+		if not marker.forecast.is_empty():
+			var share: float = marker.forecast.allied_share
+			var favored := "Even" if is_equal_approx(share, 0.5) else ("Allied favored" if share > 0.5 else "Hostile favored")
+			marker.tooltip_text += "\n%s · Estimated %ds" % [favored, marker.forecast.seconds]
 		marker.accessibility_name = marker.tooltip_text
 	for offset in operation.objectives.size():
 		var index: int = operation.HOSTILE_GROUPS + offset
@@ -1276,7 +1282,7 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.set_lattice_name_visible(show_name)
 			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
 			if operation.disrupted.has(offset): tag += "!"
-			elif not operation.is_supplied(offset): tag += "/"
+			elif not operation.is_supplied(offset) or operation.capture_cutoffs.has(offset): tag += "/"
 			var capture: float = float(objective.progress) / operation.tuning.capture_seconds
 			var capture_tint := WarzonePresentation.ALLIED if objective.capturing == "allied" else WarzonePresentation.HOSTILE
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)

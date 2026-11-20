@@ -9,6 +9,10 @@ const COMMANDS := [4, 6]
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
 const FLEET_LIMIT := 40
 const MOVEMENT_STEP_MS := 100
+const ALLIED_RESERVE := ALLIED_GROUPS + HOSTILE_GROUPS
+const HOSTILE_RESERVE := ALLIED_RESERVE + 1
+const PLAYER := -1
+const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 var pattern := 0
 var links: Array[Vector2i] = []
@@ -20,6 +24,10 @@ var effort := 0
 var convoy := {}
 var recovered := false
 var wreckage := {}
+var capture_cutoffs := {}
+var reserve_launched := {}
+var _player_position := Vector3.INF
+var _route_cache := {}
 
 
 func is_lattice() -> bool:
@@ -57,6 +65,13 @@ func setup_sector(configuration: Resource, strength: int, expansion: float, seed
 	_add_front("hostile", "Defender", 7, 7, hostile, 0.0)
 	_add_front("hostile", "Reinforcement", 8, 8, hostile - 2, 0.0)
 	_add_front("hostile", "Defender", 5, 5, hostile - 2, 0.0)
+	var bounds := Layout.bounds(expansion)
+	for side in ["allied", "hostile"]:
+		var root := ALLIED_ROOT if side == "allied" else HOSTILE_ROOT
+		_add_front(side, "Reinforcement", root, root, 0, 0.0)
+		var outside := bounds.position.x - 5.0 if side == "allied" else bounds.end.x + 5.0
+		fleets.back().position = Vector3(outside, 0, objectives[root].position.z)
+		fleets.back().arriving = false
 	_refresh_supply()
 	_assign_engagements(true)
 	_launch_convoy()
@@ -72,9 +87,104 @@ func _add_front(side: String, role: String, at: int, next: int, strength: int, f
 	fleets.back().withdrawing = false
 
 
-func _refresh_supply() -> void:
+func _refresh_supply(announce: bool = true) -> void:
+	_route_cache.clear()
 	supplied.allied = Lattice.reachable(objectives, links, ALLIED_ROOT, "allied", disrupted)
 	supplied.hostile = Lattice.reachable(objectives, links, HOSTILE_ROOT, "hostile", disrupted)
+	for index in objectives.size():
+		var site: Dictionary = objectives[index]
+		if site.progress <= 0 or _capture_connected(index, site.capturing):
+			continue
+		var present := _capture_presence(index, site.capturing, _player_position)
+		if not announce and site.capturing == "allied" and not present.has(PLAYER):
+			present.append(PLAYER) # Historical saves may have had the player holding this site.
+		capture_cutoffs[index] = {"side": site.capturing, "present": present}
+		site.progress = 0
+		site.capturing = "neutral"
+		if announce: _notice("Capture link severed · " + objective_name(index))
+
+
+func note_player_position(point: Vector3) -> void:
+	_player_position = point
+
+
+func _capture_connected(index: int, side: String) -> bool:
+	return Lattice.neighbors(index, links, disrupted).any(func(site): return site in supplied.get(side, []))
+
+
+func _capture_presence(index: int, side: String, player: Vector3) -> Array[int]:
+	var present: Array[int] = []
+	var position: Vector3 = objectives[index].position
+	if side == "allied" and player.distance_to(position) <= tuning.objective_radius:
+		present.append(PLAYER)
+	for fleet in fleets:
+		if fleet.side == side and active(fleet) and not fleet.withdrawing \
+			and fleet.position.distance_to(position) <= tuning.objective_radius:
+			present.append(fleet.id)
+	return present
+
+
+func _refresh_capture_presence(index: int, player: Vector3) -> void:
+	var cutoff: Dictionary = capture_cutoffs.get(index, {})
+	if not cutoff.is_empty():
+		var present := _capture_presence(index, cutoff.side, player)
+		if present.is_empty():
+			capture_cutoffs.erase(index)
+		else:
+			cutoff.present = cutoff.present.filter(func(id): return id in present)
+
+
+func _capture(index: int, player: Vector3) -> void:
+	_refresh_capture_presence(index, player)
+	super._capture(index, player)
+
+
+func _capture_allowed(index: int, side: String, player: Vector3) -> bool:
+	if not _capture_connected(index, side): return false
+	var cutoff: Dictionary = capture_cutoffs.get(index, {})
+	if not cutoff.is_empty() and cutoff.side == side:
+		var present := _capture_presence(index, side, player)
+		if not present.any(func(id): return id not in cutoff.present):
+			return false
+	capture_cutoffs.erase(index)
+	return true
+
+
+func encounter_for_fleet(fleet: Dictionary) -> int:
+	if fleet.id == HOSTILE_RESERVE:
+		return HOSTILE_GROUPS + objectives.size()
+	return super.encounter_for_fleet(fleet)
+
+
+func has_reserves() -> bool:
+	return fleets.size() == HOSTILE_RESERVE + 1
+
+
+func _valid_fleet_count(count: int) -> bool:
+	return super._valid_fleet_count(count) or count == HOSTILE_RESERVE + 1
+
+
+func _fleet_side(id: int) -> String:
+	return "allied" if id == ALLIED_RESERVE else super._fleet_side(id)
+
+
+func _dispatch_reserves() -> void:
+	if not has_reserves(): return
+	for order in [[ALLIED_RESERVE, 22, ALLIED_ROOT], [HOSTILE_RESERVE, 30, HOSTILE_ROOT]]:
+		var id: int = order[0]
+		if reserve_launched.has(id) or clock_ms < order[1] * STEP_MS: continue
+		var fleet := fleet_at(id)
+		var network: Array = supplied[fleet.side]
+		if network.size() < 2: continue
+		# A connected shipyard or additional supplied sites make a stronger wave.
+		var strength := mini(6, 2 + network.size() + int(8 in network))
+		fleet.strength = strength
+		fleet.strength_limit = strength
+		fleet.at = order[2]
+		fleet.destination = order[2]
+		fleet.arriving = true
+		reserve_launched[id] = true
+		_notice("%s reinforcements entering the sector." % fleet.side.capitalize())
 
 
 func is_supplied(index: int) -> bool:
@@ -109,12 +219,16 @@ func motion_step_ms() -> int:
 
 
 func _advance_step(player: Vector3, allow_victory: bool) -> void:
+	_player_position = player
+	for index in capture_cutoffs.keys():
+		_refresh_capture_presence(index, player)
 	var second := clock_ms % STEP_MS == 0
 	if second:
 		for site in disrupted.keys():
 			disrupted[site] -= 1
 			if disrupted[site] <= 0: disrupted.erase(site)
 		_refresh_supply()
+		_dispatch_reserves()
 	_assign_engagements(true)
 	for fleet in fleets:
 		if active(fleet) and fleet.engaged < 0:
@@ -156,63 +270,79 @@ func _command_ready() -> bool:
 
 
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
+	if fleet.get("arriving", false) and supplied[fleet.side].size() < 2:
+		return
 	while seconds > 0.00001:
 		var at: int = fleet.at
 		var next: int = fleet.destination
 		var position: Vector3 = fleet.position
-		if at != next and not fleet.withdrawing and next not in Lattice.neighbors(at, links, disrupted):
-			# A severed corridor sends ships back along the same segment.
-			next = at
-			fleet.destination = at
+		if at != next and not fleet.withdrawing and not route_valid(fleet.side, at, next):
+			next = _direct_target(fleet)
+			fleet.destination = next
 		var target: Vector3 = objectives[next].position
 		var distance := position.distance_to(target)
 		if distance <= 0.00001:
 			fleet.at = next
+			if fleet.has("arriving"): fleet.arriving = false
 			fleet.withdrawing = false
-			if objectives[next].owner != fleet.side and not disrupted.has(next) and fleet.strength > 2:
+			if objectives[next].owner != fleet.side and fleet.strength > 2 and _capture_connected(next, fleet.side):
 				return
-			fleet.destination = _next_hop(fleet)
+			fleet.destination = _direct_target(fleet)
 			if fleet.destination == next:
 				return
 			continue
-		var speed: float = tuning.fleet_speed * (1.0 if at in supplied[fleet.side] else 0.72)
+		var speed: float = tuning.fleet_speed * (1.0 if _fleet_supplied(fleet) else 0.72)
 		fleet.position = position.move_toward(target, speed * seconds)
 		seconds -= distance / speed
 
 
-func _next_hop(fleet: Dictionary) -> int:
+func route_valid(side: String, origin: int, target: int) -> bool:
+	if origin == target: return true
+	var key := Vector3i(origin, target, int(side == "hostile"))
+	if not _route_cache.has(key):
+		_route_cache[key] = (objectives[target].owner == side or _capture_connected(target, side)) \
+			and not _supply_route(side, origin, target, true).is_empty()
+	return _route_cache[key]
+
+
+func _direct_target(fleet: Dictionary) -> int:
 	var at: int = fleet.at
 	var side: String = fleet.side
-	var retreat: bool = fleet.strength <= 2
-	if retreat and at in supplied[side]: return at
+	var retreat: bool = fleet.strength <= 2 or at not in supplied[side]
 	var goal: int = fleet.counter_target
-	if not retreat and goal >= 0 and goal != at:
-		var path := _supply_route(side, at, goal, true)
-		if path.size() >= 2: return path[1]
+	if not retreat and goal >= 0 and goal != at and route_valid(side, at, goal):
+		return goal
 	if goal >= 0: fleet.counter_target = -1
-	var frontier: Array[int] = [at]
-	var first := {at: at}
+	if retreat:
+		var closest := INF
+		var safe := at
+		for site in supplied[side]:
+			var distance: float = fleet.position.distance_squared_to(objectives[site].position)
+			if distance < closest and route_valid(side, at, site):
+				closest = distance
+				safe = site
+		return safe
+	var queued: Array[int] = [at]
+	var visited := {at: true}
 	var cursor := 0
-	while cursor < frontier.size():
-		var site := frontier[cursor]
+	while cursor < queued.size():
+		var site := queued[cursor]
 		cursor += 1
 		for next in Lattice.neighbors(site, links, disrupted):
-			if first.has(next): continue
-			first[next] = next if site == at else first[site]
-			if retreat:
-				var safe: bool = is_supplied(next) and objectives[next].owner == side
-				if safe: return first[next]
-			elif objectives[next].owner != side:
-				if fleet.role == "Defender" and side == "hostile" and objectives[next].owner != "allied": continue
-				return first[next]
-			if objectives[next].owner == side: frontier.append(next)
+			if visited.has(next): continue
+			visited[next] = true
+			if objectives[next].owner == side:
+				queued.append(next)
+			elif fleet.role != "Defender" or side != "hostile" or objectives[next].owner == "allied":
+				return next
 	return at
 
 
 func _counterattack(index: int) -> void:
+	_refresh_supply()
 	var candidates := fleets.filter(func(fleet):
 		return (fleet.side == "hostile" and active(fleet) and fleet.engaged < 0
-			and fleet.strength > 2 and _supply_route("hostile", fleet.at, index, true).size() >= 2))
+			and fleet.strength > 2 and fleet.at in supplied.hostile and route_valid("hostile", fleet.at, index)))
 	var point: Vector3 = objectives[index].position
 	candidates.sort_custom(func(a, b):
 		var first: float = a.position.distance_squared_to(point)
@@ -237,13 +367,54 @@ func _exchange_damage() -> void:
 				fleet.strength += 1
 			continue
 		volley.append(Vector2i(fleet.id, fleet.engaged))
-		var shot := 2 if supplied_fleet and (fleet.side == "hostile" or fleet.strength >= tuning.heavy_damage_strength) else 1
-		damage[fleet.engaged] += shot
+		damage[fleet.engaged] += _shot_damage(fleet)
 	for fleet in fleets:
 		if damage[fleet.id] <= 0: continue
 		_damage(fleet, damage[fleet.id])
 		if not active(fleet) and fleet.side == "hostile":
 			_award("fleet:%d" % fleet.id, tuning.victory_effort, "Allied strategic victory")
+
+
+func _shot_damage(fleet: Dictionary) -> int:
+	return 2 if _fleet_supplied(fleet) and (fleet.side == "hostile" or fleet.strength >= tuning.heavy_damage_strength) else 1
+
+
+# One forecast per connected fight. Estimate from the same per-target attrition
+# as a volley. Estimates are conditional on the fleets keeping current targets.
+func engagement_predictions() -> Dictionary:
+	var predictions := {}
+	var visited := {}
+	for fleet in fleets:
+		if not active(fleet) or fleet.engaged < 0 or visited.has(fleet.id): continue
+		var component: Array[int] = [fleet.id]
+		visited[fleet.id] = true
+		var cursor := 0
+		while cursor < component.size():
+			var id := component[cursor]
+			cursor += 1
+			for member in fleets:
+				if not active(member) or visited.has(member.id): continue
+				if member.engaged == id or fleet_at(id).engaged == member.id:
+					visited[member.id] = true
+					component.append(member.id)
+		var damage := {"allied": 0, "hostile": 0}
+		var strength := {"allied": 0, "hostile": 0}
+		var anchor := HOSTILE_RESERVE + 1
+		for id in component:
+			var member := fleet_at(id)
+			strength[member.side] += member.strength
+			if member.engaged in component: damage[member.side] += _shot_damage(member)
+			if member.side == "hostile": anchor = mini(anchor, id)
+		if damage.allied == 0 or damage.hostile == 0 or anchor > HOSTILE_RESERVE: continue
+		var allied_endurance: float = float(strength.allied) / damage.hostile
+		var hostile_endurance: float = float(strength.hostile) / damage.allied
+		var intervals: int = tuning.exchange_seconds * STEP_MS
+		var volleys := ceili(minf(allied_endurance, hostile_endurance))
+		var remaining := intervals - posmod(clock_ms, intervals)
+		predictions[anchor] = {
+			"allied_share": allied_endurance / (allied_endurance + hostile_endurance),
+			"seconds": ceili((remaining + (volleys - 1) * intervals) / float(STEP_MS))}
+	return predictions
 
 
 func _damage(fleet: Dictionary, damage: int) -> void:
@@ -279,6 +450,7 @@ func _launch_convoy(side: String = "hostile") -> void:
 
 
 func _supply_route(side: String, origin: int, target: int, allow_hostile_target: bool = false) -> Array[int]:
+	if disrupted.has(origin): return []
 	var queued: Array[int] = [origin]
 	var previous := {origin: -1}
 	var cursor := 0
@@ -376,9 +548,11 @@ func snapshot() -> Dictionary:
 	var value := super.snapshot()
 	value.lattice = {"version": 2, "pattern": pattern, "links": links.map(func(edge): return [edge.x, edge.y]),
 		"effort": effort, "accomplishments": accomplishments.duplicate(), "planned": planned.duplicate(),
-		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {}}
+		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {},
+		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {}}
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
 	for key in wreckage: value.lattice.wreckage[str(key)] = wreckage[key]
+	for key in capture_cutoffs: value.lattice.capture_cutoffs[str(key)] = capture_cutoffs[key].duplicate(true)
 	return value
 
 
@@ -413,7 +587,6 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			or not Defense.number(fleet.get("strength_limit"), fleet.strength, FLEET_LIMIT) \
 			or not Defense.number(fleet.get("counter_target"), -1, objectives.size() - 1): return false
 		if not fleet.get("withdrawing") is bool: return false
-		if fleet.at != fleet.destination and fleet.destination not in Lattice.neighbors(int(fleet.at), links): return false
 		fleet.counter_target = int(fleet.counter_target)
 		fleet.at = int(fleet.at)
 		fleet.strength_limit = int(fleet.strength_limit)
@@ -456,6 +629,36 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		accomplishments[key] = int(saved.accomplishments[key])
 	planned = saved.planned.duplicate()
 	recovered = saved.recovered
-	_refresh_supply()
+	if not _restore_logistics(saved): return false
+	_refresh_supply(false)
 	if not convoy.is_empty() and not _convoy_route_valid(convoy.side, convoy.route): return false
 	return consolidation == 0 or (effort >= tuning.effort_goal and _command_ready())
+
+
+func _restore_logistics(saved: Dictionary) -> bool:
+	for site in objectives:
+		if site.progress > 0 and (site.capturing == "neutral" or site.capturing == site.owner): return false
+	var launched: Variant = saved.get("reserve_launched", [])
+	if not launched is Array or launched.size() > 2 or (not has_reserves() and not launched.is_empty()): return false
+	for id in launched:
+		if not Defense.number(id, ALLIED_RESERVE, HOSTILE_RESERVE) or reserve_launched.has(int(id)): return false
+		reserve_launched[int(id)] = true
+	if has_reserves():
+		for id in [ALLIED_RESERVE, HOSTILE_RESERVE]:
+			var reserve := fleet_at(id)
+			if not reserve.get("arriving") is bool: return false
+			if not reserve_launched.has(id) and (active(reserve) or reserve.arriving): return false
+	var cutoffs: Variant = saved.get("capture_cutoffs", {})
+	if not cutoffs is Dictionary or cutoffs.size() > objectives.size(): return false
+	for key in cutoffs:
+		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1): return false
+		var record: Variant = cutoffs[key]
+		if not record is Dictionary or record.get("side") not in ["allied", "hostile"] or not record.get("present") is Array: return false
+		if record.present.size() > fleets.size() + 1 or objectives[int(key)].progress > 0: return false
+		var present: Array[int] = []
+		for id in record.present:
+			if not Defense.number(id, PLAYER, fleets.size() - 1) or int(id) in present: return false
+			if (id == PLAYER and record.side != "allied") or (id != PLAYER and fleet_at(int(id)).side != record.side): return false
+			present.append(int(id))
+		capture_cutoffs[int(key)] = {"side": record.side, "present": present}
+	return true
