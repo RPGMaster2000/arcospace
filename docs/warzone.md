@@ -1,6 +1,62 @@
-# Warzone implementation
+# Warzone v2 · Strategic Lattice Warfare
 
-## Campaign foundation
+## Playing the sector
+
+System 2 opens in a starless deep-space sector with a small allied foothold and two
+active fleet engagements. **Lattice** emphasizes viable, contested and severed routes.
+An **A** or **H** badge identifies ownership. **!** marks disruption and **/** marks
+isolation. Inspect a site for its name, supply status and available operations.
+The player can use free navigation, including behind hostile lines.
+
+- **Command and junctions** open routes to capture. Disrupt command defenses and
+  remain nearby for the capture interval if allied fleets cannot reach the site.
+- **Supply depots and communications infrastructure** can be disrupted to sever
+  routes and force nearby hostile fleets to withdraw. A depot raid yields Salvage.
+- **Convoys** follow the supplied graph. Either side can deliver reserves. The
+  player can ambush a hostile convoy at one of its current route endpoints.
+- **Repairs** spend Salvage and restore existing allied formations. If both were
+  lost, a repair operation can relaunch one reserve once per sector.
+- **Fleet wreckage** is briefly recoverable at the associated lattice position.
+  The protected Trading Outpost keeps its existing service and is outside the lattice.
+
+Wars end after reaching the War Effort threshold and holding a supplied command
+objective through consolidation. War Effort credits operations, captures, cutoffs,
+reconnections and destroyed hostile formations by stable accomplishment keys.
+Losing all allied formations reduces the outcome grade. The allied command
+rendezvous remains a supply foothold and all three victory grades unlock System 3.
+
+## Ownership and tuning
+
+`WarzoneLattice` derives one of six connected patterns from an independent seed.
+`WarzoneSector` owns the graph, routes, supply, fleets, operational ledger and victory.
+`WarzoneOperations` supplies operation quotes and applies effects after the expedition
+validates proximity, available Salvage and uniqueness. `ExpeditionState` owns the
+campaign and strategic clock. The standard card battle and allied support handoffs
+remain in use. Tier 2 fights favor available faction elites or heavy faction profiles.
+The hostile command fleet can use the faction mothership, which is optional to defeat.
+
+Use `WarzoneTuning` for capture and consolidation time, Effort values, disruption
+length, convoy timing and repair prices. Existing Homeworld support packages still
+set initial allied strength, Salvage and Shields. Use `warzone_lattice_enabled` to
+select the original operation for newly generated systems in development. The
+versioned lattice payload distinguishes a v2 sector from the three-objective save
+format. Saves store ownership, link topology, orders, effects and accomplished
+operations. The influence field and motion buffers are reconstructed from state.
+
+Fleet movement advances on the existing fixed strategic clock. The renderer
+queues committed positions in order and follows intermediate waypoints during
+bulk waits. Refreshing the map leaves the current visual segment intact.
+A single transparent mesh shows weighted territorial influence. Connected nodes
+have stronger influence, and fleets and disruption change the field. The 3D
+map reuses the existing sky and scenery and uses one non-shadowing fill light.
+
+`warzone_lattice_test` exercises all six patterns across 64 seeds, save round trips,
+a zero-card-battle infrastructure victory and a separate raid-and-repair victory.
+`warzone_lattice_presentation_test` exercises the live System 2 handoff, touch
+overlay, starless lighting, influence updates and narrow-screen HUD under both
+renderers.
+
+## Campaign foundation and original Warzone saves
 
 `ExpeditionState` owns the system boundary and writes the final Homeworld record
 before system generation replaces the Defense state. A secured Homeworld also
@@ -23,7 +79,7 @@ denominator in effect when Homeworld was secured. Support calculation consumes
 no random numbers. Older saves have no historical integrity field. Their
 fallback package is Standard.
 
-## Playing Warzone
+## Playing the original three-objective operation
 
 Two allied groups are fighting at the Communications Relay and the Shipyard
 when the player arrives. Five hostile groups hold the Shipyard and Defense

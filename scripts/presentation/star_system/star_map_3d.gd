@@ -211,8 +211,11 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
 	var solar_clearance := preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environment_instances())
-	visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
-		settings, system_profile, layout_expansion, orbit_clearance, solar_clearance)
+	if warzone_view != null and warzone_view.is_lattice():
+		visual_data = VisualSystem.generate_sector(cosmetic_seed, system_number, entries, warzone_view)
+	else:
+		visual_data = VisualSystem.generate(cosmetic_seed, system_number, [] if expanded_defense else entries,
+			settings, system_profile, layout_expansion, orbit_clearance, solar_clearance)
 	if not defense_view.is_empty():
 		var planet_sizes := {}
 		for entry in entries.filter(VisualSystem.is_planetary):
@@ -250,9 +253,10 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	camera.overview(settings, true)
 	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength, system_variation)
 	for p in visual_data.planets:
-		var orbit: MeshInstance3D = Planets.orbit(p,settings)
-		visual_root.add_child(orbit)
-		orbit_nodes[p.index] = orbit
+		if not visual_data.get("starless", false):
+			var orbit: MeshInstance3D = Planets.orbit(p,settings)
+			visual_root.add_child(orbit)
+			orbit_nodes[p.index] = orbit
 		var planet: Node3D = Planets.build(p,settings)
 		planet.position = p.position
 		visual_root.add_child(planet)
@@ -273,48 +277,59 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var orbit: MeshInstance3D = Planets.orbit(visual_data.poi_orbits[index], settings)
 		orbit.name = "DestinationOrbit%d" % index
 		visual_root.add_child(orbit)
-	var sun := QuadMesh.new()
-	sun.size = Vector2(18, 18)
-	var disc := Models.part(visual_root, sun, Color.WHITE)
-	disc.name = "Sun"
-	# Billboard vertices rotate outside the original flat quad bounds.
-	disc.custom_aabb = AABB(Vector3.ONE*-9.0,Vector3.ONE*18.0)
-	var material := ShaderMaterial.new()
-	material.shader = preload("res://shaders/menu_sun.gdshader")
-	material.set_shader_parameter("sun_color", visual_data.star_color)
-	var solar: Dictionary = SolarVisual.primary(environment_instances())
+	var starless: bool = visual_data.get("starless", false)
+	var disc: MeshInstance3D
 	var core_scale: float = settings.sun_core_scale
-	if not solar.is_empty():
-		disc.position = Vector3(solar.position[0], solar.position[1], solar.position[2])
-		core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
-	world.get_node("SunLight").position = disc.position
-	world.get_node("SunLight").light_color = Color.WHITE.lerp(visual_data.star_color, 0.35) if layout_expansion > 0.0 else Color(1.0, 0.88, 0.70)
-	material.set_shader_parameter("core_scale", core_scale)
-	material.set_shader_parameter("corona_spread", settings.sun_corona_spread)
-	material.set_shader_parameter("corona_strength", settings.sun_corona_strength)
-	material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
-	material.set_shader_parameter("map_corona_visibility",true)
-	visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
+	world.get_node("SunLight").visible = not starless
+	if starless:
+		var fill := DirectionalLight3D.new()
+		fill.name = "SectorFill"
+		fill.rotation_degrees = Vector3(-46, -35, 0)
+		fill.light_color = Color("b8d6ee")
+		fill.light_energy = 0.8
+		visual_root.add_child(fill)
+	else:
+		var sun := QuadMesh.new()
+		sun.size = Vector2(18, 18)
+		disc = Models.part(visual_root, sun, Color.WHITE)
+		disc.name = "Sun"
+		# Billboard vertices rotate outside the original flat quad bounds.
+		disc.custom_aabb = AABB(Vector3.ONE*-9.0,Vector3.ONE*18.0)
+		var material := ShaderMaterial.new()
+		material.shader = preload("res://shaders/menu_sun.gdshader")
+		material.set_shader_parameter("sun_color", visual_data.star_color)
+		var solar: Dictionary = SolarVisual.primary(environment_instances())
+		if not solar.is_empty():
+			disc.position = Vector3(solar.position[0], solar.position[1], solar.position[2])
+			core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
+		world.get_node("SunLight").position = disc.position
+		world.get_node("SunLight").light_color = Color.WHITE.lerp(visual_data.star_color, 0.35) if layout_expansion > 0.0 else Color(1.0, 0.88, 0.70)
+		material.set_shader_parameter("core_scale", core_scale)
+		material.set_shader_parameter("corona_spread", settings.sun_corona_spread)
+		material.set_shader_parameter("corona_strength", settings.sun_corona_strength)
+		material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
+		material.set_shader_parameter("map_corona_visibility",true)
+		visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
+		material.render_priority = 10
+		disc.material_override = material
+		objects[-100] = disc
+		# Cosmetic companion: no light, target, collider or solar influence source.
+		var companion: Dictionary = system_variation.get("companion", {})
+		if not companion.is_empty():
+			var companion_mesh := QuadMesh.new()
+			companion_mesh.size = Vector2.ONE * float(companion.radius) / 0.07
+			var companion_node := Models.part(visual_root, companion_mesh, Color.WHITE)
+			companion_node.name = "VisualCompanionStar"
+			companion_node.position = Vector3(companion.position[0], companion.position[1], companion.position[2])
+			companion_node.custom_aabb = AABB(Vector3.ONE * -4, Vector3.ONE * 8)
+			var companion_material := ShaderMaterial.new()
+			companion_material.shader = material.shader
+			companion_material.set_shader_parameter("sun_color", Color(companion.color))
+			companion_material.set_shader_parameter("corona_strength", 0.4)
+			companion_material.set_shader_parameter("flare_intensity", 0.04)
+			companion_node.material_override = companion_material
 	for item in environment_instances():
 		if item.type == "SPACE_STORM" and StormVisual.Storms.valid(item): visual_root.add_child(StormVisual.build(item))
-	material.render_priority = 10
-	disc.material_override = material
-	objects[-100] = disc
-	# Cosmetic companion: no light, target, collider or solar influence source.
-	var companion: Dictionary = system_variation.get("companion", {})
-	if not companion.is_empty():
-		var companion_mesh := QuadMesh.new()
-		companion_mesh.size = Vector2.ONE * float(companion.radius) / 0.07
-		var companion_node := Models.part(visual_root, companion_mesh, Color.WHITE)
-		companion_node.name = "VisualCompanionStar"
-		companion_node.position = Vector3(companion.position[0], companion.position[1], companion.position[2])
-		companion_node.custom_aabb = AABB(Vector3.ONE * -4, Vector3.ONE * 8)
-		var companion_material := ShaderMaterial.new()
-		companion_material.shader = material.shader
-		companion_material.set_shader_parameter("sun_color", Color(companion.color))
-		companion_material.set_shader_parameter("corona_strength", 0.4)
-		companion_material.set_shader_parameter("flare_intensity", 0.04)
-		companion_node.material_override = companion_material
 	for entry in entries:
 		var index: int = entry.index
 		if not objects.has(index):
@@ -334,6 +349,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.lattice_tag = starless and index >= 0
 		button.contrast = warzone_view != null or (not defense_view.is_empty() and entry.get("profile") != null)
 		button.style_tag(entry.color)
 		if warzone_view != null:
@@ -355,7 +371,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		ring.configure(float(objects[index].get_meta("radius", 0.65)), button.accent)
 		selection_rings[index] = ring
 	# Build scenery after final physical positions/scales (including defense layout).
-	var exclusions: Array = [{"position": disc.position, "radius": SolarVisual.Solar.CORE_RADIUS_PER_SCALE * core_scale}]
+	var exclusions: Array = [] if starless else [{"position": disc.position, "radius": SolarVisual.Solar.CORE_RADIUS_PER_SCALE * core_scale}]
 	for planet in planet_nodes.values():
 		exclusions.append({"position": planet.position, "radius": float(planet.get_meta("radius")) * 1.035})
 	for index in markers:
@@ -368,7 +384,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	background.add_atmospheric_accent(atmospheric_recipe.sky, camera)
 	atmospheric_nodes = AtmosphericAccents.build_world(atmospheric_recipe, visual_root,
 		planet_nodes, settings.atmospheric_accents, settings)
-	if settings.stellar_shafts_enabled:
+	if not starless and settings.stellar_shafts_enabled:
 		var shafts := preload("res://scripts/presentation/star_system/stellar_shafts.gd").new()
 		visual_root.add_child(shafts)
 		shafts.strength = settings.stellar_dust_density
@@ -389,7 +405,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	ship.scale = Vector3.ONE * 0.175
 	world.add_child(ship)
 	for model_root in [visual_root,destination_root,ship]:
-		Lighting.calibrate(model_root,settings,disc.position)
+		Lighting.calibrate(model_root,settings,Vector3(-30, 30, 20) if starless else disc.position)
 	if is_instance_valid(feedback): feedback.queue_free()
 	feedback = preload("res://scripts/presentation/star_system/map_feedback.gd").new()
 	feedback.canvas = self
@@ -453,8 +469,9 @@ func _process(delta: float) -> void:
 	sun_lens.update(is_visible_in_tree(), viewport, camera, objects.get(-100), visual_data.get("star_color", Color.WHITE))
 	if not is_instance_valid(ship):
 		return
-	if warzone_view != null and is_instance_valid(warzone_presentation) and not focused and not introducing:
-		warzone_presentation.animate_engagements(delta)
+	if warzone_view != null and is_instance_valid(warzone_presentation):
+		warzone_presentation.animate_movement(delta)
+		if not focused and not introducing: warzone_presentation.animate_engagements(delta)
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
 	if is_instance_valid(feedback): feedback.suppressed = introducing or presentation_blocked
 	for p in visual_data.get("planets",[]):
@@ -477,7 +494,8 @@ func _process(delta: float) -> void:
 		button.set_state(button.completed,blocked,index==selected_index)
 		button.mouse_filter = MOUSE_FILTER_IGNORE if blocked else MOUSE_FILTER_STOP
 		var top: Vector2 = camera.unproject_position(point+Vector3.UP*float(objects[index].get_meta("radius",0.65)))
-		button.position = top+Vector2(settings.label_offset.x,-absf(settings.label_offset.y))-Vector2(button.size.x*0.5,button.size.y)
+		var lift := Vector2.ZERO if button.lattice_tag else Vector2(settings.label_offset.x, -absf(settings.label_offset.y))
+		button.position = top + lift - Vector2(button.size.x * 0.5, button.size.y)
 		for rect in hud_regions:
 			if rect.intersects(button.get_global_rect().grow(14)):
 				if button.contrast and rect.position.y < get_viewport_rect().size.y * 0.5:
@@ -883,6 +901,10 @@ func _tap_at(point: Vector2) -> void:
 func screen_to_navigation(point: Vector2) -> Vector3:
 	var target := _project_navigation_plane(point)
 	var bounds := Layout.bounds(layout_expansion, settings.system_bounds)
+	if warzone_view != null and warzone_view.is_lattice():
+		for node in warzone_view.objectives:
+			bounds = bounds.expand(Vector2(node.position.x, node.position.z))
+		bounds = bounds.grow(3.0)
 	return Vector3(clampf(target.x,bounds.position.x,bounds.end.x-0.001),0,clampf(target.z,bounds.position.y,bounds.end.y-0.001))
 
 func _project_navigation_plane(point: Vector2) -> Vector3:
@@ -1046,7 +1068,9 @@ func point_is_reserved(point: Vector2) -> bool:
 func fit_overview() -> void:
 	var points: Array[Vector3] = []
 	for p in visual_data.planets:
-		for i in range(64): points.append(VisualSystem.orbit_point(p,TAU*i/64.0))
+		if visual_data.get("starless", false): points.append(p.position)
+		else:
+			for i in range(64): points.append(VisualSystem.orbit_point(p,TAU*i/64.0))
 	for orbit in visual_data.poi_orbits.values():
 		for i in range(32): points.append(VisualSystem.orbit_point(orbit, TAU * i / 32.0))
 	for key in objects:
@@ -1173,7 +1197,7 @@ func sync_warzone(operation: RefCounted) -> void:
 		if markers[index].text != glyph:
 			markers[index].set_label("", glyph, false)
 		markers[index].tooltip_text = "Hostile %s · Strength %d · %s\nObjective: %s" % [
-			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.OBJECTIVES[fleet.destination]]
+			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.objective_name(fleet.destination)]
 	for offset in operation.objectives.size():
 		var index: int = operation.HOSTILE_GROUPS + offset
 		if not markers.has(index): continue
@@ -1185,10 +1209,26 @@ func sync_warzone(operation: RefCounted) -> void:
 			# Only the accent changes after creation. Reuse the marker's input bindings.
 			marker.accent = tint
 			marker._refresh_state()
-		if marker.text != "◇":
-			marker.set_label(operation.OBJECTIVES[offset], "◇", true)
-		marker.set_objective("Contested" if objective.contested else objective.owner.capitalize())
+		var glyph: String = operation.objective_glyph(offset) if operation.is_lattice() else "◇"
+		if marker.text != glyph:
+			marker.set_label(operation.objective_name(offset), glyph, true)
+		var tag: String = "Contested" if objective.contested else objective.owner.capitalize()
+		if operation.is_lattice():
+			var show_name: bool = offset in operation.COMMANDS or (warzone_presentation.overlay_enabled
+				and offset in [operation.ALLIED_ROOT, operation.HOSTILE_ROOT, 3, 5])
+			marker.set_lattice_name_visible(show_name)
+			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
+			if objective.progress > 0: tag = "%d%%" % roundi(100.0 * objective.progress / operation.tuning.capture_seconds)
+			elif operation.disrupted.has(offset): tag += "!"
+			elif not operation.is_supplied(offset): tag += "/"
+		marker.set_objective(tag)
 		marker.tooltip_text = operation.objective_brief(offset)
+
+
+func set_lattice_overlay(enabled: bool) -> void:
+	if is_instance_valid(warzone_presentation):
+		warzone_presentation.overlay_enabled = enabled
+		sync_warzone(warzone_view)
 
 
 func _defense_hostile(index: int) -> bool:

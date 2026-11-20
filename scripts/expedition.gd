@@ -167,6 +167,8 @@ func _ready() -> void:
 	_build_ui()
 	screen.overview_hud.system_details_requested.connect(_show_system_details)
 	screen.overview_hud.warzone_wait_requested.connect(_wait_in_warzone)
+	screen.overview_hud.lattice_overlay_changed.connect(func(enabled: bool):
+		if is_instance_valid(star_map) and state.is_warzone(): star_map.set_lattice_overlay(enabled))
 	_setup_decoy_controls()
 	card_management = CardManagement.new()
 	add_child(card_management)
@@ -832,7 +834,7 @@ func show_battle_preview(index: int) -> void:
 		var fleet: Dictionary = state.warzone_fleet(index)
 		var operation = state.warzone
 		view.add_child(_label("Hostile %s · Strength %d · %s\nObjective · %s" % [
-			fleet.role, fleet.strength, operation.fleet_status(fleet), State.Warzone.OBJECTIVES[fleet.destination]], 16))
+			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.objective_name(fleet.destination)], 16))
 		var ally: Dictionary = operation.allied_support(fleet.id)
 		if not ally.is_empty():
 			view.add_child(_label("Allied %s engaged · Strength %d" % [ally.role, ally.strength], 16))
@@ -906,8 +908,21 @@ func _show_warzone_objective(index: int) -> void:
 		view.add_child(_label("%s capture · %ds / %ds" % [
 			objective.capturing.capitalize(), objective.progress, state.warzone.tuning.capture_seconds], 16))
 	if not inspecting and not state.warzone.complete:
-		view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
+		if state.warzone.is_lattice():
+			var offset := index - State.Warzone.HOSTILE_GROUPS
+			for action in state.warzone.operations(offset, state.salvage):
+				var info: String = "%s · %ds · +%d War Effort" % [action.details, action.seconds, action.effort]
+				if action.cost > 0: info += " · %d Salvage" % action.cost
+				_tile(view, action.title, info, Color("75cfe8"), _warzone_operation.bind(index, action.id), not action.enabled)
+		else:
+			view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
 		_button("Hold position · %ds" % state.warzone.tuning.wait_seconds, _wait_in_warzone)
+
+
+func _warzone_operation(index: int, id: String) -> void:
+	if phase == Phase.DESTINATION and state.warzone_operate(index, id):
+		if state.warzone.complete: show_system()
+		else: show_poi(index)
 
 
 func _wait_in_warzone() -> void:
@@ -1497,7 +1512,7 @@ func _free_arrived() -> void:
 func _warzone_updated(target_lost: bool) -> void:
 	if not state.is_warzone() or not is_instance_valid(star_map):
 		return
-	star_map.sync_warzone(state.warzone)
+	star_map.set_lattice_overlay(screen.overview_hud.lattice_button.button_pressed)
 	screen.set_warzone_status(state)
 	if target_lost and phase == Phase.TRAVELING:
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
@@ -1812,8 +1827,8 @@ func _show_system_details() -> void:
 	elif state.is_warzone():
 		var operation = state.warzone
 		var lines := PackedStringArray(["[b]Warzone reports[/b]", ""])
-		for index in State.Warzone.OBJECTIVES.size():
-			lines.append("%s · %s" % [State.Warzone.OBJECTIVES[index], operation.objective_brief(index)])
+		for index in operation.objectives.size():
+			lines.append("%s · %s" % [operation.objective_name(index), operation.objective_brief(index)])
 		lines.append("")
 		lines.append_array(PackedStringArray(operation.events))
 		screen.system_details_overlay.show_text("\n".join(lines))

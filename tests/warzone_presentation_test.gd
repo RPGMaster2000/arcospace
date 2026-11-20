@@ -41,6 +41,8 @@ func run() -> void:
 	root.size = Vector2i(1280, 720)
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false
+	host.rules = host.rules.duplicate()
+	host.rules.warzone_lattice_enabled = false
 	host.play_system_intro = false
 	host.star_system_settings = host.star_system_settings.duplicate(true)
 	host.star_system_settings.departure_turn_duration = 0.1
@@ -95,15 +97,15 @@ func run() -> void:
 	var goal: Vector3 = host.state.warzone.fleets[3].position
 	check(reinforcement.position == origin and goal != origin,
 		"The authoritative move commits before visible interpolation")
-	if presentation.motion.has(3):
-		var flight: Tween = presentation.motion[3]
-		flight.pause()
-		flight.custom_step(0.24)
-		check(reinforcement.position != origin and not reinforcement.position.is_equal_approx(goal),
-			"The rendered group passes through intermediate positions")
-		flight.custom_step(1.0)
-	else:
-		check(false, "The moving group has a visual tween")
+	var waypoints: Array = presentation.motion.get(3, [])
+	check(waypoints.size() > 1, "A batch wait preserves intermediate committed positions")
+	presentation.animate_movement(0.24)
+	check(reinforcement.position != origin and not reinforcement.position.is_equal_approx(goal),
+		"The rendered group passes through intermediate positions")
+	var midflight := reinforcement.position
+	map.sync_warzone(host.state.warzone)
+	check(reinforcement.position == midflight, "Refreshing the map does not restart movement")
+	presentation.animate_movement(5.0)
 	check(reinforcement.position.is_equal_approx(goal), "The model converges on the strategic position without drift")
 	check(presentation.fx.emitted_beams > before_shots and presentation.fx.emitted_impacts > 0,
 		"Committed exchanges emit beams and reflect real casualties with impacts")

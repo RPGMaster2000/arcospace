@@ -22,7 +22,9 @@ func check(value: bool, message: String) -> void:
 
 func operation(integrity: int) -> Resource:
 	var state := State.new()
-	state.start(0, Rules, 22731)
+	var legacy_rules := Rules.duplicate()
+	legacy_rules.warzone_lattice_enabled = false
+	state.start(0, legacy_rules, 22731)
 	state.defense.integrity = integrity
 	state.defense.revealed = true
 	for unit in state.defense.units: state.defense.neutralize(unit.encounter)

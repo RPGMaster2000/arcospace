@@ -29,6 +29,8 @@ var hovered := false
 var secondary := false
 var accent := Color("a6e9ff")
 var contrast: bool = false
+var lattice_tag := false
+var lattice_show_name := false
 
 
 func style_tag(color: Color) -> void:
@@ -37,7 +39,7 @@ func style_tag(color: Color) -> void:
 	flat = false
 	# Bitmap emoji must use native advances; synthetic emboldening distorts them.
 	add_theme_font_override("font", EMOJI_FONT)
-	add_theme_font_size_override("font_size", 28)
+	add_theme_font_size_override("font_size", 22 if lattice_tag else 28)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
 		box.draw_center = state!="focus" # Focus overlays the normal box: no second half-alpha fill.
@@ -115,7 +117,10 @@ func _refresh_state() -> void:
 	for key in ["font_color","font_hover_color","font_pressed_color","font_focus_color","font_disabled_color"]:
 		add_theme_color_override(key,foreground.lightened(0.1) if emphasis else foreground)
 	end_bulk_theme_override()
-	if planet_name != null: planet_name.add_theme_color_override("font_color",Color.WHITE if contrast else foreground)
+	if planet_name != null:
+		planet_name.add_theme_color_override("font_color",Color.WHITE if contrast else foreground)
+		if lattice_tag:
+			planet_name.visible = not planet_name.text.is_empty() and (emphasis or lattice_show_name)
 	z_index = priority()*10
 	queue_redraw()
 
@@ -127,7 +132,7 @@ func set_label(value: String, symbol: String, is_planet: bool) -> void:
 		planet_name.mouse_filter = MOUSE_FILTER_IGNORE
 		planet_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		planet_name.add_theme_font_override("font",ThemeDB.fallback_font)
-		planet_name.add_theme_font_size_override("font_size",18)
+		planet_name.add_theme_font_size_override("font_size", 14 if lattice_tag else 18)
 		planet_name.add_theme_color_override("font_outline_color",Color("020611"))
 		planet_name.add_theme_constant_override("outline_size",2)
 		add_child(planet_name)
@@ -140,14 +145,25 @@ func set_label(value: String, symbol: String, is_planet: bool) -> void:
 	planet_name.visible = is_planet
 	planet_name.add_theme_color_override("font_color", Color.WHITE if contrast else accent)
 	var width: float = ThemeDB.fallback_font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x+24 if is_planet else 48.0
-	custom_minimum_size = Vector2(maxf(48,width),78 if is_planet else 48)
+	custom_minimum_size = Vector2(44, 44) if lattice_tag else Vector2(maxf(48,width),78 if is_planet else 48)
 	size = custom_minimum_size
-	icon_center = Vector2(size.x*0.5,(32+size.y-4)*0.5) if is_planet else size*0.5
+	icon_center = Vector2(size.x*0.5,(32+size.y-4)*0.5) if is_planet and not lattice_tag else size*0.5
 	completion_badge.position = Vector2(size.x-4,-8)
-	planet_name.position = Vector2(6,4)
-	planet_name.size = Vector2(size.x-12,24)
+	if lattice_tag:
+		var name_width := planet_name.get_minimum_size().x
+		planet_name.position = Vector2((size.x - name_width) * 0.5, -20)
+		planet_name.size = Vector2(name_width, 20)
+	else:
+		planet_name.position = Vector2(6,4)
+		planet_name.size = Vector2(size.x-12,24)
 	for state in ["normal","hover","pressed","disabled","focus"]:
-		get_theme_stylebox(state).content_margin_top = 32 if is_planet else 4
+		get_theme_stylebox(state).content_margin_top = 32 if is_planet and not lattice_tag else 4
+	_refresh_state()
+
+
+func set_lattice_name_visible(value: bool) -> void:
+	if lattice_show_name == value: return
+	lattice_show_name = value
 	_refresh_state()
 
 
@@ -201,7 +217,7 @@ func set_objective(value: String) -> void:
 		objective_badge = Label.new()
 		objective_badge.mouse_filter = MOUSE_FILTER_IGNORE
 		objective_badge.add_theme_font_override("font",preload("res://assets/fonts/emoji_ui.tres"))
-		objective_badge.add_theme_font_size_override("font_size",23)
+		objective_badge.add_theme_font_size_override("font_size",14 if lattice_tag else 23)
 		objective_badge.add_theme_color_override("font_color",Color("ffe39a"))
 		objective_badge.add_theme_color_override("font_outline_color",Color("020611"))
 		objective_badge.add_theme_constant_override("outline_size",4)
@@ -212,7 +228,7 @@ func set_objective(value: String) -> void:
 	objective_badge.text = "" if value == "🔒" else value
 	objective_badge.queue_redraw()
 	objective_badge.visible = not value.is_empty() and not completed
-	objective_badge.position = Vector2(size.x-12,-12)
+	objective_badge.position = Vector2(size.x-12, -9 if lattice_tag else -12)
 
 
 func _draw_objective() -> void:

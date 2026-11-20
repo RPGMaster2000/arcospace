@@ -1197,8 +1197,9 @@ func _battle_system_overview() -> String:
 	if expedition == null:
 		return "Standalone battle"
 	if expedition.is_warzone():
-		var lines := PackedStringArray(["Warzone · Objectives %d / %d" % [
-			expedition.warzone.controlled(), expedition.Warzone.REQUIRED_OBJECTIVES],
+		var operation = expedition.warzone
+		var progress: String = "War Effort %d / %d" % [operation.effort, operation.tuning.effort_goal] if operation.is_lattice() 			else "Objectives %d / %d" % [operation.controlled(), expedition.Warzone.REQUIRED_OBJECTIVES]
+		var lines := PackedStringArray(["Warzone · " + progress,
 			"Hostile fleets %d" % expedition.warzone.fleet_count("hostile")])
 		var allied: Dictionary = battle_environment.get("friendly_support", {})
 		if allied.get("source") == "allied_fleet":
