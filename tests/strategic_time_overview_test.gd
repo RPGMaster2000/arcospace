@@ -102,6 +102,8 @@ func check_defense() -> void:
 	await settle()
 	var display = host.strategic_overview
 	var pressure: float = state.defense.pressure
+	var commits: Array[Dictionary] = []
+	state.defense_advanced.connect(func(events): commits.append(events))
 	var unit: Dictionary = state.defense.units[0]
 	var before: Vector3 = unit.position
 	host._approach(site, 0)
@@ -111,11 +113,14 @@ func check_defense() -> void:
 	display.advance(0.75)
 	check(state.defense.pressure > pressure and not before.is_equal_approx(unit.position),
 		"Defense pressure and enemy world positions advance during the overview")
-	check(state.last_poi_success == -1 and FileAccess.file_exists(store.path),
-		"An intermediate state cannot grant the reward")
+	check(state.last_poi_success == -1 and FileAccess.file_exists(store.path) and commits.is_empty(),
+		"Intermediate updates do not publish a completed span or grant the reward")
 	await capture("strategic-time")
 	host.notification(NOTIFICATION_APPLICATION_PAUSED)
 	check(not display.active and state.last_poi_success == 1, "Suspension settles a confirmed action exactly once")
+	check(commits.size() == 1 and is_equal_approx(commits[0].elapsed,
+		float(state.poi_approaches(site)[0].get_meta("strategic_seconds"))),
+		"The live span publishes one aggregate time event")
 	check(Save.encode(state) == Save.encode(baseline), "Interrupted presentation matches instant PoI resolution")
 	var loaded: Resource = store.load_run().get("state")
 	check(loaded != null and loaded.last_poi_success == state.last_poi_success and loaded.salvage == state.salvage

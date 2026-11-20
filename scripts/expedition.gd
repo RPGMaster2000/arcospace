@@ -413,7 +413,8 @@ func start_expedition() -> bool:
 
 
 func _bind_progress() -> void:
-	if not state.defense_advanced.is_connected(_defense_updated): state.defense_advanced.connect(_defense_updated)
+	if not state.defense_advanced.is_connected(_defense_span_committed): state.defense_advanced.connect(_defense_span_committed)
+	if not state.defense_activity_updated.is_connected(_defense_updated): state.defense_activity_updated.connect(_defense_updated)
 	if not state.warzone_advanced.is_connected(_warzone_updated): state.warzone_advanced.connect(_warzone_updated)
 	if not state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.connect(_progress_committed)
@@ -1639,6 +1640,12 @@ func _warzone_updated(target_lost: bool) -> void:
 		star_map._select_destination(-1)
 		map_destination = -1
 		_clear("system")
+
+
+func _defense_span_committed(events: Dictionary) -> void:
+	# The overview already displayed these slices, including their impacts.
+	if not strategic_overview.active:
+		_defense_updated(events)
 
 
 func _defense_updated(events: Dictionary) -> void:

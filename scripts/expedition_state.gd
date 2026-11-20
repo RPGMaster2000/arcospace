@@ -6,6 +6,7 @@ class_name ExpeditionState
 signal deck_changed
 signal progress_committed
 signal defense_advanced(events: Dictionary)
+signal defense_activity_updated(events: Dictionary)
 signal warzone_advanced(target_lost: bool)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
@@ -67,8 +68,8 @@ func _advance_defense(distance: float) -> void:
 		Defense.point(navigation.movement_origin), Defense.point(navigation.position), false)
 
 # Activity commits and movement share event ordering and collision handling.
-func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) -> void:
-	if not is_defense() or defense == null or defense.complete or run_ended: return
+func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool, notify: bool = true) -> Dictionary:
+	if not is_defense() or defense == null or defense.complete or run_ended: return {}
 	var integrity_before: int = defense.integrity
 	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
@@ -96,11 +97,12 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	events.integrity_before = integrity_before
 	events.integrity_after = defense.integrity
 	events.homeworld_damage = maxi(0,integrity_before-defense.integrity)
-	defense_advanced.emit(events)
+	if notify: defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
 			or events.missile_event or events.decoy_changed or defense.failed() or target_lost
 			or not events.spawned.is_empty() or rift_changed or extraction_salvage > 0):
 		progress_committed.emit()
+	return events
 
 func _commit_activity_time(seconds: float) -> void:
 	if is_warzone() and not run_ended:
@@ -130,19 +132,39 @@ func _spend_activity_time(seconds: float, settle: Callable, present: Callable) -
 		defense.deferred_seconds = 0.0
 	else:
 		seconds = roundi(seconds * Warzone.STEP_MS) / float(Warzone.STEP_MS)
-	var activity := StrategicActivity.new(seconds, _advance_activity_slice.bind(position))
+	var aggregate := {}
+	var activity := StrategicActivity.new(seconds, _advance_activity_slice.bind(position, aggregate, present.is_valid()))
+	var finish := func():
+		# Keep the operation notification ahead of rewards and the final commit.
+		if not aggregate.is_empty(): defense_advanced.emit(aggregate)
+		settle.call()
 	if present.is_valid():
-		present.call(activity, settle)
+		present.call(activity, finish)
 	else:
 		activity.advance_to(activity.duration)
-		settle.call()
+		finish.call()
 
 
-func _advance_activity_slice(seconds: float, position: Vector3) -> void:
+func _advance_activity_slice(seconds: float, position: Vector3, aggregate: Dictionary, live: bool) -> void:
 	if is_warzone():
 		_advance_warzone_clock(seconds, position, position)
+		return
+	var events := _advance_strategy(seconds, position, position, true, false)
+	if events.is_empty(): return
+	if aggregate.is_empty():
+		aggregate.merge(events.duplicate(true))
 	else:
-		_advance_strategy(seconds, position, position, true)
+		for key in ["elapsed", "arrivals", "extraction_salvage", "homeworld_damage"]:
+			aggregate[key] += events[key]
+		for key in ["missile_shots", "spawned"]:
+			aggregate[key].append_array(events[key])
+		for key in ["missile_event", "revealed", "escalated", "decoy_changed", "target_lost"]:
+			aggregate[key] = aggregate[key] or events[key]
+		for key in ["position", "integrity_after"]:
+			aggregate[key] = events[key]
+		for key in ["contact", "missile_contact"]:
+			if events[key] >= 0: aggregate[key] = events[key]
+	if live: defense_activity_updated.emit(events)
 
 
 var run_ended: bool = false
