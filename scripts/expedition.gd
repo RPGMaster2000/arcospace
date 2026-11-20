@@ -1,5 +1,7 @@
 extends Control
 
+const StrategicOverview = preload("res://scripts/presentation/star_system/strategic_time_overview.gd")
+const MenuPreferences = preload("res://scripts/ui/menu_preferences.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
 const WarzoneIcons = preload("res://scripts/ui/warzone_indicators.gd")
 # RESPONSIBILITY: Route exploration screens and connect their choices to ExpeditionState.
@@ -18,6 +20,9 @@ var persistence_enabled: bool:
 	get: return persistence.enabled
 	set(value): persistence.enabled = value
 var resume_data: Dictionary = {}
+var strategic_overview: StrategicOverview
+var _strategic_shutdown := false
+var _application_suspended := false
 var developer_test: Dictionary = {}
 var save_error: AcceptDialog
 var _battle_checkpoint: Dictionary:
@@ -171,6 +176,8 @@ func _ready() -> void:
 			phase = homeworld_previous_phase
 			state.navigation.rebase_movement(state.navigation.position))
 	_build_ui()
+	strategic_overview = StrategicOverview.new()
+	add_child(strategic_overview)
 	screen.overview_hud.system_details_requested.connect(_show_system_details)
 	screen.overview_hud.warzone_wait_requested.connect(_wait_in_warzone)
 	screen.overview_hud.lattice_overlay_changed.connect(func(enabled: bool):
@@ -406,7 +413,8 @@ func start_expedition() -> bool:
 
 
 func _bind_progress() -> void:
-	if not state.defense_advanced.is_connected(_defense_updated): state.defense_advanced.connect(_defense_updated)
+	if not state.defense_advanced.is_connected(_defense_span_committed): state.defense_advanced.connect(_defense_span_committed)
+	if not state.defense_activity_updated.is_connected(_defense_updated): state.defense_activity_updated.connect(_defense_updated)
 	if not state.warzone_advanced.is_connected(_warzone_updated): state.warzone_advanced.connect(_warzone_updated)
 	if not state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.connect(_progress_committed)
@@ -417,11 +425,12 @@ func _progress_committed() -> void:
 	if state.is_warzone(): screen.set_warzone_status(state)
 	if is_instance_valid(battle) and battle.result_recorded:
 		battle.settings_button.menu.battle_restart_notice = false
-	if persistence_enabled and not _save_progress():
+	if persistence_enabled and strategic_overview.activity == null and not _save_progress():
 		_show_save_error()
 
 
 func _save_progress() -> bool:
+	if strategic_overview.activity != null: _finish_strategic_action()
 	_checkpoint_navigation_position()
 	return persistence.save_progress(state, battle)
 
@@ -442,9 +451,39 @@ func _configure_settings_exit(menu: CanvasLayer, in_battle: bool = false) -> voi
 		menu.configure_save_quit(_save_and_quit, in_battle)
 
 
+func _run_strategic_action(action: Callable) -> bool:
+	if strategic_overview.active:
+		return false
+	var previous_phase := phase
+	var owner: Resource = state
+	var present := Callable()
+	if is_instance_valid(star_map) and star_map.visible and not is_instance_valid(battle) \
+		and MenuPreferences.strategic_time_overview():
+		present = func(activity, settle):
+			_begin_presentation(Phase.RESOLVING)
+			strategic_overview.begin(activity, settle, star_map, screen)
+			if state.is_warzone(): _warzone_updated(false)
+	if not action.call(present):
+		return false
+	if strategic_overview.active:
+		await strategic_overview.finished
+		if owner != state or phase == Phase.EXITED or not is_inside_tree():
+			return false
+		phase = previous_phase
+	return not _strategic_shutdown
+
+
+func _finish_strategic_action() -> void:
+	if is_instance_valid(strategic_overview):
+		strategic_overview.finish_immediately()
+
+
 func _save_and_quit() -> bool:
 	if phase == Phase.EXITED:
 		return true
+	_strategic_shutdown = true
+	_finish_strategic_action()
+	_strategic_shutdown = false
 	if developer_test.is_empty() and not _save_progress():
 		_show_save_error()
 		return false
@@ -453,8 +492,19 @@ func _save_and_quit() -> bool:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED: _warzone_suspended = true
-	elif what == NOTIFICATION_APPLICATION_RESUMED: _warzone_suspended = false
+	if what == NOTIFICATION_APPLICATION_PAUSED:
+		_application_suspended = true
+		_finish_strategic_action()
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		_application_suspended = false
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_strategic_shutdown = true
+		_finish_strategic_action()
+		_strategic_shutdown = false
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(strategic_overview) and strategic_overview.active:
+		return
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED] and is_instance_valid(strategic_overview):
+		strategic_overview.rebase_clock()
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
 		_navigation_clock = Time.get_ticks_msec()
 		if state != null: state.navigation.rebase_movement()
@@ -490,6 +540,7 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	_strategic_shutdown = true
 	if is_instance_valid(card_management): card_management.dismiss(true)
 	_cancel_presentation()
 	phase = Phase.EXITED
@@ -564,7 +615,7 @@ func _map_input_allowed(block_construction: bool = true) -> bool:
 		var construction: Control = _construction_panel()
 		if is_instance_valid(construction) and construction.visible: return false
 	return (
-		phase != Phase.EXITED and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not _application_suspended and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and (not is_instance_valid(decoy_confirmation) or not decoy_confirmation.shade.visible)
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
@@ -983,7 +1034,7 @@ func _show_warzone_objective(index: int) -> void:
 
 
 func _warzone_operation(index: int, id: String) -> void:
-	if phase == Phase.DESTINATION and state.warzone_operate(index, id):
+	if phase == Phase.DESTINATION and await _run_strategic_action(func(present): return state.warzone_operate(index, id, present)):
 		if state.warzone.complete: show_system()
 		else: show_poi(index)
 
@@ -991,7 +1042,7 @@ func _warzone_operation(index: int, id: String) -> void:
 func _wait_in_warzone() -> void:
 	if state == null or phase not in [Phase.OVERVIEW, Phase.DESTINATION] or not _map_input_allowed():
 		return
-	if state.wait_in_warzone():
+	if await _run_strategic_action(state.wait_in_warzone):
 		show_system()
 
 
@@ -1049,7 +1100,7 @@ func _select_approach(slot: int) -> void:
 			outpost_screen.select_service(slot)
 		return
 	if slot == -2:
-		if not state.can_survey(selected_encounter, _uses_3d_map()):
+		if not state.can_survey(selected_encounter):
 			return
 	else:
 		var approaches: Array = state.poi_approaches(selected_encounter)
@@ -1130,7 +1181,7 @@ func _purchase_outpost_service(
 		or source != outpost_screen
 	):
 		return
-	if state.purchase_service(slot, revision, amount, card_index):
+	if await _run_strategic_action(func(present): return state.purchase_service(slot, revision, amount, card_index, present)):
 		return_to_outpost = true
 		_purchase_finished()
 
@@ -1138,7 +1189,7 @@ func _purchase_outpost_service(
 func _survey(index: int, suspense: bool = false) -> void:
 	if presenting_outcome or transitioning:
 		return
-	if state.survey(index):
+	if await _run_strategic_action(func(present): return state.survey(index, present)):
 		await _present_resolved_outcome(suspense, false)
 
 
@@ -1164,7 +1215,7 @@ func _approach(index: int, slot: int, suspense: bool = false) -> void:
 		if is_instance_valid(outpost_screen):
 			_purchase_outpost_service(slot, int(repair_selector.value), service_confirmation_revision, -1, outpost_screen)
 		return
-	if state.resolve_approach(index, slot):
+	if await _run_strategic_action(func(present): return state.resolve_approach(index, slot, -1.0, present)):
 		var guaranteed: bool = state.is_defense() and state.defense_poi_version == 1
 		await _present_resolved_outcome(suspense and not guaranteed, not guaranteed)
 
@@ -1506,9 +1557,8 @@ func _confirm_field_repair(amount: int, revision: int) -> void:
 
 # The legacy roll policy receives active gameplay time; navigation receives actual movement.
 var _navigation_clock: int = 0
-var _warzone_suspended := false
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if is_instance_valid(settings_button): settings_button.disabled = homeworld_sequence.active
 	if is_instance_valid(deck_button): deck_button.disabled = homeworld_sequence.active
 	_update_decoy_controls()
@@ -1521,19 +1571,15 @@ func _process(delta: float) -> void:
 		return
 	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
 		state.advance_chasedown_cooldown(elapsed)
-	var warzone_live: bool = not _warzone_suspended and is_instance_valid(star_map) and state.is_warzone() and state.warzone.is_lattice() \
-		and phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed()
-	var from := State.Defense.point(state.navigation.position) if warzone_live else Vector3.ZERO
 	_sample_navigation_position()
-	if warzone_live:
-		state.advance_warzone_map(delta, from, State.Defense.point(state.navigation.position))
-		# Meet the currently committed position, even if the original travel waypoint
-		# is now behind the target. The card battle still requires actual proximity.
-		if phase == Phase.TRAVELING and star_map.traveling and state.travel_destination >= 0 \
-			and state.can_engage(state.travel_destination):
-			var contact: int = state.travel_destination
-			star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
-			visit(contact)
+	# The navigation sample already advanced the clock. Test the latest position
+	# for contact so moving fleets can be intercepted before a stale waypoint.
+	if state.is_warzone() and phase == Phase.TRAVELING and is_instance_valid(star_map) \
+		and star_map.traveling and _map_input_allowed() and state.travel_destination >= 0 \
+		and state.can_engage(state.travel_destination):
+		var contact: int = state.travel_destination
+		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
+		visit(contact)
 	_present_homeworld_damage()
 
 func _sample_navigation_position(arriving: bool = false) -> void:
@@ -1596,12 +1642,22 @@ func _warzone_updated(target_lost: bool) -> void:
 		_clear("system")
 
 
+func _defense_span_committed(events: Dictionary) -> void:
+	# The overview already displayed these slices, including their impacts.
+	if not strategic_overview.active:
+		_defense_updated(events)
+
+
 func _defense_updated(events: Dictionary) -> void:
 	homeworld_sequence.record(state,events)
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
 	star_map.sync_defense(state.defense_map_view())
 	star_map.flash_missile_shots(events.get("missile_shots", []))
-	# Activity events are presented after results and rewards, at show_system.
+	# Strategic overview shows live pressure and movement. Travel alone opens
+	# interception screens; action results are still routed by their caller.
+	if strategic_overview.active:
+		_refresh_defense_hud()
+		if events.get("extraction_salvage", 0) > 0: resource_bar.exploration(state)
 	if phase != Phase.TRAVELING: return
 	if events.get("extraction_salvage", 0) > 0:
 		resource_bar.exploration(state)
@@ -1736,7 +1792,7 @@ func _show_missile(index: int) -> void:
 		Color("87e5ad"), _resolve_missile.bind(index, "emp"), state.modifier_value("emp_pulse_charge") <= 0)
 
 func _resolve_missile(index: int, approach: String) -> void:
-	if state.resolve_missile(index, approach):
+	if await _run_strategic_action(func(present): return state.resolve_missile(index, approach, present)):
 		map_destination = -1
 		show_system()
 

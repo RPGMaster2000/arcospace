@@ -6,10 +6,12 @@ class_name ExpeditionState
 signal deck_changed
 signal progress_committed
 signal defense_advanced(events: Dictionary)
+signal defense_activity_updated(events: Dictionary)
 signal warzone_advanced(target_lost: bool)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
+const StrategicActivity = preload("res://scripts/expedition/strategic_activity.gd")
 const WarzoneOperation = preload("res://scripts/expedition/warzone_operation.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
@@ -56,20 +58,18 @@ func bind_defense_movement() -> void:
 func _advance_defense(distance: float) -> void:
 	if not can_navigate(): return
 	if is_warzone():
-		if warzone.is_lattice(): return # The active map owns the lattice clock, including travel.
-		var previous_tick: int = warzone.clock_ms / Warzone.STEP_MS
-		warzone.advance(distance * rules.defense_tuning.seconds_per_distance * Warzone.STEP_MS,
+		# The map's linear travel uses this same speed. Only covered distance
+		# represents elapsed travel, including the last partial frame on arrival.
+		advance_warzone_map(distance / rules.defense_tuning.player_speed,
 			Defense.point(navigation.movement_origin), Defense.point(navigation.position))
-		if warzone.clock_ms / Warzone.STEP_MS != previous_tick:
-			_sync_warzone()
 		return
 	if not is_defense() or defense == null: return
 	_advance_strategy(distance * rules.defense_tuning.seconds_per_distance,
 		Defense.point(navigation.movement_origin), Defense.point(navigation.position), false)
 
 # Activity commits and movement share event ordering and collision handling.
-func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) -> void:
-	if not is_defense() or defense == null or defense.complete or run_ended: return
+func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool, notify: bool = true) -> Dictionary:
+	if not is_defense() or defense == null or defense.complete or run_ended: return {}
 	var integrity_before: int = defense.integrity
 	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
@@ -97,11 +97,12 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool) 
 	events.integrity_before = integrity_before
 	events.integrity_after = defense.integrity
 	events.homeworld_damage = maxi(0,integrity_before-defense.integrity)
-	defense_advanced.emit(events)
+	if notify: defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
 			or events.missile_event or events.decoy_changed or defense.failed() or target_lost
 			or not events.spawned.is_empty() or rift_changed or extraction_salvage > 0):
 		progress_committed.emit()
+	return events
 
 func _commit_activity_time(seconds: float) -> void:
 	if is_warzone() and not run_ended:
@@ -115,6 +116,56 @@ func _commit_activity_time(seconds: float) -> void:
 	defense.deferred_seconds = 0.0
 	var position: Vector3 = Defense.point(navigation.position)
 	_advance_strategy(total, position, position, true)
+
+
+# Noncombat operations validate and commit their initial mutations before spending
+# the span. The continuation owns rewards/notifications that belong after time.
+func _spend_activity_time(seconds: float, settle: Callable, present: Callable) -> void:
+	var available: bool = not run_ended and ((is_warzone() and not warzone.complete)
+		or (is_defense() and defense != null and not defense.complete and navigation.position.size() == 3))
+	if not available or seconds <= 0.0:
+		settle.call()
+		return
+	var position := Defense.point(navigation.position)
+	if is_defense():
+		seconds += defense.deferred_seconds
+		defense.deferred_seconds = 0.0
+	else:
+		seconds = roundi(seconds * Warzone.STEP_MS) / float(Warzone.STEP_MS)
+	var aggregate := {}
+	var activity := StrategicActivity.new(seconds, _advance_activity_slice.bind(position, aggregate, present.is_valid()))
+	var finish := func():
+		# Keep the operation notification ahead of rewards and the final commit.
+		if not aggregate.is_empty(): defense_advanced.emit(aggregate)
+		settle.call()
+	if present.is_valid():
+		present.call(activity, finish)
+	else:
+		activity.advance_to(activity.duration)
+		finish.call()
+
+
+func _advance_activity_slice(seconds: float, position: Vector3, aggregate: Dictionary, live: bool) -> void:
+	if is_warzone():
+		_advance_warzone_clock(seconds, position, position)
+		return
+	var events := _advance_strategy(seconds, position, position, true, false)
+	if events.is_empty(): return
+	if aggregate.is_empty():
+		aggregate.merge(events.duplicate(true))
+	else:
+		for key in ["elapsed", "arrivals", "extraction_salvage", "homeworld_damage"]:
+			aggregate[key] += events[key]
+		for key in ["missile_shots", "spawned"]:
+			aggregate[key].append_array(events[key])
+		for key in ["missile_event", "revealed", "escalated", "decoy_changed", "target_lost"]:
+			aggregate[key] = aggregate[key] or events[key]
+		for key in ["position", "integrity_after"]:
+			aggregate[key] = events[key]
+		for key in ["contact", "missile_contact"]:
+			if events[key] >= 0: aggregate[key] = events[key]
+	if live: defense_activity_updated.emit(events)
+
 
 var run_ended: bool = false
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
@@ -280,7 +331,7 @@ func deploy_decoy(at: Vector3) -> bool:
 func has_missile(index: int) -> bool:
 	return is_defense() and defense != null and defense.missiles.active.has(index)
 
-func resolve_missile(index: int, approach: String) -> bool:
+func resolve_missile(index: int, approach: String, present: Callable = Callable()) -> bool:
 	if not has_missile(index) or defense.missiles.pending != index or run_ended: return false
 	var seconds: float
 	match approach:
@@ -296,9 +347,9 @@ func resolve_missile(index: int, approach: String) -> bool:
 	defense.missiles.active.erase(index)
 	defense.missiles.pending = -1
 	defense.update_clear()
-	_commit_activity_time(seconds)
-	_secure_defense()
-	progress_committed.emit()
+	_spend_activity_time(seconds, func():
+		_secure_defense()
+		progress_committed.emit(), present)
 	return true
 
 func refresh_defense_bodies() -> void:
@@ -682,7 +733,7 @@ func warzone_objective(index: int) -> Dictionary:
 	return warzone.objectives[objective]
 
 
-func warzone_operate(index: int, id: String) -> bool:
+func warzone_operate(index: int, id: String, present: Callable = Callable()) -> bool:
 	if (not is_warzone() or not warzone.is_lattice() or not can_visit(index)
 		or navigation.leg_active or navigation.position.size() != 3):
 		return false
@@ -693,25 +744,26 @@ func warzone_operate(index: int, id: String) -> bool:
 	for action in warzone.operations(offset, salvage):
 		if action.id != id or not action.enabled: continue
 		salvage += warzone.operate(offset, action) - action.cost
-		_commit_activity_time(action.seconds)
-		progress_committed.emit()
+		_spend_activity_time(action.seconds, progress_committed.emit, present)
 		return true
 	return false
 
 
-func wait_in_warzone() -> bool:
+func wait_in_warzone(present: Callable = Callable()) -> bool:
 	if not is_warzone() or warzone.complete or navigation.leg_active or not can_navigate():
 		return false
-	_commit_activity_time(rules.warzone_tuning.wait_seconds)
-	progress_committed.emit()
+	_spend_activity_time(rules.warzone_tuning.wait_seconds, progress_committed.emit, present)
 	return true
 
 
-# Map time and committed activity share fixed ticks. Map time is only submitted
-# during overview/travel, so a wait, operation or battle cannot accrue it twice.
+# Travel submits elapsed motion only. Explicit activities share the same clock.
 func advance_warzone_map(seconds: float, from: Vector3, to: Vector3) -> void:
-	if not is_warzone() or not warzone.is_lattice() or warzone.complete or not can_navigate():
+	if not is_warzone() or warzone.complete or not can_navigate():
 		return
+	_advance_warzone_clock(seconds, from, to)
+
+
+func _advance_warzone_clock(seconds: float, from: Vector3, to: Vector3) -> void:
 	var previous_tick: int = warzone.clock_ms / Warzone.STEP_MS
 	var previous_event: int = warzone.event_revision
 	warzone.advance(seconds * Warzone.STEP_MS, from, to)
@@ -849,18 +901,16 @@ func can_survey(index: int) -> bool:
 	return true
 
 
-func survey(index: int) -> bool:
+func survey(index: int, present: Callable = Callable()) -> bool:
 	if not can_survey(index):
 		return false
 	last_poi_success = -1
 	_complete_encounter(index)
 	add_modifiers(rules.survey_penalty)
-	_commit_activity_time(rules.defense_tuning.poi_seconds)
-	last_outcome = (
-		"Navigation survey completed. No Salvage or other rewards. Next battle: "
-		+ describe_modifiers(rules.survey_penalty)
-	)
-	progress_committed.emit()
+	_spend_activity_time(rules.defense_tuning.poi_seconds, func():
+		last_outcome = "Navigation survey completed. No Salvage or other rewards. Next battle: " \
+			+ describe_modifiers(rules.survey_penalty)
+		progress_committed.emit(), present)
 	return true
 
 
@@ -1107,12 +1157,9 @@ func poi_approaches(index: int) -> Array:
 func _defense_poi_reward_rng(index: int) -> RandomNumberGenerator:
 	return DefensePoiResolver.reward_rng(self, index)
 
-func _resolve_defense_poi(index: int, slot: int) -> bool:
-	var result = DefensePoiResolver.resolve(self, index, slot)
-	if not result.resolved: return false
-	# One notification after rewards, or after an activity ends the expedition.
-	progress_committed.emit()
-	return true
+func _resolve_defense_poi(index: int, slot: int, present: Callable = Callable()) -> bool:
+	return DefensePoiResolver.resolve(self, index, slot, present)
+
 
 # Preserve gate order: production, price, then a full Hull repair target.
 func approach_requirement(approach: Resource) -> RefCounted:
@@ -1147,11 +1194,11 @@ func locked_reason(approach: Resource) -> String:
 
 # Validate/pay the approach, roll its outcome and complete the PoI before applying rewards.
 # forced_roll is a deterministic test hook; normal play uses this expedition's RNG.
-func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0) -> bool:
+func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0, present: Callable = Callable()) -> bool:
 	if index == SERVICE_INDEX or not can_visit(index) or objective_locked(index) or encounter_at(index).kind != "poi":
 		return false
 	if is_defense() and defense_poi_version == 1:
-		return _resolve_defense_poi(index,approach_index)
+		return _resolve_defense_poi(index, approach_index, present)
 	var poi: Resource = encounter_at(index).poi
 	if approach_index < 0 or approach_index >= poi.approaches.size():
 		return false
@@ -1177,8 +1224,7 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
 	_apply_outcome(outcome)
-	_commit_activity_time(rules.defense_tuning.poi_seconds)
-	progress_committed.emit()
+	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 
@@ -1399,7 +1445,7 @@ func service_locked_reason(slot: int) -> String:
 
 
 # Use a confirmation revision to reject stale purchases; services never complete a progression PoI.
-func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_index: int = -1) -> bool:
+func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_index: int = -1, present: Callable = Callable()) -> bool:
 	if revision != service_revision or not service_locked_reason(slot).is_empty():
 		return false
 	var outcome: Resource = service.poi.approaches[slot].success
@@ -1433,8 +1479,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_ind
 			station_production_purchases += 1
 		last_outcome += describe_outcome(outcome)
 		_apply_outcome(outcome)
-	_commit_activity_time(rules.defense_tuning.poi_seconds)
-	progress_committed.emit()
+	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 

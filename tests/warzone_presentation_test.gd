@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
+
 var checks := 0
 var failures := 0
 
@@ -38,6 +40,7 @@ func capture(tag: String) -> void:
 
 
 func run() -> void:
+	Preferences.set_strategic_time_overview(false)
 	root.size = Vector2i(1280, 720)
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false
@@ -67,8 +70,8 @@ func run() -> void:
 		"Ownership is readable without color")
 	check(not host.state.can_jump(), "The initial operation keeps FTL locked")
 	var presentation = map.warzone_presentation
-	check(presentation.fx.emitted_beams >= 4 and presentation.fx.emitted_impacts == 0,
-		"The two opening battles show beams without advancing attrition")
+	check(presentation.fx.emitted_beams == 0 and presentation.fx.emitted_impacts == 0,
+		"Opening engagements hold fire while the map is idle")
 	check(presentation.formations[0].size() == 2 and presentation.formations[2].size() == 2,
 		"Both sides have bounded, lightweight formation escorts")
 	presentation.idle_countdown = 0

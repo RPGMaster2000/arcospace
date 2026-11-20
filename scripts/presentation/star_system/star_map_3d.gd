@@ -96,6 +96,9 @@ var warzone_presentation: Node3D
 const WARZONE_ALLY_MARKER_BASE := 1000
 const WarzonePresentation = preload("res://scripts/presentation/star_system/warzone_presentation.gd")
 var physical_speed: float = 0.0
+var keep_activity_focus := false
+var strategic_time_active := false
+var _strategic_defense_samples := {}
 var defense_effects: Node3D
 var motion: Tween
 var impact_motion: Tween
@@ -472,7 +475,9 @@ func _process(delta: float) -> void:
 		return
 	if warzone_view != null and is_instance_valid(warzone_presentation):
 		warzone_presentation.animate_movement(delta)
-		if not focused and not introducing: warzone_presentation.animate_engagements(delta)
+		if not focused and not introducing and (strategic_time_active or (
+			traveling and (not input_allowed.is_valid() or input_allowed.call()))):
+			warzone_presentation.animate_engagements(delta)
 	zoom_controls.visible = _zoom_enabled() and not external_zoom_controls
 	if is_instance_valid(feedback): feedback.suppressed = introducing or presentation_blocked
 	for p in visual_data.get("planets",[]):
@@ -640,6 +645,7 @@ func _start_journey(destination: Vector3, index: int, intercepted: bool) -> void
 	travel_direction = destination - origin
 	var seconds: float = origin.distance_to(destination) / physical_speed if physical_speed > 0 else travel_duration
 	motion = create_tween().set_trans(Tween.TRANS_LINEAR if physical_speed > 0 else Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if warzone_view != null: motion.set_ignore_time_scale(true)
 	if intercepted:
 		var fraction := minf(0.5 / maxf(travel_duration, 0.6), 0.8)
 		motion.tween_property(ship, "position", origin.lerp(destination, fraction), 0.5)
@@ -708,6 +714,9 @@ func _impact() -> void:
 
 
 func focus(index: int) -> void:
+	var preserve := keep_activity_focus and focused and selected_index == index
+	keep_activity_focus = false
+	if preserve: return
 	_restore_tactical()
 	focus_orbit_enabled = true
 	orbit_velocity = Vector2.ZERO
@@ -723,6 +732,7 @@ func focus(index: int) -> void:
 
 
 func overview() -> void:
+	keep_activity_focus = false
 	selected_touch_index = -1
 	last_touch_msec = 0
 	interception_pending = false
@@ -1300,6 +1310,29 @@ func set_lattice_overlay(enabled: bool) -> void:
 		sync_warzone(warzone_view)
 
 
+func _set_defense_position(index: int, position_now: Vector3) -> void:
+	if not strategic_time_active:
+		objects[index].position = position_now
+		return
+	var prior: Vector3 = _strategic_defense_samples.get(index, {}).get("to", objects[index].position)
+	if not objects[index].visible or (missile_ids.has(index) == false and index not in visual_data.anchors):
+		prior = position_now
+	_strategic_defense_samples[index] = {"from": prior, "to": position_now}
+
+
+func blend_strategic_defense(fraction: float) -> void:
+	for index in _strategic_defense_samples:
+		if not objects.has(index): continue
+		var span: Dictionary = _strategic_defense_samples[index]
+		objects[index].position = (span.from as Vector3).lerp(span.to, fraction)
+
+
+func finish_strategic_time() -> void:
+	blend_strategic_defense(1.0)
+	_strategic_defense_samples.clear()
+	strategic_time_active = false
+
+
 func _defense_hostile(index: int) -> bool:
 	if missile_ids.has(index): return true
 	for unit in defense_view.get("units", []):
@@ -1322,7 +1355,8 @@ func sync_defense(snapshot: Dictionary) -> void:
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
 		if not objects.has(index): continue
-		objects[index].position = _defense_point(unit.position)
+		var target := _defense_point(unit.position)
+		_set_defense_position(index, target)
 		var active: bool = unit.status == "active" and (not unit.mothership or snapshot.revealed) and not snapshot.complete
 		objects[index].visible = active
 		markers[index].disabled = not active
@@ -1332,7 +1366,7 @@ func sync_defense(snapshot: Dictionary) -> void:
 			if modifier != 0: markers[index].tooltip_text += "\n" + preload("res://scripts/combat_modifier.gd").NAMES[modifier]
 		if unit.mothership and snapshot.get("mothership_advancing", false):
 			markers[index].tooltip_text += "\nAdvancing · ETA %.1fs" % snapshot.mothership_eta
-		visual_data.anchors[index] = objects[index].position
+		visual_data.anchors[index] = target
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)
 
 func _sync_missiles(records: Array, home: Vector3) -> void:
@@ -1359,7 +1393,7 @@ func _sync_missiles(records: Array, home: Vector3) -> void:
 			ring.configure(0.48, marker.accent)
 			selection_rings[id] = ring
 		var body: Node3D = objects[id]
-		body.position = _defense_point(record.position)
+		_set_defense_position(id, _defense_point(record.position))
 		if body.position.distance_squared_to(home) > 0.00001: body.look_at(home, Vector3.UP)
 		markers[id].tooltip_text = "Incoming missile · Hull %d" % record.hull
 	for id in missile_ids:

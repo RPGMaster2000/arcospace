@@ -47,14 +47,20 @@ versioned lattice payload distinguishes a v2 sector from the three-objective sav
 format. Saves store ownership, link topology, orders, effects and accomplished
 operations. The influence field and motion buffers are reconstructed from state.
 
-The active lattice map advances strategic time during overview and travel.
-Inspections, reports, menus, cinematics and card battles pause the live clock.
-Explicit waits, operations and battle outcomes still commit their quoted spans
-through the same clock. Lattice movement and engagement contact use fixed 100 ms
-steps. Capture, volleys, supply timers and consolidation retain their existing
-second-based timing. The renderer interpolates sampled positions and briefly
-replays the path after an explicit time advance. Legacy three-objective saves
-use their original travel and activity clock.
+Fleet movement follows the player's travel clock. Idle maps, inspections and
+menus pause strategic time. Lattice movement and engagement contact use fixed
+100 ms steps. Capture, volleys, supply timers and consolidation keep their
+second-based timing.
+
+**Strategic Time Overview** in Settings is on by default for timed noncombat
+actions in Warzone and Starfront Defense. Confirmed actions cut to the full map
+and spend one strategic second per active second. The progress bar displays
+consumed time, and returning the camera spends none. Turning the setting off
+settles the same fixed steps immediately. An orderly quit or application
+suspension settles any confirmed remainder before saving.
+
+Card battles keep their existing strategic-time commitments. Field Repairs,
+which only cost Salvage, and modes without a strategic clock have no overview.
 A single transparent mesh shows weighted territorial influence. Connected nodes
 have stronger influence, and fleets and disruption change the field. The 3D
 map reuses the existing sky and scenery and uses one non-shadowing fill light.

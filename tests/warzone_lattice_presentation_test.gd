@@ -2,6 +2,7 @@ extends "res://tests/warzone_presentation_test.gd"
 
 
 func run() -> void:
+	Preferences.set_strategic_time_overview(false)
 	root.size = Vector2i(1280, 720)
 	var host = load("res://scenes/expedition.tscn").instantiate()
 	host.persistence_enabled = false
@@ -28,10 +29,9 @@ func run() -> void:
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
 	var before_clock: int = operation.clock_ms
-	var wall_ms := Time.get_ticks_msec()
 	await touch(hud.lattice_button)
-	check(presentation.overlay_enabled and operation.clock_ms - before_clock < Time.get_ticks_msec() - wall_ms + 300,
-		"Touch toggles route overlay without purchasing additional strategic time")
+	check(presentation.overlay_enabled and operation.clock_ms == before_clock,
+		"Touch toggles the overlay while strategic time stays paused")
 	check(hud.warzone_counts[0].text == "A %d" % operation.fleet_count("allied") and
 		hud.warzone_counts[1].text == "H %d" % operation.fleet_count("hostile"), "Fleet icons carry authoritative counts")
 	check(hud.territory_bar.value == operation.controlled(), "Territory strip matches opening control")
@@ -111,6 +111,12 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	fleet.position = point
 	operation.motion_samples.clear()
 	var model: Node3D = presentation.models[fleet.id]
+	var idle := model.position
+	var idle_clock: int = operation.clock_ms
+	await create_timer(0.3).timeout
+	check(model.position == idle and operation.clock_ms == idle_clock, "Idle maps hold the fleet and clock")
+	var player: Vector3 = host.star_map.ship.position
+	host.star_map.travel_to_position(player + Vector3(0, 0, 30))
 	var watched := 0
 	for interval in 12:
 		var before: Vector3 = model.position
@@ -124,4 +130,10 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	check(watched >= 10, "The rendered fleet advances at the configured speed through successive quarter-second observations")
 	check(model == presentation.models[fleet.id] and model.position.distance_to(fleet.position) < 0.25,
 		"Rendering remains bound to the same fleet and within the fixed-step interpolation delay")
-	check(host.phase == host.Phase.OVERVIEW and presentation.motion.is_empty(), "Live lattice movement never enters the legacy playback queue")
+	check(host.phase == host.Phase.TRAVELING and presentation.motion.is_empty(), "Live lattice movement never enters the legacy playback queue")
+	host.star_map.apply_navigation_position(host.State.Defense.point(host.state.navigation.position))
+	host.state.cancel_travel()
+	host.show_system()
+	var stopped_clock: int = operation.clock_ms
+	await create_timer(0.3).timeout
+	check(operation.clock_ms == stopped_clock, "Stopping the player's ship also stops the lattice clock")
