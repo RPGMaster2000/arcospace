@@ -1099,7 +1099,7 @@ func _select_approach(slot: int) -> void:
 			outpost_screen.select_service(slot)
 		return
 	if slot == -2:
-		if not state.can_survey(selected_encounter, _uses_3d_map()):
+		if not state.can_survey(selected_encounter):
 			return
 	else:
 		var approaches: Array = state.poi_approaches(selected_encounter)
