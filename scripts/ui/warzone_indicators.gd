@@ -9,11 +9,11 @@ const MOTIFS := {
 	"combat": preload("res://assets/ui/card_effects/attack.png"),
 	"warning": preload("res://assets/ui/card_effects/risk.png"),
 	"sabotage": preload("res://assets/ui/card_effects/sabotage.png"),
-	"breach": preload("res://assets/ui/card_effects/pierce.png"),
-	"intercept": preload("res://assets/ui/card_effects/attack.png"),
+	"coordinate": preload("res://assets/ui/card_effects/attack.png"),
+	"jam": preload("res://assets/ui/card_effects/sabotage.png"),
+	"fortify": preload("res://assets/ui/card_effects/shield.png"),
+	"deploy": preload("res://assets/ui/card_effects/hull.png"),
 	"repair": preload("res://assets/ui/card_effects/repair.png"),
-	"salvage": preload("res://assets/ui/card_effects/resource_store.png"),
-	"raid": preload("res://assets/ui/card_effects/resource_store.png"),
 }
 
 

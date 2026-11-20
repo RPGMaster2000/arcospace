@@ -34,7 +34,7 @@ extends Resource
 @export_group("Lattice operations")
 @export_range(20, 150, 1) var effort_goal := 60
 @export_range(1, 30, 1) var capture_effort := 8
-@export_range(1, 30, 1) var operation_effort := 14
+@export_range(1, 30, 1) var npc_victory_effort := 7
 @export_range(1, 30, 1) var victory_effort := 10
 @export_range(1, 15, 1) var repair_cost := 4
 @export_range(10, 90, 1) var sabotage_seconds := 35

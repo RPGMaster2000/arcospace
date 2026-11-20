@@ -73,15 +73,16 @@ func generation() -> void:
 func logistics() -> void:
 	var state := fresh(19)
 	var op: RefCounted = state.warzone
+	var index := 5
 	var hostile_before: int = op.supplied.hostile.size()
 	var start_clock: int = op.clock_ms
-	check(act(state, 7, "sabotage"), "Hostile supply root can be sabotaged behind the front")
-	check(op.supplied.hostile.size() < hostile_before and op.objectives[7].owner == "hostile",
+	check(act(state, index, "sabotage"), "A hostile depot can be sabotaged behind the front")
+	check(op.supplied.hostile.size() < hostile_before and op.objectives[index].owner == "hostile",
 		"Cutoff isolates without claiming territory")
-	check(op.disrupted.has(7) and op.effort >= Rules.warzone_tuning.operation_effort
+	check(op.disrupted.has(index) and op.accomplishments["cut:%d" % index] <= 8
 		and op.clock_ms > start_clock, "Sabotage consumes time and changes the strategic ledger")
 	var prior: int = op.effort
-	check(not state.warzone_operate(State.Warzone.HOSTILE_GROUPS + 7, "sabotage")
+	check(not state.warzone_operate(State.Warzone.HOSTILE_GROUPS + index, "sabotage")
 		and op.effort == prior, "Operations cannot be farmed")
 	var malformed := Store.encode(state)
 	malformed.warzone.lattice.links = []
@@ -99,8 +100,8 @@ func supply_combat() -> void:
 	var cutoff := fresh(19, 1)
 	var index := Sector.HOSTILE_ROOT
 	var op: RefCounted = cutoff.warzone
-	var order: Dictionary = op.operations(index, cutoff.salvage).front()
-	op.operate(index, order)
+	op.disrupted[index] = op.tuning.sabotage_seconds
+	op._refresh_supply()
 	for second in baseline.warzone.tuning.exchange_seconds:
 		baseline.wait_in_warzone()
 		cutoff.wait_in_warzone()
@@ -157,28 +158,147 @@ func battle_progression() -> void:
 	check(State.Defense.point(state.navigation.position).is_equal_approx(entry), "Battle preserves the player position")
 
 
-func scenario(seed_value: int, strategy: String) -> void:
-	var state := fresh(seed_value, 75 if strategy == "infrastructure" else 1)
-	if strategy == "infrastructure":
-		act(state, 7, "sabotage")
-		act(state, 5, "sabotage")
-		act(state, 3, "sabotage")
-	else:
-		check(act(state, 5, "raid") and act(state, 1, "repair"), "Raid funds emergency repairs")
-		act(state, 8, "sabotage")
-		act(state, 7, "sabotage")
-	act(state, 4, "breach")
+func facilities() -> void:
+	var state := fresh(19)
 	var op: RefCounted = state.warzone
-	for wait_index in 72:
-		if state.can_jump(): break
-		state.wait_in_warzone()
-	print(strategy, ": ", op.effort, " effort, ", op.supplied, " ", op.events)
+	for site in op.objectives.size():
+		check(op.operations(site, 100).size() == 1, "Each installation quotes exactly one signature operation")
+	check(not op.operations(7, 100).front().enabled, "Hostile command cannot direct allied fleets")
+	check(not op.operations(0, 0).front().enabled, "Repair Dock enforces its Salvage cost")
+	check(not op.operations(0, 20).front().enabled, "Undamaged fleets cannot buy repairs")
+	op.fleets[0].strength -= 5
+	op.fleets[1].strength -= 1
+	check(act(state, 0, "repair"), "Repair Dock restores the weakest allied formation")
+	check(op.facility_cooldowns.has(0) and not op.facility_cooldowns.has(1)
+		and not op.operations(0, 20).front().enabled, "Recharge is local to the facility instance")
+	var cooling: int = op.facility_cooldowns[0]
+	var restored := roundtrip(state)
+	if restored != null:
+		check(restored.warzone.facility_cooldowns[0] == cooling, "Save preserves the exact remaining recharge")
+		restored.wait_in_warzone()
+		check(restored.warzone.facility_cooldowns[0] == cooling - 1, "One-second Wait spends one recharge second")
+	var start_effort: int = op.effort
+	check(act(state, 3, "jam") and op.jam_until > op.clock_ms and not op.disrupted.has(3),
+		"Communications jamming delays orders without severing the supply graph")
+	check(op.effort == start_effort, "Facility activation alone grants no War Effort")
+	check(roundtrip(state) != null, "Active communications disruption persists")
+	var deploy := fresh(19)
+	var sector: RefCounted = deploy.warzone
+	sector.objectives[8].owner = "allied"
+	sector.links.append(Vector2i(1, 8))
+	sector._refresh_supply()
+	check(act(deploy, 8, "deploy") and sector.fleets[Sector.ALLIED_RESERVE].arriving,
+		"Supplied Shipyard dispatches an off-map allied reserve")
+	check(not sector.can_deploy_allied() and roundtrip(deploy) != null, "Shipyard cannot exceed the fleet cap")
+
+
+func facility_effects() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var command: Dictionary = op.operations(1, 20).front()
+	check(command.enabled, "Supplied command can coordinate a reachable offensive")
+	op.operate(1, command)
+	var allied: Dictionary = op.fleets[0]
+	var hostile: Dictionary = op.fleets[2]
+	allied.position = op.objectives[op.offensive_target].position
+	var boosted: int = op._shot_damage(allied)
+	op.offensive_until = 0
+	check(boosted == op._shot_damage(allied) + 1, "Coordinated volleys change strategic attrition")
+	var fortify: Dictionary = op.operations(2, 20).front()
+	allied.position = op.objectives[2].position
+	hostile.engaged = allied.id
+	var unfortified: int = op._shot_damage(hostile)
+	op.operate(2, fortify)
+	check(op._shot_damage(hostile) == unfortified - 1, "Fortifications mitigate hostile volleys at their own site")
+	op.facility_cooldowns.erase(2)
+	check(op._shot_damage(hostile) == unfortified, "Expired fortifications stop mitigating volleys")
+	var cut: Dictionary = op.operations(5, 20).front()
+	op.operate(5, cut)
+	var reward: int = op.effort
+	op.facility_cooldowns.erase(5)
+	op.disrupted.clear()
+	op._refresh_supply()
+	op.operate(5, op.operations(5, 20).front())
+	check(reward > 0 and op.effort == reward, "Recharged logistics disruption cannot pay the same cutoff twice")
+	var recovery := fresh(19, 1)
+	for fleet in recovery.warzone.fleets:
+		if fleet.side == "allied": fleet.strength = 0
+	recovery.salvage = 0
+	check(act(recovery, 0, "repair") and recovery.warzone.fleet_count("allied") > 0,
+		"An emergency recovery is possible after a rout with no Salvage")
+
+
+func approach(state: Resource, site: int) -> void:
+	var op: RefCounted = state.warzone
+	var from := State.Defense.point(state.navigation.position)
+	var to: Vector3 = op.objectives[site].position
+	state.advance_warzone_map(from.distance_to(to) / state.rules.defense_tuning.player_speed, from, to)
+	if not op.complete:
+		state.update_navigation_position(State.Defense.wire(to))
+		travel(state, site)
+
+
+func scenario(seed_value: int, strategy: String) -> void:
+	var state := fresh(seed_value, 75)
+	var op: RefCounted = state.warzone
+	var visited := {}
+	var clock_before_visit := 0
+	for round_index in 12:
+		if op.complete: break
+		var route := [3, 5, 8, 0, 1] if strategy == "infrastructure" else [1, 0, 2, 3, 5, 8]
+		for site in route:
+			if op.complete: break
+			if strategy == "infrastructure" and round_index == 0 and site == 1: continue
+			var action: Dictionary = op.operations(site, state.salvage).front()
+			if not action.enabled: continue
+			approach(state, site)
+			if not op.complete and state.warzone_operate(site + State.Warzone.HOSTILE_GROUPS, action.id):
+				visited[site] = true
+		if op.complete: break
+		for site in range(3, op.objectives.size()):
+			var eligible: bool = op._capture_connected(site, "allied") and op.objectives[site].owner != "allied"
+			var defended: bool = op.fleets.any(func(fleet): return fleet.side == "hostile" and op.active(fleet) \
+				and not fleet.withdrawing and fleet.position.distance_to(op.objectives[site].position) <= op.tuning.objective_radius)
+			if (eligible and not defended) or site == op.final_command:
+				approach(state, site)
+				visited[site] = true
+				break
+		state._commit_activity_time(16)
+		clock_before_visit = op.clock_ms
+	print(strategy, ": ", op.effort, " effort, ", visited.size(), " locations, ", clock_before_visit / 1000, "s, ", op.events)
 	check(state.can_jump() and op.player_victories == 0, strategy + " wins with zero direct battles")
+	check(visited.size() >= 4, strategy + " uses multiple strategic locations")
 	if state.can_jump():
+		check(op.final_command in Sector.FINAL_COMMANDS and op._command_ready(), "Victory requires a supplied deep command")
 		var next := roundtrip(state)
 		if next != null:
 			check(next.generate_system() and next.system_number == 3
 				and next.warzone_outcome.effort == op.effort, "Victory survives the campaign transition")
+
+
+func final_offensive() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var away := Vector3(25, 0, 25)
+	op._award("fixture", 50, "Opening gains")
+	op._award("fixture:2", 10, "Second gains")
+	op.objectives[4].owner = "allied"
+	op._refresh_supply()
+	op.advance(20000, away, away)
+	check(op.final_command == -1 and not op.complete, "NPC-only War Effort cannot end the operation")
+	op.player_intervened = true
+	op._update_final_offensive(true)
+	check(op.final_command in Sector.FINAL_COMMANDS and op.consolidation == 0, "War Effort unlocks a deep command offensive")
+	if roundtrip(state) == null: return
+	for site in [3, 4, 5, 6, 7]:
+		op.objectives[site].owner = "allied"
+	op._refresh_supply()
+	op._update_final_offensive(true)
+	check(op.consolidation == 1, "Consolidation starts only with supplied control")
+	op.disrupted[op.final_command] = 5
+	op._refresh_supply()
+	op._update_final_offensive(true)
+	check(op.consolidation == 0 and not op.complete, "A cutoff interrupts final consolidation")
 
 
 func _edge(a: int, b: int) -> Vector2i:
@@ -370,6 +490,9 @@ func run() -> void:
 	fleet_routing_and_convoys()
 	battle_progression()
 	scenario(19, "infrastructure")
-	scenario(27, "repair and raids")
+	scenario(27, "fleet support")
+	facilities()
+	facility_effects()
+	final_offensive()
 	print("Warzone lattice: %d checks, %d failures" % [checks, failures])
 	quit(int(failures > 0))

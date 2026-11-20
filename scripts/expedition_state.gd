@@ -747,7 +747,8 @@ func warzone_operate(index: int, id: String, present: Callable = Callable()) -> 
 	for action in warzone.operations(offset, salvage):
 		if action.id != id or not action.enabled: continue
 		warzone.note_player_position(Defense.point(navigation.position))
-		salvage += warzone.operate(offset, action) - action.cost
+		warzone.operate(offset, action)
+		salvage -= action.cost
 		_spend_activity_time(action.seconds, progress_committed.emit, present)
 		return true
 	return false
