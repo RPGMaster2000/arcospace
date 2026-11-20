@@ -3,7 +3,7 @@ extends Node3D
 
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
 const ALLIED := Color("65dee9")
-const HOSTILE := Color("ff936d")
+const HOSTILE := Color("ff817c")
 const CONTESTED := Color("ffdc85")
 const NEUTRAL := Color("c6d2e0")
 const BattleFX = preload("res://scripts/presentation/star_system/warzone_battle_fx.gd")
@@ -14,6 +14,12 @@ var models: Dictionary = {}
 var formations: Dictionary = {}
 var motion: Dictionary = {}
 var last_motion_tick := -1
+var lattice_operation: RefCounted
+var _last_rendered_clock := -1.0
+var _replay_time := -1.0
+var _replay_speed := 0.0
+var _replay_start := 0.0
+var _replay_positions: Dictionary = {}
 var overlay_enabled := false
 var influence: ShaderMaterial
 var influence_target := PackedVector4Array()
@@ -50,6 +56,7 @@ func _ready() -> void:
 func refresh(operation: RefCounted, objects: Dictionary) -> void:
 	beam_range = maxf(4.0, operation.tuning.engagement_radius * 1.35)
 	if operation.is_lattice():
+		lattice_operation = operation
 		_refresh_lattice(operation)
 	else:
 		paths.clear_surfaces()
@@ -71,15 +78,16 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 		_refresh_fleet(fleet, operation, objects)
 		if operation.active(fleet) and fleet.engaged >= 0:
 			cosmetic_contacts.append(Vector2i(fleet.id, fleet.engaged))
-	if last_motion_tick >= 0:
-		for sample in operation.motion_samples:
-			if sample.tick <= last_motion_tick: continue
-			for fleet in operation.fleets:
-				if operation.active(fleet):
-					_queue_position(fleet.id, sample.positions[fleet.id])
-	for fleet in operation.fleets:
-		if operation.active(fleet): _queue_position(fleet.id, fleet.position)
-	last_motion_tick = operation.clock_ms - posmod(operation.clock_ms, operation.STEP_MS)
+	if lattice_operation == null:
+		if last_motion_tick >= 0:
+			for sample in operation.motion_samples:
+				if sample.tick <= last_motion_tick: continue
+				for fleet in operation.fleets:
+					if operation.active(fleet):
+						_queue_position(fleet.id, sample.positions[fleet.id])
+		for fleet in operation.fleets:
+			if operation.active(fleet): _queue_position(fleet.id, fleet.position)
+		last_motion_tick = operation.clock_ms - posmod(operation.clock_ms, operation.STEP_MS)
 	if operation.volley_tick > last_volley:
 		last_volley = operation.volley_tick
 		_fire(operation.volley)
@@ -108,6 +116,7 @@ func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionar
 	escorts[0].visible = fleet.strength >= 3
 	escorts[1].visible = fleet.strength >= 5
 	if allies.has(id):
+		allies[id].visible = not operation.is_lattice()
 		allies[id].text = "ALLIED · %s%s" % [fleet.role, " · ENGAGED" if fleet.engaged >= 0 else ""]
 	displayed[id] = {"position": next, "strength": fleet.strength, "heading": heading}
 
@@ -121,6 +130,66 @@ func _queue_position(id: int, next: Vector3) -> void:
 
 
 func animate_movement(delta: float) -> void:
+	if lattice_operation != null:
+		_interpolate_lattice(delta)
+	else:
+		_play_committed_routes(delta)
+	if is_instance_valid(convoy_model) and convoy_model.visible:
+		convoy_model.position = convoy_model.position.move_toward(convoy_target, delta * 2.8)
+	if influence != null and influence_display != influence_target:
+		for index in influence_display.size():
+			var gap := influence_display[index].distance_to(influence_target[index])
+			influence_display[index] = influence_display[index].lerp(influence_target[index], minf(1.0, delta * 1.6 / maxf(0.001, gap)))
+		influence.set_shader_parameter("sources", influence_display)
+
+
+func _interpolate_lattice(delta: float) -> void:
+	var samples: Array = lattice_operation.motion_samples
+	if samples.size() < 2:
+		return
+	var clock: float = lattice_operation.clock_ms + lattice_operation.travel_ms_remainder
+	var step: int = lattice_operation.motion_step_ms()
+	var draw_time := clock if lattice_operation.complete else clock - step
+	# Buyable waits and operations advance the ledger immediately. Briefly
+	# replay their sampled route; ordinary motion is one interpolation step behind.
+	if _last_rendered_clock >= 0.0 and clock - _last_rendered_clock > 500.0 and _replay_time < 0.0:
+		_replay_start = _last_rendered_clock - step
+		_replay_time = _replay_start
+		_replay_speed = maxf(4000.0, (draw_time - _replay_start) / 0.65)
+		for id in models:
+			_replay_positions[id] = models[id].position
+	_last_rendered_clock = clock
+	if _replay_time >= 0.0:
+		_replay_time += delta * _replay_speed
+		if _replay_time >= draw_time:
+			_replay_time = -1.0
+			_replay_positions.clear()
+		else:
+			draw_time = _replay_time
+	var index := clampi(floori((draw_time - samples[0].tick) / step), 0, samples.size() - 2)
+	var before: Dictionary = samples[index]
+	var after: Dictionary = samples[index + 1]
+	var bridging: bool = _replay_time >= 0.0 and draw_time < before.tick
+	var alpha := clampf((draw_time - before.tick) / step, 0.0, 1.0)
+	if bridging:
+		alpha = clampf((draw_time - _replay_start) / maxf(1.0, before.tick - _replay_start), 0.0, 1.0)
+
+	for id in models:
+		var model: Node3D = models[id]
+		if not model.visible: continue
+		var first: Vector3 = _replay_positions.get(id, model.position) if bridging else before.positions[id]
+		var last: Vector3 = before.positions[id] if bridging else after.positions[id]
+		var direction := last - first
+		model.position = first.lerp(last, alpha)
+		var fleet: Dictionary = lattice_operation.fleet_at(id)
+		var contact: Dictionary = lattice_operation.fleet_at(fleet.engaged)
+		if not contact.is_empty():
+			direction = (contact.position as Vector3) - model.position
+		if direction.length_squared() > 0.00001:
+			model.rotation.y = lerp_angle(model.rotation.y, atan2(-direction.z, direction.x), 1.0 - exp(-8.0 * delta))
+
+
+func _play_committed_routes(delta: float) -> void:
 	for id in models:
 		var model: Node3D = models[id]
 		var pending: Array = motion.get(id, [])
@@ -141,13 +210,6 @@ func animate_movement(delta: float) -> void:
 		if not model.visible: pending.clear()
 		if pending.is_empty() and displayed.has(id):
 			model.rotation.y = lerp_angle(model.rotation.y, displayed[id].heading, minf(1.0, delta * 8.0))
-	if is_instance_valid(convoy_model) and convoy_model.visible:
-		convoy_model.position = convoy_model.position.move_toward(convoy_target, delta * 2.8)
-	if influence != null and influence_display != influence_target:
-		for index in influence_display.size():
-			var gap := influence_display[index].distance_to(influence_target[index])
-			influence_display[index] = influence_display[index].lerp(influence_target[index], minf(1.0, delta * 1.6 / maxf(0.001, gap)))
-		influence.set_shader_parameter("sources", influence_display)
 
 
 func _refresh_lattice(operation: RefCounted) -> void:
@@ -188,7 +250,7 @@ func _refresh_lattice(operation: RefCounted) -> void:
 		influence.set_shader_parameter("sources", influence_display)
 	var signature := hash([operation.links, operation.disrupted.keys(),
 		operation.objectives.map(func(node): return [node.owner, node.contested]),
-		overlay_enabled, operation.fleets.map(func(fleet): return fleet.destination) if overlay_enabled else []])
+		overlay_enabled, operation.fleets.map(func(fleet): return [fleet.at, fleet.destination, fleet.engaged, operation.active(fleet)])])
 	if signature == routes_signature: return
 	routes_signature = signature
 	paths.clear_surfaces()
@@ -204,12 +266,19 @@ func _refresh_lattice(operation: RefCounted) -> void:
 			_line(second.position, second.position.lerp(first.position, 0.32), Color(NEUTRAL, alpha * 0.65))
 		else:
 			_line(first.position, second.position, Color(tint, alpha))
-	if overlay_enabled:
-		for fleet in operation.fleets:
-			if operation.active(fleet) and fleet.at != fleet.destination:
-				_line(operation.objectives[fleet.at].position + Vector3.UP * 0.15,
-					operation.objectives[fleet.destination].position + Vector3.UP * 0.15,
-					ALLIED if fleet.side == "allied" else HOSTILE)
+	for fleet in operation.fleets:
+		if not operation.active(fleet) or fleet.engaged >= 0 or fleet.at == fleet.destination:
+			continue
+		var start: Vector3 = operation.objectives[fleet.at].position + Vector3.UP * 0.15
+		var finish: Vector3 = operation.objectives[fleet.destination].position + Vector3.UP * 0.15
+		var tint := Color(ALLIED if fleet.side == "allied" else HOSTILE, 0.86 if overlay_enabled else 0.52)
+		if overlay_enabled: _line(start, finish, tint)
+		var arrow := start.lerp(finish, 0.68)
+		var heading := (finish - start).normalized()
+		var side := heading.cross(Vector3.UP)
+		var base := arrow - heading * 0.53
+		_line(base + side * 0.23, arrow, tint)
+		_line(base - side * 0.23, arrow, tint)
 	paths.surface_end()
 
 
@@ -234,7 +303,7 @@ func _refresh_convoy(operation: RefCounted) -> void:
 	if not convoy_model.visible: convoy_model.position = convoy_target
 	var side: String = operation.convoy.side
 	var badge: Label3D = convoy_model.get_node("Badge")
-	badge.text = "A · Convoy" if side == "allied" else "H · Convoy"
+	badge.text = "◇"
 	badge.modulate = ALLIED if side == "allied" else HOSTILE
 	convoy_model.get_child(0).material_override = escort_materials[side]
 	convoy_model.show()

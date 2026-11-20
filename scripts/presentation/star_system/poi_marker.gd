@@ -31,9 +31,31 @@ var accent := Color("a6e9ff")
 var contrast: bool = false
 var lattice_tag := false
 var lattice_show_name := false
+var capture_ratio := 0.0
+var capture_tint := Color.WHITE
+var in_clash := false
+var fleet_strength := -1.0
+var _pulse := 0.0
+
+
+func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: float = -1.0) -> void:
+	capture_ratio = progress
+	capture_tint = tint
+	in_clash = clash
+	fleet_strength = strength
+	set_process(clash)
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if not in_clash or not is_visible_in_tree():
+		return
+	_pulse = fmod(_pulse + delta * 3.8, TAU)
+	queue_redraw()
 
 
 func style_tag(color: Color) -> void:
+	set_process(false)
 	accent = color.lightened(0.3)
 	accent.a = 1.0
 	flat = false
@@ -168,6 +190,17 @@ func set_lattice_name_visible(value: bool) -> void:
 
 
 func _draw() -> void:
+	if lattice_tag:
+		var ring := minf(size.x, size.y) * 0.5 - 4.0
+		if in_clash:
+			draw_arc(icon_center, ring, 0, TAU, 24, Color(capture_tint, 0.5 + sin(_pulse) * 0.19), 2.0, true)
+		elif capture_ratio > 0:
+			draw_arc(icon_center, ring, -PI / 2, -PI / 2 + TAU * capture_ratio, 28, capture_tint, 2.5, true)
+		if fleet_strength >= 0.0:
+			var track := Rect2(Vector2(8, size.y - 7), Vector2(size.x - 16, 3))
+			draw_rect(track, Color("20364b"))
+			track.size.x *= clampf(fleet_strength, 0.0, 1.0)
+			draw_rect(track, accent)
 	if not Rect2(Vector2.ZERO,size).has_point(anchor_point):
 		var direction := anchor_point - size * 0.5
 		var ratio: float = minf(size.x * 0.5 / maxf(absf(direction.x), 0.001), size.y * 0.5 / maxf(absf(direction.y), 0.001))

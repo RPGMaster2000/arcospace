@@ -93,6 +93,7 @@ var travel_duration := 1.4
 var defense_view: Dictionary = {}
 var warzone_view: RefCounted
 var warzone_presentation: Node3D
+const WARZONE_ALLY_MARKER_BASE := 1000
 const WarzonePresentation = preload("res://scripts/presentation/star_system/warzone_presentation.gd")
 var physical_speed: float = 0.0
 var defense_effects: Node3D
@@ -573,6 +574,9 @@ func travel(index: int) -> void:
 	if is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
+	if markers[index].has_meta("warzone_ally"):
+		inspect_requested.emit(index)
+		return
 	if before_travel.is_valid() and not before_travel.call(index):
 		return
 	var intercepted: bool = intercept_travel.is_valid() and intercept_travel.call(index)
@@ -862,6 +866,9 @@ func _touch_tap(point: Vector2) -> void:
 		# Marker confirmation must not swallow single-tap free travel.
 		# Reuse _tap_at to preserve HUD, object and inspection guards.
 		_tap_at(point)
+		return
+	if markers[index].has_meta("warzone_ally"):
+		inspect_requested.emit(index)
 		return
 	var now: int = Time.get_ticks_msec()
 	if selected_touch_index == index and now - last_touch_msec <= double_tap_msec:
@@ -1189,15 +1196,29 @@ func sync_warzone(operation: RefCounted) -> void:
 		return
 	warzone_presentation.refresh(operation, objects)
 	for fleet in operation.fleets:
-		if fleet.side != "hostile": continue
-		var index: int = fleet.id - operation.ALLIED_GROUPS
+		var allied: bool = fleet.side == "allied"
+		if allied and not operation.is_lattice(): continue
+		var index: int = WARZONE_ALLY_MARKER_BASE + fleet.id if allied else fleet.id - operation.ALLIED_GROUPS
+		if allied and not markers.has(index):
+			_add_warzone_ally(index, fleet.id)
 		if not objects.has(index): continue
-		markers[index].disabled = not operation.active(fleet) or operation.complete
+		var marker: Button = markers[index]
+		marker.disabled = not operation.active(fleet) or operation.complete
+		var status: String = operation.fleet_status(fleet)
 		var glyph := "×" if fleet.engaged >= 0 else "H"
-		if markers[index].text != glyph:
-			markers[index].set_label("", glyph, false)
-		markers[index].tooltip_text = "Hostile %s · Strength %d · %s\nObjective: %s" % [
-			fleet.role, fleet.strength, operation.fleet_status(fleet), operation.objective_name(fleet.destination)]
+		if operation.is_lattice():
+			glyph = {"Moving": "›", "Retreating": "‹", "Capturing": "⌖", "Defending": "◇", "Resupplying": "+"}.get(status, glyph)
+			var tint := WarzonePresentation.ALLIED if allied else WarzonePresentation.HOSTILE
+			if marker.accent != tint:
+				marker.accent = tint
+				marker._refresh_state()
+			marker.set_warzone_readout(0.0, WarzonePresentation.CONTESTED, fleet.engaged >= 0,
+				float(fleet.strength) / maxi(1, fleet.strength_limit))
+		if marker.text != glyph:
+			marker.set_label("", glyph, false)
+		marker.tooltip_text = "%s %s · Strength %d · %s\nObjective: %s" % [
+			fleet.side.capitalize(), fleet.role, fleet.strength, status, operation.objective_name(fleet.destination)]
+		marker.accessibility_name = marker.tooltip_text
 	for offset in operation.objectives.size():
 		var index: int = operation.HOSTILE_GROUPS + offset
 		if not markers.has(index): continue
@@ -1218,11 +1239,33 @@ func sync_warzone(operation: RefCounted) -> void:
 				and offset in [operation.ALLIED_ROOT, operation.HOSTILE_ROOT, 3, 5])
 			marker.set_lattice_name_visible(show_name)
 			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
-			if objective.progress > 0: tag = "%d%%" % roundi(100.0 * objective.progress / operation.tuning.capture_seconds)
-			elif operation.disrupted.has(offset): tag += "!"
+			if operation.disrupted.has(offset): tag += "!"
 			elif not operation.is_supplied(offset): tag += "/"
+			var capture: float = float(objective.progress) / operation.tuning.capture_seconds
+			var capture_tint := WarzonePresentation.ALLIED if objective.capturing == "allied" else WarzonePresentation.HOSTILE
+			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)
 		marker.set_objective(tag)
 		marker.tooltip_text = operation.objective_brief(offset)
+
+
+func _add_warzone_ally(index: int, id: int) -> void:
+	var model: Node3D = warzone_presentation.models[id]
+	objects[index] = model
+	var marker := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
+	marker.set_meta("warzone_ally", id)
+	marker.lattice_tag = true
+	marker.contrast = true
+	marker.style_tag(WarzonePresentation.ALLIED)
+	marker.add_theme_font_override("font", ThemeDB.fallback_font)
+	marker.hit_allowed = func(point): return not point_is_reserved(point)
+	marker.nearest_hit = func(point): return nearest_marker(point) == index
+	marker.pressed.connect(travel.bind(index))
+	add_child(marker)
+	markers[index] = marker
+	var ring := preload("res://scripts/presentation/star_system/selectable_ring.gd").new()
+	visual_root.add_child(ring)
+	ring.configure(0.65, marker.accent)
+	selection_rings[index] = ring
 
 
 func set_lattice_overlay(enabled: bool) -> void:

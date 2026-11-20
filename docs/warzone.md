@@ -1,11 +1,15 @@
-# Warzone v2 · Strategic Lattice Warfare
+# Warzone v2.1 · Strategic Lattice Warfare
 
 ## Playing the sector
 
 System 2 opens in a starless deep-space sector with a small allied foothold and two
 active fleet engagements. **Lattice** emphasizes viable, contested and severed routes.
 An **A** or **H** badge identifies ownership. **!** marks disruption and **/** marks
-isolation. Inspect a site for its name, supply status and available operations.
+isolation. A capture ring shows progress and a pulsing ring marks combat.
+Fleet markers show strength and orders. Select an allied fleet for its readout,
+or hold a hostile marker to inspect it before committing to an interception.
+The HUD shows War Effort, the territorial split and fleet counts. System Status
+keeps the event log, and Operation Details explains the actions at each site.
 The player can use free navigation, including behind hostile lines.
 
 - **Command and junctions** open routes to capture. Disrupt command defenses and
@@ -43,9 +47,14 @@ versioned lattice payload distinguishes a v2 sector from the three-objective sav
 format. Saves store ownership, link topology, orders, effects and accomplished
 operations. The influence field and motion buffers are reconstructed from state.
 
-Fleet movement advances on the existing fixed strategic clock. The renderer
-queues committed positions in order and follows intermediate waypoints during
-bulk waits. Refreshing the map leaves the current visual segment intact.
+The active lattice map advances strategic time during overview and travel.
+Inspections, reports, menus, cinematics and card battles pause the live clock.
+Explicit waits, operations and battle outcomes still commit their quoted spans
+through the same clock. Lattice movement and engagement contact use fixed 100 ms
+steps. Capture, volleys, supply timers and consolidation retain their existing
+second-based timing. The renderer interpolates sampled positions and briefly
+replays the path after an explicit time advance. Legacy three-objective saves
+use their original travel and activity clock.
 A single transparent mesh shows weighted territorial influence. Connected nodes
 have stronger influence, and fleets and disruption change the field. The 3D
 map reuses the existing sky and scenery and uses one non-shadowing fill light.
