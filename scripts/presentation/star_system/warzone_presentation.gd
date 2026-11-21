@@ -15,7 +15,13 @@ const ALLIED_SHIPS := [
 ]
 const BattleFX = preload("res://scripts/presentation/star_system/warzone_battle_fx.gd")
 
+const CONNECTION_WIDTH := 0.27
+const ORDER_WIDTH := 0.115
 var paths := ImmediateMesh.new()
+var order_paths := ImmediateMesh.new()
+var _order_endpoints := PackedVector3Array()
+var _legacy_material: Material
+var _connection_mesh: MeshInstance3D
 var allies: Dictionary = {}
 var models: Dictionary = {}
 var formations: Dictionary = {}
@@ -58,6 +64,19 @@ func _ready() -> void:
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	lines.material_override = material
 	add_child(lines)
+	var connections := ShaderMaterial.new()
+	connections.shader = preload("res://shaders/warzone_routes.gdshader")
+	lines.material_override = connections
+	_legacy_material = material
+	_connection_mesh = lines
+	var orders := MeshInstance3D.new()
+	orders.mesh = order_paths
+	orders.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var moving := connections.duplicate() as ShaderMaterial
+	moving.set_shader_parameter("moving", true)
+	moving.render_priority = 1
+	orders.material_override = moving
+	add_child(orders)
 	fx = BattleFX.new()
 	add_child(fx)
 
@@ -67,6 +86,7 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 	if operation.is_lattice():
 		lattice_operation = operation
 	else:
+		_connection_mesh.material_override = _legacy_material
 		paths.clear_surfaces()
 		var moving: Array = operation.fleets.filter(func(fleet):
 			var target: Vector3 = operation.objectives[fleet.destination].position
@@ -147,6 +167,8 @@ func animate_movement(delta: float) -> void:
 		_interpolate_lattice(delta)
 	else:
 		_play_committed_routes(delta)
+	if overlay_enabled and lattice_operation != null and not aftermath_started:
+		_update_orders()
 	if is_instance_valid(convoy_model) and convoy_model.visible:
 		convoy_model.position = convoy_model.position.move_toward(convoy_target, delta * 2.8)
 	if overlay_enabled and influence != null and influence_display != influence_target:
@@ -159,6 +181,7 @@ func animate_movement(delta: float) -> void:
 func begin_aftermath(operation: RefCounted, grade: String, bounds: Rect2) -> void:
 	if aftermath_started: return
 	aftermath_started = true
+	order_paths.clear_surfaces()
 	cosmetic_contacts.clear()
 	paths.clear_surfaces()
 	if is_instance_valid(convoy_model): convoy_model.hide()
@@ -289,7 +312,10 @@ func _play_committed_routes(delta: float) -> void:
 
 func _refresh_lattice(operation: RefCounted) -> void:
 	if is_instance_valid(influence_field): influence_field.visible = overlay_enabled
-	if not overlay_enabled: paths.clear_surfaces()
+	if not overlay_enabled:
+		paths.clear_surfaces()
+		order_paths.clear_surfaces()
+		_order_endpoints.clear()
 	if aftermath_started: return
 	_refresh_convoy(operation)
 	if influence == null:
@@ -333,15 +359,14 @@ func _refresh_lattice(operation: RefCounted) -> void:
 		influence_target = sources
 		influence.set_shader_parameter("sources", influence_display)
 	var signature := hash([operation.links, operation.disrupted.keys(),
-		operation.objectives.map(func(node): return [node.owner, node.contested]),
-		overlay_enabled, operation.fleets.map(func(fleet): return [fleet.at, fleet.destination, fleet.engaged, operation.active(fleet)])])
+		operation.objectives.map(func(node): return node.owner)])
 	if not overlay_enabled:
 		routes_signature = 0
 		return
 	if signature == routes_signature: return
 	routes_signature = signature
 	paths.clear_surfaces()
-	paths.surface_begin(Mesh.PRIMITIVE_LINES)
+	paths.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for edge in operation.links:
 		var first: Dictionary = operation.objectives[edge.x]
 		var second: Dictionary = operation.objectives[edge.y]
@@ -349,24 +374,43 @@ func _refresh_lattice(operation: RefCounted) -> void:
 		var tint := CONTESTED if first.owner != second.owner else objective_color(first)
 		var alpha := 0.78
 		if not live:
-			_line(first.position, first.position.lerp(second.position, 0.32), Color(NEUTRAL, alpha * 0.65))
-			_line(second.position, second.position.lerp(first.position, 0.32), Color(NEUTRAL, alpha * 0.65))
+			_ribbon(paths, CONNECTION_WIDTH, first.position, first.position.lerp(second.position, 0.32), Color(NEUTRAL, alpha * 0.65))
+			_ribbon(paths, CONNECTION_WIDTH, second.position, second.position.lerp(first.position, 0.32), Color(NEUTRAL, alpha * 0.65))
 		else:
-			_line(first.position, second.position, Color(tint, alpha))
-	for fleet in operation.fleets:
-		if not operation.active(fleet) or fleet.engaged >= 0 or fleet.at == fleet.destination:
-			continue
-		var start: Vector3 = operation.objectives[fleet.at].position + Vector3.UP * 0.15
-		var finish: Vector3 = operation.objectives[fleet.destination].position + Vector3.UP * 0.15
-		var tint := Color(ALLIED if fleet.side == "allied" else HOSTILE, 0.86)
-		_line(start, finish, tint)
-		var arrow := start.lerp(finish, 0.68)
-		var heading := (finish - start).normalized()
-		var side := heading.cross(Vector3.UP)
-		var base := arrow - heading * 0.53
-		_line(base + side * 0.23, arrow, tint)
-		_line(base - side * 0.23, arrow, tint)
+			_ribbon(paths, CONNECTION_WIDTH, first.position, second.position, Color(tint, alpha))
 	paths.surface_end()
+
+
+func _update_orders() -> void:
+	var endpoints := PackedVector3Array()
+	if not lattice_operation.complete:
+		for fleet in lattice_operation.fleets:
+			if fleet.side != "hostile" or not lattice_operation.active(fleet) or fleet.engaged >= 0: continue
+			if fleet.get("arriving", false) and lattice_operation.supplied.hostile.size() < 2: continue
+			var finish: Vector3 = lattice_operation.objectives[fleet.destination].position
+			var position: Vector3 = fleet.position
+			if position.distance_squared_to(finish) < 0.0025: continue
+			endpoints.append(models[fleet.id].position)
+			endpoints.append(finish)
+	if endpoints == _order_endpoints: return
+	_order_endpoints = endpoints
+	order_paths.clear_surfaces()
+	if endpoints.is_empty(): return
+	order_paths.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(0, endpoints.size(), 2):
+		_ribbon(order_paths, ORDER_WIDTH, endpoints[i], endpoints[i + 1], Color("cf5365"))
+	order_paths.surface_end()
+
+
+func _ribbon(mesh: ImmediateMesh, width: float, start: Vector3, finish: Vector3, tint: Color) -> void:
+	var edge := (finish - start).cross(Vector3.UP).normalized() * width * 0.5
+	var length := start.distance_to(finish)
+	var points := [start - edge, start + edge, finish + edge, finish - edge]
+	var uvs := [Vector2.ZERO, Vector2(0, 1), Vector2(length, 1), Vector2(length, 0)]
+	for index in [0, 1, 2, 0, 2, 3]:
+		mesh.surface_set_color(tint)
+		mesh.surface_set_uv(uvs[index])
+		mesh.surface_add_vertex(points[index] - Vector3.UP * 0.12)
 
 
 func _refresh_convoy(operation: RefCounted) -> void:

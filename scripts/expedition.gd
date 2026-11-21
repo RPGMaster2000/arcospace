@@ -247,7 +247,9 @@ func _build_ui() -> void:
 	screen.deck_requested.connect(_show_current_deck)
 	screen.main_menu_requested.connect(_exit)
 	screen.hull_requested.connect(_show_hull_info)
-	screen.return_requested.connect(show_system)
+	screen.return_requested.connect(func():
+		if inspecting: _dismiss_inspection()
+		else: show_system())
 	screen.cancel_requested.connect(_cancel_approach)
 	screen.confirm_requested.connect(_confirm_approach)
 	screen.jump_requested.connect(_jump)
@@ -519,6 +521,9 @@ func _notification(what: int) -> void:
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
 		_navigation_clock = Time.get_ticks_msec()
 		if state != null: state.navigation.rebase_movement()
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and inspecting:
+		_dismiss_inspection()
+		return
 	if (not persistence_enabled and developer_test.is_empty()) or state == null: return
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		var cinematic_board = battle
@@ -644,8 +649,20 @@ func _show_star_map(resume_travel: bool = true) -> void:
 	if map_system != state.system_number:
 		map_system = state.system_number
 		map_destination = state.navigation_origin
-	var entries: Array = screen.map_entries(state, _icon)
 	var new_map: bool = not is_instance_valid(star_map)
+	# The lattice scene and the fleet markers are already maintained by
+	# warzone_advanced. Only discovery completion can change on this return.
+	if not new_map and not new_system and state.is_warzone() and star_map.warzone_view == state.warzone \
+		and not state.navigation.leg_active:
+		for key in state.encounter_positions:
+			var index := int(key)
+			if star_map.markers.has(index):
+				star_map.markers[index].disabled = state.encounters[index].completed
+				star_map.markers[index].set_state(state.encounters[index].completed, false, false)
+		_set_system_name(star_map.visual_data.name)
+		screen.set_warzone_status(state)
+		return
+	var entries: Array = screen.map_entries(state, _icon)
 	if _uses_3d_map():
 		if new_map:
 			star_map = preload("res://scenes/star_system_3d.tscn").instantiate()
@@ -1826,7 +1843,7 @@ func _inspect_marker(index: int) -> void:
 	elif state.has_missile(index): _show_missile(index)
 	elif state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
-	return_button.hide()
+	return_button.show()
 	for option in screen.sidebar.find_children("*", "BaseButton", true, false):
 		option.disabled = true
 
@@ -1993,6 +2010,12 @@ func _cancel_decoy(restore_camera: bool = true) -> void:
 		decoy_panel.queue_free()
 	decoy_camera.clear()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if inspecting and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_dismiss_inspection()
+
+
 func _unhandled_key_input(event: InputEvent) -> void:
 	if decoy_camera.is_empty() or not _map_input_allowed(): return
 	if event.is_action_pressed("ui_cancel"):
@@ -2012,10 +2035,15 @@ func _dismiss_inspection() -> void:
 	inspecting = false
 	var backing: StyleBoxFlat = screen.focus_backing.get_theme_stylebox("panel")
 	backing.bg_color = inspection_backing_color
-	if is_instance_valid(star_map): star_map.inspection_active = false
+	if is_instance_valid(star_map):
+		star_map.consume_gesture()
+		star_map.inspection_active = false
 	map_destination = -1
 	phase = Phase.OVERVIEW
 	show_system()
+	if is_instance_valid(star_map) and view_kind == "system":
+		screen._cancel_focus_motion()
+		star_map.camera.overview(star_map.settings, true)
 
 
 func _faction_profile() -> Resource:

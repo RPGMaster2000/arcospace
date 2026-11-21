@@ -80,6 +80,29 @@ func run() -> void:
 		if host._map_input_allowed(): break
 		await create_timer(0.025).timeout
 	await _watch_fleet(host, operation, presentation)
+	var routes: ImmediateMesh = presentation.order_paths
+	check(presentation.CONNECTION_WIDTH > presentation.ORDER_WIDTH, "Permanent links are wider than movement routes")
+	var moving: Dictionary = operation.fleets[4]
+	var original := moving.duplicate()
+	moving.engaged = -1
+	moving.destination = operation.root("hostile")
+	moving.position = operation.objectives[moving.destination].position + Vector3(3.0, 0.0, 0.0)
+	presentation.models[moving.id].position = moving.position
+	presentation._update_orders()
+	check(routes.get_surface_count() == 1 and presentation._order_endpoints.has(moving.position),
+		"Hostile routes start at their displayed ship positions")
+	var tip: Vector3 = operation.objectives[moving.destination].position
+	check(presentation._order_endpoints.has(tip), "Hostile route ends at its actual destination")
+	moving.destination = operation.site("shipyard")
+	presentation._update_orders()
+	check(presentation._order_endpoints.has(operation.objectives[moving.destination].position),
+		"Hostile route follows reassigned orders")
+	moving.position = operation.objectives[moving.destination].position
+	presentation._update_orders()
+	check(not presentation._order_endpoints.has(presentation.models[moving.id].position),
+		"The route disappears at arrival")
+	moving.merge(original, true)
+
 	var forecast: Dictionary = map.markers[0].forecast
 	check(not forecast.is_empty() and forecast.seconds > 0
 		and is_equal_approx(forecast.allied_share, operation.engagement_predictions()[2].allied_share),

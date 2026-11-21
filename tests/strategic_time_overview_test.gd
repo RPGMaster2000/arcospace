@@ -115,6 +115,52 @@ func check_inspection() -> void:
 	await process_frame
 
 
+func check_inspection_input() -> void:
+	var state := fresh("warzone")
+	var host := mount(state)
+	await settle()
+	var map = host.star_map
+	var index: int = state.warzone.root("hostile") + state.warzone.HOSTILE_GROUPS
+	var anchor: Vector3 = map.ship.position
+	var clock: int = state.warzone.clock_ms
+	var models: Dictionary = map.warzone_presentation.models.duplicate()
+	var outside := Vector2(250, 210)
+	for touch in [true, false]:
+		host._inspect_marker(index)
+		await settle()
+		map.travel(index)
+		map.travel_to_position(anchor + Vector3(2, 0, 0))
+		check(not map.traveling and not state.navigation.leg_active, "Inspection gates both navigation entry points")
+		for pressed in [true, false]:
+			var event: InputEvent
+			if touch:
+				event = InputEventScreenTouch.new()
+			else:
+				event = InputEventMouseButton.new()
+				event.button_index = MOUSE_BUTTON_LEFT
+			event.position = outside
+			event.pressed = pressed
+			root.push_input(event, true)
+		check(not host.inspecting and not map.traveling and map.ship.position == anchor,
+			"Outside press consumes its release without navigating")
+	for attempt in 5:
+		host._inspect_marker(index)
+		var start := Time.get_ticks_usec()
+		host.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+		check(not host.inspecting and Time.get_ticks_usec() - start < 250000,
+			"Back promptly dismisses inspection")
+		await process_frame
+	var start := Time.get_ticks_usec()
+	host.show_system()
+	check(Time.get_ticks_usec() - start < 250000 and map.warzone_presentation.models == models
+		and state.warzone.clock_ms == clock and map.ship.position == anchor,
+		"Returning to overview reuses every fleet and spends no strategic time")
+	map.travel_to_position(anchor + Vector3(2, 0, 0))
+	check(map.traveling and state.navigation.leg_active, "Navigation is available again after dismissal")
+	host.queue_free()
+	await process_frame
+
+
 func check_battlefield_framing() -> void:
 	root.size = Vector2i(960, 540)
 	var state := fresh("warzone")
@@ -285,6 +331,7 @@ func run() -> void:
 		"Enabled preference roundtrips through the existing settings file")
 	await check_warzone(true)
 	await check_inspection()
+	await check_inspection_input()
 	await check_battlefield_framing()
 	await check_one_second_wait()
 	await check_defense()
