@@ -353,7 +353,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		button.tooltip_text = entry.tooltip
 		button.flat = true
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.lattice_tag = starless and index >= 0
+		button.lattice_tag = starless and index >= 0 and not entry.get("independent_discovery", false)
 		button.contrast = warzone_view != null or (not defense_view.is_empty() and entry.get("profile") != null)
 		button.style_tag(entry.color)
 		if warzone_view != null:
@@ -1116,13 +1116,16 @@ func fit_overview() -> void:
 			for i in range(64): points.append(VisualSystem.orbit_point(p,TAU*i/64.0))
 	for orbit in visual_data.poi_orbits.values():
 		for i in range(32): points.append(VisualSystem.orbit_point(orbit, TAU * i / 32.0))
+	var sector: bool = warzone_view != null and warzone_view.is_lattice()
+	var bounds := Layout.bounds(layout_expansion)
 	for key in objects:
 		var at: Vector3 = objects[key].position
+		if sector and not bounds.has_point(Vector2(at.x, at.z)): continue
 		var radius: float = float(objects[key].get_meta("radius",2.6 if key==-100 else 1.0))+2.0
 		for x in [-1,1]:
 			for y in [-1,1]:
 				for z in [-1,1]: points.append(at+Vector3(x,y,z)*radius)
-	camera.fit_system(points,settings)
+	camera.fit_system(points, settings, sector)
 
 func begin_introduction() -> void:
 	cancel_presentation()
@@ -1262,6 +1265,9 @@ func sync_warzone(operation: RefCounted) -> void:
 			var share: float = marker.forecast.allied_share
 			var favored := "Even" if is_equal_approx(share, 0.5) else ("Allied favored" if share > 0.5 else "Hostile favored")
 			marker.tooltip_text += "\n%s · Estimated %ds" % [favored, marker.forecast.seconds]
+		if modifier_source.is_valid() and not allied:
+			var modifier: int = modifier_source.call(index)
+			if modifier > 0: marker.tooltip_text += "\n" + preload("res://scripts/combat_modifier.gd").NAMES[modifier]
 		marker.accessibility_name = marker.tooltip_text
 	for offset in operation.objectives.size():
 		var index: int = operation.HOSTILE_GROUPS + offset
@@ -1279,15 +1285,16 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.set_label(operation.objective_name(offset), glyph, true)
 		var tag: String = "Contested" if objective.contested else objective.owner.capitalize()
 		if operation.is_lattice():
-			var show_name: bool = offset == operation.final_command or offset in operation.COMMANDS or (warzone_presentation.overlay_enabled
-				and offset in [operation.ALLIED_ROOT, operation.HOSTILE_ROOT, 3, 5])
+			var show_name: bool = offset == operation.final_command or offset in operation.command_sites() or offset == operation.root("allied") or (warzone_presentation.overlay_enabled and (offset in warzone_presentation.bottlenecks
+				or offset in [operation.site("relay"), operation.site("depot")]))
 			marker.set_lattice_name_visible(show_name)
 			var remaining: int = operation.facility_cooldowns.get(offset, 0)
-			var duration: int = operation.Operations.cooldown(operation.Operations.operation_kind(offset))
+			var duration: int = operation.Operations.cooldown(operation.facility(offset))
 			marker.set_recharge(1.0 - float(remaining) / duration if remaining > 0 and not operation.complete else -1.0)
 			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
 			if operation.disrupted.has(offset): tag += "!"
 			elif not operation.is_supplied(offset) or operation.capture_cutoffs.has(offset): tag += "/"
+			elif warzone_presentation.overlay_enabled and offset in warzone_presentation.bottlenecks: tag += "+"
 			var capture: float = float(objective.progress) / operation.tuning.capture_seconds
 			var capture_tint := WarzonePresentation.ALLIED if objective.capturing == "allied" else WarzonePresentation.HOSTILE
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)

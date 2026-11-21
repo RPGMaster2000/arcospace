@@ -76,7 +76,7 @@ static func _valid_warzone_outcome(value: Variant) -> bool:
 			if not value.get(field) is Array or value[field].size() > 12: return false
 			for id in value[field]:
 				if not _integer(id, 0, 11): return false
-		if value.command_positions.is_empty() or not value.get("node_owners") is Array 			or value.node_owners.size() not in [9, 12]: return false
+		if value.command_positions.is_empty() or not value.get("node_owners") is Array 			or value.node_owners.size() not in range(9, 13): return false
 		for owner in value.node_owners:
 			if owner not in State.Warzone.OWNER: return false
 	else:
@@ -199,7 +199,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
 	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()] + preload("res://scripts/expedition/faction_catalog.gd").ships(configuration))
-	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS + State.WarzoneOperation.OBJECTIVE_MODELS)
+	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS + State.WarzoneOperation.OBJECTIVE_MODELS + State.WarzoneOperation.Discoveries.POIS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
 	if not data.get("revised_starting_decks", false) is bool: return null
@@ -315,10 +315,28 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			return null
 		var reserve: bool = state.warzone.is_lattice() and state.warzone.has_reserves()
 		var expected_count: int = State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size() + int(reserve)
-		if entries.size() != expected_count:
+		var discovery_count: int = entries.size() - expected_count
+		var points: Dictionary = data.get("encounter_positions", {})
+		var procedural: bool = state.warzone.is_lattice() and not state.warzone.roles.is_empty()
+		if discovery_count < 0 or discovery_count > State.WarzoneOperation.Discoveries.MAX_DISCOVERIES \
+			or (discovery_count != 0 and not procedural) or points.size() != discovery_count:
 			return null
+		var discovered: Array[Resource] = []
+		var positions: Array[Vector3] = []
 		for index in entries.size():
-			if index < State.Warzone.HOSTILE_GROUPS or (reserve and index == expected_count - 1):
+			if index >= expected_count:
+				var poi: Resource = entries[index].get("poi")
+				if entries[index].kind != "poi" or poi not in State.WarzoneOperation.Discoveries.POIS \
+					or poi in discovered or entries[index].has("objective_role") or not points.has(str(index)):
+					return null
+				var point := State.Defense.point(points[str(index)])
+				var bounds := State.SystemLayout.bounds(float(data.get("layout_expansion", 0.0)))
+				if absf(point.y) > 0.001 or not bounds.has_point(Vector2(point.x, point.z)): return null
+				if state.warzone.objectives.any(func(node): return point.distance_to(node.position) < 4.7) \
+					or positions.any(func(other): return point.distance_to(other) < 4.7): return null
+				discovered.append(poi)
+				positions.append(point)
+			elif index < State.Warzone.HOSTILE_GROUPS or (reserve and index == expected_count - 1):
 				if (entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index))
 					or entries[index].has("warzone_rank") != state.warzone.is_lattice()):
 					return null
@@ -657,6 +675,7 @@ static func _valid_encounter_positions(data: Dictionary) -> bool:
 		if not key is String or not key.is_valid_int() or str(int(key)) != key: return false
 		var index: int = int(key)
 		if index < 0 or index >= entries.size(): return false
-		if not entries[index] is Dictionary or entries[index].get("kind") != "battle": return false
+		if not entries[index] is Dictionary or (entries[index].get("kind") != "battle" \
+			and not (data.get("game_mode") == "warzone" and entries[index].get("kind") == "poi")): return false
 		if not preload("res://scripts/expedition/navigation_state.gd").valid_point(positions[key], false): return false
 	return true

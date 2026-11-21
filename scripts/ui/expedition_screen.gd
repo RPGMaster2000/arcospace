@@ -651,9 +651,10 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 			elif encounter.get("mandatory_boss", false):
 				detail = "Mandatory Boss · " + detail
 		var tooltip: String = detail
+		var discovery: bool = state.is_warzone() and not state.warzone_discovery(index).is_empty()
 		if state.is_warzone():
 			var objective: Dictionary = state.warzone_objective(index)
-			detail = "Hostile fleet" if objective.is_empty() else "Capture objective"
+			detail = "Capture objective" if not objective.is_empty() else ("Independent discovery" if encounter.kind == "poi" else "Hostile fleet")
 			tooltip = detail
 		var modifier: int = state.preview_modifier(index) if encounter.kind == "battle" else 0
 		if encounter.kind == "battle" and modifier != 0:
@@ -664,6 +665,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 				"mothership": state.is_defense() and state.defense.unit_for(index).get("mothership", false),
 				"name": encounter.title,
 				"model_kind": key,
+				"independent_discovery": discovery,
 				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
 				"world_position": state.Defense.wire(state.navigation_destination(index, Vector3.ZERO, Vector3.ZERO)) if state.is_warzone() else state.battle_location(index),
 				"text":
@@ -674,7 +676,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 					+ ("Completed" if encounter.completed else detail)
 				),
 				"tooltip": tooltip,
-				"color": Presentation.COLORS[Presentation.classification(encounter)],
+				"color": Color("d0d8df") if discovery else Presentation.COLORS[Presentation.classification(encounter)],
 				"completed": encounter.completed,
 				"objective_marker": state.objective_marker(index)
 			}

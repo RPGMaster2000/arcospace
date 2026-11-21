@@ -29,6 +29,7 @@ var aftermath_routes := {}
 var influence_target := PackedVector4Array()
 var influence_display := PackedVector4Array()
 var routes_signature := 0
+var bottlenecks: Array[int] = []
 var convoy_model: Node3D
 var convoy_target := Vector3.ZERO
 var displayed: Dictionary = {}
@@ -157,7 +158,7 @@ func begin_aftermath(operation: RefCounted, grade: String, bounds: Rect2) -> voi
 	cosmetic_contacts.clear()
 	paths.clear_surfaces()
 	if is_instance_valid(convoy_model): convoy_model.hide()
-	var command: Vector3 = operation.objectives[operation.final_command if operation.final_command >= 0 else operation.ALLIED_ROOT].position
+	var command: Vector3 = operation.objectives[operation.final_command if operation.final_command >= 0 else operation.root("allied")].position
 	var center := Vector3(bounds.get_center().x, 0, bounds.get_center().y)
 	var costly := grade == "Pyrrhic Victory"
 	for fleet in operation.fleets:
@@ -283,6 +284,8 @@ func _play_committed_routes(delta: float) -> void:
 
 
 func _refresh_lattice(operation: RefCounted) -> void:
+	if influence != null:
+		influence.set_shader_parameter("projection_strength", 1.0 if overlay_enabled else 0.58)
 	if aftermath_started: return
 	_refresh_convoy(operation)
 	if influence == null:
@@ -297,6 +300,12 @@ func _refresh_lattice(operation: RefCounted) -> void:
 		influence.shader = preload("res://shaders/warzone_influence.gdshader")
 		influence.render_priority = -40
 		influence.set_shader_parameter("source_count", operation.objectives.size())
+		var total := 0.0
+		for edge: Vector2i in operation.links:
+			total += operation.objectives[edge.x].position.distance_to(operation.objectives[edge.y].position)
+		influence.set_shader_parameter("reach", clampf(total / operation.links.size() * 1.22, 9.0, 16.0))
+		influence.set_shader_parameter("projection_strength", 1.0 if overlay_enabled else 0.58)
+		bottlenecks = operation.Lattice.bottlenecks(operation.objectives, operation.links)
 		field.material_override = influence
 		add_child(field)
 		influence_display.resize(12)

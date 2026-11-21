@@ -3,10 +3,6 @@ extends "res://scripts/expedition/warzone_state.gd"
 ## handoff, campaign outcome and historical three-objective saves.
 
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
-const ALLIED_ROOT := 1
-const HOSTILE_ROOT := 7
-const COMMANDS := [1, 6, 7]
-const FINAL_COMMANDS := [6, 7]
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
 const FLEET_LIMIT := 40
 const MOVEMENT_STEP_MS := 100
@@ -16,6 +12,7 @@ const PLAYER := -1
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 var pattern := 0
+var roles: Array[String] = []
 var links: Array[Vector2i] = []
 var disrupted := {}
 var supplied: Dictionary = {"allied": [], "hostile": []}
@@ -41,20 +38,56 @@ func is_lattice() -> bool:
 	return true
 
 
+func site(role: String) -> int:
+	var index := roles.find(role) if not roles.is_empty() else Lattice.ROLES.find(role)
+	return index if index < objectives.size() else -1
+
+
+func role_index(index: int) -> int:
+	return index if roles.is_empty() else Lattice.ROLES.find(roles[index])
+
+
+func facility(index: int) -> String:
+	return Lattice.FACILITIES[role_index(index)]
+
+
+func command_sites() -> Array[int]:
+	return [site("forward_command"), site("hostile_command")]
+
+
+func root(side: String) -> int:
+	return site("allied_command" if side == "allied" else "hostile_command")
+
+
 func objective_name(index: int) -> String:
-	return Lattice.TYPES[index]
+	return Lattice.TYPES[role_index(index)]
 
 
 func objective_glyph(index: int) -> String:
-	return Lattice.GLYPHS[index]
+	return Lattice.GLYPHS[role_index(index)]
 
 
 func start_position(_expansion: float) -> Vector3:
-	return objectives[1].position.lerp(objectives[4].position, 0.47)
+	return objectives[site("allied_command")].position.lerp(objectives[site("junction")].position, 0.47)
 
 
 func outpost_position(_expansion: float) -> Vector3:
-	return objectives[1].position + (objectives[1].position - objectives[4].position).normalized() * 4.0
+	var origin: Vector3 = objectives[site("allied_command")].position
+	return origin + (origin - (objectives[site("junction")].position as Vector3)).normalized() * 4.0
+
+
+func reserve_entry(side: String, expansion: float) -> Vector3:
+	var bounds := Layout.bounds(expansion)
+	var origin: Vector3 = objectives[root(side)].position
+	if roles.is_empty():
+		return Vector3(bounds.position.x - 5.0 if side == "allied" else bounds.end.x + 5.0, 0, origin.z)
+	var opponent: Vector3 = objectives[root("hostile" if side == "allied" else "allied")].position
+	var direction := (origin - opponent).normalized()
+	var edge_x := bounds.end.x if direction.x > 0 else bounds.position.x
+	var edge_z := bounds.end.y if direction.z > 0 else bounds.position.y
+	var distance_x := (edge_x - origin.x) / direction.x if absf(direction.x) > 0.001 else INF
+	var distance_z := (edge_z - origin.z) / direction.z if absf(direction.z) > 0.001 else INF
+	return origin + direction * (minf(distance_x, distance_z) + 5.0)
 
 
 func setup_sector(configuration: Resource, strength: int, expansion: float, seed_value: int, system: int) -> void:
@@ -62,22 +95,22 @@ func setup_sector(configuration: Resource, strength: int, expansion: float, seed
 	var generated := Lattice.generate(seed_value, system, expansion)
 	objectives.assign(generated.nodes)
 	links.assign(generated.links)
+	roles.assign(generated.roles)
 	pattern = generated.pattern
 	initial_allied_strength = strength * ALLIED_GROUPS
-	_add_front("allied", "Vanguard", 1, 4, strength, 0.47)
-	_add_front("allied", "Vanguard", 0, 3, strength, 0.47)
+	_add_front("allied", "Vanguard", site("allied_command"), site("junction"), strength, 0.47)
+	_add_front("allied", "Vanguard", site("repair"), site("relay"), strength, 0.47)
 	var hostile: int = maxi(tuning.hostile_strength, strength)
-	_add_front("hostile", "Assault", 4, 1, hostile, 0.48)
-	_add_front("hostile", "Patrol", 3, 0, hostile, 0.48)
-	_add_front("hostile", "Defender", 7, 7, hostile, 0.0)
-	_add_front("hostile", "Reinforcement", 8, 8, hostile - 2, 0.0)
-	_add_front("hostile", "Defender", 5, 5, hostile - 2, 0.0)
-	var bounds := Layout.bounds(expansion)
+	_add_front("hostile", "Assault", site("junction"), site("allied_command"), hostile, 0.48)
+	_add_front("hostile", "Patrol", site("relay"), site("repair"), hostile, 0.48)
+	for deployment in [["Defender", "hostile_command", hostile],
+			["Reinforcement", "shipyard", hostile - 2], ["Defender", "depot", hostile - 2]]:
+		var at := site(deployment[1])
+		_add_front("hostile", deployment[0], at, at, deployment[2], 0.0)
 	for side in ["allied", "hostile"]:
-		var root := ALLIED_ROOT if side == "allied" else HOSTILE_ROOT
-		_add_front(side, "Reinforcement", root, root, 0, 0.0)
-		var outside := bounds.position.x - 5.0 if side == "allied" else bounds.end.x + 5.0
-		fleets.back().position = Vector3(outside, 0, objectives[root].position.z)
+		var at := root(side)
+		_add_front(side, "Reinforcement", at, at, 0, 0.0)
+		fleets.back().position = reserve_entry(side, expansion)
 		fleets.back().arriving = false
 	_refresh_supply()
 	_assign_engagements(true)
@@ -96,8 +129,8 @@ func _add_front(side: String, role: String, at: int, next: int, strength: int, f
 
 func _refresh_supply(announce: bool = true) -> void:
 	_route_cache.clear()
-	supplied.allied = Lattice.reachable(objectives, links, ALLIED_ROOT, "allied", disrupted)
-	supplied.hostile = Lattice.reachable(objectives, links, HOSTILE_ROOT, "hostile", disrupted)
+	supplied.allied = Lattice.reachable(objectives, links, root("allied"), "allied", disrupted)
+	supplied.hostile = Lattice.reachable(objectives, links, root("hostile"), "hostile", disrupted)
 	for index in objectives.size():
 		var site: Dictionary = objectives[index]
 		if site.progress <= 0 or _capture_connected(index, site.capturing):
@@ -177,7 +210,7 @@ func _fleet_side(id: int) -> String:
 
 func _dispatch_reserves() -> void:
 	if not has_reserves(): return
-	for order in [[ALLIED_RESERVE, 22, ALLIED_ROOT], [HOSTILE_RESERVE, 30, HOSTILE_ROOT]]:
+	for order in [[ALLIED_RESERVE, 22, root("allied")], [HOSTILE_RESERVE, 30, root("hostile")]]:
 		var id: int = order[0]
 		if reserve_launched.has(id) or clock_ms < order[1] * STEP_MS: continue
 		if id == HOSTILE_RESERVE and clock_ms < jam_until: continue
@@ -193,15 +226,13 @@ func can_deploy_allied() -> bool:
 
 func deploy_allied() -> void:
 	var fleet := fleet_at(ALLIED_RESERVE)
-	# Later waves also begin beyond the largest navigable sector.
-	var entry_x := Layout.bounds(Layout.MAX_EXPANSION).position.x - 5.0
-	if not reserve_launched.has(ALLIED_RESERVE): entry_x = fleet.position.x
-	fleet.position = Vector3(entry_x, 0, objectives[ALLIED_ROOT].position.z)
-	_launch_reserve(fleet, ALLIED_ROOT, supplied.allied)
+	if reserve_launched.has(ALLIED_RESERVE):
+		fleet.position = reserve_entry("allied", Layout.MAX_EXPANSION)
+	_launch_reserve(fleet, root("allied"), supplied.allied)
 
 
 func _launch_reserve(fleet: Dictionary, root: int, network: Array) -> void:
-	var strength := mini(6, 2 + network.size() + int(8 in network))
+	var strength := mini(6, 2 + network.size() + int(site("shipyard") in network))
 	fleet.strength = strength
 	fleet.strength_limit = strength
 	fleet.at = root
@@ -275,13 +306,13 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 		var before: String = objectives[index].owner
 		var prior: Array = supplied.allied.duplicate()
 		# The emergency rendezvous remains an allied foothold even after a rout.
-		if index != ALLIED_ROOT: _capture(index, player)
+		if index != root("allied"): _capture(index, player)
 		if before != objectives[index].owner:
 			_refresh_supply()
 			if objectives[index].owner == "allied":
 				if player.distance_to(objectives[index].position) <= tuning.objective_radius:
 					player_intervened = true
-				var value: int = tuning.capture_effort + (4 if index in FINAL_COMMANDS else 0)
+				var value: int = tuning.capture_effort + (4 if index in command_sites() else 0)
 				_award("capture:%d" % index, value, "Captured " + objective_name(index))
 				if supplied.allied.size() > prior.size() + 1:
 					_award("reconnect:%d" % index, 6, "Reconnected allied installations")
@@ -296,8 +327,8 @@ func _update_final_offensive(allow_victory: bool) -> void:
 	if final_command < 0 and player_intervened and effort >= tuning.effort_goal:
 		# A deep command facility anchors the last offensive. Prefer one we
 		# already hold or can approach from supplied territory.
-		var next: int = FINAL_COMMANDS.front()
-		for site in FINAL_COMMANDS:
+		var next: int = command_sites().front()
+		for site in command_sites():
 			if site in supplied.allied or _capture_connected(site, "allied"):
 				next = site
 				break
@@ -441,7 +472,7 @@ func _shot_damage(fleet: Dictionary) -> int:
 	var target := fleet_at(fleet.engaged)
 	if fleet.side == "hostile" and not target.is_empty():
 		for site in facility_cooldowns:
-			if Operations.operation_kind(site) == "fortify" and site in supplied.allied \
+			if facility(site) == "fortify" and site in supplied.allied \
 				and (target.position as Vector3).distance_to(objectives[site].position) <= tuning.objective_radius:
 				return maxi(1, damage - 1)
 	return damage
@@ -501,9 +532,12 @@ func allied_support(hostile_id: int) -> Dictionary:
 
 
 func _launch_convoy(side: String = "hostile") -> void:
-	var origin := HOSTILE_ROOT if side == "hostile" else ALLIED_ROOT
+	var origin := root(side)
 	var options: Array = supplied[side]
-	for site in [5, 8, 6, 4, 3] if side == "hostile" else [0, 2, 4, 3]:
+	var priorities := ["depot", "shipyard", "forward_command", "junction", "relay", "west_hub", "east_hub"] \
+		if side == "hostile" else ["repair", "outpost", "junction", "relay", "shipyard", "forward_command"]
+	for role in priorities:
+		var site := site(role)
 		if site not in options: continue
 		var route := _supply_route(side, origin, site)
 		if route.is_empty(): continue
@@ -601,19 +635,20 @@ func outcome() -> Dictionary:
 	disruptions.sort()
 	value.infrastructure = infrastructure
 	value.disruptions = disruptions
-	value.command_positions = [final_command] if final_command >= 0 and complete else FINAL_COMMANDS.filter(func(id): return id in supplied.allied)
+	value.command_positions = [final_command] if final_command >= 0 and complete else command_sites().filter(func(id): return id in supplied.allied)
 	value.node_owners = objectives.map(func(node): return node.owner)
 	return value
 
 
 func snapshot() -> Dictionary:
 	var value := super.snapshot()
-	value.lattice = {"version": 2, "pattern": pattern, "links": links.map(func(edge): return [edge.x, edge.y]),
+	value.lattice = {"version": 2 if roles.is_empty() else 3, "pattern": pattern, "links": links.map(func(edge): return [edge.x, edge.y]),
 		"effort": effort, "accomplishments": accomplishments.duplicate(), "planned": planned.duplicate(),
 		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {},
 		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
 		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
 		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until}
+	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
 	for key in wreckage: value.lattice.wreckage[str(key)] = wreckage[key]
@@ -622,7 +657,7 @@ func snapshot() -> Dictionary:
 
 
 func _valid_objective_count(count: int) -> bool:
-	return count in [9, 12]
+	return count >= Lattice.MIN_NODES and count <= Lattice.MAX_NODES
 
 
 func _valid_consolidation(_records: Array[Dictionary], _saved: int) -> bool:
@@ -634,8 +669,21 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	if not data is Dictionary or not data.get("lattice") is Dictionary or not super.restore(data, configuration):
 		return false
 	var saved: Dictionary = data.lattice
-	if saved.get("version") != 2 or not Defense.number(saved.get("pattern"), 0, Lattice.PATTERNS.size() - 1):
+	if not Defense.number(saved.get("version"), 2, 3): return false
+	var version := int(saved.version)
+	if not Defense.number(saved.get("pattern"), 0, 5 if version == 2 else Lattice.PATTERNS.size() - 1):
 		return false
+	if version == 2:
+		if objectives.size() not in [9, 12]: return false
+	else:
+		var values: Variant = saved.get("roles")
+		if not values is Array or values.size() != objectives.size(): return false
+		for role in values:
+			if role not in Lattice.ROLES or role in roles: return false
+			roles.append(role)
+		for role in Lattice.ROLES.slice(0, Lattice.MIN_NODES):
+			if role not in roles: return false
+		if objectives[root("allied")].owner != "allied": return false
 	if not saved.get("links") is Array or saved.links.size() > 24: return false
 	links.clear()
 	for pair in saved.links:
@@ -712,13 +760,13 @@ func _restore_facilities(saved: Dictionary) -> bool:
 	for key in cooldowns:
 		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1): return false
 		var site := int(key)
-		if not Defense.number(cooldowns[key], 1, Operations.cooldown(Operations.operation_kind(site))): return false
+		if not Defense.number(cooldowns[key], 1, Operations.cooldown(facility(site))): return false
 		facility_cooldowns[site] = int(cooldowns[key])
 	var intervened: Variant = saved.get("player_intervened", player_victories > 0 or not planned.is_empty())
 	var command: Variant = saved.get("final_command", -1)
 	var target: Variant = saved.get("offensive_target", -1)
 	if not intervened is bool or not Defense.number(command, -1, objectives.size() - 1) \
-		or (int(command) != -1 and (int(command) not in FINAL_COMMANDS or not intervened or effort < tuning.effort_goal)) \
+		or (int(command) != -1 and (int(command) not in command_sites() or not intervened or effort < tuning.effort_goal)) \
 		or not Defense.number(target, -1, objectives.size() - 1): return false
 	for field in ["jam_until", "offensive_until"]:
 		if not Defense.number(saved.get(field, 0), 0, clock_ms + 35 * STEP_MS): return false
