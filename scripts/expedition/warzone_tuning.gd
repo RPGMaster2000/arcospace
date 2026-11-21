@@ -41,3 +41,11 @@ extends Resource
 @export_range(8, 60, 1) var convoy_seconds := 18
 
 @export_range(0.0, 1.0, 0.01) var battle_modifier_chance := 0.54
+
+@export_group("Fleet command and reinforcements")
+@export_range(1, 60, 1) var scramble_seconds := 20
+@export_range(1, 60, 1) var reinforcement_cooldown := 30
+@export_range(0, 20, 1) var reinforcement_cost := 3
+@export_range(1, 30, 1) var reinforcement_seconds := 4
+@export_range(1, 4, 1) var reinforcement_budget := 2
+@export_range(3, 7, 1) var max_allied_fleets := 4

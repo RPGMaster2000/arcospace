@@ -4,10 +4,13 @@ extends "res://scripts/expedition/warzone_state.gd"
 
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
+const AlliedOrders = preload("res://scripts/expedition/warzone_allied_orders.gd")
 const FLEET_LIMIT := 40
 const MOVEMENT_STEP_MS := 100
 const ALLIED_RESERVE := ALLIED_GROUPS + HOSTILE_GROUPS
 const HOSTILE_RESERVE := ALLIED_RESERVE + 1
+const REQUEST_FIRST := HOSTILE_RESERVE + 1
+const REQUEST_LIMIT := 4
 const PLAYER := -1
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 
@@ -30,6 +33,10 @@ var player_intervened := false
 var jam_until := 0
 var offensive_target := -1
 var offensive_until := 0
+var scramble_until := 0
+var scramble_site := -1
+var _importance := {}
+var _supply_signature: Array = []
 var _player_position := Vector3.INF
 var _route_cache := {}
 
@@ -128,9 +135,13 @@ func _add_front(side: String, role: String, at: int, next: int, strength: int, f
 
 
 func _refresh_supply(announce: bool = true) -> void:
-	_route_cache.clear()
-	supplied.allied = Lattice.reachable(objectives, links, root("allied"), "allied", disrupted)
-	supplied.hostile = Lattice.reachable(objectives, links, root("hostile"), "hostile", disrupted)
+	var signature := [objectives.map(func(node): return node.owner), disrupted.keys(), links.duplicate()]
+	if signature != _supply_signature:
+		_supply_signature = signature
+		_importance.clear()
+		_route_cache.clear()
+		supplied.allied = Lattice.reachable(objectives, links, root("allied"), "allied", disrupted)
+		supplied.hostile = Lattice.reachable(objectives, links, root("hostile"), "hostile", disrupted)
 	for index in objectives.size():
 		var site: Dictionary = objectives[index]
 		if site.progress <= 0 or _capture_connected(index, site.capturing):
@@ -197,15 +208,15 @@ func encounter_for_fleet(fleet: Dictionary) -> int:
 
 
 func has_reserves() -> bool:
-	return fleets.size() == HOSTILE_RESERVE + 1
+	return fleets.size() >= REQUEST_FIRST
 
 
 func _valid_fleet_count(count: int) -> bool:
-	return super._valid_fleet_count(count) or count == HOSTILE_RESERVE + 1
+	return super._valid_fleet_count(count) or count in range(REQUEST_FIRST, REQUEST_FIRST + REQUEST_LIMIT + 1)
 
 
 func _fleet_side(id: int) -> String:
-	return "allied" if id == ALLIED_RESERVE else super._fleet_side(id)
+	return "allied" if id == ALLIED_RESERVE or id >= REQUEST_FIRST else super._fleet_side(id)
 
 
 func _dispatch_reserves() -> void:
@@ -214,21 +225,72 @@ func _dispatch_reserves() -> void:
 		var id: int = order[0]
 		if reserve_launched.has(id) or clock_ms < order[1] * STEP_MS: continue
 		if id == HOSTILE_RESERVE and clock_ms < jam_until: continue
+		if id == ALLIED_RESERVE and fleet_count("allied") >= tuning.max_allied_fleets: continue
 		var fleet := fleet_at(id)
 		var network: Array = supplied[fleet.side]
 		if network.size() < 2: continue
 		_launch_reserve(fleet, order[2], network)
 
 
-func can_deploy_allied() -> bool:
-	return has_reserves() and not active(fleets[ALLIED_RESERVE]) and supplied.allied.size() >= 2
+func reinforcement_lock() -> String:
+	if not has_reserves() or supplied.allied.size() < 2:
+		return "Requires a connected supply network"
+	if fleets.size() - REQUEST_FIRST >= tuning.reinforcement_budget:
+		return "Reinforcement budget spent"
+	if fleet_count("allied") >= tuning.max_allied_fleets:
+		return "Allied fleet limit reached"
+	return ""
 
 
-func deploy_allied() -> void:
-	var fleet := fleet_at(ALLIED_RESERVE)
-	if reserve_launched.has(ALLIED_RESERVE):
-		fleet.position = reserve_entry("allied", Layout.MAX_EXPANSION)
-	_launch_reserve(fleet, root("allied"), supplied.allied)
+func deploy_allied(site: int) -> void:
+	var entry := reserve_entry("allied", Layout.MAX_EXPANSION)
+	_add_fleet("allied", "Reinforcement", entry, site, 0)
+	_launch_reserve(fleets.back(), site, supplied.allied)
+
+
+func scramble(site: int) -> void:
+	scramble_until = clock_ms + tuning.scramble_seconds * STEP_MS
+	scramble_site = site
+	AlliedOrders.assign(self, true, true)
+
+
+func allied_site_importance(index: int) -> float:
+	if not _importance.has(index):
+		var command := index in command_sites()
+		var disconnected := 0
+		if index in supplied.allied and index != root("allied"):
+			var blocked := disrupted.duplicate()
+			blocked[index] = true
+			disconnected = maxi(0, supplied.allied.size() - 1 \
+				- Lattice.reachable(objectives, links, root("allied"), "allied", blocked).size())
+		_importance[index] = (8.0 if command else 2.0) + minf(9.0, disconnected * 3.0)
+	return _importance[index]
+
+
+func fleet_speed(fleet: Dictionary) -> float:
+	return tuning.fleet_speed * (1.0 if _fleet_supplied(fleet) else 0.72)
+
+
+func fleet_target_position(fleet: Dictionary) -> Vector3:
+	var enemy := fleet_at(fleet.get("intercept", -1))
+	if active(enemy) and not enemy.withdrawing:
+		return AlliedOrders.interception_point(self, fleet, enemy)
+	return objectives[fleet.destination].position
+
+
+func fleet_order_text(fleet: Dictionary) -> String:
+	var enemy := fleet_at(fleet.get("intercept", -1))
+	if active(enemy) and not enemy.withdrawing:
+		return "Hostile %s %d" % [enemy.role, enemy.id - ALLIED_GROUPS + 1]
+	return objective_name(fleet.destination)
+
+
+func fleet_status(fleet: Dictionary) -> String:
+	if active(fleet) and fleet.engaged < 0:
+		if fleet.get("arriving", false): return "Reinforcing"
+		if fleet.has("recover_until") and not fleet.withdrawing: return "Regrouping"
+		if active(fleet_at(fleet.get("intercept", -1))): return fleet.assignment
+	return super.fleet_status(fleet)
 
 
 func _launch_reserve(fleet: Dictionary, root: int, network: Array) -> void:
@@ -241,7 +303,7 @@ func _launch_reserve(fleet: Dictionary, root: int, network: Array) -> void:
 	fleet.withdrawing = false
 	fleet.counter_target = -1
 	fleet.engaged = -1
-	reserve_launched[fleet.id] = true
+	if fleet.id < REQUEST_FIRST: reserve_launched[fleet.id] = true
 	_notice("%s reinforcements entering the sector." % fleet.side.capitalize())
 
 
@@ -290,6 +352,13 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 		_refresh_supply()
 		_dispatch_reserves()
 	_assign_engagements(true)
+	var expired := scramble_until > 0 and clock_ms >= scramble_until
+	if expired:
+		scramble_until = 0
+		scramble_site = -1
+		for fleet in fleets: AlliedOrders.clear_interception(self, fleet)
+	if expired or clock_ms % AlliedOrders.INTERVAL_MS == 0:
+		AlliedOrders.assign(self, scramble_until > clock_ms)
 	for fleet in fleets:
 		if active(fleet) and fleet.engaged < 0:
 			_move_fleet(fleet, float(MOVEMENT_STEP_MS) / STEP_MS)
@@ -349,8 +418,18 @@ func _command_ready() -> bool:
 
 
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
-	if fleet.get("arriving", false) and supplied[fleet.side].size() < 2:
-		return
+	if fleet.get("arriving", false):
+		if supplied[fleet.side].size() < 2: return
+		if fleet.destination not in supplied[fleet.side]:
+			fleet.destination = root(fleet.side)
+			fleet.at = fleet.destination
+	if fleet.has("intercept"):
+		var enemy := fleet_at(fleet.intercept)
+		if active(enemy) and not enemy.withdrawing and _fleet_supplied(fleet):
+			var position: Vector3 = fleet.position
+			fleet.position = position.move_toward(fleet_target_position(fleet), fleet_speed(fleet) * seconds)
+			return
+		AlliedOrders.clear_interception(self, fleet)
 	while seconds > 0.00001:
 		var at: int = fleet.at
 		var next: int = fleet.destination
@@ -364,13 +443,17 @@ func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
 			fleet.at = next
 			if fleet.has("arriving"): fleet.arriving = false
 			fleet.withdrawing = false
+			if fleet.has("recover_until"):
+				if clock_ms < fleet.recover_until or fleet.strength < AlliedOrders.MIN_RESPONSE_STRENGTH:
+					return
+				fleet.erase("recover_until")
 			if objectives[next].owner != fleet.side and fleet.strength > 2 and _capture_connected(next, fleet.side):
 				return
 			fleet.destination = _direct_target(fleet)
 			if fleet.destination == next:
 				return
 			continue
-		var speed: float = tuning.fleet_speed * (1.0 if _fleet_supplied(fleet) else 0.72)
+		var speed := fleet_speed(fleet)
 		fleet.position = position.move_toward(target, speed * seconds)
 		seconds -= distance / speed
 
@@ -451,7 +534,8 @@ func _exchange_damage() -> void:
 		if not active(fleet): continue
 		var supplied_fleet := _fleet_supplied(fleet)
 		if fleet.engaged < 0:
-			if supplied_fleet and fleet.strength < fleet.strength_limit and fleet.destination == fleet.at:
+			if supplied_fleet and fleet.strength < fleet.strength_limit and fleet.destination == fleet.at \
+				and (not fleet.has("recover_until") or (fleet.position as Vector3).distance_squared_to(objectives[fleet.at].position) < 0.01):
 				fleet.strength += 1
 			continue
 		volley.append(Vector2i(fleet.id, fleet.engaged))
@@ -647,7 +731,8 @@ func snapshot() -> Dictionary:
 		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {},
 		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
 		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
-		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until}
+		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until,
+		"scramble_until": scramble_until, "scramble_site": scramble_site}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -703,6 +788,19 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		fleet.counter_target = int(fleet.counter_target)
 		fleet.at = int(fleet.at)
 		fleet.strength_limit = int(fleet.strength_limit)
+		if fleet.has("intercept"):
+			if fleet.side != "allied" or not Defense.number(fleet.intercept, ALLIED_GROUPS, HOSTILE_RESERVE) \
+				or fleet_at(int(fleet.intercept)).get("side") != "hostile" \
+				or fleet.get("assignment") not in ["Intercepting", "Assisting"] \
+				or not Defense.number(fleet.get("commit_until"), 0, clock_ms + AlliedOrders.COMMIT_MS):
+				return false
+			fleet.intercept = int(fleet.intercept)
+			fleet.commit_until = int(fleet.commit_until)
+		if fleet.has("recover_until"):
+			if fleet.side != "allied" or not Defense.number(fleet.recover_until, 0, clock_ms + AlliedOrders.RECOVERY_MS):
+				return false
+			fleet.recover_until = int(fleet.recover_until)
+		if fleet.id >= REQUEST_FIRST and not fleet.get("arriving") is bool: return false
 	if not Defense.number(saved.get("effort"), 0, 1000) or not saved.get("recovered") is bool:
 		return false
 	for key in ["accomplishments", "planned", "disrupted", "convoy"]:
@@ -760,7 +858,7 @@ func _restore_facilities(saved: Dictionary) -> bool:
 	for key in cooldowns:
 		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1): return false
 		var site := int(key)
-		if not Defense.number(cooldowns[key], 1, Operations.cooldown(facility(site))): return false
+		if not Defense.number(cooldowns[key], 1, maxi(35 if facility(site) == "deploy" else 0, Operations.cooldown(facility(site), tuning))): return false
 		facility_cooldowns[site] = int(cooldowns[key])
 	var intervened: Variant = saved.get("player_intervened", player_victories > 0 or not planned.is_empty())
 	var command: Variant = saved.get("final_command", -1)
@@ -776,6 +874,13 @@ func _restore_facilities(saved: Dictionary) -> bool:
 	offensive_target = int(target)
 	jam_until = int(saved.get("jam_until", 0))
 	offensive_until = int(saved.get("offensive_until", 0))
+	var deadline: Variant = saved.get("scramble_until", 0)
+	var origin: Variant = saved.get("scramble_site", -1)
+	if not Defense.number(deadline, 0, clock_ms + 60 * STEP_MS) \
+		or not Defense.number(origin, -1, objectives.size() - 1): return false
+	if int(deadline) > 0 and (int(origin) < 0 or facility(int(origin)) != "coordinate"): return false
+	scramble_until = int(deadline)
+	scramble_site = int(origin)
 	return true
 
 

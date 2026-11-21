@@ -20,11 +20,11 @@ Each facility has its own cooldown, which advances only on the strategic clock.
 | Facility | Access | Signature operation | Recharge |
 | --- | --- | --- | --- |
 | Repair Dock | Supplied allied | Repair the weakest damaged fleet. One free emergency recovery is available after a rout. | 18s |
-| Command station | Supplied allied | Coordinate an offensive and strengthen allied volleys near the target for 20s. | 28s |
+| Command station | Supplied allied | Scramble available fleets to intercept hostiles for 20s. Free, 2 strategic seconds. | 28s |
 | Outpost or junction | Supplied allied | Fortify a position against heavy hostile volleys for the recharge interval. | 16s |
 | Communications Array | Infiltrate while hostile or transmit while supplied allied | Delay hostile reserves and counterattack orders for 20s. | 25s |
 | Supply depot or logistics hub | Infiltrate while hostile | Sever local supply links and scatter the garrison. | 42s |
-| Shipyard | Supplied allied | Dispatch a reserve when its fleet slot is vacant. | 35s |
+| Shipyard | Supplied allied | Request an additional off-map formation for 3 Salvage and 4 strategic seconds. | 30s |
 
 Convoys deliver strength along supplied routes and abort when their route is cut.
 The Trading Outpost retains its protected services outside the lattice.
@@ -40,6 +40,32 @@ connected installations, and a cutoff can delay their entry. Historical sectors
 retain their existing fleet roster. The fleet marker at each engagement shows an
 attrition estimate based on current strength and incoming fire. **Wait** spends
 one strategic second.
+
+Allied fleets reassess orders every three strategic seconds. Command stations and
+junctions that supply other installations receive higher priority. Fleets
+compare travel time and volley strength, prefer to finish nearly completed
+captures, and converge when a threatened formation needs help. A six-second
+commitment reduces target switching. Weak ships can withdraw to supplied
+territory to recover using existing repair rules. Interception leads the
+hostile's current leg and reevaluates if its orders change. Both factions' dashed
+movement routes are hidden with Lattice OFF.
+
+Scramble immediately reassesses available formations and temporarily raises the
+priority of pursuing hostile fleets. The active station broadcasts a visible
+pulse. Scramble uses existing engagements and damage. The Shipyard budget is
+two paid requests per sector with a maximum of four active allied fleets,
+including an inbound formation or the automatic reserve. A supplied Shipyard
+is required to request a fleet. An incoming fleet can divert to allied command
+if the Shipyard loses supply, or wait off-map if the network cannot support
+it. Request costs and limits are editable in `warzone_tuning.gd`.
+
+A 120-strategic-second simulation over 40 seeds at each of two support levels
+compared the policy against the previous system. The mean number of allied
+objectives at 120 seconds rose from 1.65 to 2.10 at strength 5 and from 1.65 to
+2.08 at strength 9. Allied losses fell from 115 to 108 and from 103 to 101
+summed across seeds. Neither version entered the final offensive without
+player intervention. These unattended runs measure opening survival and
+territory, alongside the lattice regression's distinct player-led victory paths.
 
 War Effort credits captured territory, supply connections severed or restored,
 and defeated fleets. Starting an operation grants no automatic Effort. Each

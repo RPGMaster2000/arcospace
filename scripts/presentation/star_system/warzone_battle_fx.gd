@@ -8,6 +8,7 @@ const AMBER := Color("ff8750")
 
 var beam_mesh := BoxMesh.new()
 var impact_mesh := SphereMesh.new()
+var signal_mesh := TorusMesh.new()
 var beam_materials: Dictionary
 var emitted_beams := 0
 var emitted_impacts := 0
@@ -19,6 +20,10 @@ func _ready() -> void:
 	impact_mesh.height = 1.0
 	impact_mesh.radial_segments = 8
 	impact_mesh.rings = 4
+	signal_mesh.inner_radius = 0.46
+	signal_mesh.outer_radius = 0.50
+	signal_mesh.rings = 20
+	signal_mesh.ring_segments = 5
 	for side in ["allied", "hostile"]:
 		var tint := CYAN if side == "allied" else AMBER
 		beam_materials[side] = [_material(Color(tint, 0.34)), _material(tint.lerp(Color.WHITE, 0.7))]
@@ -52,6 +57,16 @@ func impact(at: Vector3, destroyed: bool) -> void:
 	fade.tween_property(pulse, "scale", Vector3.ONE * (0.9 if destroyed else 0.62), 0.18)
 	fade.tween_property(pulse, "scale", Vector3.ONE * 0.04, 0.14)
 	fade.tween_callback(pulse.queue_free)
+
+
+func transmission(at: Vector3) -> void:
+	var material := _material(Color(CYAN, 0.6))
+	var pulse := _part(self, signal_mesh, material, Vector3.ONE)
+	pulse.position = at + Vector3.UP * 0.2
+	var fade := pulse.create_tween().set_parallel()
+	fade.tween_property(pulse, "scale", Vector3.ONE * 14.0, 0.8)
+	fade.tween_property(material, "albedo_color:a", 0.0, 0.8)
+	fade.chain().tween_callback(pulse.queue_free)
 
 
 static func _material(tint: Color) -> StandardMaterial3D:

@@ -20,6 +20,8 @@ const ORDER_WIDTH := 0.115
 var paths := ImmediateMesh.new()
 var order_paths := ImmediateMesh.new()
 var _order_endpoints := PackedVector3Array()
+var _order_colors := PackedColorArray()
+var _last_scramble := -1
 var _legacy_material: Material
 var _connection_mesh: MeshInstance3D
 var allies: Dictionary = {}
@@ -106,7 +108,11 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 		_refresh_fleet(fleet, operation, objects)
 		if not operation.complete and operation.active(fleet) and fleet.engaged >= 0:
 			cosmetic_contacts.append(Vector2i(fleet.id, fleet.engaged))
-	if operation.is_lattice(): _refresh_lattice(operation)
+	if operation.is_lattice():
+		_refresh_lattice(operation)
+		if _last_scramble >= 0 and operation.scramble_until > _last_scramble:
+			fx.transmission(operation.objectives[operation.scramble_site].position)
+		_last_scramble = operation.scramble_until
 	if lattice_operation == null:
 		if last_motion_tick >= 0:
 			for sample in operation.motion_samples:
@@ -125,7 +131,8 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 
 func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionary) -> void:
 	var id: int = fleet.id
-	var target: Vector3 = operation.objectives[fleet.destination].position
+	var target: Vector3 = operation.fleet_target_position(fleet) if operation.is_lattice() \
+		else operation.objectives[fleet.destination].position
 	var foe: Dictionary = operation.fleet_at(fleet.engaged)
 	if not foe.is_empty(): target = foe.position
 	var facing: Vector3 = target - fleet.position
@@ -149,7 +156,7 @@ func _refresh_fleet(fleet: Dictionary, operation: RefCounted, objects: Dictionar
 	if allies.has(id):
 		allies[id].visible = not operation.is_lattice()
 		allies[id].text = "ALLIED · %s%s" % [fleet.role, " · ENGAGED" if fleet.engaged >= 0 else ""]
-	displayed[id] = {"position": next, "strength": fleet.strength, "heading": heading}
+	displayed[id] = {"position": next, "strength": fleet.strength, "heading": heading, "target": target}
 
 
 func _queue_position(id: int, next: Vector3) -> void:
@@ -274,7 +281,7 @@ func _interpolate_lattice(delta: float) -> void:
 
 	for id in models:
 		var model: Node3D = models[id]
-		if not model.visible: continue
+		if not model.visible or id >= before.positions.size() or id >= after.positions.size(): continue
 		var first: Vector3 = _replay_positions.get(id, model.position) if bridging else before.positions[id]
 		var last: Vector3 = before.positions[id] if bridging else after.positions[id]
 		var direction := last - first
@@ -316,6 +323,7 @@ func _refresh_lattice(operation: RefCounted) -> void:
 		paths.clear_surfaces()
 		order_paths.clear_surfaces()
 		_order_endpoints.clear()
+		_order_colors.clear()
 	if aftermath_started: return
 	_refresh_convoy(operation)
 	if influence == null:
@@ -383,22 +391,26 @@ func _refresh_lattice(operation: RefCounted) -> void:
 
 func _update_orders() -> void:
 	var endpoints := PackedVector3Array()
+	var colors := PackedColorArray()
 	if not lattice_operation.complete:
 		for fleet in lattice_operation.fleets:
-			if fleet.side != "hostile" or not lattice_operation.active(fleet) or fleet.engaged >= 0: continue
-			if fleet.get("arriving", false) and lattice_operation.supplied.hostile.size() < 2: continue
-			var finish: Vector3 = lattice_operation.objectives[fleet.destination].position
+			if not lattice_operation.active(fleet) or fleet.engaged >= 0: continue
+			if fleet.get("arriving", false) and lattice_operation.supplied[fleet.side].size() < 2: continue
+			var finish: Vector3 = displayed[fleet.id].target if fleet.has("intercept") \
+				else lattice_operation.objectives[fleet.destination].position
 			var position: Vector3 = fleet.position
 			if position.distance_squared_to(finish) < 0.0025: continue
 			endpoints.append(models[fleet.id].position)
 			endpoints.append(finish)
-	if endpoints == _order_endpoints: return
+			colors.append(Color("4da7d6") if fleet.side == "allied" else Color("cf5365"))
+	if endpoints == _order_endpoints and colors == _order_colors: return
 	_order_endpoints = endpoints
+	_order_colors = colors
 	order_paths.clear_surfaces()
 	if endpoints.is_empty(): return
 	order_paths.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in range(0, endpoints.size(), 2):
-		_ribbon(order_paths, ORDER_WIDTH, endpoints[i], endpoints[i + 1], Color("cf5365"))
+	for i in colors.size():
+		_ribbon(order_paths, ORDER_WIDTH, endpoints[i * 2], endpoints[i * 2 + 1], colors[i])
 	order_paths.surface_end()
 
 
