@@ -305,7 +305,7 @@ func refresh_emp(data: Dictionary) -> void:
 	var scope: Node = nodes["FTLPanel/WarpButton"]
 	var ready_now: bool = data.emp.can_warp and data.winner.is_empty()
 	if data.escaped_by_ftl and not _emp_fired:
-		Sound.play(&"emp_fire", scope)
+		if not data.get("emp_cinematic", false): Sound.play(&"emp_fire", scope)
 		_emp_fired = true
 	elif ready_now and not _emp_ready:
 		Sound.play(&"emp_ready", scope)
@@ -352,7 +352,9 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 	var player_can_act: bool = (
 		data.winner.is_empty() and data.current_actor == "player" and not data.resolving_card
 	)
-	if data.winner.is_empty():
+	if data.get("emp_pending", false):
+		nodes["TurnLabel"].text = "EMP PULSE"
+	elif data.winner.is_empty():
 		nodes["TurnLabel"].text = (
 			"Turn %d · %s"
 			% [data.turn_number, "You" if data.current_actor == "player" else "Enemy"]

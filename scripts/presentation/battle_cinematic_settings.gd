@@ -28,6 +28,8 @@ class_name BattleCinematicSettings
 @export var boost_seconds: float = .38
 @export var boost_distance: float = 72
 @export var fade_seconds: float = .30
+## Charge, discharge and drift use wall-clock seconds independent of camera playback.
+@export var emp_seconds := Vector3(1.5, 0.5, 2.0)
 
 
 func duration(authored_seconds: float) -> float:

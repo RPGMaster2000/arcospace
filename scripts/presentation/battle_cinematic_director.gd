@@ -7,6 +7,7 @@ signal stage_changed(stage: String)
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
+const EMP = preload("res://scripts/presentation/emp_cinematic_effect.gd")
 const IntroFont = preload("res://assets/fonts/emoji_ui.tres")
 @export var settings: Resource = preload("res://resources/presentation/battle_cinematics.tres")
 var camera: Camera3D
@@ -46,6 +47,7 @@ var _transition: CanvasLayer
 var _charge_glow: MeshInstance3D
 var _beam_victim_pose: Transform3D
 var _impact_hold: Tween
+var emp_effect: Node3D
 
 
 static func enabled() -> bool:
@@ -173,6 +175,16 @@ func _begin(mode: String, fullscreen: bool) -> int:
 	var focused := board.get_viewport().gui_get_focus_owner()
 	_focus_rest = weakref(focused) if focused != null else null
 	_skip_layer.show()
+	if mode == "emp":
+		skip_button.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		skip_button.offset_left = -70.0
+		skip_button.offset_right = 70.0
+	else:
+		skip_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		skip_button.offset_left = -156.0
+		skip_button.offset_right = -16.0
+	skip_button.offset_top = 16.0
+	skip_button.offset_bottom = 64.0
 	skip_button.grab_focus()
 	return revision
 
@@ -521,6 +533,30 @@ func departure(transition: CanvasLayer) -> bool:
 	return covered
 
 
+func emp_victory(seed_value: int) -> void:
+	if not allowed(): return
+	var token := _begin("emp", false)
+	emp_effect = EMP.new()
+	player.get_parent().add_child(emp_effect)
+	emp_effect.setup(_center(player), _bounds[player].radius, enemy, _center(enemy), _bounds[enemy].radius, seed_value)
+	var seconds: Vector3 = settings.emp_seconds
+	motion = create_tween().set_ignore_time_scale(true)
+	motion.tween_method(func(progress: float): emp_effect.charge(progress, camera), 0.0, 1.0, maxf(0.01, seconds.x))
+	motion.tween_callback(func():
+		emp_effect.discharge()
+		_stage("emp_discharge"))
+	motion.tween_method(func(progress: float): emp_effect.expand(progress), 0.0, 1.0, maxf(0.01, seconds.y))
+	motion.tween_callback(func():
+		emp_effect.drift(0.0)
+		_stage("emp_drift"))
+	motion.tween_method(func(progress: float): emp_effect.drift(progress), 0.0, 1.0, maxf(0.01, seconds.z))
+	motion.tween_callback(func():
+		enemy.hide()
+		_finish())
+	_stage("emp_charge")
+	if active and token == revision: await settled
+
+
 func skip() -> void:
 	if not active:
 		return
@@ -530,6 +566,9 @@ func skip() -> void:
 	if kind == "departure" and is_instance_valid(_transition) and _transition.curtain.visible:
 		_transition.curtain.color.a = 1.0
 		_transition.cancel(false)
+	if kind == "emp":
+		_finish()
+		return
 	settled.emit()
 	if active and kind != "departure":
 		_finish()
@@ -543,6 +582,11 @@ func _finish() -> void:
 	if _impact_hold and _impact_hold.is_valid():
 		_impact_hold.kill()
 	_clear_charge()
+	if is_instance_valid(emp_effect):
+		emp_effect.restore_power()
+		emp_effect.hide()
+		emp_effect.queue_free()
+		emp_effect = null
 	active = false
 	view.offset_bottom = _view_bottom
 	camera.global_transform = _camera_rest
