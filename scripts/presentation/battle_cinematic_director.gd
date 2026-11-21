@@ -175,6 +175,16 @@ func _begin(mode: String, fullscreen: bool) -> int:
 	var focused := board.get_viewport().gui_get_focus_owner()
 	_focus_rest = weakref(focused) if focused != null else null
 	_skip_layer.show()
+	if mode == "emp":
+		skip_button.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		skip_button.offset_left = -70.0
+		skip_button.offset_right = 70.0
+	else:
+		skip_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		skip_button.offset_left = -156.0
+		skip_button.offset_right = -16.0
+	skip_button.offset_top = 16.0
+	skip_button.offset_bottom = 64.0
 	skip_button.grab_focus()
 	return revision
 

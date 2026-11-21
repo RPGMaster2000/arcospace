@@ -68,6 +68,7 @@ func refresh_display() -> void:
 func _display_snapshot() -> Dictionary:
 	var data: Dictionary = super._display_snapshot()
 	data.emp_cinematic = emp_presented
+	data.emp_pending = emp_pending
 	var camera_busy: bool = (
 		(is_instance_valid(cinematic_director) and cinematic_director.active)
 		or (victory_pending and not victory_ready) or emp_pending

@@ -108,7 +108,7 @@ func discharge() -> void:
 func expand(progress: float) -> void:
 	var size := lerpf(_radius, _max_radius, progress)
 	_wave.scale = Vector3.ONE * size
-	_wave_material.set_shader_parameter("intensity", clampf(1.0 - smoothstep(0.68, 1.0, progress), 0.0, 1.0))
+	_wave_material.set_shader_parameter("intensity", clampf(1.0 - smoothstep(0.84, 1.0, progress), 0.0, 1.0))
 	if not _disabled and size >= _hit_at: _disable_enemy()
 
 

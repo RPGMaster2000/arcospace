@@ -352,7 +352,9 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 	var player_can_act: bool = (
 		data.winner.is_empty() and data.current_actor == "player" and not data.resolving_card
 	)
-	if data.winner.is_empty():
+	if data.get("emp_pending", false):
+		nodes["TurnLabel"].text = "EMP PULSE"
+	elif data.winner.is_empty():
 		nodes["TurnLabel"].text = (
 			"Turn %d · %s"
 			% [data.turn_number, "You" if data.current_actor == "player" else "Enemy"]

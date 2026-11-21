@@ -534,8 +534,9 @@ func emp_checks() -> void:
 	board._warp_out()
 	check(director.active and director.stage == "emp_charge" and board.escaped_by_ftl and board.result_recorded,
 		"Authoritative EMP win commits before its cinematic starts")
-	check(not board.get_node("MatchResult").visible and board._presentation_locked(),
-		"The normal victory panel and combat input wait for the EMP")
+	check(not board.get_node("MatchResult").visible and board._presentation_locked()
+		and board.get_node("TurnLabel").text == "EMP PULSE",
+		"Victory indicators and combat input wait for the EMP")
 	board._warp_out()
 	check(board.battles_won == victories + 1 and board.enemy_hull == original_hull,
 		"Repeated activation cannot commit another result or turn escape into destruction")
