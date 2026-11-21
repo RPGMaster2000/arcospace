@@ -240,3 +240,16 @@ The 3D map routes and ship formations reflect the live state. The ship models
 interpolate between authoritative positions. Cosmetic beam exchanges remain
 visible on an idle overview. Committed volleys drive damage flashes and
 formation losses.
+
+## Inspection and tactical routes
+
+Inspection owns its dismissing pointer until release, then unlocks the next
+gesture. A same-sector overview return reuses the map and live markers instead
+of regenerating marker labels. In a headless 25-return probe on the seeded
+Warzone test scene, the median Back callback fell from about 1.63 seconds to
+1.1 milliseconds. Separate timings isolated the work to the same-map marker
+refresh, including relabeling and reapplying the tactical marker presentation.
+
+Lattice connections use feathered world-space strips. The narrower animated
+hostile routes connect each displayed fleet to its current movement target.
+Toggling Lattice off clears both meshes together with the influence field.

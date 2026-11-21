@@ -602,7 +602,7 @@ func _facing_basis(direction: Vector3, bank: float = 0.0) -> Basis:
 
 
 func travel(index: int) -> void:
-	if is_instance_valid(decoy_preview): return
+	if inspection_active or is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
 	if markers[index].has_meta("warzone_ally"):
@@ -622,7 +622,7 @@ func travel(index: int) -> void:
 # Free movement uses exactly the same presentation and interception path as PoI travel.
 # The coordinator authorizes intent; this map never changes expedition state.
 func travel_to_position(point: Vector3, check_eligibility: bool = true) -> void:
-	if is_instance_valid(decoy_preview): return
+	if inspection_active or is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or focused:
 		return
 	if check_eligibility and before_free_travel.is_valid() and not before_free_travel.call(point):
@@ -776,7 +776,7 @@ func depart() -> void:
 
 func _zoom_enabled() -> bool:
 	return (
-		is_visible_in_tree() and interactive and not focused
+		is_visible_in_tree() and interactive and not focused and not inspection_active
 		and camera.viewing == &"overview" and not (camera.motion and camera.motion.is_running())
 		and (not input_allowed.is_valid() or input_allowed.call())
 	)
@@ -795,18 +795,41 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+var _dismiss_pointer := -2
+
+
 func _input(event: InputEvent) -> void:
-	var pressed: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
-	if inspection_active and pressed and (not inspection_area.is_valid() or not inspection_area.call().has_point(event.position)):
-		consume_gesture()
-		inspection_dismissed.emit()
-		get_viewport().set_input_as_handled()
+	var pointer := -2
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		pointer = event.index
+	elif event is InputEventMouseButton and event.device != -1 and event.button_index == MOUSE_BUTTON_LEFT:
+		pointer = -1
+	if _dismiss_pointer != -2:
+		if pointer == _dismiss_pointer or (event is InputEventMouseButton and event.device == -1):
+			if not event is InputEventScreenDrag and not event.pressed and pointer == _dismiss_pointer:
+				_dismiss_pointer = -2
+				gesture = Gesture.IDLE
+			get_viewport().set_input_as_handled()
+			return
+		if pointer != -2:
+			get_viewport().set_input_as_handled()
+			return
+	if inspection_active:
+		if pointer != -2 and not event is InputEventScreenDrag and event.pressed \
+			and (not inspection_area.is_valid() or not inspection_area.call().has_point(event.position)):
+			_dismiss_pointer = pointer
+			consume_gesture()
+			get_viewport().set_input_as_handled()
+			inspection_dismissed.emit()
 		return
 	if gesture == Gesture.CONSUMED:
 		if (event is InputEventScreenTouch or event is InputEventMouseButton) and not event.pressed:
 			gesture = Gesture.IDLE
 			get_viewport().set_input_as_handled()
-		return
+			return
+		# A new physical press after keyboard Back is a fresh gesture.
+		if pointer == -2 or event is InputEventScreenDrag or not event.pressed: return
+		gesture = Gesture.IDLE
 	if focused and focus_orbit_enabled and is_visible_in_tree() and (not input_allowed.is_valid() or input_allowed.call()):
 		_focus_input(event)
 		return
