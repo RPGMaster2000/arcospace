@@ -188,7 +188,9 @@ func _ready() -> void:
 	lattice_button.text = "Lattice"
 	lattice_button.custom_minimum_size = Vector2(96, 48)
 	lattice_button.toggle_mode = true
-	lattice_button.toggled.connect(lattice_overlay_changed.emit)
+	lattice_button.toggled.connect(func(enabled: bool):
+		_sync_strategic_controls()
+		lattice_overlay_changed.emit(enabled))
 	preload("res://scripts/ui/encounter_presentation.gd").action(lattice_button)
 	status_actions.add_child(lattice_button)
 	lattice_button.hide()
@@ -605,4 +607,6 @@ func _sync_strategic_controls() -> void:
 	lattice_button.visible = show_actions and warzone_mode and lattice_mode
 	var show_lattice := show_actions and warzone_mode and lattice_mode
 	for control in [war_effort_bar, warzone_summary, territory_bar]: control.visible = show_lattice
-	warzone_warning.visible = show_lattice and not warzone_warning_text.text.is_empty()
+	var connection_warning := warzone_warning_text.text in ["Capture link severed", "Hostile supply cut"]
+	warzone_warning.visible = show_lattice and not warzone_warning_text.text.is_empty() \
+		and (lattice_button.button_pressed or not connection_warning)

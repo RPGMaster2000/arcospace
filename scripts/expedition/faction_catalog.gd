@@ -50,6 +50,12 @@ static func find(rules: Resource, id: String) -> Resource:
 
 static func select(state: Resource) -> Resource:
 	var choices: Array = eligible(state.rules)
+	if state.rules.fixed_opening_factions and state.developer_test.is_empty():
+		var pinned := ""
+		if state.system_number == 1 and state.is_defense(): pinned = "scavenger_clans"
+		elif state.system_number == 2 and state.is_warzone(): pinned = "axiom_collective"
+		for profile in choices:
+			if profile.id == pinned: return profile
 	var alternatives := choices.filter(func(profile): return profile.id != state.faction_id)
 	if not alternatives.is_empty():
 		choices = alternatives

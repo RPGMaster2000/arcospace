@@ -24,7 +24,7 @@ static func beacon(parent: Node3D, at: Vector3, color: Color, size: float = 0.12
 	lamp.material_override.emission_enabled = true
 	lamp.material_override.emission = color
 
-static func ship(profile: Resource) -> Node3D:
+static func ship(profile: Resource, fleet: bool = false) -> Node3D:
 	var mount := Node3D.new()
 	if profile != null:
 		# Standard enemies use the same legacy hull as the battlefield; variants provide model_scene.
@@ -45,14 +45,28 @@ static func ship(profile: Resource) -> Node3D:
 			var shield := model.get_node_or_null("Shield")
 			if shield != null:
 				shield.hide()
+			if fleet:
+				var stripped := {}
+				for part in model.find_children("*", "MeshInstance3D", true, false):
+					part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+					var material: Material = part.material_override
+					# Map hulls use baked materials and steady engine emission.
+					# Battle damage and repair passes stay on the battle instances.
+					if material != null and material.next_pass != null:
+						if not stripped.has(material):
+							var simplified := material.duplicate() as Material
+							simplified.next_pass = null
+							stripped[material] = simplified
+						part.material_override = stripped[material]
 		)
 	else:
 		push_warning("Star map: missing ship model; using a primitive placeholder")
 		var mesh := PrismMesh.new()
 		mesh.size = Vector3(2.5, 0.5, 1)
 		part(mount, mesh, Color.SLATE_GRAY)
-	beacon(mount,Vector3(-1.2,0,0.25),Color("5edbff"),0.2)
-	beacon(mount,Vector3(-1.2,0,-0.25),Color("5edbff"),0.2)
+	if not fleet:
+		beacon(mount,Vector3(-1.2,0,0.25),Color("5edbff"),0.2)
+		beacon(mount,Vector3(-1.2,0,-0.25),Color("5edbff"),0.2)
 	return mount
 
 
@@ -66,7 +80,8 @@ static func ring(parent: Node3D, radius: float, tint: Color, at := Vector3.ZERO)
 
 static func build(entry: Dictionary, rng: RandomNumberGenerator, replacement: PackedScene = null) -> Node3D:
 	if entry.get("profile") != null:
-		var model := ship(entry.profile)
+		var model := ship(entry.profile, entry.get("fleet", false))
+		model.set_meta("ship_profile", entry.profile)
 		model.scale = Vector3.ONE*0.55
 		return model
 	if replacement != null:
