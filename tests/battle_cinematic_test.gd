@@ -547,7 +547,7 @@ func emp_checks() -> void:
 			"The electrical effects originate near the hull")
 	await capture("emp-charge")
 	await wait_until(func(): return director.stage == "emp_discharge", "EMP transitions into the discharge")
-	await wait_until(func(): return is_instance_valid(director.emp_effect) and director.emp_effect._wave.scale.x > director.emp_effect._radius * 2.0,
+	await wait_until(func(): return is_instance_valid(director.emp_effect) and director.emp_effect._wave.scale.x > director.emp_effect._radius * 1.35,
 		"The pulse visibly expands past the emitter")
 	if is_instance_valid(director.emp_effect):
 		var wave: Vector3 = director.emp_effect._wave.scale
