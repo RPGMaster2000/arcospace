@@ -115,11 +115,14 @@ func run() -> void:
 		"Operation updates the effort bar and gain indicator")
 	check(map.markers[index].objective_value.contains("!"), "Disruption is identifiable without color")
 	host.show_system()
+	for attempt in 40:
+		if host._map_input_allowed() and hud.lattice_button.is_visible_in_tree(): break
+		await create_timer(0.025).timeout
 	await settle()
-	await touch(hud.lattice_button)
+	hud.lattice_button.button_pressed = false
 	check(not map.markers[index].objective_value.contains("!") and not presentation.influence_field.visible
 		and presentation.paths.get_surface_count() == 0, "Lattice OFF hides link disruption cues")
-	await touch(hud.lattice_button)
+	hud.lattice_button.button_pressed = true
 	check(map.markers[index].recharge_ratio >= 0.0, "The facility marker shows its own recharge ring")
 	check(presentation.fx.emitted_impacts > 0, "Strategic volleys produce visible damage feedback")
 	host.show_system()
