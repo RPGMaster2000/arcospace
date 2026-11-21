@@ -1272,7 +1272,8 @@ func sync_warzone(operation: RefCounted) -> void:
 		if operation.is_lattice():
 			if operation.complete: status = "Regrouping" if allied else "Withdrawing"
 			glyph = {"Moving": "›", "Retreating": "‹", "Capturing": "⌖", "Defending": "◇",
-				"Resupplying": "+", "Regrouping": "◇", "Withdrawing": "‹"}.get(status, glyph)
+				"Resupplying": "+", "Regrouping": "◇", "Withdrawing": "‹",
+				"Intercepting": "⌖", "Assisting": "+", "Reinforcing": "+"}.get(status, glyph)
 			var tint := WarzonePresentation.ALLIED if allied else WarzonePresentation.HOSTILE
 			if marker.accent != tint:
 				marker.accent = tint
@@ -1281,8 +1282,9 @@ func sync_warzone(operation: RefCounted) -> void:
 				float(fleet.strength) / maxi(1, fleet.strength_limit))
 		if marker.text != glyph:
 			marker.set_label("", glyph, false)
-		marker.tooltip_text = "%s %s · Strength %d · %s\nObjective: %s" % [
-			fleet.side.capitalize(), fleet.role, fleet.strength, status, operation.objective_name(fleet.destination)]
+		var order: String = operation.fleet_order_text(fleet) if operation.is_lattice() else operation.objective_name(fleet.destination)
+		marker.tooltip_text = "%s %s · Strength %d · %s\n→ %s" % [
+			fleet.side.capitalize(), fleet.role, fleet.strength, status, order]
 		marker.set_forecast(forecasts.get(fleet.id, {}))
 		if not marker.forecast.is_empty():
 			var share: float = marker.forecast.allied_share
@@ -1304,6 +1306,9 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.accent = tint
 			marker._refresh_state()
 		var glyph: String = operation.objective_glyph(offset) if operation.is_lattice() else "◇"
+		var scrambling: bool = operation.is_lattice() and not operation.complete \
+			and offset == operation.scramble_site and operation.scramble_until > operation.clock_ms
+		if scrambling: glyph = "⌁"
 		if marker.text != glyph:
 			marker.set_label(operation.objective_name(offset), glyph, true)
 		var tag: String = "Contested" if objective.contested else objective.owner.capitalize()
@@ -1312,7 +1317,7 @@ func sync_warzone(operation: RefCounted) -> void:
 				or offset in [operation.site("relay"), operation.site("depot")]))
 			marker.set_lattice_name_visible(show_name)
 			var remaining: int = operation.facility_cooldowns.get(offset, 0)
-			var duration: int = operation.Operations.cooldown(operation.facility(offset))
+			var duration: int = operation.Operations.cooldown(operation.facility(offset), operation.tuning)
 			marker.set_recharge(1.0 - float(remaining) / duration if remaining > 0 and not operation.complete else -1.0)
 			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
 			if warzone_presentation.overlay_enabled:
@@ -1324,6 +1329,8 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)
 		marker.set_objective(tag)
 		marker.tooltip_text = operation.objective_brief(offset)
+		if scrambling:
+			marker.tooltip_text += "\nScramble active · %ds" % ceili((operation.scramble_until - operation.clock_ms) / 1000.0)
 		if operation.is_lattice() and not operation.complete:
 			var remaining: int = operation.facility_cooldowns.get(offset, 0)
 			if remaining > 0: marker.tooltip_text += "\nOperation recharges in %ds" % remaining

@@ -966,7 +966,12 @@ func _add_fleet_readout(fleet: Dictionary, operation: RefCounted) -> void:
 	gauge.value = fleet.strength
 	gauge.accessibility_name = "%s fleet strength %d of %d" % [fleet.side.capitalize(), fleet.strength, gauge.max_value]
 	view.add_child(gauge)
-	view.add_child(_label("→ " + operation.objective_name(fleet.destination), 15))
+	var order: String = operation.fleet_order_text(fleet) if operation.is_lattice() else operation.objective_name(fleet.destination)
+	if operation.is_lattice() and fleet.engaged < 0:
+		var distance: float = (fleet.position as Vector3).distance_to(operation.fleet_target_position(fleet))
+		if distance > 0.1 and (not fleet.get("arriving", false) or operation.supplied[fleet.side].size() >= 2):
+			order += " · ~%ds" % ceili(distance / operation.fleet_speed(fleet))
+	view.add_child(_label("→ " + order, 15))
 
 
 func _add_warzone_inspection_row(icon: Control, title: String, font_size: int) -> void:

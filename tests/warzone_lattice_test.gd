@@ -330,9 +330,28 @@ func facilities() -> void:
 	var edge := _edge(sector.root("allied"), yard)
 	if edge not in sector.links: sector.links.append(edge)
 	sector._refresh_supply()
-	check(act(deploy, yard, "deploy") and sector.fleets[Sector.ALLIED_RESERVE].arriving,
-		"Supplied Shipyard dispatches an off-map allied reserve")
-	check(not sector.can_deploy_allied() and roundtrip(deploy) != null, "Shipyard cannot exceed the fleet cap")
+	travel(deploy, yard)
+	var salvage: int = deploy.salvage
+	var start_clock: int = sector.clock_ms
+	var original_allies: int = sector.fleet_count("allied")
+	check(deploy.warzone_operate(yard + State.Warzone.HOSTILE_GROUPS, "deploy") and sector.fleet_count("allied") == original_allies + 1,
+		"Supplied Shipyard adds a formation while both original allies are active")
+	var inbound: Dictionary = sector.fleet_at(Sector.REQUEST_FIRST)
+	check(not inbound.is_empty() and inbound.arriving and inbound.destination == yard
+		and inbound.position.distance_to(sector.objectives[yard].position) > 10.0,
+		"Requested reinforcements visibly approach from outside the sector")
+	check(deploy.salvage == salvage - 3 and sector.clock_ms == start_clock + 4000,
+		"Reinforcement request costs three Salvage and four strategic seconds")
+	sector.disrupted[yard] = 10
+	sector._refresh_supply()
+	check(not sector.operations(yard, 20).front().enabled and sector.active(inbound),
+		"Supply disruption locks requests and preserves incoming forces")
+	check(roundtrip(deploy) != null, "Inbound formation and spent request persist")
+	sector.disrupted.clear()
+	sector._refresh_supply()
+	sector.facility_cooldowns.erase(yard)
+	check(act(deploy, yard, "deploy") and not sector.reinforcement_lock().is_empty(),
+		"Request limit remains finite across facility recharges")
 
 
 func facility_effects() -> void:
@@ -342,14 +361,15 @@ func facility_effects() -> void:
 	var fort: int = op.site("outpost")
 	var depot: int = op.site("depot")
 	var command: Dictionary = op.operations(root, 20).front()
-	check(command.enabled, "Supplied command can coordinate a reachable offensive")
-	op.operate(root, command)
+	check(command.enabled and command.title == "Scramble Fleet Command" and command.seconds == 2,
+		"Supplied command quotes the emergency interception operation")
 	var allied: Dictionary = op.fleets[0]
 	var hostile: Dictionary = op.fleets[2]
-	allied.position = op.objectives[op.offensive_target].position
-	var boosted: int = op._shot_damage(allied)
-	op.offensive_until = 0
-	check(boosted == op._shot_damage(allied) + 1, "Coordinated volleys change strategic attrition")
+	var ordinary: int = op._shot_damage(allied)
+	op.operate(root, command)
+	check(op.scramble_until == op.clock_ms + 20000 and op._shot_damage(allied) == ordinary,
+		"Scramble coordinates orders without adding damage")
+	check(roundtrip(state) != null, "Active Scramble and facility recharge persist")
 	op.objectives[fort].owner = "allied"
 	var edge := _edge(root, fort)
 	if edge not in op.links: op.links.append(edge)

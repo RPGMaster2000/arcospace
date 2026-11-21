@@ -161,6 +161,33 @@ func run() -> void:
 			return (other != marker and other.is_visible_in_tree() and other.get_global_rect().intersects(name_rect)))
 		check(not overlaps, "Station names leave moving map controls unobstructed")
 	await capture("lattice-cutoff")
+	var allied: Dictionary = operation.fleets[0]
+	var old_allied := allied.duplicate()
+	allied.position = Vector3(0, 0, 2)
+	allied.engaged = -1
+	allied.intercept = moving.id
+	allied.assignment = "Intercepting"
+	map.sync_warzone(operation)
+	presentation._update_orders()
+	check(presentation._order_colors.has(Color("4da7d6"))
+		and presentation._order_endpoints.has(operation.fleet_target_position(allied)),
+		"Allied dashed route marks the actual interception point")
+	hud.lattice_button.button_pressed = false
+	check(routes.get_surface_count() == 0, "Lattice OFF clears both sides' route mesh")
+	hud.lattice_button.button_pressed = true
+	allied.erase("intercept")
+	allied.erase("assignment")
+	allied.merge(old_allied, true)
+	var command: int = operation.root("allied")
+	operation.deploy_allied(command)
+	map.sync_warzone(operation)
+	await process_frame
+	var inbound: Dictionary = operation.fleets.back()
+	check(inbound.arriving and presentation.models[inbound.id].visible,
+		"An appended reserve gets a ship model while earlier motion samples are still present")
+	operation.scramble(command)
+	map.sync_warzone(operation)
+	await capture("allied-reinforcement")
 	await _watch_aftermath(host, operation, presentation)
 	root.size = Vector2i(1344, 576)
 	await settle()
