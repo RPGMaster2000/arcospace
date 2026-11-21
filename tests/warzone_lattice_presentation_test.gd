@@ -25,15 +25,29 @@ func run() -> void:
 	check(map.visual_data.starless and not map.objects.has(-100) and not map.world.get_node("SunLight").visible
 		and map.visual_root.has_node("SectorFill"), "Live Warzone map has sky and fill lighting without a sun")
 	check(presentation.influence != null and presentation.influence_target.size() == 12
-		and presentation.paths.get_surface_count() == 1, "One influence mesh and one lattice line batch")
+		and presentation.paths.get_surface_count() == 0 and not presentation.influence_field.visible,
+		"Lattice OFF removes the influence draw and all lattice lines")
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
 	var before_clock: int = operation.clock_ms
-	var normal_strength: float = presentation.influence.get_shader_parameter("projection_strength")
+	for fleet in operation.fleets:
+		var mount: Node3D = presentation.models[fleet.id]
+		var profile: Resource = mount.get_meta("ship_profile")
+		var hull := mount.find_child("Body", true, false)
+		check(profile != null and hull != null and hull.find_child("Hull", true, false) != null,
+			"Strategic fleet uses a real spacecraft scene")
+		var solid := hull.find_child("Hull", true, false) as MeshInstance3D
+		check(solid.material_override.next_pass == null and solid.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
+			"Map hulls avoid battle material passes and shadows")
+		if fleet.side == "hostile":
+			var contact: Dictionary = host.state.encounters[operation.encounter_for_fleet(fleet)]
+			check(contact.enemy_data.resource_path.get_file().begins_with("axiom") \
+				and profile.model_scene == contact.enemy_data.model_scene and profile.ship_name == contact.enemy_data.ship_name,
+				"Hostile visuals match the AXIOM contact")
+	await capture("fleets-lattice-off")
 	await touch(hud.lattice_button)
-	check(normal_strength >= 0.5 and normal_strength < 0.7 \
-		and is_equal_approx(presentation.influence.get_shader_parameter("projection_strength"), 1.0),
-		"The overlay strengthens the same subtle territorial projection")
+	check(presentation.influence_field.visible and presentation.paths.get_surface_count() == 1,
+		"Lattice ON draws one influence mesh and one lattice line batch")
 	var discovery: int = int(host.state.encounter_positions.keys().front())
 	check(map.markers.has(discovery) and not map.markers[discovery].lattice_tag \
 		and map.markers[discovery].tooltip_text == "Independent discovery",
@@ -100,6 +114,15 @@ func run() -> void:
 		and operation.effort > 0 and hud.war_effort_gain.text.begins_with("+"),
 		"Operation updates the effort bar and gain indicator")
 	check(map.markers[index].objective_value.contains("!"), "Disruption is identifiable without color")
+	host.show_system()
+	for attempt in 40:
+		if host._map_input_allowed() and hud.lattice_button.is_visible_in_tree(): break
+		await create_timer(0.025).timeout
+	await settle()
+	hud.lattice_button.button_pressed = false
+	check(not map.markers[index].objective_value.contains("!") and not presentation.influence_field.visible
+		and presentation.paths.get_surface_count() == 0, "Lattice OFF hides link disruption cues")
+	hud.lattice_button.button_pressed = true
 	check(map.markers[index].recharge_ratio >= 0.0, "The facility marker shows its own recharge ring")
 	check(presentation.fx.emitted_impacts > 0, "Strategic volleys produce visible damage feedback")
 	host.show_system()

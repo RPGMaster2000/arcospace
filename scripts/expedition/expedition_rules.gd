@@ -11,6 +11,8 @@ class_name ExpeditionRules
 @export_range(1.0, 1.5, 0.01) var system_expansion: float = 1.20
 @export var defense_v2: bool = true
 @export var system_variety: Resource = preload("res://scripts/expedition/system_variety_settings.gd").new()
+# Temporary opening campaign balance. Developer launches still use the faction catalog.
+@export var fixed_opening_factions: bool = true
 @export var factions: Array[Resource] = preload("res://scripts/expedition/faction_catalog.gd").DEFAULTS.duplicate()
 @export_range(0.1, 1.0, 0.05) var planet_orbit_clearance: float = 0.35
 

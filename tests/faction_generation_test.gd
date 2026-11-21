@@ -19,6 +19,7 @@ func fresh(seed_value: int, configuration: Resource = null) -> Resource:
 	var rules: Resource = configuration if configuration != null else Rules.duplicate(true)
 	rules.game_mode = "defense"
 	rules.warzone_campaign_enabled = false
+	rules.fixed_opening_factions = false
 	rules.log_rolls = false
 	state.start(0, rules, seed_value)
 	return state
@@ -33,7 +34,26 @@ func _initialize() -> void:
 	call_deferred("run")
 
 
+func opening_progression() -> void:
+	var developer := {}
+	for seed_value in range(1, 13):
+		var state := State.new()
+		state.start(0, Rules, seed_value)
+		check(state.faction_id == "scavenger_clans", "Normal System 1 fields Scavenger Clans")
+		state.defense.complete = true
+		check(state.generate_system() and state.faction_id == "axiom_collective", "Normal System 2 fields AXIOM Collective")
+		var axiom: Resource = Catalog.find(Rules, state.faction_id)
+		for entry in state.encounters:
+			if entry.kind == "battle":
+				check(entry.enemy_data in axiom.standard_roster or entry.enemy_data == axiom.mothership,
+					"Opening Warzone contact belongs to AXIOM")
+		state.start(0, Rules, seed_value, {"mode": "warzone", "stage": 2, "rank": -1})
+		developer[state.faction_id] = true
+	check(developer.size() > 1 and developer.has("hollow_choir"), "Developer Warzone launches retain procedural faction selection")
+
+
 func run() -> void:
+	opening_progression()
 	var seen: Dictionary = {}
 	for seed_value in range(1, 21):
 		var state := fresh(seed_value)

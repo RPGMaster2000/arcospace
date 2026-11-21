@@ -235,15 +235,26 @@ func check_one_second_wait() -> void:
 	var host := mount(state)
 	await settle()
 	check(host.screen.overview_hud.wait_button.text == "Wait 1s", "The default Wait HUD offers one second")
+	for enabled in [false, true]:
+		host.screen.overview_hud.lattice_button.button_pressed = enabled
+		host._wait_in_warzone()
+		var overlay = host.strategic_overview
+		overlay.set_process(false)
+		var painter = host.star_map.warzone_presentation
+		check(painter.influence_field.visible == enabled and (painter.paths.get_surface_count() > 0) == enabled,
+			"Strategic Time keeps the player's Lattice setting")
+		overlay.advance(1.0)
+		await overlay.finished
+	var start: int = state.warzone.clock_ms
 	host._wait_in_warzone()
 	var display = host.strategic_overview
 	display.set_process(false)
 	display.advance(0.9)
-	check(display.activity != null and state.warzone.clock_ms < 1000, "One-second Wait retains real-time presentation")
+	check(display.activity != null and state.warzone.clock_ms < start + 1000, "One-second Wait retains real-time presentation")
 	display.advance(0.1)
-	check(display.activity == null and state.warzone.clock_ms == 1000, "The full Wait spends exactly one second")
+	check(display.activity == null and state.warzone.clock_ms == start + 1000, "The full Wait spends exactly one second")
 	await display.finished
-	check(state.warzone.clock_ms == 1000, "Camera return spends none of the next second")
+	check(state.warzone.clock_ms == start + 1000, "Camera return spends none of the next second")
 	host.queue_free()
 	await process_frame
 

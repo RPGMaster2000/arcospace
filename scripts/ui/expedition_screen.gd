@@ -666,6 +666,7 @@ static func map_entries(state: Resource, icon: Callable) -> Array:
 				"name": encounter.title,
 				"model_kind": key,
 				"independent_discovery": discovery,
+				"fleet": state.is_warzone() and encounter.kind == "battle",
 				"profile": state.enemy_profile(encounter) if encounter.kind == "battle" else null,
 				"world_position": state.Defense.wire(state.navigation_destination(index, Vector3.ZERO, Vector3.ZERO)) if state.is_warzone() else state.battle_location(index),
 				"text":

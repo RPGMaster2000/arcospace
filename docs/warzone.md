@@ -80,9 +80,13 @@ connections, or War Effort rewards. Their positions and completion state reload
 with the encounter. Lattice version 3 saves roles explicitly. Version 2 and the
 original three-objective saves continue using their stored layouts and IDs.
 
-The normal map shows subtle territorial color. Toggle **Lattice** for stronger
-influence and a `+` marker on a chokepoint. The shared influence shader retains
-a single visual layer in both renderers.
+The normal map shows spacecraft, combat and ownership badges. Toggle **Lattice**
+to show saturated territorial gradients, supply links, disruptions and chokepoints.
+Strategic Time respects that setting. Fleet leaders and escorts reuse model
+scenes with steady engine emission, no battle passes, and no ship shadows.
+The normal campaign fields Scavenger Clans in System 1 and AXIOM Collective
+in System 2 while `fixed_opening_factions` is enabled. Developer Test Launch
+and later systems still select from the configured faction catalog.
 
 **Warzone Tuning → Lattice Operations → Battle Modifier Chance** defaults to 54%.
 Contacts draw from six existing modifiers without repeating a planned modifier

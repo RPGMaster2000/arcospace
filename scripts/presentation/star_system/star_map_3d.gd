@@ -1292,9 +1292,10 @@ func sync_warzone(operation: RefCounted) -> void:
 			var duration: int = operation.Operations.cooldown(operation.facility(offset))
 			marker.set_recharge(1.0 - float(remaining) / duration if remaining > 0 and not operation.complete else -1.0)
 			tag = "×" if objective.contested else ("A" if objective.owner == "allied" else "H")
-			if operation.disrupted.has(offset): tag += "!"
-			elif not operation.is_supplied(offset) or operation.capture_cutoffs.has(offset): tag += "/"
-			elif warzone_presentation.overlay_enabled and offset in warzone_presentation.bottlenecks: tag += "+"
+			if warzone_presentation.overlay_enabled:
+				if operation.disrupted.has(offset): tag += "!"
+				elif not operation.is_supplied(offset) or operation.capture_cutoffs.has(offset): tag += "/"
+				elif offset in warzone_presentation.bottlenecks: tag += "+"
 			var capture: float = float(objective.progress) / operation.tuning.capture_seconds
 			var capture_tint := WarzonePresentation.ALLIED if objective.capturing == "allied" else WarzonePresentation.HOSTILE
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)
