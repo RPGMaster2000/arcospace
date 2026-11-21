@@ -514,6 +514,78 @@ func _initialize() -> void:
 	call_deferred("run")
 
 
+func emp_checks() -> void:
+	Preferences.set_skip_cinematics(false)
+	var board := fresh(preload("res://ships/enemy/axiom_enforcer.tres"))
+	var director: Node = board.cinematic_director
+	if director.active: director.skip()
+	await wait_until(func(): return not director.active and board.current_actor == "player" \
+		and not board.resolving_card and not board.battle_effects.busy, "Opening turn is ready for EMP")
+	var stages: Array[String] = []
+	var times: Array[int] = []
+	director.stage_changed.connect(func(stage):
+		stages.append(stage)
+		times.append(Time.get_ticks_msec()))
+	var victim: Node3D = director.enemy
+	var rest := victim.global_transform
+	var original_hull: int = board.enemy_hull
+	var victories: int = board.battles_won
+	board.ftl.charge = board.ftl.charge_target
+	board._warp_out()
+	check(director.active and director.stage == "emp_charge" and board.escaped_by_ftl and board.result_recorded,
+		"Authoritative EMP win commits before its cinematic starts")
+	check(not board.get_node("MatchResult").visible and board._presentation_locked(),
+		"The normal victory panel and combat input wait for the EMP")
+	board._warp_out()
+	check(board.battles_won == victories + 1 and board.enemy_hull == original_hull,
+		"Repeated activation cannot commit another result or turn escape into destruction")
+	await wait_until(func(): return is_instance_valid(director.emp_effect) and director.emp_effect._arc_sample >= 13,
+		"Electrical arcs build around the active player hull")
+	if is_instance_valid(director.emp_effect):
+		check(director.emp_effect._arcs.global_position.distance_to(director.player.global_position) < 2.5,
+			"The electrical effects originate near the hull")
+	await capture("emp-charge")
+	await wait_until(func(): return director.stage == "emp_discharge", "EMP transitions into the discharge")
+	await wait_until(func(): return is_instance_valid(director.emp_effect) and director.emp_effect._wave.scale.x > director.emp_effect._radius * 2.0,
+		"The pulse visibly expands past the emitter")
+	if is_instance_valid(director.emp_effect):
+		var wave: Vector3 = director.emp_effect._wave.scale
+		check(is_equal_approx(wave.x, wave.y) and is_equal_approx(wave.y, wave.z), "The pulse is spherical")
+	await capture("emp-wave")
+	await wait_until(func(): return director.stage == "emp_drift", "The wave disables the target")
+	if is_instance_valid(director.emp_effect):
+		check(not victim.is_processing() and victim.find_children("*", "Light3D", true, false).all(func(light): return not light.visible),
+			"EMP shuts down the enemy lights and thrust animation")
+		check(not director.emp_effect._materials.is_empty() and director.emp_effect._materials.all(func(record):
+			var active: Material = record.part.material_override if record.surface < 0 else record.part.get_active_material(record.surface)
+			return active != null and not active.emission_enabled), "Only the target's instance overrides lose emission")
+		await wait_until(func(): return not victim.global_transform.basis.is_equal_approx(rest.basis), "Disabled ship drifts visibly")
+	await capture("emp-drift")
+	await wait_until(func(): return not director.active and board.get_node("MatchResult").visible,
+		"EMP proceeds directly to the existing victory screen")
+	check(stages == ["emp_charge", "emp_discharge", "emp_drift"] and not board.destruction_started and not board.victory_started,
+		"EMP has only charge, discharge, and drift stages")
+	if times.size() == 3 and DisplayServer.get_name() == "headless":
+		check(absf(times[1] - times[0] - 1500) < 180 and absf(times[2] - times[1] - 500) < 150
+			and absf(Time.get_ticks_msec() - times[2] - 2000) < 200, "EMP uses 1.5s, 0.5s and 2.0s stage durations")
+	check(victim.is_processing() and victim.global_transform.basis.is_equal_approx(rest.basis) and not is_instance_valid(director.emp_effect),
+		"EMP material, pose and processing overrides are cleaned up")
+	board.free()
+	await process_frame
+	board = fresh()
+	director = board.cinematic_director
+	if director.active: director.skip()
+	await wait_until(func(): return not director.active and board.current_actor == "player" \
+		and not board.resolving_card and not board.battle_effects.busy, "Opening turn is ready for EMP")
+	board.ftl.charge = board.ftl.charge_target
+	board._warp_out()
+	director.skip()
+	check(not director.active and board.get_node("MatchResult").visible and board.escaped_by_ftl,
+		"Skipping the EMP preserves the committed victory")
+	board.free()
+	await process_frame
+
+
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	await introduction_checks()
@@ -521,6 +593,7 @@ func run() -> void:
 	await attack_checks()
 	await skip_beam_checks()
 	await defeat_hud_checks()
+	await emp_checks()
 	Preferences.set_skip_cinematics(previous_skip)
 	Preferences.set_battle_vfx(previous_vfx)
 	print("Battle cinematic cameras: %d checks, %d failures" % [checks, failures])

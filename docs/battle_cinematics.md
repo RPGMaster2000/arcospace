@@ -116,3 +116,13 @@ These are actual Godot production-scene captures, with no generated artwork. [Mo
 | Acceleration with shield, fading out | [Boost and fade](battle_cinematics_screenshots/fade_to_black.webp) |
 
 ![Sampled production motion](battle_cinematics_screenshots/cinematic-motion.webp)
+
+
+## EMP victory
+
+EMP commits through the existing escape result, then plays a 1.5-second hull
+charge, a 0.5-second spherical discharge, and a 2-second disabled drift in the
+current battle camera. The EMP settings vector uses real seconds independently
+of camera playback speed. The enemy's temporary power and pose overrides are
+instance-local and restored on cleanup. The result panel appears directly after
+the sequence or on skip, with no ship destruction or departure cutscene.

@@ -14,6 +14,8 @@ var _camera_attack: Dictionary = {}
 # Presentation latches only; rewards remain committed by Board._record_result.
 var victory_started := false
 var victory_pending := false
+var emp_presented := false
+var emp_pending := false
 var victory_ready := false
 var victory_transition: CanvasLayer
 
@@ -45,7 +47,7 @@ func refresh_display() -> void:
 	super.refresh_display()
 	if is_instance_valid(cinematic_director): cinematic_director.mask_ui()
 	if not is_instance_valid(cinematic_director) or not cinematic_director.active or cinematic_director.kind != "departure":
-		$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = escaped_by_ftl
+		$BattleView/Viewport/Battlefield/PlayerShip.engine_boost = false
 	$BattleView/Viewport/Battlefield/PlayerShip.set_hull_strength(
 		mini(player_hull, player_hull_capacity)
 	)
@@ -56,15 +58,19 @@ func refresh_display() -> void:
 		0 if modifier.shields_disabled() or (destruction_started and player_hull <= 0) else player_shields
 	)
 	$BattleView/Viewport/Battlefield/EnemyShip.set_shield_strength(
-		0 if modifier.shields_disabled() or (destruction_started and enemy_hull <= 0) else enemy_shields
+		0 if modifier.shields_disabled() or (destruction_started and enemy_hull <= 0) or (
+			is_instance_valid(cinematic_director) and is_instance_valid(cinematic_director.emp_effect)
+			and cinematic_director.emp_effect._disabled
+		) else enemy_shields
 	)
 
 
 func _display_snapshot() -> Dictionary:
 	var data: Dictionary = super._display_snapshot()
+	data.emp_cinematic = emp_presented
 	var camera_busy: bool = (
 		(is_instance_valid(cinematic_director) and cinematic_director.active)
-		or (victory_pending and not victory_ready)
+		or (victory_pending and not victory_ready) or emp_pending
 	)
 	data.effects_busy = data.effects_busy or destruction_pending or camera_busy
 	data.resolving_card = data.resolving_card or camera_busy
@@ -256,8 +262,20 @@ func _begin_battle_presentation() -> void:
 	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit and not cinematic_director.exiting:
 		_begin_turn("player")
 
+func _begin_emp_presentation() -> void:
+	if not is_instance_valid(cinematic_director) or not cinematic_director.allowed(): return
+	emp_presented = true
+	# The director cancels any old presentation before acquiring the camera.
+	# Keep the committed result masked through that handoff as well.
+	emp_pending = true
+	await cinematic_director.emp_victory(ftl.rng.seed)
+	emp_pending = false
+	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit and not cinematic_director.exiting:
+		refresh_display()
+
+
 func _presentation_locked() -> bool:
-	return victory_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
+	return victory_pending or emp_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
 
 func _prepare_beam_presentation(side: String, card: Resource) -> float:
 	if not cinematic_director.allowed(): return 0.0
