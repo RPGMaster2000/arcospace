@@ -1843,7 +1843,7 @@ func _inspect_marker(index: int) -> void:
 	elif state.has_missile(index): _show_missile(index)
 	elif state.encounter_at(index).kind == "battle": show_battle_preview(index)
 	else: show_poi(index)
-	return_button.show()
+	return_button.visible = state.is_warzone()
 	for option in screen.sidebar.find_children("*", "BaseButton", true, false):
 		option.disabled = true
 

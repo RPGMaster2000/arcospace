@@ -145,8 +145,12 @@ func check_inspection_input() -> void:
 			"Outside press consumes its release without navigating")
 	for attempt in 5:
 		host._inspect_marker(index)
+		check(host.return_button.visible, "Warzone inspection exposes the Back button")
 		var start := Time.get_ticks_usec()
-		host.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+		if attempt == 0:
+			host.return_button.pressed.emit()
+		else:
+			host.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 		check(not host.inspecting and Time.get_ticks_usec() - start < 250000,
 			"Back promptly dismisses inspection")
 		await process_frame
