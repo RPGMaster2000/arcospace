@@ -716,6 +716,7 @@ func early_reserves_and_deep_command() -> void:
 	op.clock_ms = 25 * op.STEP_MS
 	op._dispatch_reserves()
 	check(op.active(hostile), "First hostile reserve launches at 25 seconds")
+	state._sync_warzone()
 	check(roundtrip(state) != null, "The expanded roster and both launched reserves persist together")
 	var command := fresh(19).warzone
 	command.player_intervened = true
@@ -770,6 +771,7 @@ func kited_hunter_engages_ally() -> void:
 		"Crossing allied and player-hunter paths automatically starts an ordinary fleet engagement")
 	check(op.player_hunter == -1 and not op.complete,
 		"Allied interception ends the pursuit without forcing a player card battle")
+	state._sync_warzone()
 	check(roundtrip(state) != null, "Crossed-path fleet combat and resolved pursuit survive a checkpoint")
 
 
