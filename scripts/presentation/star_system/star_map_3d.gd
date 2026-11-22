@@ -1279,7 +1279,7 @@ func sync_warzone(operation: RefCounted) -> void:
 			if operation.complete: status = "Regrouping" if allied else "Withdrawing"
 			glyph = {"Moving": "›", "Retreating": "‹", "Capturing": "⌖", "Defending": "◇",
 				"Resupplying": "+", "Regrouping": "◇", "Withdrawing": "‹",
-				"Intercepting": "⌖", "Assisting": "+", "Reinforcing": "+"}.get(status, glyph)
+				"Intercepting": "⌖", "Assisting": "+", "Reinforcing": "+", "Pursuing": "!"}.get(status, glyph)
 			var tint := WarzonePresentation.ALLIED if allied else WarzonePresentation.HOSTILE
 			if marker.accent != tint:
 				marker.accent = tint
@@ -1338,7 +1338,7 @@ func sync_warzone(operation: RefCounted) -> void:
 				if operation.disrupted.has(offset): tag += "!"
 				elif not operation.is_supplied(offset) or operation.capture_cutoffs.has(offset): tag += "/"
 				elif offset in warzone_presentation.bottlenecks: tag += "+"
-			var capture: float = float(objective.progress) / operation.tuning.capture_seconds
+			var capture: float = float(objective.progress) / operation.capture_requirement(offset, objective.capturing, operation._player_position)
 			var capture_tint := WarzonePresentation.ALLIED if objective.capturing == "allied" else WarzonePresentation.HOSTILE
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)
 		marker.set_objective(tag)
