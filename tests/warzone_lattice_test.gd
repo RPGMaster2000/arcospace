@@ -107,7 +107,7 @@ func graph_audit() -> void:
 				for index in op.objectives.size():
 					if op.objectives[index].owner == "allied" or not op._capture_connected(index, "allied"): continue
 					var at: Vector3 = op.objectives[index].position
-					op.advance(op.tuning.capture_seconds * 1000, at, at)
+					op.advance(op.player_capture_requirement(index, at) * 1000, at, at)
 					frontier = true
 				if not frontier: break
 			if op.final_command >= 0:
