@@ -554,6 +554,9 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 			warzone_mission.text = "FINAL · Secure %s + supply" % command_name
 	else:
 		warzone_mission.text = "Capture territory · %d Effort remaining" % maxi(0, goal - operation.effort)
+	if not operation.complete and operation.player_alert > 0:
+		var alert: String = "HUNTED" if operation.player_hunter >= 0 else ("HIGH" if operation.player_alert >= operation.tuning.alert_to_hunt else "RISING")
+		warzone_mission.text += "\nENEMY ALERT · " + alert
 	var counts := [operation.fleet_count("allied"), operation.fleet_count("hostile"),
 		0 if operation.complete else operation.engagement_count()]
 	for i in warzone_counts.size():
@@ -578,7 +581,11 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 	_warzone_effort = operation.effort
 	if operation.event_revision != _warzone_event:
 		for event in operation.events_since(_warzone_event):
-			if event.begins_with("Hostile counterattack"):
+			if event.begins_with("Hostile pursuit inbound"):
+				_flash_warzone_warning("HOSTILE PURSUIT INBOUND")
+			elif event.begins_with("Hostile patrol responding"):
+				_flash_warzone_warning("Hostile patrol responding")
+			elif event.begins_with("Hostile counterattack"):
 				_flash_warzone_warning("Counterattack")
 			elif event.begins_with("Allied") and event.ends_with("destroyed."):
 				_flash_warzone_warning("Allied fleet lost")
