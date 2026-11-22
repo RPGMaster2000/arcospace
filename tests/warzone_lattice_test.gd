@@ -916,13 +916,12 @@ func final_defense_convergence() -> void:
 	var original_destination: int = engaged.destination
 	op.note_player_position(position)
 	op._activate_final_defense(position)
-	check(op.final_defense_active and op.player_hunter == -1 and op.events.any(
-		func(event): return event.begins_with("FINAL DEFENSE")),
+	var announced: bool = op.events.any(func(event): return event.begins_with("FINAL DEFENSE"))
+	check(op.final_defense_active and op.player_hunter == -1 and announced,
 		"An allied capture attempt immediately announces full enemy convergence")
-	var eligible: Array = op.fleets.filter(func(fleet): return fleet.side == "hostile"
-		and op.active(fleet) and fleet.engaged < 0 and not fleet.withdrawing)
-	check(not eligible.is_empty() and eligible.all(func(fleet):
-		return fleet.destination == target and fleet.counter_target == target),
+	var eligible: Array = op.fleets.filter(func(fleet): return fleet.side == "hostile" and op.active(fleet) and fleet.engaged < 0 and not fleet.withdrawing)
+	var all_converge: bool = eligible.all(func(fleet): return fleet.destination == target and fleet.counter_target == target)
+	check(not eligible.is_empty() and all_converge,
 		"Every available hostile ship, including defenders, targets the final installation")
 	check(engaged.destination == original_destination and engaged.engaged == ally.id,
 		"Existing engagements remain intact while the fleet-wide order is issued")
@@ -942,9 +941,8 @@ func final_defense_convergence() -> void:
 		"Full hostile mobilization persists across save and resume")
 	if restored != null:
 		var r: RefCounted = restored.warzone
-		check(r.fleets.filter(func(fleet): return fleet.side == "hostile" and r.active(fleet)
-			and fleet.engaged < 0 and not fleet.withdrawing).all(func(fleet):
-				return fleet.destination == target),
+		var restored_hostiles: Array = r.fleets.filter(func(fleet): return fleet.side == "hostile" and r.active(fleet) and fleet.engaged < 0 and not fleet.withdrawing)
+		check(restored_hostiles.all(func(fleet): return fleet.destination == target),
 			"Restored available hostile formations remain committed to the final target")
 
 
