@@ -96,6 +96,7 @@ static func assign_modifiers(state: Resource) -> void:
 		var encounter: Dictionary = state.encounters[index]
 		if encounter.kind != "battle" or rng.randf() >= state.rules.warzone_tuning.battle_modifier_chance:
 			continue
+		if available.is_empty(): break # Expanded roster can exceed six unique modifiers.
 		var fleet: Dictionary = state.warzone_fleet(index)
 		# A contact deployed around industrial logistics leans toward debris
 		# or material storms, but draws from the same single-modifier pool.
