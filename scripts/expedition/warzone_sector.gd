@@ -468,6 +468,10 @@ func link_active(link: Vector2i) -> bool:
 
 func objective_brief(index: int) -> String:
 	var status := super.objective_brief(index)
+	var objective: Dictionary = objectives[index]
+	if objective.progress > 0 and objective.capturing == "allied":
+		status = "Allied capturing · %ds / %ds" % [objective.progress,
+			player_capture_requirement(index, _player_position)]
 	if disrupted.has(index): return status + " · disrupted %ds" % disrupted[index]
 	return status + (" · supplied" if is_supplied(index) else " · isolated")
 
