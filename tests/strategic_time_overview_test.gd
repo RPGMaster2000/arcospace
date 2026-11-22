@@ -310,7 +310,12 @@ func check_one_second_wait() -> void:
 
 
 func check_hold_to_wait() -> void:
-	var state := fresh("warzone")
+	# Normal campaign Warzone data (System 2) is required for real save/restore
+	# validation; developer launch warzones are intentionally not persisted.
+	var state := State.new()
+	state.start(0, Rules, 19)
+	state.defense.complete = true
+	state.generate_system()
 	var host := mount(state)
 	await settle()
 	var button: Button = host.screen.overview_hud.wait_button
