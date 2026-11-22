@@ -39,6 +39,53 @@ func run() -> void:
 		"The universal one-second Wait action is available")
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
+	# Mission emphasis uses real objective roles, without changing the simulation.
+	var strategic_site: int = operation.site("forward_command")
+	var final_site: int = operation.site("hostile_command")
+	var strategic_marker = map.markers[operation.HOSTILE_GROUPS + strategic_site]
+	var final_marker = map.markers[operation.HOSTILE_GROUPS + final_site]
+	check(strategic_marker.warzone_importance == 1 and final_marker.warzone_importance == 1
+		and hud.warzone_mission.visible and hud.warzone_mission.text.contains("Effort remaining")
+		and not hud.warzone_hold_bar.visible, "Before the final offensive, command stations are strategic but not final objectives")
+	var previous_effort: int = operation.effort
+	var previous_intervention: bool = operation.player_intervened
+	var previous_owner: String = operation.objectives[final_site].owner
+	var previous_supply: Array = operation.supplied.allied.duplicate()
+	operation.effort = operation.tuning.effort_goal
+	operation.player_intervened = true
+	operation.final_command = final_site
+	map.sync_warzone(operation)
+	hud.set_warzone_status(host.state)
+	check(final_marker.warzone_importance == 2 and strategic_marker.warzone_importance == 1
+		and final_marker.planet_name.text == "FINAL · Hostile Command"
+		and final_marker.tooltip_text.contains("FINAL OBJECTIVE")
+		and hud.warzone_mission.text.contains("Secure Hostile Command"),
+		"Active final objective gains a unique marker, permanent mission name and HUD instruction")
+	await capture("final-target")
+	operation.objectives[final_site].owner = "allied"
+	if final_site not in operation.supplied.allied: operation.supplied.allied.append(final_site)
+	operation.consolidation = 7
+	map.sync_warzone(operation)
+	hud.set_warzone_status(host.state)
+	check(final_marker.warzone_consolidation > 0.0
+		and is_equal_approx(final_marker.warzone_consolidation, 7.0 / operation.tuning.consolidation_seconds)
+		and final_marker.tooltip_text.contains("Consolidation")
+		and hud.warzone_hold_bar.visible and hud.warzone_hold_bar.value == 7
+		and hud.warzone_mission.text.contains("Hold Hostile Command"),
+		"Secured final target displays authoritative consolidation time on marker and HUD")
+	await capture("final-consolidation")
+	operation.objectives[final_site].owner = previous_owner
+	operation.supplied.allied = previous_supply
+	operation.effort = previous_effort
+	operation.player_intervened = previous_intervention
+	operation.final_command = -1
+	operation.consolidation = 0
+	map.sync_warzone(operation)
+	hud.set_warzone_status(host.state)
+	check(final_marker.warzone_importance == 1 and final_marker.warzone_consolidation < 0.0
+		and not final_marker.planet_name.text.begins_with("FINAL")
+		and not hud.warzone_hold_bar.visible and operation.clock_ms == 0,
+		"Returning to normal map state clears final highlighting without spending strategic time")
 	var before_clock: int = operation.clock_ms
 	for fleet in operation.fleets:
 		var mount: Node3D = presentation.models[fleet.id]

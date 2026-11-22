@@ -33,6 +33,8 @@ var lattice_tag := false
 var lattice_show_name := false
 var lattice_name_occluded := false
 var recharge_ratio := -1.0
+var warzone_importance := 0 # 0 ordinary, 1 strategic command/chokepoint, 2 active final objective
+var warzone_consolidation := -1.0
 var capture_ratio := 0.0
 var capture_tint := Color.WHITE
 var in_clash := false
@@ -46,8 +48,20 @@ func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: fl
 	capture_tint = tint
 	in_clash = clash
 	fleet_strength = strength
-	set_process(clash)
+	set_process(clash or warzone_importance == 2)
 	queue_redraw()
+
+
+func set_warzone_importance(tier: int, consolidation: float = -1.0) -> void:
+	var next_tier := clampi(tier, 0, 2)
+	var next_progress := clampf(consolidation, 0.0, 1.0) if consolidation >= 0.0 else -1.0
+	if warzone_importance == next_tier and is_equal_approx(warzone_consolidation, next_progress): return
+	var tier_changed := warzone_importance != next_tier
+	warzone_importance = next_tier
+	warzone_consolidation = next_progress
+	set_process(in_clash or warzone_importance == 2)
+	if tier_changed: _refresh_state()
+	else: queue_redraw()
 
 
 func set_recharge(value: float) -> void:
@@ -63,7 +77,7 @@ func set_forecast(value: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
-	if not in_clash or not is_visible_in_tree():
+	if not (in_clash or warzone_importance == 2) or not is_visible_in_tree():
 		return
 	_pulse = fmod(_pulse + delta * 3.8, TAU)
 	queue_redraw()
@@ -109,7 +123,7 @@ func highlighted() -> bool:
 	return selected or hovered or has_focus()
 
 func priority() -> int:
-	return 3 if selected else (2 if highlighted() else (0 if completed else 1))
+	return 3 if selected else (2 if highlighted() or warzone_importance == 2 else (0 if completed else 1))
 
 func set_state(is_completed: bool, blocked: bool, is_selected: bool) -> void:
 	if completed==is_completed and unavailable==blocked and selected==is_selected: return
@@ -146,8 +160,11 @@ func _refresh_state() -> void:
 		box.border_color = foreground.lightened(0.18) if bright else foreground
 		box.border_color.a = 0.95 if bright else (0.23 if completed else 0.65)
 		if secondary and not bright: box.border_color.a *= 0.55
+		if lattice_tag and warzone_importance > 0 and not selected:
+			box.border_color = Color("ffe4a2") if warzone_importance == 2 else Color("d4aa66")
+			box.border_color.a = 0.97 if warzone_importance == 2 else 0.82
 		if selected: box.border_color = Color("b8faff")
-		box.set_border_width_all(3 if selected else (2 if bright else 1))
+		box.set_border_width_all(3 if selected or (lattice_tag and warzone_importance == 2) else (2 if bright or (lattice_tag and warzone_importance == 1) else 1))
 		box.shadow_color = Color(0.3,0.9,1.0,0.35) if selected else Color(foreground.r,foreground.g,foreground.b,0.18 if bright else 0.0)
 		box.shadow_size = 6 if selected else (4 if bright else 0)
 	begin_bulk_theme_override()
@@ -155,7 +172,7 @@ func _refresh_state() -> void:
 		add_theme_color_override(key,foreground.lightened(0.1) if emphasis else foreground)
 	end_bulk_theme_override()
 	if planet_name != null:
-		planet_name.add_theme_color_override("font_color",Color.WHITE if contrast else foreground)
+		planet_name.add_theme_color_override("font_color", Color("ffe4a2") if lattice_tag and warzone_importance == 2 else (Color.WHITE if contrast else foreground))
 		if lattice_tag:
 			planet_name.visible = not planet_name.text.is_empty() and (emphasis or (lattice_show_name and not lattice_name_occluded))
 	z_index = priority()*10
@@ -213,6 +230,17 @@ func set_lattice_name_occluded(value: bool) -> void:
 func _draw() -> void:
 	if lattice_tag:
 		var ring := minf(size.x, size.y) * 0.5 - 4.0
+		if warzone_importance == 1:
+			var strategic_tint := Color("d4aa66")
+			for segment in 4:
+				var start := float(segment) * TAU / 4.0 + 0.10
+				draw_arc(icon_center, ring + 1.0, start, start + 0.60, 8, strategic_tint, 1.8, true)
+		elif warzone_importance == 2:
+			var alpha := 0.73 + 0.21 * sin(_pulse)
+			draw_arc(icon_center, ring + 2.0, 0, TAU, 40, Color(Color("ffe4a2"), alpha), 2.7, true)
+			if warzone_consolidation >= 0.0:
+				draw_arc(icon_center, ring + 2.0, -PI / 2, -PI / 2 + TAU * warzone_consolidation,
+					40, Color("fff5d5"), 3.5, true)
 		if recharge_ratio >= 0.0:
 			draw_arc(icon_center, ring - 4.0, 0, TAU, 24, Color("20364b"), 2.0, true)
 			if recharge_ratio > 0.0:

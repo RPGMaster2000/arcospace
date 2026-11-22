@@ -550,7 +550,10 @@ func _process(delta: float) -> void:
 # The map keeps compact icons selectable when nearby labels would overlap.
 func _space_lattice_names(visible_markers: Array[Control]) -> void:
 	var occupied_names: Array[Rect2] = []
-	for marker in visible_markers:
+	# The final mission label claims space before lesser station names.
+	var ordered := visible_markers.duplicate()
+	ordered.sort_custom(func(a, b): return a.warzone_importance > b.warzone_importance)
+	for marker in ordered:
 		if not marker.lattice_tag or not marker.lattice_show_name:
 			continue
 		var name_rect: Rect2 = marker.planet_name.get_global_rect()
@@ -559,10 +562,11 @@ func _space_lattice_names(visible_markers: Array[Control]) -> void:
 			if rect.intersects(name_rect):
 				blocked = true
 				break
-		for other in visible_markers:
-			if other != marker and other.get_global_rect().grow(4).intersects(name_rect):
-				blocked = true
-				break
+		if marker.warzone_importance != 2:
+			for other in visible_markers:
+				if other != marker and other.get_global_rect().grow(4).intersects(name_rect):
+					blocked = true
+					break
 		for area in occupied_names:
 			if area.intersects(name_rect):
 				blocked = true
@@ -1311,10 +1315,18 @@ func sync_warzone(operation: RefCounted) -> void:
 		var scrambling: bool = operation.is_lattice() and not operation.complete \
 			and offset == operation.scramble_site and operation.scramble_until > operation.clock_ms
 		if scrambling: glyph = "⌁"
-		if marker.text != glyph:
-			marker.set_label(operation.objective_name(offset), glyph, true)
+		var final_active: bool = operation.is_lattice() and offset == operation.final_command and not operation.complete
+		var display_name: String = ("FINAL · " if final_active else "") + operation.objective_name(offset)
+		if marker.text != glyph or marker.planet_name == null or marker.planet_name.text != display_name:
+			marker.set_label(display_name, glyph, true)
 		var tag: String = "Contested" if objective.contested else objective.owner.capitalize()
+		var consolidation: float = -1.0
 		if operation.is_lattice():
+			var strategic: bool = offset in operation.command_sites() or offset == operation.root("allied") \
+				or offset in warzone_presentation.bottlenecks
+			consolidation = float(operation.consolidation) / maxf(1.0, operation.tuning.consolidation_seconds) \
+				if final_active and objective.owner == "allied" and operation.is_supplied(offset) else -1.0
+			marker.set_warzone_importance(2 if final_active else (1 if strategic else 0), consolidation)
 			var show_name: bool = offset == operation.final_command or offset in operation.command_sites() or offset == operation.root("allied") or (warzone_presentation.overlay_enabled and (offset in warzone_presentation.bottlenecks
 				or offset in [operation.site("relay"), operation.site("depot")]))
 			marker.set_lattice_name_visible(show_name)
@@ -1331,6 +1343,12 @@ func sync_warzone(operation: RefCounted) -> void:
 			marker.set_warzone_readout(capture, WarzonePresentation.CONTESTED if objective.contested else capture_tint, objective.contested)
 		marker.set_objective(tag)
 		marker.tooltip_text = operation.objective_brief(offset)
+		if final_active:
+			marker.tooltip_text = "FINAL OBJECTIVE · " + operation.objective_name(offset) + "\n" + marker.tooltip_text
+			if consolidation >= 0.0:
+				marker.tooltip_text += "\nConsolidation · %d/%ds" % [operation.consolidation, operation.tuning.consolidation_seconds]
+			else:
+				marker.tooltip_text += "\nSecure allied control and supply to begin consolidation"
 		if scrambling:
 			marker.tooltip_text += "\nScramble active · %ds" % ceili((operation.scramble_until - operation.clock_ms) / 1000.0)
 		if operation.is_lattice() and not operation.complete:
