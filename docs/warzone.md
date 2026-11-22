@@ -7,8 +7,9 @@ menu. It starts off and stays set between battles in the same test session.
 A player card that deals damage can end a battle even if the enemy shields
 absorb the hit. Normal victory rewards and strategic time still apply.
 
-System 2 opens in a starless deep-space sector with a small allied foothold and two
-active fleet engagements. **Lattice** starts enabled and emphasizes viable,
+System 2 opens in a starless deep-space sector with three allied ships and
+six hostile ships, including one extra opening formation per side. Two
+engagements are already active. **Lattice** starts enabled and emphasizes viable,
 contested and severed routes. Fleet routes show current orders on entry and
 after loading. Toggle Lattice off to clear those projections.
 An **A** or **H** badge identifies ownership. **!** marks disruption and **/** marks
@@ -53,7 +54,10 @@ battle checkpoint. The pursuit warns for three strategic seconds before
 contact becomes eligible, uses a 25-second cooldown, and permits at most two
 player hunts per sector. The threat ends when the hunter is defeated,
 engaged by allies, disconnected from supply, expires, or intercepts the
-player. The player can also escape by keeping distance. These rules and the
+player. Autonomous allies recognize player hunters as priority threats
+and intercept the hunter's real route toward the player. When the hunter
+passes through fleet engagement range of an allied ship, normal fleet combat
+begins and pursuit ends. The player can also escape by keeping distance. These rules and the
 solo capture multiplier are tunable in `warzone_tuning.gd`; active alert
 and warned stations persist in saves, while older sectors load Quiet.
 
@@ -68,10 +72,12 @@ reserve ordinary destinations as they choose their next assignment. Undefended
 frontier objectives generally need one fleet. Defended sites can draw a second,
 and the existing interception policy still coordinates responses to major threats.
 
-New sectors have one reserve formation per side. They approach from outside the
-sector once their supply network can support them. Their strength depends on
-connected installations, and a cutoff can delay their entry. Historical sectors
-retain their existing fleet roster. The fleet marker at each engagement shows an
+New sectors have one reserve formation per side. The first allied wave
+becomes eligible at 18 strategic seconds and the hostile wave at 25 seconds
+(previously 22 and 30). They approach from outside the sector once their
+supply network can support them. Their strength depends on
+connected installations, and a cutoff can delay their entry. Historical sectors retain their existing fleet roster and encounter IDs;
+new opening formations have additional stable IDs after the original reserves. The fleet marker at each engagement shows an
 attrition estimate based on current strength and incoming fire. **Wait** spends
 one strategic second.
 
@@ -81,13 +87,17 @@ compare travel time and volley strength, prefer to finish nearly completed
 captures, and converge when a threatened formation needs help. A six-second
 commitment reduces target switching. Weak ships can withdraw to supplied
 territory to recover using existing repair rules. Interception leads the
-hostile's current leg and reevaluates if its orders change. Both factions' dashed
+hostile's current leg (or the player's moving position during a pursuit)
+and reevaluates if its orders change. The final offensive now prioritizes a
+command station farther from Allied Command by travel distance and graph
+hops; hostile command stations are placed deeper into the hostile end of
+the lattice during new sector generation. Both factions' dashed
 movement routes are hidden with Lattice OFF.
 
 Scramble immediately reassesses available formations and temporarily raises the
 priority of pursuing hostile fleets. The active station broadcasts a visible
 pulse. Scramble uses existing engagements and damage. The Shipyard budget is
-two paid requests per sector with a maximum of four active allied fleets,
+two paid requests per sector with a maximum of five active allied fleets,
 including an inbound formation or the automatic reserve. A supplied Shipyard
 is required to request a fleet. An incoming fleet can divert to allied command
 if the Shipyard loses supply, or wait off-map if the network cannot support
