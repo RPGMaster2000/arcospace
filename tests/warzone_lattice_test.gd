@@ -702,7 +702,7 @@ func aggression_guardrails() -> void:
 	for second in op.tuning.capture_seconds:
 		op._capture(site, point)
 	check(op.objectives[site].owner == "hostile" and op.objectives[site].progress == 6
-		and op.objective_brief(site).contains("6ds / 12ds"),
+		and op.objective_brief(site).contains("6s / 12s"),
 		"Solo player cannot take an undefended station in six seconds")
 	state._sync_warzone()
 	var resumed := roundtrip(state)
