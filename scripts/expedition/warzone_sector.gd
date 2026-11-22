@@ -121,6 +121,12 @@ func setup_sector(configuration: Resource, strength: int, expansion: float, seed
 		fleets.back().arriving = false
 	_refresh_supply()
 	_assign_engagements(true)
+	# Stations begin on their assigned nodes. Select the same onward order
+	# that their first movement step would choose, without spending that step.
+	for fleet in fleets:
+		if active(fleet) and fleet.engaged < 0 and fleet.at == fleet.destination \
+			and (fleet.position as Vector3).is_equal_approx(objectives[fleet.at].position):
+			fleet.destination = _direct_target(fleet)
 	_launch_convoy()
 	_notice("%s · Allied forces are fighting on two fronts." % Lattice.PATTERNS[pattern])
 

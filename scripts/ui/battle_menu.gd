@@ -1,6 +1,9 @@
 extends Button
 # RESPONSIBILITY: Battle utility navigation. Settings retains audio, pause and exit ownership.
 signal main_menu_requested
+signal developer_one_hit_kill_changed(enabled: bool)
+var developer_one_hit_kill_available := false
+var developer_one_hit_kill_enabled := false
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 @export var menu_width: float = 300.0
 ## TUNE: Open toward the viewscreen so the resource column stays readable.
@@ -53,6 +56,16 @@ func _ready() -> void:
 	panel.add_child(column)
 	settings_option = _entry(column, "Settings", menu.present)
 	info_option = _entry(column, "GAME REFERENCE", information.show_legend)
+	if developer_one_hit_kill_available:
+		var lethal_hit := CheckButton.new()
+		lethal_hit.name = "DeveloperOneHitKill"
+		lethal_hit.text = "DEV: One-Hit Kill"
+		lethal_hit.custom_minimum_size = Vector2(menu_width, 56)
+		lethal_hit.add_theme_font_size_override("font_size", 21)
+		lethal_hit.set_pressed_no_signal(developer_one_hit_kill_enabled)
+		lethal_hit.toggled.connect(func(enabled: bool): developer_one_hit_kill_changed.emit(enabled))
+		Style.action(lethal_hit)
+		column.add_child(lethal_hit)
 	close_button = _entry(column, "Close", func(): pass)
 	pressed.connect(
 		func():

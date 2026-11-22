@@ -18,7 +18,8 @@ static func can_play(card: Resource, discard: bool, actor: Dictionary) -> bool:
 # Resolve into caller-owned snapshots. Live combat may stage Hull loss before committing them.
 static func resolve(
 	card: Resource, discard: bool, actor: Dictionary, target: Dictionary,
-	modifier: Node = null, generator: RandomNumberGenerator = null, attack_advantage: String = ""
+	modifier: Node = null, generator: RandomNumberGenerator = null, attack_advantage: String = "",
+	developer_lethal_hit: bool = false
 ) -> Resolution:
 	if not can_play(card, discard, actor):
 		return null
@@ -31,6 +32,12 @@ static func resolve(
 	else:
 		Effects.play(card, actor, target, generator, false, result.hull_damage, -1, null, attack_advantage)
 	result.direct_damage = int(result.hull_damage.get("direct_damage", 0))
+	# Use the resolved hit (including absorbed damage), so a miss, discard,
+	# utility effect or self-hit cannot trigger the developer override.
+	if developer_lethal_hit and result.direct_damage > 0:
+		result.hull_damage.target = int(result.hull_damage.get("target", 0)) + int(target.hull)
+		target.hull = 0
+		target.shields = 0
 	result.extra_action = not discard and card.play_again
 	return result
 

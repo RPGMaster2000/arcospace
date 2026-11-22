@@ -27,6 +27,7 @@ var _warzone_victory_seen := 0
 var _strategic_shutdown := false
 var _application_suspended := false
 var developer_test: Dictionary = {}
+var _developer_one_hit_kill := false
 var save_error: AcceptDialog
 var _battle_checkpoint: Dictionary:
 	get: return persistence.battle_checkpoint
@@ -415,6 +416,7 @@ func start_expedition() -> bool:
 	if state != null and state.progress_committed.is_connected(_progress_committed):
 		state.progress_committed.disconnect(_progress_committed)
 	state = candidate
+	_developer_one_hit_kill = false
 	persistence.reset_battle()
 	_bind_progress()
 	show_system()
@@ -679,6 +681,10 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		star_map.player_profile = state.ship()
 		star_map.defense_view = state.defense_map_view() if state.is_defense() else {}
 		star_map.warzone_view = state.warzone
+		if state.is_warzone() and state.warzone.is_lattice():
+			var lattice: Button = screen.overview_hud.lattice_button
+			if new_system: lattice.set_pressed_no_signal(true)
+			star_map.lattice_overlay_enabled = lattice.button_pressed
 		star_map.locator_exclusions = func():
 			var areas: Array = []
 			for panel in screen.overview_hud.panels:
@@ -1056,7 +1062,7 @@ func _show_warzone_objective(index: int) -> void:
 		capture.accessibility_name = "%s capture progress %d of %d" % [objective.capturing, objective.progress, capture.max_value]
 		view.add_child(capture)
 	if operation.complete: return
-	if not inspecting:
+	if not inspecting and (not operation.is_lattice() or objective.owner != "allied"):
 		_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
 	if operation.is_lattice():
 		var choices: Array[Dictionary] = operation.operations(offset, state.salvage)
@@ -1492,6 +1498,9 @@ func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {
 	battle_session.create(BOARD, state, index, battle_seed,
 		_battle_finished, _restart_from_battle, _exit_from_battle, checkpoint.environment)
 	battle.resume_combat = combat
+	if not state.developer_test.is_empty():
+		battle.developer_one_hit_kill = _developer_one_hit_kill
+		battle.developer_one_hit_kill_changed.connect(func(enabled: bool): _developer_one_hit_kill = enabled)
 	add_child(battle)
 	_configure_settings_exit(battle.settings_button.menu, true)
 
