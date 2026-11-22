@@ -3,7 +3,8 @@ extends Control
 signal settled
 signal geometry_changed
 signal system_details_requested
-signal warzone_wait_requested
+signal warzone_wait_requested # Legacy direct wait action remains usable by existing tests.
+signal warzone_wait_held(pressed: bool)
 signal lattice_overlay_changed(enabled: bool)
 
 enum Mode { HIDDEN, OVERVIEW, FOCUS }
@@ -41,6 +42,8 @@ var _warzone_event := 0
 var _gain_fade: Tween
 var _warning_fade: Tween
 var wait_button: Button
+var _wait_held := false
+var _wait_elapsed := 0.0
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
 var pressure_gap: Control
@@ -194,9 +197,10 @@ func _ready() -> void:
 	status_actions.add_child(details_button)
 	wait_button = Button.new()
 	wait_button.name = "WarzoneWait"
-	wait_button.custom_minimum_size = Vector2(96, 48)
+	wait_button.custom_minimum_size = Vector2(124, 48)
 	preload("res://scripts/ui/encounter_presentation.gd").action(wait_button)
-	wait_button.pressed.connect(warzone_wait_requested.emit)
+	wait_button.button_down.connect(func(): warzone_wait_held.emit(true))
+	wait_button.button_up.connect(func(): warzone_wait_held.emit(false))
 	status_actions.add_child(wait_button)
 	lattice_button = Button.new()
 	lattice_button.text = "Lattice"
@@ -523,10 +527,18 @@ func set_warzone_status(state: Resource) -> void:
 		_warzone_holding = false
 		_set_legacy_warzone_text(state, operation)
 	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
-	wait_button.text = "Wait %ds" % operation.tuning.wait_seconds
+	wait_button.text = "Waiting %.1fs" % (ceilf(_wait_elapsed * 2.0) / 2.0) if _wait_held else "Hold to Wait"
 	wait_button.disabled = operation.complete or state.navigation.leg_active or not state.can_navigate()
 	_sync_strategic_controls()
 	queue_layout()
+
+
+# The button is deliberately a hold gesture; no one-second click is
+# connected to gameplay. The coordinator owns elapsed strategic time.
+func set_wait_held(held: bool, seconds: float = 0.0) -> void:
+	_wait_held = held
+	_wait_elapsed = maxf(0.0, seconds) if held else 0.0
+	wait_button.text = "Waiting %.1fs" % (ceilf(_wait_elapsed * 2.0) / 2.0) if held else "Hold to Wait"
 
 
 func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
@@ -581,7 +593,9 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 	_warzone_effort = operation.effort
 	if operation.event_revision != _warzone_event:
 		for event in operation.events_since(_warzone_event):
-			if event.begins_with("Hostile pursuit inbound"):
+			if event.begins_with("FINAL DEFENSE"):
+				_flash_warzone_warning("FINAL DEFENSE · HOSTILES CONVERGING")
+			elif event.begins_with("Hostile pursuit inbound"):
 				_flash_warzone_warning("HOSTILE PURSUIT INBOUND")
 			elif event.begins_with("Hostile patrol responding"):
 				_flash_warzone_warning("Hostile patrol responding")
