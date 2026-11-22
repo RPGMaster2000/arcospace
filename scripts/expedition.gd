@@ -1145,7 +1145,7 @@ func _start_capture_hold(index: int) -> void:
 	screen.focus_backing.hide()
 	screen.return_button.hide()
 	capture_hud.present(state.warzone.objective_name(offset), objective.progress if objective.capturing == "allied" else 0,
-		state.warzone.tuning.capture_seconds)
+		state.warzone.player_capture_requirement(offset, State.Defense.point(state.navigation.position)))
 
 
 func _advance_capture_hold(seconds: float) -> void:
@@ -1174,7 +1174,7 @@ func _advance_capture_hold(seconds: float) -> void:
 		var offset := _capture_hold - State.Warzone.HOSTILE_GROUPS
 		var objective: Dictionary = operation.objectives[offset]
 		capture_hud.update_progress(operation.objective_name(offset), objective.progress if objective.capturing == "allied" else 0,
-			operation.tuning.capture_seconds)
+			operation.player_capture_requirement(offset, point))
 
 
 func _stop_capture_hold(message: String, restore_overview: bool = true) -> void:
