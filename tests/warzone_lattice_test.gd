@@ -919,7 +919,7 @@ func final_defense_convergence() -> void:
 	check(op.final_defense_active and op.player_hunter == -1 and op.events.any(
 		func(event): return event.begins_with("FINAL DEFENSE")),
 		"An allied capture attempt immediately announces full enemy convergence")
-	var eligible := op.fleets.filter(func(fleet): return fleet.side == "hostile"
+	var eligible: Array = op.fleets.filter(func(fleet): return fleet.side == "hostile"
 		and op.active(fleet) and fleet.engaged < 0 and not fleet.withdrawing)
 	check(not eligible.is_empty() and eligible.all(func(fleet):
 		return fleet.destination == target and fleet.counter_target == target),
