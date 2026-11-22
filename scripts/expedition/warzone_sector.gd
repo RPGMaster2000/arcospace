@@ -39,6 +39,15 @@ var _importance := {}
 var _supply_signature: Array = []
 var _player_position := Vector3.INF
 var _route_cache := {}
+# Alert is deliberately separate from War Effort. It only rises from player
+# interventions, not autonomous allied captures.
+var player_alert := 0
+var player_hunter := -1
+var hunter_until := 0
+var hunter_contact_at := 0
+var hunter_cooldown_until := 0
+var hunter_count := 0
+var response_sites: Array[int] = []
 
 
 func is_lattice() -> bool:
@@ -191,9 +200,122 @@ func _refresh_capture_presence(index: int, player: Vector3) -> void:
 			cutoff.present = cutoff.present.filter(func(id): return id in present)
 
 
+func capture_requirement(index: int, side: String, player: Vector3) -> int:
+	if side == "allied" and player.distance_to(objectives[index].position) <= tuning.objective_radius:
+		# A real allied formation on site completes the same job in six seconds.
+		if _capture_presence(index, "allied", player).size() == 1:
+			return tuning.capture_seconds * tuning.solo_capture_multiplier
+	return tuning.capture_seconds
+
+
+func _capture_save_limit(configuration: Resource) -> int:
+	return configuration.capture_seconds * configuration.solo_capture_multiplier - 1
+
+
+func player_capture_requirement(index: int, player: Vector3) -> int:
+	return capture_requirement(index, "allied", player)
+
+
 func _capture(index: int, player: Vector3) -> void:
 	_refresh_capture_presence(index, player)
+	var previous_progress: int = objectives[index].progress
 	super._capture(index, player)
+	if previous_progress == 0 and objectives[index].progress == 1 \
+			and objectives[index].capturing == "allied" \
+			and player.distance_to(objectives[index].position) <= tuning.objective_radius \
+			and _capture_presence(index, "allied", player).size() == 1:
+		_proactive_response(index, player)
+
+
+# A warning and one existing patrol respond before a solo capture completes.
+# Never spawn ships, remove an engaged combatant, or redirect a command defender.
+func _proactive_response(index: int, player: Vector3) -> void:
+	if index in response_sites or objectives[index].owner != "hostile":
+		return
+	if index not in command_sites() and index not in [site("shipyard"), site("depot")] and player_alert == 0:
+		return
+	var chosen := {}
+	var best: float = tuning.response_range
+	for fleet in fleets:
+		if fleet.side != "hostile" or not active(fleet) or fleet.engaged >= 0 \
+				or fleet.withdrawing or fleet.get("arriving", false) or fleet.role == "Defender" \
+				or fleet.id == player_hunter or not _fleet_supplied(fleet) \
+				or not route_valid("hostile", fleet.at, index):
+			continue
+		var distance: float = (fleet.position as Vector3).distance_to(player)
+		if distance < best and distance > tuning.objective_radius:
+			best = distance
+			chosen = fleet
+	if chosen.is_empty(): return
+	response_sites.append(index)
+	chosen.counter_target = index
+	chosen.destination = index
+	_notice("Hostile patrol responding to capture at %s." % objective_name(index))
+
+
+func note_player_aggression(amount: int = 1) -> void:
+	if complete or amount <= 0: return
+	var previous: int = player_alert
+	player_alert = mini(3, player_alert + amount)
+	if previous < tuning.alert_to_hunt and player_alert >= tuning.alert_to_hunt:
+		_notice("Hostile alert elevated · patrols searching for your ship.")
+
+
+func _finish_player_hunt(reason: String = "") -> void:
+	if player_hunter < 0: return
+	var fleet := fleet_at(player_hunter)
+	if active(fleet) and not fleet.withdrawing:
+		fleet.counter_target = -1
+		fleet.destination = fleet.at
+	player_hunter = -1
+	hunter_until = 0
+	hunter_contact_at = 0
+	hunter_cooldown_until = clock_ms + tuning.hunt_cooldown_seconds * STEP_MS
+	player_alert = maxi(0, player_alert - 1)
+	if not reason.is_empty(): _notice(reason)
+
+
+func _update_player_hunt(player: Vector3) -> void:
+	if player_hunter >= 0:
+		var hunter := fleet_at(player_hunter)
+		if not active(hunter) or hunter.withdrawing or hunter.engaged >= 0 \
+				or not _fleet_supplied(hunter) or clock_ms >= hunter_until:
+			_finish_player_hunt("Hostile pursuit disengaged.")
+		else:
+			return
+	if player_alert < tuning.alert_to_hunt or hunter_count >= tuning.max_player_hunts \
+			or clock_ms < hunter_cooldown_until or clock_ms < jam_until:
+		return
+	var chosen := {}
+	var best := 1000000.0
+	for fleet in fleets:
+		if fleet.side != "hostile" or not active(fleet) or fleet.engaged >= 0 \
+				or fleet.withdrawing or fleet.get("arriving", false) or fleet.role == "Defender" \
+				or not _fleet_supplied(fleet):
+			continue
+		var distance: float = (fleet.position as Vector3).distance_to(player)
+		if distance > tuning.objective_radius * 2.5 and distance < best:
+			best = distance
+			chosen = fleet
+	if chosen.is_empty(): return
+	player_hunter = chosen.id
+	hunter_count += 1
+	hunter_until = clock_ms + tuning.hunt_duration_seconds * STEP_MS
+	hunter_contact_at = clock_ms + 3 * STEP_MS # Always show a warning before contact.
+	chosen.counter_target = -1
+	_notice("Hostile pursuit inbound · avoid or fight the marked patrol.")
+
+
+func player_hunter_contact(player: Vector3) -> int:
+	if player_hunter < 0 or clock_ms < hunter_contact_at: return -1
+	var hunter := fleet_at(player_hunter)
+	if not active(hunter) or hunter.engaged >= 0 or hunter.withdrawing: return -1
+	return encounter_for_fleet(hunter) if (hunter.position as Vector3).distance_to(player) <= INTERCEPT_RADIUS else -1
+
+
+func consume_player_hunter_contact() -> void:
+	_finish_player_hunt("Hostile pursuit intercepted the player.")
+
 
 
 func _capture_allowed(index: int, side: String, player: Vector3) -> bool:
@@ -292,6 +414,8 @@ func fleet_speed(fleet: Dictionary) -> float:
 
 
 func fleet_target_position(fleet: Dictionary) -> Vector3:
+	if fleet.id == player_hunter and _player_position.is_finite():
+		return _player_position
 	var enemy := fleet_at(fleet.get("intercept", -1))
 	if active(enemy) and not enemy.withdrawing:
 		return AlliedOrders.interception_point(self, fleet, enemy)
@@ -299,6 +423,7 @@ func fleet_target_position(fleet: Dictionary) -> Vector3:
 
 
 func fleet_order_text(fleet: Dictionary) -> String:
+	if fleet.id == player_hunter: return "Player ship"
 	var enemy := fleet_at(fleet.get("intercept", -1))
 	if active(enemy) and not enemy.withdrawing:
 		return "Hostile %s %d" % [enemy.role, enemy.id - ALLIED_GROUPS + 1]
@@ -306,6 +431,7 @@ func fleet_order_text(fleet: Dictionary) -> String:
 
 
 func fleet_status(fleet: Dictionary) -> String:
+	if active(fleet) and fleet.id == player_hunter and fleet.engaged < 0: return "Pursuing"
 	if active(fleet) and fleet.engaged < 0:
 		if fleet.get("arriving", false): return "Reinforcing"
 		if fleet.has("recover_until") and not fleet.withdrawing: return "Regrouping"
@@ -342,6 +468,10 @@ func link_active(link: Vector2i) -> bool:
 
 func objective_brief(index: int) -> String:
 	var status := super.objective_brief(index)
+	var objective: Dictionary = objectives[index]
+	if objective.progress > 0 and objective.capturing == "allied":
+		status = "Allied capturing · %ds / %ds" % [objective.progress,
+			player_capture_requirement(index, _player_position)]
 	if disrupted.has(index): return status + " · disrupted %ds" % disrupted[index]
 	return status + (" · supplied" if is_supplied(index) else " · isolated")
 
@@ -371,6 +501,7 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 			if disrupted[site] <= 0: disrupted.erase(site)
 		_refresh_supply()
 		_dispatch_reserves()
+		_update_player_hunt(player)
 	_assign_engagements(true)
 	var expired := scramble_until > 0 and clock_ms >= scramble_until
 	if expired:
@@ -401,6 +532,7 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 			if objectives[index].owner == "allied":
 				if player.distance_to(objectives[index].position) <= tuning.objective_radius:
 					player_intervened = true
+					note_player_aggression(2 if index in command_sites() else 1)
 				var value: int = tuning.capture_effort + (4 if index in command_sites() else 0)
 				_award("capture:%d" % index, value, "Captured " + objective_name(index))
 				if supplied.allied.size() > prior.size() + 1:
@@ -438,6 +570,10 @@ func _command_ready() -> bool:
 
 
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
+	if fleet.id == player_hunter and _player_position.is_finite() and not fleet.withdrawing:
+		fleet.position = (fleet.position as Vector3).move_toward(
+			_player_position, fleet_speed(fleet) * tuning.hunt_speed_multiplier * seconds)
+		return
 	if fleet.get("arriving", false):
 		if supplied[fleet.side].size() < 2: return
 		if fleet.destination not in supplied[fleet.side]:
@@ -622,6 +758,7 @@ func engagement_predictions() -> Dictionary:
 func player_victory(hostile_id: int) -> bool:
 	if not super.player_victory(hostile_id): return false
 	player_intervened = true
+	note_player_aggression(1)
 	_award("fleet:%d" % hostile_id, tuning.victory_effort, "Hostile formation defeated")
 	return true
 
@@ -751,7 +888,11 @@ func snapshot() -> Dictionary:
 		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
 		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
 		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until,
-		"scramble_until": scramble_until, "scramble_site": scramble_site}
+		"scramble_until": scramble_until, "scramble_site": scramble_site,
+		"player_alert": player_alert, "player_hunter": player_hunter,
+		"hunter_until": hunter_until, "hunter_contact_at": hunter_contact_at,
+		"hunter_cooldown_until": hunter_cooldown_until, "hunter_count": hunter_count,
+		"response_sites": response_sites.duplicate()}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -859,7 +1000,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		accomplishments[key] = int(saved.accomplishments[key])
 	planned = saved.planned.duplicate()
 	recovered = saved.recovered
-	if not _restore_logistics(saved) or not _restore_facilities(saved): return false
+	if not _restore_logistics(saved) or not _restore_facilities(saved) or not _restore_player_alert(saved): return false
 	_refresh_supply(false)
 	if not convoy.is_empty() and not _convoy_route_valid(convoy.side, convoy.route): return false
 	if not saved.has("final_command"):
@@ -869,6 +1010,39 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		return true
 	if complete and final_command == -1: return true  # Previously earned legacy victory.
 	return consolidation == 0 or (effort >= tuning.effort_goal and _command_ready())
+
+
+# Optional v3 data: pre-change sectors load at Quiet, with no active hunter.
+func _restore_player_alert(saved: Dictionary) -> bool:
+	for pair in [["player_alert", 3], ["hunter_count", tuning.max_player_hunts]]:
+		if not Defense.number(saved.get(pair[0], 0), 0, pair[1]): return false
+	var hunter: Variant = saved.get("player_hunter", -1)
+	if not Defense.number(hunter, -1, HOSTILE_RESERVE): return false
+	if int(hunter) >= 0 and (not active(fleet_at(int(hunter))) \
+			or fleet_at(int(hunter)).side != "hostile" or int(saved.get("hunter_count", 0)) == 0):
+		return false
+	for field in ["hunter_until", "hunter_contact_at", "hunter_cooldown_until"]:
+		if not Defense.number(saved.get(field, 0), 0,
+				clock_ms + maxi(tuning.hunt_duration_seconds, tuning.hunt_cooldown_seconds) * STEP_MS + 3000):
+			return false
+	var sites: Variant = saved.get("response_sites", [])
+	if not sites is Array or sites.size() > objectives.size(): return false
+	var unique_sites: Array[int] = []
+	for node in sites:
+		if not Defense.number(node, 0, objectives.size() - 1) or int(node) in unique_sites:
+			return false
+		unique_sites.append(int(node))
+	player_alert = int(saved.get("player_alert", 0))
+	player_hunter = int(hunter)
+	hunter_until = int(saved.get("hunter_until", 0))
+	hunter_contact_at = int(saved.get("hunter_contact_at", 0))
+	hunter_cooldown_until = int(saved.get("hunter_cooldown_until", 0))
+	hunter_count = int(saved.get("hunter_count", 0))
+	response_sites = unique_sites
+	for objective in objectives:
+		if objective.capturing == "hostile" and objective.progress >= tuning.capture_seconds:
+			return false
+	return true
 
 
 func _restore_facilities(saved: Dictionary) -> bool:

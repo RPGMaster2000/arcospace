@@ -107,7 +107,7 @@ func graph_audit() -> void:
 				for index in op.objectives.size():
 					if op.objectives[index].owner == "allied" or not op._capture_connected(index, "allied"): continue
 					var at: Vector3 = op.objectives[index].position
-					op.advance(op.tuning.capture_seconds * 1000, at, at)
+					op.advance(op.player_capture_requirement(index, at) * 1000, at, at)
 					frontier = true
 				if not frontier: break
 			if op.final_command >= 0:
@@ -688,7 +688,110 @@ func continuous_clock() -> void:
 		check(slow.warzone.snapshot() == restored.warzone.snapshot(), "Resume from a fractional tick continues identically")
 
 
+func aggression_guardrails() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var site: int = op.site("junction")
+	var point: Vector3 = op.objectives[site].position
+	for fleet in op.fleets:
+		fleet.strength = 0
+		fleet.engaged = -1
+	op.note_player_position(point)
+	check(op.capture_requirement(site, "allied", point) == 12,
+		"Unsupported player capture takes twice the standard fleet duration")
+	for second in op.tuning.capture_seconds:
+		op._capture(site, point)
+	check(op.objectives[site].owner == "hostile" and op.objectives[site].progress == 6
+		and op.objective_brief(site).contains("6s / 12s"),
+		"Solo player cannot take an undefended station in six seconds")
+	state._sync_warzone()
+	var resumed := roundtrip(state)
+	check(resumed != null and resumed.warzone.objectives[site].progress == 6,
+		"Longer partial solo captures survive the unchanged save codec")
+	for second in op.tuning.capture_seconds:
+		op._capture(site, point)
+	check(op.objectives[site].owner == "allied" and op.objectives[site].progress == 0,
+		"Solo player finishes capture after twelve full strategic seconds")
+	var assisted := fresh(19)
+	var support: RefCounted = assisted.warzone
+	var supported: int = support.site("junction")
+	var position: Vector3 = support.objectives[supported].position
+	for fleet in support.fleets:
+		fleet.strength = 0
+		fleet.engaged = -1
+	var ally: Dictionary = support.fleets[0]
+	ally.strength = 6
+	ally.position = position
+	ally.at = supported
+	ally.destination = supported
+	check(support.capture_requirement(supported, "allied", position) == 6,
+		"A real allied fleet restores the original six-second capture speed")
+	for second in support.tuning.capture_seconds:
+		support._capture(supported, position)
+	check(support.objectives[supported].owner == "allied",
+		"Player and allied fleet together complete capture at regular speed")
+	var response := fresh(19)
+	var threat: RefCounted = response.warzone
+	var target: int = threat.site("junction")
+	var target_point: Vector3 = threat.objectives[target].position
+	var patrol: Dictionary = threat.fleets[5] # Hostile off-front reinforcement, not a defender.
+	for fleet in threat.fleets:
+		fleet.engaged = -1
+		if fleet.side == "allied":
+			fleet.position = threat.objectives[threat.root("allied")].position
+		elif fleet.id != patrol.id:
+			fleet.strength = 0
+	patrol.at = threat.root("hostile")
+	patrol.destination = patrol.at
+	patrol.position = target_point + Vector3(10, 0, 0)
+	patrol.strength = maxi(3, patrol.strength)
+	threat.player_alert = 1
+	check(threat.route_valid("hostile", patrol.at, target), "Threat fixture has a supplied response route")
+	threat.note_player_position(target_point)
+	threat._capture(target, target_point)
+	check(target in threat.response_sites and patrol.destination == target
+		and threat.events.any(func(event): return event.contains("patrol responding")),
+		"A threatened capture orders an existing available hostile patrol before ownership changes")
+	threat.note_player_aggression(1)
+	threat._update_player_hunt(target_point)
+	check(threat.player_hunter == patrol.id and threat.hunter_count == 1
+		and threat.player_hunter_contact(target_point) == -1,
+		"Repeat aggression activates one warned player hunter with contact grace")
+	var before: float = patrol.position.distance_to(target_point)
+	threat._move_fleet(patrol, 1.0)
+	check(patrol.position.distance_to(target_point) < before and threat.fleet_status(patrol) == "Pursuing"
+		and threat.fleet_order_text(patrol) == "Player ship",
+		"Visible player hunter moves toward the player rather than a stationary station")
+	response._sync_warzone()
+	var reloaded := roundtrip(response)
+	check(reloaded != null and reloaded.warzone.player_hunter == patrol.id
+		and reloaded.warzone.hunter_count == 1 and target in reloaded.warzone.response_sites,
+		"Active pursuit and warned stations survive save and resume")
+	patrol.position = target_point + Vector3(2, 0, 0)
+	check(threat.player_hunter_contact(target_point) == -1,
+		"The hunter cannot force an immediate unwarned encounter")
+	threat.clock_ms = threat.hunter_contact_at
+	check(threat.player_hunter_contact(target_point) == threat.encounter_for_fleet(patrol),
+		"Only an actual fleet within combat radius can intercept the player")
+	threat.consume_player_hunter_contact()
+	check(threat.player_hunter == -1 and threat.hunter_count == 1
+		and threat.hunter_cooldown_until > threat.clock_ms,
+		"Contact ends the pursuit without spawning additional fleets or bypassing cooldown")
+	var achievement := fresh(19)
+	var earned: RefCounted = achievement.warzone
+	var advance_site: int = earned.site("junction")
+	var advance_point: Vector3 = earned.objectives[advance_site].position
+	for fleet in earned.fleets:
+		fleet.strength = 0
+		fleet.engaged = -1
+	earned.advance(earned.tuning.capture_seconds * earned.tuning.solo_capture_multiplier * 1000,
+		advance_point, advance_point)
+	check(earned.objectives[advance_site].owner == "allied" and earned.player_alert >= 1,
+		"Only committed player territorial intervention increases enemy attention")
+
+
 func run() -> void:
+	aggression_guardrails()
 	direct_movement()
 	capture_cutoff("allied")
 	capture_cutoff("hostile")

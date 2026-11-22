@@ -402,8 +402,7 @@ func _update_orders() -> void:
 		for fleet in lattice_operation.fleets:
 			if not lattice_operation.active(fleet) or fleet.engaged >= 0: continue
 			if fleet.get("arriving", false) and lattice_operation.supplied[fleet.side].size() < 2: continue
-			var finish: Vector3 = lattice_operation.fleet_target_position(fleet) if fleet.has("intercept") \
-				else lattice_operation.objectives[fleet.destination].position
+			var finish: Vector3 = lattice_operation.fleet_target_position(fleet)
 			var position: Vector3 = fleet.position
 			if position.distance_squared_to(finish) < 0.0025: continue
 			endpoints.append(models[fleet.id].position)
