@@ -278,7 +278,8 @@ func _finish_player_hunt(reason: String = "") -> void:
 func _update_player_hunt(player: Vector3) -> void:
 	if player_hunter >= 0:
 		var hunter := fleet_at(player_hunter)
-		if not active(hunter) or hunter.withdrawing or hunter.engaged >= 0 or clock_ms >= hunter_until:
+		if not active(hunter) or hunter.withdrawing or hunter.engaged >= 0 \
+				or not _fleet_supplied(hunter) or clock_ms >= hunter_until:
 			_finish_player_hunt("Hostile pursuit disengaged.")
 		else:
 			return
@@ -883,7 +884,11 @@ func snapshot() -> Dictionary:
 		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
 		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
 		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until,
-		"scramble_until": scramble_until, "scramble_site": scramble_site}
+		"scramble_until": scramble_until, "scramble_site": scramble_site,
+		"player_alert": player_alert, "player_hunter": player_hunter,
+		"hunter_until": hunter_until, "hunter_contact_at": hunter_contact_at,
+		"hunter_cooldown_until": hunter_cooldown_until, "hunter_count": hunter_count,
+		"response_sites": response_sites.duplicate()}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -991,7 +996,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		accomplishments[key] = int(saved.accomplishments[key])
 	planned = saved.planned.duplicate()
 	recovered = saved.recovered
-	if not _restore_logistics(saved) or not _restore_facilities(saved): return false
+	if not _restore_logistics(saved) or not _restore_facilities(saved) or not _restore_player_alert(saved): return false
 	_refresh_supply(false)
 	if not convoy.is_empty() and not _convoy_route_valid(convoy.side, convoy.route): return false
 	if not saved.has("final_command"):
@@ -1001,6 +1006,39 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		return true
 	if complete and final_command == -1: return true  # Previously earned legacy victory.
 	return consolidation == 0 or (effort >= tuning.effort_goal and _command_ready())
+
+
+# Optional v3 data: pre-change sectors load at Quiet, with no active hunter.
+func _restore_player_alert(saved: Dictionary) -> bool:
+	for pair in [["player_alert", 3], ["hunter_count", tuning.max_player_hunts]]:
+		if not Defense.number(saved.get(pair[0], 0), 0, pair[1]): return false
+	var hunter: Variant = saved.get("player_hunter", -1)
+	if not Defense.number(hunter, -1, HOSTILE_RESERVE): return false
+	if int(hunter) >= 0 and (not active(fleet_at(int(hunter))) \
+			or fleet_at(int(hunter)).side != "hostile" or int(saved.get("hunter_count", 0)) == 0):
+		return false
+	for field in ["hunter_until", "hunter_contact_at", "hunter_cooldown_until"]:
+		if not Defense.number(saved.get(field, 0), 0,
+				clock_ms + maxi(tuning.hunt_duration_seconds, tuning.hunt_cooldown_seconds) * STEP_MS + 3000):
+			return false
+	var sites: Variant = saved.get("response_sites", [])
+	if not sites is Array or sites.size() > objectives.size(): return false
+	var unique_sites: Array[int] = []
+	for node in sites:
+		if not Defense.number(node, 0, objectives.size() - 1) or int(node) in unique_sites:
+			return false
+		unique_sites.append(int(node))
+	player_alert = int(saved.get("player_alert", 0))
+	player_hunter = int(hunter)
+	hunter_until = int(saved.get("hunter_until", 0))
+	hunter_contact_at = int(saved.get("hunter_contact_at", 0))
+	hunter_cooldown_until = int(saved.get("hunter_cooldown_until", 0))
+	hunter_count = int(saved.get("hunter_count", 0))
+	response_sites = unique_sites
+	for objective in objectives:
+		if objective.capturing == "hostile" and objective.progress >= tuning.capture_seconds:
+			return false
+	return true
 
 
 func _restore_facilities(saved: Dictionary) -> bool:
