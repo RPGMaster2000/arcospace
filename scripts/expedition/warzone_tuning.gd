@@ -11,6 +11,7 @@ extends Resource
 
 @export_group("Fleet operations")
 @export_range(1, 60, 1) var capture_seconds := 6
+@export_range(1, 3, 1) var solo_capture_multiplier := 2
 @export_range(1, 120, 1) var consolidation_seconds := 15
 @export_range(1, 30, 1) var exchange_seconds := 4
 @export_range(0.25, 5.0, 0.05) var fleet_speed := 1.15
@@ -41,6 +42,14 @@ extends Resource
 @export_range(8, 60, 1) var convoy_seconds := 18
 
 @export_range(0.0, 1.0, 0.01) var battle_modifier_chance := 0.54
+
+@export_group("Player aggression response")
+@export_range(1, 3, 1) var alert_to_hunt := 2
+@export_range(1, 5, 1) var max_player_hunts := 2
+@export_range(5, 60, 1) var hunt_duration_seconds := 30
+@export_range(5, 60, 1) var hunt_cooldown_seconds := 25
+@export_range(1.0, 4.0, 0.1) var hunt_speed_multiplier := 2.0
+@export_range(8.0, 40.0, 1.0) var response_range := 24.0
 
 @export_group("Fleet command and reinforcements")
 @export_range(1, 60, 1) var scramble_seconds := 20
