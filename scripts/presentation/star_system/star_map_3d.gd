@@ -1320,10 +1320,11 @@ func sync_warzone(operation: RefCounted) -> void:
 		if marker.text != glyph or marker.planet_name == null or marker.planet_name.text != display_name:
 			marker.set_label(display_name, glyph, true)
 		var tag: String = "Contested" if objective.contested else objective.owner.capitalize()
+		var consolidation: float = -1.0
 		if operation.is_lattice():
 			var strategic: bool = offset in operation.command_sites() or offset == operation.root("allied") \
 				or offset in warzone_presentation.bottlenecks
-			var consolidation: float = float(operation.consolidation) / maxf(1.0, operation.tuning.consolidation_seconds) \
+			consolidation = float(operation.consolidation) / maxf(1.0, operation.tuning.consolidation_seconds) \
 				if final_active and objective.owner == "allied" and operation.is_supplied(offset) else -1.0
 			marker.set_warzone_importance(2 if final_active else (1 if strategic else 0), consolidation)
 			var show_name: bool = offset == operation.final_command or offset in operation.command_sites() or offset == operation.root("allied") or (warzone_presentation.overlay_enabled and (offset in warzone_presentation.bottlenecks
