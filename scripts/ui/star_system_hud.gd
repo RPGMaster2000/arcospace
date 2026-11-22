@@ -26,6 +26,9 @@ var warzone_mode := false
 var lattice_mode := false
 var lattice_button: Button
 var war_effort_bar: ProgressBar
+var warzone_mission: Label
+var warzone_hold_bar: ProgressBar
+var _warzone_holding := false
 var war_effort_gain: Label
 var warzone_summary: HBoxContainer
 var warzone_counts: Array[Label] = []
@@ -103,6 +106,17 @@ func _ready() -> void:
 	metagame.add_theme_font_size_override("font_size", 14)
 	metagame.mouse_filter = MOUSE_FILTER_IGNORE
 	status.add_child(metagame)
+	warzone_mission = Label.new()
+	warzone_mission.name = "WarzoneMission"
+	warzone_mission.mouse_filter = MOUSE_FILTER_IGNORE
+	warzone_mission.add_theme_font_size_override("font_size", 13)
+	warzone_mission.add_theme_color_override("font_color", Color("ffe4a2"))
+	warzone_mission.hide()
+	status.add_child(warzone_mission)
+	warzone_hold_bar = WarzoneIcons.bar(Color("ffe4a2"), 4)
+	warzone_hold_bar.name = "WarzoneConsolidation"
+	warzone_hold_bar.hide()
+	status.add_child(warzone_hold_bar)
 	war_effort_bar = WarzoneIcons.bar(WarzoneIcons.ALLIED, 8)
 	status.add_child(war_effort_bar)
 	war_effort_gain = Label.new()
@@ -506,6 +520,7 @@ func set_warzone_status(state: Resource) -> void:
 	if lattice_mode:
 		_present_lattice_status(state, operation)
 	else:
+		_warzone_holding = false
 		_set_legacy_warzone_text(state, operation)
 	metagame.add_theme_color_override("font_color", Color("9ad8e5"))
 	wait_button.text = "Wait %ds" % operation.tuning.wait_seconds
@@ -521,15 +536,24 @@ func _present_lattice_status(state: Resource, operation: RefCounted) -> void:
 	war_effort_bar.value = operation.effort
 	war_effort_bar.accessibility_name = "War Effort %d of %d" % [operation.effort, goal]
 	metagame.text = "WAR EFFORT  %d%%" % percent
+	_warzone_holding = false
 	if operation.complete:
 		metagame.text = state.warzone_outcome.grade + " · FTL Ready"
-	elif operation.consolidation > 0:
-		metagame.text += "\nHolding %s · %d/%ds" % [operation.objective_name(operation.final_command),
-			operation.consolidation, operation.tuning.consolidation_seconds]
+		warzone_mission.text = "Sector secured · FTL available"
 	elif operation.final_command >= 0:
-		metagame.text += "\nSecure " + operation.objective_name(operation.final_command)
-	elif percent == 100:
-		metagame.text += "\nSupport the offensive"
+		var target: int = operation.final_command
+		var command_name: String = operation.objective_name(target)
+		_warzone_holding = operation._command_ready()
+		if _warzone_holding:
+			var seconds: int = operation.tuning.consolidation_seconds
+			warzone_mission.text = "FINAL · Hold %s · %d/%ds" % [command_name, operation.consolidation, seconds]
+			warzone_hold_bar.max_value = seconds
+			warzone_hold_bar.value = operation.consolidation
+			warzone_hold_bar.accessibility_name = "Final objective consolidation %d of %d seconds" % [operation.consolidation, seconds]
+		else:
+			warzone_mission.text = "FINAL · Secure %s + supply" % command_name
+	else:
+		warzone_mission.text = "Capture territory · %d Effort remaining" % maxi(0, goal - operation.effort)
 	var counts := [operation.fleet_count("allied"), operation.fleet_count("hostile"),
 		0 if operation.complete else operation.engagement_count()]
 	for i in warzone_counts.size():
@@ -606,7 +630,8 @@ func _sync_strategic_controls() -> void:
 	wait_button.visible = show_actions and warzone_mode
 	lattice_button.visible = show_actions and warzone_mode and lattice_mode
 	var show_lattice := show_actions and warzone_mode and lattice_mode
-	for control in [war_effort_bar, warzone_summary, territory_bar]: control.visible = show_lattice
+	for control in [war_effort_bar, warzone_summary, territory_bar, warzone_mission]: control.visible = show_lattice
+	warzone_hold_bar.visible = show_lattice and _warzone_holding
 	var connection_warning := warzone_warning_text.text in ["Capture link severed", "Hostile supply cut"]
 	warzone_warning.visible = show_lattice and not warzone_warning_text.text.is_empty() \
 		and (lattice_button.button_pressed or not connection_warning)
