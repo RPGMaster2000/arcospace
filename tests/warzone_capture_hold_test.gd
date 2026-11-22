@@ -28,7 +28,8 @@ func run() -> void:
 		return
 	host.set_process(false)
 	await touch(hold)
-	check(host.capture_hud.blocker.visible and not host.strategic_overview.active and not host._map_input_allowed(),
+	check(host.capture_hud.blocker.visible and host.capture_hud.progress.max_value == op.tuning.capture_seconds * op.tuning.solo_capture_multiplier \
+		and not host.strategic_overview.active and not host._map_input_allowed(),
 		"Touch starts the capture HUD and locks navigation on the live map")
 	check(root.get_visible_rect().encloses(host.capture_hud.cancel_button.get_global_rect()),
 		"Cancel Hold fits a 960×540 touch viewport")
@@ -109,8 +110,8 @@ func run() -> void:
 	await create_timer(0.30).timeout
 	host._start_capture_hold(index)
 	host._advance_capture_hold(99.0)
-	check(op.objectives[site].owner == "allied" and op.clock_ms == stopped - posmod(stopped, 1000) + op.tuning.capture_seconds * 1000
-		and host._capture_hold < 0, "Hold completes through normal capture and stops at the exact completion tick")
+	check(op.objectives[site].owner == "allied" and op.clock_ms == stopped - posmod(stopped, 1000) + op.tuning.capture_seconds * op.tuning.solo_capture_multiplier * 1000
+		and host._capture_hold < 0, "Hold completes through normal solo capture and stops at the exact completion tick")
 	host.show_poi(index)
 	check(_hold_button(host) == null, "Allied stations never offer Hold Until Captured")
 	host.free()
