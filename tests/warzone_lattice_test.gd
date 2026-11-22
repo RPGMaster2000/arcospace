@@ -273,6 +273,7 @@ func fleet_routing_and_convoys() -> void:
 		"An ongoing engagement keeps its target during a counterattack")
 	check(op.fleets.any(func(fleet): return fleet.counter_target == junction),
 		"A reachable capture draws a routed hostile counterattack")
+	op.fleets[Sector.EXTRA_ALLIED].strength = 0 # Focus this routing fixture on the original vanguard.
 	var fleet: Dictionary = op.fleets[0]
 	fleet.at = junction
 	fleet.position = op.objectives[junction].position
@@ -345,7 +346,7 @@ func facilities() -> void:
 	var original_allies: int = sector.fleet_count("allied")
 	check(deploy.warzone_operate(yard + State.Warzone.HOSTILE_GROUPS, "deploy") and sector.fleet_count("allied") == original_allies + 1,
 		"Supplied Shipyard adds a formation while both original allies are active")
-	var inbound: Dictionary = sector.fleet_at(Sector.REQUEST_FIRST)
+	var inbound: Dictionary = sector.fleet_at(sector.requested_first())
 	check(not inbound.is_empty() and inbound.arriving and inbound.destination == yard
 		and inbound.position.distance_to(sector.objectives[yard].position) > 10.0,
 		"Requested reinforcements visibly approach from outside the sector")
@@ -509,7 +510,7 @@ func capture_cutoff(side: String) -> void:
 	op.objectives[right].owner = side
 	op.objectives[site].owner = owner
 	state.encounter_positions.clear()
-	state.encounters.resize(State.Warzone.HOSTILE_GROUPS + op.objectives.size() + 1)
+	state.encounters.resize(State.Warzone.HOSTILE_GROUPS + op.objectives.size() + 1 + int(op.expanded_roster))
 	op.convoy.clear()
 	for fleet in op.fleets:
 		fleet.strength = 0
@@ -573,6 +574,7 @@ func direct_movement() -> void:
 	op.objectives[mid].position = Vector3(0, 0, 10)
 	op.objectives[origin].position = Vector3.ZERO
 	op.objectives[goal].position = Vector3(10, 0, 0)
+	op.fleets[Sector.EXTRA_ALLIED].strength = 0 # Restore the original two-allies route-assignment fixture.
 	var fleet: Dictionary = op.fleets[0]
 	fleet.at = origin
 	fleet.destination = origin
