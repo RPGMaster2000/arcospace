@@ -26,6 +26,7 @@ func run() -> void:
 		host.free()
 		quit(1)
 		return
+	host.set_process(false)
 	await touch(hold)
 	check(host.capture_hud.blocker.visible and not host.strategic_overview.active and not host._map_input_allowed(),
 		"Touch starts the capture HUD and locks navigation on the live map")
@@ -33,25 +34,29 @@ func run() -> void:
 		"Cancel Hold fits a 960×540 touch viewport")
 	var wall_start := Time.get_ticks_usec()
 	var clock_start: int = op.clock_ms
+	host._capture_clock_usec = wall_start
+	host.set_process(true)
 	await create_timer(0.30, false, false, true).timeout
 	var wall_ms := (Time.get_ticks_usec() - wall_start) / 1000.0
 	check(absf(op.clock_ms - clock_start - wall_ms) < 150.0 and op.clock_ms > clock_start,
 		"Live capture time advances at the real wall-clock rate")
 	host.set_process(false)
+	var before_tick: int = op.objectives[site].progress
 	host._advance_capture_hold(1.0)
-	check(op.objectives[site].progress == 1 and host.capture_hud.progress.value == 1
+	var committed_progress: int = op.objectives[site].progress
+	check(committed_progress == before_tick + 1 and host.capture_hud.progress.value == committed_progress
 		and State.Defense.point(state.navigation.position) == point, "Existing capture ticks update the HUD without moving the ship")
 	await capture("capture-hold")
 	await touch(host.capture_hud.cancel_button)
 	var stopped: int = op.clock_ms
 	host._advance_capture_hold(100.0)
-	check(op.clock_ms == stopped and op.objectives[site].progress == 1
+	check(op.clock_ms == stopped and op.objectives[site].progress == committed_progress
 		and host._capture_hold < 0 and not state.navigation.leg_active, "Cancelling preserves progress and spends no further time")
 	await create_timer(0.30).timeout
 	check(host._map_input_allowed() and host.screen.overview_hud.wait_button.visible, "Cancellation restores navigation and universal Wait")
 	var encoded := Save.encode(state)
 	var restored := Save.new().decode(encoded, state.rules)
-	check(restored != null and restored.warzone.clock_ms == stopped and restored.warzone.objectives[site].progress == 1,
+	check(restored != null and restored.warzone.clock_ms == stopped and restored.warzone.objectives[site].progress == committed_progress,
 		"Save data retains committed progress and the exact stopped clock")
 	host.free()
 	await process_frame
@@ -71,7 +76,8 @@ func run() -> void:
 	op._refresh_supply()
 	host._advance_capture_hold(2.0)
 	check(host._capture_hold < 0 and op.clock_ms == stopped and op.objectives[site].progress == 0
-		and host.capture_hud.notice_label.text.contains("Supply disconnected"), "Supply loss cancels the capture and its hold immediately")
+		and host.capture_hud.notice_label.text.contains("Supply disconnected"),
+		"Supply loss cancels the capture and its hold immediately · %s" % host.capture_hud.notice_label.text)
 	op.disrupted.clear()
 	op.capture_cutoffs.clear() # Simulate leaving and re-entering after reconnection.
 	op._refresh_supply()
