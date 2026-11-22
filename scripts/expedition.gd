@@ -1725,6 +1725,7 @@ func _process(_delta: float) -> void:
 	if phase in [Phase.OVERVIEW, Phase.TRAVELING] and _map_input_allowed():
 		state.advance_chasedown_cooldown(elapsed)
 	_sample_navigation_position()
+	if _intercept_warzone_player(): return
 	# The navigation sample already advanced the clock. Test the latest position
 	# for contact so moving fleets can be intercepted before a stale waypoint.
 	if state.is_warzone() and phase == Phase.TRAVELING and is_instance_valid(star_map) \
@@ -1782,6 +1783,31 @@ func _free_arrived() -> void:
 	map_destination = -1
 	phase = Phase.OVERVIEW
 	_clear("system")
+
+# Hostile pursuers reuse a real fleet contact and normal combat checkpoint.
+# This is evaluated after committed movement and capture steps, not idle time.
+func _intercept_warzone_player() -> bool:
+	if not state.is_warzone() or not state.warzone.is_lattice() or state.warzone.complete \
+			or phase not in [Phase.OVERVIEW, Phase.TRAVELING, Phase.DESTINATION] \
+			or transitioning or presenting_outcome or _application_suspended \
+			or not is_instance_valid(star_map) or not is_instance_valid(screen):
+		return false
+	if _capture_hold < 0 and (phase == Phase.DESTINATION or not _map_input_allowed()):
+		return false
+	var point: Vector3 = State.Defense.point(state.navigation.position)
+	var contact: int = state.warzone.player_hunter_contact(point)
+	if contact < 0 or not state.can_engage(contact): return false
+	if _capture_hold >= 0:
+		_stop_capture_hold("Capture interrupted · Hostile pursuit", true)
+	elif phase == Phase.TRAVELING:
+		star_map.apply_navigation_position(point)
+		state.cancel_travel()
+		map_destination = -1
+	state.warzone.consume_player_hunter_contact()
+	state.progress_committed.emit()
+	_enter_battle(contact)
+	return true
+
 
 # Simulation decides events; coordinator cancels presentation and routes existing UI.
 func _warzone_updated(target_lost: bool) -> void:
