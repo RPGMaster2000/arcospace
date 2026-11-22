@@ -118,6 +118,13 @@ static func _threats(sector: RefCounted) -> Dictionary:
 			importance = sector.allied_site_importance(site)
 			seconds = (enemy.position as Vector3).distance_to(objective.position) / sector.fleet_speed(enemy)
 			seconds += sector.tuning.capture_seconds - objective.progress
+		# Pursuers threaten the player's escape corridor, even if their
+		# original static objective is neutral or hostile-owned. Allies can
+		# proactively cross that corridor and intercept the actual ship.
+		if enemy.id == sector.player_hunter:
+			importance = maxf(importance, 14.0)
+			seconds = minf(seconds, maxf(0.0,
+				float(sector.hunter_until - sector.clock_ms) / sector.STEP_MS))
 		if assisting:
 			var incoming := 0
 			for attacker in sector.fleets:
@@ -137,7 +144,7 @@ static func _score(sector: RefCounted, fleet: Dictionary, threat: Dictionary, co
 	var enemy: Dictionary = threat.enemy
 	var intercept := interception_point(sector, fleet, enemy)
 	var eta: float = maxf(0.0, (fleet.position as Vector3).distance_to(intercept) - sector.tuning.engagement_radius) / sector.fleet_speed(fleet)
-	if eta > (24.0 if emergency else 16.0) or eta > threat.seconds + 1.0: return 0.0
+	if eta > (24.0 if emergency or enemy.id == sector.player_hunter else 16.0) or eta > threat.seconds + 1.0: return 0.0
 	var power := _power(sector, fleet)
 	var required: float = threat.need - committed
 	# Permit a risky defense of exposed critical infrastructure. For ordinary
@@ -184,17 +191,19 @@ static func _recover(sector: RefCounted, fleet: Dictionary) -> bool:
 
 static func interception_point(sector: RefCounted, fleet: Dictionary, enemy: Dictionary) -> Vector3:
 	var start: Vector3 = enemy.position
-	if enemy.engaged >= 0 or not sector.route_valid(enemy.side, enemy.at, enemy.destination):
+	var hunting: bool = enemy.id == sector.player_hunter and sector._player_position.is_finite()
+	if enemy.engaged >= 0 or (not hunting and not sector.route_valid(enemy.side, enemy.at, enemy.destination)):
 		return start
-	var finish: Vector3 = sector.objectives[enemy.destination].position
-	var velocity: Vector3 = start.direction_to(finish) * sector.fleet_speed(enemy)
+	var finish: Vector3 = sector._player_position if hunting else sector.objectives[enemy.destination].position
+	var pursuer_speed: float = sector.fleet_speed(enemy) * (sector.tuning.hunt_speed_multiplier if hunting else 1.0)
+	var velocity: Vector3 = start.direction_to(finish) * pursuer_speed
 	var separation: Vector3 = start - fleet.position
 	var speed: float = sector.fleet_speed(fleet)
 	# Solve |separation + velocity * t| = speed * t along the ordered leg.
 	var a := velocity.length_squared() - speed * speed
 	var b := 2.0 * separation.dot(velocity)
 	var c := separation.length_squared()
-	var travel: float = start.distance_to(finish) / sector.fleet_speed(enemy)
+	var travel: float = start.distance_to(finish) / pursuer_speed
 	var time := travel
 	if absf(a) < 0.00001:
 		if b < -0.00001: time = minf(time, -c / b)

@@ -314,7 +314,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		if not state.warzone.restore(data.warzone, configuration.warzone_tuning) or state.warzone.complete != data.ftl_access:
 			return null
 		var reserve: bool = state.warzone.is_lattice() and state.warzone.has_reserves()
-		var expected_count: int = State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size() + int(reserve)
+		var extra_contact: bool = reserve and state.warzone.expanded_roster
+		var expected_count: int = State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size() \
+			+ int(reserve) + int(extra_contact)
 		var discovery_count: int = entries.size() - expected_count
 		var points: Dictionary = data.get("encounter_positions", {})
 		var procedural: bool = state.warzone.is_lattice() and not state.warzone.roles.is_empty()
@@ -336,7 +338,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 					or positions.any(func(other): return point.distance_to(other) < 4.7): return null
 				discovered.append(poi)
 				positions.append(point)
-			elif index < State.Warzone.HOSTILE_GROUPS or (reserve and index == expected_count - 1):
+			elif index < State.Warzone.HOSTILE_GROUPS or \
+				(reserve and index == State.Warzone.HOSTILE_GROUPS + state.warzone.objectives.size()) or \
+				(extra_contact and index == expected_count - 1):
 				if (entries[index].kind != "battle" or entries[index].completed == state.warzone.active(state.warzone_fleet(index))
 					or entries[index].has("warzone_rank") != state.warzone.is_lattice()):
 					return null

@@ -57,4 +57,4 @@ extends Resource
 @export_range(0, 20, 1) var reinforcement_cost := 3
 @export_range(1, 30, 1) var reinforcement_seconds := 4
 @export_range(1, 4, 1) var reinforcement_budget := 2
-@export_range(3, 7, 1) var max_allied_fleets := 4
+@export_range(3, 7, 1) var max_allied_fleets := 5

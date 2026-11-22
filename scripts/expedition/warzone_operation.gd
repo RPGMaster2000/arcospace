@@ -60,6 +60,10 @@ static func generate(state: Resource, support: Dictionary) -> void:
 
 	if state.warzone.is_lattice() and state.warzone.has_reserves():
 		_add_contact(state, faction, escalated, Warzone.HOSTILE_GROUPS, true)
+		# The new sixth opening hostile receives a normal combat encounter.
+		# Append after the original reserve so its contact index stays fixed.
+		if state.warzone.expanded_roster:
+			_add_contact(state, faction, escalated, Warzone.HOSTILE_GROUPS + 1, false)
 
 
 static func _add_contact(state: Resource, faction: Resource, escalated: bool, slot: int, dormant: bool) -> void:
@@ -92,6 +96,7 @@ static func assign_modifiers(state: Resource) -> void:
 		var encounter: Dictionary = state.encounters[index]
 		if encounter.kind != "battle" or rng.randf() >= state.rules.warzone_tuning.battle_modifier_chance:
 			continue
+		if available.is_empty(): break # Expanded roster can exceed six unique modifiers.
 		var fleet: Dictionary = state.warzone_fleet(index)
 		# A contact deployed around industrial logistics leans toward debris
 		# or material storms, but draws from the same single-modifier pool.

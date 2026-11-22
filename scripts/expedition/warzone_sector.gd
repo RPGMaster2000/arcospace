@@ -9,7 +9,10 @@ const FLEET_LIMIT := 40
 const MOVEMENT_STEP_MS := 100
 const ALLIED_RESERVE := ALLIED_GROUPS + HOSTILE_GROUPS
 const HOSTILE_RESERVE := ALLIED_RESERVE + 1
-const REQUEST_FIRST := HOSTILE_RESERVE + 1
+const REQUEST_FIRST := HOSTILE_RESERVE + 1 # Original request ID; keep old saves valid.
+const EXTRA_ALLIED := REQUEST_FIRST
+const EXTRA_HOSTILE := REQUEST_FIRST + 1
+const EXPANDED_REQUEST_FIRST := EXTRA_HOSTILE + 1
 const REQUEST_LIMIT := 4
 const PLAYER := -1
 const Layout = preload("res://scripts/expedition/system_layout.gd")
@@ -48,6 +51,7 @@ var hunter_contact_at := 0
 var hunter_cooldown_until := 0
 var hunter_count := 0
 var response_sites: Array[int] = []
+var expanded_roster := false # New sectors only; older saves retain their original IDs.
 
 
 func is_lattice() -> bool:
@@ -108,12 +112,13 @@ func reserve_entry(side: String, expansion: float) -> Vector3:
 
 func setup_sector(configuration: Resource, strength: int, expansion: float, seed_value: int, system: int) -> void:
 	tuning = configuration
+	expanded_roster = true
 	var generated := Lattice.generate(seed_value, system, expansion)
 	objectives.assign(generated.nodes)
 	links.assign(generated.links)
 	roles.assign(generated.roles)
 	pattern = generated.pattern
-	initial_allied_strength = strength * ALLIED_GROUPS
+	initial_allied_strength = strength * (ALLIED_GROUPS + int(expanded_roster))
 	_add_front("allied", "Vanguard", site("allied_command"), site("junction"), strength, 0.47)
 	_add_front("allied", "Vanguard", site("repair"), site("relay"), strength, 0.47)
 	var hostile: int = maxi(tuning.hostile_strength, strength)
@@ -128,6 +133,11 @@ func setup_sector(configuration: Resource, strength: int, expansion: float, seed
 		_add_front(side, "Reinforcement", at, at, 0, 0.0)
 		fleets.back().position = reserve_entry(side, expansion)
 		fleets.back().arriving = false
+	# Add starting ships after the original two dormant reserve IDs. Their IDs
+	# never displace the five established hostile battle contacts or reserves.
+	if expanded_roster:
+		_add_front("allied", "Vanguard", site("allied_command"), site("junction"), strength, 0.10)
+		_add_front("hostile", "Patrol", site("hostile_command"), site("forward_command"), hostile - 1, 0.12)
 	_refresh_supply()
 	_assign_engagements(true)
 	# Stations begin on their assigned nodes. Select the same onward order
@@ -346,6 +356,8 @@ func capture_hold_block(index: int, player: Vector3) -> String:
 func encounter_for_fleet(fleet: Dictionary) -> int:
 	if fleet.id == HOSTILE_RESERVE:
 		return HOSTILE_GROUPS + objectives.size()
+	if expanded_roster and fleet.id == EXTRA_HOSTILE:
+		return HOSTILE_GROUPS + objectives.size() + 1
 	return super.encounter_for_fleet(fleet)
 
 
@@ -353,17 +365,24 @@ func has_reserves() -> bool:
 	return fleets.size() >= REQUEST_FIRST
 
 
+func requested_first() -> int:
+	return EXPANDED_REQUEST_FIRST if expanded_roster else REQUEST_FIRST
+
+
 func _valid_fleet_count(count: int) -> bool:
-	return super._valid_fleet_count(count) or count in range(REQUEST_FIRST, REQUEST_FIRST + REQUEST_LIMIT + 1)
+	return super._valid_fleet_count(count) or count in range(requested_first(), requested_first() + REQUEST_LIMIT + 1)
 
 
 func _fleet_side(id: int) -> String:
-	return "allied" if id == ALLIED_RESERVE or id >= REQUEST_FIRST else super._fleet_side(id)
+	if id == ALLIED_RESERVE or expanded_roster and id == EXTRA_ALLIED or id >= requested_first():
+		return "allied"
+	if id == HOSTILE_RESERVE or expanded_roster and id == EXTRA_HOSTILE: return "hostile"
+	return super._fleet_side(id)
 
 
 func _dispatch_reserves() -> void:
 	if not has_reserves(): return
-	for order in [[ALLIED_RESERVE, 22, root("allied")], [HOSTILE_RESERVE, 30, root("hostile")]]:
+	for order in [[ALLIED_RESERVE, 18, root("allied")], [HOSTILE_RESERVE, 25, root("hostile")]]:
 		var id: int = order[0]
 		if reserve_launched.has(id) or clock_ms < order[1] * STEP_MS: continue
 		if id == HOSTILE_RESERVE and clock_ms < jam_until: continue
@@ -377,7 +396,7 @@ func _dispatch_reserves() -> void:
 func reinforcement_lock() -> String:
 	if not has_reserves() or supplied.allied.size() < 2:
 		return "Requires a connected supply network"
-	if fleets.size() - REQUEST_FIRST >= tuning.reinforcement_budget:
+	if fleets.size() - requested_first() >= tuning.reinforcement_budget:
 		return "Reinforcement budget spent"
 	if fleet_count("allied") >= tuning.max_allied_fleets:
 		return "Allied fleet limit reached"
@@ -546,13 +565,21 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 
 func _update_final_offensive(allow_victory: bool) -> void:
 	if final_command < 0 and player_intervened and effort >= tuning.effort_goal:
-		# A deep command facility anchors the last offensive. Prefer one we
-		# already hold or can approach from supplied territory.
+		# The final offensive should demand a meaningful advance, not resolve
+		# at whichever command happens to be closest or already held. Both
+		# command stations remain possible and the more distant reachable
+		# lattice location gets the mission marker.
 		var next: int = command_sites().front()
-		for site in command_sites():
-			if site in supplied.allied or _capture_connected(site, "allied"):
-				next = site
-				break
+		var best := -INF
+		var starting: Vector3 = objectives[root("allied")].position
+		for candidate in command_sites():
+			var distance: float = starting.distance_to(objectives[candidate].position)
+			var depth: int = _lattice_hops(root("allied"), candidate)
+			var score: float = distance + 2.5 * depth
+			if objectives[candidate].owner == "hostile": score += 4.0
+			if score > best:
+				best = score
+				next = candidate
 		final_command = next
 		_notice("Final offensive · Secure " + objective_name(final_command) + ".")
 		_counterattack(final_command)
@@ -563,6 +590,22 @@ func _update_final_offensive(allow_victory: bool) -> void:
 	if allow_victory and consolidation >= tuning.consolidation_seconds:
 		complete = true
 		_notice(outcome().grade + " · Sector secured.")
+
+
+func _lattice_hops(origin: int, target: int) -> int:
+	if origin == target: return 0
+	var queue: Array[int] = [origin]
+	var distances := {origin: 0}
+	var cursor := 0
+	while cursor < queue.size():
+		var site_id: int = queue[cursor]
+		cursor += 1
+		for neighbor in Lattice.neighbors(site_id, links):
+			if distances.has(neighbor): continue
+			distances[neighbor] = distances[site_id] + 1
+			if neighbor == target: return distances[neighbor]
+			queue.append(neighbor)
+	return objectives.size()
 
 
 func _command_ready() -> bool:
@@ -892,7 +935,7 @@ func snapshot() -> Dictionary:
 		"player_alert": player_alert, "player_hunter": player_hunter,
 		"hunter_until": hunter_until, "hunter_contact_at": hunter_contact_at,
 		"hunter_cooldown_until": hunter_cooldown_until, "hunter_count": hunter_count,
-		"response_sites": response_sites.duplicate()}
+		"response_sites": response_sites.duplicate(), "expanded_roster": expanded_roster}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -911,9 +954,13 @@ func _valid_consolidation(_records: Array[Dictionary], _saved: int) -> bool:
 
 
 func restore(data: Variant, configuration: Resource) -> bool:
-	if not data is Dictionary or not data.get("lattice") is Dictionary or not super.restore(data, configuration):
+	if not data is Dictionary or not data.get("lattice") is Dictionary:
 		return false
 	var saved: Dictionary = data.lattice
+	if not saved.get("expanded_roster", false) is bool: return false
+	# Read this before the base validates roster slots and their faction identities.
+	expanded_roster = bool(saved.get("expanded_roster", false))
+	if not super.restore(data, configuration): return false
 	if not Defense.number(saved.get("version"), 2, 3): return false
 	var version := int(saved.version)
 	if not Defense.number(saved.get("pattern"), 0, 5 if version == 2 else Lattice.PATTERNS.size() - 1):
@@ -949,7 +996,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		fleet.at = int(fleet.at)
 		fleet.strength_limit = int(fleet.strength_limit)
 		if fleet.has("intercept"):
-			if fleet.side != "allied" or not Defense.number(fleet.intercept, ALLIED_GROUPS, HOSTILE_RESERVE) \
+			if fleet.side != "allied" or not Defense.number(fleet.intercept, ALLIED_GROUPS, EXTRA_HOSTILE if expanded_roster else HOSTILE_RESERVE) \
 				or fleet_at(int(fleet.intercept)).get("side") != "hostile" \
 				or fleet.get("assignment") not in ["Intercepting", "Assisting"] \
 				or not Defense.number(fleet.get("commit_until"), 0, clock_ms + AlliedOrders.COMMIT_MS):
@@ -960,7 +1007,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			if fleet.side != "allied" or not Defense.number(fleet.recover_until, 0, clock_ms + AlliedOrders.RECOVERY_MS):
 				return false
 			fleet.recover_until = int(fleet.recover_until)
-		if fleet.id >= REQUEST_FIRST and not fleet.get("arriving") is bool: return false
+		if fleet.id >= requested_first() and not fleet.get("arriving") is bool: return false
 	if not Defense.number(saved.get("effort"), 0, 1000) or not saved.get("recovered") is bool:
 		return false
 	for key in ["accomplishments", "planned", "disrupted", "convoy"]:
@@ -1017,7 +1064,7 @@ func _restore_player_alert(saved: Dictionary) -> bool:
 	for pair in [["player_alert", 3], ["hunter_count", tuning.max_player_hunts]]:
 		if not Defense.number(saved.get(pair[0], 0), 0, pair[1]): return false
 	var hunter: Variant = saved.get("player_hunter", -1)
-	if not Defense.number(hunter, -1, HOSTILE_RESERVE): return false
+	if not Defense.number(hunter, -1, EXTRA_HOSTILE if expanded_roster else HOSTILE_RESERVE): return false
 	if int(hunter) >= 0 and (not active(fleet_at(int(hunter))) \
 			or fleet_at(int(hunter)).side != "hostile" or int(saved.get("hunter_count", 0)) == 0):
 		return false

@@ -729,6 +729,9 @@ func warzone_fleet(index: int) -> Dictionary:
 		return warzone.fleet_at(index + Warzone.ALLIED_GROUPS)
 	if warzone.is_lattice() and index == Warzone.HOSTILE_GROUPS + warzone.objectives.size():
 		return warzone.fleet_at(WarzoneOperation.Sector.HOSTILE_RESERVE)
+	if warzone.is_lattice() and warzone.expanded_roster \
+			and index == Warzone.HOSTILE_GROUPS + warzone.objectives.size() + 1:
+		return warzone.fleet_at(WarzoneOperation.Sector.EXTRA_HOSTILE)
 	return {}
 
 
@@ -741,7 +744,8 @@ func warzone_objective(index: int) -> Dictionary:
 
 func warzone_discovery(index: int) -> Array:
 	if not is_warzone() or not warzone.is_lattice(): return []
-	var first: int = Warzone.HOSTILE_GROUPS + warzone.objectives.size() + int(warzone.has_reserves())
+	var first: int = Warzone.HOSTILE_GROUPS + warzone.objectives.size() + int(warzone.has_reserves()) \
+		+ int(warzone.expanded_roster)
 	return encounter_positions.get(str(index), []) if index >= first else []
 
 

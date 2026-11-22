@@ -71,12 +71,12 @@ static func _sample(rng: RandomNumberGenerator, pattern: int, count: int, scale:
 	for role in roles:
 		if points.has(role): continue
 		var allied: bool = role in allied_roles
-		var low := -21.0 if allied else (10.0 if role == "hostile_command" else 4.5)
+		var low := -21.0 if allied else (13.0 if role == "hostile_command" else 4.5)
 		var high := -9.0 if allied else 21.0
 		if role == "outpost" and pattern == 2:
 			low = 12.0
 			allied_roles.append(role)
-		var spread := 12.0 if pattern == 4 else 19.0
+		var spread := 12.0 if pattern == 4 or role == "hostile_command" else 19.0
 		var placed := false
 		for attempt in 32:
 			var z := rng.randf_range(-spread, spread)
