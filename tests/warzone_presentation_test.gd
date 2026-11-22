@@ -96,7 +96,7 @@ func run() -> void:
 	var origin := reinforcement.position
 	var before_shots: int = presentation.fx.emitted_beams
 	# Exercise legacy multi-step interpolation using the same committed cost
-	# as the historical fixture. The real Wait button below still spends 1s.
+	# as the historical fixture. The live Hold to Wait button below spends 0.5s for a tap.
 	host.state._commit_activity_time(6)
 	var goal: Vector3 = host.state.warzone.fleets[3].position
 	check(reinforcement.position == origin and goal != origin,
@@ -115,8 +115,8 @@ func run() -> void:
 		"Committed exchanges emit beams and reflect real casualties with impacts")
 	before = host.state.warzone.clock_ms
 	await touch(hud.wait_button)
-	check(host.state.warzone.clock_ms == before + host.state.warzone.tuning.wait_seconds * 1000,
-		"An explicit touch wait advances the timeline")
+	check(host.state.warzone.clock_ms == before + 500 and not host._wait_hold_active,
+		"A quick touch of Hold to Wait commits only the rounded half-second")
 	before = host.state.warzone.clock_ms
 	map.travel(5)
 	for attempt in 60:
