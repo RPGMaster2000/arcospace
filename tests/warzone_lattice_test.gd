@@ -59,6 +59,15 @@ func generation() -> void:
 		var op: RefCounted = state.warzone
 		patterns[op.pattern] = true
 		check(op.is_lattice() and state.system_number == 2, "System 2 uses the lattice")
+		check(op.expanded_roster and op.fleet_count("allied") == 3 and op.fleet_count("hostile") == 6,
+			"New sectors open with three allied ships and six hostiles")
+		check(op.fleets[Sector.EXTRA_ALLIED].side == "allied" and op.fleets[Sector.EXTRA_HOSTILE].side == "hostile"
+			and op.fleets.size() == Sector.EXPANDED_REQUEST_FIRST,
+			"Extra combatants retain stable IDs after dormant reserve slots")
+		var extra_contact: int = op.encounter_for_fleet(op.fleets[Sector.EXTRA_HOSTILE])
+		check(state.warzone_fleet(extra_contact).id == Sector.EXTRA_HOSTILE
+			and state.encounters[extra_contact].kind == "battle" and not state.encounters[extra_contact].completed,
+			"Extra hostile fleet uses the normal battle encounter ledger")
 		check(op.objectives.size() in range(9, 13) and op.controlled() in range(2, 5), "Hostile starts with majority")
 		check(state.can_engage(0) and op.engagement_count() == 2, "Opening fights and accessible contact")
 		check(state.enemy_profile(state.encounters[0]).enemy_rank == 1
@@ -642,6 +651,7 @@ func historical_roster() -> void:
 	lattice.version = 2
 	lattice.pattern = mini(5, lattice.pattern)
 	lattice.erase("roles")
+	lattice.erase("expanded_roster")
 	lattice.erase("reserve_launched")
 	lattice.erase("capture_cutoffs")
 	lattice.convoy.clear()
@@ -686,6 +696,81 @@ func continuous_clock() -> void:
 		slow.advance_warzone_map(0.75, target, target)
 		restored.advance_warzone_map(0.75, target, target)
 		check(slow.warzone.snapshot() == restored.warzone.snapshot(), "Resume from a fractional tick continues identically")
+
+
+func early_reserves_and_deep_command() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var allied: Dictionary = op.fleet_at(Sector.ALLIED_RESERVE)
+	var hostile: Dictionary = op.fleet_at(Sector.HOSTILE_RESERVE)
+	check(not op.active(allied) and not op.active(hostile), "The original reserve slots remain dormant at entry")
+	op.clock_ms = 17 * op.STEP_MS
+	op._dispatch_reserves()
+	check(not op.active(allied), "Allied reserve does not launch before the accelerated 18-second threshold")
+	op.clock_ms = 18 * op.STEP_MS
+	op._dispatch_reserves()
+	check(op.active(allied) and not op.active(hostile), "First allied reserve launches at 18 seconds")
+	op.clock_ms = 24 * op.STEP_MS
+	op._dispatch_reserves()
+	check(not op.active(hostile), "Hostile reserve still waits for its own 25-second threshold")
+	op.clock_ms = 25 * op.STEP_MS
+	op._dispatch_reserves()
+	check(op.active(hostile), "First hostile reserve launches at 25 seconds")
+	check(roundtrip(state) != null, "The expanded roster and both launched reserves persist together")
+	var command := fresh(19).warzone
+	command.player_intervened = true
+	command._award("deep-offensive", command.tuning.effort_goal, "Test")
+	command._update_final_offensive(false)
+	var start: Vector3 = command.objectives[command.root("allied")].position
+	var other: int = command.command_sites().front()
+	if command.final_command == other: other = command.command_sites().back()
+	var score := func(site: int) -> float:
+		return start.distance_to(command.objectives[site].position) + \
+			2.5 * command._lattice_hops(command.root("allied"), site) + \
+			(4.0 if command.objectives[site].owner == "hostile" else 0.0)
+	check(command.final_command in command.command_sites() and \
+		score.call(command.final_command) >= score.call(other),
+		"The final offensive prioritizes the more distant command site by strategic depth")
+
+
+func kited_hunter_engages_ally() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var escort: Dictionary = op.fleet_at(Sector.EXTRA_ALLIED)
+	var hunter: Dictionary = op.fleet_at(Sector.EXTRA_HOSTILE)
+	for fleet in op.fleets:
+		fleet.engaged = -1
+		if fleet.id not in [escort.id, hunter.id]: fleet.strength = 0
+	escort.position = Vector3.ZERO
+	escort.at = op.root("allied")
+	escort.destination = escort.at
+	escort.strength = 10
+	escort.strength_limit = 10
+	hunter.position = Vector3(6, 0, 0)
+	hunter.at = op.root("hostile")
+	hunter.destination = hunter.at
+	hunter.strength = 10
+	hunter.strength_limit = 10
+	var player := Vector3(-6, 0, 0)
+	op.note_player_position(player)
+	op.player_hunter = hunter.id
+	op.player_alert = 2
+	op.hunter_count = 1
+	op.hunter_until = 30 * op.STEP_MS
+	op.hunter_contact_at = 3 * op.STEP_MS
+	var old_target: Vector3 = op.objectives[hunter.destination].position
+	var predicted: Vector3 = op.AlliedOrders.interception_point(op, escort, hunter)
+	check(predicted.distance_to(old_target) > 1.0,
+		"Ally interception predicts the hunter's player-directed path, not the old station destination")
+	op.AlliedOrders.assign(op, false, true)
+	check(escort.get("intercept", -1) == hunter.id,
+		"Autonomous allied AI assigns an escort to intercept an active player pursuer")
+	op.advance(3000, player, player)
+	check(escort.engaged == hunter.id and hunter.engaged == escort.id,
+		"Crossing allied and player-hunter paths automatically starts an ordinary fleet engagement")
+	check(op.player_hunter == -1 and not op.complete,
+		"Allied interception ends the pursuit without forcing a player card battle")
+	check(roundtrip(state) != null, "Crossed-path fleet combat and resolved pursuit survive a checkpoint")
 
 
 func aggression_guardrails() -> void:
@@ -791,6 +876,8 @@ func aggression_guardrails() -> void:
 
 
 func run() -> void:
+	early_reserves_and_deep_command()
+	kited_hunter_engages_ally()
 	aggression_guardrails()
 	direct_movement()
 	capture_cutoff("allied")
