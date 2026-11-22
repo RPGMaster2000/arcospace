@@ -29,6 +29,9 @@ var _application_suspended := false
 var capture_hud = preload("res://scripts/ui/warzone_capture_hud.gd").new()
 var _capture_hold := -1
 var _capture_clock_usec := 0
+var _wait_hold_active := false
+var _wait_hold_clock_usec := 0
+var _wait_hold_elapsed := 0.0
 var developer_test: Dictionary = {}
 var _developer_one_hit_kill := false
 var save_error: AcceptDialog
@@ -192,6 +195,9 @@ func _ready() -> void:
 	warzone_victory_banner.dismissed.connect(_finish_warzone_aftermath)
 	screen.overview_hud.system_details_requested.connect(_show_system_details)
 	screen.overview_hud.warzone_wait_requested.connect(_wait_in_warzone)
+	screen.overview_hud.warzone_wait_held.connect(func(pressed: bool):
+		if pressed: _start_hold_wait()
+		else: _end_hold_wait())
 	screen.overview_hud.lattice_overlay_changed.connect(func(enabled: bool):
 		if is_instance_valid(star_map) and state.is_warzone(): star_map.set_lattice_overlay(enabled))
 	_setup_decoy_controls()
@@ -295,6 +301,7 @@ func _icon(key: String) -> String:
 
 # Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
 func _clear(kind: String, preserve_transition: bool = false) -> void:
+	_end_hold_wait(false, false)
 	_stop_capture_hold("", false)
 	_cancel_decoy()
 	if not preserve_transition:
@@ -470,7 +477,7 @@ func _configure_settings_exit(menu: CanvasLayer, in_battle: bool = false) -> voi
 
 
 func _run_strategic_action(action: Callable) -> bool:
-	if strategic_overview.active or _capture_hold >= 0:
+	if strategic_overview.active or _capture_hold >= 0 or _wait_hold_active:
 		return false
 	var previous_phase := phase
 	var owner: Resource = state
@@ -499,6 +506,7 @@ func _finish_strategic_action() -> void:
 func _save_and_quit() -> bool:
 	if phase == Phase.EXITED:
 		return true
+	_end_hold_wait()
 	_stop_capture_hold("", false)
 	_strategic_shutdown = true
 	_finish_strategic_action()
@@ -513,20 +521,27 @@ func _save_and_quit() -> bool:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED:
 		_application_suspended = true
+		_end_hold_wait(false, false)
 		_stop_capture_hold("Hold paused")
 		_finish_strategic_action()
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		_application_suspended = false
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_end_hold_wait()
 		_stop_capture_hold("", false)
 		_strategic_shutdown = true
 		_finish_strategic_action()
 		_strategic_shutdown = false
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(strategic_overview) and strategic_overview.active:
 		return
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _wait_hold_active:
+		_end_hold_wait()
+		return
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _capture_hold >= 0:
 		_stop_capture_hold("Hold cancelled")
 		return
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED] and _wait_hold_active:
+		_end_hold_wait(false, false)
 	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED] and _capture_hold >= 0:
 		_capture_clock_usec = Time.get_ticks_usec()
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(warzone_victory_banner) and warzone_victory_banner.active:
@@ -647,7 +662,7 @@ func _map_input_allowed(block_construction: bool = true, during_capture: bool = 
 		var construction: Control = _construction_panel()
 		if is_instance_valid(construction) and construction.visible: return false
 	return (
-		phase != Phase.EXITED and (during_capture or _capture_hold < 0) and not _application_suspended and not warzone_victory_banner.active and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and not _wait_hold_active and (during_capture or _capture_hold < 0) and not _application_suspended and not warzone_victory_banner.active and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and (not is_instance_valid(decoy_confirmation) or not decoy_confirmation.shade.visible)
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
@@ -1111,6 +1126,49 @@ func _warzone_operation(index: int, id: String) -> void:
 	if phase == Phase.DESTINATION and await _run_strategic_action(func(present): return state.warzone_operate(index, id, present)):
 		if state.warzone.complete: show_system()
 		else: show_poi(index)
+
+
+# Holding the button spends actual elapsed time, without invoking the
+# fixed-duration cinematic strategic action. Release rounds UP to 0.5 s.
+func _start_hold_wait() -> void:
+	if _wait_hold_active or state == null or not state.is_warzone() or state.warzone.complete \
+			or phase != Phase.OVERVIEW or state.navigation.leg_active or not state.can_navigate() \
+			or not _map_input_allowed() or get_tree().paused:
+		return
+	_wait_hold_active = true
+	_wait_hold_elapsed = 0.0
+	_wait_hold_clock_usec = Time.get_ticks_usec()
+	if is_instance_valid(star_map):
+		star_map.consume_gesture()
+		star_map.strategic_time_active = true
+	screen.overview_hud.set_wait_held(true)
+
+
+func _advance_hold_wait(seconds: float) -> void:
+	if not _wait_hold_active or seconds <= 0.0 or state == null or state.warzone.complete: return
+	var at: Vector3 = State.Defense.point(state.navigation.position)
+	state.advance_warzone_map(seconds, at, at)
+	_wait_hold_elapsed += seconds
+	screen.overview_hud.set_wait_held(true, _wait_hold_elapsed)
+
+
+func _end_hold_wait(round_forward: bool = true, sample_now: bool = true) -> void:
+	if not _wait_hold_active: return
+	# Include the last partial frame before rounding, even for a fast tap.
+	if sample_now and round_forward and not get_tree().paused and not _application_suspended:
+		var now := Time.get_ticks_usec()
+		_advance_hold_wait(maxf(0.0, (now - _wait_hold_clock_usec) / 1000000.0))
+	if round_forward and state != null and not state.warzone.complete:
+		var rounded: float = maxf(0.5, float(ceili(_wait_hold_elapsed * 2.0 - 0.0000001)) * 0.5)
+		_advance_hold_wait(maxf(0.0, rounded - _wait_hold_elapsed))
+	_wait_hold_active = false
+	_wait_hold_elapsed = 0.0
+	_wait_hold_clock_usec = 0
+	if is_instance_valid(star_map):
+		star_map.strategic_time_active = false
+		star_map.consume_gesture()
+	if is_instance_valid(screen): screen.overview_hud.set_wait_held(false)
+	if state != null and not _application_suspended: state.progress_committed.emit()
 
 
 func _wait_in_warzone() -> void:
@@ -1714,6 +1772,14 @@ func _process(_delta: float) -> void:
 	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
 	_navigation_clock = now
 	if state == null: return
+	if _wait_hold_active:
+		var wait_usec := Time.get_ticks_usec()
+		var held_seconds: float = maxf(0.0, (wait_usec - _wait_hold_clock_usec) / 1000000.0)
+		_wait_hold_clock_usec = wait_usec
+		if not get_tree().paused and not _application_suspended:
+			_advance_hold_wait(held_seconds)
+			if state.warzone.complete or not state.can_navigate() or phase != Phase.OVERVIEW:
+				_end_hold_wait(false, false)
 	if _capture_hold >= 0:
 		var usec := Time.get_ticks_usec()
 		var active_seconds := (usec - _capture_clock_usec) / 1000000.0
