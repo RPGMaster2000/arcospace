@@ -718,7 +718,7 @@ func early_reserves_and_deep_command() -> void:
 	check(op.active(hostile), "First hostile reserve launches at 25 seconds")
 	state._sync_warzone()
 	check(roundtrip(state) != null, "The expanded roster and both launched reserves persist together")
-	var command := fresh(19).warzone
+	var command: RefCounted = fresh(19).warzone
 	command.player_intervened = true
 	command._award("deep-offensive", command.tuning.effort_goal, "Test")
 	command._update_final_offensive(false)
