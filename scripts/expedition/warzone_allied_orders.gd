@@ -195,15 +195,15 @@ static func interception_point(sector: RefCounted, fleet: Dictionary, enemy: Dic
 	if enemy.engaged >= 0 or (not hunting and not sector.route_valid(enemy.side, enemy.at, enemy.destination)):
 		return start
 	var finish: Vector3 = sector._player_position if hunting else sector.objectives[enemy.destination].position
-	var speed: float = sector.fleet_speed(enemy) * (sector.tuning.hunt_speed_multiplier if hunting else 1.0)
-	var velocity: Vector3 = start.direction_to(finish) * speed
+	var pursuer_speed: float = sector.fleet_speed(enemy) * (sector.tuning.hunt_speed_multiplier if hunting else 1.0)
+	var velocity: Vector3 = start.direction_to(finish) * pursuer_speed
 	var separation: Vector3 = start - fleet.position
 	var speed: float = sector.fleet_speed(fleet)
 	# Solve |separation + velocity * t| = speed * t along the ordered leg.
 	var a := velocity.length_squared() - speed * speed
 	var b := 2.0 * separation.dot(velocity)
 	var c := separation.length_squared()
-	var travel: float = start.distance_to(finish) / speed
+	var travel: float = start.distance_to(finish) / pursuer_speed
 	var time := travel
 	if absf(a) < 0.00001:
 		if b < -0.00001: time = minf(time, -c / b)
