@@ -275,6 +275,16 @@ func _capture_allowed(_index: int, _side: String, _player: Vector3) -> bool:
 	return true
 
 
+# A separate hook leaves legacy Warzone captures at six seconds while the
+# lattice can require longer for an unsupported player ship.
+func capture_requirement(_index: int, _side: String, _player: Vector3) -> int:
+	return tuning.capture_seconds
+
+
+func _capture_save_limit(configuration: Resource) -> int:
+	return configuration.capture_seconds - 1
+
+
 func _capture(index: int, player: Vector3) -> void:
 	var objective := objectives[index]
 	var allied: bool = player.distance_to(objective.position) <= tuning.objective_radius
@@ -297,7 +307,7 @@ func _capture(index: int, player: Vector3) -> void:
 		return
 	objective.progress = objective.progress + 1 if objective.capturing == side else 1
 	objective.capturing = side
-	if objective.progress >= tuning.capture_seconds:
+	if objective.progress >= capture_requirement(index, side, player):
 		objective.owner = side
 		objective.capturing = "neutral"
 		objective.progress = 0
@@ -483,7 +493,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			return false
 		if objective.get("owner") not in OWNER or objective.get("capturing") not in OWNER or not objective.get("contested") is bool:
 			return false
-		if not Defense.number(objective.get("progress"), 0, configuration.capture_seconds - 1):
+		if not Defense.number(objective.get("progress"), 0, _capture_save_limit(configuration)):
 			return false
 		if not Defense.number(objective.get("held"), 0, configuration.consolidation_seconds):
 			return false
