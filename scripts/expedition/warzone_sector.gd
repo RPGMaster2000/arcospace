@@ -197,14 +197,28 @@ func _capture(index: int, player: Vector3) -> void:
 
 
 func _capture_allowed(index: int, side: String, player: Vector3) -> bool:
-	if not _capture_connected(index, side): return false
-	var cutoff: Dictionary = capture_cutoffs.get(index, {})
-	if not cutoff.is_empty() and cutoff.side == side:
-		var present := _capture_presence(index, side, player)
-		if not present.any(func(id): return id not in cutoff.present):
-			return false
+	if not _capture_eligible(index, side, player): return false
 	capture_cutoffs.erase(index)
 	return true
+
+
+func _capture_eligible(index: int, side: String, player: Vector3) -> bool:
+	if not _capture_connected(index, side): return false
+	var cutoff: Dictionary = capture_cutoffs.get(index, {})
+	if cutoff.is_empty() or cutoff.side != side: return true
+	return _capture_presence(index, side, player).any(func(id): return id not in cutoff.present)
+
+
+func capture_hold_block(index: int, player: Vector3) -> String:
+	if index < 0 or index >= objectives.size(): return "Objective unavailable"
+	var objective: Dictionary = objectives[index]
+	if objective.owner == "allied": return "Objective secured"
+	if complete: return "Objective unavailable"
+	if player.distance_to(objective.position) > tuning.objective_radius: return "Outside capture range"
+	if not _capture_connected(index, "allied"): return "Supply disconnected"
+	if not _capture_eligible(index, "allied", player): return "Leave and return to retry"
+	if not _capture_presence(index, "hostile", player).is_empty(): return "Objective contested"
+	return ""
 
 
 func encounter_for_fleet(fleet: Dictionary) -> int:
@@ -479,11 +493,10 @@ func _direct_target(fleet: Dictionary) -> int:
 	var retreat: bool = fleet.strength <= 2 or at not in supplied[side]
 	var goal: int = -1 if side == "hostile" and clock_ms < jam_until else fleet.counter_target
 	if not retreat and side == "allied":
-		var priority := offensive_target if clock_ms < offensive_until else final_command
-		if priority >= 0 and priority != at and route_valid(side, at, priority):
-			return priority
-		if priority >= 0 and priority == at and objectives[at].owner == side:
-			return at
+		# Let a previously saved Coordinate Offensive finish on its old terms.
+		if clock_ms < offensive_until and offensive_target >= 0 and route_valid(side, at, offensive_target):
+			return offensive_target
+		return AlliedOrders.frontier_target(self, fleet)
 	if not retreat and goal >= 0 and goal != at and route_valid(side, at, goal):
 		return goal
 	if goal >= 0: fleet.counter_target = -1

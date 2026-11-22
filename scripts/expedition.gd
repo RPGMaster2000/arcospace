@@ -26,6 +26,9 @@ var warzone_victory_banner: WarzoneVictoryBanner
 var _warzone_victory_seen := 0
 var _strategic_shutdown := false
 var _application_suspended := false
+var capture_hud = preload("res://scripts/ui/warzone_capture_hud.gd").new()
+var _capture_hold := -1
+var _capture_clock_usec := 0
 var developer_test: Dictionary = {}
 var _developer_one_hit_kill := false
 var save_error: AcceptDialog
@@ -182,6 +185,8 @@ func _ready() -> void:
 	_build_ui()
 	strategic_overview = StrategicOverview.new()
 	add_child(strategic_overview)
+	add_child(capture_hud)
+	capture_hud.cancel_requested.connect(_stop_capture_hold.bind("Hold cancelled"))
 	warzone_victory_banner = WarzoneVictoryBanner.new()
 	add_child(warzone_victory_banner)
 	warzone_victory_banner.dismissed.connect(_finish_warzone_aftermath)
@@ -290,6 +295,7 @@ func _icon(key: String) -> String:
 
 # Rebuild only the current exploration view while keeping ExpeditionState and map destination alive.
 func _clear(kind: String, preserve_transition: bool = false) -> void:
+	_stop_capture_hold("", false)
 	_cancel_decoy()
 	if not preserve_transition:
 		_cancel_presentation()
@@ -464,7 +470,7 @@ func _configure_settings_exit(menu: CanvasLayer, in_battle: bool = false) -> voi
 
 
 func _run_strategic_action(action: Callable) -> bool:
-	if strategic_overview.active:
+	if strategic_overview.active or _capture_hold >= 0:
 		return false
 	var previous_phase := phase
 	var owner: Resource = state
@@ -493,6 +499,7 @@ func _finish_strategic_action() -> void:
 func _save_and_quit() -> bool:
 	if phase == Phase.EXITED:
 		return true
+	_stop_capture_hold("", false)
 	_strategic_shutdown = true
 	_finish_strategic_action()
 	_strategic_shutdown = false
@@ -506,15 +513,22 @@ func _save_and_quit() -> bool:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED:
 		_application_suspended = true
+		_stop_capture_hold("Hold paused")
 		_finish_strategic_action()
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		_application_suspended = false
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_stop_capture_hold("", false)
 		_strategic_shutdown = true
 		_finish_strategic_action()
 		_strategic_shutdown = false
 	elif what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(strategic_overview) and strategic_overview.active:
 		return
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _capture_hold >= 0:
+		_stop_capture_hold("Hold cancelled")
+		return
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_UNPAUSED] and _capture_hold >= 0:
+		_capture_clock_usec = Time.get_ticks_usec()
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(warzone_victory_banner) and warzone_victory_banner.active:
 		warzone_victory_banner.finish()
 		return
@@ -628,12 +642,12 @@ func _construction_panel() -> Control:
 	if not is_instance_valid(effects) or not is_instance_valid(effects.construction): return null
 	return effects.construction.popup
 
-func _map_input_allowed(block_construction: bool = true) -> bool:
+func _map_input_allowed(block_construction: bool = true, during_capture: bool = false) -> bool:
 	if block_construction:
 		var construction: Control = _construction_panel()
 		if is_instance_valid(construction) and construction.visible: return false
 	return (
-		phase != Phase.EXITED and not _application_suspended and not warzone_victory_banner.active and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
+		phase != Phase.EXITED and (during_capture or _capture_hold < 0) and not _application_suspended and not warzone_victory_banner.active and not strategic_overview.active and not transitioning and not screen.focus_transition and not screen.confirmation.shade.visible and not resource_bar.overlay.shade.visible
 		and (not is_instance_valid(decoy_confirmation) or not decoy_confirmation.shade.visible)
 		and not current_deck_viewer.shade.visible
 		and not card_management.shade.visible
@@ -1055,15 +1069,19 @@ func _show_warzone_objective(index: int) -> void:
 		elif operation.capture_cutoffs.has(offset) and operation.capture_cutoffs[offset].side == "allied":
 			capture_status = "Capture interrupted. Leave and return to retry."
 		view.add_child(_label(capture_status, 14))
-	if objective.progress > 0:
-		var capture := WarzoneIcons.bar(WarzoneIcons.tint(objective.capturing))
+	var can_hold: bool = not inspecting and operation.is_lattice() and _capture_hold_block(index).is_empty()
+	if objective.progress > 0 or can_hold:
+		var capture := WarzoneIcons.bar(WarzoneIcons.tint(objective.capturing if objective.progress > 0 else "allied"))
 		capture.max_value = operation.tuning.capture_seconds
 		capture.value = objective.progress
 		capture.accessibility_name = "%s capture progress %d of %d" % [objective.capturing, objective.progress, capture.max_value]
 		view.add_child(capture)
 	if operation.complete: return
-	if not inspecting and (not operation.is_lattice() or objective.owner != "allied"):
-		_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
+	if not inspecting:
+		if not operation.is_lattice():
+			_button("Hold position · %ds" % operation.tuning.wait_seconds, _wait_in_warzone)
+		elif can_hold:
+			_button("Hold Until Captured", _start_capture_hold.bind(index))
 	if operation.is_lattice():
 		var choices: Array[Dictionary] = operation.operations(offset, state.salvage)
 		if choices.is_empty(): return
@@ -1100,6 +1118,75 @@ func _wait_in_warzone() -> void:
 		return
 	if await _run_strategic_action(state.wait_in_warzone):
 		show_system()
+
+
+func _capture_hold_block(index: int) -> String:
+	if phase != Phase.DESTINATION or not state.is_warzone() or not state.warzone.is_lattice() \
+		or not state.can_navigate() or state.navigation.leg_active or is_instance_valid(battle):
+		return "Objective unavailable"
+	return state.warzone.capture_hold_block(index - State.Warzone.HOSTILE_GROUPS,
+		State.Defense.point(state.navigation.position))
+
+
+func _start_capture_hold(index: int) -> void:
+	if not _map_input_allowed() or inspecting or not _capture_hold_block(index).is_empty(): return
+	var offset := index - State.Warzone.HOSTILE_GROUPS
+	var objective: Dictionary = state.warzone.objectives[offset]
+	_capture_hold = index
+	_capture_clock_usec = Time.get_ticks_usec()
+	state.warzone.note_player_position(State.Defense.point(state.navigation.position))
+	star_map.consume_gesture()
+	star_map.overview()
+	star_map.strategic_time_active = true
+	screen.map_layout(true, false)
+	screen.overview_hud.set_mode(screen.EdgeHUD.Mode.OVERVIEW)
+	screen._sync_map_rect()
+	screen.ui.hide()
+	screen.focus_backing.hide()
+	screen.return_button.hide()
+	capture_hud.present(state.warzone.objective_name(offset), objective.progress if objective.capturing == "allied" else 0,
+		state.warzone.tuning.capture_seconds)
+
+
+func _advance_capture_hold(seconds: float) -> void:
+	while _capture_hold >= 0:
+		var reason := _capture_hold_block(_capture_hold)
+		var can_present := _map_input_allowed(true, true)
+		if not reason.is_empty() or not can_present:
+			var message := reason if reason == "Objective secured" else "Capture interrupted · " \
+				+ (reason if not reason.is_empty() else "Action interrupted")
+			_stop_capture_hold(message, can_present or not reason.is_empty())
+			if not can_present and reason.is_empty():
+				phase = Phase.OVERVIEW
+				state.progress_committed.emit()
+			return
+		if seconds <= 0.00000001: return
+		var operation = state.warzone
+		var point := State.Defense.point(state.navigation.position)
+		# Stop on the first authoritative movement boundary which changes
+		# eligibility, even when a slow frame covers multiple fixed steps.
+		var step_ms: int = operation.motion_step_ms()
+		var boundary: float = (step_ms - posmod(operation.clock_ms, step_ms) - operation.travel_ms_remainder) / 1000.0
+		var slice := minf(seconds, boundary)
+		state.advance_warzone_map(slice, point, point)
+		seconds -= slice
+		if _capture_hold < 0: return
+		var offset := _capture_hold - State.Warzone.HOSTILE_GROUPS
+		var objective: Dictionary = operation.objectives[offset]
+		capture_hud.update_progress(operation.objective_name(offset), objective.progress if objective.capturing == "allied" else 0,
+			operation.tuning.capture_seconds)
+
+
+func _stop_capture_hold(message: String, restore_overview: bool = true) -> void:
+	if _capture_hold < 0: return
+	_capture_hold = -1
+	capture_hud.dismiss(message)
+	if is_instance_valid(star_map):
+		star_map.strategic_time_active = false
+		star_map.consume_gesture()
+	if restore_overview:
+		show_system()
+		if not _application_suspended: state.progress_committed.emit()
 
 
 func show_outpost() -> void:
@@ -1489,6 +1576,7 @@ func start_battle(index: int, battle_seed: int = -1, environment: Dictionary = {
 			view.add_child(_label("The battle could not be resumed until its checkpoint can be saved."))
 			_button("Retry Battle", start_battle.bind(index, battle_seed, checkpoint.environment, combat))
 		return
+	_stop_capture_hold("Capture interrupted · Battle started", false)
 	state.field_repairs_open = false
 	screen.hide_for_battle()
 	if not transitioning:
@@ -1553,6 +1641,7 @@ func _exit() -> void:
 
 
 func _prepare_departure() -> void:
+	_stop_capture_hold("", false)
 	_cancel_presentation()
 	phase = Phase.EXITED
 	if is_instance_valid(battle) and not battle.result_recorded:
@@ -1625,6 +1714,11 @@ func _process(_delta: float) -> void:
 	var elapsed: float = maxf(0, (now - _navigation_clock) / 1000.0) if _navigation_clock > 0 else 0.0
 	_navigation_clock = now
 	if state == null: return
+	if _capture_hold >= 0:
+		var usec := Time.get_ticks_usec()
+		var active_seconds := (usec - _capture_clock_usec) / 1000000.0
+		_capture_clock_usec = usec
+		if not get_tree().paused and not _application_suspended: _advance_capture_hold(active_seconds)
 	if not is_instance_valid(screen) or get_tree().paused:
 		state.navigation.rebase_movement()
 		return
@@ -2025,7 +2119,10 @@ func _cancel_decoy(restore_camera: bool = true) -> void:
 	decoy_camera.clear()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if inspecting and event.is_action_pressed("ui_cancel"):
+	if _capture_hold >= 0 and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_stop_capture_hold("Hold cancelled")
+	elif inspecting and event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_dismiss_inspection()
 
