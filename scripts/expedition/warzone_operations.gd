@@ -76,6 +76,7 @@ static func apply(sector: RefCounted, index: int, action: Dictionary) -> void:
 	sector.player_intervened = true
 	match kind:
 		"sabotage":
+			sector.note_player_aggression(1)
 			var previously_supplied: Array = sector.supplied.hostile.duplicate()
 			sector.disrupted[index] = int(sector.tuning.sabotage_seconds)
 			sector._refresh_supply()
