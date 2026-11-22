@@ -36,10 +36,14 @@ func run() -> void:
 	actor.hull = 0
 	check(Execution.outcome(states, clock) == "draw_hull", "Simultaneous Hull loss is a draw")
 	check(Execution.next_turn("player", 2) == {"side": "enemy", "round": 2} and Execution.next_turn("enemy", 2) == {"side": "player", "round": 3}, "Round advances only after enemy turn")
+	verify_lethal_hit()
 	var board = load("res://scenes/board.tscn").instantiate()
 	board.get_node("BattleEffects").enabled = false
 	root.add_child(board)
 	board.enemy_timer.stop()
+	board.developer_one_hit_kill = true
+	check(board.settings_button.find_child("DeveloperOneHitKill", true, false) == null,
+		"Standalone and normal combat do not expose the developer toggle")
 	var modifier = preload("res://scripts/combat_modifier.gd").new()
 	for kind in range(6):
 		for side in ["player", "enemy"]:
@@ -75,3 +79,29 @@ func run() -> void:
 	board.free()
 	print("Combat execution: %d failures" % failures)
 	quit(1 if failures else 0)
+
+
+func verify_lethal_hit() -> void:
+	var actor: Dictionary = State.new().snapshot()
+	var target: Dictionary = State.new().snapshot()
+	for key in State.RESOURCES: actor[key] = 100
+	target.hull = 40
+	target.shields = 100
+	var attack := CardData.new()
+	attack.family = "energy"
+	attack.cost = 1
+	attack.effects = {"damage": 1}
+	var utility := CardData.new()
+	utility.family = "energy"
+	utility.effects = {"energy": 1}
+	var ordinary = Execution.resolve(attack, false, actor, target)
+	check(ordinary.direct_damage == 1 and target.hull == 40 and target.shields == 99,
+		"An ordinary positive hit can be fully absorbed by shields")
+	Execution.resolve(utility, false, actor, target, null, null, "", true)
+	Execution.resolve(attack, true, actor, target, null, null, "", true)
+	check(target.hull == 40 and target.shields == 99, "Utility cards and discards do not trigger One-Hit Kill")
+	var lethal = Execution.resolve(attack, false, actor, target, null, null, "", true)
+	check(lethal.direct_damage == 1 and lethal.hull_damage.target == 40 and target.hull == 0 and target.shields == 0,
+		"A shield-absorbed hit defeats the enemy and keeps the real hit report for VFX")
+	check(Execution.outcome({"player": actor, "enemy": target}, Failure.new()) == "win_hull"
+		and attack.effects.damage == 1, "One-Hit Kill uses the normal Hull outcome and preserves card stats")

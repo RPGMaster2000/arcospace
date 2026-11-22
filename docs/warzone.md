@@ -2,8 +2,15 @@
 
 ## Playing the sector
 
+Developer Test Launch expeditions offer **DEV: One-Hit Kill** in the battle
+menu. It starts off and stays set between battles in the same test session.
+A player card that deals damage can end a battle even if the enemy shields
+absorb the hit. Normal victory rewards and strategic time still apply.
+
 System 2 opens in a starless deep-space sector with a small allied foothold and two
-active fleet engagements. **Lattice** emphasizes viable, contested and severed routes.
+active fleet engagements. **Lattice** starts enabled and emphasizes viable,
+contested and severed routes. Fleet routes show current orders on entry and
+after loading. Toggle Lattice off to clear those projections.
 An **A** or **H** badge identifies ownership. **!** marks disruption and **/** marks
 isolation. A capture ring shows progress and a pulsing ring marks combat.
 Fleet markers show strength and orders. Select an allied fleet for its readout,
@@ -12,7 +19,8 @@ The HUD shows War Effort, the territorial split and fleet counts. System Status
 keeps the event log. The player can navigate freely behind hostile lines.
 
 **Territorial Control** shows ownership, supplied attack routes and capture progress.
-Clear defenders and hold position or let an allied fleet capture the site. The
+Clear defenders and hold position or let an allied fleet capture the site. Use
+the main HUD’s one-second **Wait** at stations already under allied control. The
 **Facility Operation** section shows the site's signature effect, requirements,
 cost and recharge. An inner ring on the map marker shows recharge progress.
 Each facility has its own cooldown, which advances only on the strategic clock.

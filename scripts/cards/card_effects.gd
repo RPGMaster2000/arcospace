@@ -136,7 +136,7 @@ static func _apply_effects(
 	if blocked > 0 and enemy.shields == 0:
 		actor.energy += int(effects.get("energy_on_shield_break", 0))
 	actor.materials += mini(blocked, int(effects.get("materials_from_shields", 0)))
-	# Presentation only: count ordinary opposing damage at the actual resolution site.
+	# Record ordinary opposing damage at the actual resolution site.
 	# Includes shield absorption, selected conditional branches and modified/upgraded effects.
 	damage_report["direct_damage"] = int(damage_report.get("direct_damage", 0)) + maxi(0, blocked) + mini(enemy.hull, maxi(0, damage - blocked))
 	if not damage_report.has("target_before"):

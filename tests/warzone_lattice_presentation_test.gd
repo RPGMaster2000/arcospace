@@ -1,5 +1,7 @@
 extends "res://tests/warzone_presentation_test.gd"
 
+const Save = preload("res://scripts/persistence/expedition_save.gd")
+
 
 func run() -> void:
 	Preferences.set_strategic_time_overview(false)
@@ -22,11 +24,19 @@ func run() -> void:
 	var hud = host.screen.overview_hud
 	var operation: RefCounted = host.state.warzone
 	var presentation = map.warzone_presentation
+	var saved := Save.encode(host.state)
+	var sector: Dictionary = saved.warzone
+	var allied_order: Dictionary = sector.fleets[0]
+	sector.fleets[allied_order.engaged].engaged = -1
+	allied_order.engaged = -1
 	check(map.visual_data.starless and not map.objects.has(-100) and not map.world.get_node("SunLight").visible
 		and map.visual_root.has_node("SectorFill"), "Live Warzone map has sky and fill lighting without a sun")
-	check(presentation.influence != null and presentation.influence_target.size() == 12
-		and presentation.paths.get_surface_count() == 0 and not presentation.influence_field.visible,
-		"Lattice OFF removes the influence draw and all lattice lines")
+	check(hud.lattice_button.button_pressed and presentation.influence_field.visible
+		and presentation.paths.get_surface_count() == 1 and presentation.order_paths.get_surface_count() == 1
+		and presentation._order_colors.has(Color("cf5365")) and operation.clock_ms == 0,
+		"On entry, Lattice and hostile routes are visible before strategic time advances")
+	check(hud.wait_button.visible and hud.wait_button.text.contains("1"),
+		"The universal one-second Wait action is available")
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
 	var before_clock: int = operation.clock_ms
@@ -44,6 +54,12 @@ func run() -> void:
 			check(contact.enemy_data.resource_path.get_file().begins_with("axiom") \
 				and profile.model_scene == contact.enemy_data.model_scene and profile.ship_name == contact.enemy_data.ship_name,
 				"Hostile visuals match the AXIOM contact")
+	await touch(hud.lattice_button)
+	check(not presentation.influence_field.visible and presentation.paths.get_surface_count() == 0
+		and presentation.order_paths.get_surface_count() == 0, "Lattice OFF hides all tactical projections")
+	host.show_system()
+	check(not hud.lattice_button.button_pressed and not presentation.influence_field.visible,
+		"Returning to the same map preserves the manual overlay choice")
 	await capture("fleets-lattice-off")
 	await touch(hud.lattice_button)
 	check(presentation.influence_field.visible and presentation.paths.get_surface_count() == 1,
@@ -160,6 +176,21 @@ func run() -> void:
 		var overlaps: bool = map.markers.values().any(func(other):
 			return (other != marker and other.is_visible_in_tree() and other.get_global_rect().intersects(name_rect)))
 		check(not overlaps, "Station names leave moving map controls unobstructed")
+	var allied_site: int = operation.HOSTILE_GROUPS + operation.root("allied")
+	host.show_poi(allied_site)
+	check(not _has_hold(host) and host.view.find_children("*", "Button", true, false).any(
+		func(button): return button.text == "Activate Operation"),
+		"Allied stations omit Hold Position and retain their special operation")
+	var hostile_site: int = operation.HOSTILE_GROUPS + operation.root("hostile")
+	host.show_poi(hostile_site)
+	check(_has_hold(host), "Hostile station panels retain Hold Position")
+	var objective: Dictionary = operation.objectives[operation.root("hostile")]
+	objective.owner = "neutral"
+	host.show_poi(hostile_site)
+	check(_has_hold(host), "Neutral station panels retain Hold Position")
+	objective.owner = "hostile"
+	host.show_system()
+	await settle()
 	await capture("lattice-cutoff")
 	var allied: Dictionary = operation.fleets[0]
 	var old_allied := allied.duplicate()
@@ -196,8 +227,24 @@ func run() -> void:
 		check(map.get_rect().size.x > 0 and root.get_visible_rect().has_point(map.camera.unproject_position(anchor)),
 			"The ultrawide overview frames the generated objectives")
 
+	var rules: Resource = host.rules
 	host.free()
 	await process_frame
+	var restored := Save.new().decode(saved, rules)
+	check(restored != null, "Saved moving fleets decode")
+	if restored != null:
+		var resumed = load("res://scenes/expedition.tscn").instantiate()
+		resumed.resume_data = {"state": restored}
+		resumed.persistence_enabled = false
+		resumed.play_system_intro = false
+		root.add_child(resumed)
+		var resumed_map = resumed.star_map.warzone_presentation
+		check(resumed_map.order_paths.get_surface_count() == 1 and resumed_map._order_colors.has(Color("4da7d6"))
+			and resumed_map._order_colors.has(Color("cf5365")) and restored.warzone.clock_ms == 0
+			and restored.warzone.fleets[0].position == Vector3(allied_order.position[0], allied_order.position[1], allied_order.position[2]),
+			"A resumed map draws saved allied and hostile orders before time or positions change")
+		resumed.free()
+		await process_frame
 	print("Warzone lattice presentation: %d checks, %d failures" % [checks, failures])
 	quit(int(failures > 0))
 
@@ -300,3 +347,8 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	var stopped_clock: int = operation.clock_ms
 	await create_timer(0.3).timeout
 	check(operation.clock_ms == stopped_clock, "Stopping the player's ship also stops the lattice clock")
+
+
+func _has_hold(host: Node) -> bool:
+	return host.screen.find_children("*", "Button", true, false).any(
+		func(button): return button.is_visible_in_tree() and button.text.begins_with("Hold position"))

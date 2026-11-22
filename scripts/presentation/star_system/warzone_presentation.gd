@@ -110,6 +110,7 @@ func refresh(operation: RefCounted, objects: Dictionary) -> void:
 			cosmetic_contacts.append(Vector2i(fleet.id, fleet.engaged))
 	if operation.is_lattice():
 		_refresh_lattice(operation)
+		if overlay_enabled and not aftermath_started: _update_orders()
 		if _last_scramble >= 0 and operation.scramble_until > _last_scramble:
 			fx.transmission(operation.objectives[operation.scramble_site].position)
 		_last_scramble = operation.scramble_until

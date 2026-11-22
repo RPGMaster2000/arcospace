@@ -189,6 +189,12 @@ func verify_menu() -> void:
 				await click(director.skip_button, true)
 			await process_frame
 			await click(test.battle.settings_button)
+			var lethal_hit := test.battle.settings_button.find_child("DeveloperOneHitKill", true, false) as CheckButton
+			check(lethal_hit != null and not lethal_hit.button_pressed, "Developer battle toggle starts off")
+			if lethal_hit != null:
+				await click(lethal_hit, true)
+				check(lethal_hit.button_pressed and test._developer_one_hit_kill and test.battle.developer_one_hit_kill,
+					"Touch enables One-Hit Kill and retains it on the expedition")
 			await click(test.battle.settings_button.settings_option)
 			await process_frame
 			check(settings.shade.visible, "Battle settings open after the intro")
@@ -207,8 +213,49 @@ func verify_menu() -> void:
 	store.clear_run()
 
 
+func verify_live_lethal_hit() -> void:
+	var host = load("res://scenes/expedition.tscn").instantiate()
+	host.developer_test = Launch.configuration("warzone", 1, 0)
+	host.play_system_intro = false
+	root.add_child(host)
+	var state: State = host.state
+	state.navigation.checkpoint_position(State.Defense.wire(state.warzone_fleet(0).position))
+	host.start_battle(0, 1234)
+	var board = host.battle
+	var toggle := board.settings_button.find_child("DeveloperOneHitKill", true, false) as CheckButton
+	toggle.button_pressed = true
+	board.battle_effects.enabled = false
+	board.modifier.configure(0)
+	var card := CardData.new()
+	card.effects = {"damage": 1}
+	board.player_shields = 100
+	board.enemy_shields = 100
+	var hull: int = board.player_hull
+	board._resolve_card("enemy", 0, false, card)
+	check(board.player_hull == hull and board.player_shields == 99 and board.winner.is_empty(),
+		"Enemy attacks ignore the developer toggle")
+	board._resolve_card("player", 0, false, card)
+	check(board.winner == "player" and board.result_recorded and state.warzone.player_victories == 1
+		and state.encounters[0].completed and state.pending_choice == "battle_reward",
+		"A shielded enemy is defeated through normal Warzone victory and rewards")
+	if state.choose_battle_reward(true):
+		state.choose_card(0)
+		if state.pending_choice == "replace": state.decline_card()
+	host._battle_finished(board)
+	state.navigation.checkpoint_position(State.Defense.wire(state.warzone_fleet(1).position))
+	host.start_battle(1, 1235)
+	check(is_instance_valid(host.battle) and host.battle.developer_one_hit_kill,
+		"The next encounter inherits the enabled toggle")
+	host._remove_battle()
+	host.start_expedition()
+	check(not host._developer_one_hit_kill, "A new test expedition resets the toggle")
+	host.free()
+	await process_frame
+
+
 func run() -> void:
 	verify_generation()
+	await verify_live_lethal_hit()
 	await verify_menu()
 	print("Developer launch: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

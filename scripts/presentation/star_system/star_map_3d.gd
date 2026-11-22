@@ -93,6 +93,7 @@ var travel_duration := 1.4
 var defense_view: Dictionary = {}
 var warzone_view: RefCounted
 var warzone_presentation: Node3D
+var lattice_overlay_enabled := false
 const WARZONE_ALLY_MARKER_BASE := 1000
 const WarzonePresentation = preload("res://scripts/presentation/star_system/warzone_presentation.gd")
 var physical_speed: float = 0.0
@@ -438,6 +439,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		sync_defense(defense_view)
 	if warzone_view != null:
 		warzone_presentation = WarzonePresentation.new()
+		warzone_presentation.overlay_enabled = lattice_overlay_enabled
 		destination_root.add_child(warzone_presentation)
 		sync_warzone(warzone_view)
 	if is_instance_valid(storm_legend):
@@ -1358,6 +1360,7 @@ func _add_warzone_ally(index: int, id: int) -> void:
 
 
 func set_lattice_overlay(enabled: bool) -> void:
+	lattice_overlay_enabled = enabled
 	if is_instance_valid(warzone_presentation):
 		warzone_presentation.overlay_enabled = enabled
 		sync_warzone(warzone_view)

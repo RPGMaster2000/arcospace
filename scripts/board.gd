@@ -12,12 +12,14 @@ signal action_finished(side: String, discarded: bool)
 signal expedition_continue
 signal expedition_restart
 signal expedition_exit
+signal developer_one_hit_kill_changed(enabled: bool)
 const BattleResult = preload("res://scripts/combat/battle_result.gd")
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
 const BattleAdapter = preload("res://scripts/combat/battle_adapter.gd")
 var battle_setup: BattleSetup
 var expedition: Resource
 var expedition_encounter: int = -1
+var developer_one_hit_kill := false
 ## TUNE: Static Power Allocation weight; copied into the player hand at battle start.
 @export var allocation_settings: Resource = preload("res://resources/power_allocation.tres")
 var settings_button: Button
@@ -244,6 +246,12 @@ func _apply_ship(side: String, data: Resource) -> void:
 func _ready() -> void:
 	get_node("/root/Music").play_battle()
 	settings_button = preload("res://scripts/ui/battle_menu.gd").new()
+	if expedition != null and not expedition.developer_test.is_empty():
+		settings_button.developer_one_hit_kill_available = true
+		settings_button.developer_one_hit_kill_enabled = developer_one_hit_kill
+		settings_button.developer_one_hit_kill_changed.connect(func(enabled: bool):
+			developer_one_hit_kill = enabled
+			developer_one_hit_kill_changed.emit(enabled))
 	settings_button.z_index = 110  # Keep settings accessible above the result screen's shade.
 	add_child(settings_button)
 	settings_button.main_menu_requested.connect(_return_to_setup)
@@ -674,7 +682,10 @@ func _resolve_card(side: String, slot: int, discard: bool, card: Resource, card_
 	var other: String = "enemy" if side == "player" else "player"
 	var actor: Dictionary = ship_snapshot(side)
 	var target: Dictionary = ship_snapshot(other)
-	var resolution = Execution.resolve(card, discard, actor, target, modifier, null, battle_environment.get("mothership_advantage", "") if side == "player" else "")
+	var developer_lethal_hit: bool = side == "player" and developer_one_hit_kill \
+		and expedition != null and not expedition.developer_test.is_empty()
+	var advantage: String = battle_environment.get("mothership_advantage", "") if side == "player" else ""
+	var resolution = Execution.resolve(card, discard, actor, target, modifier, null, advantage, developer_lethal_hit)
 	if resolution == null:
 		return false
 	$ModifierDisplay.announce(resolution.announcement, modifier.storm_color(modifier.kind) if modifier.kind in [6,7] else Color.WHITE)
