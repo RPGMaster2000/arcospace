@@ -889,7 +889,67 @@ func aggression_guardrails() -> void:
 		"Only committed player territorial intervention increases enemy attention")
 
 
+func final_defense_convergence() -> void:
+	var state := fresh(19)
+	var op: RefCounted = state.warzone
+	var target: int = op.site("hostile_command")
+	var root_site: int = op.root("allied")
+	var edge := _edge(root_site, target)
+	if edge not in op.links: op.links.append(edge)
+	op.player_intervened = true
+	op._award("final-stand-fixture", op.tuning.effort_goal, "Final stand")
+	op.final_command = target
+	op._refresh_supply()
+	var position: Vector3 = op.objectives[target].position
+	check(op._capture_connected(target, "allied") and not op.final_defense_active,
+		"Final-defense fixture begins before an actual allied assault")
+	# The command marker alone must not mobilize the whole hostile force.
+	op._advance_step(Vector3(250, 0, 250), true)
+	check(not op.final_defense_active,
+		"Unlocking the final mission does not prematurely summon every hostile")
+	# Temporarily engage one hostile: the final order must not steal it from
+	# an ongoing NPC battle, but it should redirect it once released.
+	var engaged: Dictionary = op.fleets[2]
+	var ally: Dictionary = op.fleets[0]
+	engaged.engaged = ally.id
+	ally.engaged = engaged.id
+	var original_destination: int = engaged.destination
+	op.note_player_position(position)
+	op._activate_final_defense(position)
+	check(op.final_defense_active and op.player_hunter == -1 and op.events.any(
+		func(event): return event.begins_with("FINAL DEFENSE")),
+		"An allied capture attempt immediately announces full enemy convergence")
+	var eligible := op.fleets.filter(func(fleet): return fleet.side == "hostile"
+		and op.active(fleet) and fleet.engaged < 0 and not fleet.withdrawing)
+	check(not eligible.is_empty() and eligible.all(func(fleet):
+		return fleet.destination == target and fleet.counter_target == target),
+		"Every available hostile ship, including defenders, targets the final installation")
+	check(engaged.destination == original_destination and engaged.engaged == ally.id,
+		"Existing engagements remain intact while the fleet-wide order is issued")
+	var rushing: Dictionary = eligible.front()
+	var before: float = rushing.position.distance_to(position)
+	op._move_fleet(rushing, 0.5)
+	check(rushing.position.distance_to(position) < before,
+		"Converging ships move directly toward final command regardless of routes")
+	engaged.engaged = -1
+	ally.engaged = -1
+	op._converge_final_defenders()
+	check(engaged.destination == target and engaged.counter_target == target,
+		"Ships freed from battle immediately join the final defensive rush")
+	state._sync_warzone()
+	var restored := roundtrip(state)
+	check(restored != null and restored.warzone.final_defense_active,
+		"Full hostile mobilization persists across save and resume")
+	if restored != null:
+		var r: RefCounted = restored.warzone
+		check(r.fleets.filter(func(fleet): return fleet.side == "hostile" and r.active(fleet)
+			and fleet.engaged < 0 and not fleet.withdrawing).all(func(fleet):
+				return fleet.destination == target),
+			"Restored available hostile formations remain committed to the final target")
+
+
 func run() -> void:
+	final_defense_convergence()
 	early_reserves_and_deep_command()
 	kited_hunter_engages_ally()
 	aggression_guardrails()
