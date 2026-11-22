@@ -273,7 +273,14 @@ func fleet_routing_and_convoys() -> void:
 		"An ongoing engagement keeps its target during a counterattack")
 	check(op.fleets.any(func(fleet): return fleet.counter_target == junction),
 		"A reachable capture draws a routed hostile counterattack")
-	op.fleets[Sector.EXTRA_ALLIED].strength = 0 # Focus this routing fixture on the original vanguard.
+	# Make the one-vanguard routing fixture independent of the larger fleet
+	# roster: no other ally should reserve its intended next frontier.
+	op.fleets[1].strength = 0
+	op.fleets[Sector.EXTRA_ALLIED].strength = 0
+	var frontier: int = op.site("depot")
+	var frontier_edge := _edge(junction, frontier)
+	if frontier_edge not in op.links: op.links.append(frontier_edge)
+	op._refresh_supply()
 	var fleet: Dictionary = op.fleets[0]
 	fleet.at = junction
 	fleet.position = op.objectives[junction].position
@@ -478,6 +485,9 @@ func final_offensive() -> void:
 	op.player_intervened = true
 	op._update_final_offensive(true)
 	check(op.final_command in op.command_sites() and op.consolidation == 0, "War Effort unlocks a deep command offensive")
+	# This fixture advances the sector directly instead of through the
+	# ExpeditionState clock, so synchronize destroyed fleet contacts first.
+	state._sync_warzone()
 	if roundtrip(state) == null: return
 	for site in op.objectives.size():
 		op.objectives[site].owner = "allied"
