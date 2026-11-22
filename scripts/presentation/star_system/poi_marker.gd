@@ -123,7 +123,7 @@ func highlighted() -> bool:
 	return selected or hovered or has_focus()
 
 func priority() -> int:
-	return 4 if selected else (3 if highlighted() else (2 if warzone_importance == 2 else (0 if completed else 1)))
+	return 3 if selected else (2 if highlighted() or warzone_importance == 2 else (0 if completed else 1))
 
 func set_state(is_completed: bool, blocked: bool, is_selected: bool) -> void:
 	if completed==is_completed and unavailable==blocked and selected==is_selected: return
