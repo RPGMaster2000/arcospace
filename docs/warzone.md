@@ -19,6 +19,9 @@ The HUD shows War Effort, the territorial split and fleet counts. System Status
 keeps the event log. The player can navigate freely behind hostile lines.
 
 **Territorial Control** shows ownership, supplied attack routes and capture progress.
+Solo player captures now take **12 strategic seconds** by default, versus six
+with an allied fleet present. The progress ring, inspection text and Hold HUD use
+the current requirement, including when an ally enters or leaves the station.
 Clear defenders and choose **Hold Until Captured** at an eligible site, or let
 an allied fleet capture it. The hold keeps the ship in place and runs the ordinary
 war at one strategic second per real second. **Cancel Hold**, contested territory,
@@ -37,6 +40,22 @@ Each facility has its own cooldown, which advances only on the strategic clock.
 | Communications Array | Infiltrate while hostile or transmit while supplied allied | Delay hostile reserves and counterattack orders for 20s. | 25s |
 | Supply depot or logistics hub | Infiltrate while hostile | Sever local supply links and scatter the garrison. | 42s |
 | Shipyard | Supplied allied | Request an additional off-map formation for 3 Salvage and 4 strategic seconds. | 30s |
+
+Aggressive player actions now increase **Enemy Alert**, without affecting
+War Effort or causing constant enemy spawns. At critical enemy installations,
+or after alert has risen, an available existing hostile patrol can respond as
+soon as an uncontested solo capture begins. A patrol is never taken out of an
+active engagement or from a designated command-defense role. Repeated
+aggression can assign **one existing hostile ship** to a timed player pursuit;
+a warned fleet displays a pursuit icon and route toward the actual player ship.
+Only physical contact within the normal combat radius can trigger the standard
+battle checkpoint. The pursuit warns for three strategic seconds before
+contact becomes eligible, uses a 25-second cooldown, and permits at most two
+player hunts per sector. The threat ends when the hunter is defeated,
+engaged by allies, disconnected from supply, expires, or intercepts the
+player. The player can also escape by keeping distance. These rules and the
+solo capture multiplier are tunable in `warzone_tuning.gd`; active alert
+and warned stations persist in saves, while older sectors load Quiet.
 
 Convoys deliver strength along supplied routes and abort when their route is cut.
 The Trading Outpost retains its protected services outside the lattice.
