@@ -996,7 +996,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 		fleet.at = int(fleet.at)
 		fleet.strength_limit = int(fleet.strength_limit)
 		if fleet.has("intercept"):
-			if fleet.side != "allied" or not Defense.number(fleet.intercept, ALLIED_GROUPS, HOSTILE_RESERVE) \
+			if fleet.side != "allied" or not Defense.number(fleet.intercept, ALLIED_GROUPS, EXTRA_HOSTILE if expanded_roster else HOSTILE_RESERVE) \
 				or fleet_at(int(fleet.intercept)).get("side") != "hostile" \
 				or fleet.get("assignment") not in ["Intercepting", "Assisting"] \
 				or not Defense.number(fleet.get("commit_until"), 0, clock_ms + AlliedOrders.COMMIT_MS):
