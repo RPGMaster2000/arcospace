@@ -565,13 +565,21 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 
 func _update_final_offensive(allow_victory: bool) -> void:
 	if final_command < 0 and player_intervened and effort >= tuning.effort_goal:
-		# A deep command facility anchors the last offensive. Prefer one we
-		# already hold or can approach from supplied territory.
+		# The final offensive should demand a meaningful advance, not resolve
+		# at whichever command happens to be closest or already held. Both
+		# command stations remain possible and the more distant reachable
+		# lattice location gets the mission marker.
 		var next: int = command_sites().front()
-		for site in command_sites():
-			if site in supplied.allied or _capture_connected(site, "allied"):
-				next = site
-				break
+		var best := -INF
+		var starting: Vector3 = objectives[root("allied")].position
+		for candidate in command_sites():
+			var distance: float = starting.distance_to(objectives[candidate].position)
+			var depth: int = _lattice_hops(root("allied"), candidate)
+			var score: float = distance + 2.5 * depth
+			if objectives[candidate].owner == "hostile": score += 4.0
+			if score > best:
+				best = score
+				next = candidate
 		final_command = next
 		_notice("Final offensive · Secure " + objective_name(final_command) + ".")
 		_counterattack(final_command)
@@ -582,6 +590,22 @@ func _update_final_offensive(allow_victory: bool) -> void:
 	if allow_victory and consolidation >= tuning.consolidation_seconds:
 		complete = true
 		_notice(outcome().grade + " · Sector secured.")
+
+
+func _lattice_hops(origin: int, target: int) -> int:
+	if origin == target: return 0
+	var queue: Array[int] = [origin]
+	var distances := {origin: 0}
+	var cursor := 0
+	while cursor < queue.size():
+		var site_id: int = queue[cursor]
+		cursor += 1
+		for neighbor in Lattice.neighbors(site_id, links):
+			if distances.has(neighbor): continue
+			distances[neighbor] = distances[site_id] + 1
+			if neighbor == target: return distances[neighbor]
+			queue.append(neighbor)
+	return objectives.size()
 
 
 func _command_ready() -> bool:
