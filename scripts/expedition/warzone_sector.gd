@@ -32,6 +32,7 @@ var capture_cutoffs := {}
 var reserve_launched := {}
 var facility_cooldowns := {}
 var final_command := -1
+var final_defense_active := false
 var player_intervened := false
 var jam_until := 0
 var offensive_target := -1
@@ -228,6 +229,7 @@ func player_capture_requirement(index: int, player: Vector3) -> int:
 
 func _capture(index: int, player: Vector3) -> void:
 	_refresh_capture_presence(index, player)
+	if index == final_command: _activate_final_defense(player)
 	var previous_progress: int = objectives[index].progress
 	super._capture(index, player)
 	if previous_progress == 0 and objectives[index].progress == 1 \
@@ -263,6 +265,32 @@ func _proactive_response(index: int, player: Vector3) -> void:
 	_notice("Hostile patrol responding to capture at %s." % objective_name(index))
 
 
+# Unlike an ordinary two-fleet counterattack, the final defense is a
+# persistent all-hands order. It begins on actual allied presence at the
+# final site, not when the final mission marker first appears.
+func _activate_final_defense(player: Vector3) -> void:
+	if final_defense_active or final_command < 0 or complete: return
+	if _capture_presence(final_command, "allied", player).is_empty(): return
+	if objectives[final_command].owner == "allied" and not _command_ready(): return
+	if objectives[final_command].owner != "allied" and not _capture_connected(final_command, "allied"): return
+	# A chasing patrol must return to its fleet role when the last stand begins.
+	if player_hunter >= 0: _finish_player_hunt()
+	final_defense_active = true
+	_converge_final_defenders()
+	_notice("FINAL DEFENSE · All available hostile fleets converging on %s!" % objective_name(final_command))
+
+
+func _converge_final_defenders() -> void:
+	if not final_defense_active or final_command < 0 or complete: return
+	for fleet in fleets:
+		if fleet.side != "hostile" or not active(fleet) or fleet.engaged >= 0 or fleet.withdrawing:
+			continue
+		# Current and subsequently freed fleets join the same last stand.
+		# Hostile flight is direct; it does not require an intact supply route.
+		fleet.counter_target = final_command
+		fleet.destination = final_command
+
+
 func note_player_aggression(amount: int = 1) -> void:
 	if complete or amount <= 0: return
 	var previous: int = player_alert
@@ -286,6 +314,7 @@ func _finish_player_hunt(reason: String = "") -> void:
 
 
 func _update_player_hunt(player: Vector3) -> void:
+	if final_defense_active: return
 	if player_hunter >= 0:
 		var hunter := fleet_at(player_hunter)
 		if not active(hunter) or hunter.withdrawing or hunter.engaged >= 0 \
@@ -521,6 +550,8 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 		_refresh_supply()
 		_dispatch_reserves()
 		_update_player_hunt(player)
+	_activate_final_defense(player)
+	_converge_final_defenders()
 	_assign_engagements(true)
 	var expired := scramble_until > 0 and clock_ms >= scramble_until
 	if expired:
@@ -613,6 +644,14 @@ func _command_ready() -> bool:
 
 
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
+	if final_defense_active and fleet.side == "hostile" and active(fleet) \
+			and fleet.engaged < 0 and not fleet.withdrawing:
+		var command: Vector3 = objectives[final_command].position
+		fleet.position = (fleet.position as Vector3).move_toward(command, fleet_speed(fleet) * seconds)
+		if (fleet.position as Vector3).distance_squared_to(command) < 0.00001:
+			fleet.at = final_command
+			if fleet.has("arriving"): fleet.arriving = false
+		return
 	if fleet.id == player_hunter and _player_position.is_finite() and not fleet.withdrawing:
 		fleet.position = (fleet.position as Vector3).move_toward(
 			_player_position, fleet_speed(fleet) * tuning.hunt_speed_multiplier * seconds)
@@ -930,6 +969,7 @@ func snapshot() -> Dictionary:
 		"disrupted": {}, "convoy": convoy.duplicate(true), "recovered": recovered, "wreckage": {},
 		"reserve_launched": reserve_launched.keys(), "capture_cutoffs": {},
 		"facility_cooldowns": {}, "player_intervened": player_intervened, "final_command": final_command,
+		"final_defense_active": final_defense_active,
 		"jam_until": jam_until, "offensive_target": offensive_target, "offensive_until": offensive_until,
 		"scramble_until": scramble_until, "scramble_site": scramble_site,
 		"player_alert": player_alert, "player_hunter": player_hunter,
@@ -1048,6 +1088,9 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	planned = saved.planned.duplicate()
 	recovered = saved.recovered
 	if not _restore_logistics(saved) or not _restore_facilities(saved) or not _restore_player_alert(saved): return false
+	var final_active: Variant = saved.get("final_defense_active", false)
+	if not final_active is bool or (final_active and final_command < 0): return false
+	final_defense_active = final_active
 	_refresh_supply(false)
 	if not convoy.is_empty() and not _convoy_route_valid(convoy.side, convoy.route): return false
 	if not saved.has("final_command"):
