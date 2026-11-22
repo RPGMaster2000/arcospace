@@ -57,7 +57,7 @@ static func options(sector: RefCounted, index: int, salvage: int) -> Array[Dicti
 			details = "Cut this installation's supply links for %ds and force its local garrison to withdraw." % sector.tuning.sabotage_seconds
 		"deploy":
 			title = "Request Reinforcements"
-			var remaining_requests: int = maxi(0, sector.tuning.reinforcement_budget - (sector.fleets.size() - sector.REQUEST_FIRST))
+			var remaining_requests: int = maxi(0, sector.tuning.reinforcement_budget - (sector.fleets.size() - sector.requested_first()))
 			details = "Dispatch one formation from outside the sector · %d requests left." % remaining_requests
 			cost = sector.tuning.reinforcement_cost
 			seconds = sector.tuning.reinforcement_seconds
