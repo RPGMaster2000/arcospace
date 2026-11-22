@@ -235,7 +235,7 @@ func _proactive_response(index: int, player: Vector3) -> void:
 	if index not in command_sites() and index not in [site("shipyard"), site("depot")] and player_alert == 0:
 		return
 	var chosen := {}
-	var best := tuning.response_range
+	var best: float = tuning.response_range
 	for fleet in fleets:
 		if fleet.side != "hostile" or not active(fleet) or fleet.engaged >= 0 \
 				or fleet.withdrawing or fleet.get("arriving", false) or fleet.role == "Defender" \
