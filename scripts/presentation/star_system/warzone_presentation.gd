@@ -15,8 +15,8 @@ const ALLIED_SHIPS := [
 ]
 const BattleFX = preload("res://scripts/presentation/star_system/warzone_battle_fx.gd")
 
-const CONNECTION_WIDTH := 0.27
-const ORDER_WIDTH := 0.115
+const CONNECTION_WIDTH := 4.0
+const ORDER_WIDTH := 2.25
 var paths := ImmediateMesh.new()
 var order_paths := ImmediateMesh.new()
 var _order_endpoints := PackedVector3Array()
@@ -59,6 +59,7 @@ var convoy_ships := {}
 func _ready() -> void:
 	var lines := MeshInstance3D.new()
 	lines.mesh = paths
+	lines.extra_cull_margin = 1.0
 	lines.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -68,14 +69,17 @@ func _ready() -> void:
 	add_child(lines)
 	var connections := ShaderMaterial.new()
 	connections.shader = preload("res://shaders/warzone_routes.gdshader")
+	connections.set_shader_parameter("width_pixels", CONNECTION_WIDTH)
 	lines.material_override = connections
 	_legacy_material = material
 	_connection_mesh = lines
 	var orders := MeshInstance3D.new()
 	orders.mesh = order_paths
+	orders.extra_cull_margin = 1.0
 	orders.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var moving := connections.duplicate() as ShaderMaterial
 	moving.set_shader_parameter("moving", true)
+	moving.set_shader_parameter("width_pixels", ORDER_WIDTH)
 	moving.render_priority = 1
 	orders.material_override = moving
 	add_child(orders)
@@ -367,8 +371,8 @@ func _refresh_lattice(operation: RefCounted) -> void:
 	if sources != influence_target:
 		influence_target = sources
 		influence.set_shader_parameter("sources", influence_display)
-	var signature := hash([operation.links, operation.disrupted.keys(),
-		operation.objectives.map(func(node): return node.owner)])
+	var signature := hash([operation.links, operation.disrupted.keys(), operation.supplied,
+		operation.objectives.map(func(node): return [node.owner, node.position])])
 	if not overlay_enabled:
 		routes_signature = 0
 		return
@@ -379,14 +383,15 @@ func _refresh_lattice(operation: RefCounted) -> void:
 	for edge in operation.links:
 		var first: Dictionary = operation.objectives[edge.x]
 		var second: Dictionary = operation.objectives[edge.y]
-		var live: bool = operation.link_active(edge)
+		var direction: Vector3 = first.position.direction_to(second.position)
+		# Leave room for the node and its badge. Incident edges no longer
+		# alpha-blend on top of each other at the installation center.
+		var inset: float = minf(0.9, first.position.distance_to(second.position) * 0.15)
 		var tint := CONTESTED if first.owner != second.owner else objective_color(first)
-		var alpha := 0.78
-		if not live:
-			_ribbon(paths, CONNECTION_WIDTH, first.position, first.position.lerp(second.position, 0.32), Color(NEUTRAL, alpha * 0.65))
-			_ribbon(paths, CONNECTION_WIDTH, second.position, second.position.lerp(first.position, 0.32), Color(NEUTRAL, alpha * 0.65))
-		else:
-			_ribbon(paths, CONNECTION_WIDTH, first.position, second.position, Color(tint, alpha))
+		var disconnected: bool = not operation.link_active(edge) or (first.owner == second.owner
+			and (not operation.is_supplied(edge.x) or not operation.is_supplied(edge.y)))
+		_ribbon(paths, first.position + direction * inset, second.position - direction * inset,
+			NEUTRAL.lerp(tint, 0.35) if disconnected else tint, 0.0, disconnected)
 	paths.surface_end()
 
 
@@ -397,7 +402,7 @@ func _update_orders() -> void:
 		for fleet in lattice_operation.fleets:
 			if not lattice_operation.active(fleet) or fleet.engaged >= 0: continue
 			if fleet.get("arriving", false) and lattice_operation.supplied[fleet.side].size() < 2: continue
-			var finish: Vector3 = displayed[fleet.id].target if fleet.has("intercept") \
+			var finish: Vector3 = lattice_operation.fleet_target_position(fleet) if fleet.has("intercept") \
 				else lattice_operation.objectives[fleet.destination].position
 			var position: Vector3 = fleet.position
 			if position.distance_squared_to(finish) < 0.0025: continue
@@ -411,18 +416,32 @@ func _update_orders() -> void:
 	if endpoints.is_empty(): return
 	order_paths.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in colors.size():
-		_ribbon(order_paths, ORDER_WIDTH, endpoints[i * 2], endpoints[i * 2 + 1], colors[i])
+		var start := endpoints[i * 2]
+		var finish := endpoints[i * 2 + 1]
+		var lane := 4.0
+		# Separate parallel approaches to the same installation. Opposite
+		# directions already put the offset on opposite sides of the edge.
+		for prior in i:
+			if finish.distance_squared_to(endpoints[prior * 2 + 1]) < 0.1 \
+				and start.direction_to(finish).dot(endpoints[prior * 2].direction_to(finish)) > 0.98:
+				lane += 3.0
+		var inset := minf(0.6, start.distance_to(finish) * 0.15)
+		_ribbon(order_paths, start, finish.move_toward(start, inset), colors[i], lane)
 	order_paths.surface_end()
 
 
-func _ribbon(mesh: ImmediateMesh, width: float, start: Vector3, finish: Vector3, tint: Color) -> void:
-	var edge := (finish - start).cross(Vector3.UP).normalized() * width * 0.5
+func _ribbon(mesh: ImmediateMesh, start: Vector3, finish: Vector3, tint: Color,
+		lane: float, disconnected: bool = false) -> void:
+	var direction := start.direction_to(finish)
 	var length := start.distance_to(finish)
-	var points := [start - edge, start + edge, finish + edge, finish - edge]
+	if length < 0.001: return
+	var points := [start, start, finish, finish]
 	var uvs := [Vector2.ZERO, Vector2(0, 1), Vector2(length, 1), Vector2(length, 0)]
 	for index in [0, 1, 2, 0, 2, 3]:
 		mesh.surface_set_color(tint)
+		mesh.surface_set_normal(direction)
 		mesh.surface_set_uv(uvs[index])
+		mesh.surface_set_uv2(Vector2(lane, float(disconnected)))
 		mesh.surface_add_vertex(points[index] - Vector3.UP * 0.12)
 
 

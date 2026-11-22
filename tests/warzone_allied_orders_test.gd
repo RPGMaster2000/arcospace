@@ -59,7 +59,36 @@ func scenario(seed_value: int) -> RefCounted:
 	op._refresh_supply()
 	return op
 
+func check_frontier_distribution() -> void:
+	var op := scenario(17)
+	var ally: Dictionary = op.fleets[0]
+	var partner: Dictionary = op.fleets[1]
+	var first: int = op.site("shipyard")
+	var second: int = op.site("depot")
+	var junction: int = op.site("junction")
+	for fleet in op.fleets:
+		if fleet.side == "hostile": fleet.strength = 0
+	for site in [first, second]:
+		op.links.append(Vector2i(mini(junction, site), maxi(junction, site)))
+	op.objectives[first].position = Vector3(2, 0, 0)
+	op.objectives[second].position = Vector3(6, 0, 2)
+	for fleet in [ally, partner]:
+		fleet.at = junction
+		fleet.destination = junction
+		fleet.position = op.objectives[junction].position
+		fleet.strength = 8
+	op._refresh_supply()
+	op._move_fleet(ally, 0.1)
+	op._move_fleet(partner, 0.1)
+	check(ally.destination != partner.destination and ally.destination != junction and partner.destination != junction
+		and partner.position != op.objectives[junction].position, "Idle fleets depart and reserve different undefended targets")
+	var committed: int = partner.destination
+	op.advance(500, Vector3(0, 0, -20), Vector3(0, 0, -20))
+	check(partner.destination == committed, "A valid route remains committed during travel")
+
+
 func run() -> void:
+	check_frontier_distribution()
 	for seed_value in [2, 17, 111]:
 		var op := scenario(seed_value)
 		var ally: Dictionary = op.fleets[0]

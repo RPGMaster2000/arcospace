@@ -19,8 +19,12 @@ The HUD shows War Effort, the territorial split and fleet counts. System Status
 keeps the event log. The player can navigate freely behind hostile lines.
 
 **Territorial Control** shows ownership, supplied attack routes and capture progress.
-Clear defenders and hold position or let an allied fleet capture the site. Use
-the main HUD’s one-second **Wait** at stations already under allied control. The
+Clear defenders and choose **Hold Until Captured** at an eligible site, or let
+an allied fleet capture it. The hold keeps the ship in place and runs the ordinary
+war at one strategic second per real second. **Cancel Hold**, contested territory,
+loss of supply, and app suspension stop the hold. Resume retains committed capture
+progress and starts with the hold off. Use the main HUD’s one-second **Wait** at
+stations already under allied control. The
 **Facility Operation** section shows the site's signature effect, requirements,
 cost and recharge. An inner ring on the map marker shows recharge progress.
 Each facility has its own cooldown, which advances only on the strategic clock.
@@ -40,7 +44,10 @@ The Trading Outpost retains its protected services outside the lattice.
 Fleets fly a direct course to lattice-connected objectives. Cutting a route can
 redirect them and immediately resets any capture that loses its last supplied
 link. Restoring the link permits a new attack when an attacker enters the site.
-The previous owner retains control until a fresh capture succeeds.
+The previous owner retains control until a fresh capture succeeds. Allied fleets
+reserve ordinary destinations as they choose their next assignment. Undefended
+frontier objectives generally need one fleet. Defended sites can draw a second,
+and the existing interception policy still coordinates responses to major threats.
 
 New sectors have one reserve formation per side. They approach from outside the
 sector once their supply network can support them. Their strength depends on
@@ -287,3 +294,9 @@ refresh, including relabeling and reapplying the tactical marker presentation.
 Lattice connections use feathered world-space strips. The narrower animated
 hostile routes connect each displayed fleet to its current movement target.
 Toggling Lattice off clears both meshes together with the influence field.
+
+The tactical shader extrudes cached connections perpendicular to their projected
+direction in viewport pixels. Permanent lines are four pixels wide and fleet
+routes are 2.25 pixels wide before edge feathering. Node insets keep incident
+connections apart, nearby parallel routes get separate lanes, and disconnected
+links use a muted patterned stroke. Width stays stable as the map zooms.

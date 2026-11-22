@@ -183,12 +183,7 @@ func run() -> void:
 		"Allied stations omit Hold Position and retain their special operation")
 	var hostile_site: int = operation.HOSTILE_GROUPS + operation.root("hostile")
 	host.show_poi(hostile_site)
-	check(_has_hold(host), "Hostile station panels retain Hold Position")
-	var objective: Dictionary = operation.objectives[operation.root("hostile")]
-	objective.owner = "neutral"
-	host.show_poi(hostile_site)
-	check(_has_hold(host), "Neutral station panels retain Hold Position")
-	objective.owner = "hostile"
+	check(not _has_hold(host), "Out-of-range hostile stations do not offer automated capture")
 	host.show_system()
 	await settle()
 	await capture("lattice-cutoff")
@@ -245,6 +240,8 @@ func run() -> void:
 			"A resumed map draws saved allied and hostile orders before time or positions change")
 		resumed.free()
 		await process_frame
+	if DisplayServer.get_name() != "headless":
+		await _check_projected_width()
 	print("Warzone lattice presentation: %d checks, %d failures" % [checks, failures])
 	quit(int(failures > 0))
 
@@ -351,4 +348,41 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 
 func _has_hold(host: Node) -> bool:
 	return host.screen.find_children("*", "Button", true, false).any(
-		func(button): return button.is_visible_in_tree() and button.text.begins_with("Hold position"))
+		func(button): return button.is_visible_in_tree() and button.text == "Hold Until Captured")
+
+
+func _check_projected_width() -> void:
+	var sample := SubViewport.new()
+	sample.size = Vector2i(320, 240)
+	sample.own_world_3d = true
+	sample.transparent_bg = true
+	sample.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(sample)
+	var camera := Camera3D.new()
+	sample.add_child(camera)
+	camera.make_current()
+	var presentation := preload("res://scripts/presentation/star_system/warzone_presentation.gd").new()
+	sample.add_child(presentation)
+	var mesh: ImmediateMesh = presentation.paths
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	var line := Vector3(4, 0, 0)
+	presentation._ribbon(mesh, -line, line, Color.WHITE, 0.0)
+	mesh.surface_end()
+	var center := Vector3.DOWN * 0.12
+	var widths: Array[int] = []
+	for offset in [Vector3(0, 11, 7), Vector3(3, 20, 16), Vector3(5, 6, 6)]:
+		camera.position = center + offset
+		camera.look_at(center)
+		await RenderingServer.frame_post_draw
+		var capture := sample.get_texture().get_image()
+		var pixel := camera.unproject_position(center)
+		var tangent := pixel.direction_to(camera.unproject_position(center + line))
+		var across := Vector2(-tangent.y, tangent.x)
+		var thick := 0
+		for step in range(-6, 7):
+			var at := Vector2i((pixel + across * float(step)).floor())
+			if capture.get_pixelv(at).a > 0.35: thick += 1
+		widths.append(thick)
+	check(widths.min() >= 3 and widths.max() <= 5 and widths.max() - widths.min() <= 1,
+		"Rendered connection width stays within one pixel across tilt, rotation and zoom · %s" % [widths])
+	sample.free()

@@ -58,6 +58,41 @@ static func clear_interception(sector: RefCounted, fleet: Dictionary) -> void:
 		fleet.destination = sector._direct_target(fleet)
 
 
+static func frontier_target(sector: RefCounted, fleet: Dictionary) -> int:
+	var loads := {}
+	var hostile_power := {}
+	for formation in sector.fleets:
+		if formation.id == fleet.id or not sector.active(formation) or formation.withdrawing:
+			continue
+		var site: int = formation.destination
+		if formation.side == "allied":
+			if not formation.get("arriving", false) and not formation.has("intercept"):
+				loads[site] = int(loads.get(site, 0)) + 1
+		else:
+			# A committed defender or attacker can justify a second formation.
+			hostile_power[site] = float(hostile_power.get(site, 0.0)) + _power(sector, formation)
+	var best := -INF
+	var target: int = fleet.at
+	var own_power := _power(sector, fleet)
+	for site in sector.objectives.size():
+		var objective: Dictionary = sector.objectives[site]
+		var final: bool = site == sector.final_command
+		if objective.owner == "allied" and not final: continue
+		if not sector.route_valid("allied", fleet.at, site): continue
+		var assigned: int = loads.get(site, 0)
+		var defenders: float = hostile_power.get(site, 0.0)
+		# A single response is enough for an undefended minor objective.
+		var capacity := 2 if defenders > own_power * 1.15 else 1
+		if assigned >= capacity: continue
+		var eta: float = (fleet.position as Vector3).distance_to(objective.position) / sector.fleet_speed(fleet)
+		var neighbors := Lattice.neighbors(site, sector.links, sector.disrupted).size()
+		var score := (18.0 if final else 0.0) + float(neighbors) * 1.4 - eta * 0.55 - assigned * 7.0
+		if score > best:
+			best = score
+			target = site
+	return target
+
+
 static func _power(sector: RefCounted, fleet: Dictionary) -> float:
 	return float(fleet.strength * sector._shot_damage(fleet))
 
