@@ -27,8 +27,10 @@ Clear defenders and choose **Hold Until Captured** at an eligible site, or let
 an allied fleet capture it. The hold keeps the ship in place and runs the ordinary
 war at one strategic second per real second. **Cancel Hold**, contested territory,
 loss of supply, and app suspension stop the hold. Resume retains committed capture
-progress and starts with the hold off. Use the main HUD’s one-second **Wait** at
-stations already under allied control. The
+progress and starts with the hold off. The main HUD's **Hold to Wait** advances the
+normal battlefield simulation while pressed and, on release, rounds the total
+strategic duration **up to the nearest 0.5 seconds** (minimum 0.5 seconds).
+The button stays on the live map; it does not start a timed camera overview. The
 **Facility Operation** section shows the site's signature effect, requirements,
 cost and recharge. An inner ring on the map marker shows recharge progress.
 Each facility has its own cooldown, which advances only on the strategic clock.
@@ -78,8 +80,8 @@ becomes eligible at 18 strategic seconds and the hostile wave at 25 seconds
 supply network can support them. Their strength depends on
 connected installations, and a cutoff can delay their entry. Historical sectors retain their existing fleet roster and encounter IDs;
 new opening formations have additional stable IDs after the original reserves. The fleet marker at each engagement shows an
-attrition estimate based on current strength and incoming fire. **Wait** spends
-one strategic second.
+attrition estimate based on current strength and incoming fire. **Hold to Wait**
+advances the strategic clock for as long as the button is pressed.
 
 Allied fleets reassess orders every three strategic seconds. Command stations and
 junctions that supply other installations receive higher priority. Fleets
@@ -88,7 +90,12 @@ captures, and converge when a threatened formation needs help. A six-second
 commitment reduces target switching. Weak ships can withdraw to supplied
 territory to recover using existing repair rules. Interception leads the
 hostile's current leg (or the player's moving position during a pursuit)
-and reevaluates if its orders change. The final offensive now prioritizes a
+and reevaluates if its orders change. Once allied forces begin taking the
+final command station, **every active, unengaged hostile fleet** immediately
+converges there using a direct route, including command defenders and any
+subsequently available ships. Ships fighting an existing engagement or
+withdrawing are left alone until available; no new enemies are spawned.
+The final-defense order persists in saved sectors. The final offensive now prioritizes a
 command station farther from Allied Command by travel distance and graph
 hops; hostile command stations are placed deeper into the hostile end of
 the lattice during new sector generation. Both factions' dashed

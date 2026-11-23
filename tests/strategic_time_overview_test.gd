@@ -284,7 +284,7 @@ func check_one_second_wait() -> void:
 	state.rules.warzone_tuning.wait_seconds = Rules.warzone_tuning.wait_seconds
 	var host := mount(state)
 	await settle()
-	check(host.screen.overview_hud.wait_button.text == "Wait 1s", "The default Wait HUD offers one second")
+	check(host.screen.overview_hud.wait_button.text == "Hold to Wait", "The Warzone HUD now offers hold-to-wait rather than a fixed one-second click")
 	for enabled in [false, true]:
 		host.screen.overview_hud.lattice_button.button_pressed = enabled
 		host._wait_in_warzone()
@@ -305,6 +305,74 @@ func check_one_second_wait() -> void:
 	check(display.activity == null and state.warzone.clock_ms == start + 1000, "The full Wait spends exactly one second")
 	await display.finished
 	check(state.warzone.clock_ms == start + 1000, "Camera return spends none of the next second")
+	host.queue_free()
+	await process_frame
+
+
+func check_hold_to_wait() -> void:
+	# Normal campaign Warzone data (System 2) is required for real save/restore
+	# validation; developer launch warzones are intentionally not persisted.
+	var state := State.new()
+	state.start(0, Rules, 19)
+	state.defense.complete = true
+	state.generate_system()
+	var host := mount(state)
+	await settle()
+	var button: Button = host.screen.overview_hud.wait_button
+	check(button.text == "Hold to Wait" and not button.disabled,
+		"Warzone Wait control is accessible as a press-and-hold gesture")
+	host.set_process(false)
+	button.button_down.emit()
+	check(host._wait_hold_active and not host.strategic_overview.active
+		and button.text.begins_with("Waiting"),
+		"Press begins live waiting without triggering a fixed one-second overview")
+	host._advance_hold_wait(0.12)
+	check(state.warzone.clock_ms == 120 and not state.navigation.leg_active,
+		"Holding advances the strategic clock continuously without moving the player")
+	host._end_hold_wait(true, false)
+	check(state.warzone.clock_ms == 500 and not host._wait_hold_active
+		and button.text == "Hold to Wait",
+		"Releasing a short hold rounds time forward to the next half-second")
+	button.button_up.emit()
+	check(state.warzone.clock_ms == 500, "Redundant release cannot double-spend strategic time")
+	button.button_down.emit()
+	host._advance_hold_wait(0.7)
+	host._end_hold_wait(true, false)
+	check(state.warzone.clock_ms == 1500,
+		"Seven-tenths of a second rounds up to a full second")
+	button.button_down.emit()
+	host._advance_hold_wait(1.35)
+	host._end_hold_wait(true, false)
+	check(state.warzone.clock_ms == 3000,
+		"Longer holds round upward in consistent half-second increments")
+	button.button_down.emit()
+	host._end_hold_wait(true, false)
+	check(state.warzone.clock_ms == 3500,
+		"Even a fast tap commits only the minimum half-second")
+	button.button_down.emit()
+	host.screen.overview_hud.wait_touch_index = 5
+	host._advance_hold_wait(0.18)
+	var other_finger := InputEventScreenTouch.new()
+	other_finger.index = 6
+	other_finger.pressed = false
+	host._input(other_finger)
+	check(host._wait_hold_active and state.warzone.clock_ms == 3680,
+		"Releasing another finger does not cancel a held Wait")
+	var released := InputEventScreenTouch.new()
+	released.index = 5
+	released.pressed = false
+	host._input(released)
+	check(not host._wait_hold_active and state.warzone.clock_ms == 4000,
+		"Global touch-up reliably finishes and rounds waiting even if the button misses the release")
+	var stored = Save.new().decode(Save.encode(state), state.rules)
+	check(stored != null and stored.warzone.clock_ms == state.warzone.clock_ms,
+		"Rounded strategic time survives a save/load checkpoint")
+	button.button_down.emit()
+	host._advance_hold_wait(0.2)
+	host.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
+	check(not host._wait_hold_active and state.warzone.clock_ms == 4200,
+		"App suspension ends the hold without charging an unseen rounding interval")
+	host.notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	host.queue_free()
 	await process_frame
 
@@ -338,6 +406,7 @@ func run() -> void:
 	await check_inspection_input()
 	await check_battlefield_framing()
 	await check_one_second_wait()
+	await check_hold_to_wait()
 	await check_defense()
 	await check_disabled()
 	print("Strategic time overview: %d checks, %d failures" % [checks, failures])

@@ -35,8 +35,8 @@ func run() -> void:
 		and presentation.paths.get_surface_count() == 1 and presentation.order_paths.get_surface_count() == 1
 		and presentation._order_colors.has(Color("cf5365")) and operation.clock_ms == 0,
 		"On entry, Lattice and hostile routes are visible before strategic time advances")
-	check(hud.wait_button.visible and hud.wait_button.text.contains("1"),
-		"The universal one-second Wait action is available")
+	check(hud.wait_button.visible and hud.wait_button.text == "Hold to Wait",
+		"The universal Hold to Wait control is available")
 	check(hud.war_effort_bar.visible and hud.lattice_button.visible and operation.engagement_count() == 2,
 		"War Effort, lattice control and two opening engagements")
 	# Mission emphasis uses real objective roles, without changing the simulation.
