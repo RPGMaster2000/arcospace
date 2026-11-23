@@ -1167,7 +1167,9 @@ func _end_hold_wait(round_forward: bool = true, sample_now: bool = true) -> void
 	if is_instance_valid(star_map):
 		star_map.strategic_time_active = false
 		star_map.consume_gesture()
-	if is_instance_valid(screen): screen.overview_hud.set_wait_held(false)
+	if is_instance_valid(screen):
+		screen.overview_hud.set_wait_held(false)
+		screen.overview_hud.wait_touch_index = -1
 	if state != null and not _application_suspended: state.progress_committed.emit()
 
 
@@ -2209,6 +2211,18 @@ func _cancel_decoy(restore_camera: bool = true) -> void:
 		decoy_panel.hide()
 		decoy_panel.queue_free()
 	decoy_camera.clear()
+
+# A Control may stop receiving touch-up when strategic-time mode changes the
+# map's input state while pressed. Capture matching releases before GUI dispatch.
+func _input(event: InputEvent) -> void:
+	if not _wait_hold_active: return
+	if event is InputEventScreenTouch and not event.pressed:
+		var touch_index: int = screen.overview_hud.wait_touch_index if is_instance_valid(screen) else -1
+		if touch_index < 0 or event.index == touch_index:
+			_end_hold_wait()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_end_hold_wait()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _capture_hold >= 0 and event.is_action_pressed("ui_cancel"):
