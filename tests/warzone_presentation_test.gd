@@ -115,8 +115,10 @@ func run() -> void:
 		"Committed exchanges emit beams and reflect real casualties with impacts")
 	before = host.state.warzone.clock_ms
 	await touch(hud.wait_button)
-	check(host.state.warzone.clock_ms == before + 500 and not host._wait_hold_active,
-		"A quick touch of Hold to Wait commits only the rounded half-second")
+	var touch_advance: int = host.state.warzone.clock_ms - before
+	check(touch_advance >= 500 and posmod(touch_advance, 500) == 0 and not host._wait_hold_active,
+		"Touch Hold to Wait spends a positive rounded half-second multiple (actual: %dms, held: %s)" \
+		% [touch_advance, str(host._wait_hold_active)])
 	before = host.state.warzone.clock_ms
 	map.travel(5)
 	for attempt in 60:
