@@ -349,13 +349,28 @@ func check_hold_to_wait() -> void:
 	host._end_hold_wait(true, false)
 	check(state.warzone.clock_ms == 3500,
 		"Even a fast tap commits only the minimum half-second")
+	button.button_down.emit()
+	host.screen.overview_hud.wait_touch_index = 5
+	host._advance_hold_wait(0.18)
+	var other_finger := InputEventScreenTouch.new()
+	other_finger.index = 6
+	other_finger.pressed = false
+	host._input(other_finger)
+	check(host._wait_hold_active and state.warzone.clock_ms == 3680,
+		"Releasing another finger does not cancel a held Wait")
+	var released := InputEventScreenTouch.new()
+	released.index = 5
+	released.pressed = false
+	host._input(released)
+	check(not host._wait_hold_active and state.warzone.clock_ms == 4000,
+		"Global touch-up reliably finishes and rounds waiting even if the button misses the release")
 	var stored = Save.new().decode(Save.encode(state), state.rules)
 	check(stored != null and stored.warzone.clock_ms == state.warzone.clock_ms,
 		"Rounded strategic time survives a save/load checkpoint")
 	button.button_down.emit()
 	host._advance_hold_wait(0.2)
 	host.notification(Node.NOTIFICATION_APPLICATION_PAUSED)
-	check(not host._wait_hold_active and state.warzone.clock_ms == 3700,
+	check(not host._wait_hold_active and state.warzone.clock_ms == 4200,
 		"App suspension ends the hold without charging an unseen rounding interval")
 	host.notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	host.queue_free()
