@@ -897,7 +897,10 @@ func final_defense_convergence() -> void:
 	var edge := _edge(root_site, target)
 	if edge not in op.links: op.links.append(edge)
 	op.player_intervened = true
-	op._award("final-stand-fixture", op.tuning.effort_goal, "Final stand")
+	# Save validation caps individual War Effort awards at 50; earn the
+	# required sixty from two legitimate ledger entries.
+	op._award("final-stand-fixture", 50, "Final stand")
+	op._award("final-stand-fixture:2", op.tuning.effort_goal - 50, "Final stand support")
 	op.final_command = target
 	op._refresh_supply()
 	var position: Vector3 = op.objectives[target].position
