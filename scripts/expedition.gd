@@ -1139,7 +1139,9 @@ func _start_hold_wait() -> void:
 	_wait_hold_elapsed = 0.0
 	_wait_hold_clock_usec = Time.get_ticks_usec()
 	if is_instance_valid(star_map):
-		star_map.consume_gesture()
+		# The Wait button is already a reserved map hit region. Consuming the
+		# gesture here would swallow the matching touch-up before it can
+		# finalize and round the hold.
 		star_map.strategic_time_active = true
 	screen.overview_hud.set_wait_held(true)
 
