@@ -201,6 +201,12 @@ func _ready() -> void:
 	preload("res://scripts/ui/encounter_presentation.gd").action(wait_button)
 	wait_button.button_down.connect(func(): warzone_wait_held.emit(true))
 	wait_button.button_up.connect(func(): warzone_wait_held.emit(false))
+	# Godot's touchscreen action path can deliver GUI touch events without
+	# emitting the mouse-oriented button_down/up pair. Handle both directly;
+	# the coordinator ignores repeated starts and releases.
+	wait_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventScreenTouch:
+			warzone_wait_held.emit(event.pressed))
 	status_actions.add_child(wait_button)
 	lattice_button = Button.new()
 	lattice_button.text = "Lattice"
