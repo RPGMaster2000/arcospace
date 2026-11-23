@@ -44,6 +44,7 @@ var _warning_fade: Tween
 var wait_button: Button
 var _wait_held := false
 var _wait_elapsed := 0.0
+var wait_touch_index := -1
 var pressure_bar: ProgressBar
 var pressure_fill: StyleBoxFlat
 var pressure_gap: Control
@@ -206,6 +207,7 @@ func _ready() -> void:
 	# the coordinator ignores repeated starts and releases.
 	wait_button.gui_input.connect(func(event: InputEvent):
 		if event is InputEventScreenTouch:
+			if event.pressed: wait_touch_index = event.index
 			warzone_wait_held.emit(event.pressed))
 	status_actions.add_child(wait_button)
 	lattice_button = Button.new()
