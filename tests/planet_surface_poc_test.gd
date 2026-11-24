@@ -31,11 +31,11 @@ func run() -> void:
 			Surface.height_at(point.x, point.y, a_again, b_again)),
 			"Fixed seed generates the same surface height")
 	check(Surface.POI_SITES.size() == 4, "Exactly four non-living locations")
-	var preview := Preview.instantiate()
+	var preview = Preview.instantiate()
 	root.add_child(preview)
 	await process_frame
 	check(preview.get_node_or_null("Terrain") is MeshInstance3D, "Procedural terrain exists")
-	var ground: MeshInstance3D = preview.get_node("Terrain")
+	var ground := preview.get_node("Terrain") as MeshInstance3D
 	check(ground.mesh.get_surface_count() == 1, "Terrain contains one surface")
 	check(ground.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() == 64 * 64 * 6,
 		"Expected low-poly triangle count")
