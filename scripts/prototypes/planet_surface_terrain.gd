@@ -2,8 +2,9 @@ extends RefCounted
 ## Small seeded low-poly surface for the stand-alone Exploration prototype.
 ## Independent of expedition RNG, planet assets, and campaign/save state.
 
-const HALF_SIZE := 64.0
-const GRID_COUNT := 64
+## Render a generous surrounding landscape so the map never ends at the flight boundary.
+const HALF_SIZE := 192.0
+const GRID_COUNT := 128
 const STEP := HALF_SIZE * 2.0 / GRID_COUNT
 const POI_SITES := [
 	Vector2(-29.0, -24.0), # signal spire
@@ -62,9 +63,8 @@ static func terrain_mesh(hills: FastNoiseLite, ridges: FastNoiseLite, details: F
 			var c := Vector3(x, height_at(x, z + STEP, hills, ridges), z + STEP)
 			var d := Vector3(x + STEP, height_at(x + STEP, z + STEP, hills, ridges), z + STEP)
 			# Separate triangle vertices create deliberate low-poly facets.
-			_triangle(surface, a, c, b, terrain_color((a.y + b.y + c.y) / 3.0, x, z, details))
-			_triangle(surface, b, c, d, terrain_color((b.y + c.y + d.y) / 3.0, x + STEP, z + STEP, details))
-	surface.generate_normals()
+			_triangle(surface, a, b, c, terrain_color((a.y + b.y + c.y) / 3.0, x, z, details))
+			_triangle(surface, b, d, c, terrain_color((b.y + c.y + d.y) / 3.0, x + STEP, z + STEP, details))
 	var mesh := surface.commit()
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
@@ -74,6 +74,10 @@ static func terrain_mesh(hills: FastNoiseLite, ridges: FastNoiseLite, details: F
 
 
 static func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
+	# Godot uses clockwise front faces. Reverse the conventional cross product
+	# to supply an explicit upward-facing flat normal for every triangle.
+	var normal := (c - a).cross(b - a).normalized()
 	for vertex in [a, b, c]:
+		surface.set_normal(normal)
 		surface.set_color(color)
 		surface.add_vertex(vertex)
