@@ -33,7 +33,7 @@ static func height_at(x: float, z: float, hills: FastNoiseLite, ridges: FastNois
 	for site in landing_sites:
 		var distance := Vector2(x, z).distance_to(site)
 		if distance < 9.0:
-			var blend := smoothstep(9.0, 3.0, distance)
+			var blend := 1.0 - smoothstep(3.0, 9.0, distance)
 			height = lerpf(height, 0.8, blend)
 	return height
 
