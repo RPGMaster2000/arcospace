@@ -18,7 +18,12 @@ const POIS := [
 ]
 const FLIGHT_SPEED := 19.0
 const ARRIVAL_DISTANCE := 1.5
-const FLY_HEIGHT := 2.8
+## Fixed global flight plane clears the highest terrain, rocks and spire.
+const FLIGHT_ALTITUDE := 19.0
+const FLIGHT_BOUND := 60.0
+const CAMERA_BOUND := 60.0
+const DRAG_THRESHOLD := 12.0
+const CAMERA_OFFSET := Vector3(0, 88, 51)
 const CAMERA_MIN_SIZE := 32.0
 const CAMERA_MAX_SIZE := 110.0
 
@@ -34,9 +39,16 @@ var destination_poi := -1
 var poi_nodes: Array[Node3D] = []
 var status_label: Label
 var _camera_size := 78.0
-var _touch_origin := Vector2.ZERO
-var _touch_active := false
+var camera_center := Vector2(0, 6)
+var _mouse_down := false
+var _mouse_dragged := false
+var _pointer_origin := Vector2.ZERO
+var _pointer_previous := Vector2.ZERO
+var _touches: Dictionary = {}
 var _touch_dragged := false
+var _pinch_distance := 0.0
+var _pending_pick := false
+var _pick_screen := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -79,6 +91,7 @@ func _build_lighting() -> void:
 	camera.far = 350.0
 	camera.current = true
 	add_child(camera)
+	_apply_camera()
 
 
 func _build_terrain() -> void:
@@ -236,7 +249,7 @@ func _label(parent: Node3D, title: String, at_height: float) -> void:
 func _build_ship() -> void:
 	ship = Models.ship(PLAYER, false)
 	ship.name = "PlayerShip"
-	ship.position = Vector3(0, surface_height(0, 6) + FLY_HEIGHT, 6)
+	ship.position = Vector3(0, FLIGHT_ALTITUDE, 6)
 	ship.scale = Vector3.ONE * 1.2
 	add_child(ship)
 	destination = Vector2(0, 6)
@@ -292,7 +305,7 @@ func _build_hud() -> void:
 	heading.add_theme_font_size_override("font_size", 18)
 	info.add_child(heading)
 	var hint := Label.new()
-	hint.text = "PROOF OF CONCEPT  •  NO ASSETS\nTap/click ground to fly\nMouse wheel or Zoom buttons to scale"
+	hint.text = "PROOF OF CONCEPT  •  NO ASSETS\nTap/click ground to fly\nDrag to pan • Pinch/wheel to zoom"
 	info.add_child(hint)
 	var controls := HBoxContainer.new()
 	info.add_child(controls)
@@ -301,6 +314,10 @@ func _build_hud() -> void:
 		zoom_button.text = "Zoom +" if direction < 0 else "Zoom −"
 		zoom_button.pressed.connect(_zoom.bind(float(direction)))
 		controls.add_child(zoom_button)
+	var center_button := Button.new()
+	center_button.text = "Center ship"
+	center_button.pressed.connect(_center_ship)
+	controls.add_child(center_button)
 	var locations := _make_panel(ui, true)
 	var title := Label.new()
 	title.text = "SURFACE CONTACTS"
@@ -319,7 +336,39 @@ func _build_hud() -> void:
 
 
 func _zoom(direction: float) -> void:
-	_camera_size = clampf(_camera_size * (1.1 if direction > 0.0 else 0.9), CAMERA_MIN_SIZE, CAMERA_MAX_SIZE)
+	_zoom_factor(1.1 if direction > 0.0 else 0.9)
+
+
+func _zoom_factor(factor: float) -> void:
+	_camera_size = clampf(_camera_size * factor, CAMERA_MIN_SIZE, _max_camera_size())
+
+
+func _max_camera_size() -> float:
+	# Keep the entire view on generated ground, even on unusually wide displays.
+	var aspect := get_viewport().get_visible_rect().size.aspect()
+	return minf(CAMERA_MAX_SIZE, (Terrain.HALF_SIZE - CAMERA_BOUND - 8.0) * 2.0 / maxf(1.0, aspect))
+
+
+func _apply_camera() -> void:
+	var center := Vector3(camera_center.x, 1.0, camera_center.y)
+	camera.position = center + CAMERA_OFFSET
+	camera.look_at(center, Vector3.UP)
+
+
+func _center_ship() -> void:
+	camera_center = Vector2(ship.position.x, ship.position.z).clamp(Vector2.ONE * -CAMERA_BOUND, Vector2.ONE * CAMERA_BOUND)
+	_apply_camera()
+
+
+func pan_screen(from: Vector2, to: Vector2) -> void:
+	var plane := Plane(Vector3.UP, 1.0)
+	var start: Variant = plane.intersects_ray(camera.project_ray_origin(from), camera.project_ray_normal(from))
+	var finish: Variant = plane.intersects_ray(camera.project_ray_origin(to), camera.project_ray_normal(to))
+	if start == null or finish == null:
+		return
+	var shift: Vector3 = start - finish
+	camera_center = (camera_center + Vector2(shift.x, shift.z)).clamp(Vector2.ONE * -CAMERA_BOUND, Vector2.ONE * CAMERA_BOUND)
+	_apply_camera()
 
 
 func _process(delta: float) -> void:
@@ -330,7 +379,7 @@ func _process(delta: float) -> void:
 		var next := current.move_toward(destination, FLIGHT_SPEED * delta)
 		var direction := (destination - current).normalized()
 		ship.rotation.y = lerp_angle(ship.rotation.y, atan2(direction.x, direction.y), minf(1.0, delta * 5.0))
-		ship.position = Vector3(next.x, surface_height(next.x, next.y) + FLY_HEIGHT, next.y)
+		ship.position = Vector3(next.x, FLIGHT_ALTITUDE, next.y)
 		if next.distance_to(destination) <= ARRIVAL_DISTANCE:
 			moving = false
 			if destination_poi >= 0:
@@ -338,11 +387,19 @@ func _process(delta: float) -> void:
 				status_label.text = "%s — %s  (visual inspection only)" % [data.name, data.detail]
 			else:
 				status_label.text = "Survey position reached. Four structures are available to inspect."
-	var target := ship.position
-	var camera_at := target + Vector3(0, 68, 65)
-	camera.global_position = camera.global_position.lerp(camera_at, 1.0 - exp(-5.0 * delta))
-	camera.look_at(target, Vector3.UP)
-	camera.size = lerpf(camera.size, _camera_size, 1.0 - exp(-8.0 * delta))
+	_camera_size = minf(_camera_size, _max_camera_size())
+	camera.size = minf(lerpf(camera.size, _camera_size, 1.0 - exp(-8.0 * delta)), _max_camera_size())
+
+
+func _physics_process(_delta: float) -> void:
+	if _pending_pick:
+		_pending_pick = false
+		_fly_to(_pick_screen)
+
+
+func _queue_pick(screen: Vector2) -> void:
+	_pick_screen = screen
+	_pending_pick = true
 
 
 func approach_poi(index: int) -> void:
@@ -369,12 +426,69 @@ func _fly_to(screen: Vector2) -> void:
 			approach_poi(i)
 			return
 	destination_poi = -1
-	destination = Vector2(clampf(point.x, -60.0, 60.0), clampf(point.z, -60.0, 60.0))
+	destination = Vector2(point.x, point.z).clamp(Vector2.ONE * -FLIGHT_BOUND, Vector2.ONE * FLIGHT_BOUND)
 	moving = true
 	status_label.text = "Moving across the planetary surface..."
 
 
+# Own a gesture after it begins on the map, including releases over a HUD panel.
+# New gestures begin only in unhandled input, so HUD controls retain priority.
+func _input(event: InputEvent) -> void:
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	if event is InputEventMouseMotion and _mouse_down:
+		_drag_mouse(event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and _mouse_down:
+		_drag_mouse(event.position)
+		if not _mouse_dragged:
+			_queue_pick(event.position)
+		_mouse_down = false
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and _touches.has(event.index):
+		_drag_touch(event.index, event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch and not event.pressed and _touches.has(event.index):
+		var last := _touches.size() == 1
+		if last and not _touch_dragged and not event.canceled:
+			if event.position.distance_to(_pointer_origin) <= DRAG_THRESHOLD:
+				_queue_pick(event.position)
+		_touches.erase(event.index)
+		_pinch_distance = 0.0
+		if not _touches.is_empty():
+			_pointer_previous = _touches.values()[0]
+		get_viewport().set_input_as_handled()
+
+
+func _drag_mouse(point: Vector2) -> void:
+	if not _mouse_dragged and point.distance_to(_pointer_origin) >= DRAG_THRESHOLD:
+		_mouse_dragged = true
+	if _mouse_dragged:
+		pan_screen(_pointer_previous, point)
+		_pointer_previous = point
+
+
+func _drag_touch(index: int, point: Vector2) -> void:
+	_touches[index] = point
+	if _touches.size() >= 2:
+		var positions := _touches.values()
+		var distance: float = positions[0].distance_to(positions[1])
+		if _pinch_distance > 1.0 and distance > 1.0:
+			_zoom_factor(_pinch_distance / distance)
+		_pinch_distance = distance
+		_touch_dragged = true
+	else:
+		if not _touch_dragged and point.distance_to(_pointer_origin) >= DRAG_THRESHOLD:
+			_touch_dragged = true
+		if _touch_dragged:
+			pan_screen(_pointer_previous, point)
+			_pointer_previous = point
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	# Avoid handling synthetic mouse events a second time after native touch.
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom(-1.0)
@@ -383,20 +497,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			_zoom(1.0)
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
-			_fly_to(event.position)
+			_mouse_down = true
+			_mouse_dragged = false
+			_pointer_origin = event.position
+			_pointer_previous = event.position
 			get_viewport().set_input_as_handled()
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			_touch_active = true
+	elif event is InputEventScreenTouch and event.pressed:
+		if _touches.is_empty():
 			_touch_dragged = false
-			_touch_origin = event.position
-		elif _touch_active:
-			if not _touch_dragged:
-				_fly_to(event.position)
-			_touch_active = false
-			get_viewport().set_input_as_handled()
-	elif event is InputEventScreenDrag and _touch_active:
-		if event.position.distance_to(_touch_origin) > 16.0:
+			_pointer_origin = event.position
+			_pointer_previous = event.position
+		_touches[event.index] = event.position
+		if _touches.size() >= 2:
+			var positions := _touches.values()
+			_pinch_distance = positions[0].distance_to(positions[1])
 			_touch_dragged = true
+		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		get_tree().quit()
