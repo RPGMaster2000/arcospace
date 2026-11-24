@@ -37,9 +37,27 @@ func run() -> void:
 	check(preview.get_node_or_null("Terrain") is MeshInstance3D, "Procedural terrain exists")
 	var ground := preview.get_node("Terrain") as MeshInstance3D
 	check(ground.mesh.get_surface_count() == 1, "Terrain contains one surface")
-	check(ground.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() == 64 * 64 * 6,
+	check(ground.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() == Surface.GRID_COUNT * Surface.GRID_COUNT * 6,
 		"Expected low-poly triangle count")
+	var arrays := ground.mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var facing_up := true
+	for i in range(0, vertices.size(), 3):
+		var normal := (vertices[i + 2] - vertices[i]).cross(vertices[i + 1] - vertices[i])
+		if normal.y <= 0.0 or normals[i].y <= 0.0 or normals[i + 1].y <= 0.0 or normals[i + 2].y <= 0.0:
+			facing_up = false
+			break
+	check(facing_up, "Every triangle has Godot clockwise winding and upward normals")
+	check(Surface.HALF_SIZE > preview.CAMERA_BOUND + preview.CAMERA_MAX_SIZE * 0.5 * 16.0 / 9.0,
+		"Terrain extends beyond the panned, fully zoomed-out view")
 	check(ground.get_child_count() > 0, "Ground has picking collision")
+	await physics_frame
+	await physics_frame
+	var world: World3D = preview.get_world_3d()
+	for point in [Vector2.ZERO, Vector2(-39, 42), Vector2(120, -120)]:
+		var query := PhysicsRayQueryParameters3D.create(Vector3(point.x, 40, point.y), Vector3(point.x, -40, point.y))
+		check(not world.direct_space_state.intersect_ray(query).is_empty(), "Terrain picks from above at %s" % point)
 	check(preview.poi_nodes.size() == 4 and preview.get_node("SurfacePOIs").get_child_count() == 4,
 		"Four recognizable PoIs are built")
 	for location in preview.poi_nodes:
@@ -50,6 +68,23 @@ func run() -> void:
 		"PoI inspection commands the ship to fly there")
 	preview.approach_poi(-1)
 	check(preview.destination_poi == 1, "Invalid destination does not reset current route")
+	var initial_y: float = preview.ship.position.y
+	var original_center: Vector2 = preview.camera_center
+	preview.pan_screen(Vector2(640, 360), Vector2(740, 360))
+	check(preview.camera_center.distance_to(original_center) > 0.5, "Dragging pans the camera")
+	var panned_center: Vector2 = preview.camera_center
+	preview.set_process(false)
+	for step in range(12):
+		preview._process(0.1)
+		check(is_equal_approx(preview.ship.position.y, initial_y), "Ship stays at a constant global altitude")
+	check(preview.ship.position.y == preview.FLIGHT_ALTITUDE, "Ship uses the fixed flight plane")
+	check(preview.camera_center == panned_center, "Camera stays panned while ship moves")
+	check(preview.ship.position.y > ground.mesh.get_aabb().end.y + 5.0, "Flight plane clears the terrain")
+	preview._center_ship()
+	check(preview.camera_center.is_equal_approx(Vector2(preview.ship.position.x, preview.ship.position.z)), "Center control returns to ship")
+	var zoom_before: float = preview._camera_size
+	preview._zoom_factor(0.8)
+	check(preview._camera_size < zoom_before, "Pinch-in factor zooms closer")
 	preview.queue_free()
 	await process_frame
 	print("Planet surface PoC: %d checks, %d failures" % [checks, failures])
