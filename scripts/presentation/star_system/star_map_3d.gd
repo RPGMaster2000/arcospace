@@ -550,6 +550,7 @@ func _process(delta: float) -> void:
 		_space_lattice_names(placed_enemies)
 	elif system_variation.get("version") == 2:
 		_space_environment_markers()
+	if is_instance_valid(convoy_route_visual): convoy_route_visual.project_beacon(self)
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -1484,6 +1485,11 @@ func sync_defense(snapshot: Dictionary) -> void:
 		objects[index].visible = active
 		markers[index].disabled = not active
 		markers[index].tooltip_text = "Mothership · Neutralize to unlock FTL" if unit.mothership else "Incoming attacker → HOMEWORLD"
+		var hunter: bool = unit.get("target_kind") == "convoy"
+		if hunter != markers[index].has_meta("evacuation_pursuit"):
+			if hunter: markers[index].set_meta("evacuation_pursuit", true)
+			else: markers[index].remove_meta("evacuation_pursuit")
+			markers[index].set_objective("➤" if hunter else "")
 		match unit.get("target_kind"):
 			"convoy": markers[index].tooltip_text = "Pursuing evacuation convoy · ETA %.1fs" % unit.convoy_eta
 			"decoy": markers[index].tooltip_text = "Diverted toward tactical decoy"
@@ -1522,12 +1528,12 @@ func _sync_convoy(record: Dictionary) -> void:
 	if active and not objects.has(index):
 		var model := Models.ship(preload("res://ships/player/ganymede.tres"), true)
 		model.scale = Vector3.ONE * 0.46
-		_add_contact_marker(index, model, "Evacuation Convoy", "◇", ConvoyVisual.TINT)
+		_add_contact_marker(index, model, "Evacuation Convoy", "🚀", ConvoyVisual.TINT)
 	if not objects.has(index): return
 	if active and (not is_instance_valid(convoy_route_visual) or convoy_route_visual.get_parent() != visual_root):
 		convoy_route_visual = ConvoyVisual.new()
 		visual_root.add_child(convoy_route_visual)
-		convoy_route_visual.configure(record.route)
+		convoy_route_visual.configure(record.route, self)
 	if is_instance_valid(convoy_route_visual): convoy_route_visual.visible = active
 	objects[index].visible = active
 	markers[index].disabled = not active
@@ -1540,7 +1546,7 @@ func _sync_convoy(record: Dictionary) -> void:
 		objects[index].basis = _facing_basis(next - position_now) * Basis.from_scale(Vector3.ONE * 0.46)
 	var caption := "Evacuation Convoy · %d/%d" % [record.integrity, record.maximum_integrity]
 	if markers[index].tooltip_text != caption:
-		markers[index].set_label(caption, "◇", true)
+		markers[index].set_label(caption, "🚀", true)
 		markers[index].tooltip_text = caption
 
 func _sync_missiles(records: Array, home: Vector3) -> void:

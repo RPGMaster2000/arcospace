@@ -165,6 +165,11 @@ func outcomes() -> void:
 	hp = fleet.integrity
 	advance(run, 0.2)
 	check(fleet.integrity == hp and not run.can_jump(), "Stationary punitive contact cannot damage Homeworld twice")
+	for reserved in fleet.units:
+		if reserved.status == "secured": run.encounters[reserved.encounter].completed = true
+	var settled := reload_run(run)
+	check(settled != null and settled.defense.unit_for(convoy.punitive_index).get("holding", false) and not settled.can_jump()
+		and settled.defense.integrity == hp, "Stationary mandatory contact and damage survive resume")
 	for unit in fleet.units:
 		if unit.status == "active" and not unit.get("punitive", false):
 			fleet.neutralize(unit.encounter)
@@ -254,11 +259,33 @@ func priorities() -> void:
 	check(terminal_fleet.convoy.activity == "extracted" and terminal_fleet.complete and terminal._claim_evacuation() + settled.get("convoy_reward", 0) == 15, "Winning the battlefield safely resolves a surviving convoy")
 
 
+func last_missile() -> void:
+	var run := controlled()
+	var fleet: RefCounted = run.defense
+	fleet.revealed = true
+	var missile_id: int = fleet.missiles.next_id
+	var mother: Dictionary = fleet.unit_for(fleet.mothership_index())
+	fleet.missiles.next_id += 1
+	fleet.missiles.active[missile_id] = {"origin":mother.position, "remaining":mother.position.distance_to(fleet.home), "hull":fleet.tuning.missile_hull}
+	fleet.missiles.pending = missile_id
+	for unit in fleet.units:
+		if fleet.available(unit):
+			fleet.neutralize(unit.encounter)
+			run.encounters[unit.encounter].completed = true
+		if unit.status == "secured": run.encounters[unit.encounter].completed = true
+	check(not fleet.complete and fleet.convoy.traveling(), "A live missile blocks safe battlefield evacuation")
+	var before: int = run.salvage
+	check(run.resolve_missile(missile_id, "direct") and run.can_jump(), "Last missile resolves the sector and evacuation at once")
+	check(fleet.convoy.reward_claimed and run.salvage == before + 15 + fleet.tuning.secured_salvage, "Missile resolution pays exactly one evacuation and secured reward")
+	check(not run.resolve_missile(missile_id, "direct") and run._claim_evacuation() == 0, "Repeating missile resolution cannot duplicate evacuation currency")
+
+
 func _initialize() -> void:
 	generation()
 	movement()
 	outcomes()
 	decoys_and_pressure()
 	priorities()
+	last_missile()
 	print("Starfront convoy: %d checks, %d failures" % [checks, failures])
 	quit(int(failures > 0))

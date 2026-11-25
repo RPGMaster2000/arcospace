@@ -88,6 +88,7 @@ available from their map control on the left, leaving the FTL panel clear.
 
 | View | Mobile Vulkan | GL Compatibility |
 |---|---|---|
+| Civilian evacuation, System 5 seed 39 | See the rendered convoy test | [Compatibility](starfront_defense_v2/convoy-gl_compatibility.webp) |
 | Initial fleet, orbits and FTL HUD | [Mobile](starfront_defense_v2/fleet-and-orbits-mobile.png) | [Compatibility](starfront_defense_v2/fleet-and-orbits-gl_compatibility.png) |
 | Mothership reveal at pressure 50 | [Mobile](starfront_defense_v2/reveal-mobile.png) | [Compatibility](starfront_defense_v2/reveal-gl_compatibility.png) |
 | Missile on approach | [Mobile](starfront_defense_v2/missile-flight-mobile.png) | [Compatibility](starfront_defense_v2/missile-flight-gl_compatibility.png) |

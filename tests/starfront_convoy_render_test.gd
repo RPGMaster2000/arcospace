@@ -58,8 +58,9 @@ func run() -> void:
 	var convoy: RefCounted = state.defense.convoy
 	var start: Vector3 = convoy.position()
 	check(map.objects.has(Convoy.MARKER) and map.objects[Convoy.MARKER].visible, "Rendered evacuation transport")
-	check(map.convoy_route_visual.visible and map.convoy_route_visual.extraction_label.text == "EVAC BEACON", "Distinct route and extraction beacon")
-	check(map.markers[convoy.pursuers.front()].tooltip_text.contains("Pursuing evacuation convoy"), "Hostile route has an evacuation target")
+	check(map.convoy_route_visual.visible and map.convoy_route_visual.extraction_label.visible and map.convoy_route_visual.extraction_label.text == "EVAC BEACON", "Distinct route and extraction beacon")
+	var hostile: Button = map.markers[convoy.pursuers.front()]
+	check(hostile.tooltip_text.contains("Pursuing evacuation convoy") and hostile.has_meta("evacuation_pursuit"), "Pursuer has a visible badge and evacuation target")
 	check(Details.text(state).contains("Integrity 40 / 40") and Details.text(state).contains("mandatory elite"), "System Details shows secondary objective and consequences")
 	for size in [Vector2i(960,540), Vector2i(686,384)]:
 		root.size = size
@@ -96,7 +97,7 @@ func run() -> void:
 	host.phase = host.Phase.OVERVIEW
 	state._advance_strategy(convoy.remaining_seconds() + 0.01, player, player, true)
 	await settle()
-	check(not convoy.traveling() and not map.objects[Convoy.MARKER].visible and not map.convoy_route_visual.visible, "Resolved objective and beacon leave the map")
+	check(not convoy.traveling() and not map.objects[Convoy.MARKER].visible and not map.convoy_route_visual.visible and not map.convoy_route_visual.extraction_label.visible, "Resolved objective and beacon leave the map")
 	host.queue_free()
 	await create_timer(0.3).timeout
 	print("Starfront convoy rendering: %d checks, %d failures" % [checks, failures])

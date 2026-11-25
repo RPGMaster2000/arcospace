@@ -2,11 +2,11 @@ extends Node3D
 ## The route and beacon are presentation-only and use committed navigation points.
 const Models = preload("res://scripts/presentation/star_system/destination_models.gd")
 const TINT := Color("75e4c7")
-var extraction_label: Label3D
+var extraction_label: Label
 var extraction: Vector3
 
 
-func configure(route: Array) -> void:
+func configure(route: Array, map: Control) -> void:
 	var mesh := ImmediateMesh.new()
 	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in range(1, route.size()):
@@ -33,15 +33,40 @@ func configure(route: Array) -> void:
 	extraction = _point(route.back())
 	Models.ring(self, 1.65, TINT, extraction + Vector3.UP * 0.2).rotation.x = PI * 0.5
 	Models.beacon(self, extraction + Vector3.UP * 0.9, TINT, 0.33)
-	extraction_label = Label3D.new()
+	extraction_label = Label.new()
 	extraction_label.name = "EvacuationBeacon"
 	extraction_label.text = "EVAC BEACON"
-	extraction_label.position = extraction + Vector3.UP * 1.8
-	extraction_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	extraction_label.modulate = TINT
-	extraction_label.font_size = 26
-	extraction_label.pixel_size = 0.023
-	add_child(extraction_label)
+	extraction_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	extraction_label.z_index = 25
+	extraction_label.add_theme_font_size_override("font_size", 14)
+	extraction_label.add_theme_color_override("font_color", TINT)
+	extraction_label.add_theme_color_override("font_outline_color", Color("071616"))
+	extraction_label.add_theme_constant_override("outline_size", 5)
+	map.add_child(extraction_label)
+
+
+func project_beacon(map: Control) -> void:
+	extraction_label.visible = visible and not map.focused and not map.introducing and not map.camera.is_position_behind(extraction)
+	if not extraction_label.visible: return
+	var at: Vector2 = map.camera.unproject_position(extraction + Vector3.UP * 1.3)
+	var area := Rect2(Vector2.ZERO, map.size).grow(-4.0)
+	var extent := extraction_label.get_minimum_size()
+	extraction_label.visible = area.has_point(at)
+	if not extraction_label.visible: return
+	var position_at := at - Vector2(extent.x * 0.5, extent.y + 5.0)
+	var reserved: Array = map.hud_regions.duplicate()
+	for tag in map.markers.values():
+		if tag.visible: reserved.append(tag.get_rect().grow(3.0))
+	for shift in [Vector2.ZERO, Vector2(0, extent.y + 14), Vector2(extent.x, 0), Vector2(-extent.x, 0)]:
+		var candidate: Vector2 = (position_at + shift).clamp(area.position, area.end - extent)
+		if not reserved.any(func(rect): return rect.intersects(Rect2(candidate, extent))):
+			extraction_label.position = candidate
+			return
+	extraction_label.position = position_at.clamp(area.position, area.end - extent)
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(extraction_label): extraction_label.queue_free()
 
 
 static func _point(wire: Array) -> Vector3:
