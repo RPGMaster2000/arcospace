@@ -15,8 +15,12 @@ func check(ok: bool, message: String) -> void:
 		push_error(message)
 
 
-func fresh(faction: Resource, seed_value: int = 42) -> Resource:
+func fresh(faction: Resource, seed_value: int = 42, warfare: bool = false) -> Resource:
 	var config := Rules.duplicate(true)
+	# The original faction expansion contract also applies to legacy active systems.
+	# Keep those exact roster, class speed and damage assertions in their own fixture.
+	config.defense_tuning = Rules.defense_tuning.duplicate(true)
+	config.defense_tuning.procedural_warfare = warfare
 	config.game_mode = "defense"
 	config.warzone_campaign_enabled = false
 	config.log_rolls = false
@@ -92,6 +96,7 @@ func run() -> void:
 					next(state)
 					next(twin)
 	check(seen.size() == 8, "All eight new standards appear in seeded systems")
+	warfare_rosters()
 	for faction in Catalog.DEFAULTS:
 		for ship in Catalog.roster(faction):
 			if ship.minimum_defense_system == 1:
@@ -242,3 +247,49 @@ func run() -> void:
 	)
 	print("Faction expansion: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+
+# Also exercise the actual new doctrine on campaign transitions, not just the
+# developer launches covered in defense_warfare_test.gd. Do not allow an elite
+# from another faction or an ineligible future ship to satisfy the roster check.
+func warfare_rosters() -> void:
+	for faction in Catalog.DEFAULTS:
+		var elites_seen := 0
+		for seed_value in range(1, 11):
+			var state := fresh(faction, seed_value, true)
+			var twin := fresh(faction, seed_value, true)
+			for system in range(1, 7):
+				var fleet: RefCounted = state.defense
+				if system < 3:
+					check(fleet.military.is_empty(), "Opening systems retain the legacy faction doctrine")
+				else:
+					check(not fleet.military.is_empty(), "Later campaign system has a military scenario")
+				var elites := Catalog.defense_elites(faction, system)
+				for unit in fleet.units:
+					var ship: Resource = fleet.ship_profile(unit)
+					check(ship == twin.defense.ship_profile(twin.defense.unit_for(unit.encounter)),
+						"Campaign doctrine roster is deterministic")
+					if unit.mothership: continue
+					if ship.enemy_rank == 1:
+						check(system >= 3 and not fleet.military.is_empty() and ship in elites,
+							"Elite attacker belongs to the eligible faction Defense roster")
+						elites_seen += 1
+					else:
+						check(ship.enemy_rank == 0 and ship in Catalog.roster(faction, system),
+							"Standard attacker belongs to the eligible faction roster")
+					if not fleet.military.is_empty():
+						var data: Dictionary = fleet.deployment(unit)
+						check(fleet.Warfare.valid_deployment(data, ship), "Doctrine commits valid role metadata")
+						if data.is_empty(): continue
+						var role: Array = fleet.Warfare.ROLES[data.role]
+						check(is_equal_approx(fleet._speed(unit), fleet.tuning.enemy_speed * float(fleet.military.speed) * float(role[1])),
+							"Doctrine movement overrides legacy class multiplier exactly once")
+						check(fleet.arrival_damage(unit) == fleet.tuning.base_attack_damage + (5 if data.role == "siege" else 0),
+							"Doctrine arrival damage follows role")
+				var restored: Resource = Save.new().decode(Save.encode(state), state.rules)
+				check(restored != null and Save.encode(restored) == Save.encode(state),
+					"Campaign doctrine roster and roles survive an exact save roundtrip")
+				check(state.rng.state == twin.rng.state, "Campaign doctrine preserves deterministic gameplay stream")
+				if system < 6:
+					next(state)
+					next(twin)
+		check(elites_seen > 0, "Faction can deploy authentic eligible elites in later systems")
