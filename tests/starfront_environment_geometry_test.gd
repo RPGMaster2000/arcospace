@@ -180,6 +180,9 @@ func _initialize() -> void:
 	tampered = Variation.canonical(Save.encode(forced))
 	tampered.system_variation.star_radius = 20.0
 	check(Save.new().decode(tampered, current) == null, "Corrupt stellar radius is rejected")
+	tampered = Variation.canonical(Save.encode(forced))
+	tampered.environmental_instances.append(State.EnvironmentData.instance("incomplete", "SPACE_STORM"))
+	check(Save.new().decode(tampered, current) == null, "Incomplete hazard geometry is rejected")
 	check(forced.system_variation.poi_count == forced.encounters.filter(func(item): return item.kind == "poi").size(),
 		"Committed density matches the actual installations")
 	var prior: String = forced.system_variation.archetype

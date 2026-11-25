@@ -411,6 +411,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if later:
 		var bounds := State.SystemLayout.bounds(state.layout_expansion)
 		for item in state.environmental_instances:
+			if item.position.is_empty() or item.region.is_empty(): return null
 			var center := Vector2(item.position[0], item.position[2])
 			if not bounds.grow(0.001).has_point(center): return null
 			if item.type == EnvironmentData.Solar.TYPE:
