@@ -103,7 +103,7 @@ func high_tier_draw_checks() -> void:
 	var hand := Hand.new()
 	hand.card_pool.assign([card(1), card(85)])
 	hand.tier_three_chance = 1.0
-	hand.current_round = hand.tier_two_locked_turns
+	hand.current_round = hand.tier_three_locked_turns
 	check(hand.draw_card() == card(1), "Tier 3 respects the opening-round gate")
 	hand.current_round += 1
 	check(hand.draw_card() == card(85), "Owned Tier 3 cards are drawable after the opening rounds")
@@ -134,7 +134,7 @@ func reward_checks() -> void:
 	result.battles_won = 1
 	check(state.record_battle(result) and not state.record_battle(result), "Victory creates reward once")
 	check(state.pending_choice == "battle_reward" and state.card_offers.size() == 5, "Five victory offers")
-	check(state.card_offers.any(func(c): return c.tier == 3), "Tier 3 appears in victory offers")
+	check(state.card_offers.all(func(c): return c.tier < 3), "Ordinary victory has no Tier 3 slot")
 	var restored := Save.new().decode(JSON.parse_string(JSON.stringify(Save.encode(state))), state.rules)
 	check(restored != null and restored.pending_choice == "battle_reward", "Reward choice survives JSON save")
 	if restored == null: return

@@ -24,8 +24,9 @@ func legacy_draw(hand: Node) -> Resource:
 		if card != null and hand._eligible(card, -1) and (not hand.card_pool.is_empty() or card.signature_ship < 0): buckets[card.tier].append(card)
 	var roll: float = hand.rng.randf()
 	var tier: int = 1
-	if roll < hand.tier_three_chance: tier = 3
-	elif roll < hand.tier_three_chance + clampf(hand.tier_two_chance * hand.drop_multiplier, 0, 1): tier = 2
+	var tier_two_rate := clampf(hand.tier_two_chance * hand.drop_multiplier, 0, 1.0)
+	if roll < tier_two_rate: tier = 2
+	elif roll < tier_two_rate + hand.tier_three_chance: tier = 3
 	var eligible: Array = buckets[tier] if not buckets[tier].is_empty() else buckets[1]
 	if eligible.is_empty(): return null
 	var weights: Array[float] = []

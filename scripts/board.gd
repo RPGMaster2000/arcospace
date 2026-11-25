@@ -302,8 +302,9 @@ func _ready() -> void:
 		expedition.deck_changed.connect(_sync_expedition_hand)
 		starting_player_hull = player_hull
 	modifier.configure(int(setup_settings.get("modifier", 0)), battle_setup.battle_seed if battle_setup != null else -1)
+	if expedition != null and expedition.system_number < 3:
+		enemy_hand.tier_three_chance = 0.0
 	if battle_setup != null and battle_setup.battle_seed >= 0:
-		hand.tier_three_chance = 0.10 if hand.card_pool.any(func(card): return card.tier == 3) else 0.0
 		hand.rng.seed = battle_setup.battle_seed ^ 101
 		enemy_hand.rng.seed = battle_setup.battle_seed ^ 103
 		enemy_ai.rng.seed = battle_setup.battle_seed ^ 107

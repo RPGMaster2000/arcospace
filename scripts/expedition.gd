@@ -1394,9 +1394,14 @@ func _present_shop_cards(slot: int, revision: int, source: OutpostScreen) -> voi
 	_card_revision = _presentation_revision
 	source.cancel_selection()
 	screen.process_mode = Node.PROCESS_MODE_DISABLED
-	var price: int = state.service_cost(slot)
+	var prices := {}
+	for card in offers:
+		prices[card.identity_key()] = state.service_card_cost(slot, card)
+	var price_range := "%d Salvage" % int(prices.values().min())
+	if prices.values().min() != prices.values().max():
+		price_range = "%d–%d Salvage" % [prices.values().min(), prices.values().max()]
 	card_management.present("purchase", offers, 0, null, state.deck_limit(),
-		"%d Salvage · Balance after purchase: %d" % [price, state.salvage - price])
+		price_range, prices, state.salvage)
 
 
 func _shop_choice_current(revision: int) -> bool:

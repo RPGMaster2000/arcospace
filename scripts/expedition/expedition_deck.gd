@@ -2,6 +2,7 @@ extends RefCounted
 # RESPONSIBILITY: Own persistent card identities and card reward/upgrade transactions.
 # DOES NOT: Hold expedition/Board references, spend currency, resolve encounters or save.
 # Context and the authoritative reward RNG are supplied by ExpeditionState per operation.
+const Preferences = preload("res://scripts/cards/card_preferences.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const GANYMEDE = preload("res://ships/player/ganymede.tres")
 const GANYMEDE_LEGACY_CARD = preload("res://cards/06_shield_disruptor.tres")
@@ -53,9 +54,9 @@ func snapshot() -> Dictionary:
 
 
 # Same card-choice precedence and exact draw order; the coordinator owns non-card rewards.
-func start_card_reward(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int) -> String:
+func start_card_reward(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int, rare: bool = false) -> String:
 	pending_choice = "card"
-	card_offers = random_card_offers(profile, rules, rng, minimum_tier)
+	card_offers = random_card_offers(profile, rules, rng, minimum_tier, rare)
 	if card_offers.is_empty():
 		pending_choice = ""
 		return "\nNo unowned cards meet this reward's minimum tier."
@@ -71,7 +72,7 @@ func _ids(cards: Array[Resource]) -> Array[String]:
 func player_pool(profile: Resource) -> Array[Resource]:
 	var result: Array[Resource] = []
 	var starting: Array = (
-		profile.starting_cards if not profile.starting_cards.is_empty() else Cards.CARDS
+		profile.starting_cards if not profile.starting_cards.is_empty() else Cards.BASE_CARDS + Cards.PROTOTYPES
 	)
 	var seen: Dictionary = {}
 	var retained: Array = []
@@ -111,24 +112,48 @@ func available_reward_cards(profile: Resource, minimum_tier: int = 1, include_pr
 	return candidates
 
 
-func random_card_offers(profile: Resource, rules: Resource, rng: RandomNumberGenerator, minimum_tier: int = 1) -> Array[Resource]:
-	var candidates: Array[Resource] = available_reward_cards(profile, minimum_tier, true)
+func random_card_offers(
+	profile: Resource, rules: Resource, rng: RandomNumberGenerator,
+	minimum_tier: int = 1, rare: bool = false
+) -> Array[Resource]:
+	var candidates := available_reward_cards(profile, minimum_tier)
+	var ordinary := candidates.filter(func(card): return card.tier < 3)
+	var rare_cards := candidates.filter(func(card): return card.tier == 3)
+	var reserve_rare := (rare or minimum_tier == 3) and not rare_cards.is_empty()
 	var offers: Array[Resource] = []
-	for slot in range(mini(5, candidates.size())):
-		var preferred_tier := 2 if rng.randf() < rules.reward_tier_two_chance else 1
-		# Keep a late-tier option in a full five-card draft when one exists.
-		if slot == 4 and candidates.any(func(card): return card.tier >= 3):
-			preferred_tier = 3
-		var bucket: Array[Resource] = []
-		for card in candidates:
-			if card.tier == preferred_tier:
-				bucket.append(card)
+	for slot in mini(5 - int(reserve_rare), ordinary.size()):
+		var tier := 2 if rng.randf() < rules.reward_tier_two_chance else 1
+		var bucket := ordinary.filter(func(card): return card.tier == tier)
 		if bucket.is_empty():
-			bucket.assign(candidates)
+			bucket = ordinary
 		var chosen: Resource = bucket[rng.randi_range(0, bucket.size() - 1)]
 		offers.append(chosen)
-		candidates.erase(chosen)
+		ordinary.erase(chosen)
+	if reserve_rare:
+		offers.append(rare_cards[rng.randi_range(0, rare_cards.size() - 1)])
 	return offers
+
+
+# Extend the built-in roster while retaining its authored decks and prototype entries.
+# Keep candidates bounded and rank them using the same preferences as enemy draws.
+static func enemy_pool(profile: Resource, system: int, built_in: bool) -> Array[Resource]:
+	var pool: Array[Resource] = []
+	pool.assign(profile.starting_cards if profile != null and not profile.starting_cards.is_empty()
+		else Cards.BASE_CARDS)
+	if profile == null or system < 3 or not built_in:
+		return pool
+	for tier in [2, 3]:
+		if tier == 3 and profile.enemy_rank == 0 and system < 5:
+			break
+		var candidates: Array = Cards.SYNERGY_CARDS.filter(func(card): return card.tier == tier)
+		var weights := {}
+		for card in candidates:
+			weights[card] = Preferences.draw_weight(card, profile.card_family_weights, profile.card_effect_weights)
+		candidates.sort_custom(func(a, b):
+			return a.identity_key() < b.identity_key() if weights[a] == weights[b] else weights[a] > weights[b])
+		var limit := 6 if tier == 2 else (2 if profile.enemy_rank == 0 else 3)
+		pool.append_array(candidates.slice(0, limit))
+	return pool
 
 
 func deck_limit(profile: Resource, rules: Resource) -> int:

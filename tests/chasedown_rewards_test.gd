@@ -142,8 +142,9 @@ func run() -> void:
 		board.refresh_display()
 		var expected: int = [2,3,3][rank]
 		check(state.upgrades_remaining == expected, "Configured upgrades by rank")
-		if rank == 0:
-			check(state.choose_battle_reward(false), "Standard victory opens the existing upgrade allowance")
+		check(state.card_offers.filter(func(card): return card.tier == 3).size() == int(rank > 0),
+			"Elite and boss victories reserve exactly one rare choice")
+		check(state.choose_battle_reward(false), "Every rank retains the existing upgrade allowance")
 		var picked: Array = []
 		for n in range(expected):
 			var card = state.upgrade_candidates()[0]
