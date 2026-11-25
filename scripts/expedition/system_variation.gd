@@ -6,6 +6,7 @@ const ARCHETYPES = [
 ]
 const FORMATIONS = ["spread", "clustered", "staggered", "pincer", "vanguard", "unstructured"]
 const PALETTE = ["7451b3", "367ba8", "ad485b", "387d75", "686bb4"]
+const Weather = preload("res://scripts/expedition/extreme_weather.gd")
 const Solar = preload("res://scripts/expedition/solar_regions.gd")
 const MapSettings = preload("res://resources/presentation/star_system_settings.tres")
 const Settings = preload("res://scripts/expedition/system_variety_settings.gd")
@@ -175,6 +176,8 @@ static func later(profile: Dictionary, seed_value: int, system: int, settings: R
 	var tint: String = PALETTE[[2, 1, 4, 1, 0, 3, 2][index]]
 	for layer in profile.background:
 		if layer.kind != 4: layer.color = tint
+	var weather := Weather.plan(archetype, settings, rng_for(seed_value, system, "extreme-weather-budget"))
+	if not weather.is_empty(): profile.weather = weather
 	return canonical(profile)
 
 
@@ -289,6 +292,7 @@ static func valid(value: Variant) -> bool:
 				return false
 		if not number(layer.get("opacity"), 0, 0.4):
 			return false
+	if value.has("weather") and (value.version != 2 or not Weather.valid(value.weather, value.archetype)): return false
 	if value.version == 2:
 		if not number(value.get("star_radius"), 0.9, 3.41): return false
 		for key in ["size_class", "home_region", "star", "placement_attempt"]:

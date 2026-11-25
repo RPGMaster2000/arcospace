@@ -22,7 +22,10 @@ static func build(storm: Dictionary) -> Node3D:
 	var tint := Color.from_string(storm.visual.color, Color.WHITE)
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(2.0, 2.0)
-	for slice in SLICES:
+	var front: bool = storm.generation.get("front", false)
+	# Dense sectors can have nine overlapping fronts. One sheet with the same
+	# exact engagement boundary replaces three legacy sheets per instance.
+	for slice in ([0.0] if front else SLICES):
 		# Every cloud sheet fits the matching cross section of the saved ellipsoid.
 		var scale_factor := sqrt(1.0 - float(slice) * float(slice))
 		var sheet := MeshInstance3D.new()
@@ -35,14 +38,15 @@ static func build(storm: Dictionary) -> Node3D:
 		material.render_priority = -10
 		material.set_shader_parameter("storm_color", tint)
 		material.set_shader_parameter("phase", storm.visual.phase)
-		material.set_shader_parameter("density", float(storm.intensity) * (0.36 if slice == 0.0 else 0.30))
+		material.set_shader_parameter("density", float(storm.intensity) * (0.60 if front else (0.36 if slice == 0.0 else 0.30)))
+		if front: material.set_shader_parameter("front_strength", 1.0)
 		material.set_shader_parameter("layer", float(slice))
 		sheet.material_override = material
 		root.add_child(sheet)
-	root.add_child(_boundary(axes, tint))
+	root.add_child(_boundary(axes, tint, front))
 	return root
 
-static func _boundary(axes: Vector3, tint: Color) -> MeshInstance3D:
+static func _boundary(axes: Vector3, tint: Color, front: bool) -> MeshInstance3D:
 	var mesh := ImmediateMesh.new()
 	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	for i in range(BOUNDARY_SEGMENTS + 1):
@@ -55,7 +59,7 @@ static func _boundary(axes: Vector3, tint: Color) -> MeshInstance3D:
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.albedo_color = Color(tint, 0.32)
+	material.albedo_color = Color(tint, 0.44 if front else 0.32)
 	var ring := MeshInstance3D.new()
 	ring.name = "EngagementBoundary"
 	ring.mesh = mesh

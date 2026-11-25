@@ -5,6 +5,7 @@ uniform vec4 storm_color : source_color;
 uniform float phase;
 uniform float density;
 uniform float layer;
+uniform float front_strength = 0.0;
 
 float hash_cell(vec2 cell) {
 	vec3 p = fract(vec3(cell.xyx) * 0.1031);
@@ -32,4 +33,15 @@ void fragment() {
 	float illumination = pulse * smoothstep(0.55, 0.91, broad) * detail;
 	ALBEDO = storm_color.rgb * (0.53 + cloud * 0.64 + illumination * 0.65);
 	ALPHA = edge * (0.12 + cloud * 0.88) * density;
+	if (front_strength > 0.0) {
+		float flash_time = TIME * 0.62 + phase;
+		float pulse_width = smoothstep(0.91, 0.965, fract(flash_time)) *
+			(1.0 - smoothstep(0.975, 1.0, fract(flash_time)));
+		float strike = hash_cell(vec2(floor(flash_time), phase)) * 1.14 - 0.57;
+		float crooked = strike + 0.08 * sin(p.y * 24.0 + phase) + 0.05 * sin(p.y * 51.0);
+		float lightning = (1.0 - smoothstep(0.010, 0.054, abs(p.x - crooked))) *
+			(1.0 - smoothstep(0.22, 0.84, abs(p.y))) * pulse_width;
+		ALBEDO = mix(storm_color.rgb * (0.56 + cloud * 0.8), vec3(0.77, 0.87, 1.0), lightning);
+		ALPHA = min(0.66, edge * ((0.21 + cloud * 0.79) * density + lightning * 0.36));
+	}
 }

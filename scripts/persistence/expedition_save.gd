@@ -188,7 +188,6 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 # Returns null on any invalid reference/shape; never loads a path supplied by a save.
 func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if not data is Dictionary: return null
-	if not EnvironmentData.valid_instances(data.get("environmental_instances", [])): return null
 	if not _valid_encounter_positions(data): return null
 	var legacy: bool = not data.has("metagame_version")
 	if legacy:
@@ -198,6 +197,11 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	var variation: Variant = data.get("system_variation", {})
 	if not Variation.valid(variation): return null
 	var later: bool = variation.get("version") == 2
+	var weather: Dictionary = variation.get("weather", {})
+	if not EnvironmentData.valid_instances(data.get("environmental_instances", []),
+		int(weather.get("storms", 2)), int(weather.get("rift_cap", 1))): return null
+	if weather.is_empty() and data.get("environmental_instances", []).any(func(item): return item.generation.get("front", false)):
+		return null
 	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0), later): return null
 	if later and (not _integer(data.get("system_number"), 3, 1000000)
 		or not Variation.number(float(data.layout_expansion) / float(variation.geometry_scale),
@@ -421,16 +425,21 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			elif item.type == EnvironmentData.Storms.TYPE:
 				var axes := Vector2(item.region.axes[0], item.region.axes[2])
 				var angle: float = item.region.angle
-				var extent := Vector2(absf(cos(angle)) * axes.x + absf(sin(angle)) * axes.y,
+				var front: bool = item.generation.get("front", false)
+				if front != not weather.is_empty(): return null
+				var extent := EnvironmentData.Storms.planar_extent(axes, angle) if front else Vector2(
+					absf(cos(angle)) * axes.x + absf(sin(angle)) * axes.y,
 					absf(sin(angle)) * axes.x + absf(cos(angle)) * axes.y)
 				if not bounds.grow(0.001).encloses(Rect2(center - extent, extent * 2.0)): return null
-	var active_rift := State.TemporalRift.active(state.environmental_instances)
+	var active_rifts := State.TemporalRift.active_all(state.environmental_instances)
 	if state.is_defense():
+		state.rifts.configure(variation)
 		state.rifts.reset(state.seed_used, state.system_number, state.defense.tuning.rift_initial_delay)
 		if data.has("temporal_rift_schedule"):
-			if not state.rifts.restore(data.temporal_rift_schedule) or not state.rifts.valid_active(active_rift, state.defense): return null
-		elif not active_rift.is_empty(): return null
-	elif not active_rift.is_empty() or data.has("temporal_rift_schedule"): return null
+			if not state.rifts.restore(data.temporal_rift_schedule): return null
+			if not active_rifts.all(func(item): return state.rifts.valid_active(item, state.defense)): return null
+		elif not active_rifts.is_empty() or not weather.is_empty(): return null
+	elif not active_rifts.is_empty() or data.has("temporal_rift_schedule"): return null
 	state.encounter_positions = data.get("encounter_positions", {}).duplicate(true)
 	state.encounters = entries
 	state.service = service

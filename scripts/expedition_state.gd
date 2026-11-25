@@ -14,6 +14,7 @@ const Warzone = preload("res://scripts/expedition/warzone_state.gd")
 const CombatPreparation = preload("res://scripts/combat/combat_preparation.gd")
 const StrategicActivity = preload("res://scripts/expedition/strategic_activity.gd")
 const WarzoneOperation = preload("res://scripts/expedition/warzone_operation.gd")
+const SystemEnvironments = preload("res://scripts/expedition/system_variety_environments.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
 const SystemLayout = preload("res://scripts/expedition/system_layout.gd")
 const RouteEnvironments = preload("res://scripts/expedition/route_environments.gd")
@@ -74,14 +75,14 @@ func _advance_defense(distance: float) -> void:
 func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool, notify: bool = true) -> Dictionary:
 	if not is_defense() or defense == null or defense.complete or run_ended: return {}
 	var integrity_before: int = defense.integrity
-	var previous_rift: String = TemporalRift.active(environmental_instances).get("id", "")
+	var previous_rifts: Array = TemporalRift.active_all(environmental_instances).map(func(item): return item.id)
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
 		rifts.advance_span.bind(defense, environmental_instances))
 	_secure_defense()
 	var extraction_salvage: int = poi_effects.advance_extraction(events.elapsed)
 	salvage += extraction_salvage
 	events.extraction_salvage = extraction_salvage
-	var rift_changed: bool = previous_rift != TemporalRift.active(environmental_instances).get("id", "")
+	var rift_changed: bool = previous_rifts != TemporalRift.active_all(environmental_instances).map(func(item): return item.id)
 	for unit in defense.units:
 		if unit.status == "arrived": encounters[unit.encounter].completed = true
 	var target: Dictionary = defense.unit_for(travel_destination) if not carry else {}
@@ -288,7 +289,7 @@ func environment_view() -> Array:
 
 func defense_map_view() -> Dictionary:
 	var view: Dictionary = defense.snapshot()
-	view.temporal_rift = TemporalRift.active(environmental_instances).duplicate(true)
+	view.temporal_rifts = TemporalRift.active_all(environmental_instances).duplicate(true)
 	return view
 
 func can_place_decoy() -> bool:
@@ -666,14 +667,24 @@ func _generate_system(initial_test_launch: bool) -> bool:
 	bind_defense_movement()
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
+	var extreme: bool = system_variation.has("weather")
+	var active_corona: bool = extreme and system_variation.archetype == "chaotic"
 	var influence := {} if is_warzone() and warzone.is_lattice() else solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
-		SystemVariation.star_radius(system_variation, solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale), preload("res://scripts/expedition/system_variety_environments.gd").solar_range(self),
+		SystemVariation.star_radius(system_variation, solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale), SystemEnvironments.solar_range(self),
 		0.8 if layout_expansion > 0.0 else 1.0)
+	if active_corona:
+		var rng := SystemVariation.rng_for(seed_used, system_number, "chaotic-corona")
+		var clearance := preload("res://scripts/expedition/environment_clearance.gd")
+		var radius := SystemLayout.bounds(layout_expansion).size.x * rng.randf_range(0.29, 0.37)
+		influence.region.radius = minf(radius, defense.home.length() - clearance.home_radius(rules.defense_tuning.environment_visual_margin) - 0.2)
+		influence.intensity = rng.randf_range(0.93, 1.14)
+		influence.visual.activity = 0.98
+		influence.visual.pulse_rate = 1.05
 	if not influence.is_empty():
-		influence.generation.celestial_clearance = true
+		influence.generation.celestial_clearance = not active_corona
 		influence.generation.visual_margin = rules.defense_tuning.environment_visual_margin
 		influence = JSON.parse_string(JSON.stringify(influence))
-	if is_defense():
+	if is_defense() and not active_corona:
 		# Navigable gas PoIs already have authoritative orbit anchors. Preserve them
 		# and omit optional stellar influence if no safe volume fits that layout.
 		for index in SystemLayout.planetary_indices(encounters):
@@ -681,7 +692,7 @@ func _generate_system(initial_test_launch: bool) -> bool:
 			if defense.anchors[index].length()-SystemLayout.planetary_radius("gas_giant") * float(system_variation.get("planet_scales", {}).get(str(index), 1.0)) < influence.region.radius+influence.generation.visual_margin:
 				influence = {}
 				break
-	if not influence.is_empty() and (not is_defense() or not defense.v2 or RouteEnvironments.relevant(influence,defense)):
+	if not influence.is_empty() and (active_corona or not is_defense() or not defense.v2 or RouteEnvironments.relevant(influence,defense)):
 		environmental_instances.append(influence)
 	# A pure preview proves the full gas orbit layout is feasible before committing
 	# encounter coordinates. No gameplay RNG is consumed by either preview.
@@ -698,7 +709,8 @@ func _generate_system(initial_test_launch: bool) -> bool:
 			preview.clear()
 	if is_defense():
 		var rift_delay: float = defense.tuning.rift_initial_delay
-		if system_variation.get("version") == 2 and system_variation.archetype in ["unstable", "chaotic"]:
+		rifts.configure(system_variation)
+		if not extreme and system_variation.get("version") == 2 and system_variation.archetype in ["unstable", "chaotic"]:
 			rift_delay *= 0.78 if system_variation.archetype == "unstable" else 0.90
 		rifts.reset(seed_used, system_number, rift_delay)
 	encounter_positions = {} if is_defense() or is_warzone() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
@@ -718,15 +730,21 @@ func _generate_system(initial_test_launch: bool) -> bool:
 	for index in encounters.size():
 		var location := battle_location(index)
 		if not location.is_empty(): hostile_positions.append(location)
-	environmental_instances.append_array(preload("res://scripts/expedition/system_variety_environments.gd").storms(self,
+	environmental_instances.append_array(SystemEnvironments.storms(self,
 		route_points if routed else hostile_positions, environmental_instances))
 	if is_warzone() and warzone.is_lattice():
 		WarzoneOperation.Discoveries.populate(self)
 		WarzoneOperation.assign_modifiers(self)
 	if is_defense():
-		environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
-		if system_variation.get("version") == 2:
-			environmental_instances = preload("res://scripts/expedition/system_variety_environments.gd").preserve_approaches(self, environmental_instances)
+		var clearance := preload("res://scripts/expedition/environment_clearance.gd")
+		if extreme:
+			var fronts := environmental_instances.filter(func(item): return item.generation.get("front", false))
+			var ordinary := environmental_instances.filter(func(item): return not item.generation.get("front", false))
+			environmental_instances = clearance.protect_home(self, ordinary, route_points) + fronts
+		else:
+			environmental_instances = clearance.protect_home(self, environmental_instances, route_points)
+			if system_variation.get("version") == 2:
+				environmental_instances = SystemEnvironments.preserve_approaches(self, environmental_instances)
 	if is_defense() and not preview.is_empty() and preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances) == preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(solar_records):
 		defense.decorative_bodies = preview.planets.slice(1).filter(func(body): return body.encounter == -1)
 	else:

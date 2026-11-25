@@ -37,7 +37,9 @@ var modifier_source: Callable
 var storm_legend: PanelContainer
 var presentation_blocked := false
 var locator_exclusions: Callable
-var rift_visual: Node3D
+var rift_visuals: Dictionary = {}
+var rift_visual: Node3D:
+	get: return rift_visuals.values().front() if not rift_visuals.is_empty() else null
 const DecoyVisual = preload("res://scripts/presentation/star_system/decoy_visual.gd")
 var decoy_preview: Node3D
 var active_decoy: Node3D
@@ -1451,7 +1453,7 @@ func _defense_hostile(index: int) -> bool:
 	return false
 func sync_defense(snapshot: Dictionary) -> void:
 	defense_view = snapshot
-	_sync_temporal_rift(snapshot.get("temporal_rift", {}))
+	_sync_temporal_rifts(snapshot.get("temporal_rifts", []))
 	var beacon: Dictionary = snapshot.get("decoy", {})
 	if is_instance_valid(active_decoy) and (beacon.is_empty() or active_decoy.get_parent() != visual_root):
 		active_decoy.hide()
@@ -1520,15 +1522,20 @@ func flash_missile_shots(shots: Array) -> void:
 	for shot in shots:
 		MissileVisual.shot(visual_root, _defense_point(shot.from), _defense_point(shot.to), shot.destroyed)
 
-func _sync_temporal_rift(record: Dictionary) -> void:
-	if not is_instance_valid(visual_root): return
-	if is_instance_valid(rift_visual) and rift_visual.get_parent() == visual_root:
-		if rift_visual.instance_id == record.get("id", ""):
-			rift_visual.update_lifetime(record.simulation.remaining)
-			return
-		rift_visual.expire()
-	rift_visual = null
-	if record.is_empty(): return
-	rift_visual = RiftVisual.new()
-	rift_visual.configure(record)
-	visual_root.add_child(rift_visual)
+func _sync_temporal_rifts(records: Array) -> void:
+	var old := rift_visuals.keys()
+	for record in records:
+		var id: String = record.id
+		var visual: Node3D = rift_visuals.get(id)
+		old.erase(id)
+		if not is_instance_valid(visual) or visual.get_parent() != visual_root:
+			visual = RiftVisual.new()
+			visual.configure(record)
+			visual_root.add_child(visual)
+			rift_visuals[id] = visual
+		else:
+			visual.update_lifetime(record.simulation.remaining)
+	for id in old:
+		var visual: Node3D = rift_visuals[id]
+		if is_instance_valid(visual): visual.expire()
+		rift_visuals.erase(id)

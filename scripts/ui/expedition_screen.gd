@@ -716,6 +716,8 @@ func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resour
 	if state.is_defense():
 		var details := preload("res://scripts/ui/system_details.gd").contact_details(state, state.defense.unit_for(index), enemy)
 		if not details.is_empty(): view.add_child(_label(details, 15))
+		if index >= 0 and state.battle_environment(index).has("temporal_anomaly"):
+			view.add_child(_label("Temporal Rift · Tier 2 draw chance ×2", 15))
 	if state.is_defense() and state.defense.unit_for(index).get("mothership",false):
 		if state.poi_effects.mothership == "penetration": view.add_child(_label("Research: player card attacks bypass mothership Shields",15))
 		if state.poi_effects.mothership == "damage": view.add_child(_label("Research: player card attacks deal +50% damage",15))

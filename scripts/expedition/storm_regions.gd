@@ -46,6 +46,23 @@ static func generate(run_seed: int, system: int, chance: float, hostile_position
 		"generation": {"version": 1, "seed": str(rng.seed), "run_seed": str(run_seed), "system": system}}
 	return JSON.parse_string(JSON.stringify(record))
 
+## Exact horizontal support of a rotated ellipsoid. Used for front placement
+## and save validation, including corner-touching formations.
+static func planar_extent(axes: Vector2, angle: float) -> Vector2:
+	var co := cos(angle)
+	var si := sin(angle)
+	return Vector2(Vector2(axes.x * co, axes.y * si).length(), Vector2(axes.x * si, axes.y * co).length())
+
+
+static func front(run_seed: int, system: int, index: int, center: Vector2, axes: Vector2,
+		angle: float, subtype: String, intensity: float, phase: float) -> Dictionary:
+	return {"id":"storm-%d-%d" % [system, index], "type":TYPE,
+		"position":[center.x, 0.0, center.y], "region":{"shape":"ellipsoid", "axes":[axes.x, 3.4, axes.y], "angle":angle},
+		"intensity":intensity, "configuration":{"subtype":subtype},
+		"visual":{"color":Modifiers.storm_color(modifier_id(subtype)).to_html(false), "phase":phase},
+		"simulation":{}, "generation":{"version":1, "seed":str(hash("%d:%d:%d:front" % [run_seed, system, index])),
+			"run_seed":str(run_seed), "system":system, "extended":true, "front":true}}
+
 static func _covers_with_priority(item: Dictionary, location: Array) -> bool:
 	match item.get("type"):
 		Solar.TYPE: return Solar.contains(item, location)
@@ -58,8 +75,10 @@ static func valid(item: Dictionary) -> bool:
 	if not region is Dictionary or region.get("shape") != "ellipsoid": return false
 	var axes: Variant = region.get("axes")
 	if not Navigation.valid_point(axes, false): return false
+	var generation: Dictionary = item.get("generation", {})
+	var maximum := 44.0 if generation.get("front", false) else (18.0 if generation.get("extended", false) else 9.0)
 	for extent in axes:
-		if extent < 1.0 or extent > (18.0 if item.get("generation", {}).get("extended", false) else 9.0): return false
+		if extent < 1.0 or extent > maximum: return false
 	if not Solar._number(region.get("angle", 0.0), 0.0, TAU): return false
 	var configuration: Variant = item.get("configuration")
 	return configuration is Dictionary and modifier_id(configuration.get("subtype")) != 0
@@ -73,7 +92,7 @@ static func valid_visual(value: Variant, subtype: Variant) -> bool:
 
 static func valid_generation(value: Dictionary) -> bool:
 	var seed_value: Variant = value.get("seed")
-	return value.get("version") == 1 and seed_value is String and seed_value.is_valid_int() and value.get("extended", false) is bool
+	return value.get("version") == 1 and seed_value is String and seed_value.is_valid_int() and value.get("extended", false) is bool and value.get("front", false) is bool
 
 static func contains(item: Dictionary, location: Array) -> bool:
 	if not valid(item) or not Navigation.valid_point(location, false): return false

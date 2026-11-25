@@ -23,3 +23,11 @@ extends Resource
 @export var later_density_weights: Array[Vector3] = [
 	Vector3(15, 70, 15), Vector3(45, 45, 10), Vector3(5, 35, 60),
 	Vector3(25, 50, 25), Vector3(25, 55, 20), Vector3(30, 50, 20), Vector3(35, 30, 35)]
+
+@export_group("Extreme weather")
+@export var extreme_weather := true
+## Rows are Unstable, Storm-dominated and Chaotic.
+@export var extreme_storm_counts: Array[Vector2i] = [Vector2i(2, 4), Vector2i(5, 9), Vector2i(3, 7)]
+@export var extreme_storm_coverage: Array[Vector2] = [Vector2(0.16, 0.29), Vector2(0.43, 0.62), Vector2(0.33, 0.52)]
+@export var extreme_rift_caps := Vector3i(3, 2, 4)
+@export var extreme_rift_rates := Vector3(3.0, 1.5, 4.0)
