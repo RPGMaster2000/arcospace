@@ -13,7 +13,7 @@ const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
 	"completed", "chasedown", "response", "resolution", "intercept_position",
-	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank"]
+	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank", "warzone_detour"]
 const OBJECTIVE_POIS = [preload("res://encounters/fuel_depot.tres"),
 	preload("res://encounters/sensor_relay.tres"), preload("res://encounters/ancient_navigation_array.tres")]
 const PROFILE_IDS = ["quiet", "industrial", "hostile", "ancient"]
@@ -159,9 +159,10 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 			if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)) or absf(float(coordinate)) > 10000: return {}
 	if value.has("resolution") and value.resolution not in ["escaped", "defeated"]: return {}
 	if value.has("objective_role") and value.objective_role not in ["", "access", "prerequisite"]: return {}
+	if value.has("warzone_detour") and (value.kind != "poi" or not _integer(value.warzone_detour, 0, 2)): return {}
 	var result: Dictionary = value.duplicate(true)
 	result.erase("charge_awarded")
-	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance", "warzone_rank"]:
+	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance", "warzone_rank", "warzone_detour"]:
 		if result.has(key): result[key] = int(result[key])
 	if value.kind == "battle":
 		if value.has("warzone_rank") and not _integer(value.warzone_rank, 1, 2): return {}
@@ -306,6 +307,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for key in ["production_upgrades", "card_upgrades"]:
 			for id in outcome[key]:
 				state.homeworld_outcome[key][id] = int(outcome[key][id])
+	if mode != "warzone" and entries.any(func(entry): return entry.has("warzone_detour")): return null
 	if mode == "warzone":
 		if data.system_number != State.CampaignSupport.WARZONE_SYSTEM or data.navigation.position.size() != 3:
 			return null
@@ -326,7 +328,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		var discovered: Array[Resource] = []
 		var positions: Array[Vector3] = []
 		for index in entries.size():
+			if index < expected_count and entries[index].has("warzone_detour"): return null
 			if index >= expected_count:
+				if (state.warzone.economy != null if procedural else false) != entries[index].has("warzone_detour"): return null
 				var poi: Resource = entries[index].get("poi")
 				if entries[index].kind != "poi" or poi not in State.WarzoneOperation.Discoveries.POIS \
 					or poi in discovered or entries[index].has("objective_role") or not points.has(str(index)):

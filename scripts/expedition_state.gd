@@ -749,10 +749,23 @@ func warzone_discovery(index: int) -> Array:
 	return encounter_positions.get(str(index), []) if index >= first else []
 
 
+func warzone_discovery_payout(index: int, approach: Resource, success: bool) -> int:
+	if warzone_discovery(index).is_empty(): return -1
+	var entry: Dictionary = encounters[index]
+	var tier: int = entry.get("warzone_detour", -1)
+	return -1 if tier < 0 else WarzoneOperation.Discoveries.payout(tier, entry.poi.hazardous, approach, success)
+
+
 func _at_warzone_discovery(index: int) -> bool:
 	var point := warzone_discovery(index)
 	return not point.is_empty() and not navigation.leg_active and navigation.position.size() == 3 \
 		and Defense.point(navigation.position).distance_to(Defense.point(point)) <= warzone.tuning.objective_radius
+
+
+func warzone_station_services(index: int) -> Array[Dictionary]:
+	if not is_warzone() or not warzone.is_lattice() or warzone_objective(index).is_empty(): return []
+	return warzone.Stations.quotes(warzone, index - Warzone.HOSTILE_GROUPS, "allied", salvage,
+		warzone.player_preparation, maxi(0, ship().hull_capacity - hull))
 
 
 func warzone_operate(index: int, id: String, present: Callable = Callable()) -> bool:
@@ -763,6 +776,14 @@ func warzone_operate(index: int, id: String, present: Callable = Callable()) -> 
 	if site.is_empty() or Defense.point(navigation.position).distance_to(site.position) > warzone.tuning.objective_radius:
 		return false
 	var offset := index - Warzone.HOSTILE_GROUPS
+	for action in warzone_station_services(index):
+		if action.id != id or not action.enabled: continue
+		warzone.Stations.apply(warzone, offset, action, warzone.player_preparation)
+		salvage -= action.cost
+		if action.attribute == warzone.Stations.REPAIR: hull += action.amount
+		warzone._notice(action.title + " · " + warzone.objective_name(offset))
+		_spend_activity_time(action.seconds, progress_committed.emit, present)
+		return true
 	for action in warzone.operations(offset, salvage):
 		if action.id != id or not action.enabled: continue
 		warzone.note_player_position(Defense.point(navigation.position))
@@ -1248,18 +1269,19 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 				% [seed_used, system_number, index, approach_index, roll, success]
 			)
 		)
-	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
+	var payout := warzone_discovery_payout(index, approach, success)
+	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome, payout)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
-	_apply_outcome(outcome)
+	_apply_outcome(outcome, payout)
 	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 
 # Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
-func _apply_outcome(outcome: Resource) -> void:
-	salvage += outcome.salvage
+func _apply_outcome(outcome: Resource, discovery_salvage: int = -1) -> void:
+	salvage += outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
 	# Combined Hull model: neutral outcomes preserve purchased plating. Positive PoI repairs
 	# cannot add plating; damaging PoIs reduce the combined total (agreed single-value rule).
 	if outcome.hull < 0:
@@ -1320,10 +1342,11 @@ func describe_modifiers(values: Dictionary) -> String:
 	return " · ".join(parts)
 
 
-func describe_outcome(outcome: Resource) -> String:
+func describe_outcome(outcome: Resource, discovery_salvage: int = -1) -> String:
 	var parts: Array[String] = []
-	if outcome.salvage != 0:
-		parts.append("%+d Salvage" % outcome.salvage)
+	var payout: int = outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
+	if payout != 0:
+		parts.append("%+d Salvage" % payout)
 	if outcome.hull != 0:
 		parts.append("%+d permanent Hull" % outcome.hull)
 	for key in outcome.next_battle:

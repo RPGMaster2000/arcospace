@@ -20,6 +20,8 @@ static func options(sector: RefCounted, index: int, salvage: int) -> Array[Dicti
 	var reason := ""
 	if owner != ("hostile" if hostile_only else "allied") and not (can_infiltrate and owner == "hostile"):
 		reason = "Requires hostile infrastructure" if hostile_only else "Requires allied control"
+	elif owner == "allied" and sector.economy != null and kind in ["repair", "deploy"] and sector.objectives[index].contested:
+		reason = "Installation contested"
 	elif owner == "allied" and not sector.is_supplied(index):
 		reason = "Requires allied supply"
 	elif remaining > 0:

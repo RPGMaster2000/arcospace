@@ -2,6 +2,8 @@ extends "res://scripts/expedition/warzone_state.gd"
 ## Lattice rules for new sectors. The base state handles the existing clock, combat
 ## handoff, campaign outcome and historical three-objective saves.
 
+const Stations = preload("res://scripts/expedition/warzone_stations.gd")
+const Preparation = preload("res://scripts/combat/combat_preparation.gd")
 const Economy = preload("res://scripts/expedition/warzone_economy.gd")
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
@@ -20,6 +22,9 @@ const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 var pattern := 0
 var economy: Economy
+var player_preparation := {}
+var fleet_preparations := {}
+var service_ready := {}
 var roles: Array[String] = []
 var links: Array[Vector2i] = []
 var disrupted := {}
@@ -605,18 +610,7 @@ func _update_final_offensive(allow_victory: bool) -> void:
 		# at whichever command happens to be closest or already held. Both
 		# command stations remain possible and the more distant reachable
 		# lattice location gets the mission marker.
-		var next: int = command_sites().front()
-		var best := -INF
-		var starting: Vector3 = objectives[root("allied")].position
-		for candidate in command_sites():
-			var distance: float = starting.distance_to(objectives[candidate].position)
-			var depth: int = _lattice_hops(root("allied"), candidate)
-			var score: float = distance + 2.5 * depth
-			if objectives[candidate].owner == "hostile": score += 4.0
-			if score > best:
-				best = score
-				next = candidate
-		final_command = next
+		final_command = offensive_command_candidate()
 		_notice("Final offensive · Secure " + objective_name(final_command) + ".")
 		_counterattack(final_command)
 	var can_hold := final_command >= 0 and _command_ready()
@@ -627,6 +621,20 @@ func _update_final_offensive(allow_victory: bool) -> void:
 		complete = true
 		_notice(outcome().grade + " · Sector secured.")
 
+
+func offensive_command_candidate() -> int:
+	var next: int = command_sites().front()
+	var best := -INF
+	var starting: Vector3 = objectives[root("allied")].position
+	for candidate in command_sites():
+		var distance: float = starting.distance_to(objectives[candidate].position)
+		var depth: int = _lattice_hops(root("allied"), candidate)
+		var score: float = distance + 2.5 * depth
+		if objectives[candidate].owner == "hostile": score += 4.0
+		if score > best:
+			best = score
+			next = candidate
+	return next
 
 func _lattice_hops(origin: int, target: int) -> int:
 	if origin == target: return 0
@@ -984,7 +992,10 @@ func snapshot() -> Dictionary:
 		"hunter_until": hunter_until, "hunter_contact_at": hunter_contact_at,
 		"hunter_cooldown_until": hunter_cooldown_until, "hunter_count": hunter_count,
 		"response_sites": response_sites.duplicate(), "expanded_roster": expanded_roster}
-	if economy != null: value.lattice.economy = economy.snapshot()
+	if economy != null:
+		value.lattice.economy = economy.snapshot()
+		value.lattice.preparation = {"player": player_preparation.duplicate(),
+			"fleets": fleet_preparations.duplicate(true), "ready": service_ready.duplicate()}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -1013,6 +1024,7 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	if saved.has("economy"):
 		economy = Economy.new()
 		if not economy.restore(saved.economy, objectives.size(), fleets.size(), clock_ms): return false
+	if economy != null and not _restore_preparation(saved.get("preparation", {})): return false
 	if not Defense.number(saved.get("version"), 2, 3): return false
 	var version := int(saved.version)
 	if not Defense.number(saved.get("pattern"), 0, 5 if version == 2 else Lattice.PATTERNS.size() - 1):
@@ -1205,4 +1217,22 @@ func _restore_logistics(saved: Dictionary) -> bool:
 			if (id == PLAYER and record.side != "allied") or (id != PLAYER and fleet_at(int(id)).side != record.side): return false
 			present.append(int(id))
 		capture_cutoffs[int(key)] = {"side": record.side, "present": present}
+	return true
+
+
+func _restore_preparation(record: Variant) -> bool:
+	if not record is Dictionary: return false
+	var player: Variant = record.get("player", {})
+	var prepared: Variant = record.get("fleets", {})
+	var ready: Variant = record.get("ready", {})
+	if not Preparation.valid(player) or not prepared is Dictionary or not ready is Dictionary: return false
+	for key in prepared:
+		if not str(key).is_valid_int() or not Defense.number(int(key), 0, fleets.size() - 1) \
+			or not Preparation.valid(prepared[key]): return false
+	for key in ready:
+		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1) \
+			or not Defense.number(ready[key], 0, clock_ms + 30 * STEP_MS): return false
+	player_preparation = player.duplicate()
+	fleet_preparations = prepared.duplicate(true)
+	for key in ready: service_ready[str(key)] = int(ready[key])
 	return true
