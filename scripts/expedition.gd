@@ -1149,7 +1149,7 @@ func _show_warzone_services(index: int, tint: Color) -> void:
 			view.add_child(_label(text, 15))
 		else:
 			var service := _button(text, _warzone_operation.bind(index, offer.id), not offer.enabled, 54)
-			service.name = "WarzoneService"
+			service.name = "WarzoneService_" + str(offer.attribute).replace(".", "_")
 
 
 func _warzone_operation(index: int, id: String) -> void:
