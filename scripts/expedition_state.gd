@@ -1503,19 +1503,17 @@ func service_locked_reason(slot: int) -> String:
 	if slot < 0 or slot >= service.poi.approaches.size():
 		return "Unknown service"
 	var approach: Resource = service.poi.approaches[slot]
-	if (
-		approach.success.card_reward
-		and service_card_offers(slot).is_empty()
-	):
-		return "No unowned cards meet this reward's minimum tier"
-	if approach.success.card_reward and player_pool().size() >= deck_limit():
-		return "Deck full"
-	if approach.success.hull > 0 and hull >= station_hull_ceiling():
-		return "Ablative Plating Full"
 	var cost: int = service_cost(slot)
 	if approach.success.card_reward:
-		var prices := service_card_offers(slot).map(func(card): return service_card_cost(slot, card))
+		var offers := service_card_offers(slot)
+		if offers.is_empty():
+			return "No unowned cards meet this reward's minimum tier"
+		if player_pool().size() >= deck_limit():
+			return "Deck full"
+		var prices := offers.map(func(card): return service_card_cost(slot, card))
 		cost = int(prices.min())
+	if approach.success.hull > 0 and hull >= station_hull_ceiling():
+		return "Ablative Plating Full"
 	if salvage < cost:
 		return "Requires %d Salvage (you have %d)" % [cost, salvage]
 	return ""
@@ -1797,7 +1795,7 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 	setup.player_cards = player_pool()
 	setup.identity_weights = acquired_draw_weights()
 	var source_profile: Resource = enemy_data
-	if source_profile == null or source_profile.resource_path.is_empty():
+	if source_profile == null:
 		if index >= 0 and index < encounters.size() and encounters[index].kind == "battle":
 			source_profile = encounters[index].get("enemy_data", Ships.ENEMIES[int(encounters[index].get("enemy", 0))])
 	var built_in := source_profile != null and source_profile.resource_path.begins_with("res://ships/enemy/")

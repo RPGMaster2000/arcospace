@@ -22,11 +22,12 @@ static func condition(rule: Dictionary) -> String:
 	elif rule.has("compare_attribute"):
 		var other: String = rule.compare_attribute
 		var same: bool = other == rule.get("attribute", "hull")
-		threshold = (
-			("yours" if same else "your " + other.capitalize())
-			if rule.get("compare_target", "self") == "self"
-			else ("enemy's" if same else "enemy " + other.capitalize())
-		)
+		if rule.get("compare_target", "self") == "enemy":
+			threshold = "enemy's" if same else "enemy " + other.capitalize()
+		elif rule.get("target", "self") == "self":
+			threshold = other.capitalize()
+		else:
+			threshold = "yours" if same else "your " + other.capitalize()
 	return (
 		"%s%s%s"
 		% [
@@ -48,7 +49,10 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		handled.append(key)
 		var value: int = effects[key]
 		if PRODUCTION.has(key):
-			result.append("%s prod. %+d." % [PRODUCTION[key], value])
+			if effects.size() == 1:
+				result.append("%s %+d." % [key.capitalize(), value])
+			else:
+				result.append("%s prod. %+d." % [PRODUCTION[key], value])
 		elif key == "hull":
 			result.append(("Repair %d Hull." if value >= 0 else "Lose %d Hull.") % absi(value))
 		else:
@@ -66,7 +70,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		for key in effects.enemy_production:
 			result.append(
 				(
-					"Enemy %s %+d (min 0)."
+					"Enemy %s %+d."
 					% [str(key).capitalize(), int(effects.enemy_production[key])]
 				)
 			)
@@ -179,7 +183,10 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		if not result.is_empty():
 			# Keep explicit timing, without making a long condition header wrap twice.
 			result[-1] += " Then:"
-		result.append("If " + condition(rule))
+		var comparison := condition(rule)
+		var same_ship: bool = rule.get("target", "self") == rule.get("compare_target", "self")
+		var compares_distinct_stats: bool = rule.has("compare_attribute") and rule.compare_attribute != rule.get("attribute")
+		result.append(comparison + "?" if same_ship and compares_distinct_stats else "If " + comparison)
 		result.append_array(rows(rule.get("then", {}), family))
 		if not rule.get("else", {}).is_empty():
 			var otherwise := rows(rule["else"], family)

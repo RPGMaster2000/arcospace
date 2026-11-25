@@ -123,6 +123,20 @@ func run() -> void:
 	gallery.confirm_button.pressed.emit()
 	check(host.state.salvage == balance - price and host.state.acquired_cards.size() == count + 1,
 		"A fresh gallery confirmation pays once and awards one selected card")
+	host.state.system_number = 3
+	host.state.salvage = 24
+	host.show_outpost()
+	host.outpost_screen.select_service(2)
+	var options: Array = gallery.gallery.cards
+	var rare: Array = options.filter(func(card): return card.tier == 3)
+	check(rare.size() == 1, "System 3 purchase gallery includes one Tier 3 option")
+	if not rare.is_empty():
+		gallery.select_card(rare[0])
+		check(gallery.confirm_button.disabled and gallery.context.text.contains("25 Salvage"),
+			"Selected Tier 3 card displays its price and disables an unaffordable purchase")
+		gallery.select_card(options[0])
+		check(not gallery.confirm_button.disabled and gallery.context.text.contains("15 Salvage"),
+			"Switching cards restores the ordinary price and affordability")
 	host.free()
 	await process_frame
 	print("Outpost component: %d checks, %d failures" % [checks, failures])
