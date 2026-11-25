@@ -86,6 +86,11 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		if audit.has("battle_setup"):
 			hands[0].card_pool.assign(audit.battle_setup.player_cards)
 			hands[0].identity_weights = audit.battle_setup.identity_weights.duplicate()
+			var rates: Vector2 = audit.battle_setup.enemy_draw_rates
+			if rates.x >= 0.0:
+				hands[1].card_pool.assign(audit.battle_setup.enemy_cards)
+				hands[1].tier_two_chance = rates.x if hands[1].card_pool.any(func(card): return card.tier == 2) else 0.0
+				hands[1].tier_three_chance = rates.y if hands[1].card_pool.any(func(card): return card.tier == 3) else 0.0
 		if audit.has("rarity_policy"):
 			hands[0].tier_three_chance = audit.rarity_policy.chance
 			hands[0].tier_three_locked_turns = audit.rarity_policy.locked

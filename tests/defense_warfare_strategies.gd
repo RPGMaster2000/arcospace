@@ -1,0 +1,135 @@
+extends SceneTree
+## Map-only stress diagnostic. Contacts use the real sweep; each card battle assumes a win.
+const State = preload("res://scripts/expedition_state.gd")
+const Rules = preload("res://encounters/expedition_rules.tres")
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
+const Result = preload("res://scripts/combat/battle_result.gd")
+const STRATEGIES := ["nearest", "dangerous", "nearby_poi", "turrets", "decoys", "economic", "early_boss", "detours"]
+
+
+func _initialize() -> void:
+	for strategy in STRATEGIES:
+		var groups := {}
+		for mode in Warfare.FORMATIONS:
+			groups[mode] = {"runs":0, "secured":0, "lost":0, "damage":0, "pressure":0.0, "reveal":0, "advance":0, "waves":0, "battles":0}
+		for stage in [3, 4, 5]:
+			for seed_value in range(31, 49):
+				var run := State.new()
+				run.start(seed_value % 6, Rules, seed_value, {"mode":"defense","stage":stage,"rank":-1})
+				var row: Dictionary = groups[run.defense.military.formation]
+				play(run, strategy, row)
+		print("STARFRONT_STRATEGY ", strategy, " ", JSON.stringify(groups))
+	quit()
+
+
+func play(run: Resource, policy: String, row: Dictionary) -> void:
+	var fleet: RefCounted = run.defense
+	var spent := 0.0
+	var report_id := 0
+	var prepared := false
+	row.runs += 1
+	if policy == "turrets":
+		run.salvage += 2 * fleet.tuning.turret_salvage_cost
+		for id in ["flank_a", "flank_b", "home"]:
+			run.deploy_turret(id)
+	if policy == "decoys": run.decoys = 2
+	var player: Vector3 = fleet.start
+	for step in 160:
+		if fleet.complete or fleet.failed() or spent > 210.0: break
+		if policy == "decoys" and fleet.decoy.is_empty() and run.decoys > 0:
+			for angle in 12:
+				var at := player + Vector3(5, 0, 0).rotated(Vector3.UP, TAU * angle / 12.0)
+				if not fleet.decoy_targets(at, fleet.tuning.decoy_attraction_radius).is_empty() and run.deploy_decoy(at):
+					break
+		var destination := player
+		var poi := -1
+		if policy in ["nearby_poi", "economic"] and not prepared:
+			for index in Warfare.preparation_sites(run, fleet.anchors.keys()):
+				if index >= 0 and fleet.anchors[index].distance_to(player) < 21.0:
+					poi = index
+					break
+		if poi >= 0:
+			destination = fleet.anchors[poi]
+		elif policy == "detours" and spent < 24.0:
+			var edge := State.SystemLayout.bounds(run.layout_expansion).end.x - 3.0
+			destination = Vector3(edge if player.x < 0.0 else -edge, 0, edge if player.z < 0.0 else -edge)
+		else:
+			destination = target(fleet, player, policy)
+		var travel: float = player.distance_to(destination) * fleet.tuning.seconds_per_distance
+		var event: Dictionary = fleet.advance_time(maxf(1.0, travel), player, destination)
+		spent += event.elapsed
+		player = event.position
+		run.navigation.checkpoint_position(State.Defense.wire(player))
+		if event.contact >= 0:
+			run.active_battle = event.contact
+			var result := Result.new()
+			report_id += 1
+			result.result_id = report_id
+			result.encounter_index = event.contact
+			result.system_number = run.system_number
+			result.winner = "player"
+			result.player_hull = run.hull
+			result.salvage = run.salvage
+			result.battles_won = run.battles_won + 1
+			if run.record_battle(result):
+				row.battles += 1
+				spent += fleet.tuning.battle_seconds
+				run.active_battle = -1
+				if run.pending_choice == "battle_reward": run.choose_battle_reward(false)
+				while run.pending_choice == "upgrade":
+					run.choose_upgrade(run.upgrade_candidates().front().identity_key())
+		elif event.missile_contact >= 0:
+			run.resolve_missile(event.missile_contact, "direct")
+			spent += fleet.tuning.missile_intercept_seconds
+		elif poi >= 0:
+			var options: Array = run.poi_approaches(poi)
+			var choice := 0
+			if policy == "economic":
+				for index in options.size():
+					var reward: Dictionary = options[index].get_meta("strategic_reward", {})
+					if not run.approach_requirement(options[index]).is_locked() and (reward.has("production") or reward.has("next_battle")):
+						choice = index
+						break
+			if run.resolve_approach(poi, choice):
+				spent += float(options[choice].get_meta("strategic_seconds", 0))
+			prepared = true
+		if fleet.revealed and not fleet.mothership_destroyed() and not row.has("current_reveal"):
+			row.current_reveal = spent
+		if fleet.mothership_advancing and not row.has("current_advance"):
+			row.current_advance = spent
+	row.reveal += float(row.get("current_reveal", 0.0))
+	row.advance += float(row.get("current_advance", 0.0))
+	row.erase("current_reveal")
+	row.erase("current_advance")
+	row.secured += int(fleet.complete)
+	row.lost += int(fleet.failed())
+	row.damage += fleet.tuning.base_integrity - fleet.integrity
+	row.pressure += fleet.pressure
+	row.waves += fleet.reinforcements_spawned
+
+
+func target(fleet: RefCounted, player: Vector3, policy: String) -> Vector3:
+	var best := INF
+	var meeting := player
+	for unit in fleet.units:
+		if not fleet.available(unit): continue
+		var position: Vector3 = fleet.intercept_point(unit.encounter, player)
+		var cost := player.distance_to(position)
+		if unit.mothership:
+			if policy == "early_boss" or fleet.mothership_advancing:
+				cost *= 0.25
+			else:
+				cost *= 1.4
+		elif policy == "dangerous":
+			var eta: float = unit.position.distance_to(fleet.target_for(unit)) / fleet._speed(unit)
+			cost = 0.35 * cost + eta - fleet.arrival_damage(unit) * 0.3
+		if cost < best:
+			best = cost
+			meeting = position
+	for missile in fleet.missiles.active:
+		var position: Vector3 = fleet.intercept_point(missile, player)
+		var cost := player.distance_to(position) * 0.65
+		if cost < best:
+			best = cost
+			meeting = position
+	return meeting

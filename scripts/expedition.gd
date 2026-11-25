@@ -597,7 +597,8 @@ func _exit_tree() -> void:
 
 
 func _set_system_name(value: String) -> void:
-	screen.set_system_name(value if developer_test.is_empty() else "Test · " + value)
+	var headline: String = state.system_name if state.is_defense() and not state.defense.military.is_empty() else value
+	screen.set_system_name(headline if developer_test.is_empty() else "Test · " + headline)
 
 
 func show_system(preserve_transition: bool = false) -> void:

@@ -77,7 +77,7 @@ func run() -> void:
 					check(ship.enemy_rank == 2, "Valid existing boss")
 				else:
 					check(
-						ship in profile.standard_roster,
+						ship in profile.standard_roster or (entry.has("defense_deployment") and ship in Catalog.defense_elites(profile, state.system_number)),
 						"Starting and reserve ships belong to faction"
 					)
 				check(ship == twin.encounters[i].enemy_data, "Deterministic ship identity")

@@ -1,6 +1,6 @@
 # Starfront Defense v2
 
-New Defense systems roll for two or three attackers with weights
+System 1 and legacy v2 systems roll for two or three attackers with weights
 40% and 60%. A dedicated seed controls the roster size and deployment
 variation. Attackers start on both sides of the homeworld approach with
 different travel distances. The mothership has its own encounter ID.
@@ -12,6 +12,11 @@ attackers remain active. This schedule runs independently of missiles.
 Existing saves finish their current system with its original roster,
 reveal rule and reinforcement schedule.
 
+Starfront Defense from System 3 onward adds separate military scenario generation
+and capped strategic difficulty. The campaign still uses Warzone in System 2.
+See [Later Starfront Defense](balance/starfront_warfare.md) for formations,
+battle tuning, and validation results.
+
 ## Strategic clock
 
 | Pressure | Mothership |
@@ -20,10 +25,12 @@ reveal rule and reinforcement schedule.
 | 50–99 | Revealed and launches missiles |
 | 100 | Advances and continues launching |
 
-Default pressure increases by one point per strategic second. Player and
-enemy movement speeds, strategic seconds per distance and the 100-point
+Base v2 pressure is scaled by the configured pressure-rate multiplier.
+Later scenarios apply their own multiplier once to that effective rate.
+Player speed, strategic seconds per distance, and the 100-point
 maximum retain their tuning. The mothership still uses the existing boss
-battle. Neutralizing it secures the system and clears any live missiles.
+battle. Neutralizing it stands down undeployed reserves. Deployed attackers and
+in-flight missiles must resolve before the sector is secure.
 
 The missile scheduler consumes the same event spans as the defense fleet.
 It launches eight seconds after reveal, then every 18 seconds with at
