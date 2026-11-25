@@ -733,6 +733,10 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 	if not risk.is_empty(): view.add_child(_label(risk, 16))
 	if map_3d:
 		view.add_child(_label(state.poi_description(index), 18))
+	var detour: int = state.encounter_at(index).get("warzone_detour", -1)
+	if detour >= 0:
+		var discovery = state.WarzoneOperation.Discoveries
+		view.add_child(_label("%s detour · %d Salvage base" % [discovery.DETOURS[detour], discovery.DETOUR_SALVAGE[detour]], 16))
 	var options = add_grid(1 if map_3d else 2)
 	var approaches: Array = state.poi_approaches(index)
 	for slot in range(approaches.size()):
@@ -742,7 +746,7 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 		var button = add_tile(
 			options,
 			icon.call(key) + "  " + approach.title,
-			Text.approach_text(state, approach, map_3d),
+			Text.approach_text(state, approach, map_3d, index),
 			Presentation.COLORS[Presentation.classification(state.encounter_at(index))],
 			select_approach.bind(slot),
 			requirement.is_locked()
@@ -751,7 +755,7 @@ func present_poi(state: Resource, index: int, map_3d: bool, inspecting: bool,
 			button.heading.text = approach.title
 			button.collapse_requirement(Text.requirement_text(requirement, state.LABELS))
 		else:
-			button.set_rich_details(Text.highlight_outcome(Text.approach_text(state, approach, map_3d)))
+			button.set_rich_details(Text.highlight_outcome(Text.approach_text(state, approach, map_3d, index)))
 		approach_buttons.append(button)
 	if state.can_survey(index):
 		var survey = add_tile(

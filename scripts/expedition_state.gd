@@ -11,6 +11,7 @@ signal warzone_advanced(target_lost: bool)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
+const CombatPreparation = preload("res://scripts/combat/combat_preparation.gd")
 const StrategicActivity = preload("res://scripts/expedition/strategic_activity.gd")
 const WarzoneOperation = preload("res://scripts/expedition/warzone_operation.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
@@ -436,11 +437,22 @@ func battle_environment(index: int) -> Dictionary:
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
 	var support := battle_support(index)
 	var advantage: String = poi_effects.mothership if is_defense() and defense.unit_for(index).get("mothership",false) else ""
-	if support.is_empty() and advantage.is_empty(): return snapshot
+	var preparations := warzone_battle_preparations(index)
+	if support.is_empty() and advantage.is_empty() and preparations.is_empty(): return snapshot
 	var combined := snapshot.duplicate(true)
 	if not support.is_empty(): combined.friendly_support = support
 	if not advantage.is_empty(): combined.mothership_advantage = advantage
+	if not preparations.is_empty(): combined.preparations = preparations
 	return EnvironmentData.snapshot(combined)
+
+
+func warzone_battle_preparations(index: int) -> Dictionary:
+	if not is_warzone() or not warzone.is_lattice() or warzone.economy == null: return {}
+	var contact := warzone_fleet(index)
+	if contact.is_empty(): return {}
+	var enemy: Dictionary = warzone.fleet_preparations.get(str(contact.id), {})
+	if enemy.is_empty() and warzone.player_preparation.is_empty(): return {}
+	return {"player": warzone.player_preparation.duplicate(), "enemy": enemy.duplicate()}
 
 
 # Preview is a pure query; only Persistence captures the authoritative entry snapshot.
@@ -749,10 +761,23 @@ func warzone_discovery(index: int) -> Array:
 	return encounter_positions.get(str(index), []) if index >= first else []
 
 
+func warzone_discovery_payout(index: int, approach: Resource, success: bool) -> int:
+	if warzone_discovery(index).is_empty(): return -1
+	var entry: Dictionary = encounters[index]
+	var tier: int = entry.get("warzone_detour", -1)
+	return -1 if tier < 0 else WarzoneOperation.Discoveries.payout(tier, entry.poi.hazardous, approach, success)
+
+
 func _at_warzone_discovery(index: int) -> bool:
 	var point := warzone_discovery(index)
 	return not point.is_empty() and not navigation.leg_active and navigation.position.size() == 3 \
 		and Defense.point(navigation.position).distance_to(Defense.point(point)) <= warzone.tuning.objective_radius
+
+
+func warzone_station_services(index: int) -> Array[Dictionary]:
+	if not is_warzone() or not warzone.is_lattice() or warzone_objective(index).is_empty(): return []
+	return warzone.Stations.quotes(warzone, index - Warzone.HOSTILE_GROUPS, "allied", salvage,
+		warzone.player_preparation, maxi(0, ship().hull_capacity - hull))
 
 
 func warzone_operate(index: int, id: String, present: Callable = Callable()) -> bool:
@@ -763,6 +788,14 @@ func warzone_operate(index: int, id: String, present: Callable = Callable()) -> 
 	if site.is_empty() or Defense.point(navigation.position).distance_to(site.position) > warzone.tuning.objective_radius:
 		return false
 	var offset := index - Warzone.HOSTILE_GROUPS
+	for action in warzone_station_services(index):
+		if action.id != id or not action.enabled: continue
+		warzone.Stations.apply(warzone, offset, action, warzone.player_preparation)
+		salvage -= action.cost
+		if action.attribute == warzone.Stations.REPAIR: hull += action.amount
+		warzone._notice(action.title + " · " + warzone.objective_name(offset))
+		_spend_activity_time(action.seconds, progress_committed.emit, present)
+		return true
 	for action in warzone.operations(offset, salvage):
 		if action.id != id or not action.enabled: continue
 		warzone.note_player_position(Defense.point(navigation.position))
@@ -1248,18 +1281,19 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 				% [seed_used, system_number, index, approach_index, roll, success]
 			)
 		)
-	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome)
+	var payout := warzone_discovery_payout(index, approach, success)
+	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome, payout)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
-	_apply_outcome(outcome)
+	_apply_outcome(outcome, payout)
 	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 
 # Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
-func _apply_outcome(outcome: Resource) -> void:
-	salvage += outcome.salvage
+func _apply_outcome(outcome: Resource, discovery_salvage: int = -1) -> void:
+	salvage += outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
 	# Combined Hull model: neutral outcomes preserve purchased plating. Positive PoI repairs
 	# cannot add plating; damaging PoIs reduce the combined total (agreed single-value rule).
 	if outcome.hull < 0:
@@ -1320,10 +1354,11 @@ func describe_modifiers(values: Dictionary) -> String:
 	return " · ".join(parts)
 
 
-func describe_outcome(outcome: Resource) -> String:
+func describe_outcome(outcome: Resource, discovery_salvage: int = -1) -> String:
 	var parts: Array[String] = []
-	if outcome.salvage != 0:
-		parts.append("%+d Salvage" % outcome.salvage)
+	var payout: int = outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
+	if payout != 0:
+		parts.append("%+d Salvage" % payout)
 	if outcome.hull != 0:
 		parts.append("%+d permanent Hull" % outcome.hull)
 	for key in outcome.next_battle:
@@ -1742,6 +1777,13 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 	if setup.enemy_profile != null:
 		setup.enemy_state = ShipState.new()
 		setup.enemy_state.configure_profile(setup.enemy_profile)
+	var preparations: Dictionary = setup.environment.get("preparations", {})
+	if not preparations.is_empty() and is_warzone() and warzone.is_lattice() and warzone.economy != null \
+		and setup.enemy_state != null:
+		CombatPreparation.apply(setup.player_state, preparations.player, preparations.enemy)
+		CombatPreparation.apply(setup.enemy_state, preparations.enemy, preparations.player)
+		warzone.player_preparation.clear()
+		warzone.fleet_preparations.erase(str(warzone_fleet(index).id))
 	setup.salvage = salvage
 	setup.battles_won = battles_won
 	if is_defense(): setup.emp_victory_message = "Enemy systems disabled. Allied recovery forces have secured the vessel."
@@ -1874,7 +1916,7 @@ func record_battle(result: BattleResult) -> bool:
 	if active_battle >= 0:
 		encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
 		if is_warzone():
-			warzone.player_victory(warzone_fleet(active_battle).id)
+			warzone.player_victory(warzone_fleet(active_battle).id, not result.escaped_by_ftl)
 		if is_defense():
 			defense.neutralize(active_battle)
 			_secure_defense(result)

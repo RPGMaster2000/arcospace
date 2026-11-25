@@ -65,6 +65,12 @@ static func generate(state: Resource, support: Dictionary) -> void:
 		if state.warzone.expanded_roster:
 			_add_contact(state, faction, escalated, Warzone.HOSTILE_GROUPS + 1, false)
 
+	if state.warzone.is_lattice():
+		for fleet in state.warzone.fleets:
+			var index: int = state.warzone.encounter_for_fleet(fleet)
+			var profile: Resource = state.encounters[index].enemy_data if index >= 0 else state.ship()
+			state.warzone.FleetLogistics.configure_preference(fleet, profile)
+
 
 static func _add_contact(state: Resource, faction: Resource, escalated: bool, slot: int, dormant: bool) -> void:
 	var enemy := _sector_enemy(state, faction, slot) if escalated else Factions.enemy(state, faction, slot)

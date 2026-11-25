@@ -228,6 +228,11 @@ func run() -> void:
 	check(not _has_hold(host) and host.view.find_children("*", "Button", true, false).any(
 		func(button): return button.text == "Activate Operation"),
 		"Allied stations omit Hold Position and retain their special operation")
+	var services: Array[Node] = host.view.find_children("WarzoneService_*", "Button", true, false)
+	check(services.size() == 3 and services.any(
+		func(button): return button.text.contains("Reactor") and button.text.contains("12 Salvage")), "Command station keeps Scramble alongside three production choices")
+	await create_timer(0.3).timeout
+	await capture("command-preparation")
 	var hostile_site: int = operation.HOSTILE_GROUPS + operation.root("hostile")
 	host.show_poi(hostile_site)
 	check(not _has_hold(host), "Out-of-range hostile stations do not offer automated capture")
@@ -371,11 +376,14 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 			if player.distance_squared_to(corner) > player.distance_squared_to(destination):
 				destination = corner
 	host.star_map.travel_to_position(destination)
+	check(host.phase == host.Phase.TRAVELING, "Observation starts with an active player travel leg")
+	var remained_live: bool = presentation.motion.is_empty()
 	var watched := 0
 	for interval in 12:
 		var before: Vector3 = model.position
 		var before_clock: int = operation.clock_ms
 		await create_timer(0.25).timeout
+		remained_live = remained_live and presentation.motion.is_empty()
 		if interval == 0: continue # Interpolation primes its first two samples.
 		var elapsed: float = (operation.clock_ms - before_clock) * 0.001
 		var distance := before.distance_to(model.position)
@@ -384,7 +392,7 @@ func _watch_fleet(host: Node, operation: RefCounted, presentation: Node3D) -> vo
 	check(watched >= 10, "The rendered fleet advances at the configured speed through successive quarter-second observations")
 	check(model == presentation.models[fleet.id] and model.position.distance_to(fleet.position) < 0.25,
 		"Rendering remains bound to the same fleet and within the fixed-step interpolation delay")
-	check(host.phase == host.Phase.TRAVELING and presentation.motion.is_empty(), "Live lattice movement never enters the legacy playback queue")
+	check(remained_live, "Live lattice movement never enters the legacy playback queue, including on arrival")
 	host.star_map.apply_navigation_position(host.State.Defense.point(host.state.navigation.position))
 	host.state.cancel_travel()
 	host.show_system()

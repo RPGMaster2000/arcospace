@@ -336,3 +336,67 @@ direction in viewport pixels. Permanent lines are four pixels wide and fleet
 routes are 2.25 pixels wide before edge feathering. Node insets keep incident
 connections apart, nearby parallel routes get separate lanes, and disconnected
 links use a muted patterned stroke. Width stays stable as the map zooms.
+
+## Faction economy and station logistics
+
+New Warzone sectors give Allied and Hostile forces their own Salvage wallets.
+Each starts with **10**, holds at most **40**, and earns **3** on its first
+capture of each installation and **4** the first time an opposing fleet is
+neutralized by qualifying combat. Supplied depots and hubs award **2** every
+**20 strategic seconds**, capped at **4** in each interval. The System Status
+report shows faction and personal balances separately.
+
+A service requires friendly control, lattice supply, an uncontested installation,
+an available recharge and a useful target. Players spend personal Salvage.
+Autonomous formations buy local services from their own side's wallet only
+when they arrive. They reserve repair funds when another formation is already
+headed to a dock and generally buy only one preparation between fights.
+Existing interception, pursuit, counterattacks and final-command defense
+take priority over station visits.
+
+| Installation | Service | Salvage | Effect | Recharge |
+| --- | --- | ---: | --- | ---: |
+| Repair Dock | Emergency Repairs | 4 | Up to 5 actual Hull or fleet integrity | 18s |
+| Depot or logistics hub | Combat Resupply | 7 | +5 of the chosen starting resource | 20s |
+| Outpost or junction | Shield Reinforcement | 6 | +6 starting Shields | 24s |
+| Command Station | Production Optimization | 12 | +1 of the chosen production family | 30s |
+| Communications Array | Signal Disruption | 8 | −4 of the chosen opposing resource | 25s |
+| Shipyard | Request Reinforcements | 3 | One formation within the existing limits | 30s |
+
+Personal preparation services cost four strategic seconds. Scramble, Fortify,
+Jam, Disrupt Logistics, allied fleet assistance and emergency recovery remain.
+Preparation has its own recharge except for immediate dock repairs, which share
+the dock's repair recharge. New sectors use paid dock repairs and existing
+convoy delivery for fleet recovery. The old passive repair at each volley
+remains part of legacy sectors. The station graph is unchanged, so a faction
+needs to control and supply the sector's Repair Dock to use it.
+
+Preparations cap at +12 Shields, +10 of each resource, +1 production total
+and one disruption. Card battles snapshot both packages in the existing
+checkpoint before applying them to detached starting stats. In automated
+combat, +5 resources gives +1 offensive strength, +6 Shields gives +1
+temporary defensive strength, +1 production gives +1.5 offensive strength,
+and disruption imposes −0.75 opposing offensive strength. Combined positive
+benefits are capped at +3 or 30% of starting fleet integrity, whichever is
+lower. Fractional attrition carries between volleys and expires with the
+engagement. Repairs and preparation remain separate.
+
+The optional economy record preserves balances, event IDs, services, and
+active engagement modifiers. A save without that record keeps the previous
+sector rules until the next generated sector. Opening an old run never
+regenerates its lattice or reclassifies its existing discoveries.
+
+### Balance audit
+
+Run `godot --headless --path . --script res://tools/warzone_economy_audit.gd -- 20`
+for 20 seeds per policy and model. The comparison disables the new economy
+and station decisions in the baseline. Across 200 runs, the capture-rush
+policy encountered a pursuit interception in 16 of 20 new runs, up from
+14 of 20 in the baseline. It secured four sectors instead of six. Unattended
+and discovery-only policies won none. They retained 25 allied formations
+across the 20 runs instead of 16. The fixed station-support sweep produced
+103 observed station service events, but completed no sectors within its
+short probe. The two adaptive regression scenarios still win with zero
+card battles. The infrastructure route stops disrupting a connected
+frontier after its initial sabotage so its own offensive can advance.
+Service prices, caps, and intervals match the proposed values.

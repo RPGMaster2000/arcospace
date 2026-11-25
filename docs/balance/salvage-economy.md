@@ -52,3 +52,13 @@ The old turret scenario leaves only 8 Salvage after repairs, so the purchase
 fails. The new balance covers it and leaves 16. Passive mining is a delayed
 alternative to taking 12 upfront. It reaches the same maximum only if the
 player commits 60 strategic seconds before securing or leaving the system.
+
+## Warzone
+
+Faction Salvage is distinct from player Salvage. Each side starts at **10**,
+holds at most **40**, and gains **3** on first capture and **4** on qualifying
+fleet neutralization. Supplied logistics income is **2 per depot or hub every
+20 strategic seconds**, capped at **4** per faction each interval. Autonomous
+fleets pay for local services from their own side's wallet. Personal station
+purchases and player-requested reinforcements use player Salvage. See the
+[Warzone service table](../warzone.md#faction-economy-and-station-logistics).

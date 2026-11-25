@@ -180,6 +180,7 @@ func discoveries_and_modifiers() -> void:
 	var transaction := {}
 	var approach: Resource = state.poi_approaches(index).front()
 	var prior: int = state.salvage
+	var payout: int = state.warzone_discovery_payout(index, approach, true)
 	var valid: bool = state.resolve_approach(index, 0, 0.0, func(activity, finish):
 		transaction.activity = activity
 		transaction.finish = finish)
@@ -188,9 +189,9 @@ func discoveries_and_modifiers() -> void:
 	if not valid or transaction.is_empty(): return
 	transaction.activity.advance_to(cost)
 	transaction.finish.call()
-	check(state.warzone.clock_ms == elapsed + cost * 1000 and state.salvage == prior + approach.success.salvage - approach.salvage_cost
+	check(state.warzone.clock_ms == elapsed + cost * 1000 and state.salvage == prior + payout + mini(0, approach.success.salvage) - approach.salvage_cost
 		and state.encounters[index].completed and not state.resolve_approach(index, 0, 0.0),
-		"Existing discovery rewards and time apply exactly once")
+		"Detour Salvage replaces the old payout and the action consumes time once")
 	check(roundtrip(state) != null and state.warzone.effort == 0 and not state.can_jump(),
 		"Completed discoveries persist without awarding War Effort or FTL access")
 	var malformed := Store.encode(saved)
@@ -442,6 +443,10 @@ func scenario(seed_value: int, strategy: String) -> void:
 			if strategy == "infrastructure" and round_index == 0 and role == "allied_command": continue
 			var action: Dictionary = op.operations(site, state.salvage).front()
 			if not action.enabled: continue
+			# Stop cutting the frontier the allied offensive is trying to take.
+			# This still exercises sabotage and supply disruption on the first visit.
+			if action.id == "sabotage" and visited.has(site) and op.final_command >= 0 \
+					and op._capture_connected(site, "allied"): continue
 			approach(state, site)
 			if not op.complete and state.warzone_operate(site + State.Warzone.HOSTILE_GROUPS, action.id):
 				visited[site] = true

@@ -1217,6 +1217,11 @@ func _battle_system_overview() -> String:
 		var progress: String = "War Effort %d / %d" % [operation.effort, operation.tuning.effort_goal] if operation.is_lattice() 			else "Objectives %d / %d" % [operation.controlled(), expedition.Warzone.REQUIRED_OBJECTIVES]
 		var lines := PackedStringArray(["Warzone · " + progress,
 			"Hostile fleets %d" % expedition.warzone.fleet_count("hostile")])
+		var packages: Dictionary = battle_environment.get("preparations", {})
+		for side in ["player", "enemy"]:
+			var preparation := preload("res://scripts/combat/combat_preparation.gd").summary(packages.get(side, {}))
+			if not preparation.is_empty():
+				lines.append("%s preparation · %s" % [side.capitalize(), preparation])
 		var allied: Dictionary = battle_environment.get("friendly_support", {})
 		if allied.get("source") == "allied_fleet":
 			var next_round: int = turn_number + posmod(1 - turn_number, allied.interval)
