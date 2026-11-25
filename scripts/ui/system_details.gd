@@ -4,7 +4,6 @@ const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
-const Modifiers = preload("res://scripts/combat_modifier.gd")
 
 
 static func active_enemies(state: Resource) -> Array:
@@ -67,9 +66,14 @@ static func text(state: Resource) -> String:
 			Variation.SIZE_CLASSES[int(geography.size_class)], Variation.HOME_REGIONS[int(geography.home_region)]])
 		rows.insert(3, "%s%s · %s intensity" % [Variation.STARS[int(geography.star)][0],
 			"" if geography.companion.is_empty() else " + companion", ["Low", "Moderate", "High"][int(geography.intensity)]])
+	if geography.has("weather"):
+		var storms: int = state.environmental_instances.filter(func(item): return item.type == EnvironmentData.SPACE_STORM).size()
+		var rifts: int = EnvironmentData.Rifts.active_all(state.environmental_instances).size()
+		rows.insert(4, "%d storm fronts · %d live temporal rifts" % [storms, rifts])
+
 	if not state.defense.military.is_empty():
 		var formation: String = state.defense.military.formation
-		var position := 4 if geography.get("version") == 2 else 2
+		var position := (5 if geography.has("weather") else 4) if geography.get("version") == 2 else 2
 		rows.insert(position, Warfare.describe(formation))
 		rows.insert(position + 1, Warfare.brief(formation))
 	if enemies.is_empty():
@@ -122,7 +126,7 @@ static func text(state: Resource) -> String:
 			temporary.append(
 				(
 					"%s: %s — at current location; fixed on battle entry"
-					% [enemy.name, Modifiers.NAMES[modifier]]
+					% [enemy.name, EnvironmentData.name_for(environment)]
 				)
 			)
 	rows.append("\n".join(temporary) if not temporary.is_empty() else "None")

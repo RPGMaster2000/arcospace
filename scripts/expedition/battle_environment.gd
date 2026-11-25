@@ -25,11 +25,11 @@ static func instance(id: String, type: String, position: Array = []) -> Dictiona
 		"simulation": {}, "generation": {}}
 
 
-static func valid_instances(value: Variant) -> bool:
+static func valid_instances(value: Variant, storm_limit: int = 2, rift_limit: int = 1) -> bool:
 	if not value is Array or value.size() > 128: return false
 	var ids: Dictionary = {}
 	var physical_storm := 0
-	var physical_rift := false
+	var physical_rifts := 0
 	for item in value:
 		if not item is Dictionary: return false
 		if not item.get("id") is String or item.id.is_empty() or item.id.length() > 128 or ids.has(item.id): return false
@@ -43,19 +43,19 @@ static func valid_instances(value: Variant) -> bool:
 		if item.type == SOLAR_INTERFERENCE and not item.region.is_empty() and (not Solar.valid(item) or not Solar.valid_visual(item.visual)): return false
 		if item.type == SPACE_STORM and not item.region.is_empty():
 			physical_storm += 1
-			if physical_storm > 2: return false
+			if physical_storm > storm_limit: return false
 			if not Storms.valid(item) or not Storms.valid_visual(item.visual, item.configuration.subtype): return false
 			if not Storms.valid_generation(item.generation): return false
 		if item.type == TEMPORAL_RIFT and not item.region.is_empty():
-			if physical_rift or not Rifts.valid_instance(item): return false
-			physical_rift = true
+			physical_rifts += 1
+			if physical_rifts > rift_limit or not Rifts.valid_instance(item): return false
 	return true
 
 
 # Legacy > solar > temporal rift > asteroid > storm. Lexical ID breaks ties
 # within each type, independent of record order. Empty reserved records remain neutral.
 static func evaluate(state: Resource, location: Array, instances: Array,
-		encounter_index: int = -1, legacy_modifier: int = 0) -> Dictionary:
+		encounter_index: int = -1, legacy_modifier: int = 0, overlap: bool = false) -> Dictionary:
 	var result: Dictionary = {"version": 1, "type": NONE, "instance_id": "",
 		"intensity": 0.0, "configuration": {}, "visual": {},
 		"location": location, "run_seed": str(state.seed_used),
@@ -63,14 +63,22 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 		"legacy_modifier": legacy_modifier}
 	if legacy_modifier == 0:
 		var selected: Dictionary = {}
+		var temporal: Dictionary = {}
 		var selected_priority := 0
 		for item in instances:
 			if not item is Dictionary or not item.get("id") is String: continue
 			var priority: int = _priority(item, location)
 			if priority == 0: continue
-			if selected.is_empty() or priority > selected_priority or (priority == selected_priority and item.id < selected.id):
+			if overlap and item.type == TEMPORAL_RIFT:
+				if _wins_tie(item, temporal, true): temporal = item
+				continue
+			if priority > selected_priority or (priority == selected_priority and _wins_tie(item, selected, overlap)):
 				selected = item
 				selected_priority = priority
+		if selected.is_empty(): selected = temporal
+		elif not temporal.is_empty():
+			# One timed battle modifier plus the existing passive rift draw rule.
+			result.temporal_anomaly = {"id":temporal.id, "position":temporal.position, "region":temporal.region}
 		if not selected.is_empty():
 			result.type = selected.type
 			result.instance_id = selected.id
@@ -82,8 +90,24 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 			# Historical snapshots omit this optional flag and retain the old bounds.
 			if selected.type == SPACE_STORM and selected.generation.get("extended", false):
 				result.configuration.extended = true
+			if selected.generation.get("front", false): result.configuration.front = true
 			result.visual = selected.visual.duplicate(true)
 	return snapshot(result)
+
+
+static func _wins_tie(candidate: Dictionary, current: Dictionary, compare_intensity: bool) -> bool:
+	if current.is_empty(): return true
+	if compare_intensity and candidate.intensity != current.intensity: return candidate.intensity > current.intensity
+	return candidate.id < current.id
+
+
+static func temporal_draw(value: Dictionary) -> bool:
+	return value.get("type") == TEMPORAL_RIFT or value.has("temporal_anomaly")
+
+
+static func name_for(value: Dictionary) -> String:
+	var label: String = Modifiers.NAMES[modifier_id(value)]
+	return label + " + Temporal Rift" if value.has("temporal_anomaly") else label
 
 
 # Only the selection boundary maps physical phenomena to existing mechanics/arenas.
@@ -138,6 +162,13 @@ static func valid_snapshot(value: Variant) -> bool:
 		support.source != "allied_fleet" or not Installations._positive_integer(support.get("strength"), 1000000)
 	): return false
 	if value.type == NONE and (value.instance_id != "" or value.intensity != 0): return false
+	if value.has("temporal_anomaly"):
+		var anomaly: Variant = value.temporal_anomaly
+		if value.type not in [SOLAR_INTERFERENCE, ASTEROID_FIELD, SPACE_STORM] or not anomaly is Dictionary \
+			or not anomaly.get("id") is String or not anomaly.id.begins_with("rift-") or anomaly.id.length() > 128 \
+			or not _wire(anomaly) or not Rifts.contains({"position":anomaly.get("position"), "region":anomaly.get("region"),
+				"generation":{"front":true}}, value.get("location", [])):
+			return false
 	if not Navigation.valid_point(value.get("location")): return false
 	if not value.get("run_seed") is String or not value.run_seed.is_valid_int(): return false
 	if not _integer(value.get("system_number"), 1) or not _integer(value.get("encounter_index"), -1): return false
@@ -154,14 +185,16 @@ static func valid_snapshot(value: Variant) -> bool:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0: return false
 		if not Storms.valid_visual(value.visual, value.configuration.get("subtype")): return false
 		var extended: Variant = value.configuration.get("extended", false)
-		if not extended is bool: return false
+		var front: Variant = value.configuration.get("front", false)
+		if not extended is bool or not front is bool: return false
 		if not Storms.valid({"position": value.configuration.get("position"),
 				"region": value.configuration.get("region"), "configuration": value.configuration,
-				"generation": {"extended": extended}}): return false
+				"generation": {"extended": extended, "front":front}}): return false
 	if value.type == TEMPORAL_RIFT:
 		if value.instance_id.is_empty() or value.legacy_modifier != 0 or not Rifts.valid_visual(value.visual): return false
 		if not Rifts.contains({"position": value.configuration.get("position"),
-				"region": value.configuration.get("region")}, value.location): return false
+				"region": value.configuration.get("region"),
+				"generation":{"front":value.configuration.get("front", false)}}, value.location): return false
 	return true
 
 

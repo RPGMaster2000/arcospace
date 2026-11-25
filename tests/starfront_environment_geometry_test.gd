@@ -127,6 +127,9 @@ func geometry(state: Resource, old: Resource) -> void:
 func _initialize() -> void:
 	var current := Rules.duplicate()
 	current.log_rolls = false
+	# PR #125's sanctuary contract remains covered with its environmental policy.
+	current.system_variety = Rules.system_variety.duplicate()
+	current.system_variety.extreme_weather = false
 	var baseline := current.duplicate()
 	baseline.system_variety = current.system_variety.duplicate()
 	baseline.system_variety.progressive_geometry = false

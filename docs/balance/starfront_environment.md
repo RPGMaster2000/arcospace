@@ -1,5 +1,7 @@
 # Later Starfront geography
 
+[Extreme Starfront weather](extreme_weather.md) describes the current Unstable, Storm-dominated and Chaotic hazard profiles. The weather measurements below record PR #125's original policy for comparison.
+
 ## Environmental profiles
 
 The following weights apply before excluding the previous committed archetype. The unusual bucket is split evenly across scattered, crowded and asymmetric. The extreme bucket is split between unstable and storm-dominated. The cap applies from System 5. System 1 uses the original generator.

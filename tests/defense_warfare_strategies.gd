@@ -11,6 +11,7 @@ func _initialize() -> void:
 	var rules := Rules.duplicate()
 	rules.system_variety = Rules.system_variety.duplicate()
 	rules.system_variety.progressive_geometry = "--legacy-geography" not in OS.get_cmdline_user_args()
+	rules.system_variety.extreme_weather = "--legacy-weather" not in OS.get_cmdline_user_args()
 	for strategy in STRATEGIES:
 		var groups := {}
 		for mode in Warfare.FORMATIONS:
@@ -60,12 +61,13 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 		else:
 			destination = target(fleet, player, policy)
 		var travel: float = player.distance_to(destination) * fleet.tuning.seconds_per_distance
-		var event: Dictionary = fleet.advance_time(maxf(1.0, travel), player, destination)
+		var event: Dictionary = run._advance_strategy(maxf(1.0, travel), player, destination, false, false)
 		spent += event.elapsed
 		player = event.position
 		run.navigation.checkpoint_position(State.Defense.wire(player))
 		if event.contact >= 0:
 			row.hazardous_battles += int(run.preview_modifier(event.contact) != 0)
+			row["coupled_battles"] = row.get("coupled_battles", 0) + int(run.battle_environment(event.contact).has("temporal_anomaly"))
 			run.active_battle = event.contact
 			var result := Result.new()
 			report_id += 1

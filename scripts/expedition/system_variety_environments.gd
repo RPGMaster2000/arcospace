@@ -1,6 +1,7 @@
 extends RefCounted
 ## New-system parameter adapter; existing physical records remain authoritative.
 const Variation = preload("res://scripts/expedition/system_variation.gd")
+const Weather = preload("res://scripts/expedition/extreme_weather.gd")
 const Storms = preload("res://scripts/expedition/storm_regions.gd")
 const Routes = preload("res://scripts/expedition/route_environments.gd")
 
@@ -16,6 +17,8 @@ static func storms(state: Resource, candidates: Array, existing: Array) -> Array
 	var result: Array = []
 	var profile: Dictionary = state.system_variation
 	var varied := not profile.is_empty()
+	if profile.has("weather"):
+		return Weather.fronts(state, profile.weather, Variation.rng_for(state.seed_used, state.system_number, "extreme-fronts"))
 	var count: int = int(profile.storm_count) if varied else 1
 	for index in count:
 		var seed_value: int = (

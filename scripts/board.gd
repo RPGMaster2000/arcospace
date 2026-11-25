@@ -15,6 +15,7 @@ signal expedition_exit
 signal developer_one_hit_kill_changed(enabled: bool)
 const BattleResult = preload("res://scripts/combat/battle_result.gd")
 const BattleSetup = preload("res://scripts/combat/battle_setup.gd")
+const BattleEnvironment = preload("res://scripts/expedition/battle_environment.gd")
 const BattleAdapter = preload("res://scripts/combat/battle_adapter.gd")
 var battle_setup: BattleSetup
 var expedition: Resource
@@ -311,7 +312,7 @@ func _ready() -> void:
 		ftl.rng.seed = battle_setup.battle_seed ^ 109
 	for active_hand in [hand, enemy_hand]:
 		active_hand.drop_multiplier = (
-			modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 else 1.0
+			modifier.TEMPORAL_DROP_MULTIPLIER if modifier.kind == 5 or BattleEnvironment.temporal_draw(battle_environment) else 1.0
 		)
 	_setup_allocation()
 	$MatchResult/Panel/Configure.pressed.connect(_return_to_setup)
@@ -1158,6 +1159,8 @@ func _display_snapshot() -> Dictionary:
 	if not modifier_status.is_empty():
 		modifier_details += modifier_status + "\n"
 	modifier_details += modifier.description(modifier.kind)
+	if battle_environment.has("temporal_anomaly"):
+		modifier_details += "\nTemporal Rift · Tier 2 draw chance ×2 for both ships."
 	return {
 		"player": ship_snapshot("player"),
 		"enemy": ship_snapshot("enemy"),
