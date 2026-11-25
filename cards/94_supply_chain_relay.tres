@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Supply Chain Relay"
+tier = 2
+family = "materials"
+cost = 13
+allocation_category = "systems"
+description = "Gain 7 Crew. If own Reactor is lower, gain 7 Energy. Else gain 5 Shields."
+effects = {"crew": 7, "conditional": {"target": "self", "attribute": "reactor", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "enemy", "then": {"energy": 7}, "else": {"shields": 5}}}
+upgrade_effects = Array[Dictionary]([{"crew": 8, "conditional": {"target": "self", "attribute": "reactor", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "enemy", "then": {"energy": 8}, "else": {"shields": 6}}}, {"crew": 9, "conditional": {"target": "self", "attribute": "reactor", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "enemy", "then": {"energy": 9}, "else": {"shields": 7}}}])

@@ -87,7 +87,7 @@ const BASE_CARDS = [
 ]
 
 # Prototype cards are awarded through victory and the outpost.
-const CARDS = BASE_CARDS + [
+const PROTOTYPES = [
 	preload("res://cards/81_emergency_refit_mkii.tres"),
 	preload("res://cards/82_power_siphon.tres"),
 	preload("res://cards/83_boarding_raid.tres"),
@@ -97,3 +97,35 @@ const CARDS = BASE_CARDS + [
 	preload("res://cards/87_fortress_protocol.tres"),
 	preload("res://cards/88_reactor_gambit.tres"),
 ]
+
+const SYNERGY_CARDS = [
+	preload("res://cards/89_industrial_conversion.tres"),
+	preload("res://cards/90_reactive_foundry.tres"),
+	preload("res://cards/91_emergency_fabrication.tres"),
+	preload("res://cards/92_kinetic_reclamation.tres"),
+	preload("res://cards/93_automated_assembly_line.tres"),
+	preload("res://cards/94_supply_chain_relay.tres"),
+	preload("res://cards/95_execution_beam.tres"),
+	preload("res://cards/96_shield_dividend.tres"),
+	preload("res://cards/97_capacitor_transfer.tres"),
+	preload("res://cards/98_reactor_cascade.tres"),
+	preload("res://cards/99_ion_interdictor.tres"),
+	preload("res://cards/100_reserve_equalizer.tres"),
+	preload("res://cards/101_precision_boarding.tres"),
+	preload("res://cards/102_deep_cover.tres"),
+	preload("res://cards/103_recovery_specialists.tres"),
+	preload("res://cards/104_logistics_officers.tres"),
+	preload("res://cards/105_shield_boarding.tres"),
+	preload("res://cards/106_counterintelligence_cell.tres"),
+	preload("res://cards/107_industrial_supremacy.tres"),
+	preload("res://cards/108_bastion_foundry.tres"),
+	preload("res://cards/109_siege_assembly.tres"),
+	preload("res://cards/110_aegis_protocol.tres"),
+	preload("res://cards/111_overload_sequence.tres"),
+	preload("res://cards/112_tri_vector_reactor.tres"),
+	preload("res://cards/113_total_infiltration.tres"),
+	preload("res://cards/114_fleet_quartermaster.tres"),
+	preload("res://cards/115_last_stand_command.tres"),
+]
+
+const CARDS = BASE_CARDS + PROTOTYPES + SYNERGY_CARDS

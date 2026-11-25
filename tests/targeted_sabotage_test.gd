@@ -54,7 +54,7 @@ func snapshot() -> Dictionary:
 
 
 func run() -> void:
-	check(Library.CARDS.size() == 88, "88 registered identities")
+	check(Library.CARDS.size() == 115, "115 registered identities")
 	var occurrences: Dictionary = {}
 	for index in range(6):
 		var base: Resource = Library.CARDS[68 + index]

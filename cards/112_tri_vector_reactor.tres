@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Tri-Vector Reactor"
+tier = 3
+family = "energy"
+cost = 24
+allocation_category = "systems"
+description = "At 4+ Reactor: +16 Materials, +12 Crew. Else +1 Reactor, +8 Materials and Crew each."
+effects = {"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"materials": 16, "crew": 12}, "else": {"reactor": 1, "materials": 8, "crew": 8}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"materials": 18, "crew": 14}, "else": {"reactor": 1, "materials": 10, "crew": 10}}}, {"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"materials": 20, "crew": 16}, "else": {"reactor": 1, "materials": 12, "crew": 12}}}])

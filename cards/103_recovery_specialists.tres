@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Recovery Specialists"
+tier = 2
+family = "crew"
+cost = 12
+allocation_category = "defense"
+description = "Gain 6 Materials. Below 50% Hull, repair 10 Hull. Else gain 8 Shields."
+effects = {"materials": 6, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 10}, "else": {"shields": 8}}}
+upgrade_effects = Array[Dictionary]([{"materials": 7, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 12}, "else": {"shields": 10}}}, {"materials": 8, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 14}, "else": {"shields": 12}}}])

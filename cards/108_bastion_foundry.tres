@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Bastion Foundry"
+tier = 3
+family = "materials"
+cost = 25
+allocation_category = "defense"
+description = "Below 50% Hull: repair 14 Hull, gain 22 Shields. Else repair 10 Hull, gain 16 Shields."
+effects = {"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 14, "shields": 22}, "else": {"hull": 10, "shields": 16}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 17, "shields": 25}, "else": {"hull": 12, "shields": 19}}}, {"conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 20, "shields": 28}, "else": {"hull": 14, "shields": 22}}}])

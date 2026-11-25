@@ -27,7 +27,7 @@ func custom(values: Dictionary, family: String = "energy", cost: int = 0) -> Res
 func expect(actual: Dictionary, wanted: Dictionary, context: String) -> void:
 	for key in wanted: check(actual[key] == wanted[key], context + " " + key + " expected " + str(wanted[key]) + " got " + str(actual[key]))
 func run() -> void:
-	check(Library.CARDS.size() == 88, "88 distinct resources")
+	check(Library.CARDS.size() == 115, "115 distinct resources")
 	var identities: Dictionary = {}
 	var counts: Dictionary = {"materials":0,"energy":0,"crew":0}
 	# Per-level outcomes from the prototype specification, with the same public combat state.

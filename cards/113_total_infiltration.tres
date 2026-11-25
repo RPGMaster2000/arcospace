@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Total Infiltration"
+tier = 3
+family = "crew"
+cost = 22
+allocation_category = "offense"
+description = "Deal 12 piercing damage. Steal up to 8 each of Materials, Energy and Crew."
+effects = {"damage": 12, "pierce": 1.0, "steal": {"materials": 8, "energy": 8, "crew": 8}}
+upgrade_effects = Array[Dictionary]([{"damage": 15, "pierce": 1.0, "steal": {"materials": 9, "energy": 9, "crew": 9}}, {"damage": 18, "pierce": 1.0, "steal": {"materials": 10, "energy": 10, "crew": 10}}])

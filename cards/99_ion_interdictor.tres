@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Ion Interdictor"
+tier = 2
+family = "energy"
+cost = 15
+allocation_category = "offense"
+description = "Remove 12 enemy Shields. At 4+ enemy Reactor, drain 8 Energy. Else gain 4 Crew."
+effects = {"break_shields": 12, "conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"drain": {"energy": 8}}, "else": {"crew": 4}}}
+upgrade_effects = Array[Dictionary]([{"break_shields": 14, "conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"drain": {"energy": 10}}, "else": {"crew": 5}}}, {"break_shields": 16, "conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"drain": {"energy": 12}}, "else": {"crew": 6}}}])

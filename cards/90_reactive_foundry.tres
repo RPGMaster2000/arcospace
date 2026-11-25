@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Reactive Foundry"
+tier = 2
+family = "materials"
+cost = 10
+allocation_category = "defense"
+description = "Gain 8 Shields. Below 50% Hull, also gain 6 Energy."
+effects = {"shields": 8, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"energy": 6}}}
+upgrade_effects = Array[Dictionary]([{"shields": 10, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"energy": 7}}}, {"shields": 12, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"energy": 8}}}])
