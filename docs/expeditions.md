@@ -50,24 +50,24 @@ A present station remains available until leaving its system. Buy any affordable
 |---|---|---|
 | Hull service | 1 Salvage/Hull below capacity; 2 Salvage/plating at full Hull | One tile/selector: Repair Hull → Install Ablative Plating → disabled at +10. Quantity and cost are validated before confirmation. |
 | Purchase supplies | 7 Salvage | Choose +5 Materials, Energy or Crew next battle; repeated purchases add |
-| Acquire card | 15 Salvage | Up to three distinct unowned offers; choose one for the player pool |
-| Shipyard improvements | 25, 40, 60, 85, 115, 150, 190, … | Choose +1 permanent expedition production |
+| Acquire card | 15 Salvage normally, 25 for Tier 3 | Browse up to six unowned designs. One Tier 3 can appear from System 3. |
+| Shipyard improvements | 35, 50, 70, 95, 125, 160, 200, … | Choose +1 permanent expedition production |
 
 Hull services and field repairs use shared `RepairRules.max_quantity` bounds. The station previews the selected Hull gain, resulting Hull and exact cost before confirmation. For 17/35 Hull, 50 Salvage and a +12 selection, the result is 29/35 Hull and 38 Salvage.
 
-Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 25/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
+Shipyard price for purchase `n` is `base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2`, with defaults 35/15/5. The counter combines Synthesizer, Reactor and Quarters purchases; it resets at the next station, while permanent production remains. Tune supplies/card/shipyard base prices in `encounters/trading_outpost.tres` → Approaches → Salvage Cost, and increments in `ExpeditionRules`. Repair parity is fixed by the shared numerical rule. Current Salvage, prices, locks and Return remain visible in the existing station layout; a repair slider appears in the footer only when repairs are selected.
 
-Card rewards offer **three distinct unowned cards** when available and allow one selection, including Engineering Recovery. Smaller eligible pools show fewer choices; exhaustion resolves with an explanation. Boarding teams offer Tier 2 or better only. Mixed-tier rewards favor Tier 2 at 60% per slot. Tiers display as Common/Uncommon/Rare.
+Ordinary card rewards offer up to five unowned identities. Eligible slots roll 40% Tier 1 and 60% Tier 2. Elite and boss victories and designated hazardous discoveries reserve one Tier 3 slot if an unowned candidate exists. Ordinary reward minimums still apply. The [balance reference](balance/cards.md) lists the full catalogue and draw rules.
 
-Each player ship retains its own 25 original Tier 1 identities plus three targeted sabotage cards, for 28 identities from the 74-card library. Acquisitions add new identities to the **player-only expedition pool**, at configurable ×3 draw weight within rarity, up to the default **36 distinct identities**. At capacity the selected incoming card stays fixed: select and confirm one owned identity to replace, or Keep Current Deck to decline without a refund. No card is removed before confirmation. Upgrades and drawn copies do not add to the count; retained upgrades persist and removed upgrades are discarded. Deck Viewer shows count / capacity. Tune **Max Deck Identities** in ExpeditionRules. Enemies retain the full, unmodified library. Six-card hands, maximum two identical cards and one-per-higher-tier restrictions remain. Tier 2 unlocks in round 3 for both sides.
+The six ships each start with 29 identities from their own pool. Acquired identities count toward the configured **34-identity** deck limit and get ×3 draw weight within their own rarity. At capacity, confirm an owned card to replace or keep the current deck. Copies and upgrade levels never add to the count. Removed identities lose their upgrades, while retained upgrades and pending choices survive save/resume.
 
-Each identity supports two effect upgrades (+ and ++), preserving its original cost, rarity and extra-action flag. A private upgraded Resource replaces every player copy in both pool and hand; upgrades persist for this expedition. Enemy Resources remain at base level. If no card can be upgraded, research grants 4 Salvage instead (editable). Exact effects and starting memberships: `docs/balance/cards.md`.
+Most cards have two private upgrades (+ and ++) with the original cost, rarity and action cost. The eight prototypes retain their authored upgrade limits. An upgrade updates every player copy in the pool and hand. Enemy cards stay at base level.
 
 ## Chasedown and combat upgrades
 
 Valid travel between two PoIs has a 5% Chasedown chance, at most once per system. Initial arrival, menus, battle returns and FTL jumps do not roll. Four responses feed the existing battle-start modifiers; the ordinary enemy uses existing difficulty scaling. Victory or escape grants exactly +1 FTL, then resumes the untouched destination.
 
-Non-escape victories offer upgrades to **different identities**: Chasedown 1, standard 2, elite 3, boss 3. Spend all available upgrades sequentially in the existing gallery before continuing. If no eligible identities remain, the event closes automatically. A card selected in an event is excluded until that event ends; a later event may upgrade it again, up to the existing two-level maximum. Combat upgrade exhaustion grants no extra Salvage. Escape grants neither Salvage nor upgrades. Research keeps its existing exhausted-pool Salvage fallback.
+A non-Chasedown victory offers one card acquisition or the existing upgrade allowance. Standard victories offer two upgrades and elite or boss victories offer three. Chasedown victories offer one upgrade. Spend all available upgrades sequentially in the existing gallery before continuing. If no eligible identities remain, the event closes automatically. A card selected in an event is excluded until that event ends; a later event may upgrade it again, up to the existing two-level maximum. Combat upgrade exhaustion grants no extra Salvage. Escape grants neither Salvage nor upgrades. Research keeps its existing exhausted-pool Salvage fallback.
 
 Shipping interstellar FTL carryover is now zero, in both script defaults and configuration. Requirements, current-system charge and combat EMP Pulse rules remain unchanged. Wormhole bonus successes are 40% / 50% / 45%, each giving only +1 extra charge; the guaranteed perimeter approach gives none. See [implementation, tuning and validation](chasedown_rewards.md) for exact modifiers, old/new Wormhole outcomes and state handling.
 
@@ -138,7 +138,7 @@ Station overhaul validation used Godot 4.5.1 headless: editor/Resource import su
 
 The [card reference](balance/cards.md) describes the 24 added tactical identities, eight revised cards, generic conditionals/resource exchanges, replacement state and validation. These changes preserve PoIs, FTL, enemy scaling, starting pools and the combat reward upgrade event rules above.
 
-## Card expansion validation
+## Historical card expansion validation
 
 Based on main `2b08af7`, retaining its Chasedown, combat reward and distinct-upgrade-event behavior. Added 24 identities (eight per family; 13 Tier 1 / 11 Tier 2) and revised eight existing Resources. The [card catalogue](balance/cards.md) lists exact costs, allocation, tiers, all upgrade effects, conditional timing and Inspector tuning. Energy Cell is now Emergency Power Cell at its original path. New Hull attacks use existing 100% pierce; Shield damage uses existing break_shields without spillover. All requested base values are retained; conservative upgrades keep production changes ±1 and thresholds fixed. Hull Patch/Torpedo conditions choose their complete branch before repair/attack; Laser Burst and Shield-clearing follow-ups check afterward.
 
@@ -146,9 +146,9 @@ Godot **4.7.2** editor import and all **49 automated test scripts** pass after u
 
 Rendered Compatibility/software OpenGL checks cover replacement, all card-upgrade comparisons and paid station acquisitions at capacity. Replacement was inspected at desktop/ultrawide and 960×540, 800×450, 686×384 landscape sizes. The incoming portrait opens read-only inspection; the owned gallery scrolls independently and the lower actions remain reachable by scrolling the outcome view. Physical Android has not been tested.
 
-There is no disk save/load implementation to test or migrate. The authoritative owned pool, removed identities, retained upgrades, acquired weights and fixed incoming replacement persist through in-memory screen rebuilds and system transitions. Closing the application still ends the expedition. No persistence format or second progression system was introduced.
+At this stage, deck state and pending replacement survived in-memory transitions. The current expedition save also restores those commitments from disk.
 
-Balance concerns: direct Hull attacks can be strong against shield-heavy enemies; reserve exchanges can cause large economy swings and affect recovery during Systems Failure. Tier 2 gates the production manipulation and exchanges. Acquired ×3 weighting and the existing 1/2/3/3 combat upgrades amplify newly chosen identities, while the 36-identity cap limits breadth rather than total upgrade strength. These prototype interactions need human playtesting; no additional balance changes were made.
+Balance concerns: direct Hull attacks can be strong against shield-heavy enemies; reserve exchanges can cause large economy swings and affect recovery during Systems Failure. Tier 2 gates the production manipulation and exchanges. Acquired ×3 weighting and the existing 1/2/3/3 combat upgrades amplify newly chosen identities, while the deck cap limits the number of owned identities. These prototype interactions need human playtesting; no additional balance changes were made.
 
 Changed-file ownership:
 

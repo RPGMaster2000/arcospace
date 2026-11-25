@@ -40,12 +40,10 @@ Ion card previews and glow use the same storm multiplier as resolution. FTL stat
 
 ## Card tiers
 
-Existing cards default to Tier 1. The CardData Inspector offers Tier 1, Tier 2 and Tier 3. Six Tier 2 cards are added: Siege Driver / Emergency Refit (Materials), Antimatter Lance / Aegis Overcharge (Energy), Sabotage Commandos / Damage Control (Crew). Tier 3 is reserved; no Tier 3 cards exist yet.
+The CardData Inspector exposes three rarities. Rarity stays fixed through both upgrade levels. The [card catalogue](balance/cards.md) lists the 115 shared identities and the full effects of each variant.
 
-Each hand can hold one Tier 2 card total. This applies to starting hands and replacement draws, for both ships. Tier 1 retains the two-identical-copy limit. The draw first chooses a tier (15% Tier 2 when eligible), then uniformly selects an eligible card within that tier. If a Tier 2 is already held, draws fall back to Tier 1. Using/discarding that card opens the slot for its replacement. Custom pools without an eligible fallback can produce an empty slot.
+Each six-card hand allows at most one Tier 2 and one Tier 3 at the same time, with at most two copies of an identity. Tier 2 unlocks in round 3 and Tier 3 in round 6. The normal eligible rates are 80% Tier 1, 15% Tier 2 and 5% Tier 3. A locked, missing or occupied rarity falls back to Tier 1. Once rarity is rolled, identity selection uses the hand's existing weights. Custom pools without a valid fallback can leave a slot empty.
 
-Temporal Rift is a whole-battle modifier with no periodic event. It doubles Tier 2 chance to 30% for both hands and loads `scenes/battlefield_temporal_rift.tscn`, an independent copy ready for editor changes. No other modifier is active alongside it.
+Temporal Rift doubles the Tier 2 rate to 30%. Tier 3 stays at 5%, and both round gates and caps still apply. The modifier uses `scenes/battlefield_temporal_rift.tscn`.
 
-TUNE: `card_hand.gd` exposes tier chances and max copies. Each new `.tres` exposes tier, cost and numerical effects. `card_view.gd` exposes commented jagged depth, spacing and pulse intensity; the Tier 2 outline pulses softly and remains visible on the played-card presentation.
-
-Tier 2 cards are blocked for both ships during full rounds 1-2, including opening/fixed hands and Temporal Rift. Draws unlock at round 3. TUNE `card_hand.gd` → `tier_two_locked_turns` to change this delay. Emergency Power Cell retains `08_energy_cell.tres`, costs 0 and consumes a turn. It grants +3 Materials and +3 Crew, plus +3 Energy if own Energy is at most 5 after payment. Normal card summaries use 14 px text and a fixed artwork area. Hold a card or middle-click for full effects and both upgrades; tune `resources/card_presentation.tres`.
+Tune chances, rounds and duplicate limits in `scripts/cards/card_hand.gd`. Card resources expose effect dictionaries and rarity in the Inspector. The card face shows compact effect timing and highlights Tier 3 with a gold badge. Hold or middle-click for the full effects and upgrades.
