@@ -404,12 +404,13 @@ func layout() -> void:
 func regions() -> Array[Rect2]:
 	return reserved if active else []
 
-func prepare_introduction(name_value: String, number: int) -> void:
+func prepare_introduction(name_value: String, number: int, geography: String = "") -> void:
 	cancel()
 	system_name = name_value
 	system_number = number
 	title.text = name_value.to_upper()
 	subtitle.text = "SYSTEM %02d" % number
+	if not geography.is_empty(): subtitle.text += " · " + geography.to_upper()
 	title.modulate.a = 0
 	subtitle.modulate.a = 0
 	title.show()

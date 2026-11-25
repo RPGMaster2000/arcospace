@@ -21,6 +21,8 @@ var layout_expansion: float = 0.0
 var orbit_clearance: float = 0.0
 ## Sole owner of the optional new-system profile; absent in historical systems.
 var system_variation: Dictionary = {}
+var previous_defense_environment := ""
+const SystemVariation = preload("res://scripts/expedition/system_variation.gd")
 var game_mode: String = "exploration"
 const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
 var developer_test: Dictionary = {}
@@ -307,7 +309,7 @@ func decoy_placement(at: Vector3) -> String:
 			sun = item
 			break
 	var center := Vector3.ZERO if sun.is_empty() else Defense.point(sun.position)
-	var radius: float = EnvironmentData.Solar.CORE_RADIUS_PER_SCALE * DECOY_MAP_SETTINGS.sun_core_scale if sun.is_empty() else sun.configuration.star_radius
+	var radius: float = SystemVariation.star_radius(system_variation, EnvironmentData.Solar.CORE_RADIUS_PER_SCALE * DECOY_MAP_SETTINGS.sun_core_scale) if sun.is_empty() else sun.configuration.star_radius
 	if at.distance_to(center) <= radius + 0.35: return "Stellar surface"
 	if at.distance_to(defense.home) <= 1.8 * 1.5 * 1.035 + 0.35: return "Homeworld"
 	for body in defense.decorative_bodies:
@@ -361,9 +363,9 @@ func refresh_defense_bodies() -> void:
 		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
 	preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
 		visual, defense.snapshot(), SystemLayout.planetary_indices(encounters), layout_expansion, orbit_clearance,
-		SystemLayout.planetary_radii(encounters),
-		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
-	defense.decorative_bodies = visual.planets.slice(1)
+		SystemLayout.planetary_radii(encounters, system_variation.get("planet_scales", {})),
+		preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances), system_variation)
+	defense.decorative_bodies = visual.planets.slice(1).filter(func(body): return body.encounter == -1)
 
 
 func battle_location(index: int) -> Array:
@@ -469,6 +471,7 @@ func encounter_at(index: int) -> Dictionary:
 func start(ship_index: int, configuration: Resource, seed_override: int = 0, test_launch: Dictionary = {}) -> void:
 	faction_id = ""
 	system_variation = {}
+	previous_defense_environment = ""
 	run_ended = false
 	homeworld_outcome.clear()
 	warzone_outcome.clear()
@@ -478,7 +481,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0, tes
 	decoys = 0
 	rules = configuration
 	developer_test = DeveloperLaunch.configuration(test_launch.get("mode", ""),
-		test_launch.get("stage", 0), test_launch.get("rank", -1), test_launch.get("formation", ""), test_launch.get("faction", ""))
+		test_launch.get("stage", 0), test_launch.get("rank", -1), test_launch.get("formation", ""), test_launch.get("faction", ""), test_launch)
 	game_mode = developer_test.get("mode", rules.game_mode)
 	warzone_campaign_enabled = rules.warzone_campaign_enabled
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
@@ -503,6 +506,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0, tes
 	active_battle = -1
 	field_repairs_open = false
 	var chosen_seed: int = seed_override if seed_override != 0 else rules.debug_seed
+	if seed_override == 0 and developer_test.has("seed"): chosen_seed = int(developer_test.seed)
 	if chosen_seed == 0:
 		rng.randomize()
 	else:
@@ -663,7 +667,7 @@ func _generate_system(initial_test_launch: bool) -> bool:
 	var solar = preload("res://scripts/expedition/solar_regions.gd")
 	var star_settings = preload("res://resources/presentation/star_system_settings.tres")
 	var influence := {} if is_warzone() and warzone.is_lattice() else solar.generate(seed_used, system_number, [0.0, 0.0, 0.0],
-		solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale, preload("res://scripts/expedition/system_variety_environments.gd").solar_range(self),
+		SystemVariation.star_radius(system_variation, solar.CORE_RADIUS_PER_SCALE * star_settings.sun_core_scale), preload("res://scripts/expedition/system_variety_environments.gd").solar_range(self),
 		0.8 if layout_expansion > 0.0 else 1.0)
 	if not influence.is_empty():
 		influence.generation.celestial_clearance = true
@@ -674,7 +678,7 @@ func _generate_system(initial_test_launch: bool) -> bool:
 		# and omit optional stellar influence if no safe volume fits that layout.
 		for index in SystemLayout.planetary_indices(encounters):
 			if encounters[index].poi.resource_path.get_file().get_basename() != "gas_giant": continue
-			if defense.anchors[index].length()-SystemLayout.planetary_radius("gas_giant") < influence.region.radius+influence.generation.visual_margin:
+			if defense.anchors[index].length()-SystemLayout.planetary_radius("gas_giant") * float(system_variation.get("planet_scales", {}).get(str(index), 1.0)) < influence.region.radius+influence.generation.visual_margin:
 				influence = {}
 				break
 	if not influence.is_empty() and (not is_defense() or not defense.v2 or RouteEnvironments.relevant(influence,defense)):
@@ -687,12 +691,16 @@ func _generate_system(initial_test_launch: bool) -> bool:
 		preview = visual.generate(seed_used,system_number,[] if is_defense() and layout_expansion > 0 else preload("res://scripts/presentation/star_system/visual_system.gd").entries_for(self),star_settings,system_profile,layout_expansion,orbit_clearance,
 			preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
 		if is_defense():
-			preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(preview,defense.snapshot(),SystemLayout.planetary_indices(encounters),layout_expansion,orbit_clearance,SystemLayout.planetary_radii(encounters),
-				preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances))
+			preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(preview,defense.snapshot(),SystemLayout.planetary_indices(encounters),layout_expansion,orbit_clearance,SystemLayout.planetary_radii(encounters, system_variation.get("planet_scales", {})),
+				preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances), system_variation)
 		if not preview.get("solar_clear",true):
 			environmental_instances.clear()
 			preview.clear()
-	if is_defense(): rifts.reset(seed_used, system_number, defense.tuning.rift_initial_delay)
+	if is_defense():
+		var rift_delay: float = defense.tuning.rift_initial_delay
+		if system_variation.get("version") == 2 and system_variation.archetype in ["unstable", "chaotic"]:
+			rift_delay *= 0.78 if system_variation.archetype == "unstable" else 0.90
+		rifts.reset(seed_used, system_number, rift_delay)
 	encounter_positions = {} if is_defense() or is_warzone() else preload("res://scripts/presentation/star_system/visual_system.gd").battle_positions(self,preview)
 	var routed: bool = is_defense() and defense.v2
 	var route_points: Array = RouteEnvironments.points(defense) if routed else encounter_positions.values()
@@ -715,9 +723,12 @@ func _generate_system(initial_test_launch: bool) -> bool:
 	if is_warzone() and warzone.is_lattice():
 		WarzoneOperation.Discoveries.populate(self)
 		WarzoneOperation.assign_modifiers(self)
-	if is_defense(): environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
+	if is_defense():
+		environmental_instances = preload("res://scripts/expedition/environment_clearance.gd").protect_home(self,environmental_instances,route_points)
+		if system_variation.get("version") == 2:
+			environmental_instances = preload("res://scripts/expedition/system_variety_environments.gd").preserve_approaches(self, environmental_instances)
 	if is_defense() and not preview.is_empty() and preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environmental_instances) == preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(solar_records):
-		defense.decorative_bodies = preview.planets.slice(1)
+		defense.decorative_bodies = preview.planets.slice(1).filter(func(body): return body.encounter == -1)
 	else:
 		refresh_defense_bodies()
 

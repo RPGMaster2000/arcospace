@@ -273,18 +273,27 @@ static func place(state: Resource, fleet: RefCounted, military: Dictionary) -> b
 	var heading: float = atan2(fleet.home.z, fleet.home.x)
 	var mirror := -1.0 if rng.randf() < 0.5 else 1.0
 	var orbit_edge := 4.15
-	for index in Layout.planetary_radii(state.encounters):
-		orbit_edge = maxf(orbit_edge, fleet.anchors[index].length() + Layout.planetary_radius(
-			state.encounters[index].poi.resource_path.get_file().get_basename()))
+	var radii := Layout.planetary_radii(state.encounters, fleet.geometry.get("planet_scales", {}))
+	for index in radii:
+		orbit_edge = maxf(orbit_edge, fleet.anchors[index].length() + float(radii[index]))
 	var minimum: float = state.system_variation.get("minimum_arrival", 20.0)
 	var attackers: Array = fleet.units.filter(func(unit): return not unit.mothership and not unit.reinforcement)
 	var reserves: Array = fleet.units.filter(func(unit): return unit.reinforcement)
 	var mother: Dictionary = fleet.unit_for(fleet.mothership_index())
 	var mother_origin: Vector3 = mother.position
-	if military.formation == "spearhead":
+	if military.formation == "spearhead" or (not fleet.geometry.is_empty() and not _clear(fleet, mother_origin, orbit_edge, [])):
 		var proposed := _position(fleet, heading + mirror * 2.54, 0.83)
 		if _clear(fleet, proposed, orbit_edge, []):
 			mother_origin = proposed
+		if not fleet.geometry.is_empty() and not _clear(fleet, mother_origin, orbit_edge, []):
+			var found := false
+			for step in 32:
+				var at := _position(fleet, heading + mirror * (0.8 + TAU * step / 32.0), 0.97)
+				if not _clear(fleet, at, orbit_edge, []): continue
+				mother_origin = at
+				found = true
+				break
+			if not found: return false
 	for attempt in 72:
 		var occupied: Array = [mother_origin]
 		var positions: Array[Vector3] = []
@@ -322,6 +331,7 @@ static func place(state: Resource, fleet: RefCounted, military: Dictionary) -> b
 		if arrivals[1] - arrivals[0] < 0.8 or arrivals[2] - arrivals[0] < battle_time + 0.5: continue
 		if not _intercept_opening(fleet, attackers, positions): continue
 		var entries: Array[Vector3] = []
+		var reserve_obstacles: Array = [mother_origin] if fleet.geometry.is_empty() else occupied
 		for unit in reserves:
 			var info: Dictionary = state.encounters[unit.encounter].defense_deployment
 			var center: float = headings[info.group]
@@ -331,7 +341,7 @@ static func place(state: Resource, fleet: RefCounted, military: Dictionary) -> b
 				var at := _position(fleet, heading + mirror * (center + offset), radial)
 				var speed: float = fleet._speed(unit)
 				var eta: float = at.distance_to(fleet.home) / speed
-				if eta < minimum or not _clear(fleet, at, orbit_edge, [mother_origin]):
+				if eta < minimum or not _clear(fleet, at, orbit_edge, reserve_obstacles):
 					continue
 				entries.append(at)
 				break
@@ -358,7 +368,7 @@ static func _position(fleet: RefCounted, heading: float, fraction: float) -> Vec
 static func _clear(fleet: RefCounted, at: Vector3, outer: float, occupied: Array) -> bool:
 	if at.length() < outer + 1.6 or at.distance_to(fleet.start) < 7.0 or at.distance_to(fleet.home) < 9.0:
 		return false
-	if Geometry3D.get_closest_point_to_segment(Vector3.ZERO, at, fleet.home).length() < 3.5:
+	if Geometry3D.get_closest_point_to_segment(Vector3.ZERO, at, fleet.home).length() < fleet.stellar_clearance():
 		return false
 	var gap: float = 2.0 * fleet.tuning.interception_radius + 0.75
 	if occupied.any(func(other): return at.distance_to(other) < gap):

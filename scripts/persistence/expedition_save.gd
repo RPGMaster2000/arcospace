@@ -4,6 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
+const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
@@ -135,6 +136,8 @@ static func encode(state: Resource) -> Dictionary:
 	if state.is_defense() and state.decoys > 0: data.decoys = state.decoys
 	if state.is_defense(): data.temporal_rift_schedule = state.rifts.snapshot()
 	if not state.system_variation.is_empty(): data.system_variation = state.system_variation.duplicate(true)
+	if not state.previous_defense_environment.is_empty() and not state.is_defense():
+		data.previous_defense_environment = state.previous_defense_environment
 	if state.layout_expansion > 0.0: data.layout_expansion = state.layout_expansion
 	if state.orbit_clearance > 0.0: data.orbit_clearance = state.orbit_clearance
 	data.upgrades = deck.upgrades
@@ -192,8 +195,14 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		data = _migrate_legacy(data)
 		if data.is_empty(): return null
 	if not _integer(data.get("metagame_version"), 1, 3): return null
-	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0)): return null
-	if not preload("res://scripts/expedition/system_variation.gd").valid(data.get("system_variation", {})): return null
+	var variation: Variant = data.get("system_variation", {})
+	if not Variation.valid(variation): return null
+	var later: bool = variation.get("version") == 2
+	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0), later): return null
+	if later and (not _integer(data.get("system_number"), 3, 1000000)
+		or not State.SystemLayout.valid_expansion(float(data.layout_expansion) / float(variation.geometry_scale))):
+		return null
+	if data.has("previous_defense_environment") and data.previous_defense_environment not in Variation.ARCHETYPES: return null
 	if data.has("system_variation") and data.get("game_mode", "exploration") != "defense": return null
 	var orbit_clearance: Variant = data.get("orbit_clearance", 0.0)
 	if not (orbit_clearance is float or orbit_clearance is int) or not is_finite(float(orbit_clearance)) or orbit_clearance < 0.0 or orbit_clearance > 1.0: return null
@@ -285,7 +294,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if data.has("defense_poi_version"):
 		if mode != "defense" or not _integer(data.defense_poi_version,1,1): return null
 		state.defense_poi_version = int(data.defense_poi_version)
-	state.system_variation = data.get("system_variation", {}).duplicate(true)
+	state.system_variation = variation.duplicate(true)
+	state.previous_defense_environment = data.get("previous_defense_environment", variation.get("archetype", ""))
 	state.layout_expansion = float(data.get("layout_expansion", 0.0))
 	state.orbit_clearance = float(orbit_clearance)
 	if mode == "defense":
@@ -297,6 +307,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 				if not unit is Dictionary or not unit.has("reinforcement") or not unit.has("spawned"): return null
 		state.defense = State.Defense.new()
 		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion, int(data.system_number)): return null
+		if later:
+			state.defense.geometry = state.system_variation
+			if not _valid_defense_geometry(state): return null
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
@@ -695,4 +708,32 @@ static func _valid_encounter_positions(data: Dictionary) -> bool:
 		if not entries[index] is Dictionary or (entries[index].get("kind") != "battle" \
 			and not (data.get("game_mode") == "warzone" and entries[index].get("kind") == "poi")): return false
 		if not preload("res://scripts/expedition/navigation_state.gd").valid_point(positions[key], false): return false
+	return true
+
+func _valid_defense_geometry(state: Resource) -> bool:
+	var fleet: RefCounted = state.defense
+	var profile: Dictionary = fleet.geometry
+	var expansion: float = state.layout_expansion
+	if absf(fleet.home.length() - 22.0 * expansion * float(profile.home_scale)) > 0.001:
+		return false
+	if not fleet.start.is_equal_approx(fleet.home * 0.78): return false
+	for at in [state.navigation.position, state.navigation.target]:
+		if not at.is_empty() and not State.SystemLayout.navigable(fleet.point(at), expansion, -0.001): return false
+	var sizes := State.SystemLayout.planetary_radii(fleet.encounter_ledger, profile.planet_scales)
+	if sizes.size() != profile.planet_scales.size(): return false
+	var orbits: Array[Vector2] = [Vector2(fleet.home.length(), 3.05)]
+	for index in fleet.anchors:
+		var at: Vector3 = fleet.anchors[index]
+		if not State.SystemLayout.navigable(at, expansion, 1.999): return false
+		if at.length() < fleet.stellar_clearance(): return false
+		if not sizes.has(index):
+			if not State.SystemLayout.clear_orbit(at, sizes, fleet.anchors, 1.199 + state.orbit_clearance): return false
+			continue
+		var kind: String = fleet.encounter_ledger[index].poi.resource_path.get_file().get_basename()
+		if profile.planet_types.get(str(index)) != State.SystemLayout.PLANETARY[kind]: return false
+		var band := Vector2(at.length(), float(sizes[index]))
+		if band.x - band.y < fleet.stellar_clearance() + 0.599: return false
+		if orbits.any(func(existing): return absf(existing.x - band.x) < existing.y + band.y + state.orbit_clearance - 0.001):
+			return false
+		orbits.append(band)
 	return true

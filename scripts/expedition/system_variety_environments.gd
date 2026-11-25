@@ -26,6 +26,8 @@ static func storms(state: Resource, candidates: Array, existing: Array) -> Array
 		var chance: float = state.rules.space_storm_chance
 		if varied and profile.archetype == "storm_dominated" and chance > 0:
 			chance = 1.0
+		elif profile.get("version") == 2 and profile.archetype in ["unstable", "chaotic"]:
+			chance = minf(1.0, chance * 1.35)
 		var storm := Storms.generate(
 			seed_value,
 			state.system_number,
@@ -54,4 +56,36 @@ static func storms(state: Resource, candidates: Array, existing: Array) -> Array
 			storm = Routes.storm(storm, state.defense, candidates, existing + result)
 		if not storm.is_empty():
 			result.append(JSON.parse_string(JSON.stringify(storm)))
+	return result
+
+## Keep the player start, at least one nearby preparation site and one opening
+## interception on a clean route. The encounter's existing modifier resolves it.
+static func preserve_approaches(state: Resource, records: Array) -> Array:
+	var fleet: RefCounted = state.defense
+	var clearance = preload("res://scripts/expedition/environment_clearance.gd")
+	var layout = preload("res://scripts/expedition/varied_system_layout.gd")
+	var opportunities: Array = []
+	for index in fleet.anchors:
+		var at: Vector3 = fleet.anchors[index]
+		if index >= 0 and state.encounters[index].poi.resource_path.get_file().get_basename() not in layout.PREPARATION: continue
+		if at.distance_to(fleet.start) * fleet.tuning.seconds_per_distance <= 3.0:
+			opportunities.append(at)
+	var opening: Array = []
+	for unit in fleet.units:
+		if unit.mothership or unit.reinforcement: continue
+		opening.append(fleet.intercept_point(unit.encounter, fleet.start))
+	var result: Array = []
+	for item in records:
+		if clearance.intersects_sphere(item, fleet.start, 0.25): continue
+		var clean: Array = opportunities.filter(func(at): return not Routes.intersects(item, fleet.start, at))
+		if clean.is_empty() and not opportunities.is_empty(): continue
+		var intercepts: Array = opening.filter(func(at): return not Routes.intersects(item, fleet.start, at))
+		if intercepts.is_empty(): continue
+		if item.type == Storms.TYPE:
+			var center := clearance.point(item.position)
+			if result.any(func(other): return other.type == Storms.TYPE and clearance.point(other.position).distance_to(center) < 9.0):
+				continue
+		opportunities = clean
+		opening = intercepts
+		result.append(item)
 	return result

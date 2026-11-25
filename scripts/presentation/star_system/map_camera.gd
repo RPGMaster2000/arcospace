@@ -8,6 +8,7 @@ var zoom_target: float = 1.0
 var calibration: Resource
 var pan_offset := Vector2.ZERO
 var layout_expansion := -1.0
+var scale_overview_to_bounds := false
 
 
 func _process(delta: float) -> void:
@@ -28,9 +29,10 @@ func zoom_by(factor: float) -> void:
 	var high: float = maxf(calibration.minimum_zoom, calibration.maximum_zoom)
 	zoom_target = clampf(zoom_target * factor, maxf(0.1, low), maxf(0.1, high))
 
-func set_layout_expansion(expansion: float) -> void:
-	if layout_expansion == expansion: return
+func set_layout_expansion(expansion: float, scale_to_bounds: bool = false) -> void:
+	if layout_expansion == expansion and scale_overview_to_bounds == scale_to_bounds: return
 	layout_expansion = expansion
+	scale_overview_to_bounds = scale_to_bounds
 	calibration = null
 	pan_offset = Vector2.ZERO
 
@@ -50,7 +52,8 @@ func frame(position_to: Vector3, target: Vector3, duration: float, state: String
 func overview(settings: Resource, immediate: bool = false) -> void:
 	if calibration == null:
 		calibration = settings
-		zoom_target = settings.default_zoom / sqrt(Layout.scale_factor(layout_expansion))
+		var scale := Layout.scale_factor(layout_expansion)
+		zoom_target = settings.default_zoom / (scale / sqrt(1.2) if scale_overview_to_bounds else sqrt(scale))
 		zoom_by(1.0)
 		zoom_scale = zoom_target
 	frame(

@@ -9,9 +9,9 @@ const MIN_GAP = 3.2
 const HOME_GAP = 8.0
 
 
-static func apply(state: Resource) -> void:
-	if state.system_variation.is_empty():
-		return
+static func apply(state: Resource) -> bool:
+	if state.system_variation.is_empty(): return true
+	if state.system_variation.get("version") == 2: return _apply_geometry(state)
 	var fleet: RefCounted = state.defense
 	var original: Dictionary = fleet.anchors.duplicate()
 	var sizes := Layout.planetary_radii(state.encounters)
@@ -54,6 +54,7 @@ static func apply(state: Resource) -> void:
 		fleet.anchors = original
 		outer = _outer(fleet.anchors, sizes)
 	if fleet.military.is_empty(): _fleet(state, sizes, outer)
+	return true
 
 
 static func _outer(anchors: Dictionary, sizes: Dictionary) -> float:
@@ -250,3 +251,165 @@ static func _fleet(
 			fleet.units[index].route_origin = original_positions[index]
 		if not safe_retry:
 			_fleet(state, sizes, outer, true)
+
+const PREPARATION := ["derelict_starship", "pirate_debris_field", "distress_signal",
+	"radiation_nebula", "raider_cache", "spatial_anomaly"]
+const INFRASTRUCTURE := {
+	"scattered":["mining_operation", "derelict_starship", "distress_signal"],
+	"crowded":["mining_operation", "pirate_debris_field", "research_station"],
+	"asymmetric":["mining_operation", "pirate_debris_field", "derelict_starship"],
+	"unstable":["research_station", "spatial_anomaly", "radiation_nebula"],
+	"storm_dominated":["radiation_nebula", "gas_giant", "spatial_anomaly"],
+	"chaotic":["spatial_anomaly", "quarantined_colony", "distress_signal"],
+}
+
+
+static func select_pois(state: Resource, selected: Array) -> Array:
+	var result: Array = []
+	var preferred: Array = INFRASTRUCTURE.get(state.system_variation.archetype, [])
+	var size: int = state.system_variation.poi_count
+	var rng := Variation.rng_for(state.seed_used, state.system_number, "infrastructure")
+	var choices: Array = state.rules.pois.filter(func(poi):
+		return poi.resource_path.get_file().get_basename() != "unstable_wormhole")
+	var special := choices.filter(func(poi): return poi.resource_path.get_file().get_basename() in preferred)
+	for slot in mini(2, special.size()):
+		result.append(special.pop_at(rng.randi_range(0, special.size() - 1)))
+	for poi in selected + choices:
+		if result.size() >= size: break
+		if poi not in result: result.append(poi)
+	if not result.is_empty() and not result.any(func(poi): return poi.resource_path.get_file().get_basename() in PREPARATION):
+		for poi in choices:
+			if poi.resource_path.get_file().get_basename() in PREPARATION:
+				result[-1] = poi
+				break
+	return result
+
+
+static func _apply_geometry(state: Resource) -> bool:
+	var fleet: RefCounted = state.defense
+	var profile: Dictionary = state.system_variation
+	var rng := Variation.rng_for(state.seed_used, state.system_number, "geometry-%d" % int(profile.placement_attempt))
+	var sizes := Layout.planetary_radii(state.encounters, profile.planet_scales)
+	var bounds := Layout.bounds(state.layout_expansion)
+	var clear_core: float = fleet.stellar_clearance()
+	var occupied: Array[Vector3] = [fleet.home, fleet.start]
+	var keys: Array = fleet.anchors.keys()
+	keys.sort()
+	var preparation: Array = fleet.Warfare.preparation_sites(state, keys).filter(func(index):
+		return index < 0 or state.encounters[index].poi.resource_path.get_file().get_basename() in PREPARATION)
+	if preparation.is_empty():
+		preparation = keys.filter(func(index):
+			return index < 0 or state.encounters[index].poi.resource_path.get_file().get_basename() in PREPARATION).slice(0, 1)
+	keys = preparation + keys.filter(func(index): return index not in preparation)
+	if not _place_orbits(state, rng, sizes, bounds, occupied): return false
+	for index in keys:
+		if sizes.has(index): continue
+		var found := false
+		for attempt in RETRIES:
+			var at := _infrastructure_position(state, rng, index, attempt)
+			if index in preparation:
+				var distance := rng.randf_range(8.2, 13.0)
+				var sign_value := 1.0 if preparation.find(index) == 0 else -1.0
+				var direction: Vector3 = fleet.home.normalized().rotated(Vector3.UP, sign_value * rng.randf_range(0.8, 2.9))
+				at = fleet.home + direction * distance
+				if fleet.start.distance_to(at) * fleet.tuning.seconds_per_distance > 3.0: continue
+			if not Layout.navigable(at, state.layout_expansion, 2.0) or at.length() < clear_core + 1.1: continue
+			if occupied.any(func(other): return at.distance_to(other) < 3.65): continue
+			if at.distance_to(fleet.home) < HOME_GAP or not Layout.clear_orbit(at, sizes, fleet.anchors, 1.2 + state.orbit_clearance): continue
+			fleet.anchors[index] = at
+			occupied.append(at)
+			found = true
+			break
+		if not found: return false
+	if fleet.military.is_empty(): _fleet(state, sizes, _outer(fleet.anchors, sizes))
+	return true
+
+
+static func _place_orbits(state: Resource, rng: RandomNumberGenerator, sizes: Dictionary,
+		bounds: Rect2, occupied: Array[Vector3]) -> bool:
+	var fleet: RefCounted = state.defense
+	var profile: Dictionary = state.system_variation
+	var home_distance: float = fleet.home.length()
+	var inner: float = fleet.stellar_clearance() + 0.6
+	var outer := bounds.end.x - (5.8 if profile.placement_attempt == 0 else 3.9)
+	var gap: float = 3.05 + state.orbit_clearance
+	var bands := [Vector2(inner, minf(outer, home_distance - gap)), Vector2(home_distance + gap, outer)]
+	var indices := sizes.keys()
+	indices.sort()
+	if indices.is_empty(): return true
+	var best: Array = []
+	var best_score := -INF
+	for mask in 1 << indices.size():
+		var split := [[], []]
+		var used := [0.0, 0.0]
+		for i in indices.size():
+			var band: int = (mask >> i) & 1
+			split[band].append(indices[i])
+			used[band] += 2.0 * float(sizes[indices[i]]) + state.orbit_clearance
+		var slack_left: float = bands[0].y - bands[0].x - used[0] + state.orbit_clearance
+		var slack_right: float = bands[1].y - bands[1].x - used[1] + state.orbit_clearance
+		if (not split[0].is_empty() and slack_left < 0.0) or (not split[1].is_empty() and slack_right < 0.0): continue
+		var score := rng.randf_range(0, 3.0)
+		if profile.archetype == "scattered": score += float(split[1].size()) * 2.0
+		if profile.archetype == "crowded": score += absf(float(split[0].size() - split[1].size()))
+		if score <= best_score: continue
+		best = split
+		best_score = score
+	if best.is_empty(): return false
+	for band in 2:
+		var group: Array = best[band]
+		if group.is_empty(): continue
+		var cursor: float = bands[band].x
+		var slack: float = bands[band].y - cursor - state.orbit_clearance * (group.size() - 1)
+		for index in group: slack -= 2.0 * float(sizes[index])
+		var spacing: Array[float] = []
+		for i in range(group.size() + 1):
+			var weight := rng.randf_range(0.08, 1.0)
+			if profile.archetype == "crowded" and i > 0 and i < group.size(): weight *= 0.16
+			if profile.archetype == "chaotic": weight = pow(weight, 2.5)
+			spacing.append(weight)
+		var total: float = spacing.reduce(func(sum, amount): return sum + amount, 0.0)
+		for i in group.size():
+			var index: int = group[i]
+			var radius: float = sizes[index]
+			cursor += slack * spacing[i] / total
+			var distance := cursor + radius
+			var phase := rng.randf_range(0, TAU)
+			if profile.archetype in ["asymmetric", "crowded"]:
+				phase = float(profile.axis) + rng.randf_range(-0.8, 0.8)
+			var found := false
+			for attempt in 72:
+				var at := Vector3(cos(phase), 0, sin(phase)) * distance
+				if not occupied.any(func(other): return at.distance_to(other) < radius + 2.2):
+					fleet.anchors[index] = at
+					occupied.append(at)
+					found = true
+					break
+				phase += TAU / 72.0
+			if not found: return false
+			cursor += 2.0 * radius + state.orbit_clearance
+	return true
+
+
+static func _infrastructure_position(state: Resource, rng: RandomNumberGenerator, index: int, attempt: int) -> Vector3:
+	var profile: Dictionary = state.system_variation
+	var limit := Layout.bounds(state.layout_expansion).end.x - 2.0
+	var angle := rng.randf_range(0, TAU)
+	var radius := rng.randf_range(limit * 0.23, limit * 0.87)
+	if attempt < (87 if profile.placement_attempt == 0 else 64):
+		match profile.archetype:
+			"scattered":
+				radius = rng.randf_range(limit * 0.73, limit * 1.17)
+			"crowded":
+				angle = float(profile.axis) + (0.86 if index % 3 == 0 else -0.86) + rng.randf_range(-0.31, 0.31)
+				radius = rng.randf_range(limit * 0.42, limit * 0.78)
+			"asymmetric":
+				angle = float(profile.axis) + rng.randf_range(-0.94, 0.94)
+			"unstable":
+				angle = float(profile.axis) + (1.12 if index % 2 else -1.78) + rng.randf_range(-0.62, 0.62)
+			"storm_dominated":
+				radius = rng.randf_range(limit * 0.40, limit * 0.93)
+			"chaotic":
+				angle = float(profile.axis) + (1.5 if index % 2 else -1.1) + rng.randf_range(-1.12, 1.12)
+				radius = rng.randf_range(limit * 0.27, limit * 1.20)
+	return Vector3(cos(angle), 0, sin(angle)) * radius

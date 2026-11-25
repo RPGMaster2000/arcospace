@@ -859,7 +859,8 @@ func _introduce_system(reveal_white: bool = false) -> void:
 	var revision: int = _begin_presentation(Phase.INTRO)
 	var owner: Resource = state
 	var hud: Control = screen.overview_hud
-	hud.prepare_introduction(star_map.visual_data.name,state.system_number)
+	var geography := State.SystemVariation.system_title(state.system_variation) if state.system_variation.get("version") == 2 else ""
+	hud.prepare_introduction(star_map.visual_data.name, state.system_number, geography)
 	star_map.begin_introduction()
 	if reveal_white: transition.fade(0.0,star_system_settings.white_fade_duration)
 	if not await hud.introduce(star_system_settings.introduction_duration): return
