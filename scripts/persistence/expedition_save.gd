@@ -200,7 +200,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	var later: bool = variation.get("version") == 2
 	if not State.SystemLayout.valid_expansion(data.get("layout_expansion", 0.0), later): return null
 	if later and (not _integer(data.get("system_number"), 3, 1000000)
-		or not State.SystemLayout.valid_expansion(float(data.layout_expansion) / float(variation.geometry_scale))):
+		or not Variation.number(float(data.layout_expansion) / float(variation.geometry_scale),
+			1.0 - 0.00001, State.SystemLayout.MAX_EXPANSION + 0.00001)):
 		return null
 	if data.has("previous_defense_environment") and data.previous_defense_environment not in Variation.ARCHETYPES: return null
 	if data.has("system_variation") and data.get("game_mode", "exploration") != "defense": return null

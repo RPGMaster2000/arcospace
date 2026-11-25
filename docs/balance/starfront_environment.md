@@ -71,3 +71,5 @@ The audit ran 54 paired sectors per policy across Systems 3–5 and all six ship
 | Long detours | 49 → 50 | 3,610 → 3,020 | 53.50 s → 53.20 s |
 
 Nearest-contact mothership reveal moved from 42.37 to 41.55 strategic seconds and hazardous battles fell from 45 to 40. Both preparation policies used 54 PoIs. Nearby preparation paid 339 Salvage, down from 383. Economic preparation paid 20, down from 42. These particular approaches granted no permanent production. This study samples one preparation per sector, so it does not establish the economy for a player who exhausts a dense map. PoI rewards were left at their existing values.
+
+At the default tuning, the validated legacy fallback was below 1% of generated sectors. A stress test combined the minimum configured expansion with forced crowded, compact, inner-habitable binary layouts. Thirty of 32 such combinations used legacy geometry. At maximum expansion, all 32 forced expansive cases committed a new layout, with effective scales between 1.660 and 1.874.

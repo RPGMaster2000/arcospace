@@ -185,6 +185,13 @@ func _initialize() -> void:
 	check(Save.new().decode(tampered, current) == null, "Incomplete hazard geometry is rejected")
 	check(forced.system_variation.poi_count == forced.encounters.filter(func(item): return item.kind == "poi").size(),
 		"Committed density matches the actual installations")
+	var limit_rules := current.duplicate()
+	limit_rules.system_expansion = Layout.MAX_EXPANSION
+	var upper := launch(limit_rules, 5, 3, {"environment":"crowded","size_class":"Expansive",
+		"home_region":"Inner Habitable","binary":1})
+	check(upper.layout_expansion > Layout.MAX_EXPANSION and Save.new().decode(Variation.canonical(Save.encode(upper)), limit_rules) != null,
+		"Expansive geometry roundtrips at maximum configured baseline")
+
 	var prior: String = forced.system_variation.archetype
 	forced.defense.complete = true
 	check(forced.generate_system() and forced.system_variation.archetype != prior, "Consecutive defense environments differ")
