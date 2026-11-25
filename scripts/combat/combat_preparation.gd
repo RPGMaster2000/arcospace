@@ -55,3 +55,10 @@ static func valid(package: Variant) -> bool:
 		if value < 1 or value > maximum: return false
 		if key in PRODUCTION: production += int(value)
 	return production <= 1
+
+
+static func canonical(package: Dictionary) -> Dictionary:
+	var result := package.duplicate()
+	for key in result:
+		if key != "disrupt": result[key] = int(result[key])
+	return result

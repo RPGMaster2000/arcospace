@@ -109,6 +109,8 @@ static func snapshot(value: Dictionary) -> Dictionary:
 	for key in ["version", "system_number", "encounter_index", "legacy_modifier"]:
 		copy[key] = int(copy[key])
 	copy.intensity = float(copy.intensity)
+	if copy.has("preparations"):
+		for side in ["player", "enemy"]: copy.preparations[side] = Preparation.canonical(copy.preparations[side])
 	if not copy.get("friendly_support", {}).is_empty():
 		copy.friendly_support.damage = int(copy.friendly_support.damage)
 		copy.friendly_support.interval = int(copy.friendly_support.interval)

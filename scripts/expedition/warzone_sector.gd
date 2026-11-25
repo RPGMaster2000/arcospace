@@ -3,6 +3,7 @@ extends "res://scripts/expedition/warzone_state.gd"
 ## handoff, campaign outcome and historical three-objective saves.
 
 const EngagementPreparation = preload("res://scripts/expedition/warzone_engagement_preparation.gd")
+const FleetLogistics = preload("res://scripts/expedition/warzone_fleet_logistics.gd")
 const Stations = preload("res://scripts/expedition/warzone_stations.gd")
 const Preparation = preload("res://scripts/combat/combat_preparation.gd")
 const Economy = preload("res://scripts/expedition/warzone_economy.gd")
@@ -52,6 +53,7 @@ var _importance := {}
 var _supply_signature: Array = []
 var _player_position := Vector3.INF
 var _route_cache := {}
+var _command_depths := {}
 # Alert is deliberately separate from War Effort. It only rises from player
 # interventions, not autonomous allied captures.
 var player_alert := 0
@@ -176,6 +178,7 @@ func _refresh_supply(announce: bool = true) -> void:
 		_supply_signature = signature
 		_importance.clear()
 		_route_cache.clear()
+		_command_depths.clear()
 		supplied.allied = Lattice.reachable(objectives, links, root("allied"), "allied", disrupted)
 		supplied.hostile = Lattice.reachable(objectives, links, root("hostile"), "hostile", disrupted)
 	for index in objectives.size():
@@ -494,6 +497,7 @@ func fleet_status(fleet: Dictionary) -> String:
 		if fleet.get("arriving", false): return "Reinforcing"
 		if fleet.has("recover_until") and not fleet.withdrawing: return "Regrouping"
 		if active(fleet_at(fleet.get("intercept", -1))): return fleet.assignment
+		if fleet.has("service_site"): return FleetLogistics.status(self, fleet)
 	return super.fleet_status(fleet)
 
 
@@ -570,6 +574,7 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 		for fleet in fleets: AlliedOrders.clear_interception(self, fleet)
 	if expired or clock_ms % AlliedOrders.INTERVAL_MS == 0:
 		AlliedOrders.assign(self, scramble_until > clock_ms)
+	if economy != null and clock_ms % FleetLogistics.PLAN_MS == 0: FleetLogistics.plan(self)
 	for fleet in fleets:
 		if active(fleet) and fleet.engaged < 0:
 			_move_fleet(fleet, float(MOVEMENT_STEP_MS) / STEP_MS)
@@ -654,6 +659,13 @@ func _lattice_hops(origin: int, target: int) -> int:
 	return objectives.size()
 
 
+func command_depth(index: int) -> int:
+	if economy == null or final_command < 0: return 0
+	var key := Vector2i(final_command, index)
+	if not _command_depths.has(key): _command_depths[key] = _lattice_hops(index, final_command)
+	return _command_depths[key]
+
+
 func _command_ready() -> bool:
 	return final_command in supplied.allied and not objectives[final_command].contested
 
@@ -661,6 +673,7 @@ func _command_ready() -> bool:
 func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
 	if final_defense_active and fleet.side == "hostile" and active(fleet) \
 			and fleet.engaged < 0 and not fleet.withdrawing:
+		fleet.erase("service_site")
 		var command: Vector3 = objectives[final_command].position
 		fleet.position = (fleet.position as Vector3).move_toward(command, fleet_speed(fleet) * seconds)
 		if (fleet.position as Vector3).distance_squared_to(command) < 0.00001:
@@ -668,6 +681,7 @@ func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
 			if fleet.has("arriving"): fleet.arriving = false
 		return
 	if fleet.id == player_hunter and _player_position.is_finite() and not fleet.withdrawing:
+		fleet.erase("service_site")
 		fleet.position = (fleet.position as Vector3).move_toward(
 			_player_position, fleet_speed(fleet) * tuning.hunt_speed_multiplier * seconds)
 		return
@@ -683,6 +697,7 @@ func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
 			fleet.position = position.move_toward(fleet_target_position(fleet), fleet_speed(fleet) * seconds)
 			return
 		AlliedOrders.clear_interception(self, fleet)
+	if economy != null and FleetLogistics.movement(self, fleet, seconds): return
 	while seconds > 0.00001:
 		var at: int = fleet.at
 		var next: int = fleet.destination
@@ -697,7 +712,7 @@ func _move_fleet(fleet: Dictionary, seconds: float = 1.0) -> void:
 			if fleet.has("arriving"): fleet.arriving = false
 			fleet.withdrawing = false
 			if fleet.has("recover_until"):
-				if clock_ms < fleet.recover_until or fleet.strength < AlliedOrders.MIN_RESPONSE_STRENGTH:
+				if clock_ms < fleet.recover_until or (economy == null and fleet.strength < AlliedOrders.MIN_RESPONSE_STRENGTH):
 					return
 				fleet.erase("recover_until")
 			if objectives[next].owner != fleet.side and fleet.strength > 2 and _capture_connected(next, fleet.side):
@@ -779,7 +794,11 @@ func _counterattack(index: int) -> void:
 
 func _assign_engagements(announce: bool = false) -> void:
 	super._assign_engagements(announce)
-	if economy != null: engagement_preparation.update(self)
+	if economy != null:
+		for fleet in fleets:
+			if fleet.engaged >= 0 and fleet.has("service_site"):
+				FleetLogistics.cancel(self, fleet)
+		engagement_preparation.update(self)
 
 
 func effective_strength(fleet: Dictionary) -> float:
@@ -799,7 +818,7 @@ func _exchange_damage() -> void:
 		if not active(fleet): continue
 		var supplied_fleet := _fleet_supplied(fleet)
 		if fleet.engaged < 0:
-			if supplied_fleet and fleet.strength < fleet.strength_limit and fleet.destination == fleet.at \
+			if economy == null and supplied_fleet and fleet.strength < fleet.strength_limit and fleet.destination == fleet.at \
 				and (not fleet.has("recover_until") or (fleet.position as Vector3).distance_squared_to(objectives[fleet.at].position) < 0.01):
 				fleet.strength += 1
 			continue
@@ -1088,6 +1107,10 @@ func restore(data: Variant, configuration: Resource) -> bool:
 			if fleet.side != "allied" or not Defense.number(fleet.recover_until, 0, clock_ms + AlliedOrders.RECOVERY_MS):
 				return false
 			fleet.recover_until = int(fleet.recover_until)
+		if fleet.has("preferred_resource") and fleet.preferred_resource not in Preparation.RESOURCES: return false
+		if fleet.has("service_site"):
+			if economy == null or not Defense.number(fleet.service_site, 0, objectives.size() - 1): return false
+			fleet.service_site = int(fleet.service_site)
 		if fleet.id >= requested_first() and not fleet.get("arriving") is bool: return false
 	if not Defense.number(saved.get("effort"), 0, 1000) or not saved.get("recovered") is bool:
 		return false
@@ -1250,7 +1273,7 @@ func _restore_preparation(record: Variant) -> bool:
 	for key in ready:
 		if not str(key).is_valid_int() or not Defense.number(int(key), 0, objectives.size() - 1) \
 			or not Defense.number(ready[key], 0, clock_ms + 30 * STEP_MS): return false
-	player_preparation = player.duplicate()
-	fleet_preparations = prepared.duplicate(true)
+	player_preparation = Preparation.canonical(player)
+	for key in prepared: fleet_preparations[str(key)] = Preparation.canonical(prepared[key])
 	for key in ready: service_ready[str(key)] = int(ready[key])
 	return true

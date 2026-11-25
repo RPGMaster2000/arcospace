@@ -46,6 +46,7 @@ func run() -> void:
 	check(Sector.new().restore(saved, op.tuning), "Older sectors remain loadable")
 	check_stations(op)
 	check_discoveries()
+	check_fleet_services()
 	print("Warzone economy: %d failures" % failures)
 	quit(int(failures > 0))
 
@@ -78,3 +79,39 @@ func check_discoveries() -> void:
 	var approach: Resource = Discovery.POIS[1].approaches.filter(func(option): return Discovery.risky(option)).front()
 	check(Discovery.payout(2, true, approach, true) == 38
 		and Discovery.payout(2, true, approach, false) == 28, "Only success earns stackable risk and hazard bonuses")
+
+
+func check_fleet_services() -> void:
+	var op := Sector.new()
+	op.setup_sector(Tuning.new(), 8, 1.0, 19, 2)
+	var repair := op.site("repair")
+	var fleet := op.fleets[0]
+	for other in op.fleets:
+		other.strength = 0
+		other.engaged = -1
+	fleet.at = repair
+	fleet.destination = repair
+	fleet.position = op.objectives[repair].position + Vector3(1, 0, 0)
+	fleet.strength = 3
+	op.economy.wallets.allied = 3
+	op.FleetLogistics.plan(op)
+	check(not fleet.has("service_site"), "A damaged fleet cannot reserve unaffordable repairs")
+	op.economy.wallets.allied = 4
+	op.FleetLogistics.plan(op)
+	check(fleet.get("service_site") == repair, "A damaged fleet reserves a local supplied Repair Dock")
+	op._move_fleet(fleet, 1.0)
+	check(fleet.strength == 8 and op.economy.wallets == {"allied": 0, "hostile": 10}
+		and not fleet.has("service_site"), "Arrival purchases repair once from the fleet's own wallet")
+	var depot := op.site("depot")
+	var hostile := op.fleets[2]
+	hostile.at = depot
+	hostile.destination = depot
+	hostile.position = op.objectives[depot].position
+	hostile.strength = hostile.strength_limit
+	hostile.preferred_resource = "crew"
+	op.FleetLogistics.plan(op)
+	op._move_fleet(hostile, 1.0)
+	check(op.fleet_preparations.get(str(hostile.id), {}) == {"crew": 5}
+		and op.economy.wallets.hostile == 3, "Hostile suppliers charge their own wallet and respect deck preferences")
+	op.FleetLogistics.plan(op)
+	check(not hostile.has("service_site"), "A prepared fleet does not start another preparation circuit")

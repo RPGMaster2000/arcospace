@@ -74,6 +74,7 @@ static func frontier_target(sector: RefCounted, fleet: Dictionary) -> int:
 	var best := -INF
 	var target: int = fleet.at
 	var own_power := _power(sector, fleet)
+	var final_depth: int = sector.command_depth(fleet.at)
 	for site in sector.objectives.size():
 		var objective: Dictionary = sector.objectives[site]
 		var final: bool = site == sector.final_command
@@ -82,11 +83,12 @@ static func frontier_target(sector: RefCounted, fleet: Dictionary) -> int:
 		var assigned: int = loads.get(site, 0)
 		var defenders: float = hostile_power.get(site, 0.0)
 		# A single response is enough for an undefended minor objective.
-		var capacity := 2 if defenders > own_power * 1.15 else 1
+		var opens_offensive: bool = sector.command_depth(site) < final_depth
+		var capacity := 2 if opens_offensive or defenders > own_power * 1.15 else 1
 		if assigned >= capacity: continue
 		var eta: float = (fleet.position as Vector3).distance_to(objective.position) / sector.fleet_speed(fleet)
 		var neighbors := Lattice.neighbors(site, sector.links, sector.disrupted).size()
-		var score := (18.0 if final else 0.0) + float(neighbors) * 1.4 - eta * 0.55 - assigned * 7.0
+		var score := (18.0 if final else 0.0) + (5.0 if opens_offensive else 0.0) + float(neighbors) * 1.4 - eta * 0.55 - assigned * 7.0
 		if score > best:
 			best = score
 			target = site
@@ -94,7 +96,7 @@ static func frontier_target(sector: RefCounted, fleet: Dictionary) -> int:
 
 
 static func _power(sector: RefCounted, fleet: Dictionary) -> float:
-	return float(fleet.strength * sector._shot_damage(fleet))
+	return fleet.strength * sector.prepared_shot(fleet)
 
 
 static func _threats(sector: RefCounted) -> Dictionary:

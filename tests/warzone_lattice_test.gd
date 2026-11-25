@@ -443,6 +443,10 @@ func scenario(seed_value: int, strategy: String) -> void:
 			if strategy == "infrastructure" and round_index == 0 and role == "allied_command": continue
 			var action: Dictionary = op.operations(site, state.salvage).front()
 			if not action.enabled: continue
+			# Stop cutting the frontier the allied offensive is trying to take.
+			# This still exercises sabotage and supply disruption on the first visit.
+			if action.id == "sabotage" and visited.has(site) and op.final_command >= 0 \
+					and op._capture_connected(site, "allied"): continue
 			approach(state, site)
 			if not op.complete and state.warzone_operate(site + State.Warzone.HOSTILE_GROUPS, action.id):
 				visited[site] = true
