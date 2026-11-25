@@ -2,6 +2,8 @@ extends RefCounted
 # Scene-free strategic authority. Units reference the existing encounter ledger.
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
+var military: Dictionary = {}
 const Missiles = preload("res://scripts/expedition/defense_missiles.gd")
 var v2 := false
 var missiles := Missiles.new()
@@ -48,7 +50,7 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 	start = home * 0.78
 	var fleet_rng := RandomNumberGenerator.new()
 	fleet_rng.seed = hash("%d:deployment" % orbit_seed)
-	var approaches := [1.1, -2.70, -1.23]
+	var approaches := [1.1, -2.70, -1.23, 1.75, -1.95]
 	# Keep enough radial space for the existing planetary orbits and their
 	# deployment clearance even when an attacker rolls a short starting distance.
 	var minimum_deployment := 4.1501 + 5.55 + maxf(0.0, float(planet_sizes.size() - 1)) * clearance
@@ -133,7 +135,7 @@ func _planet_radii(slots: Array, sizes: Dictionary, factor: float, margin: float
 # Reserve units have stable encounter IDs and existing profiles, but no active
 # simulation or rendered presence until the scheduler deploys them.
 func add_reserves(indices: Array) -> void:
-	if v2 and not indices.is_empty(): reinforcement_remaining = tuning.v2_reinforcement_seconds
+	if v2 and not indices.is_empty(): reinforcement_remaining = reserve_delay(0)
 	var mother: Dictionary = unit_for(mothership_index())
 	for index in indices:
 		units.append({"encounter": index, "position": mother.position, "route_origin": mother.position,
@@ -145,11 +147,16 @@ func active_attackers() -> int:
 		if not unit.mothership and unit.status == "active": count += 1
 	return count
 
-func spawn_position(player: Vector3) -> Variant:
-	var center: Vector3 = unit_for(mothership_index()).position
+func reserve_delay(ordinal: int) -> float:
+	return tuning.v2_reinforcement_seconds if military.is_empty() else float(military.waves[mini(ordinal, military.waves.size() - 1)])
+
+
+func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
+	var planned := not military.is_empty() and not reserve.is_empty()
+	var center: Vector3 = reserve.route_origin if planned else unit_for(mothership_index()).position
 	var limit := Layout.bounds(layout_expansion).end.x - 2.0
-	for distance in [3.5, 5.0, 6.5]:
-		for i in range(24):
+	for distance in ([0.0, 2.0, 3.5, 5.0] if planned else [3.5, 5.0, 6.5]):
+		for i in range(1 if distance == 0.0 else 24):
 			var angle: float = TAU * float((i + reinforcements_spawned * 7) % 24) / 24.0
 			var candidate: Vector3 = center + Vector3(cos(angle), 0, sin(angle)) * distance
 			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < 3.5: continue
@@ -163,6 +170,16 @@ func spawn_position(player: Vector3) -> Variant:
 			if v2:
 				for body in decorative_bodies:
 					if candidate.distance_to(body.position) < float(body.radius) * 1.553 + 1.2: clear = false
+			if planned:
+				for site in construction_sites.values():
+					if candidate.distance_to(point(site.position)) < 1.7: clear = false
+				var eta: float = candidate.distance_to(home) / _speed(reserve)
+				var intercept: Vector3 = _intercept(candidate, home, _speed(reserve), player)
+				if eta < maxf(12.0, player.distance_to(intercept) * tuning.seconds_per_distance + tuning.battle_seconds):
+					clear = false
+				for index in Layout.planetary_indices(encounter_ledger):
+					var radius := Layout.planetary_radius(encounter_ledger[index].poi.resource_path.get_file().get_basename())
+					if absf(candidate.length() - anchors[index].length()) < radius + 1.5: clear = false
 			if clear: return candidate
 	return null
 
@@ -291,11 +308,22 @@ func ship_profile(unit: Dictionary) -> Resource:
 	if index < 0 or index >= encounter_ledger.size(): return null
 	return encounter_ledger[index].get("enemy_data")
 
+func deployment(unit: Dictionary) -> Dictionary:
+	var index: int = unit.get("encounter", -1)
+	return encounter_ledger[index].get("defense_deployment", {}) if index >= 0 and index < encounter_ledger.size() else {}
+
+
 func speed_multiplier(unit: Dictionary) -> float:
+	var info := deployment(unit)
+	if not info.is_empty() and not unit.mothership:
+		return float(info.movement)
 	var profile := ship_profile(unit)
 	return profile.strategic_speed_multiplier if profile != null else 1.0
 
 func arrival_damage(unit: Dictionary) -> int:
+	var info := deployment(unit)
+	if not info.is_empty() and not unit.mothership:
+		return int(info.arrival_damage)
 	var profile := ship_profile(unit)
 	var factor: float = profile.homeworld_damage_multiplier if profile != null else 1.0
 	return maxi(1, roundi(tuning.base_attack_damage * factor))
@@ -325,7 +353,7 @@ func relieve_pressure(amount: float) -> void:
 
 
 func pressure_rate() -> float:
-	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0) * (poi_effects.pressure_multiplier() if poi_effects != null else 1.0)
+	return tuning.pressure_per_second * (tuning.pressure_rate_multiplier if v2 else 1.0) * float(military.get("pressure", 1.0)) * (poi_effects.pressure_multiplier() if poi_effects != null else 1.0)
 
 func reveal_threshold() -> float:
 	return minf(tuning.mothership_reveal_pressure, tuning.pressure_maximum)
@@ -372,7 +400,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				reserve = unit
 				break
 		var reinforcement_clock: bool = (not mothership_destroyed() and not reserve.is_empty()) if v2 else (not mothership_destroyed() and revealed and not reveal_pending and reinforcements_spawned < tuning.maximum_reinforcements)
-		var active_limit: int = 2 if v2 else tuning.maximum_active_attackers
+		var active_limit: int = int(military.get("cap", 2)) if v2 else tuning.maximum_active_attackers
 		var can_spawn: bool = reinforcement_clock and active_attackers() < active_limit
 		if can_spawn and not spawn_blocked and reinforcement_remaining <= event_time:
 			event_time = maxf(0.0, reinforcement_remaining)
@@ -458,10 +486,10 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				break
 			continue
 		if event_kind == "spawn":
-			var at: Variant = spawn_position(from + player_velocity * elapsed)
+			var at: Variant = spawn_position(from + player_velocity * elapsed, reserve)
 			if at == null or reserve.is_empty():
 				# Retry at the next scheduled v2 attempt, independent of frame size.
-				if v2: reinforcement_remaining = tuning.v2_reinforcement_seconds
+				if v2: reinforcement_remaining = reserve_delay(reinforcements_spawned)
 				else: spawn_blocked = true
 				continue
 			reserve.position = at
@@ -469,7 +497,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			reserve.status = "active"
 			reserve.spawned = true
 			reinforcements_spawned += 1
-			reinforcement_remaining = tuning.v2_reinforcement_seconds if v2 else tuning.reinforcement_interval_seconds
+			reinforcement_remaining = reserve_delay(reinforcements_spawned) if v2 else tuning.reinforcement_interval_seconds
 			result.spawned.append(reserve.encounter)
 			continue
 		if event_kind == "contact":
@@ -523,6 +551,16 @@ func _intercept(at: Vector3, target: Vector3, speed: float, player: Vector3) -> 
 	if not is_finite(root) or root > until_arrival: return target
 	return at + velocity * root
 
+## Checks whether another attacker would intercept the normal course from launch.
+func approach_blocked(at: Vector3, speed: float, other: Vector3, other_speed: float, margin: float = 0.5) -> bool:
+	var endpoint := _intercept(at, home, speed, start)
+	var seconds: float = start.distance_to(endpoint) * tuning.seconds_per_distance
+	if seconds <= 0.001: return true
+	var velocity := (endpoint - start) / seconds
+	var opposing := (home - other).normalized() * other_speed
+	return is_finite(hit_time(start - other, velocity - opposing, tuning.interception_radius + margin, seconds))
+
+
 func snapshot() -> Dictionary:
 	var data: Dictionary = {"home": wire(home), "start": wire(start), "integrity": integrity, "maximum_integrity": tuning.base_integrity,
 		"revealed": revealed, "reveal_pending": reveal_pending, "complete": complete, "contact": contact,
@@ -539,13 +577,18 @@ func snapshot() -> Dictionary:
 	if v2:
 		data.v2 = true
 		data.missiles = missiles.snapshot(home)
+	if not military.is_empty(): data.military = military.duplicate()
 	if not decoy.is_empty(): data.decoy = decoy.duplicate(true)
 	if secured_reward_claimed: data.secured_reward_claimed = true
 	return data
-func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0) -> bool:
+func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0, system: int = 1) -> bool:
 	if not data is Dictionary: return false
 	if not data.get("v2", false) is bool: return false
 	v2 = data.get("v2", false)
+	military.clear()
+	if data.has("military"):
+		if not v2 or not Warfare.valid_plan(data.military, system): return false
+		military = data.military.duplicate()
 	layout_expansion = expansion
 	var limit := Layout.bounds(expansion).end.x
 	if not Navigation.valid_point(data.get("home"), false) or not Navigation.valid_point(data.get("start"), false): return false
@@ -572,8 +615,14 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if not number(unit.get("encounter"), 0, encounters.size()-1): return false
 		var index: int = int(unit.encounter)
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
+		var info: Dictionary = encounters[index].get("defense_deployment", {})
+		if military.is_empty() != info.is_empty(): return false
+		if not info.is_empty() and bool(unit.mothership) != (info.role == "mothership"): return false
 		if not Navigation.valid_point(unit.get("position"), false): return false
 		if not Navigation.valid_point(unit.get("route_origin", unit.position), false): return false
+		if not military.is_empty():
+			var origin: Vector3 = point(unit.get("route_origin", unit.position))
+			if absf(origin.x) > limit or absf(origin.z) > limit: return false
 		if absf(float(unit.position[0])) > limit or absf(float(unit.position[2])) > limit: return false
 		if unit.status == "secured" and not data.complete and not unit.get("reinforcement", false): return false
 		if data.complete and unit.status in ["active", "reserve"]: return false
@@ -582,8 +631,14 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 			bosses += 1
 			if unit.status == "arrived" or (data.complete and unit.status != "neutralized"): return false
 		seen[index] = true
-	if bosses != 1 or initial_count < 2 or initial_count > (4 if v2 else 2) or not number(data.get("contact"), -1, encounters.size()-1): return false
-	if v2 and (reserve_count > 3 or (reserve_count > 0 and initial_count > 3)): return false
+	if bosses != 1 or initial_count < 2 or not number(data.get("contact"), -1, encounters.size()-1): return false
+	if military.is_empty():
+		if initial_count > (4 if v2 else 2) or (v2 and (reserve_count > 3 or (reserve_count > 0 and initial_count > 3))): return false
+	elif initial_count != military.opening or reserve_count != military.reserves \
+		or data.units.filter(func(item): return item.status == "active" and not item.mothership).size() > military.cap:
+		return false
+	for index in encounters.size():
+		if encounters[index].has("defense_deployment") and not seen.has(index): return false
 	tuning = configuration
 	home = point(data.home)
 	start = point(data.start)
@@ -605,7 +660,7 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 	var deferred: Variant = data.get("deferred_seconds", 0.0)
 	if not (remaining is int or remaining is float) or not is_finite(float(remaining)) or remaining < 0 or remaining > 60: return false
 	if not (deferred is int or deferred is float) or not is_finite(float(deferred)) or deferred < 0 or deferred > 1000: return false
-	if not number(data.get("reinforcements_spawned", 0), 0, 3 if v2 else configuration.maximum_reinforcements): return false
+	if not number(data.get("reinforcements_spawned", 0), 0, int(military.get("reserves", 3)) if v2 else configuration.maximum_reinforcements): return false
 	reinforcement_remaining = float(remaining)
 	deferred_seconds = float(deferred)
 	reinforcements_spawned = int(data.get("reinforcements_spawned", 0))

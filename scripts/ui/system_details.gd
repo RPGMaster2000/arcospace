@@ -1,5 +1,6 @@
 extends RefCounted
 ## Read-only presentation from authoritative encounter/Defense ledgers. No retained state.
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
@@ -12,12 +13,14 @@ static func active_enemies(state: Resource) -> Array:
 		if not state.defense.available(unit) or state.encounters[unit.encounter].completed:
 			continue
 		var profile: Resource = state.enemy_profile(state.encounters[unit.encounter])
+		var deployment: Dictionary = state.defense.deployment(unit)
 		result.append(
 			{
 				"index": unit.encounter,
 				"name": profile.ship_name,
 				"faction": faction.display_name if faction != null else "Unassigned",
-				"class": "Mothership" if unit.mothership else profile.strategic_class,
+				"class": Warfare.ROLES[deployment.role][0] if not deployment.is_empty() else ("Mothership" if unit.mothership else profile.strategic_class),
+				"role_details": contact_details(state, unit, profile),
 				"status":
 				(
 					"Advancing"
@@ -34,6 +37,20 @@ static func active_enemies(state: Resource) -> Array:
 	return result
 
 
+static func contact_details(state: Resource, unit: Dictionary, profile: Resource) -> String:
+	if unit.is_empty(): return ""
+	var deployment: Dictionary = state.defense.deployment(unit)
+	if deployment.is_empty(): return ""
+	var label: Array = Warfare.ROLES[deployment.role]
+	var rank: String = ["Standard", "Elite", "Boss"][profile.enemy_rank]
+	var speed: float = state.defense._speed(unit)
+	var target: Vector3 = state.defense.target_for(unit)
+	var objective := "Tactical Decoy" if target != state.defense.home else "Homeworld"
+	var motion := "Holding position" if speed == 0.0 else "%.2f u/s · %s in %.1fs" % [
+		speed, objective, unit.position.distance_to(target) / speed]
+	return "%s · %s · %s\n%s" % [label[0], rank, motion, label[4]]
+
+
 static func text(state: Resource) -> String:
 	var faction: Resource = Factions.find(state.rules, state.faction_id)
 	var enemies := active_enemies(state)
@@ -43,6 +60,10 @@ static func text(state: Resource) -> String:
 		"",
 		"[b]ACTIVE ENEMY FORCES · %d[/b]" % enemies.size()
 	]
+	if not state.defense.military.is_empty():
+		var formation: String = state.defense.military.formation
+		rows.insert(2, Warfare.describe(formation))
+		rows.insert(3, Warfare.brief(formation))
 	if enemies.is_empty():
 		rows.append("No deployed enemy vessels.")
 	for enemy in enemies:
@@ -58,6 +79,7 @@ static func text(state: Resource) -> String:
 			else "%d homeworld damage" % enemy.arrival_damage
 		)
 		rows.append("%s · %s · %s" % [enemy.faction, movement, arrival])
+		if not enemy.role_details.is_empty(): rows.append(enemy.role_details)
 	rows.append_array(["", "[b]BATTLE MODIFIERS — TEMPORARY[/b]"])
 	var temporary: Array[String] = []
 	for bonuses in [state.pending_bonuses, state.pending_penalties]:

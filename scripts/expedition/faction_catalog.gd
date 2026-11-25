@@ -23,6 +23,15 @@ static func roster(profile: Resource, system: int = 0) -> Array:
 	return result
 
 
+static func defense_elites(profile: Resource, system: int = 99) -> Array:
+	var result: Array = []
+	for ship in profile.elite_roster + profile.defense_elite_roster:
+		if ship is ShipData and ship.enemy_rank == 1 and not ship.resource_path.is_empty() \
+			and ship.minimum_defense_system <= system and ship not in result:
+			result.append(ship)
+	return result
+
+
 static func eligible(rules: Resource) -> Array:
 	var result: Array = []
 	var ids: Array = []
@@ -50,6 +59,9 @@ static func find(rules: Resource, id: String) -> Resource:
 
 static func select(state: Resource) -> Resource:
 	var choices: Array = eligible(state.rules)
+	if state.system_number == state.developer_test.get("stage", 0):
+		for profile in choices:
+			if profile.id == state.developer_test.get("faction", ""): return profile
 	if state.rules.fixed_opening_factions and state.developer_test.is_empty():
 		var pinned := ""
 		if state.system_number == 1 and state.is_defense(): pinned = "scavenger_clans"

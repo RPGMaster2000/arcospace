@@ -713,6 +713,9 @@ func add_tactical_briefing(state: Resource, encounter: Dictionary, enemy: Resour
 	view.add_child(briefing)
 	briefing.configure(enemy,state.difficulty_level(),state.preview_modifier(index) if index >= 0 else int(encounter.get("modifier", 0)),state.pending_description(),pursuit,encounter.get("mandatory_boss",false),state.Pressure.description(state.pressure))
 
+	if state.is_defense():
+		var details := preload("res://scripts/ui/system_details.gd").contact_details(state, state.defense.unit_for(index), enemy)
+		if not details.is_empty(): view.add_child(_label(details, 15))
 	if state.is_defense() and state.defense.unit_for(index).get("mothership",false):
 		if state.poi_effects.mothership == "penetration": view.add_child(_label("Research: player card attacks bypass mothership Shields",15))
 		if state.poi_effects.mothership == "damage": view.add_child(_label("Research: player card attacks deal +50% damage",15))

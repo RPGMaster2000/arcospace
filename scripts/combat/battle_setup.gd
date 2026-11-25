@@ -15,6 +15,7 @@ var modifier: int = 0
 var environment: Dictionary = {}
 var player_cards: Array[Resource] = []
 var enemy_cards: Array[Resource] = []
+var enemy_draw_rates := Vector2(-1.0, -1.0)
 var identity_weights: Dictionary = {}
 var salvage: int = 0
 var battles_won: int = 0

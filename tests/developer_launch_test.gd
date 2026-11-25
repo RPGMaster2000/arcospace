@@ -146,6 +146,25 @@ func verify_menu() -> void:
 			await process_frame
 		for control in [dialog.mode, dialog.stage, dialog.difficulty, dialog.back_button, dialog.launch_button]:
 			check(root.get_visible_rect().encloses(control.get_global_rect()), "Test controls fit at %s" % dimensions)
+	dialog.mode.select(1)
+	dialog.stage.select(4)
+	dialog._update_scenario_selectors()
+	root.size = Vector2i(686, 384)
+	for frame in 4: await process_frame
+	for control in [dialog.formation, dialog.faction, dialog.back_button, dialog.launch_button]:
+		check(control.is_visible_in_tree() and root.get_visible_rect().encloses(control.get_global_rect()),
+			"Later Starfront selectors fit compact landscape")
+	await click(dialog.formation, true)
+	check(dialog.formation.get_popup().visible, "Touch opens the Formation selector")
+	dialog.formation.get_popup().hide()
+	dialog.stage.select(2)
+	dialog._update_scenario_selectors()
+	check(dialog.formation.is_item_disabled(4) and dialog.formation.is_item_disabled(5),
+		"System 3 rules out late formations in the selector")
+	dialog.mode.select(0)
+	dialog.stage.select(0)
+	dialog._update_scenario_selectors()
+	dialog.mode.grab_focus()
 	await keyboard(KEY_TAB)
 	check(root.gui_get_focus_owner() == dialog.stage, "Keyboard advances between selectors")
 	await keyboard(KEY_TAB)

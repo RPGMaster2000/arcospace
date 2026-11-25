@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="ShipData" format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/ship_data.gd" id="Ship"]
+[ext_resource type="PackedScene" path="res://scenes/ships/siege_monitor.tscn" id="Model"]
+[ext_resource type="Resource" path="res://cards/01_shield_plating.tres" id="C1"]
+[ext_resource type="Resource" path="res://cards/03_hull_patch.tres" id="C3"]
+[ext_resource type="Resource" path="res://cards/04_synthesizer_upgrade.tres" id="C4"]
+[ext_resource type="Resource" path="res://cards/05_structural_reinforcement.tres" id="C5"]
+[ext_resource type="Resource" path="res://cards/07_hull_overhaul.tres" id="C7"]
+[ext_resource type="Resource" path="res://cards/enemy/iron_counterbattery.tres" id="Counterbattery"]
+[ext_resource type="Resource" path="res://cards/10_shield_recharge.tres" id="C10"]
+[ext_resource type="Resource" path="res://cards/11_reactor_upgrade.tres" id="C11"]
+[ext_resource type="Resource" path="res://cards/12_laser_burst.tres" id="C12"]
+[ext_resource type="Resource" path="res://cards/13_plasma_strike.tres" id="C13"]
+[ext_resource type="Resource" path="res://cards/19_system_disruption.tres" id="C19"]
+[ext_resource type="Resource" path="res://cards/20_torpedo_salvo.tres" id="C20"]
+[ext_resource type="Resource" path="res://cards/26_shield_exchange.tres" id="C26"]
+[ext_resource type="Resource" path="res://cards/27_missile_barrage.tres" id="C27"]
+[ext_resource type="Resource" path="res://cards/30_siege_driver.tres" id="C30"]
+[ext_resource type="Resource" path="res://cards/35_damage_control.tres" id="C35"]
+[ext_resource type="Resource" path="res://cards/43_emergency_reserves.tres" id="C43"]
+[ext_resource type="Resource" path="res://cards/45_emergency_bulkheads.tres" id="C45"]
+[ext_resource type="Resource" path="res://cards/46_structural_reclamation.tres" id="C46"]
+[ext_resource type="Resource" path="res://cards/54_power_grid_reroute.tres" id="C54"]
+
+[resource]
+script = ExtResource("Ship")
+enemy_rank = 1
+destruction_salvage_reward = 20
+ship_name = "Siege Marshal"
+subtitle = "Iron Directorate · Siege"
+role = "Heavy"
+summary = "Builds Shields to enable piercing counterfire."
+hull_capacity = 43
+shields = 22
+materials = 8
+energy = 12
+crew = 10
+synthesizer = 1
+reactor = 3
+quarters = 2
+ftl_turns = 14
+ftl_resistance = 0
+hull_color = Color(0.3, 0.4, 0.52, 1)
+card_family_weights = {"energy":1.15}
+card_effect_weights = {"hull":1.8,"shields":2,"production":1.3,"disruption":1.6}
+tactical_weights = {"damage":0.9,"hull":1.5,"shields":0.95,"production":4,"resources":0.3,"disruption":0.8,"play_again":1}
+tactical_variation = 0.08
+model_scene = ExtResource("Model")
+strategic_class = "Heavy"
+minimum_defense_system = 3
+strategic_speed_multiplier = 0.8
+homeworld_damage_multiplier = 1.4
+starting_cards = Array[Resource]([ExtResource("C1"), ExtResource("C3"), ExtResource("C4"), ExtResource("C5"), ExtResource("C7"), ExtResource("Counterbattery"), ExtResource("C10"), ExtResource("C11"), ExtResource("C12"), ExtResource("C13"), ExtResource("C19"), ExtResource("C20"), ExtResource("C26"), ExtResource("C27"), ExtResource("C30"), ExtResource("C35"), ExtResource("C43"), ExtResource("C45"), ExtResource("C46"), ExtResource("C54")])

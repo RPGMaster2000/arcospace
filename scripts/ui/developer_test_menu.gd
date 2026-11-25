@@ -2,6 +2,8 @@ extends CanvasLayer
 
 signal launch_requested(configuration: Dictionary)
 
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
+const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const Launch = preload("res://scripts/expedition/developer_launch.gd")
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 
@@ -10,6 +12,8 @@ var ship_name: String
 var mode: OptionButton
 var stage: OptionButton
 var difficulty: OptionButton
+var formation: OptionButton
+var faction: OptionButton
 var launch_button: Button
 var back_button: Button
 var _previous_focus: Control
@@ -49,6 +53,15 @@ func _ready() -> void:
 	stage = _selector(column, "Expedition Stage", stages, int(last_configuration.stage) - 1)
 	difficulty = _selector(column, "Enemy Difficulty", ["Automatic", "Tier 1", "Tier 2", "Tier 3"],
 		int(last_configuration.rank) + 1)
+	var formation_ids: Array = [""] + Warfare.FORMATIONS
+	formation = _selector(column, "Formation", ["Automatic"] + Warfare.NAMES,
+		formation_ids.find(last_configuration.get("formation", "")))
+	var faction_ids: Array = Factions.DEFAULTS.map(func(profile): return profile.id)
+	faction = _selector(column, "Enemy Faction", ["Automatic"] + Factions.DEFAULTS.map(func(profile): return profile.display_name),
+		faction_ids.find(last_configuration.get("faction", "")) + 1)
+	mode.item_selected.connect(func(_index): _update_scenario_selectors())
+	stage.item_selected.connect(func(_index): _update_scenario_selectors())
+	_update_scenario_selectors()
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	column.add_child(actions)
@@ -99,10 +112,27 @@ func _action(row: HBoxContainer, caption: String, action: Callable, primary: boo
 	return button
 
 
+func _update_scenario_selectors() -> void:
+	var defense: bool = Launch.MODES[mode.selected] == "defense"
+	faction.get_parent().visible = defense
+	formation.get_parent().visible = defense and stage.selected >= 2
+	for index in Warfare.FORMATIONS.size():
+		formation.set_item_disabled(index + 1, not Warfare.available_formation(Warfare.FORMATIONS[index], stage.selected + 1))
+	if formation.is_item_disabled(formation.selected): formation.select(0)
+	if formation.get_parent().visible:
+		for selector in [mode, stage, difficulty, formation, faction]:
+			selector.custom_minimum_size.y = 40
+	else:
+		for selector in [mode, stage, difficulty, formation, faction]:
+			selector.custom_minimum_size.y = 48
+
+
 func _launch_selected() -> void:
 	if not _open:
 		return
-	last_configuration = Launch.configuration(Launch.MODES[mode.selected], stage.selected + 1, difficulty.selected - 1)
+	last_configuration = Launch.configuration(Launch.MODES[mode.selected], stage.selected + 1, difficulty.selected - 1,
+		Warfare.FORMATIONS[formation.selected - 1] if formation.selected > 0 else "",
+		Factions.DEFAULTS[faction.selected - 1].id if faction.selected > 0 else "")
 	close()
 	launch_requested.emit(last_configuration.duplicate())
 
@@ -132,7 +162,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _open:
-		for selector in [mode, stage, difficulty]:
+		for selector in [mode, stage, difficulty, formation, faction]:
 			if selector.get_popup().visible:
 				selector.get_popup().hide()
 				return

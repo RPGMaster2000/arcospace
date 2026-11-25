@@ -27,6 +27,11 @@ static func apply_setup(board: Node, setup: Setup) -> void:
 	board.hand.card_pool.assign(setup.player_cards)
 	board.hand.identity_weights = setup.identity_weights.duplicate()
 	board.enemy_hand.card_pool.assign(setup.enemy_cards)
+	if setup.enemy_draw_rates.x >= 0.0:
+		for tier in [2, 3]:
+			var eligible := setup.enemy_cards.any(func(card): return card.tier == tier)
+			board.enemy_hand.set("tier_two_chance" if tier == 2 else "tier_three_chance",
+				setup.enemy_draw_rates[tier - 2] if eligible else 0.0)
 
 
 static func result(board: Node) -> Result:
