@@ -173,15 +173,15 @@ func modifier_resolution(current: Resource) -> void:
 	rift.simulation = {"remaining":20.0}
 	var second := rift.duplicate(true)
 	second.id = "rift-5-2"
-	var snapshot := E.evaluate(state, spot, [metal, ion, second, rift], 0)
+	var snapshot := E.evaluate(state, spot, [metal, ion, second, rift], 0, 0, true)
 	check(E.modifier_id(snapshot) == 2 and E.temporal_draw(snapshot) and snapshot.temporal_anomaly.id == rift.id,
 		"One strongest timed hazard and one passive anomaly resolve overlapping instances")
-	check(E.valid_snapshot(snapshot) and snapshot == E.evaluate(state, spot, [rift, second, ion, metal], 0),
+	check(E.valid_snapshot(snapshot) and snapshot == E.evaluate(state, spot, [rift, second, ion, metal], 0, 0, true),
 		"Overlap is order-independent and freezes valid geometry")
 	var original: Dictionary = snapshot.duplicate(true)
 	rift.region.radius = 2.0
 	check(snapshot == original, "Changing live geometry does not affect a battle checkpoint")
-	var explicit := E.evaluate(state, spot, [ion, rift], 0, 3)
+	var explicit := E.evaluate(state, spot, [ion, rift], 0, 3, true)
 	check(E.modifier_id(explicit) == 3 and not E.temporal_draw(explicit), "Legacy explicit battle modifier keeps precedence")
 	var board := preload("res://scenes/board_3d.tscn").instantiate()
 	var setup := preload("res://scripts/combat/battle_setup.gd").new()

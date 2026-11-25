@@ -4,7 +4,6 @@ const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
-const Modifiers = preload("res://scripts/combat_modifier.gd")
 
 
 static func active_enemies(state: Resource) -> Array:

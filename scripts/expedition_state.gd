@@ -437,7 +437,8 @@ func _install_poi_turret(index: int) -> void:
 
 func battle_environment(index: int) -> Dictionary:
 	var snapshot: Dictionary = EnvironmentData.evaluate(self, battle_location(index), environmental_instances,
-		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
+		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0,
+		system_variation.has("weather"))
 	var support := battle_support(index)
 	var advantage: String = poi_effects.mothership if is_defense() and defense.unit_for(index).get("mothership",false) else ""
 	var preparations := warzone_battle_preparations(index)
@@ -462,7 +463,7 @@ func warzone_battle_preparations(index: int) -> Dictionary:
 func preview_modifier(index: int) -> int:
 	if index < 0 or index >= encounters.size(): return 0
 	return EnvironmentData.modifier_id(EnvironmentData.evaluate(self, battle_location(index),
-		environmental_instances, index, int(encounters[index].get("modifier", 0))))
+		environmental_instances, index, int(encounters[index].get("modifier", 0)), system_variation.has("weather")))
 
 
 func encounter_at(index: int) -> Dictionary:

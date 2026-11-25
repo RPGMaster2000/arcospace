@@ -21,7 +21,7 @@ Chaotic sectors also always receive a strong physical solar influence zone. Its 
 
 An explicit legacy modifier retains its precedence. Extreme-weather battles can apply one timed modifier and one passive Temporal Rift draw boost. Solar beats asteroid fields, which beat storms. When storms overlap, the strongest saved intensity wins, with stable ID as the tiebreaker. Matching storms cannot multiply card effects more than the existing ×2. One or more overlapping rifts apply the existing ×2 Tier 2 draw boost once to both hands. The established eligibility rounds, hand limits, card execution, forecast and damage rules still apply. The selected timed hazard and the contributing rift are frozen at battle entry, including on resume.
 
-Each front renders with one animated cloud sheet with shader lightning and one exact boundary. Legacy storms retain their existing three sheets. The map reuses rift visuals by instance ID and removes expired visuals independently. Weather adds no strategic per-frame work and does not depend on the renderer or quality settings.
+Each front renders with one animated cloud sheet with shader lightning and one exact boundary. Legacy storms retain their existing three sheets. The map reuses rift visuals by instance ID and removes expired visuals independently. Rendering never advances the strategic clock. The same physical fronts and rifts apply across renderers and quality settings.
 
 ## Procedural comparison
 

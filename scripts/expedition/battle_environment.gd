@@ -55,7 +55,7 @@ static func valid_instances(value: Variant, storm_limit: int = 2, rift_limit: in
 # Legacy > solar > temporal rift > asteroid > storm. Lexical ID breaks ties
 # within each type, independent of record order. Empty reserved records remain neutral.
 static func evaluate(state: Resource, location: Array, instances: Array,
-		encounter_index: int = -1, legacy_modifier: int = 0) -> Dictionary:
+		encounter_index: int = -1, legacy_modifier: int = 0, overlap: bool = false) -> Dictionary:
 	var result: Dictionary = {"version": 1, "type": NONE, "instance_id": "",
 		"intensity": 0.0, "configuration": {}, "visual": {},
 		"location": location, "run_seed": str(state.seed_used),
@@ -65,7 +65,6 @@ static func evaluate(state: Resource, location: Array, instances: Array,
 		var selected: Dictionary = {}
 		var temporal: Dictionary = {}
 		var selected_priority := 0
-		var overlap: bool = not state.system_variation.get("weather", {}).is_empty()
 		for item in instances:
 			if not item is Dictionary or not item.get("id") is String: continue
 			var priority: int = _priority(item, location)
