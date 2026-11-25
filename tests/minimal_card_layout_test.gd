@@ -96,7 +96,7 @@ func run() -> void:
 			var lines := title.text.split("\n")
 			check(lines.size() <= 2, id + " no hidden title line")
 			check(
-				title.text.replace("\n", " ") == card.card_name.trim_suffix("++").trim_suffix("+"),
+				title.text.replace("-\n", "").replace("\n", " ") == card.card_name.trim_suffix("++").trim_suffix("+"),
 				id + " complete name preserved"
 			)
 			check(

@@ -265,7 +265,12 @@ func test_presentation() -> void:
 		gallery.size = Vector2(dimensions) - Vector2(48, 48)
 		gallery.set_category("Production")
 		await settle()
-		check(gallery.visible_cards.size() == 6, "All targeted cards appear in Production gallery")
+		var producers: Array = Library.CARDS.slice(68, 74)
+		for index in [4, 9, 13, 15, 18, 23, 25]:
+			producers.append(Library.SYNERGY_CARDS[index])
+		check(gallery.visible_cards.size() == producers.size()
+			and producers.all(func(card): return card in gallery.visible_cards),
+			"Production gallery shows original sabotage and new production cards")
 		check(
 			root.get_visible_rect().encloses(gallery.get_global_rect()),
 			"Gallery fits landscape viewport"

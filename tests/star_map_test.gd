@@ -79,8 +79,12 @@ func run() -> void:
 	# A free service is separate from the six progression slots and remains revisitable.
 	host.state.service = {"kind":"service", "poi":preload("res://encounters/trading_outpost.tres"), "title":"Trading Outpost", "completed":false}
 	host.show_system()
+	# Isolate service arrival from the independently tested Chasedown event.
+	host.star_map.intercept_travel = Callable()
 	host.star_map.travel(-2)
-	await create_timer(.08).timeout
+	var deadline := Time.get_ticks_msec() + 2000
+	while host.selected_encounter != -2 and Time.get_ticks_msec() < deadline:
+		await process_frame
 	check(host.selected_encounter == -2 and host.state.pressure == pressure and host.state.ftl_access == access, "Service arrival grants no access or pressure")
 	host.show_system()
 	check(not host.star_map.markers[-2].disabled and host.state.encounters.size() == 9, "Service remains independent and revisitable")

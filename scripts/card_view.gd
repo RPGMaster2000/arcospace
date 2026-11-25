@@ -119,6 +119,13 @@ func title_text(name: String) -> String:
 	var font: Font = $TitleLabel.get_theme_font("font")
 	var first := ""
 	var words := title.split(" ")
+	var font_size: int = presentation_settings.card_title_font_size
+	if font.get_string_size(words[0], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
+		# Fold a long first word below the cost corner while retaining the title size.
+		var split := words[0].length() - 1
+		while split > 1 and font.get_string_size(words[0].left(split) + "-", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
+			split -= 1
+		return words[0].left(split) + "-\n" + title.substr(split)
 	while not words.is_empty():
 		var candidate: String = first + (" " if not first.is_empty() else "") + words[0]
 		if (
@@ -129,7 +136,7 @@ func title_text(name: String) -> String:
 						candidate,
 						HORIZONTAL_ALIGNMENT_LEFT,
 						-1,
-						presentation_settings.card_title_font_size
+						font_size
 					)
 					. x
 				)
