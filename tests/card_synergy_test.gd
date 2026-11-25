@@ -206,7 +206,8 @@ func progression() -> void:
 		for card in scenario[0].starting_cards:
 			check(card in pool, "Authored faction card survives")
 	var custom := elite.duplicate()
-	custom.starting_cards.assign([Cards.BASE_CARDS[0], Cards.PROTOTYPES[4]])
+	var custom_cards: Array[Resource] = [Cards.BASE_CARDS[0], Cards.PROTOTYPES[4]]
+	custom.starting_cards = custom_cards
 	check(Deck.enemy_pool(custom, 10, false) == custom.starting_cards, "Explicit custom deck retained")
 
 
@@ -268,12 +269,62 @@ func exceptional_discovery() -> void:
 		check(expedition.rng.state == before, "A committed card draft leaves the system RNG untouched")
 
 
+func combat_resume() -> void:
+	const State = preload("res://scripts/expedition_state.gd")
+	const Adapter = preload("res://scripts/combat/battle_adapter.gd")
+	const Checkpoint = preload("res://scripts/combat/progression_checkpoint.gd")
+	const Board = preload("res://scenes/board_3d.tscn")
+	const Enemy = preload("res://ships/enemy/marauder_vanguard.tres")
+	var config := Rules.duplicate()
+	config.game_mode = "exploration"
+	config.log_rolls = false
+	var expedition := State.new()
+	expedition.start(5, config, 88219)
+	expedition.system_number = 5
+	var owned: Resource = Cards.SYNERGY_CARDS[24]
+	expedition.acquired_cards = [owned]
+	expedition.upgraded_cards = {owned.identity_key(): owned.with_upgrade(2)}
+	var setup := expedition.prepare_battle(-1, Enemy)
+	var enemy_rares := setup.enemy_cards.filter(func(card): return card.tier == 3)
+	check(not enemy_rares.is_empty(), "Battle setup attaches the expanded enemy pool")
+	if enemy_rares.is_empty(): return
+	var board := Board.instantiate()
+	board.expedition = expedition
+	Adapter.configure(board, setup)
+	board.get_node("BattleEffects").enabled = false
+	root.add_child(board)
+	board.enemy_timer.stop()
+	board.turn_number = 6
+	board.hand.cards[0] = expedition.upgraded_cards[owned.identity_key()]
+	board.enemy_hand.cards[0] = enemy_rares[0]
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Checkpoint.capture(board)))
+	check(Checkpoint.valid(saved), "Saved player and enemy hands accept the expanded catalogue")
+	board.free()
+	var restored := Board.instantiate()
+	restored.expedition = expedition
+	Adapter.configure(restored, setup)
+	restored.resume_combat = saved
+	restored.get_node("BattleEffects").enabled = false
+	root.add_child(restored)
+	restored.enemy_timer.stop()
+	check(restored.hand.cards[0] != null and restored.hand.cards[0].upgrade_level == 2
+		and restored.hand.cards[0].identity_key() == owned.identity_key(), "Battle resume restores upgraded Tier 3")
+	check(restored.enemy_hand.cards[0] == enemy_rares[0] and restored.enemy_hand.current_round == 6,
+		"Battle resume restores the faction card and correct unlock round")
+	restored.free()
+
+
 func _initialize() -> void:
+	run.call_deferred()
+
+
+func run() -> void:
 	catalogue()
 	timing()
 	alternative_branches()
 	progression()
 	shop_and_save()
 	exceptional_discovery()
+	combat_resume()
 	print("Synergy catalogue, timing, AI, and rarity: %d failures" % failures)
 	quit(1 if failures else 0)
