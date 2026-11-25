@@ -10,6 +10,8 @@ const STRATEGIES := ["nearest", "dangerous", "nearby_poi", "turrets", "decoys", 
 func _initialize() -> void:
 	var rules := Rules.duplicate()
 	rules.system_variety = Rules.system_variety.duplicate()
+	rules.defense_tuning = Rules.defense_tuning.duplicate()
+	rules.defense_tuning.convoy_enabled = "--no-convoy" not in OS.get_cmdline_user_args()
 	rules.system_variety.progressive_geometry = "--legacy-geography" not in OS.get_cmdline_user_args()
 	rules.system_variety.extreme_weather = "--legacy-weather" not in OS.get_cmdline_user_args()
 	for strategy in STRATEGIES:
@@ -70,6 +72,7 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 			row["coupled_battles"] = row.get("coupled_battles", 0) + int(run.battle_environment(event.contact).has("temporal_anomaly"))
 			run.active_battle = event.contact
 			var result := Result.new()
+			var punitive: bool = fleet.unit_for(event.contact).get("punitive", false)
 			report_id += 1
 			result.result_id = report_id
 			result.encounter_index = event.contact
@@ -80,6 +83,12 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 			result.battles_won = run.battles_won + 1
 			if run.record_battle(result):
 				row.battles += 1
+				if run.pending_choice == "battle_reward" and run.card_offers.any(func(card): return card.tier == 3):
+					row["elite_drafts"] = row.get("elite_drafts", 0) + 1
+				if punitive:
+					row["punitive_battles"] = row.get("punitive_battles", 0) + 1
+					row["punitive_salvage"] = row.get("punitive_salvage", 0) + int(result.salvage_rewards.get("standard", 0)) + int(result.salvage_rewards.get("victory", 0))
+					row["punitive_drafts"] = row.get("punitive_drafts", 0) + int(run.pending_choice == "battle_reward" and run.card_offers.any(func(card): return card.tier == 3))
 				spent += fleet.tuning.battle_seconds
 				run.active_battle = -1
 				if run.pending_choice == "battle_reward": run.choose_battle_reward(false)
@@ -121,6 +130,13 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 	if fleet.complete: row.completion_time += spent
 	row.pressure += fleet.pressure
 	row.waves += fleet.reinforcements_spawned
+	if fleet.convoy != null:
+		var convoy: RefCounted = fleet.convoy
+		row["evacuated"] = row.get("evacuated", 0) + int(convoy.activity == "extracted")
+		row["convoy_losses"] = row.get("convoy_losses", 0) + int(convoy.activity == "destroyed")
+		row["convoy_damage"] = row.get("convoy_damage", 0) + convoy.maximum_integrity - convoy.integrity
+		row["evacuation_salvage"] = row.get("evacuation_salvage", 0) + (convoy.reward if convoy.reward_claimed else 0)
+		row["total_salvage"] = row.get("total_salvage", 0) + run.salvage
 
 
 func target(fleet: RefCounted, player: Vector3, policy: String) -> Vector3:
