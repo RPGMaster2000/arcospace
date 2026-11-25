@@ -23,7 +23,7 @@ const Layout = preload("res://scripts/expedition/system_layout.gd")
 static func point(value: Array) -> Vector3:
 	return Vector3(value[0], value[1], value[2])
 static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = [], expansion: float = 0.0,
-		clearance: float = 0.0, planet_sizes: Dictionary = {}, solar_clearance: float = 0.0) -> void:
+		clearance: float = 0.0, planet_sizes: Dictionary = {}, solar_clearance: float = 0.0, geometry: Dictionary = {}) -> void:
 	# The gameplay layout supplies every navigable anchor. Cosmetic RNG only
 	# controls the planet surface, star and atmosphere; it cannot move the base.
 	var generated_planets: Array = data.planets.duplicate(true)
@@ -59,6 +59,21 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 	home.orientation = 0.0
 	home.phase = atan2(home.position.z, home.position.x)
 	data.planets = [home]
+	if geometry.get("version") == 2:
+		for index in planetary:
+			if not data.anchors.has(index): continue
+			var orbit: Dictionary = data.poi_orbits[index]
+			var body: Dictionary = generated_planets[index % generated_planets.size()].duplicate(true)
+			body.merge(orbit, true)
+			body.index = data.planets.size()
+			body.name = "%s %d" % [data.name, body.index]
+			body.encounter = index
+			body.position = data.anchors[index]
+			body.radius = float(planet_sizes[index]) / (1.5 * 1.035)
+			body.type = geometry.get("planet_types", {}).get(str(index), "rocky")
+			data.planets.append(body)
+			data.assignments[index] = body.index
+			data.poi_orbits.erase(index)
 	if clearance > 0.0: planetary_radii.append(Vector2(home.distance, VisualSystem.planet_extent(home)))
 	# Keep procedural planet appearances while choosing clear cosmetic positions
 	# around the already-authoritative fleet and PoIs.
@@ -70,7 +85,14 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 		elif unit.status != "reserve":
 			obstacles.append(point(unit.position))
 	var factor := Layout.scale_factor(expansion)
+	var later: bool = geometry.get("version") == 2
+	var stellar := Layout.stellar_clearance(geometry)
 	var distances := [5.0, 6.0, 7.0, 8.0, 9.0, 11.0, 12.0] if expansion > 0.0 else [5.0, 7.0, 9.0, 12.0]
+	if later:
+		match geometry.archetype:
+			"scattered": distances = [6.5, 10.0, 14.0, 18.0]
+			"crowded": distances = [5.5, 6.2, 7.1, 8.6, 11.0, 14.0]
+			"asymmetric", "chaotic": distances = [5.3, 6.9, 9.1, 12.4, 15.2, 18.7]
 	for original in generated_planets.slice(0, mini(3, generated_planets.size() - 1)):
 		var planet: Dictionary = original.duplicate(true)
 		planet.index = data.planets.size()
@@ -83,6 +105,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 		var best_gap: float = -INF
 		for base_distance in distances:
 			var distance: float = base_distance * factor
+			if later and distance - VisualSystem.planet_extent(planet) < stellar: continue
 			if planet.type == "gas_giant" and distance-VisualSystem.planet_extent(planet) < solar_clearance: continue
 			if planetary_radii.any(func(other):
 				var gap: float = other.y + VisualSystem.planet_extent(planet) + clearance if clearance > 0.0 else 1.05

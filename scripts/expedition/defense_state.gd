@@ -4,6 +4,7 @@ const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 var military: Dictionary = {}
+var geometry: Dictionary = {}
 const Missiles = preload("res://scripts/expedition/defense_missiles.gd")
 var v2 := false
 var missiles := Missiles.new()
@@ -46,7 +47,7 @@ func deploy(configuration: Resource, angle: float, indices: Array, poi_indices: 
 	layout_expansion = expansion
 	var factor := Layout.scale_factor(expansion)
 	integrity = tuning.base_integrity
-	home = Vector3(cos(angle), 0, sin(angle)) * (22.0 * factor)
+	home = Vector3(cos(angle), 0, sin(angle)) * (22.0 * factor * float(geometry.get("home_scale", 1.0)))
 	start = home * 0.78
 	var fleet_rng := RandomNumberGenerator.new()
 	fleet_rng.seed = hash("%d:deployment" % orbit_seed)
@@ -151,6 +152,10 @@ func reserve_delay(ordinal: int) -> float:
 	return tuning.v2_reinforcement_seconds if military.is_empty() else float(military.waves[mini(ordinal, military.waves.size() - 1)])
 
 
+func stellar_clearance() -> float:
+	return Layout.stellar_clearance(geometry)
+
+
 func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
 	var planned := not military.is_empty() and not reserve.is_empty()
 	var center: Vector3 = reserve.route_origin if planned else unit_for(mothership_index()).position
@@ -159,9 +164,9 @@ func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
 		for i in range(1 if distance == 0.0 else 24):
 			var angle: float = TAU * float((i + reinforcements_spawned * 7) % 24) / 24.0
 			var candidate: Vector3 = center + Vector3(cos(angle), 0, sin(angle)) * distance
-			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < 3.5: continue
+			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < stellar_clearance(): continue
 			if candidate.distance_to(player) < tuning.interception_radius + 1.0 or candidate.distance_to(home) < 5: continue
-			if v2 and Geometry3D.get_closest_point_to_segment(Vector3.ZERO, candidate, home).length() < 3.5: continue
+			if v2 and not Layout.clear_stellar_segment(candidate, home, stellar_clearance()): continue
 			var clear: bool = true
 			for other in units:
 				if other.status == "active" and candidate.distance_to(other.position) < 3.0: clear = false
@@ -178,7 +183,7 @@ func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
 				if eta < maxf(12.0, player.distance_to(intercept) * tuning.seconds_per_distance + tuning.battle_seconds):
 					clear = false
 				for index in Layout.planetary_indices(encounter_ledger):
-					var radius := Layout.planetary_radius(encounter_ledger[index].poi.resource_path.get_file().get_basename())
+					var radius := Layout.planetary_radius(encounter_ledger[index].poi.resource_path.get_file().get_basename()) * float(geometry.get("planet_scales", {}).get(str(index), 1.0))
 					if absf(candidate.length() - anchors[index].length()) < radius + 1.5: clear = false
 			if clear: return candidate
 	return null

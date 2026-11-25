@@ -8,14 +8,18 @@ const STRATEGIES := ["nearest", "dangerous", "nearby_poi", "turrets", "decoys", 
 
 
 func _initialize() -> void:
+	var rules := Rules.duplicate()
+	rules.system_variety = Rules.system_variety.duplicate()
+	rules.system_variety.progressive_geometry = "--legacy-geography" not in OS.get_cmdline_user_args()
 	for strategy in STRATEGIES:
 		var groups := {}
 		for mode in Warfare.FORMATIONS:
-			groups[mode] = {"runs":0, "secured":0, "lost":0, "damage":0, "pressure":0.0, "reveal":0, "advance":0, "waves":0, "battles":0}
+			groups[mode] = {"runs":0, "secured":0, "lost":0, "damage":0, "pressure":0.0, "reveal":0, "advance":0, "waves":0, "battles":0, "completion_time":0.0, "preparations":0,
+				"salvage_from_pois":0, "production_from_pois":0, "hazardous_battles":0, "unresolved_legs":0}
 		for stage in [3, 4, 5]:
 			for seed_value in range(31, 49):
 				var run := State.new()
-				run.start(seed_value % 6, Rules, seed_value, {"mode":"defense","stage":stage,"rank":-1})
+				run.start(seed_value % 6, rules, seed_value, {"mode":"defense","stage":stage,"rank":-1})
 				var row: Dictionary = groups[run.defense.military.formation]
 				play(run, strategy, row)
 		print("STARFRONT_STRATEGY ", strategy, " ", JSON.stringify(groups))
@@ -61,6 +65,7 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 		player = event.position
 		run.navigation.checkpoint_position(State.Defense.wire(player))
 		if event.contact >= 0:
+			row.hazardous_battles += int(run.preview_modifier(event.contact) != 0)
 			run.active_battle = event.contact
 			var result := Result.new()
 			report_id += 1
@@ -90,9 +95,16 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 					if not run.approach_requirement(options[index]).is_locked() and (reward.has("production") or reward.has("next_battle")):
 						choice = index
 						break
+			var salvage: int = run.salvage
+			var production: float = run.production_upgrades.values().reduce(func(sum, increment): return sum + increment, 0)
 			if run.resolve_approach(poi, choice):
 				spent += float(options[choice].get_meta("strategic_seconds", 0))
+				row.preparations += 1
+				row.salvage_from_pois += maxi(0, run.salvage - salvage)
+				row.production_from_pois += run.production_upgrades.values().reduce(func(sum, increment): return sum + increment, 0) - production
 			prepared = true
+		elif destination != player:
+			row.unresolved_legs += 1
 		if fleet.revealed and not fleet.mothership_destroyed() and not row.has("current_reveal"):
 			row.current_reveal = spent
 		if fleet.mothership_advancing and not row.has("current_advance"):
@@ -104,6 +116,7 @@ func play(run: Resource, policy: String, row: Dictionary) -> void:
 	row.secured += int(fleet.complete)
 	row.lost += int(fleet.failed())
 	row.damage += fleet.tuning.base_integrity - fleet.integrity
+	if fleet.complete: row.completion_time += spent
 	row.pressure += fleet.pressure
 	row.waves += fleet.reinforcements_spawned
 

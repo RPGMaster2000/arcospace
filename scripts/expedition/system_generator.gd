@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Variation = preload("res://scripts/expedition/system_variation.gd")
+const VariedLayout = preload("res://scripts/expedition/varied_system_layout.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
 
@@ -172,7 +174,13 @@ static func _generate_defense(state: Resource) -> void:
 	var previous: String = state.defense.military.get("formation", "") if state.defense != null else ""
 	state.system_number += 1
 	state.system_name = "Starfront %d" % state.system_number
-	state.system_variation = preload("res://scripts/expedition/system_variation.gd").generate(state.seed_used, state.system_number, state.rules.system_variety) if state.rules.defense_v2 and state.layout_expansion > 0.0 else {}
+	var legacy_environment := Variation.generate(state.seed_used, state.system_number, state.rules.system_variety) if state.rules.defense_v2 and state.layout_expansion > 0.0 else {}
+	var overrides: Dictionary = state.developer_test if state.system_number == state.developer_test.get("stage") else {}
+	state.system_variation = Variation.later(legacy_environment.duplicate(true), state.seed_used,
+		state.system_number, state.rules.system_variety, state.previous_defense_environment, overrides)
+	var later: bool = state.system_variation.get("version") == 2
+	if later:
+		state.layout_expansion *= float(state.system_variation.geometry_scale)
 	var faction: Resource = Factions.select(state)
 	state.faction_id = faction.id
 	state.system_profile = "industrial"
@@ -218,6 +226,8 @@ static func _generate_defense(state: Resource) -> void:
 		var independent: Array = state.rules.pois.filter(func(poi): return poi.resource_path.get_file().get_basename() not in ["unstable_wormhole", "mining_operation", "gas_giant", "research_station", "quarantined_colony"])
 		while selected.size() < count and not independent.is_empty():
 			selected.append(independent[local.randi_range(0, independent.size() - 1)])
+	if later:
+		selected = VariedLayout.select_pois(state, selected)
 	var slots: Array = []
 	for poi in selected:
 		slots.append(state.encounters.size())
@@ -239,12 +249,42 @@ static func _generate_defense(state: Resource) -> void:
 	var facing: float = state.rng.randf_range(0, TAU)
 	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
 	var poi_phase: float = state.rng.randf_range(0.2, 0.5)
+	if later:
+		var orbit_rng := Variation.rng_for(state.seed_used, state.system_number, "planet-sizes")
+		for index in state.SystemLayout.planetary_indices(state.encounters):
+			var poi: Resource = state.encounters[index].poi
+			state.system_variation.planet_types[str(index)] = state.SystemLayout.PLANETARY[poi.resource_path.get_file().get_basename()]
+			state.system_variation.planet_scales[str(index)] = orbit_rng.randf_range(0.85, 1.20)
+		if state.system_variation.archetype in ["asymmetric", "crowded", "scattered"]:
+			facing = float(state.system_variation.axis) + orbit_rng.randf_range(-0.35, 0.35)
+		state.system_variation = Variation.canonical(state.system_variation)
 	var initial := range(attackers)
 	var placed := false
 	if v2 and state.system_number >= 3 and state.rules.defense_tuning.procedural_warfare:
 		placed = _deploy_warfare(state, faction, initial, reserves, attackers, slots, facing, flank, poi_phase, previous)
+	if later and not state.rules.defense_tuning.procedural_warfare:
+		for attempt in 3:
+			state.system_variation.placement_attempt = float(attempt)
+			placed = _deploy_defense(state, initial + [attackers], reserves, slots, facing, flank, poi_phase, v2)
+			if placed: break
 	if not placed:
-		_deploy_defense(state, initial + [attackers], reserves, slots, facing, flank, poi_phase, v2)
+		if later:
+			# The old geometry is the final fallback. Keep the doctrine whenever it fits.
+			if not overrides.is_empty():
+				print("Starfront environment fallback: no fair deployment in ", state.system_variation.archetype,
+					" · seed ", state.seed_used)
+			state.system_variation = legacy_environment
+			state.layout_expansion = state.rules.system_expansion
+			if state.rules.defense_tuning.procedural_warfare:
+				placed = _deploy_warfare(state, faction, initial, reserves, attackers, slots, facing, flank, poi_phase, previous)
+		if not placed:
+			_deploy_defense(state, initial + [attackers], reserves, slots, facing, flank, poi_phase, v2)
+	state.previous_defense_environment = state.system_variation.get("archetype", "")
+	if not overrides.is_empty() and state.system_variation.get("version") == 2:
+		print("Starfront environment seed=%d system=%d %s / %s / %s / %s / %s" % [state.seed_used,
+			state.system_number, Variation.system_title(state.system_variation), Variation.SIZE_CLASSES[int(state.system_variation.size_class)],
+			Variation.HOME_REGIONS[int(state.system_variation.home_region)], Variation.STARS[int(state.system_variation.star)][0],
+			Warfare.describe(state.defense.military.get("formation", ""))])
 
 # All original draw sites run before the scenario replaces or appends fleet slots.
 # Faction, PoI, loot and existing modifier RNG channels keep their previous draws.
@@ -270,8 +310,14 @@ static func _deploy_warfare(state: Resource, faction: Resource, legacy_opening: 
 			reserves.append(state.encounters.size())
 			state.encounters.append(template.duplicate())
 		Warfare.roster(state, faction, plan, opening, reserves, mother)
-		_deploy_defense(state, opening + [mother], reserves, slots, facing, flank, poi_phase, true, plan)
-		if Warfare.place(state, state.defense, plan):
+		var later: bool = state.system_variation.get("version") == 2
+		for attempt in (3 if later else 1):
+			if later:
+				state.system_variation.placement_attempt = float(attempt)
+				state.system_variation.military_fallback = formation != preferred
+			if not _deploy_defense(state, opening + [mother], reserves, slots, facing, flank, poi_phase, true, plan):
+				continue
+			if not Warfare.place(state, state.defense, plan): continue
 			state.system_name += " · " + Warfare.describe(formation)
 			if not state.developer_test.is_empty():
 				print("Starfront test seed=%d system=%d formation=%s faction=%s" % [state.seed_used, state.system_number, formation, faction.id])
@@ -283,18 +329,20 @@ static func _deploy_warfare(state: Resource, faction: Resource, legacy_opening: 
 
 
 static func _deploy_defense(state: Resource, opening: Array, reserves: Array, slots: Array,
-		facing: float, flank: float, poi_phase: float, v2: bool, plan: Dictionary = {}) -> void:
+		facing: float, flank: float, poi_phase: float, v2: bool, plan: Dictionary = {}) -> bool:
 	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
-	state.defense.military = JSON.parse_string(JSON.stringify(plan))
+	state.defense.military = Variation.canonical(plan)
+	if state.system_variation.get("version") == 2: state.defense.geometry = state.system_variation
 	state.defense.deploy(state.rules.defense_tuning, facing, opening, slots, flank, poi_phase,
 		state.layout_expansion, state.SystemLayout.planetary_indices(state.encounters),
 		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]), v2,
-		state.SystemLayout.planetary_radii(state.encounters), state.orbit_clearance)
+		state.SystemLayout.planetary_radii(state.encounters, state.defense.geometry.get("planet_scales", {})), state.orbit_clearance)
 	state.defense.add_reserves(reserves)
 	state.defense.encounter_ledger = state.encounters
-	preload("res://scripts/expedition/varied_system_layout.gd").apply(state)
+	if not VariedLayout.apply(state): return false
 	state.defense.construction_sites = state.defense.Installations.sites(
 		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)
+	return true
 
 
 static func _starting_attackers(state: Resource) -> int:

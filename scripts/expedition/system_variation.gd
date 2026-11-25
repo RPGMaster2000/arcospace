@@ -6,6 +6,8 @@ const ARCHETYPES = [
 ]
 const FORMATIONS = ["spread", "clustered", "staggered", "pincer", "vanguard", "unstructured"]
 const PALETTE = ["7451b3", "367ba8", "ad485b", "387d75", "686bb4"]
+const Solar = preload("res://scripts/expedition/solar_regions.gd")
+const MapSettings = preload("res://resources/presentation/star_system_settings.tres")
 const Settings = preload("res://scripts/expedition/system_variety_settings.gd")
 
 
@@ -99,6 +101,101 @@ static func generate(seed_value: int, number: int, settings: Resource) -> Dictio
 	return JSON.parse_string(JSON.stringify(profile))
 
 
+const SIZE_CLASSES := ["Compact", "Standard", "Expansive"]
+const HOME_REGIONS := ["Inner Habitable", "Middle Orbit", "Outer Frontier"]
+const SIZE_RANGES := [Vector2(0.85, 0.95), Vector2(0.95, 1.10), Vector2(1.10, 1.25)]
+const HOME_RANGES := [Vector2(0.70, 0.85), Vector2(0.85, 1.05), Vector2(1.05, 1.20)]
+const SIZE_WEIGHTS := [[15, 70, 15], [5, 25, 70], [70, 25, 5], [30, 40, 30],
+	[15, 50, 35], [10, 50, 40], [30, 35, 35]]
+const HOME_WEIGHTS := [[20, 60, 20], [15, 35, 50], [50, 40, 10], [34, 32, 34],
+	[25, 50, 25], [25, 45, 30], [34, 32, 34]]
+# Radius, light energy, corona strength and color are paired as stellar classes.
+const STARS := [
+	["Cool Dwarf", 0.75, 0.75, 0.78, "ffbe91"],
+	["Main Sequence", 1.0, 1.0, 1.0, "fff1cc"],
+	["Luminous Star", 1.35, 1.22, 1.18, "fff7d8"],
+	["Blue-white Star", 1.14, 1.12, 1.10, "b3d9ff"],
+	["Orange Star", 0.92, 0.88, 0.92, "ff9861"],
+]
+
+
+static func later(profile: Dictionary, seed_value: int, system: int, settings: Resource,
+		previous: String, overrides: Dictionary) -> Dictionary:
+	if profile.is_empty() or system < 3 or not settings.progressive_geometry: return profile
+	var rng := rng_for(seed_value, system, "environment-geometry")
+	var stage := mini(system - 3, 2)
+	var stage_weights: Vector4 = settings.later_layout_weights[stage] if stage < settings.later_layout_weights.size() else Vector4(10, 35, 35, 20)
+	var weights := [stage_weights.x, stage_weights.y / 3, stage_weights.y / 3, stage_weights.y / 3,
+		stage_weights.z * 0.5, stage_weights.z * 0.5, stage_weights.w]
+	var prior := ARCHETYPES.find(previous)
+	if prior >= 0 and weights.any(func(weight): return weight > 0.0) and float(weights[prior]) < stage_weights.dot(Vector4.ONE):
+		weights[prior] = 0.0
+	var archetype := overrides.get("environment", "") as String
+	var index := ARCHETYPES.find(archetype)
+	if index < 0: index = weighted(rng, weights)
+	archetype = ARCHETYPES[index]
+	var size := SIZE_CLASSES.find(overrides.get("size_class", ""))
+	if size < 0: size = weighted(rng, SIZE_WEIGHTS[index])
+	var region := HOME_REGIONS.find(overrides.get("home_region", ""))
+	if region < 0: region = weighted(rng, HOME_WEIGHTS[index])
+	var scale: Vector2 = SIZE_RANGES[size]
+	var radial: Vector2 = HOME_RANGES[region]
+	var colors := rng_for(seed_value, system, "stellar-appearance")
+	var star := colors.randi_range(0, STARS.size() - 1)
+	var companion := {}
+	var binary := int(overrides.get("binary", -1))
+	if binary == 1 or (binary < 0 and colors.randf() < settings.later_binary_chances[stage]):
+		var angle := colors.randf_range(0, TAU)
+		var separation := colors.randf_range(3.25, 4.6)
+		var tint := ["a7dfff", "ffc278", "ff8674", "fff0bd"]
+		companion = {"position":[cos(angle) * separation, 0.0, sin(angle) * separation],
+			"radius":colors.randf_range(0.31, 0.58), "color":tint[(star + colors.randi_range(1, 3)) % 4]}
+	var density: Vector3 = settings.later_density_weights[index] if index < settings.later_density_weights.size() else Vector3(15, 70, 15)
+	var band: Vector2i = [settings.sparse_poi_range, settings.common_poi_range, settings.dense_poi_range][weighted(rng, [density.x, density.y, density.z])]
+	profile.merge({"version":2, "archetype":archetype, "tier":[0, 1, 1, 1, 2, 2, 3][index],
+		"poi_count":rng.randi_range(clampi(band.x, 3, 12), clampi(maxi(band.x, band.y), 3, 12)),
+		"companion":companion, "size_class":size, "home_region":region, "geometry_scale":rng.randf_range(scale.x, scale.y),
+		"home_scale":rng.randf_range(radial.x, radial.y), "star":star,
+		"star_radius":Solar.CORE_RADIUS_PER_SCALE * MapSettings.sun_core_scale * float(STARS[star][1]), "planet_scales":{}, "planet_types":{}, "placement_attempt":0,
+		"military_fallback":false}, true)
+	var intensity_bias: Array = [[72, 24, 4], [60, 32, 8], [60, 34, 6],
+		[40, 47, 13], [5, 42, 53], [0, 0, 100], [25, 35, 40]][index]
+	profile.intensity = weighted(rng, intensity_bias)
+	profile.solar_range = _valid_band(settings.solar_radius_ranges, int(profile.intensity), Vector2(8, 13), 24)
+	profile.storm_range = _valid_band(settings.storm_extent_ranges, int(profile.intensity), Vector2(5, 7), 18)
+	profile.storm_count = 1
+	if archetype == "storm_dominated":
+		profile.storm_count = 2
+		profile.storm_range = [9, 15]
+	elif archetype == "unstable":
+		profile.storm_count = 1
+		profile.storm_range = [6, 11]
+	elif archetype == "chaotic":
+		profile.storm_count = rng.randi_range(1, 2)
+	var tint: String = PALETTE[[2, 1, 4, 1, 0, 3, 2][index]]
+	for layer in profile.background:
+		if layer.kind != 4: layer.color = tint
+	return canonical(profile)
+
+
+static func _valid_band(bands: Array[Vector2], index: int, fallback: Vector2, ceiling: float) -> Array:
+	var band := fallback if bands.is_empty() else bands[mini(index, bands.size() - 1)]
+	return [clampf(minf(band.x, band.y), 1, ceiling), clampf(maxf(band.x, band.y), 1, ceiling)]
+
+
+static func canonical(value: Dictionary) -> Dictionary:
+	return JSON.parse_string(JSON.stringify(value))
+
+
+static func star_radius(profile: Dictionary, baseline: float) -> float:
+	return float(profile.star_radius) if profile.get("version") == 2 else baseline
+
+
+static func system_title(profile: Dictionary) -> String:
+	if profile.is_empty(): return ""
+	return str(profile.archetype).replace("_", " ").capitalize()
+
+
 static func _layer(rng: RandomNumberGenerator, kind: int) -> Dictionary:
 	return {
 		"kind": kind,
@@ -127,7 +224,7 @@ static func valid(value: Variant) -> bool:
 	if value.is_empty():
 		return true  # Historical systems have no variety profile.
 	if (
-		value.get("version") != 1
+		(value.get("version") != 1 and value.get("version") != 2)
 		or value.get("archetype") not in ARCHETYPES
 		or value.get("formation") not in FORMATIONS
 	):
@@ -168,7 +265,8 @@ static func valid(value: Variant) -> bool:
 		):
 			return false
 		var at := Vector3(companion.position[0], companion.position[1], companion.position[2])
-		if absf(at.y) > 0.001 or absf(at.length() - 2.8) > 0.001:
+		var allowed := Vector2(3.24, 4.61) if value.version == 2 else Vector2(2.799, 2.801)
+		if absf(at.y) > 0.001 or not number(at.length(), allowed.x, allowed.y):
 			return false
 	var layers: Variant = value.get("background")
 	if not layers is Array or layers.size() > 4:
@@ -191,4 +289,21 @@ static func valid(value: Variant) -> bool:
 				return false
 		if not number(layer.get("opacity"), 0, 0.4):
 			return false
+	if value.version == 2:
+		if not number(value.get("star_radius"), 0.9, 3.41): return false
+		for key in ["size_class", "home_region", "star", "placement_attempt"]:
+			if not number(value.get(key), 0.0, {"star":4, "placement_attempt":16}.get(key, 2)) or int(value[key]) != value[key]:
+				return false
+		var size: Vector2 = SIZE_RANGES[int(value.size_class)]
+		var home: Vector2 = HOME_RANGES[int(value.home_region)]
+		if not number(value.get("geometry_scale"), size.x - 0.00001, size.y + 0.00001) \
+			or not number(value.get("home_scale"), home.x - 0.00001, home.y + 0.00001):
+			return false
+		if not value.get("planet_scales") is Dictionary or value.planet_scales.size() > 12 or not value.get("military_fallback") is bool:
+			return false
+		if not value.get("planet_types") is Dictionary or value.planet_types.size() != value.planet_scales.size(): return false
+		for key in value.planet_scales:
+			if value.planet_types.get(key) not in ["rocky", "terrestrial", "gas_giant", "frozen"]: return false
+			if not str(key).is_valid_int() or not number(value.planet_scales[key], 0.84999, 1.20001):
+				return false
 	return true

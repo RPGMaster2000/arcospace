@@ -15,7 +15,8 @@ reveal rule and reinforcement schedule.
 Starfront Defense from System 3 onward adds separate military scenario generation
 and capped strategic difficulty. The campaign still uses Warzone in System 2.
 See [Later Starfront Defense](balance/starfront_warfare.md) for formations,
-battle tuning, and validation results.
+battle tuning, and validation results. [Later Starfront geography](balance/starfront_environment.md)
+describes its environmental layouts and developer controls.
 
 ## Strategic clock
 

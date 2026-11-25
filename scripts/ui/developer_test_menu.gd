@@ -2,6 +2,7 @@ extends CanvasLayer
 
 signal launch_requested(configuration: Dictionary)
 
+const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const Launch = preload("res://scripts/expedition/developer_launch.gd")
@@ -14,6 +15,14 @@ var stage: OptionButton
 var difficulty: OptionButton
 var formation: OptionButton
 var faction: OptionButton
+var environment: OptionButton
+var system_size: OptionButton
+var home_region: OptionButton
+var binary: OptionButton
+var expedition_seed: LineEdit
+var setup_rows: VBoxContainer
+var geography_rows: VBoxContainer
+var geography_button: Button
 var launch_button: Button
 var back_button: Button
 var _previous_focus: Control
@@ -46,26 +55,57 @@ func _ready() -> void:
 	var summary := Label.new()
 	summary.text = "Unsaved session · Selected ship: %s" % ship_name
 	column.add_child(summary)
-	mode = _selector(column, "Game Mode", Launch.MODE_LABELS, Launch.MODES.find(last_configuration.mode))
+	setup_rows = VBoxContainer.new()
+	column.add_child(setup_rows)
+	geography_rows = VBoxContainer.new()
+	column.add_child(geography_rows)
+	geography_rows.hide()
+	mode = _selector(setup_rows, "Game Mode", Launch.MODE_LABELS, Launch.MODES.find(last_configuration.mode))
 	var stages: Array = []
 	for number in range(1, Launch.MAX_STAGE + 1):
 		stages.append("System %d" % number)
-	stage = _selector(column, "Expedition Stage", stages, int(last_configuration.stage) - 1)
-	difficulty = _selector(column, "Enemy Difficulty", ["Automatic", "Tier 1", "Tier 2", "Tier 3"],
+	stage = _selector(setup_rows, "Expedition Stage", stages, int(last_configuration.stage) - 1)
+	difficulty = _selector(setup_rows, "Enemy Difficulty", ["Automatic", "Tier 1", "Tier 2", "Tier 3"],
 		int(last_configuration.rank) + 1)
 	var formation_ids: Array = [""] + Warfare.FORMATIONS
-	formation = _selector(column, "Formation", ["Automatic"] + Warfare.NAMES,
+	formation = _selector(setup_rows, "Formation", ["Automatic"] + Warfare.NAMES,
 		formation_ids.find(last_configuration.get("formation", "")))
 	var faction_ids: Array = Factions.DEFAULTS.map(func(profile): return profile.id)
-	faction = _selector(column, "Enemy Faction", ["Automatic"] + Factions.DEFAULTS.map(func(profile): return profile.display_name),
+	faction = _selector(setup_rows, "Enemy Faction", ["Automatic"] + Factions.DEFAULTS.map(func(profile): return profile.display_name),
 		faction_ids.find(last_configuration.get("faction", "")) + 1)
 	mode.item_selected.connect(func(_index): _update_scenario_selectors())
 	stage.item_selected.connect(func(_index): _update_scenario_selectors())
-	_update_scenario_selectors()
+	var environment_labels := Variation.ARCHETYPES.map(func(key): return key.replace("_", " ").capitalize())
+	environment = _selector(geography_rows, "Environment", ["Automatic"] + environment_labels,
+		Variation.ARCHETYPES.find(last_configuration.get("environment", "")) + 1)
+	system_size = _selector(geography_rows, "System Size", ["Automatic"] + Variation.SIZE_CLASSES,
+		Variation.SIZE_CLASSES.find(last_configuration.get("size_class", "")) + 1)
+	home_region = _selector(geography_rows, "Homeworld Region", ["Automatic"] + Variation.HOME_REGIONS,
+		Variation.HOME_REGIONS.find(last_configuration.get("home_region", "")) + 1)
+	binary = _selector(geography_rows, "Stellar Configuration", ["Automatic", "Single", "Binary"],
+		int(last_configuration.get("binary", -1)) + 1)
+	var seed_row := HBoxContainer.new()
+	var seed_label := Label.new()
+	seed_label.text = "Expedition Seed"
+	seed_label.custom_minimum_size.x = 150
+	seed_row.add_child(seed_label)
+	expedition_seed = LineEdit.new()
+	expedition_seed.accessibility_name = seed_label.text
+	expedition_seed.placeholder_text = "Random"
+	expedition_seed.text = last_configuration.get("seed", "")
+	expedition_seed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	expedition_seed.custom_minimum_size.y = 36
+	expedition_seed.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
+	seed_row.add_child(expedition_seed)
+	geography_rows.add_child(seed_row)
+	for selector in [environment, system_size, home_region, binary]:
+		selector.custom_minimum_size.y = 36
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	column.add_child(actions)
 	back_button = _action(actions, "Back", close)
+	geography_button = _action(actions, "Environment & Seed", _toggle_geography)
+	_update_scenario_selectors()
 	launch_button = _action(actions, "Launch Test", _launch_selected, true)
 	# Keep keyboard focus inside the modal, including when wrapping past the buttons.
 	mode.focus_previous = mode.get_path_to(launch_button)
@@ -114,6 +154,9 @@ func _action(row: HBoxContainer, caption: String, action: Callable, primary: boo
 
 func _update_scenario_selectors() -> void:
 	var defense: bool = Launch.MODES[mode.selected] == "defense"
+	for selector in [environment, system_size, home_region, binary]:
+		selector.get_parent().visible = defense and stage.selected >= 2
+	geography_button.text = "Environment & Seed" if defense and stage.selected >= 2 else "Seed"
 	faction.get_parent().visible = defense
 	formation.get_parent().visible = defense and stage.selected >= 2
 	for index in Warfare.FORMATIONS.size():
@@ -127,12 +170,33 @@ func _update_scenario_selectors() -> void:
 			selector.custom_minimum_size.y = 48
 
 
+func _toggle_geography() -> void:
+	geography_rows.visible = not geography_rows.visible
+	setup_rows.visible = not geography_rows.visible
+	if geography_rows.visible:
+		geography_button.text = "Scenario Options"
+	else:
+		_update_scenario_selectors()
+		mode.grab_focus()
+
+
 func _launch_selected() -> void:
 	if not _open:
 		return
+	var seed_text := expedition_seed.text.strip_edges()
+	if not seed_text.is_empty() and (not seed_text.is_valid_int() or int(seed_text) == 0):
+		if not geography_rows.visible: _toggle_geography()
+		expedition_seed.placeholder_text = "Enter a nonzero integer"
+		expedition_seed.clear()
+		expedition_seed.grab_focus()
+		return
+	var overrides := {"seed":seed_text, "binary":binary.selected - 1}
+	if environment.selected > 0: overrides.environment = Variation.ARCHETYPES[environment.selected - 1]
+	if system_size.selected > 0: overrides.size_class = Variation.SIZE_CLASSES[system_size.selected - 1]
+	if home_region.selected > 0: overrides.home_region = Variation.HOME_REGIONS[home_region.selected - 1]
 	last_configuration = Launch.configuration(Launch.MODES[mode.selected], stage.selected + 1, difficulty.selected - 1,
 		Warfare.FORMATIONS[formation.selected - 1] if formation.selected > 0 else "",
-		Factions.DEFAULTS[faction.selected - 1].id if faction.selected > 0 else "")
+		Factions.DEFAULTS[faction.selected - 1].id if faction.selected > 0 else "", overrides)
 	close()
 	launch_requested.emit(last_configuration.duplicate())
 
@@ -162,7 +226,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _open:
-		for selector in [mode, stage, difficulty, formation, faction]:
+		for selector in [mode, stage, difficulty, formation, faction, environment, system_size, home_region, binary]:
 			if selector.get_popup().visible:
 				selector.get_popup().hide()
 				return

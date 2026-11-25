@@ -1,5 +1,6 @@
 extends RefCounted
 ## Read-only presentation from authoritative encounter/Defense ledgers. No retained state.
+const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
@@ -60,10 +61,17 @@ static func text(state: Resource) -> String:
 		"",
 		"[b]ACTIVE ENEMY FORCES · %d[/b]" % enemies.size()
 	]
+	var geography: Dictionary = state.system_variation
+	if geography.get("version") == 2:
+		rows.insert(2, "%s · %s · %s" % [Variation.system_title(geography),
+			Variation.SIZE_CLASSES[int(geography.size_class)], Variation.HOME_REGIONS[int(geography.home_region)]])
+		rows.insert(3, "%s%s · %s intensity" % [Variation.STARS[int(geography.star)][0],
+			"" if geography.companion.is_empty() else " + companion", ["Low", "Moderate", "High"][int(geography.intensity)]])
 	if not state.defense.military.is_empty():
 		var formation: String = state.defense.military.formation
-		rows.insert(2, Warfare.describe(formation))
-		rows.insert(3, Warfare.brief(formation))
+		var position := 4 if geography.get("version") == 2 else 2
+		rows.insert(position, Warfare.describe(formation))
+		rows.insert(position + 1, Warfare.brief(formation))
 	if enemies.is_empty():
 		rows.append("No deployed enemy vessels.")
 	for enemy in enemies:

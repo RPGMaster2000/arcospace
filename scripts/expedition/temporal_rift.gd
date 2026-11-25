@@ -121,8 +121,14 @@ func _id(event: int) -> String:
 static func _clear_navigation(at: Vector3, defense: RefCounted, instances: Array) -> bool:
 	if not Layout.bounds(defense.layout_expansion, MAP_SETTINGS.system_bounds).grow(-RADIUS).has_point(Vector2(at.x, at.z)): return false
 	if at.distance_to(defense.home) <= RADIUS + preload("res://scripts/expedition/environment_clearance.gd").home_radius(defense.tuning.environment_visual_margin): return false
-	for anchor in defense.anchors.values():
-		if at.distance_to(anchor) <= RADIUS + 1.6: return false
+	for index in defense.anchors:
+		var anchor: Vector3 = defense.anchors[index]
+		var scale: float = defense.geometry.get("planet_scales", {}).get(str(index), 1.0)
+		if at.distance_to(anchor) <= RADIUS + 1.6 * scale: return false
+	if not defense.geometry.is_empty():
+		var orbits := Layout.planetary_radii(defense.encounter_ledger, defense.geometry.planet_scales)
+		if not Layout.clear_orbit(at, orbits, defense.anchors, RADIUS): return false
+		if at.length() <= RADIUS + defense.stellar_clearance(): return false
 	for site in defense.construction_sites.values():
 		var pos := Vector3(site.position[0], site.position[1], site.position[2])
 		if at.distance_to(pos) <= RADIUS + 1.0: return false

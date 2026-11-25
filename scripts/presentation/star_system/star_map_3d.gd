@@ -21,6 +21,7 @@ const Lighting = preload("res://scripts/presentation/star_system/stellar_lightin
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
 const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift_visual.gd")
+const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 var layout_expansion: float = 0.0
 var orbit_clearance: float = 0.0
@@ -216,6 +217,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	var cosmetic_seed: int = run_seed if run_seed != 0 else visual_seed
 	var expanded_defense := not defense_view.is_empty() and layout_expansion > 0.0
 	var solar_clearance := preload("res://scripts/expedition/environment_clearance.gd").solar_clearance(environment_instances())
+	var later_geometry: bool = system_variation.get("version") == 2
 	if warzone_view != null and warzone_view.is_lattice():
 		visual_data = VisualSystem.generate_sector(cosmetic_seed, system_number, entries, warzone_view)
 	else:
@@ -224,9 +226,9 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	if not defense_view.is_empty():
 		var planet_sizes := {}
 		for entry in entries.filter(VisualSystem.is_planetary):
-			planet_sizes[entry.index] = Layout.planetary_radius(entry.model_kind)
+			planet_sizes[entry.index] = Layout.planetary_radius(entry.model_kind) * float(system_variation.get("planet_scales", {}).get(str(entry.index), 1.0))
 		preload("res://scripts/presentation/star_system/defense_presentation.gd").layout(
-			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes, solar_clearance)
+			visual_data, defense_view, planet_sizes.keys(), layout_expansion, orbit_clearance, planet_sizes, solar_clearance, system_variation)
 	# New exploration runs use State's committed static battle anchors. Old saves
 	# without anchors keep the historical cosmetic layout and neutral environment.
 	if defense_view.is_empty():
@@ -254,7 +256,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 	background = Space.new()
 	background.name = "BackgroundEnvironment"
 	world.add_child(background)
-	camera.set_layout_expansion(layout_expansion)
+	camera.far = 220.0 * maxf(1.0, Layout.scale_factor(layout_expansion) / 1.2) if later_geometry else 220.0
+	camera.set_layout_expansion(layout_expansion, later_geometry)
 	camera.overview(settings, true)
 	background.configure(camera,settings,VisualSystem.random_for(cosmetic_seed,system_number,"background"),VisualSystem.random_for(cosmetic_seed,system_number,"stardust"),visual_data.atmosphere_strength, system_variation)
 	for p in visual_data.planets:
@@ -284,7 +287,10 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		visual_root.add_child(orbit)
 	var starless: bool = visual_data.get("starless", false)
 	var disc: MeshInstance3D
-	var core_scale: float = settings.sun_core_scale
+	var core_scale: float = Variation.star_radius(system_variation,
+		settings.sun_core_scale * SolarVisual.Solar.CORE_RADIUS_PER_SCALE) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
+	var stellar: Array = Variation.STARS[int(system_variation.star)] if later_geometry else []
+	if later_geometry: visual_data.star_color = Color(stellar[4])
 	world.get_node("SunLight").visible = not starless
 	if starless:
 		var fill := DirectionalLight3D.new()
@@ -308,10 +314,11 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			disc.position = Vector3(solar.position[0], solar.position[1], solar.position[2])
 			core_scale = float(solar.configuration.star_radius) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
 		world.get_node("SunLight").position = disc.position
+		world.get_node("SunLight").light_energy = settings.sunlight_energy * (float(stellar[2]) if later_geometry else 1.0)
 		world.get_node("SunLight").light_color = Color.WHITE.lerp(visual_data.star_color, 0.35) if layout_expansion > 0.0 else Color(1.0, 0.88, 0.70)
 		material.set_shader_parameter("core_scale", core_scale)
 		material.set_shader_parameter("corona_spread", settings.sun_corona_spread)
-		material.set_shader_parameter("corona_strength", settings.sun_corona_strength)
+		material.set_shader_parameter("corona_strength", settings.sun_corona_strength * (float(stellar[3]) if later_geometry else 1.0))
 		material.set_shader_parameter("core_whitening", settings.sun_core_whitening)
 		material.set_shader_parameter("map_corona_visibility",true)
 		visual_root.add_child(SolarVisual.build(solar, visual_data.star_color))
@@ -322,7 +329,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		var companion: Dictionary = system_variation.get("companion", {})
 		if not companion.is_empty():
 			var companion_mesh := QuadMesh.new()
-			companion_mesh.size = Vector2.ONE * float(companion.radius) / 0.07
+			companion_mesh.size = Vector2.ONE * float(companion.radius) / (0.14 if later_geometry else 0.07)
 			var companion_node := Models.part(visual_root, companion_mesh, Color.WHITE)
 			companion_node.name = "VisualCompanionStar"
 			companion_node.position = Vector3(companion.position[0], companion.position[1], companion.position[2])
@@ -341,6 +348,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 			var model := Models.build(entry, VisualSystem.random_for(cosmetic_seed,system_number,"model-%d" % index), settings.destination_scenes.get(entry.get("model_kind","")))
 			var phenomenon: bool = entry.get("profile") == null and entry.get("model_kind", "") in ["radiation_nebula", "spatial_anomaly", "unstable_wormhole", "gas_giant"]
 			var size_factor: float = 1.5 if phenomenon else 0.5
+			size_factor *= float(system_variation.get("planet_scales", {}).get(str(index), 1.0))
 			if entry.get("mothership", false): size_factor *= MOTHERSHIP_MODEL_SCALE
 			model.scale *= size_factor
 			if model.has_meta("radius"):
@@ -526,6 +534,7 @@ func _process(delta: float) -> void:
 	for index in label_order:
 		var button = markers[index]
 		if not button.visible or not button.contrast: continue
+		if system_variation.get("version") == 2: continue
 		for other in placed_enemies:
 			if button.get_global_rect().intersects(other.get_global_rect().grow(4)):
 				var right: float = other.position.x + other.size.x + 5.0
@@ -534,6 +543,8 @@ func _process(delta: float) -> void:
 		placed_enemies.append(button)
 	if warzone_view != null and warzone_view.is_lattice():
 		_space_lattice_names(placed_enemies)
+	elif system_variation.get("version") == 2:
+		_space_environment_markers()
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -545,6 +556,32 @@ func _process(delta: float) -> void:
 				behind = true
 				break
 		button.set_secondary(behind)
+
+
+func _space_environment_markers() -> void:
+	var placed: Array = hud_regions.duplicate()
+	if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.home_panel):
+		placed.append(defense_effects.home_panel.get_global_rect())
+	var visible: Array = markers.keys().filter(func(index): return markers[index].visible)
+	if visible.is_empty(): return
+	visible.sort_custom(func(a, b): return markers[a].priority() > markers[b].priority())
+	var bounds := get_global_rect().grow(-3.0)
+	for index in visible:
+		var marker: Control = markers[index]
+		var anchor := camera.unproject_position(objects[index].position)
+		if not Rect2(Vector2.ZERO, size).has_point(anchor): continue
+		var box := marker.get_global_rect()
+		var offsets := [Vector2.ZERO, Vector2(-box.size.x * 0.76, 0), Vector2(box.size.x * 0.76, 0),
+			Vector2(0, -box.size.y - 4), Vector2(0, box.size.y + 4), Vector2(-box.size.x * 0.76, box.size.y),
+			Vector2(box.size.x * 0.76, box.size.y)]
+		for offset in offsets:
+			var position: Vector2 = (box.position + offset).clamp(bounds.position, bounds.end - box.size)
+			var candidate := Rect2(position, box.size)
+			if placed.any(func(other): return other.grow(3.0).intersects(candidate)): continue
+			marker.global_position = position
+			marker.anchor_point = anchor - marker.position
+			placed.append(candidate)
+			break
 
 
 # The map keeps compact icons selectable when nearby labels would overlap.
