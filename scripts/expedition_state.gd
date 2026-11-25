@@ -478,7 +478,7 @@ func start(ship_index: int, configuration: Resource, seed_override: int = 0, tes
 	decoys = 0
 	rules = configuration
 	developer_test = DeveloperLaunch.configuration(test_launch.get("mode", ""),
-		test_launch.get("stage", 0), test_launch.get("rank", -1))
+		test_launch.get("stage", 0), test_launch.get("rank", -1), test_launch.get("formation", ""), test_launch.get("faction", ""))
 	game_mode = developer_test.get("mode", rules.game_mode)
 	warzone_campaign_enabled = rules.warzone_campaign_enabled
 	player_ship = clampi(ship_index, 0, Ships.PLAYERS.size() - 1)
@@ -861,6 +861,8 @@ func developer_enemy_rank() -> int:
 
 func enemy_profile(encounter: Dictionary) -> Resource:
 	var base: Resource = encounter.get("enemy_data", Ships.ENEMIES[int(encounter.get("enemy", 0))])
+	if is_defense() and encounter.has("defense_deployment"):
+		return Defense.Warfare.battle_profile(base, encounter.defense_deployment)
 	if is_warzone() and encounter.has("warzone_rank") and base.enemy_rank != int(encounter.warzone_rank):
 		base = base.duplicate(false)
 		base.enemy_rank = int(encounter.warzone_rank)
@@ -1802,7 +1804,12 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 		if index >= 0 and index < encounters.size() and encounters[index].kind == "battle":
 			source_profile = encounters[index].get("enemy_data", Ships.ENEMIES[int(encounters[index].get("enemy", 0))])
 	var built_in := source_profile != null and source_profile.resource_path.begins_with("res://ships/enemy/")
-	setup.enemy_cards = Deck.enemy_pool(setup.enemy_profile, system_number, built_in)
+	var deployment: Dictionary = encounters[index].get("defense_deployment", {}) if index >= 0 and index < encounters.size() and is_defense() else {}
+	if not deployment.is_empty() and enemy_data == null:
+		setup.enemy_cards = Defense.Warfare.card_pool(deployment, setup.enemy_profile)
+		setup.enemy_draw_rates = Vector2(deployment.tier_two, deployment.tier_three)
+	else:
+		setup.enemy_cards = Deck.enemy_pool(setup.enemy_profile, system_number, built_in)
 	pending_bonuses.clear()
 	pending_penalties.clear()
 	return setup

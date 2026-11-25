@@ -25,6 +25,9 @@ static func apply(state: Resource) -> void:
 		occupied.append(fleet.anchors[index])
 	var keys: Array = original.keys()
 	keys.sort()
+	var preparation: Array = fleet.Warfare.preparation_sites(state, keys)
+	if not preparation.is_empty():
+		keys = preparation + keys.filter(func(index): return index not in preparation)
 	var success := true
 	for index in keys:
 		if sizes.has(index):
@@ -32,6 +35,12 @@ static func apply(state: Resource) -> void:
 		var found := false
 		for attempt in RETRIES:
 			var at := _candidate(state, rng, attempt)
+			if index in preparation and attempt < 40:
+				var distance := rng.randf_range(8.3, 13.0)
+				var flank := (1.0 if preparation.find(index) == 0 else -1.0)
+				var heading: Vector3 = fleet.home.normalized().rotated(Vector3.UP, flank * rng.randf_range(1.08, 2.55))
+				at = fleet.home + heading * distance
+				if not Layout.bounds(state.layout_expansion).grow(-2.0).has_point(Vector2(at.x, at.z)): continue
 			if not _clear(at, occupied, sizes, fleet.anchors, state.orbit_clearance, fleet.home):
 				continue
 			fleet.anchors[index] = at
@@ -44,7 +53,7 @@ static func apply(state: Resource) -> void:
 	if not success:
 		fleet.anchors = original
 		outer = _outer(fleet.anchors, sizes)
-	_fleet(state, sizes, outer)
+	if fleet.military.is_empty(): _fleet(state, sizes, outer)
 
 
 static func _outer(anchors: Dictionary, sizes: Dictionary) -> float:
@@ -216,8 +225,8 @@ static func _fleet(
 			if approaches.any(
 				func(other):
 					return (
-						_blocks(fleet, at, speed, other.position, other.speed)
-						or _blocks(fleet, other.position, other.speed, at, speed)
+						fleet.approach_blocked(at, speed, other.position, other.speed)
+						or fleet.approach_blocked(other.position, other.speed, at, speed)
 					)
 			):
 				continue
@@ -241,24 +250,3 @@ static func _fleet(
 			fleet.units[index].route_origin = original_positions[index]
 		if not safe_retry:
 			_fleet(state, sizes, outer, true)
-
-
-# Prevent another initial ship's swept interception sphere from obstructing the
-# player's initial interception course. Uses the existing actual-speed solver.
-static func _blocks(
-	fleet: RefCounted, target: Vector3, speed: float, obstacle: Vector3, obstacle_speed: float
-) -> bool:
-	var intercept: Vector3 = fleet._intercept(target, fleet.home, speed, fleet.start)
-	var seconds: float = fleet.start.distance_to(intercept) * fleet.tuning.seconds_per_distance
-	if seconds <= 0.001:
-		return true
-	var player_velocity: Vector3 = (intercept - fleet.start) / seconds
-	var enemy_velocity: Vector3 = (fleet.home - obstacle).normalized() * obstacle_speed
-	return is_finite(
-		fleet.hit_time(
-			fleet.start - obstacle,
-			player_velocity - enemy_velocity,
-			fleet.tuning.interception_radius + 0.5,
-			seconds
-		)
-	)

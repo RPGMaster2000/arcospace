@@ -1,5 +1,6 @@
 extends RefCounted
 
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
 const DeveloperLaunch = preload("res://scripts/expedition/developer_launch.gd")
 
 # Encounter construction only. ExpeditionState validates transitions and owns all generated state.
@@ -168,6 +169,7 @@ static func _poi_weight(item: Resource, profile: Resource) -> float:
 
 # One concrete defense roster, preserving existing PoI/profile registries and scaling.
 static func _generate_defense(state: Resource) -> void:
+	var previous: String = state.defense.military.get("formation", "") if state.defense != null else ""
 	state.system_number += 1
 	state.system_name = "Starfront %d" % state.system_number
 	state.system_variation = preload("res://scripts/expedition/system_variation.gd").generate(state.seed_used, state.system_number, state.rules.system_variety) if state.rules.defense_v2 and state.layout_expansion > 0.0 else {}
@@ -234,10 +236,57 @@ static func _generate_defense(state: Resource) -> void:
 		reserves.append(state.encounters.size())
 		state.encounters.append({"kind": "battle", "enemy": maxi(0, Ships.ENEMIES.find(profile)), "enemy_data": profile,
 			"system_number": state.system_number, "modifier": state._roll_battle_modifier(), "title": profile.ship_name, "completed": false})
-	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
 	var facing: float = state.rng.randf_range(0, TAU)
 	var flank: float = state.rng.randf_range(0.85, 1.05) * (-1.0 if state.rng.randi_range(0, 1) == 0 else 1.0)
-	state.defense.deploy(state.rules.defense_tuning, facing, range(attackers + 1), slots, flank, state.rng.randf_range(0.2, 0.5),
+	var poi_phase: float = state.rng.randf_range(0.2, 0.5)
+	var initial := range(attackers)
+	var placed := false
+	if v2 and state.system_number >= 3 and state.rules.defense_tuning.procedural_warfare:
+		placed = _deploy_warfare(state, faction, initial, reserves, attackers, slots, facing, flank, poi_phase, previous)
+	if not placed:
+		_deploy_defense(state, initial + [attackers], reserves, slots, facing, flank, poi_phase, v2)
+
+# All original draw sites run before the scenario replaces or appends fleet slots.
+# Faction, PoI, loot and existing modifier RNG channels keep their previous draws.
+static func _deploy_warfare(state: Resource, faction: Resource, legacy_opening: Array,
+		legacy_reserves: Array, mother: int, slots: Array, facing: float, flank: float,
+		poi_phase: float, previous: String) -> bool:
+	var entries: Array = state.encounters.duplicate(true)
+	var plan := Warfare.plan(state, faction, previous)
+	var preferred: String = plan.formation
+	var alternatives := Warfare.FORMATIONS.filter(func(formation):
+		return formation != preferred and formation != previous and Warfare.available_formation(formation, state.system_number))
+	for formation in [preferred] + alternatives:
+		plan.formation = formation
+		plan.waves = range(plan.reserves).map(func(ordinal): return Warfare.wave_delay(plan, ordinal))
+		state.encounters.assign(entries.duplicate(true))
+		var opening := legacy_opening.duplicate()
+		var reserves := legacy_reserves.slice(0, plan.reserves)
+		var template: Dictionary = entries[legacy_opening[0]]
+		while opening.size() < plan.opening:
+			opening.append(state.encounters.size())
+			state.encounters.append(template.duplicate())
+		while reserves.size() < plan.reserves:
+			reserves.append(state.encounters.size())
+			state.encounters.append(template.duplicate())
+		Warfare.roster(state, faction, plan, opening, reserves, mother)
+		_deploy_defense(state, opening + [mother], reserves, slots, facing, flank, poi_phase, true, plan)
+		if Warfare.place(state, state.defense, plan):
+			state.system_name += " · " + Warfare.describe(formation)
+			if not state.developer_test.is_empty():
+				print("Starfront test seed=%d system=%d formation=%s faction=%s" % [state.seed_used, state.system_number, formation, faction.id])
+			return true
+	state.encounters.assign(entries)
+	if not state.developer_test.is_empty():
+		print("Starfront test seed=%d system=%d formation=%s rejected by placement" % [state.seed_used, state.system_number, preferred])
+	return false
+
+
+static func _deploy_defense(state: Resource, opening: Array, reserves: Array, slots: Array,
+		facing: float, flank: float, poi_phase: float, v2: bool, plan: Dictionary = {}) -> void:
+	state.defense = preload("res://scripts/expedition/defense_state.gd").new()
+	state.defense.military = JSON.parse_string(JSON.stringify(plan))
+	state.defense.deploy(state.rules.defense_tuning, facing, opening, slots, flank, poi_phase,
 		state.layout_expansion, state.SystemLayout.planetary_indices(state.encounters),
 		hash("%d:%d:defense-orbits:v1" % [state.seed_used, state.system_number]), v2,
 		state.SystemLayout.planetary_radii(state.encounters), state.orbit_clearance)
@@ -246,6 +295,7 @@ static func _generate_defense(state: Resource) -> void:
 	preload("res://scripts/expedition/varied_system_layout.gd").apply(state)
 	state.defense.construction_sites = state.defense.Installations.sites(
 		state.defense.home, state.defense.anchors, state.encounters, state.layout_expansion)
+
 
 static func _starting_attackers(state: Resource) -> int:
 	var rng := RandomNumberGenerator.new()

@@ -4,6 +4,8 @@ const State = preload("res://scripts/expedition_state.gd")
 const Ships = preload("res://scripts/ships/ship_library.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
+const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
+const Factions = preload("res://scripts/expedition/faction_catalog.gd")
 const EnvironmentData = preload("res://scripts/expedition/battle_environment.gd")
 const VERSION: int = 3
 const PATH: String = "user://expedition_save.json"
@@ -13,7 +15,7 @@ const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
 	"completed", "chasedown", "response", "resolution", "intercept_position",
-	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank", "warzone_detour"]
+	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank", "warzone_detour", "defense_deployment"]
 const OBJECTIVE_POIS = [preload("res://encounters/fuel_depot.tres"),
 	preload("res://encounters/sensor_relay.tres"), preload("res://encounters/ancient_navigation_array.tres")]
 const PROFILE_IDS = ["quiet", "industrial", "hostile", "ancient"]
@@ -164,11 +166,13 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 	result.erase("charge_awarded")
 	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance", "warzone_rank", "warzone_detour"]:
 		if result.has(key): result[key] = int(result[key])
+	if value.has("defense_deployment") and value.kind != "battle": return {}
 	if value.kind == "battle":
 		if value.has("warzone_rank") and not _integer(value.warzone_rank, 1, 2): return {}
 		if not ships.has(value.get("enemy_id")): return {}
 		if not _integer(value.get("modifier"), 0, State.Modifiers.NAMES.size() - 1): return {}
 		result.enemy_data = ships[value.enemy_id]
+		if value.has("defense_deployment") and not Warfare.valid_deployment(value.defense_deployment, result.enemy_data): return {}
 		result.enemy = maxi(0, Ships.ENEMIES.find(result.enemy_data))
 		result.erase("enemy_id")
 	else:
@@ -199,7 +203,9 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if mode not in ["exploration", "defense", "warzone"] or data.has("warzone") != (mode == "warzone"): return null
 	if data.get("system_profile") not in PROFILE_IDS or not data.get("ftl_access") is bool: return null
 	var players: Dictionary = _catalog(Ships.PLAYERS)
-	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()] + preload("res://scripts/expedition/faction_catalog.gd").ships(configuration))
+	var enemies: Dictionary = _catalog(Ships.ENEMIES + configuration.enemy_ships + [configuration.progression.mandatory_boss_profile()] + Factions.ships(configuration))
+	for faction in Factions.eligible(configuration):
+		enemies.merge(_catalog(Factions.defense_elites(faction)))
 	var pois: Dictionary = _catalog(configuration.pois + [configuration.trading_outpost] + OBJECTIVE_POIS + State.WarzoneOperation.OBJECTIVE_MODELS + State.WarzoneOperation.Discoveries.POIS)
 	var cards: Dictionary = _catalog(Cards.CARDS)
 	if not players.has(data.get("ship_id")): return null
@@ -290,7 +296,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			for unit in data.defense.units:
 				if not unit is Dictionary or not unit.has("reinforcement") or not unit.has("spawned"): return null
 		state.defense = State.Defense.new()
-		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion): return null
+		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion, int(data.system_number)): return null
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null
@@ -307,6 +313,7 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		for key in ["production_upgrades", "card_upgrades"]:
 			for id in outcome[key]:
 				state.homeworld_outcome[key][id] = int(outcome[key][id])
+	if mode != "defense" and entries.any(func(entry): return entry.has("defense_deployment")): return null
 	if mode != "warzone" and entries.any(func(entry): return entry.has("warzone_detour")): return null
 	if mode == "warzone":
 		if data.system_number != State.CampaignSupport.WARZONE_SYSTEM or data.navigation.position.size() != 3:

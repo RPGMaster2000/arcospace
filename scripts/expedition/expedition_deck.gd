@@ -136,7 +136,7 @@ func random_card_offers(
 
 # Extend the built-in roster while retaining its authored decks and prototype entries.
 # Keep candidates bounded and rank them using the same preferences as enemy draws.
-static func enemy_pool(profile: Resource, system: int, built_in: bool) -> Array[Resource]:
+static func enemy_pool(profile: Resource, system: int, built_in: bool, prefer_affordable: bool = false) -> Array[Resource]:
 	var pool: Array[Resource] = []
 	pool.assign(profile.starting_cards if profile != null and not profile.starting_cards.is_empty()
 		else Cards.BASE_CARDS)
@@ -148,7 +148,12 @@ static func enemy_pool(profile: Resource, system: int, built_in: bool) -> Array[
 		var candidates: Array = Cards.SYNERGY_CARDS.filter(func(card): return card.tier == tier)
 		var weights := {}
 		for card in candidates:
-			weights[card] = Preferences.draw_weight(card, profile.card_family_weights, profile.card_effect_weights)
+			var weight := Preferences.draw_weight(card, profile.card_family_weights, profile.card_effect_weights)
+			if prefer_affordable:
+				var production: String = {"materials":"synthesizer", "energy":"reactor", "crew":"quarters"}[card.family]
+				var budget: float = profile.get(card.family) + profile.get(production) * (1.5 if tier == 2 else 3.0)
+				weight *= clampf(budget / maxf(1.0, card.cost), 0.45, 1.0)
+			weights[card] = weight
 		candidates.sort_custom(func(a, b):
 			return a.identity_key() < b.identity_key() if weights[a] == weights[b] else weights[a] > weights[b])
 		var limit := 6 if tier == 2 else (2 if profile.enemy_rank == 0 else 3)

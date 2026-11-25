@@ -8,10 +8,15 @@ const MODE_LABELS = ["Warzone", "Starfront Defense", "Exploration"]
 const MAX_STAGE = 10
 
 
-static func configuration(mode: String, stage: int, rank: int) -> Dictionary:
+static func configuration(mode: String, stage: int, rank: int, formation: String = "", faction: String = "") -> Dictionary:
 	if mode not in MODES or stage < 1 or stage > MAX_STAGE or rank < -1 or rank > 2:
 		return {}
-	return {"mode": mode, "stage": stage, "rank": rank}
+	var result := {"mode": mode, "stage": stage, "rank": rank}
+	if mode == "defense":
+		if preload("res://scripts/expedition/defense_warfare.gd").available_formation(formation, stage):
+			result.formation = formation
+		if not faction.is_empty(): result.faction = faction
+	return result
 
 
 static func enemy(state: Resource, original: Resource, slot: int, faction: Resource = null) -> Resource:
