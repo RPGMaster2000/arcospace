@@ -45,10 +45,35 @@ static func contact_details(state: Resource, unit: Dictionary, profile: Resource
 	var rank: String = ["Standard", "Elite", "Boss"][profile.enemy_rank]
 	var speed: float = state.defense._speed(unit)
 	var target: Vector3 = state.defense.target_for(unit)
-	var objective := "Tactical Decoy" if target != state.defense.home else "Homeworld"
+	var kind: String = state.defense.target_kind(unit)
+	var objective := "Tactical Decoy" if kind == "decoy" else "Homeworld"
 	var motion := "Holding position" if speed == 0.0 else "%.2f u/s · %s in %.1fs" % [
 		speed, objective, unit.position.distance_to(target) / speed]
+	if kind == "convoy":
+		motion = "Pursuing evacuation · intercept in %.1fs" % state.defense.convoy.pursuit_time(unit.position, speed)
+	elif kind == "holding":
+		motion = "Holding near Homeworld · Mandatory threat"
 	return "%s · %s · %s\n%s" % [label[0], rank, motion, label[4]]
+
+
+static func evacuation_details(state: Resource) -> PackedStringArray:
+	var convoy: RefCounted = state.defense.convoy
+	if convoy == null: return []
+	if convoy.traveling():
+		return ["Integrity %d / %d · Extraction in %.1fs" % [convoy.integrity, convoy.maximum_integrity, convoy.remaining_seconds()],
+			"%.2f u/s · %d assigned pursuers" % [convoy.speed, convoy.pursuers.size()],
+			"Evacuation +%d Salvage" % convoy.reward,
+			"If destroyed, +%.0f Pressure and a mandatory elite attacker" % convoy.pressure_penalty]
+	if convoy.activity == "extracted":
+		return ["Safely extracted · +%d Salvage" % convoy.reward]
+	var elite: Dictionary = state.defense.unit_for(convoy.punitive_index)
+	var status := "Punitive elite neutralized"
+	match elite.status:
+		"reserve":
+			status = "Punitive elite due in %.1fs" % convoy.punitive_remaining if convoy.punitive_remaining > 0.0 else "Punitive elite waiting for an open approach"
+		"active":
+			status = "Punitive elite holding near Homeworld" if elite.get("holding", false) else "Punitive elite attacking Homeworld"
+	return ["Convoy destroyed · +%.0f Pressure" % convoy.pressure_penalty, status]
 
 
 static func text(state: Resource) -> String:
@@ -92,6 +117,11 @@ static func text(state: Resource) -> String:
 		)
 		rows.append("%s · %s · %s" % [enemy.faction, movement, arrival])
 		if not enemy.role_details.is_empty(): rows.append(enemy.role_details)
+	var secondary := evacuation_details(state)
+	if not secondary.is_empty():
+		rows.append_array(["", "[b]CIVILIAN EVACUATION[/b]"])
+		for line in secondary: rows.append(line)
+
 	rows.append_array(["", "[b]BATTLE MODIFIERS — TEMPORARY[/b]"])
 	var temporary: Array[String] = []
 	for bonuses in [state.pending_bonuses, state.pending_penalties]:

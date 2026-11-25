@@ -1369,6 +1369,8 @@ func victory_description() -> String:
 				lines.append("System secured · +%d Salvage" % salvage_rewards.secured)
 			if salvage_rewards.has("extraction"):
 				lines.append("Mining extraction · +%d Salvage" % salvage_rewards.extraction)
+			if salvage_rewards.has("evacuation"):
+				lines.append("Civilian evacuation · +%d Salvage" % salvage_rewards.evacuation)
 		else:
 			lines.append("🪨 +%d Salvage" % expedition.victory_salvage(result))
 			if salvage_rewards.has("operation"):

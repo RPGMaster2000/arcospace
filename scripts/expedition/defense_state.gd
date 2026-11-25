@@ -1,5 +1,7 @@
 extends RefCounted
 # Scene-free strategic authority. Units reference the existing encounter ledger.
+const Convoy = preload("res://scripts/expedition/evacuation_convoy.gd")
+var convoy: Convoy
 const Navigation = preload("res://scripts/expedition/navigation_state.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 const Warfare = preload("res://scripts/expedition/defense_warfare.gd")
@@ -157,7 +159,7 @@ func stellar_clearance() -> float:
 
 
 func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
-	var planned := not military.is_empty() and not reserve.is_empty()
+	var planned: bool = not reserve.is_empty() and (not military.is_empty() or reserve.get("punitive", false))
 	var center: Vector3 = reserve.route_origin if planned else unit_for(mothership_index()).position
 	var limit := Layout.bounds(layout_expansion).end.x - 2.0
 	for distance in ([0.0, 2.0, 3.5, 5.0] if planned else [3.5, 5.0, 6.5]):
@@ -204,13 +206,14 @@ func mothership_destroyed() -> bool:
 # FTL unlocks only once the mothership and all deployed forces are gone.
 # Undeployed reserves are stood down when their mothership falls.
 func update_clear() -> void:
-	if not mothership_destroyed():
+	if not mothership_destroyed() or integrity <= 0:
 		return
 	for unit in units:
 		if not unit.mothership and unit.status in ["active", "reserve"]:
 			return
 	complete = missiles.active.is_empty() and missiles.pending < 0
 	if complete:
+		if convoy != null and convoy.traveling(): convoy.extract()
 		# Terminal saves must not retain missile launch or turret cooldown clocks.
 		missiles.countdown = 0.0
 		missiles.cooldowns.clear()
@@ -235,6 +238,7 @@ func neutralize(index: int) -> bool:
 	var unit: Dictionary = unit_for(index)
 	if unit.is_empty() or not available(unit): return false
 	unit.status = "neutralized"
+	if convoy != null: convoy.pursuers.erase(index)
 	if not decoy.is_empty(): decoy.affected.erase(index)
 	contact = -1
 	if unit.mothership:
@@ -245,7 +249,7 @@ func neutralize(index: int) -> bool:
 		# Existing enemies and in-flight missiles survive. Cancel only reserves
 		# which have not entered the system; do not create new hostiles.
 		for remaining in units:
-			if remaining.status == "reserve": remaining.status = "secured"
+			if remaining.status == "reserve" and not remaining.get("punitive", false): remaining.status = "secured"
 	elif not v2 and not revealed and neutralized_attackers() >= 1:
 		reinforcement_remaining = tuning.first_reinforcement_seconds
 		revealed = true
@@ -265,9 +269,82 @@ static func hit_time(relative: Vector3, velocity: Vector3, radius: float, limit:
 	return t if t >= 0 and t <= limit else INF
 # Both player movement and committed activity costs use this same clock.
 # Activity time advances the fleet without initiating chained stationary battles.
+func target_kind(unit: Dictionary) -> String:
+	if unit.get("holding", false): return "holding"
+	if not decoy.is_empty() and decoy.affected.has(unit.encounter): return "decoy"
+	if convoy != null and convoy.traveling() and convoy.pursuers.has(unit.encounter): return "convoy"
+	return "homeworld"
+
+
 func target_for(unit: Dictionary) -> Vector3:
-	if not decoy.is_empty() and decoy.affected.has(unit.encounter): return point(decoy.position)
+	match target_kind(unit):
+		"decoy": return point(decoy.position)
+		"convoy": return convoy.guidance(unit.position, _speed(unit))
+		"holding": return unit.position
+	if unit.get("punitive", false):
+		return home + (unit.route_origin - home).normalized() * 4.7
 	return home
+
+
+func _reconsider_pursuers() -> void:
+	if convoy == null or not convoy.traveling(): return
+	for index in convoy.pursuers.duplicate():
+		var unit := unit_for(index)
+		if not available(unit) or (target_kind(unit) == "convoy" and (
+			convoy.pursuit_time(unit.position, _speed(unit)) >= convoy.remaining_seconds()
+			or not Layout.clear_stellar_segment(unit.position, target_for(unit), stellar_clearance()))):
+			convoy.pursuers.erase(index)
+			unit.route_origin = unit.position
+
+
+func _offer_convoy_pursuit(unit: Dictionary) -> bool:
+	if convoy == null or not convoy.traveling() or convoy.pursuers.size() >= convoy.pursuer_limit: return false
+	if convoy.attackers.size() >= convoy.pursuer_limit or pressure >= tuning.pressure_maximum * 0.80: return false
+	if deployment(unit).get("role", "vanguard") not in ["vanguard", "raider", "disruptor"]: return false
+	var eta := convoy.pursuit_time(unit.position, _speed(unit))
+	if eta < 8.0 or eta >= convoy.remaining_seconds() - 1.0: return false
+	if not Layout.clear_stellar_segment(unit.position, convoy.guidance(unit.position, _speed(unit)), stellar_clearance()):
+		return false
+	convoy.pursuers.append(int(unit.encounter))
+	return true
+
+
+func _release_pursuers() -> void:
+	for index in convoy.pursuers:
+		var unit := unit_for(index)
+		unit.route_origin = unit.position
+
+
+func _punitive_pending() -> bool:
+	return convoy != null and convoy.punitive_index >= 0 and unit_for(convoy.punitive_index).status == "reserve"
+
+
+func _queue_punitive() -> void:
+	convoy.punitive_index = encounter_ledger.size()
+	convoy.punitive_remaining = convoy.dispatch_delay
+	encounter_ledger.append(convoy.punitive_entry.duplicate(true))
+	units.append({"encounter":convoy.punitive_index, "position":convoy.entry_point, "route_origin":convoy.entry_point,
+		"status":"reserve", "mothership":false, "reinforcement":false, "spawned":false, "punitive":true})
+
+
+func _punitive_spawn(player: Vector3, unit: Dictionary) -> Variant:
+	# Prefer the selected formation's reserve entry. Widen the search if
+	# the player, other attackers or a newly placed installation blocks it.
+	var candidate: Variant = spawn_position(player, unit)
+	if candidate != null: return candidate
+	var safe := Layout.bounds(layout_expansion).grow(-2.1)
+	var sizes := Layout.planetary_radii(encounter_ledger, geometry.get("planet_scales", {}))
+	for x in range(-6, 7):
+		for z in range(-6, 7):
+			var at := Vector3(safe.size.x * x / 12.0, 0.0, safe.size.y * z / 12.0)
+			if at.distance_to(home) < 13.0 or at.distance_to(player) < 5.5: continue
+			if not Layout.clear_stellar_segment(at, home, stellar_clearance()) or not Layout.clear_orbit(at, sizes, anchors, 1.6): continue
+			if anchors.values().any(func(point_at): return at.distance_to(point_at) < 3.2): continue
+			if units.any(func(other): return available(other) and at.distance_to(other.position) < 3.2): continue
+			if construction_sites.values().any(func(site): return at.distance_to(point(site.position)) < 2.0): continue
+			if decorative_bodies.any(func(body): return at.distance_to(body.position) < float(body.radius) * 1.553 + 1.2): continue
+			return at
+	return null
 
 func decoy_targets(at: Vector3, radius: float) -> Array[int]:
 	var targets: Array[int] = []
@@ -288,6 +365,7 @@ func _divert(index: int) -> void:
 func clear_decoy() -> void:
 	if decoy.is_empty(): return
 	decoy.clear()
+	_reconsider_pursuers()
 
 func _restore_decoy(value: Variant) -> bool:
 	if not value is Dictionary: return false
@@ -334,6 +412,7 @@ func arrival_damage(unit: Dictionary) -> int:
 	return maxi(1, roundi(tuning.base_attack_damage * factor))
 
 func _speed(unit: Dictionary) -> float:
+	if unit.get("holding", false): return 0.0
 	if unit.mothership:
 		return tuning.mothership_speed if mothership_advancing else 0.0
 	return tuning.enemy_speed * speed_multiplier(unit)
@@ -383,7 +462,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		observe_span: Callable = Callable()) -> Dictionary:
 	var result: Dictionary = {"position": to, "contact": -1, "missile_contact": -1, "missile_event": false,
 		"missile_shots": [], "revealed": false, "arrivals": 0, "spawned": [], "escalated": false,
-		"decoy_changed": false, "elapsed": 0.0}
+		"decoy_changed": false, "elapsed": 0.0, "evacuation":[], "convoy_reward":0}
 	if complete or contact >= 0 or missiles.pending >= 0 or failed() or seconds <= 0 or not is_finite(seconds): return result
 	var player_velocity: Vector3 = (to - from) / seconds
 	var elapsed: float = 0.0
@@ -401,7 +480,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			event_kind = "poi_expiry"
 		var reserve: Dictionary = {}
 		for unit in units:
-			if unit.status == "reserve":
+			if unit.status == "reserve" and not unit.get("punitive", false):
 				reserve = unit
 				break
 		var reinforcement_clock: bool = (not mothership_destroyed() and not reserve.is_empty()) if v2 else (not mothership_destroyed() and revealed and not reveal_pending and reinforcements_spawned < tuning.maximum_reinforcements)
@@ -417,29 +496,46 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			if threshold <= event_time:
 				event_time = maxf(0.0, threshold)
 				event_kind = "pressure"
+		var punitive_due := _punitive_pending()
+		if punitive_due and active_attackers() < active_limit and convoy.punitive_remaining <= event_time:
+			event_time = convoy.punitive_remaining
+			event_kind = "punitive"
+		var convoy_time := convoy.leg_seconds() if convoy != null else INF
 		for unit in units:
 			if not available(unit): continue
+			var pursuing := target_kind(unit) == "convoy"
 			var target: Vector3 = target_for(unit)
 			var speed: float = _speed(unit)
 			var velocity: Vector3 = (target - unit.position).normalized() * speed
 			var arrival: float = unit.position.distance_to(target) / speed if speed > 0 else INF
+			if pursuing:
+				# Solve the actual relative swept contact against the live
+				# convoy, limiting prediction to the current uniform leg.
+				arrival = hit_time(unit.position - convoy.position(), velocity - convoy.velocity(),
+					Convoy.CONTACT_RADIUS, minf(span, convoy_time))
 			var hit: float = INF if carry else hit_time(from + player_velocity * elapsed - unit.position, player_velocity - velocity, tuning.interception_radius, minf(span, arrival))
 			if hit <= event_time:
 				event_time = hit
 				event_unit = unit
 				event_kind = "contact"
 			elif arrival <= event_time:
+				if pursuing and event_kind == "contact" and arrival >= event_time - 0.000001: continue
 				var diverted: bool = not decoy.is_empty() and decoy.affected.has(unit.encounter)
 				if diverted and arrival == event_time and event_kind in ["contact", "decoy_end"]: continue
 				event_time = arrival
 				event_unit = unit
-				event_kind = "decoy_end" if diverted else "arrival"
+				event_kind = "decoy_end" if diverted else ("convoy_attack" if pursuing else "arrival")
 			if not decoy.is_empty() and not unit.mothership and speed > 0 and not decoy.affected.has(unit.encounter):
 				var entry := hit_time(unit.position - point(decoy.position), velocity, decoy.radius, minf(event_time, arrival))
 				if is_finite(entry) and (entry < event_time or event_kind.is_empty()):
 					event_time = entry
 					event_unit = unit
 					event_kind = "decoy_entry"
+		# At an equal instant player contact wins, then the convoy waypoint,
+		# then any attack. Indices give deterministic ordering within a type.
+		if convoy_time <= event_time + 0.000001 and not (event_kind == "contact" and event_time <= convoy_time):
+			event_time = minf(convoy_time, span)
+			event_kind = "convoy_leg"
 		var missile_event: Dictionary = {}
 		if v2:
 			missile_event = missiles.event(self, from + player_velocity * elapsed, player_velocity, event_time, carry, hit_time)
@@ -452,6 +548,10 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 		for unit in units:
 			if available(unit):
 				unit.position = unit.position.move_toward(target_for(unit), _speed(unit) * event_time)
+		if convoy != null:
+			convoy.travel_span(event_time)
+			if punitive_due:
+				convoy.punitive_remaining = maxf(0, convoy.punitive_remaining - event_time)
 		if not decoy.is_empty():
 			decoy.remaining = maxf(0.0, decoy.remaining - event_time)
 			var center := point(decoy.position)
@@ -490,6 +590,44 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 				result.position = from + player_velocity * elapsed
 				break
 			continue
+		if event_kind == "convoy_leg":
+			if convoy.finish_leg():
+				_release_pursuers()
+				convoy.extract()
+				result.evacuation.append({"type":"extracted"})
+			else: _reconsider_pursuers()
+			continue
+		if event_kind == "convoy_attack":
+			var threatened := convoy.pursuers.duplicate()
+			if not convoy.attack(int(event_unit.encounter)): continue
+			event_unit.status = "arrived"
+			encounter_ledger[event_unit.encounter].resolution = "convoy_strike"
+			if not decoy.is_empty(): decoy.affected.erase(event_unit.encounter)
+			result.evacuation.append({"type":"hit", "integrity":convoy.integrity, "damage":convoy.attack_damage})
+			if convoy.activity == "destroyed":
+				for index in threatened:
+					var pursuer := unit_for(index)
+					pursuer.route_origin = pursuer.position
+				pressure = minf(tuning.pressure_maximum, pressure + convoy.pressure_penalty)
+				was_revealed = revealed
+				if _advance_pressure(0.0): result.escalated = true
+				if revealed and not was_revealed: result.revealed = true
+				_queue_punitive()
+				result.evacuation.append({"type":"destroyed", "pressure":convoy.pressure_penalty})
+			continue
+		if event_kind == "punitive":
+			var elite := unit_for(convoy.punitive_index)
+			var at: Variant = _punitive_spawn(from + player_velocity * elapsed, elite)
+			if at == null:
+				convoy.punitive_remaining = 2.0
+				continue
+			elite.position = at
+			elite.route_origin = at
+			elite.status = "active"
+			elite.spawned = true
+			result.spawned.append(elite.encounter)
+			result.evacuation.append({"type":"punitive"})
+			continue
 		if event_kind == "spawn":
 			var at: Variant = spawn_position(from + player_velocity * elapsed, reserve)
 			if at == null or reserve.is_empty():
@@ -504,6 +642,7 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			reinforcements_spawned += 1
 			reinforcement_remaining = reserve_delay(reinforcements_spawned) if v2 else tuning.reinforcement_interval_seconds
 			result.spawned.append(reserve.encounter)
+			if _offer_convoy_pursuit(reserve): result.evacuation.append({"type":"pursuit"})
 			continue
 		if event_kind == "contact":
 			contact = event_unit.encounter
@@ -511,7 +650,11 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 			result.position = from + player_velocity * elapsed
 			if carry: deferred_seconds += maxf(0.0, seconds - elapsed)
 			break
-		event_unit.status = "arrived"
+		if event_unit.get("punitive", false):
+			event_unit.holding = true
+		else:
+			event_unit.status = "arrived"
+		if not decoy.is_empty(): decoy.affected.erase(event_unit.encounter)
 		if event_unit.mothership:
 			mothership_advancing = false
 			result.position = from + player_velocity * elapsed
@@ -529,6 +672,8 @@ func advance_time(seconds: float, from: Vector3, to: Vector3, carry: bool = fals
 # Predict a meeting in distance travelled by the player. Enemy speed is per
 # strategic second, so conversion to player distance is independent of FPS.
 func intercept_point(index: int, player: Vector3) -> Vector3:
+	if index == Convoy.MARKER and convoy != null and convoy.traveling():
+		return convoy.rendezvous(player, 1.0 / tuning.seconds_per_distance)
 	var unit: Dictionary = unit_for(index)
 	if missiles.active.has(index):
 		return _intercept(missiles.position(missiles.active[index], home), home, missiles.speed(tuning), player)
@@ -582,11 +727,13 @@ func snapshot() -> Dictionary:
 	if v2:
 		data.v2 = true
 		data.missiles = missiles.snapshot(home)
+	if convoy != null: data.convoy = convoy.snapshot()
 	if not military.is_empty(): data.military = military.duplicate()
 	if not decoy.is_empty(): data.decoy = decoy.duplicate(true)
 	if secured_reward_claimed: data.secured_reward_claimed = true
 	return data
-func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0, system: int = 1) -> bool:
+func restore(data: Variant, configuration: Resource, encounters: Array, expansion: float = 0.0,
+		system: int = 1, punitive_profile: Resource = null) -> bool:
 	if not data is Dictionary: return false
 	if not data.get("v2", false) is bool: return false
 	v2 = data.get("v2", false)
@@ -595,6 +742,16 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if not v2 or not Warfare.valid_plan(data.military, system): return false
 		military = data.military.duplicate()
 	layout_expansion = expansion
+	if data.has("convoy"):
+		if not v2: return false
+		convoy = Convoy.new()
+		if not convoy.restore(data.convoy, expansion, system, punitive_profile): return false
+		var doctrine: Dictionary = convoy.punitive_entry.get("defense_deployment", {})
+		if doctrine.is_empty() != military.is_empty(): return false
+		if not doctrine.is_empty() and (not Warfare.valid_deployment(doctrine, punitive_profile)
+			or doctrine.role not in ["vanguard", "disruptor"]): return false
+		for i in range(1, convoy.route.size()):
+			if not Layout.clear_stellar_segment(convoy.route[i - 1], convoy.route[i], stellar_clearance()): return false
 	var limit := Layout.bounds(expansion).end.x
 	if not Navigation.valid_point(data.get("home"), false) or not Navigation.valid_point(data.get("start"), false): return false
 	for key in ["revealed", "reveal_pending", "complete"]:
@@ -610,16 +767,29 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		if not unit is Dictionary or not unit.get("mothership") is bool: return false
 		if unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
 		if not unit.get("reinforcement", false) is bool or not unit.get("spawned", false) is bool: return false
-		if unit.get("reinforcement", false):
+		if not unit.get("punitive", false) is bool or not unit.get("holding", false) is bool: return false
+		var punitive: bool = unit.get("punitive", false)
+		if punitive:
+			if convoy == null or unit.get("encounter") != convoy.punitive_index or unit.mothership or unit.reinforcement:
+				return false
+			if unit.status not in ["reserve", "active", "neutralized"] or unit.spawned != (unit.status != "reserve"): return false
+			if unit.status != "reserve" and convoy.punitive_remaining > 0.0: return false
+			if unit.get("holding", false) and unit.status == "reserve": return false
+		elif unit.has("holding"): return false
+		elif unit.get("reinforcement", false):
 			reserve_count += 1
 			if unit.mothership or unit.status == "reserve" and unit.get("spawned", false): return false
 			if unit.status in ["active", "neutralized", "arrived"] and not unit.get("spawned", false): return false
 			if unit.get("spawned", false): spawned_count += 1
 		elif unit.get("spawned", false) or unit.status == "reserve": return false
-		if not unit.mothership and not unit.get("reinforcement", false): initial_count += 1
+		if not unit.mothership and not unit.get("reinforcement", false) and not punitive: initial_count += 1
 		if not number(unit.get("encounter"), 0, encounters.size()-1): return false
 		var index: int = int(unit.encounter)
 		if seen.has(index) or encounters[index].kind != "battle" or unit.get("status") not in ["active", "reserve", "neutralized", "arrived", "secured"]: return false
+		var entry: Dictionary = encounters[index]
+		if punitive != bool(entry.get("punitive", false)): return false
+		if punitive and (entry.enemy_data != punitive_profile or entry.get("defense_deployment", {}) != convoy.punitive_entry.get("defense_deployment", {})):
+			return false
 		var info: Dictionary = encounters[index].get("defense_deployment", {})
 		if military.is_empty() != info.is_empty(): return false
 		if not info.is_empty() and bool(unit.mothership) != (info.role == "mothership"): return false
@@ -681,6 +851,21 @@ func restore(data: Variant, configuration: Resource, encounters: Array, expansio
 		copy.reinforcement = bool(copy.get("reinforcement", false))
 		copy.spawned = bool(copy.get("spawned", false))
 		units.append(copy)
+	if convoy != null:
+		if complete and convoy.traveling(): return false
+		if convoy.punitive_index >= 0 and unit_for(convoy.punitive_index).is_empty(): return false
+		for index in convoy.pursuers:
+			var unit := unit_for(index)
+			if unit.is_empty() or unit.mothership or unit.status != "active" or unit.get("punitive", false): return false
+		for index in convoy.attackers:
+			var unit := unit_for(index)
+			if unit.is_empty() or unit.mothership or unit.status != "arrived" or encounters[index].get("resolution") != "convoy_strike":
+				return false
+	for index in encounters.size():
+		if encounters[index].get("punitive", false) and (convoy == null or convoy.punitive_index != index): return false
+		if encounters[index].get("resolution") == "convoy_strike" and (convoy == null or not convoy.attackers.has(index)):
+			return false
+
 	if v2:
 		if reveal_pending or (not revealed and (pressure >= reveal_threshold() - 0.00000001 or complete)): return false
 	else:

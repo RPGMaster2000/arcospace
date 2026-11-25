@@ -19,6 +19,7 @@ var environment: OptionButton
 var system_size: OptionButton
 var home_region: OptionButton
 var binary: OptionButton
+var evacuation: OptionButton
 var expedition_seed: LineEdit
 var setup_rows: VBoxContainer
 var geography_rows: VBoxContainer
@@ -84,6 +85,11 @@ func _ready() -> void:
 		Variation.HOME_REGIONS.find(last_configuration.get("home_region", "")) + 1)
 	binary = _selector(geography_rows, "Stellar Configuration", ["Automatic", "Single", "Binary"],
 		int(last_configuration.get("binary", -1)) + 1)
+	var convoy_choice := int(last_configuration.get("convoy_integrity", 0) == 20)
+	if last_configuration.get("convoy_force_pursuit", false): convoy_choice += 2
+	evacuation = _selector(geography_rows, "Evacuation Convoy",
+		["Default", "Damaged (20 integrity)", "Force pursuer", "Damaged + force pursuer"], convoy_choice)
+
 	var seed_row := HBoxContainer.new()
 	var seed_label := Label.new()
 	seed_label.text = "Expedition Seed"
@@ -98,7 +104,7 @@ func _ready() -> void:
 	expedition_seed.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
 	seed_row.add_child(expedition_seed)
 	geography_rows.add_child(seed_row)
-	for selector in [environment, system_size, home_region, binary]:
+	for selector in [environment, system_size, home_region, binary, evacuation]:
 		selector.custom_minimum_size.y = 36
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
@@ -154,7 +160,7 @@ func _action(row: HBoxContainer, caption: String, action: Callable, primary: boo
 
 func _update_scenario_selectors() -> void:
 	var defense: bool = Launch.MODES[mode.selected] == "defense"
-	for selector in [environment, system_size, home_region, binary]:
+	for selector in [environment, system_size, home_region, binary, evacuation]:
 		selector.get_parent().visible = defense and stage.selected >= 2
 	geography_button.text = "Environment & Seed" if defense and stage.selected >= 2 else "Seed"
 	faction.get_parent().visible = defense
@@ -191,6 +197,8 @@ func _launch_selected() -> void:
 		expedition_seed.grab_focus()
 		return
 	var overrides := {"seed":seed_text, "binary":binary.selected - 1}
+	if evacuation.selected % 2 == 1: overrides.convoy_integrity = 20
+	if evacuation.selected >= 2: overrides.convoy_force_pursuit = true
 	if environment.selected > 0: overrides.environment = Variation.ARCHETYPES[environment.selected - 1]
 	if system_size.selected > 0: overrides.size_class = Variation.SIZE_CLASSES[system_size.selected - 1]
 	if home_region.selected > 0: overrides.home_region = Variation.HOME_REGIONS[home_region.selected - 1]
@@ -226,7 +234,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and _open:
-		for selector in [mode, stage, difficulty, formation, faction, environment, system_size, home_region, binary]:
+		for selector in [mode, stage, difficulty, formation, faction, environment, system_size, home_region, binary, evacuation]:
 			if selector.get_popup().visible:
 				selector.get_popup().hide()
 				return

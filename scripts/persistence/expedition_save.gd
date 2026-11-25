@@ -16,7 +16,7 @@ const COUNTERS = ["hull", "salvage", "battles_won", "pressure",
 	"pending_destination", "chasedown_index", "chasedowns_this_system", "travel_destination"]
 const ENTRY_FIELDS = ["kind", "title", "system_number", "mandatory_boss", "modifier",
 	"completed", "chasedown", "response", "resolution", "intercept_position",
-	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank", "warzone_detour", "defense_deployment"]
+	"objective_role", "objective_prerequisite", "objective_known", "pressure_tolerance", "pressure_sensitive", "warzone_rank", "warzone_detour", "defense_deployment", "punitive"]
 const OBJECTIVE_POIS = [preload("res://encounters/fuel_depot.tres"),
 	preload("res://encounters/sensor_relay.tres"), preload("res://encounters/ancient_navigation_array.tres")]
 const PROFILE_IDS = ["quiet", "industrial", "hostile", "ancient"]
@@ -155,21 +155,21 @@ func _decode_entry(value: Variant, ships: Dictionary, pois: Dictionary) -> Dicti
 	if not value.get("completed") is bool: return {}
 	for key in value:
 		if key not in ENTRY_FIELDS + ["enemy_id", "poi_id", "charge_awarded"]: return {}
-		if key in ["mandatory_boss", "charge_awarded", "chasedown", "objective_known", "pressure_sensitive"] and not value[key] is bool: return {}
+		if key in ["mandatory_boss", "charge_awarded", "chasedown", "objective_known", "pressure_sensitive", "punitive"] and not value[key] is bool: return {}
 		if key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance"] and not _integer(value[key], -1): return {}
 	if value.has("intercept_position"):
 		var at: Variant = value.intercept_position
 		if not value.get("chasedown", false) or not at is Array or at.size() not in [2,3]: return {}
 		for coordinate in at:
 			if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)) or absf(float(coordinate)) > 10000: return {}
-	if value.has("resolution") and value.resolution not in ["escaped", "defeated"]: return {}
+	if value.has("resolution") and value.resolution not in ["escaped", "defeated", "convoy_strike"]: return {}
 	if value.has("objective_role") and value.objective_role not in ["", "access", "prerequisite"]: return {}
 	if value.has("warzone_detour") and (value.kind != "poi" or not _integer(value.warzone_detour, 0, 2)): return {}
 	var result: Dictionary = value.duplicate(true)
 	result.erase("charge_awarded")
 	for key in ["system_number", "modifier", "response", "objective_prerequisite", "pressure_tolerance", "warzone_rank", "warzone_detour"]:
 		if result.has(key): result[key] = int(result[key])
-	if value.has("defense_deployment") and value.kind != "battle": return {}
+	if (value.has("defense_deployment") or value.has("punitive")) and value.kind != "battle": return {}
 	if value.kind == "battle":
 		if value.has("warzone_rank") and not _integer(value.warzone_rank, 1, 2): return {}
 		if not ships.has(value.get("enemy_id")): return {}
@@ -254,6 +254,8 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 		var entry: Dictionary = _decode_entry(value, enemies, pois)
 		if entry.is_empty() or entry.kind == "service": return null
 		entries.append(entry)
+	if mode != "defense" and entries.any(func(item): return item.has("punitive") or item.get("resolution") == "convoy_strike"):
+		return null
 	if mode == "exploration" and not _valid_objectives(entries, data.ftl_access): return null
 	if not data.get("service") is Dictionary: return null
 	var service: Dictionary = {}
@@ -311,10 +313,16 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 			for unit in data.defense.units:
 				if not unit is Dictionary or not unit.has("reinforcement") or not unit.has("spawned"): return null
 		state.defense = State.Defense.new()
-		if not state.defense.restore(data.get("defense"), configuration.defense_tuning, entries, state.layout_expansion, int(data.system_number)): return null
-		if later:
-			state.defense.geometry = state.system_variation
-			if not _valid_defense_geometry(state): return null
+		if later: state.defense.geometry = state.system_variation
+		var elite: Resource = null
+		if data.defense.has("convoy"):
+			if not data.defense.convoy is Dictionary: return null
+			var faction := Factions.find(configuration, state.faction_id)
+			elite = enemies.get(data.defense.convoy.get("elite"))
+			if faction == null or elite not in Factions.defense_elites(faction, int(data.system_number)): return null
+		if not state.defense.restore(data.defense, configuration.defense_tuning, entries, state.layout_expansion, int(data.system_number), elite):
+			return null
+		if later and not _valid_defense_geometry(state): return null
 		if not migrated_reserves.is_empty(): state.defense.add_reserves(migrated_reserves)
 		if state.defense.failed() or state.defense.anchors.has(State.SERVICE_INDEX) != not service.is_empty(): return null
 		if (state.defense.contact >= 0 or state.defense.missiles.pending >= 0) and state.navigation.leg_active: return null

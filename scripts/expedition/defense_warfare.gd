@@ -168,7 +168,15 @@ static func _choose_ship(pool: Array, role: String, faction: Resource, rng: Rand
 
 
 static func _set_entry(state: Resource, index: int, base: Resource, military: Dictionary, role: String, group: int) -> void:
-	var entry: Dictionary = state.encounters[index]
+	_configure_entry(state, state.encounters[index], base, military, role, group)
+
+
+static func configure_entry(state: Resource, entry: Dictionary, base: Resource, role: String, group: int) -> void:
+	if not state.defense.military.is_empty():
+		_configure_entry(state, entry, base, state.defense.military, role, group)
+
+
+static func _configure_entry(state: Resource, entry: Dictionary, base: Resource, military: Dictionary, role: String, group: int) -> void:
 	var stage: int = military.stage
 	var scaled: Resource = state.rules.progression.scaled_enemy(base, state.system_number, true)
 	var rank: int = 2 if role == "mothership" else base.enemy_rank

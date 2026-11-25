@@ -71,3 +71,14 @@ extends Resource
 @export var decoy_deploy_range := 12.0
 @export var decoy_attraction_radius := 15.0
 @export var decoy_lifetime := 15.0
+
+@export_group("Civilian evacuation · System 3 onward")
+@export var convoy_enabled := true
+@export_range(1, 200) var convoy_integrity := 40
+@export_range(0.1, 10.0, 0.05) var convoy_speed := 0.7
+@export_range(1, 200) var convoy_attack_damage := 20
+@export_range(1, 2) var convoy_pursuer_limit := 2
+@export_range(0, 200) var convoy_salvage := 15
+@export_range(0.0, 100.0) var convoy_pressure := 20.0
+@export_range(0.1, 60.0, 0.1) var convoy_punitive_delay := 6.0
+@export var convoy_route_seconds := Vector2(35, 55)

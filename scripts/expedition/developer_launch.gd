@@ -22,6 +22,9 @@ static func configuration(mode: String, stage: int, rank: int, formation: String
 				var choices: Array = {"environment":Variation.ARCHETYPES, "size_class":Variation.SIZE_CLASSES,
 					"home_region":Variation.HOME_REGIONS}[key]
 				if geography.get(key) in choices: result[key] = geography[key]
+			if geography.get("convoy_integrity") is int and geography.convoy_integrity in [20, 40]:
+				result.convoy_integrity = geography.convoy_integrity
+			if geography.get("convoy_force_pursuit") == true: result.convoy_force_pursuit = true
 			if geography.get("binary") is int and geography.binary in [0, 1]: result.binary = geography.binary
 	var seed_text := str(geography.get("seed", "")).strip_edges()
 	if seed_text.is_valid_int() and int(seed_text) != 0:
