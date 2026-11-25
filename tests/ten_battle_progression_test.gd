@@ -102,11 +102,24 @@ func card_checks() -> void:
 func high_tier_draw_checks() -> void:
 	var hand := Hand.new()
 	hand.card_pool.assign([card(1), card(85)])
+	# Rarity rolls allocate Tier 2 first, then Tier 3. Disable Tier 2 so the
+	# forced Tier 3 roll really covers the entire interval, even with an empty
+	# Tier 2 bucket (which otherwise intentionally falls back to Tier 1).
+	hand.tier_two_chance = 0.0
 	hand.tier_three_chance = 1.0
+	hand.rng.seed = 717
 	hand.current_round = hand.tier_three_locked_turns
-	check(hand.draw_card() == card(1), "Tier 3 respects the opening-round gate")
+	for draw in range(32):
+		check(hand.draw_card() == card(1), "Tier 3 respects the opening-round gate")
 	hand.current_round += 1
-	check(hand.draw_card() == card(85), "Owned Tier 3 cards are drawable after the opening rounds")
+	for draw in range(32):
+		check(hand.draw_card() == card(85), "Owned Tier 3 cards are drawable after the opening rounds")
+	# An empty Tier 2 bucket must still fall back to common, not promote to
+	# Tier 3 just because the unlocked pool includes a rare card.
+	hand.tier_two_chance = 1.0
+	hand.tier_three_chance = 0.0
+	for draw in range(32):
+		check(hand.draw_card() == card(1), "Empty Tier 2 bucket falls back to Tier 1")
 	hand.free()
 
 
