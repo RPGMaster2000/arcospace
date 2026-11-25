@@ -35,6 +35,9 @@ func fresh(seed_value: int, enabled: bool = true, mode: String = "defense") -> R
 	var rules: Resource = Rules.duplicate(true)
 	rules.system_variety = Rules.system_variety.duplicate(true)
 	rules.system_variety.enabled = enabled
+	# Continue checking the historical profile across later stages. The geometry
+	# regression independently verifies the new profile and both modes' RNG parity.
+	rules.system_variety.progressive_geometry = false
 	rules.log_rolls = false
 	rules.game_mode = mode
 	rules.warzone_campaign_enabled = false

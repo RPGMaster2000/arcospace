@@ -154,6 +154,13 @@ func verify_menu() -> void:
 	for control in [dialog.formation, dialog.faction, dialog.back_button, dialog.launch_button]:
 		check(control.is_visible_in_tree() and root.get_visible_rect().encloses(control.get_global_rect()),
 			"Later Starfront selectors fit compact landscape")
+	await click(dialog.geography_button, true)
+	check(dialog.geography_rows.visible and not dialog.setup_rows.visible, "Touch opens separate environment options")
+	for option in [dialog.environment, dialog.system_size, dialog.home_region, dialog.binary, dialog.expedition_seed]:
+		check(root.get_visible_rect().encloses(option.get_global_rect()), "Environment option fits Android landscape")
+	await click(dialog.geography_button, true)
+	check(dialog.setup_rows.visible and not dialog.geography_rows.visible, "Touch returns to scenario options")
+
 	await click(dialog.formation, true)
 	check(dialog.formation.get_popup().visible, "Touch opens the Formation selector")
 	dialog.formation.get_popup().hide()

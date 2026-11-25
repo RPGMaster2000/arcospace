@@ -1,9 +1,10 @@
 # Procedural star-system variety
 
-New expanded Starfront Defense v2 systems choose a saved, version-1 variety
-profile. Exploration and historical systems retain their existing generation.
-Faction identity, starting fleet/reserve counts, enemy profiles/scaling, rewards,
-Pressure, reinforcement timers and strategic speeds are unchanged.
+System 1 and historical expanded Defense systems use the version-1 variety
+profile described below. Newly generated Starfront Defense systems from
+System 3 onward use a version-2 geography record with independent environmental
+and military selection. See [Later Starfront geography](balance/starfront_environment.md)
+for the current layout weights, recorded geometry, placement rules and validation.
 
 ## Ownership and flow
 

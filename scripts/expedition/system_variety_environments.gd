@@ -52,11 +52,40 @@ static func storms(state: Resource, candidates: Array, existing: Array) -> Array
 			storm.region.angle = rng.randf_range(0, TAU)
 			storm.intensity = rng.randf_range(0.55, 0.9)
 			storm.generation.extended = true
-		if state.is_defense() and state.defense.v2:
+		if profile.get("version") == 2:
+			var base := preserve_approaches(state, existing + result)
+			storm = _place_later_storm(state, storm, candidates, base)
+		elif state.is_defense() and state.defense.v2:
 			storm = Routes.storm(storm, state.defense, candidates, existing + result)
 		if not storm.is_empty():
 			result.append(JSON.parse_string(JSON.stringify(storm)))
 	return result
+
+# Sample each approach and its neighboring space. Keep placement bounded so
+# the other flank remains a genuine alternative even in the strongest storms.
+static func _place_later_storm(state: Resource, storm: Dictionary, candidates: Array, accepted: Array) -> Dictionary:
+	var fleet: RefCounted = state.defense
+	var clearance = preload("res://scripts/expedition/environment_clearance.gd")
+	var layout = preload("res://scripts/expedition/system_layout.gd")
+	var bounds := layout.bounds(state.layout_expansion) as Rect2
+	var home_radius: float = clearance.home_radius(fleet.tuning.environment_visual_margin)
+	var axes := Vector2(storm.region.axes[0], storm.region.axes[2])
+	var angle: float = storm.region.angle
+	var extent := Vector2(absf(cos(angle)) * axes.x + absf(sin(angle)) * axes.y,
+		absf(sin(angle)) * axes.x + absf(cos(angle)) * axes.y)
+	var offsets := [Vector3.ZERO, Vector3(7, 0, 0), Vector3(0, 0, 7), Vector3(-7, 0, 0), Vector3(0, 0, -7)]
+	var positions := [clearance.point(storm.position)]
+	for offset in offsets:
+		for location in candidates:
+			positions.append(clearance.point(location) + offset)
+	for at in positions:
+		var plane := Vector2(at.x, at.z)
+		if plane.length() < 12.0 or not bounds.encloses(Rect2(plane - extent, extent * 2.0)): continue
+		storm.position = fleet.wire(at)
+		if clearance.intersects_sphere(storm, fleet.home, home_radius) or not Routes.relevant(storm, fleet): continue
+		if preserve_approaches(state, accepted + [storm]).has(storm): return storm
+	return {}
+
 
 ## Keep the player start, at least one nearby preparation site and one opening
 ## interception on a clean route. The encounter's existing modifier resolves it.

@@ -277,6 +277,10 @@ static func select_pois(state: Resource, selected: Array) -> Array:
 	for poi in selected + choices:
 		if result.size() >= size: break
 		if poi not in result: result.append(poi)
+	var repeatable := choices.filter(func(poi):
+		return not Layout.PLANETARY.has(poi.resource_path.get_file().get_basename()))
+	while result.size() < size and not repeatable.is_empty():
+		result.append(repeatable[rng.randi_range(0, repeatable.size() - 1)])
 	if not result.is_empty() and not result.any(func(poi): return poi.resource_path.get_file().get_basename() in PREPARATION):
 		for poi in choices:
 			if poi.resource_path.get_file().get_basename() in PREPARATION:

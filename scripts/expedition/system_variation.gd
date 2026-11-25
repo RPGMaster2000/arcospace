@@ -6,6 +6,8 @@ const ARCHETYPES = [
 ]
 const FORMATIONS = ["spread", "clustered", "staggered", "pincer", "vanguard", "unstructured"]
 const PALETTE = ["7451b3", "367ba8", "ad485b", "387d75", "686bb4"]
+const Solar = preload("res://scripts/expedition/solar_regions.gd")
+const MapSettings = preload("res://resources/presentation/star_system_settings.tres")
 const Settings = preload("res://scripts/expedition/system_variety_settings.gd")
 
 
@@ -153,7 +155,8 @@ static func later(profile: Dictionary, seed_value: int, system: int, settings: R
 	profile.merge({"version":2, "archetype":archetype, "tier":[0, 1, 1, 1, 2, 2, 3][index],
 		"poi_count":rng.randi_range(clampi(band.x, 3, 12), clampi(maxi(band.x, band.y), 3, 12)),
 		"companion":companion, "size_class":size, "home_region":region, "geometry_scale":rng.randf_range(scale.x, scale.y),
-		"home_scale":rng.randf_range(radial.x, radial.y), "star":star, "planet_scales":{}, "planet_types":{}, "placement_attempt":0,
+		"home_scale":rng.randf_range(radial.x, radial.y), "star":star,
+		"star_radius":Solar.CORE_RADIUS_PER_SCALE * MapSettings.sun_core_scale * float(STARS[star][1]), "planet_scales":{}, "planet_types":{}, "placement_attempt":0,
 		"military_fallback":false}, true)
 	var intensity_bias: Array = [[72, 24, 4], [60, 32, 8], [60, 34, 6],
 		[40, 47, 13], [5, 42, 53], [0, 0, 100], [25, 35, 40]][index]
@@ -185,7 +188,7 @@ static func canonical(value: Dictionary) -> Dictionary:
 
 
 static func star_radius(profile: Dictionary, baseline: float) -> float:
-	return baseline * float(STARS[int(profile.star)][1]) if profile.get("version") == 2 else baseline
+	return float(profile.star_radius) if profile.get("version") == 2 else baseline
 
 
 static func system_title(profile: Dictionary) -> String:
@@ -287,6 +290,7 @@ static func valid(value: Variant) -> bool:
 		if not number(layer.get("opacity"), 0, 0.4):
 			return false
 	if value.version == 2:
+		if not number(value.get("star_radius"), 0.9, 3.41): return false
 		for key in ["size_class", "home_region", "star", "placement_attempt"]:
 			if not number(value.get(key), 0.0, {"star":4, "placement_attempt":16}.get(key, 2)) or int(value[key]) != value[key]:
 				return false

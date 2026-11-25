@@ -287,7 +287,8 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 		visual_root.add_child(orbit)
 	var starless: bool = visual_data.get("starless", false)
 	var disc: MeshInstance3D
-	var core_scale: float = Variation.star_radius(system_variation, settings.sun_core_scale)
+	var core_scale: float = Variation.star_radius(system_variation,
+		settings.sun_core_scale * SolarVisual.Solar.CORE_RADIUS_PER_SCALE) / SolarVisual.Solar.CORE_RADIUS_PER_SCALE
 	var stellar: Array = Variation.STARS[int(system_variation.star)] if later_geometry else []
 	if later_geometry: visual_data.star_color = Color(stellar[4])
 	world.get_node("SunLight").visible = not starless

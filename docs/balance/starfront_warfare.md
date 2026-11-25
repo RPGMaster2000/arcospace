@@ -2,6 +2,8 @@
 
 Procedural military scenarios apply to new Starfront Defense systems from System 3 onward. System 1 keeps its v2 opening roster, pressure and reinforcements. System 2 remains Warzone. Existing active systems retain their saved behavior until the next generation.
 
+The later [environmental geometry update](starfront_environment.md) provides a separate contemporaneous comparison of map variety and interception feasibility.
+
 ## Deployment
 
 Environmental layout and military doctrine use independent seeded streams. Factions receive a 10% relative weighting toward one preferred formation. An eligible alternative replaces the previous formation when there is a choice. The weights below apply before those preferences.
