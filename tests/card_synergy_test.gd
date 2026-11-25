@@ -122,6 +122,46 @@ func timing() -> void:
 			modifier.free()
 
 
+func alternative_branches() -> void:
+	# Each fixture holds other state fixed and changes only the branch predicate.
+	var fixtures := [
+		[2, {"synthesizer":3}, {}, {"crew":[80,80,80]}, {}],
+		[3, {}, {"shields":25}, {"energy":[83,84,85]}, {"shields":[15,13,11], "hull":[39,39,39]}],
+		[4, {"synthesizer":3}, {}, {"crew":[80,80,80], "quarters":[5,5,5]}, {}],
+		[5, {"reactor":3}, {}, {"energy":[87,88,89], "shields":[6,6,6]}, {}],
+		[10, {}, {"reactor":3}, {"crew":[84,85,86]}, {"energy":[80,80,80]}],
+		[11, {"crew":14}, {"crew":15}, {"crew":[24,26,28], "materials":[84,85,86]}, {}],
+		[13, {}, {"reactor":2}, {"energy":[80,80,80], "shields":[11,12,13]}, {"energy":[72,70,68], "reactor":[2,2,2]}],
+		[14, {"hull":40}, {}, {"hull":[40,40,40], "shields":[14,16,18]}, {}],
+		[15, {"quarters":3}, {}, {"quarters":[4,4,4], "materials":[84,85,86], "energy":[84,85,86]}, {}],
+		[16, {}, {"shields":10}, {"energy":[85,86,87]}, {"shields":[0,0,0], "hull":[39,39,39]}],
+		[17, {}, {"crew":14}, {"hull":[45,47,49], "materials":[86,87,88]}, {"crew":[14,14,14]}],
+		[19, {"hull":40}, {}, {"hull":[50,52,54], "shields":[22,25,28]}, {}],
+		[20, {}, {"shields":20}, {"crew":[80,80,80]}, {"hull":[34,29,26], "shields":[0,0,0]}],
+		[21, {}, {}, {"materials":[80,80,80], "shields":[24,28,32]}, {}],
+		[22, {}, {"shields":30}, {"crew":[80,80,80]}, {"hull":[39,34,29], "shields":[0,0,0]}],
+		[23, {"reactor":3}, {}, {"reactor":[4,4,4], "materials":[88,90,92], "crew":[88,90,92]}, {}],
+		[25, {"synthesizer":3}, {}, {"synthesizer":[4,4,4], "reactor":[4,4,4]}, {}],
+		[26, {"hull":40}, {}, {"hull":[40,40,40], "shields":[16,18,20]}, {"hull":[35,33,31]}],
+	]
+	for fixture in fixtures:
+		for level in range(3):
+			var card: Resource = Cards.SYNERGY_CARDS[fixture[0]].with_upgrade(level)
+			var actor := ship()
+			var target := ship()
+			actor.merge(fixture[1], true)
+			target.merge(fixture[2], true)
+			var prediction := Forecast.predict(card, actor, target)
+			check(Effects.play(card, actor, target), "Alternative branch resolves for " + card.card_name)
+			for side in [0, 1]:
+				var observed: Dictionary = [actor, target][side]
+				var expected: Dictionary = fixture[side + 3]
+				for key in expected:
+					check(observed[key] == expected[key][level], card.card_name + " alternative branch " + key)
+			check(prediction.outcomes.size() == 1 and prediction.outcomes[0].actor == actor
+				and prediction.outcomes[0].target == target, "Alternative branch forecast agrees")
+
+
 func progression() -> void:
 	var hand := Hand.new()
 	hand.card_pool.assign([Cards.BASE_CARDS[0], Cards.SYNERGY_CARDS[0], Cards.SYNERGY_CARDS[18]])
@@ -138,6 +178,15 @@ func progression() -> void:
 		check(hand.draw_card().tier == 1, "Occupied rarities fall back to Tier 1")
 	check(hand._eligible(Cards.SYNERGY_CARDS[18], 1) and hand._eligible(Cards.SYNERGY_CARDS[0], 0),
 		"Independent rarity caps permit both tiers in one hand")
+	hand.cards.clear()
+	hand.card_pool.append(Cards.SYNERGY_CARDS[19])
+	hand.tier_two_chance = 0.0
+	hand.tier_three_chance = 1.0
+	hand.identity_weights[Cards.SYNERGY_CARDS[19].identity_key()] = Rules.acquired_card_draw_weight
+	var weighted := 0
+	for draw in 6000:
+		weighted += int(hand.draw_card() == Cards.SYNERGY_CARDS[19])
+	check(absi(weighted - 4500) < 160, "Owned Tier 3 weight applies within Tier 3")
 	hand.free()
 	var deck := Deck.new()
 	var rng := RandomNumberGenerator.new()
@@ -201,10 +250,30 @@ func shop_and_save() -> void:
 		"Pending rare offers and owned rare cards survive serialization")
 
 
+func exceptional_discovery() -> void:
+	const State = preload("res://scripts/expedition_state.gd")
+	const Debris = preload("res://encounters/pirate_debris_field.tres")
+	var config := Rules.duplicate()
+	config.game_mode = "exploration"
+	config.log_rolls = false
+	for roll in [0.0, 0.99]:
+		var expedition := State.new()
+		expedition.start(0, config, 44494)
+		expedition.encounters.assign([{"kind":"poi", "poi":Debris, "completed":false}])
+		expedition.production_upgrades.quarters = 4
+		var before: int = expedition.rng.state
+		check(expedition.resolve_approach(0, 3, roll), "Boarding resolves exactly once")
+		check(expedition.card_offers.filter(func(card): return card.tier == 3).size() == int(roll == 0.0),
+			"Only successful exceptional boarding reserves a rare reward")
+		check(expedition.rng.state == before, "A committed card draft leaves the system RNG untouched")
+
+
 func _initialize() -> void:
 	catalogue()
 	timing()
+	alternative_branches()
 	progression()
 	shop_and_save()
+	exceptional_discovery()
 	print("Synergy catalogue, timing, AI, and rarity: %d failures" % failures)
 	quit(1 if failures else 0)

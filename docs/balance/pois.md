@@ -4,9 +4,9 @@ Generated from `encounters/expedition_rules.tres` and all referenced PoI Resourc
 
 | Generation category | Min / max | Weight |
 |---|---|---|
-| Ordinary | 4 / 6 | 1.0 |
+| Ordinary | 3 / 5 | 1.0 |
 | Hazardous | 0 / 3 | 0.8 |
-| Enemy | 1 / 3 | 1.0 |
+| Enemy | 2 / 4 | 1.0 |
 
 Total 9 progression encounters plus an independent profile-selected Trading Outpost. Composition weights multiply profile and rule category biases; Resources sample by encounter_weight and profile PoI biases without replacement until exhausted. Objective routes replace ordinary slots: guaranteed direct Fuel Depot; optionally Sensor Relay then Ancient Navigation Array. Routes and prerequisites remain pressure-safe. See [exploration prototype](../star_system_exploration.md) for tuning.
 
@@ -21,7 +21,7 @@ Edit `encounters/mining_operation.tres`; expand Approaches → Success / Failure
 | Surface collection | None | 0 | 100.0% | +3 Salvage | Not rolled |
 | Automated extraction | None | 0 | 75.0% | +6 Salvage | 25.0%: +2 Salvage · -3 Materials next battle |
 | Industrial extraction | Synthesizer ≥3 | 0 | 85.0% | +9 Salvage | 15.0%: +4 Salvage · -4 Materials next battle |
-| Deep-core mining | Synthesizer ≥4 | 0 | 55.0% | +14 Salvage · Choose 1 of 3 cards | 45.0%: +5 Salvage · -6 Materials next battle |
+| Deep-core mining | Synthesizer ≥4 | 0 | 55.0% | +14 Salvage · Choose 1 of up to 5 cards | 45.0%: +5 Salvage · -6 Materials next battle |
 
 ### Gas Giant
 
@@ -29,10 +29,10 @@ Edit `encounters/gas_giant.tres`; expand Approaches → Success / Failure. Gener
 
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
-| Atmospheric sampling | None | 0 | 100.0% | +3 Energy next battle | Not rolled |
-| Gas harvesting | None | 0 | 75.0% | +6 Energy next battle | 25.0%: +2 Energy next battle · -3 Shields next battle |
-| Precision skimming | Reactor ≥3 | 0 | 90.0% | +2 Salvage · +8 Energy next battle | 10.0%: +3 Energy next battle · -4 Shields next battle |
-| Deep atmospheric dive | Quarters ≥4 | 0 | 60.0% | +5 Salvage · +12 Energy next battle | 40.0%: -5 Crew next battle · +4 Energy next battle |
+| Atmospheric sampling | None | 0 | 100.0% | +5 Energy next battle | Not rolled |
+| Gas harvesting | None | 0 | 75.0% | +9 Energy next battle | 25.0%: +3 Energy next battle · -3 Shields next battle |
+| Precision skimming | Reactor ≥3 | 0 | 90.0% | +2 Salvage · +12 Energy next battle | 10.0%: +5 Energy next battle · -4 Shields next battle |
+| Deep atmospheric dive | Quarters ≥4 | 0 | 60.0% | +5 Salvage · +18 Energy next battle | 40.0%: -5 Crew next battle · +6 Energy next battle |
 
 ### Derelict Starship
 
@@ -41,9 +41,9 @@ Edit `encounters/derelict_starship.tres`; expand Approaches → Success / Failur
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
 | External salvage | None | 0 | 100.0% | +3 Salvage | Not rolled |
-| Board the wreck | None | 0 | 70.0% | +5 Salvage · Choose 1 of 3 cards | 30.0%: +2 Salvage · -3 Crew next battle |
-| Engineering recovery | Synthesizer ≥3 | 0 | 85.0% | +7 Salvage · Choose 1 of 3 cards | 15.0%: +3 Salvage · -4 Materials next battle |
-| Deploy boarding teams | Quarters ≥4 | 0 | 75.0% | +9 Salvage · Choose 1 of 3 uncommon-or-better cards | 25.0%: +4 Salvage · -5 Crew next battle |
+| Board the wreck | None | 0 | 70.0% | +5 Salvage · Choose 1 of up to 5 cards | 30.0%: +2 Salvage · -3 Crew next battle |
+| Engineering recovery | Synthesizer ≥3 | 0 | 85.0% | +7 Salvage · Choose 1 of up to 5 cards | 15.0%: +3 Salvage · -4 Materials next battle |
+| Deploy boarding teams | Quarters ≥4 | 0 | 75.0% | +9 Salvage · Choose 1 of up to 5 cards · Tier 2 | 25.0%: +4 Salvage · -5 Crew next battle |
 
 ### Abandoned Research Station
 
@@ -77,8 +77,8 @@ Edit `encounters/radiation_nebula.tres`; expand Approaches → Success / Failure
 |---|---|---|---|---|---|
 | Quick scan | None | 0 | 100.0% | +3 Salvage · -2 Shields next battle | Not rolled |
 | Collect isotopes | None | 0 | 75.0% | +8 Salvage · -3 Shields next battle | 25.0%: +2 Salvage · -5 Shields next battle |
-| Harvest particles | Synthesizer ≥3 | 0 | 70.0% | +10 Salvage · +5 Energy next battle · -4 Shields next battle | 30.0%: +3 Salvage · -6 Energy next battle |
-| Shielded expedition | Reactor ≥4 | 0 | 85.0% | +12 Salvage · -2 permanent Hull · +5 Energy next battle | 15.0%: +4 Salvage · -4 permanent Hull |
+| Harvest particles | Synthesizer ≥3 | 0 | 70.0% | +10 Salvage · +8 Energy next battle · -4 Shields next battle | 30.0%: +3 Salvage · -6 Energy next battle |
+| Shielded expedition | Reactor ≥4 | 0 | 85.0% | +12 Salvage · -2 permanent Hull · +8 Energy next battle | 15.0%: +4 Salvage · -4 permanent Hull |
 
 ### Distress Signal
 
@@ -87,9 +87,9 @@ Edit `encounters/distress_signal.tres`; expand Approaches → Success / Failure.
 | Approach | Requirement | Salvage cost | Success chance | Success (guaranteed at 100%) | Failure |
 |---|---|---|---|---|---|
 | Relay coordinates | None | 0 | 100.0% | +3 Salvage · -2 Crew next battle | Not rolled |
-| Dispatch rescue crew | None | 0 | 70.0% | +5 Salvage · -2 Crew next battle · Choose 1 of 3 cards | 30.0%: +2 Salvage · -4 Crew next battle |
-| Specialist rescue | Quarters ≥3 | 0 | 85.0% | +7 Salvage · -2 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +3 Salvage · -4 Crew next battle |
-| Fabricate relief kits | Synthesizer ≥3 | 0 | 100.0% | +8 Salvage · +3 Crew next battle · -4 Materials next battle | Not rolled |
+| Dispatch rescue crew | None | 0 | 70.0% | +5 Salvage · -2 Crew next battle · Choose 1 of up to 5 cards | 30.0%: +2 Salvage · -4 Crew next battle |
+| Specialist rescue | Quarters ≥3 | 0 | 85.0% | +7 Salvage · -2 Crew next battle · Choose 1 of up to 5 cards · Tier 2 | 15.0%: +3 Salvage · -4 Crew next battle |
+| Fabricate relief kits | Synthesizer ≥3 | 0 | 100.0% | +8 Salvage · +5 Crew next battle · -4 Materials next battle | Not rolled |
 
 ### Pirate Debris Field
 
@@ -99,8 +99,8 @@ Edit `encounters/pirate_debris_field.tres`; expand Approaches → Success / Fail
 |---|---|---|---|---|---|
 | Drone perimeter scan | None | 0 | 100.0% | +3 Salvage · -1 permanent Hull | Not rolled |
 | Recover cargo | None | 0 | 65.0% | +10 Salvage · -2 permanent Hull | 35.0%: +2 Salvage · -5 permanent Hull |
-| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 20.0%: +4 Salvage · -4 permanent Hull |
-| Board pirate flagship | Quarters ≥4 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 30.0%: +5 Salvage · -7 permanent Hull |
+| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of up to 5 cards · Tier 2 | 20.0%: +4 Salvage · -4 permanent Hull |
+| Board pirate flagship | Quarters ≥4 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of up to 5 cards · Tier 3 option if unowned | 30.0%: +5 Salvage · -7 permanent Hull |
 
 ### Unstable Wormhole
 
@@ -122,7 +122,7 @@ Edit `encounters/quarantined_colony.tres`; expand Approaches → Success / Failu
 | Remote supply exchange | None | 0 | 100.0% | +3 Salvage · -2 Materials next battle | Not rolled |
 | Accept medical repairs | None | 0 | 100.0% | +6 permanent Hull · -3 Crew next battle | Not rolled |
 | Recover research | Reactor ≥3 | 0 | 80.0% | +6 Salvage · -3 Energy next battle · Upgrade one player card | 20.0%: +3 Salvage · -5 Energy next battle |
-| Evacuate scientists | Quarters ≥4 | 0 | 85.0% | +8 Salvage · -3 Crew next battle · Choose 1 of 3 uncommon-or-better cards | 15.0%: +4 Salvage · -5 Crew next battle |
+| Evacuate scientists | Quarters ≥4 | 0 | 85.0% | +8 Salvage · -3 Crew next battle · Choose 1 of up to 5 cards · Tier 2 | 15.0%: +4 Salvage · -5 Crew next battle |
 
 ### Raider Cache
 
@@ -132,14 +132,14 @@ Edit `encounters/raider_cache.tres`; expand Approaches → Success / Failure. Ge
 |---|---|---|---|---|---|
 | Drone perimeter scan | None | 0 | 100.0% | +3 Salvage · -1 permanent Hull | Not rolled |
 | Recover cargo | None | 0 | 65.0% | +10 Salvage · -2 permanent Hull | 35.0%: +2 Salvage · -5 permanent Hull |
-| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 20.0%: +4 Salvage · -4 permanent Hull |
-| Board pirate flagship | Quarters ≥4 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of 3 uncommon-or-better cards | 30.0%: +5 Salvage · -7 permanent Hull |
+| Disarm wreckage | Synthesizer ≥3 | 0 | 80.0% | +10 Salvage · -2 permanent Hull · Choose 1 of up to 5 cards · Tier 2 | 20.0%: +4 Salvage · -4 permanent Hull |
+| Board pirate flagship | Quarters ≥4 | 0 | 70.0% | +14 Salvage · -4 permanent Hull · Choose 1 of up to 5 cards · Tier 3 option if unowned | 30.0%: +5 Salvage · -7 permanent Hull |
 
 ## Services
 
 Trading Outpost probability: Quiet Frontier 100%, Industrial 8%, Hostile 4%, Ancient 4%. Station RNG is independent of encounter/loot RNG. Unlimited purchases and free revisits until departure, with no pressure or FTL Access reward. Pending paid choices must resolve before another purchase or departure. Each confirmation revision can spend once.
 
-The same Hull service tile repairs damaged Hull for 1 Salvage/Hull up to capacity, then switches to Install Ablative Plating for 2 Salvage/point up to capacity +10. It selects an affordable quantity, previews total cost/result and rejects zero confirmation; at +10 it remains in place disabled. Shared quantity bounds live in `scripts/repair_rules.gd`; field repairs are accessed through the system Hull popup at 1 Salvage/Hull and cannot create plating. Supply/card base prices and shipyard base price are editable in `encounters/trading_outpost.tres` approach Salvage Cost; supply amount/production amount remain editable outcome Resources. Shipyard cost for purchase n: base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2. Current increment 15, acceleration 5; prices 25, 40, 60, 85, 115, 150, 190. Counter combines all production categories and resets only when a later station appears; permanent upgrades persist. Intervals and escalation parameters: `ExpeditionRules` Inspector. The table shows initial prices; repair amount is variable.
+The same Hull service tile repairs damaged Hull for 1 Salvage/Hull up to capacity, then switches to Install Ablative Plating for 2 Salvage/point up to capacity +10. It selects an affordable quantity, previews total cost/result and rejects zero confirmation; at +10 it remains in place disabled. Shared quantity bounds live in `scripts/repair_rules.gd`; field repairs are accessed through the system Hull popup at 2 Hull per Salvage and cannot create plating. Supply/card base prices and shipyard base price are editable in `encounters/trading_outpost.tres` approach Salvage Cost; supply amount/production amount remain editable outcome Resources. Shipyard cost for purchase n: base + increment × (n−1) + acceleration × (n−1) × (n−2) / 2. Current increment 15, acceleration 5; prices 35, 50, 70, 95, 125, 160, 200. Counter combines all production categories and resets only when a later station appears; permanent upgrades persist. Intervals and escalation parameters: `ExpeditionRules` Inspector. The table shows initial prices. Repair amount is variable. From System 3, one of the available card designs can be Tier 3 for 25 Salvage.
 
 ### Trading Outpost
 
@@ -149,8 +149,8 @@ Edit `encounters/trading_outpost.tres`; expand Approaches → Success / Failure.
 |---|---|---|---|---|---|
 | Hull repairs | None | 1 | 100.0% | +1 permanent Hull | Not rolled |
 | Purchase supplies | None | 7 | 100.0% | +5 starting resource of choice next battle | Not rolled |
-| Acquire card | None | 15 | 100.0% | Choose 1 of 3 cards | Not rolled |
-| Shipyard improvements | None | 25 | 100.0% | +1 production of choice for expedition | Not rolled |
+| Acquire card | None | 15 | 100.0% | Browse up to six card designs | Not rolled |
+| Shipyard improvements | None | 35 | 100.0% | +1 production of choice for expedition | Not rolled |
 
 ## Progression safeguard
 
@@ -164,7 +164,7 @@ Inspector: encounters/expedition_rules.tres -> Progression -> resources/expediti
 
 New systems start with zero pressure and locked FTL Access. Completing any access objective unlocks Jump, independently of mandatory Boss restrictions.
 
-Level = 1 + floor((system - 1) / 3); steps = level - 1. Per extra level: +2 Hull, +1 Shields, +1 each starting resource; each production adds floor(steps * 0.25). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.
+Level = 1 + floor((system - 1) / 2); steps = level - 1. Per extra level: +3 Hull, +2 Shields, +1 each starting resource; each production adds floor(steps * 0.5). Stats are copied, never written to shared ShipData. Optional encounter count is irrelevant.
 
 Elite selection retains original baseline odds in level 1, then uses min(0.35, available Elite weight / total available weight + steps * 0.025). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.
 

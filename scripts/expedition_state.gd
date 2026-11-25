@@ -1285,14 +1285,14 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome, payout)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
-	_apply_outcome(outcome, payout, success and outcome.rare_card_reward)
+	_apply_outcome(outcome, payout, index, approach_index)
 	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 
 # Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
-func _apply_outcome(outcome: Resource, discovery_salvage: int = -1, rare_card_reward: bool = false) -> void:
+func _apply_outcome(outcome: Resource, discovery_salvage: int = -1, index: int = -1, approach: int = -1) -> void:
 	salvage += outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
 	# Combined Hull model: neutral outcomes preserve purchased plating. Positive PoI repairs
 	# cannot add plating; damaging PoIs reduce the combined total (agreed single-value rule).
@@ -1302,7 +1302,10 @@ func _apply_outcome(outcome: Resource, discovery_salvage: int = -1, rare_card_re
 		hull = mini(ship().hull_capacity, hull + outcome.hull)
 	add_modifiers(outcome.next_battle)
 	if outcome.card_reward:
-		last_outcome += _deck.start_card_reward(ship(), rules, rng, outcome.minimum_card_tier, rare_card_reward)
+		var reward_rng := RandomNumberGenerator.new()
+		reward_rng.seed = hash([seed_used, system_number, index, approach, last_poi_success, "poi_cards"])
+		var rare: bool = last_poi_success == 1 and outcome.rare_card_reward
+		last_outcome += _deck.start_card_reward(ship(), rules, reward_rng, outcome.minimum_card_tier, rare)
 	elif outcome.upgrade_card:
 		if upgrade_candidates().is_empty():
 			salvage += rules.unavailable_upgrade_salvage

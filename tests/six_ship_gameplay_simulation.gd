@@ -46,6 +46,8 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 	var states: Array = [state(player), state(enemy)]
 	if audit.has("battle_setup"):
 		states[0] = audit.battle_setup.player_state.snapshot()
+		if audit.battle_setup.enemy_state != null:
+			states[1] = audit.battle_setup.enemy_state.snapshot()
 	var names: Array[String] = ["player", "enemy"]
 	var clock = Failure.new()
 	var modifier = make_modifier()
@@ -84,6 +86,11 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		if audit.has("battle_setup"):
 			hands[0].card_pool.assign(audit.battle_setup.player_cards)
 			hands[0].identity_weights = audit.battle_setup.identity_weights.duplicate()
+		if audit.has("rarity_policy"):
+			hands[0].tier_three_chance = audit.rarity_policy.chance
+			hands[0].tier_three_locked_turns = audit.rarity_policy.locked
+			hands[1].tier_three_chance = audit.rarity_policy.enemy_chance
+			hands[1].card_pool.assign(audit.battle_setup.enemy_cards)
 		if audit.has("progression"):
 			for card in audit.progression.acquired:
 				hands[0].card_pool.append(card)
@@ -273,6 +280,10 @@ func play_match(player: Resource, enemy: Resource, kind: int, seed_value: int, a
 		record.merge({"hull_lost": maxi(0, player.hull_capacity - states[0].hull), "gross_hull_damage": gross_damage,
 			"resource_sum": [int(resource_sum.x), int(resource_sum.y), int(resource_sum.z)],
 			"resource_samples": samples, "dead_hands": dead_hands, "turns": turns})
+	if audit.has("rarity_policy"):
+		record.remaining_hull = states[0].hull
+		record.remaining_shields = states[0].shields
+		record.production = Rules.PRODUCTION.map(func(key): return states[0][key])
 	if detailed:
 		record.flows = flows
 		record.enemy_resource = enemy.get_meta("audit_resource", enemy.resource_path)
@@ -287,7 +298,12 @@ func _refill(hands: Array, side: int, slot: int, round_number: int, stats: Varia
 	hands[side].current_round = round_number
 	hands[side].replace_card(slot)
 	if stats != null:
-		_count_card(stats, hands[side].cards[slot], "drawn")
+		var card: Resource = hands[side].cards[slot]
+		_count_card(stats, card, "drawn")
+		if card != null:
+			var item: Dictionary = stats[card.identity_key()]
+			if not item.has("first_draw_round"):
+				item.first_draw_round = round_number
 
 func _count_card(stats: Dictionary, card: Resource, metric: String, amount: int = 1) -> void:
 	if card == null: return

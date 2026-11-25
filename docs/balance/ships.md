@@ -10,14 +10,14 @@ Generated from loaded Resources by `tools/generate_balance_docs.gd`. Edit the in
 | Ganymede | Industrial Cruiser; Industrial cruiser: turn strong Materials production into long-term growth. Industrial Repurposing converts spare Materials into Energy and Crew. | 35 / 12 | 8/12/10 | 3/1/2 | 14 / 0.0% | Player | — | — | `ships/player/ganymede.tres` |
 | Callisto | Shield Cruiser; Energy-control cruiser: manipulate Shields and reserves to win efficient exchanges. Shield Capacitor rewards maintaining superior defenses. | 35 / 12 | 10/8/12 | 2/3/1 | 14 / 0.0% | Player | — | — | `ships/player/callisto.tres` |
 | Orion | Boarding Cruiser; Boarding cruiser: pierce defenses, raid reserves and disrupt enemy plans. Boarding Operations offers a reliable opening assault. | 35 / 12 | 8/12/10 | 1/2/3 | 14 / 0.0% | Player | — | — | `ships/player/orion.tres` |
-| Marauder | Energy Raider; Energy-rich attacker. | 27 / 5 | 8/15/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/marauder.tres` |
-| Sentinel | Shielded Defender; Heavy shields and strong Reactor. | 32 / 18 | 8/12/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/sentinel.tres` |
-| Reclaimer | Armored Harvester; Strong Hull and Materials production. | 40 / 8 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/reclaimer.tres` |
-| Marauder Vanguard | Elite Raider | 38 / 12 | 12/18/12 | 2/4/2 | Inactive (enemy has no jump mechanic) | Elite | 40 | 0.4 | `ships/enemy/marauder_vanguard.tres` |
-| Sentinel Dreadnought | Armored Dreadnought | 55 / 22 | 15/15/15 | 3/3/3 | Inactive (enemy has no jump mechanic) | Boss | 30 | 0.15 | `ships/enemy/sentinel_dreadnought.tres` |
-| Rustjack | Scrap Raider; Opportunistic scrap raider: demolition, salvage and theft. | 32 / 4 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/rustjack.tres` |
-| AXIOM-7 | Autonomous Interceptor; Precise energy interceptor: shield-breaking weapons and disruption. | 29 / 16 | 8/14/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/axiom_7.tres` |
-| The Hollow Choir | Organic Vessel; Living vessel: restoration, defensive buildup and steady crew attacks. | 42 / 2 | 12/8/12 | 2/1/3 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/hollow_choir.tres` |
+| Marauder | Scavenger Clans · Raider; High Energy reserves fuel an aggressive opening. | 27 / 5 | 8/15/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/marauder.tres` |
+| Sentinel | Iron Directorate · Bulwark; Heavy Shields and a strong Reactor sustain a drawn-out fight. | 32 / 18 | 8/12/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/sentinel.tres` |
+| Reclaimer | Iron Directorate · Harvester; Thick Hull and Materials production sustain heavy ordnance. | 40 / 8 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/reclaimer.tres` |
+| Marauder Vanguard | Scavenger Clans · Vanguard; Elite raider with reinforced Hull and stronger reserves. | 38 / 12 | 12/18/12 | 2/4/2 | Inactive (enemy has no jump mechanic) | Elite | 40 | 0.4 | `ships/enemy/marauder_vanguard.tres` |
+| Sentinel Dreadnought | Iron Directorate · Fortress; Armored flagship combines heavy defenses with siege weapons. | 55 / 22 | 15/15/15 | 3/3/3 | Inactive (enemy has no jump mechanic) | Boss | 30 | 0.15 | `ships/enemy/sentinel_dreadnought.tres` |
+| Rustjack | Scavenger Clans · Salvager; Steals supplies and turns unstable weapons into salvage. | 32 / 4 | 14/8/10 | 3/1/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/rustjack.tres` |
+| AXIOM-7 | AXIOM Collective · Disruptor; Breaks Shields and disrupts production to expose your Hull. | 29 / 16 | 8/14/10 | 1/3/2 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/axiom_7.tres` |
+| The Hollow Choir | Hollow Choir · Predator; Repair cards sustain the hunt while piercing attacks reach your Hull. | 42 / 2 | 12/8/12 | 2/1/3 | Inactive (enemy has no jump mechanic) | Standard | 10 | 1.0 | `ships/enemy/hollow_choir.tres` |
 
 Enemy profiles also serialize EMP Pulse defaults (14 turns, 0 resistance); these are unused. Elite Salvage rewards use the explicit `ExpeditionRules.elite_salvage_multiplier` (default 2); the table shows effective destruction rewards. Other ranks retain their profile rewards.
 
@@ -25,7 +25,7 @@ Exploration escape awards **0 Salvage**. [Starfront Defense](salvage-economy.md)
 
 ## Card preferences
 
-Player starting pools have 25 ordinary Tier 1 identities, three targeted sabotage identities and one ship signature each. Unowned identities remain expedition rewards. All enemies draw the full base library. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
+Player starting pools have 25 ordinary Tier 1 identities, three targeted sabotage identities and one ship signature each. Unowned identities remain expedition rewards. Enemies retain their existing faction decks or base fallback. From System 3, built-in opponents gain up to six suitable Tier 2 additions. Elites and bosses also gain up to three Tier 3 additions from System 3, and ordinary opponents gain up to two from System 5. Multipliers are soft and strictly positive. Category multipliers use the strongest matching preference, then multiply the family weight.
 
 | Ship | Starting identities | Family weights | Effect preferences | Tactical weights | Decision variation | Resource |
 |---|---|---|---|---|---|---|
