@@ -2,6 +2,7 @@ extends "res://scripts/expedition/warzone_state.gd"
 ## Lattice rules for new sectors. The base state handles the existing clock, combat
 ## handoff, campaign outcome and historical three-objective saves.
 
+const Economy = preload("res://scripts/expedition/warzone_economy.gd")
 const Lattice = preload("res://scripts/expedition/warzone_lattice.gd")
 const Operations = preload("res://scripts/expedition/warzone_operations.gd")
 const AlliedOrders = preload("res://scripts/expedition/warzone_allied_orders.gd")
@@ -18,6 +19,7 @@ const PLAYER := -1
 const Layout = preload("res://scripts/expedition/system_layout.gd")
 
 var pattern := 0
+var economy: Economy
 var roles: Array[String] = []
 var links: Array[Vector2i] = []
 var disrupted := {}
@@ -113,6 +115,7 @@ func reserve_entry(side: String, expansion: float) -> Vector3:
 
 func setup_sector(configuration: Resource, strength: int, expansion: float, seed_value: int, system: int) -> void:
 	tuning = configuration
+	economy = Economy.new()
 	expanded_roster = true
 	var generated := Lattice.generate(seed_value, system, expansion)
 	objectives.assign(generated.nodes)
@@ -569,6 +572,7 @@ func _advance_step(player: Vector3, allow_victory: bool) -> void:
 
 
 func _tick(player: Vector3, allow_victory: bool) -> void:
+	if economy != null: economy.pay_supply(self)
 	if (clock_ms / STEP_MS) % maxi(1, tuning.exchange_seconds) == 0:
 		_exchange_damage()
 		_assign_engagements()
@@ -578,6 +582,7 @@ func _tick(player: Vector3, allow_victory: bool) -> void:
 		# The emergency rendezvous remains an allied foothold even after a rout.
 		if index != root("allied"): _capture(index, player)
 		if before != objectives[index].owner:
+			if economy != null: economy.capture(objectives[index].owner, index)
 			_refresh_supply()
 			if objectives[index].owner == "allied":
 				if player.distance_to(objectives[index].position) <= tuning.objective_radius:
@@ -780,8 +785,10 @@ func _exchange_damage() -> void:
 	for fleet in fleets:
 		if damage[fleet.id] <= 0: continue
 		_damage(fleet, damage[fleet.id])
-		if not active(fleet) and fleet.side == "hostile":
-			_award("fleet:%d" % fleet.id, tuning.npc_victory_effort, "Allied strategic victory")
+		if not active(fleet):
+			if economy != null: economy.combat_kill("allied" if fleet.side == "hostile" else "hostile", fleet.id)
+			if fleet.side == "hostile":
+				_award("fleet:%d" % fleet.id, tuning.npc_victory_effort, "Allied strategic victory")
 
 
 func _shot_damage(fleet: Dictionary) -> int:
@@ -837,8 +844,9 @@ func engagement_predictions() -> Dictionary:
 	return predictions
 
 
-func player_victory(hostile_id: int) -> bool:
-	if not super.player_victory(hostile_id): return false
+func player_victory(hostile_id: int, qualifies_for_income: bool = true) -> bool:
+	if not super.player_victory(hostile_id, qualifies_for_income): return false
+	if economy != null and qualifies_for_income: economy.combat_kill("allied", hostile_id)
 	player_intervened = true
 	note_player_aggression(1)
 	_award("fleet:%d" % hostile_id, tuning.victory_effort, "Hostile formation defeated")
@@ -976,6 +984,7 @@ func snapshot() -> Dictionary:
 		"hunter_until": hunter_until, "hunter_contact_at": hunter_contact_at,
 		"hunter_cooldown_until": hunter_cooldown_until, "hunter_count": hunter_count,
 		"response_sites": response_sites.duplicate(), "expanded_roster": expanded_roster}
+	if economy != null: value.lattice.economy = economy.snapshot()
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -1001,6 +1010,9 @@ func restore(data: Variant, configuration: Resource) -> bool:
 	# Read this before the base validates roster slots and their faction identities.
 	expanded_roster = bool(saved.get("expanded_roster", false))
 	if not super.restore(data, configuration): return false
+	if saved.has("economy"):
+		economy = Economy.new()
+		if not economy.restore(saved.economy, objectives.size(), fleets.size(), clock_ms): return false
 	if not Defense.number(saved.get("version"), 2, 3): return false
 	var version := int(saved.version)
 	if not Defense.number(saved.get("pattern"), 0, 5 if version == 2 else Lattice.PATTERNS.size() - 1):

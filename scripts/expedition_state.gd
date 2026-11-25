@@ -1874,7 +1874,7 @@ func record_battle(result: BattleResult) -> bool:
 	if active_battle >= 0:
 		encounters[active_battle].resolution = "escaped" if result.escaped_by_ftl else "defeated"
 		if is_warzone():
-			warzone.player_victory(warzone_fleet(active_battle).id)
+			warzone.player_victory(warzone_fleet(active_battle).id, not result.escaped_by_ftl)
 		if is_defense():
 			defense.neutralize(active_battle)
 			_secure_defense(result)

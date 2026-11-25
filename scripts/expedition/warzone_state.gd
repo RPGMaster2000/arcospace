@@ -371,7 +371,7 @@ func allied_support(hostile_id: int) -> Dictionary:
 	return ally if active(ally) and ally.side == "allied" else {}
 
 
-func player_victory(hostile_id: int) -> bool:
+func player_victory(hostile_id: int, _qualifies_for_income: bool = true) -> bool:
 	var hostile := fleet_at(hostile_id)
 	if complete or not active(hostile) or hostile.side != "hostile":
 		return false
