@@ -4,6 +4,7 @@ const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Persistence = preload("res://scripts/expedition/expedition_persistence.gd")
+const Discoveries = preload("res://scripts/expedition/warzone_discoveries.gd")
 const Sector = preload("res://scripts/expedition/warzone_sector.gd")
 var failures := 0
 
@@ -15,9 +16,9 @@ func check(ok: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 
-func fresh() -> State:
+func fresh(seed_value: int = 19) -> State:
 	var state := State.new()
-	state.start(0, Rules, 19)
+	state.start(0, Rules, seed_value)
 	state.defense.complete = true
 	state.generate_system()
 	return state
@@ -60,6 +61,8 @@ func run() -> void:
 		check(false, "Battle checkpoint can be restored")
 	persistence.store.clear_run()
 	check_automated()
+	check_player_services()
+	check_failed_discovery()
 	print("Warzone preparation: %d failures" % failures)
 	quit(int(failures > 0))
 
@@ -89,3 +92,43 @@ func check_automated() -> void:
 	check(copy.restore(payload, op.tuning), "Prepared engagement save is valid")
 	check(JSON.stringify(copy.engagement_preparation.records) == JSON.stringify(op.engagement_preparation.records),
 		"Engagement bonuses and fractional carry survive save restoration")
+
+
+func check_player_services() -> void:
+	var state := fresh()
+	var op = state.warzone
+	var command: int = op.root("allied")
+	var index: int = command + op.HOSTILE_GROUPS
+	state.navigation.checkpoint_position(State.Defense.wire(op.objectives[command].position))
+	state.salvage = 12
+	var permanent := state.production("reactor")
+	check(state.warzone_operate(index, "prepare:reactor") and state.salvage == 0
+		and op.player_preparation == {"reactor": 1} and state.production("reactor") == permanent,
+		"Personal station purchase costs Salvage and preserves permanent production")
+	state.salvage = 12
+	check(not state.warzone_operate(index, "prepare:quarters") and state.salvage == 12,
+		"Invalid or capped preparation consumes no personal Salvage")
+	var repair: int = op.site("repair")
+	state.navigation.checkpoint_position(State.Defense.wire(op.objectives[repair].position))
+	state.hull = state.ship().hull_capacity - 3
+	check(state.warzone_operate(repair + op.HOSTILE_GROUPS, "prepare:hull")
+		and state.hull == state.ship().hull_capacity and state.salvage == 8,
+		"Personal repair restores actual missing Hull without buying Plating")
+
+
+func check_failed_discovery() -> void:
+	for candidate in range(1, 51):
+		var state := fresh(candidate)
+		for key in state.encounter_positions:
+			var index := int(key)
+			var entry: Dictionary = state.encounters[index]
+			if entry.poi != Discoveries.POIS[1]: continue
+			state.navigation.checkpoint_position(state.warzone_discovery(index))
+			var salvage := state.salvage
+			var hull := state.hull
+			var expected: int = Discoveries.DETOUR_SALVAGE[entry.warzone_detour]
+			check(state.resolve_approach(index, 1, 0.999)
+				and state.salvage == salvage + expected and state.hull == hull - 5
+				and not state.resolve_approach(index, 1, 0.0), "Failed discovery grants base once and keeps the Hull penalty")
+			return
+	check(false, "Seed sample should include a hazardous independent discovery")

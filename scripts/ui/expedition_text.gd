@@ -39,7 +39,7 @@ static func highlight_outcome(value: String) -> String:
 	return result + value.substr(offset)
 
 
-static func approach_text(state: Resource, approach: Resource, contextual: bool = false) -> String:
+static func approach_text(state: Resource, approach: Resource, contextual: bool = false, index: int = -1) -> String:
 	var lines: Array[String] = []
 	if approach.has_meta("strategic_reward"):
 		lines.append(approach.get_meta("strategic_description"))
@@ -62,12 +62,22 @@ static func approach_text(state: Resource, approach: Resource, contextual: bool 
 		)
 	if approach.salvage_cost > 0:
 		lines.append("Cost: %d Salvage" % approach.salvage_cost + (" · Available: %d" % state.salvage if contextual else ""))
+	var success_salvage: int = state.warzone_discovery_payout(index, approach, true)
+	var failure_salvage: int = state.warzone_discovery_payout(index, approach, false)
+	if success_salvage >= 0:
+		var hazard: bool = state.encounter_at(index).poi.hazardous
+		var risky: bool = state.WarzoneOperation.Discoveries.risky(approach)
+		if hazard or risky:
+			var bonuses := PackedStringArray()
+			if risky: bonuses.append("+6 risk")
+			if hazard: bonuses.append("+4 hazard")
+			lines.append("Success bonus · " + " · ".join(bonuses))
 	lines.append(
 		(
 			"%s%% — %s"
 			% [
 				String.num(approach.success_chance * 100, 2).trim_suffix(".0"),
-				compact_outcome(state, approach.success)
+				compact_text(state.describe_outcome(approach.success, success_salvage))
 			]
 		)
 	)
@@ -77,7 +87,7 @@ static func approach_text(state: Resource, approach: Resource, contextual: bool 
 				"%s%% — %s"
 				% [
 					String.num((1.0 - approach.success_chance) * 100, 2).trim_suffix(".0"),
-					compact_outcome(state, approach.failure)
+					compact_text(state.describe_outcome(approach.failure, failure_salvage))
 				]
 			)
 		)

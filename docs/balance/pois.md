@@ -169,3 +169,20 @@ Level = 1 + floor((system - 1) / 3); steps = level - 1. Per extra level: +2 Hull
 Elite selection retains original baseline odds in level 1, then uses min(0.35, available Elite weight / total available weight + steps * 0.025). Each bucket retains profile weights; unavailable buckets fall back. A pool consisting only of Elites has probability 1.
 
 Every 6 systems, starting at system 6, one enemy slot becomes a mandatory existing Boss (nine slots retained). Resolve by combat victory or existing EMP Pulse before normal FTL travel. Both resolve the Boss gate; FTL Access remains a separate objective. Destruction/resource/escape Salvage remains distinct. Escape never transitions systems. Missing mandatory metadata blocks travel.
+
+## Independent Warzone discovery payouts
+
+Warzone classifies a discovery once during generation. It finds the initial
+shortest lattice route from Allied Command to the deep command candidate,
+using edge distances. For each edge on that route, it measures the additional
+distance of replacing the edge with a leg to the discovery and a leg back
+to the route. The least added distance sets the detour class. Nearby is at
+most one median lattice edge, Moderate is at most two, and Remote is farther.
+
+Base Salvage is **12 / 20 / 28**. Successful hazardous discoveries add **4**.
+Successful approaches with a chance of an actual loss add **6**. A loss can
+be Hull damage, a Salvage cost or penalty, or a negative next-battle modifier.
+Failures pay only the base and retain authored penalties. The award replaces
+the authored positive Salvage payout. Card, repair, modifier and environmental
+effects remain. A completed discovery cannot pay twice, and none of these
+detours grant War Effort.

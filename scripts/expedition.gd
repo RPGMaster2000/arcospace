@@ -970,6 +970,8 @@ func show_battle_preview(index: int) -> void:
 		var fleet: Dictionary = state.warzone_fleet(index)
 		var operation = state.warzone
 		_add_fleet_readout(fleet, operation)
+		if operation.is_lattice() and not operation.player_preparation.is_empty():
+			view.add_child(_label("Your preparation · " + State.CombatPreparation.summary(operation.player_preparation), 15))
 		var ally: Dictionary = operation.allied_support(fleet.id)
 		if not ally.is_empty(): _add_fleet_readout(operation.fleet_at(ally.id), operation)
 		if inspecting:
@@ -1001,6 +1003,16 @@ func _add_fleet_readout(fleet: Dictionary, operation: RefCounted) -> void:
 	gauge.value = fleet.strength
 	gauge.accessibility_name = "%s fleet strength %d of %d" % [fleet.side.capitalize(), fleet.strength, gauge.max_value]
 	view.add_child(gauge)
+	if operation.is_lattice() and operation.economy != null:
+		var pending: Dictionary = operation.fleet_preparations.get(str(fleet.id), {})
+		view.add_child(_label("Integrity %d/%d · Effective strength %.1f" %
+			[fleet.strength, gauge.max_value, operation.effective_strength(fleet)], 15))
+		if not pending.is_empty():
+			view.add_child(_label("Next engagement · " + State.CombatPreparation.summary(pending), 15))
+		var frozen: Dictionary = operation.engagement_preparation.records.get(str(fleet.id), {})
+		if not frozen.is_empty() and frozen.offense + frozen.shield + frozen.penalty > 0.001:
+			view.add_child(_label("Engaged · +%.1f attack · %.1f defense · −%.2f disruption" %
+				[frozen.offense, frozen.shield, frozen.penalty], 15))
 	var order: String = operation.fleet_order_text(fleet) if operation.is_lattice() else operation.objective_name(fleet.destination)
 	if operation.is_lattice() and fleet.engaged < 0:
 		var distance: float = (fleet.position as Vector3).distance_to(operation.fleet_target_position(fleet))
@@ -1042,7 +1054,7 @@ func highlight_outcome(value: String) -> String:
 
 
 func approach_text(approach: Resource) -> String:
-	return ExpeditionText.approach_text(state, approach, _uses_3d_map())
+	return ExpeditionText.approach_text(state, approach, _uses_3d_map(), selected_encounter)
 
 
 func show_poi(index: int) -> void:
@@ -1118,8 +1130,26 @@ func _show_warzone_objective(index: int) -> void:
 		if not inspecting:
 			var activate := _button("Activate Operation", _warzone_operation.bind(index, action.id))
 			activate.disabled = not action.enabled
+		_show_warzone_services(index, tint)
 	elif not inspecting:
 		view.add_child(_label("Clear enemy fleets, then hold position to secure this objective.", 17))
+
+
+func _show_warzone_services(index: int, tint: Color) -> void:
+	var offers: Array[Dictionary] = state.warzone_station_services(index)
+	if offers.is_empty(): return
+	view.add_child(HSeparator.new())
+	_add_warzone_inspection_row(WarzoneIcons.icon("fleet", tint), offers[0].title, 19)
+	var personal_repair: bool = offers[0].attribute == "hull"
+	view.add_child(_label("Repair your ship" if personal_repair else "Next engagement preparation", 15))
+	for offer in offers:
+		var text := "%s · %d Salvage · %ds" % [offer.details, offer.cost, offer.seconds]
+		if not offer.enabled: text += " · " + offer.reason
+		if inspecting:
+			view.add_child(_label(text, 15))
+		else:
+			var service := _button(text, _warzone_operation.bind(index, offer.id), not offer.enabled, 54)
+			service.name = "WarzoneService"
 
 
 func _warzone_operation(index: int, id: String) -> void:
@@ -2276,6 +2306,11 @@ func _show_system_details() -> void:
 	elif state.is_warzone():
 		var operation = state.warzone
 		var lines := PackedStringArray(["[b]Warzone reports[/b]", ""])
+		if operation.is_lattice() and operation.economy != null:
+			lines.append("Faction Salvage · Allied %d / Hostile %d" %
+				[operation.economy.wallets.allied, operation.economy.wallets.hostile])
+			lines.append("Personal Salvage · %d" % state.salvage)
+			lines.append("")
 		for index in operation.objectives.size():
 			lines.append("%s · %s" % [operation.objective_name(index), operation.objective_brief(index)])
 		lines.append("")

@@ -228,6 +228,10 @@ func run() -> void:
 	check(not _has_hold(host) and host.view.find_children("*", "Button", true, false).any(
 		func(button): return button.text == "Activate Operation"),
 		"Allied stations omit Hold Position and retain their special operation")
+	var services: Array[Node] = host.view.find_children("WarzoneService", "Button", true, false)
+	check(services.size() == 3 and services.any(
+		func(button): return button.text.contains("Reactor") and button.text.contains("12 Salvage")), "Command station keeps Scramble alongside three production choices")
+	await capture("command-preparation")
 	var hostile_site: int = operation.HOSTILE_GROUPS + operation.root("hostile")
 	host.show_poi(hostile_site)
 	check(not _has_hold(host), "Out-of-range hostile stations do not offer automated capture")
