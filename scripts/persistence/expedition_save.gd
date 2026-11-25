@@ -553,6 +553,8 @@ static func _valid_environment_marker(battle: Dictionary, data: Dictionary) -> b
 	if not battle.has("environment"): return true
 	var snapshot: Variant = battle.environment
 	if not EnvironmentData.valid_snapshot(snapshot): return false
+	if snapshot.has("preparations") and (data.get("game_mode") != "warzone" \
+		or not data.get("warzone", {}).get("lattice", {}).has("economy")): return false
 	var support: Dictionary = snapshot.get("friendly_support", {})
 	if not support.is_empty():
 		var required_mode := "warzone" if support.get("source") == "allied_fleet" else "defense"

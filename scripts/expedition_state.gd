@@ -11,6 +11,7 @@ signal warzone_advanced(target_lost: bool)
 const Defense = preload("res://scripts/expedition/defense_state.gd")
 const CampaignSupport = preload("res://scripts/expedition/campaign_support.gd")
 const Warzone = preload("res://scripts/expedition/warzone_state.gd")
+const CombatPreparation = preload("res://scripts/combat/combat_preparation.gd")
 const StrategicActivity = preload("res://scripts/expedition/strategic_activity.gd")
 const WarzoneOperation = preload("res://scripts/expedition/warzone_operation.gd")
 const TemporalRift = preload("res://scripts/expedition/temporal_rift.gd")
@@ -436,11 +437,22 @@ func battle_environment(index: int) -> Dictionary:
 		index, int(encounters[index].get("modifier", 0)) if index >= 0 and index < encounters.size() else 0)
 	var support := battle_support(index)
 	var advantage: String = poi_effects.mothership if is_defense() and defense.unit_for(index).get("mothership",false) else ""
-	if support.is_empty() and advantage.is_empty(): return snapshot
+	var preparations := warzone_battle_preparations(index)
+	if support.is_empty() and advantage.is_empty() and preparations.is_empty(): return snapshot
 	var combined := snapshot.duplicate(true)
 	if not support.is_empty(): combined.friendly_support = support
 	if not advantage.is_empty(): combined.mothership_advantage = advantage
+	if not preparations.is_empty(): combined.preparations = preparations
 	return EnvironmentData.snapshot(combined)
+
+
+func warzone_battle_preparations(index: int) -> Dictionary:
+	if not is_warzone() or not warzone.is_lattice() or warzone.economy == null: return {}
+	var contact := warzone_fleet(index)
+	if contact.is_empty(): return {}
+	var enemy: Dictionary = warzone.fleet_preparations.get(str(contact.id), {})
+	if enemy.is_empty() and warzone.player_preparation.is_empty(): return {}
+	return {"player": warzone.player_preparation.duplicate(), "enemy": enemy.duplicate()}
 
 
 # Preview is a pure query; only Persistence captures the authoritative entry snapshot.
@@ -1765,6 +1777,13 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 	if setup.enemy_profile != null:
 		setup.enemy_state = ShipState.new()
 		setup.enemy_state.configure_profile(setup.enemy_profile)
+	var preparations: Dictionary = setup.environment.get("preparations", {})
+	if not preparations.is_empty() and is_warzone() and warzone.is_lattice() and warzone.economy != null \
+		and setup.enemy_state != null:
+		CombatPreparation.apply(setup.player_state, preparations.player, preparations.enemy)
+		CombatPreparation.apply(setup.enemy_state, preparations.enemy, preparations.player)
+		warzone.player_preparation.clear()
+		warzone.fleet_preparations.erase(str(warzone_fleet(index).id))
 	setup.salvage = salvage
 	setup.battles_won = battles_won
 	if is_defense(): setup.emp_victory_message = "Enemy systems disabled. Allied recovery forces have secured the vessel."

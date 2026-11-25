@@ -1,6 +1,7 @@
 extends RefCounted
 ## Shared scene-free wire model. ExpeditionState owns mutable instances; consumers
 ## receive detached read-only views. Selection is pure and snapshots never track the world.
+const Preparation = preload("res://scripts/combat/combat_preparation.gd")
 const Installations = preload("res://scripts/expedition/defense_installations.gd")
 const NONE = "NONE"
 const ASTEROID_FIELD = "ASTEROID_FIELD"
@@ -125,6 +126,10 @@ static func valid_snapshot(value: Variant) -> bool:
 	if not value.get("instance_id") is String or value.instance_id.length() > 128: return false
 	if not _intensity(value.get("intensity")): return false
 	if value.get("mothership_advantage", "") not in ["", "penetration", "damage"]: return false
+	if value.has("preparations"):
+		var packages: Variant = value.preparations
+		if not packages is Dictionary or packages.size() != 2 or not Preparation.valid(packages.get("player")) \
+			or not Preparation.valid(packages.get("enemy")): return false
 	var support: Variant = value.get("friendly_support", {})
 	if not Installations.valid_support(support): return false
 	if support.has("source") and (

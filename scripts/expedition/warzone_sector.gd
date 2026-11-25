@@ -2,6 +2,7 @@ extends "res://scripts/expedition/warzone_state.gd"
 ## Lattice rules for new sectors. The base state handles the existing clock, combat
 ## handoff, campaign outcome and historical three-objective saves.
 
+const EngagementPreparation = preload("res://scripts/expedition/warzone_engagement_preparation.gd")
 const Stations = preload("res://scripts/expedition/warzone_stations.gd")
 const Preparation = preload("res://scripts/combat/combat_preparation.gd")
 const Economy = preload("res://scripts/expedition/warzone_economy.gd")
@@ -25,6 +26,7 @@ var economy: Economy
 var player_preparation := {}
 var fleet_preparations := {}
 var service_ready := {}
+var engagement_preparation := EngagementPreparation.new()
 var roles: Array[String] = []
 var links: Array[Vector2i] = []
 var disrupted := {}
@@ -775,10 +777,23 @@ func _counterattack(index: int) -> void:
 			_notice("Hostile counterattack toward " + objective_name(index) + ".")
 
 
+func _assign_engagements(announce: bool = false) -> void:
+	super._assign_engagements(announce)
+	if economy != null: engagement_preparation.update(self)
+
+
+func effective_strength(fleet: Dictionary) -> float:
+	return engagement_preparation.effective(fleet) if economy != null else float(fleet.strength)
+
+
+func prepared_shot(fleet: Dictionary) -> float:
+	return engagement_preparation.volley(fleet, _shot_damage(fleet)) if economy != null else float(_shot_damage(fleet))
+
+
 func _exchange_damage() -> void:
 	volley_tick = clock_ms
 	volley.clear()
-	var damage := PackedInt32Array()
+	var damage := PackedFloat64Array()
 	damage.resize(fleets.size())
 	for fleet in fleets:
 		if not active(fleet): continue
@@ -789,10 +804,11 @@ func _exchange_damage() -> void:
 				fleet.strength += 1
 			continue
 		volley.append(Vector2i(fleet.id, fleet.engaged))
-		damage[fleet.engaged] += _shot_damage(fleet)
+		damage[fleet.engaged] += prepared_shot(fleet)
 	for fleet in fleets:
 		if damage[fleet.id] <= 0: continue
-		_damage(fleet, damage[fleet.id])
+		var amount := engagement_preparation.receive(fleet, damage[fleet.id]) if economy != null else int(damage[fleet.id])
+		_damage(fleet, amount)
 		if not active(fleet):
 			if economy != null: economy.combat_kill("allied" if fleet.side == "hostile" else "hostile", fleet.id)
 			if fleet.side == "hostile":
@@ -834,13 +850,13 @@ func engagement_predictions() -> Dictionary:
 					component.append(member.id)
 		var damage := {"allied": 0, "hostile": 0}
 		var strength := {"allied": 0, "hostile": 0}
-		var anchor := HOSTILE_RESERVE + 1
+		var anchor := fleets.size()
 		for id in component:
 			var member := fleet_at(id)
-			strength[member.side] += member.strength
-			if member.engaged in component: damage[member.side] += _shot_damage(member)
+			strength[member.side] += engagement_preparation.effective_defense(member) if economy != null else member.strength
+			if member.engaged in component: damage[member.side] += prepared_shot(member)
 			if member.side == "hostile": anchor = mini(anchor, id)
-		if damage.allied == 0 or damage.hostile == 0 or anchor > HOSTILE_RESERVE: continue
+		if damage.allied == 0 or damage.hostile == 0 or anchor == fleets.size(): continue
 		var allied_endurance: float = float(strength.allied) / damage.hostile
 		var hostile_endurance: float = float(strength.hostile) / damage.allied
 		var intervals: int = tuning.exchange_seconds * STEP_MS
@@ -995,7 +1011,8 @@ func snapshot() -> Dictionary:
 	if economy != null:
 		value.lattice.economy = economy.snapshot()
 		value.lattice.preparation = {"player": player_preparation.duplicate(),
-			"fleets": fleet_preparations.duplicate(true), "ready": service_ready.duplicate()}
+			"fleets": fleet_preparations.duplicate(true), "ready": service_ready.duplicate(),
+			"engagements": engagement_preparation.records.duplicate(true)}
 	if not roles.is_empty(): value.lattice.roles = Array(roles)
 	for key in facility_cooldowns: value.lattice.facility_cooldowns[str(key)] = facility_cooldowns[key]
 	for key in disrupted: value.lattice.disrupted[str(key)] = disrupted[key]
@@ -1226,6 +1243,7 @@ func _restore_preparation(record: Variant) -> bool:
 	var prepared: Variant = record.get("fleets", {})
 	var ready: Variant = record.get("ready", {})
 	if not Preparation.valid(player) or not prepared is Dictionary or not ready is Dictionary: return false
+	if not engagement_preparation.restore(record.get("engagements", {}), fleets.size()): return false
 	for key in prepared:
 		if not str(key).is_valid_int() or not Defense.number(int(key), 0, fleets.size() - 1) \
 			or not Preparation.valid(prepared[key]): return false
