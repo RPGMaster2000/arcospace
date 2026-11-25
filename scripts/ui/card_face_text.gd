@@ -22,11 +22,12 @@ static func condition(rule: Dictionary) -> String:
 	elif rule.has("compare_attribute"):
 		var other: String = rule.compare_attribute
 		var same: bool = other == rule.get("attribute", "hull")
-		threshold = (
-			("yours" if same else "your " + other.capitalize())
-			if rule.get("compare_target", "self") == "self"
-			else ("enemy's" if same else "enemy " + other.capitalize())
-		)
+		if rule.get("compare_target", "self") == "enemy":
+			threshold = "enemy's" if same else "enemy " + other.capitalize()
+		elif rule.get("target", "self") == "self":
+			threshold = other.capitalize()
+		else:
+			threshold = "yours" if same else "your " + other.capitalize()
 	return (
 		"%s%s%s"
 		% [
@@ -39,18 +40,27 @@ static func condition(rule: Dictionary) -> String:
 	)
 
 
-static func rows(effects: Dictionary, family: String) -> Array[String]:
+static func rows(effects: Dictionary, family: String, compact: bool = false) -> Array[String]:
 	var result: Array[String] = []
 	var handled: Array = []
+	var gains: Array = RESOURCES.filter(func(key): return int(effects.get(key, 0)) > 0) if compact else []
+	var combine_gains: bool = compact and gains.size() > 1
 	for key in ["hull", "shields"] + RESOURCES + PRODUCTION.keys():
 		if not effects.has(key):
 			continue
 		handled.append(key)
 		var value: int = effects[key]
 		if PRODUCTION.has(key):
-			result.append("%s prod. %+d." % [PRODUCTION[key], value])
+			if effects.size() == 1:
+				result.append("%s %+d." % [key.capitalize(), value])
+			else:
+				result.append("%s prod. %+d." % [PRODUCTION[key], value])
 		elif key == "hull":
 			result.append(("Repair %d Hull." if value >= 0 else "Lose %d Hull.") % absi(value))
+		elif combine_gains and key in gains:
+			if key == gains[0]:
+				var amounts := gains.map(func(resource): return "%d %s" % [effects[resource], resource.left(1).to_upper()])
+				result.append("Gain %s." % ", ".join(amounts))
 		else:
 			result.append(
 				"%s %d %s." % ["Gain" if value >= 0 else "Lose", absi(value), str(key).capitalize()]
@@ -66,7 +76,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		for key in effects.enemy_production:
 			result.append(
 				(
-					"Enemy %s %+d (min 0)."
+					"Enemy %s %+d."
 					% [str(key).capitalize(), int(effects.enemy_production[key])]
 				)
 			)
@@ -110,7 +120,7 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		result.append("Clear enemy Shields\nif below %d." % effects.shield_collapse_below)
 	if effects.has("break_shields"):
 		handled.append("break_shields")
-		result.append("Break %d Shields." % effects.break_shields)
+		result.append(("Break %d Shld." if compact else "Break %d Shields.") % effects.break_shields)
 	if effects.has("damage"):
 		handled.append("damage")
 		result.append(
@@ -132,7 +142,10 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 			continue
 		handled.append(key)
 		var values: Dictionary = effects[key]
-		if (
+		if key == "steal" and compact and values.size() == 3 \
+			and values.materials == values.energy and values.energy == values.crew:
+			result.append("Steal ≤%d each M/E/C." % values.materials)
+		elif (
 			key == "drain"
 			and values.size() == 3
 			and values.get("materials") == values.get("energy")
@@ -140,13 +153,11 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		):
 			result.append("Drain %d of each enemy resource." % values.materials)
 		else:
+			var format := "Drain %d %s."
+			if key == "steal":
+				format = "Steal ≤%d %s." if compact else "Steal up to %d %s."
 			for kind in values:
-				result.append(
-					(
-						("Steal up to %d %s." if key == "steal" else "Drain %d %s.")
-						% [values[kind], str(kind).capitalize()]
-					)
-				)
+				result.append(format % [values[kind], str(kind).capitalize()])
 	for key in ["sabotage", "random_sabotage"]:
 		if not effects.has(key):
 			continue
@@ -179,10 +190,13 @@ static func rows(effects: Dictionary, family: String) -> Array[String]:
 		if not result.is_empty():
 			# Keep explicit timing, without making a long condition header wrap twice.
 			result[-1] += " Then:"
-		result.append("If " + condition(rule))
-		result.append_array(rows(rule.get("then", {}), family))
+		var comparison := condition(rule)
+		var same_ship: bool = rule.get("target", "self") == rule.get("compare_target", "self")
+		var compares_distinct_stats: bool = rule.has("compare_attribute") and rule.compare_attribute != rule.get("attribute")
+		result.append(comparison + "?" if same_ship and compares_distinct_stats else "If " + comparison)
+		result.append_array(rows(rule.get("then", {}), family, compact))
 		if not rule.get("else", {}).is_empty():
-			var otherwise := rows(rule["else"], family)
+			var otherwise := rows(rule["else"], family, compact)
 			if not otherwise.is_empty():
 				# Positive gains and damage retain their full amount/resource/type.
 				# The branch label already establishes this as an action.
@@ -206,6 +220,8 @@ static func card_text(card: Resource) -> String:
 		return Data.describe_effects(card.effects).replace("; ", "\n")
 
 	var text := rows(card.effects, card.family)
+	if text.size() >= 5 or card.effects.get("steal", {}).size() > 1:
+		text = rows(card.effects, card.family, true)
 	if card.play_again:
 		text.append("Play again.")
 	return "\n".join(text)

@@ -41,7 +41,7 @@ func run() -> void:
 		var target_before: Dictionary = target.duplicate()
 		check(Effects.play(card, actor, target) and (actor != payment_only or target != target_before),
 			"Tier 2 changes combat/economy state beyond payment: " + card.card_name)
-	check(counts == {"materials":8,"energy":9,"crew":9}, "Twenty-six Tier 2 cards including the prototypes")
+	check(counts == {"materials":14,"energy":15,"crew":15}, "Forty-four Tier 2 cards including the prototypes and expansion")
 	hand.free()
 	var board = load("res://scenes/board_3d.tscn").instantiate()
 	board.setup_settings = {"modifier":5}

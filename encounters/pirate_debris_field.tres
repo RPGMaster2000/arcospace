@@ -71,10 +71,11 @@ hull = -7
 
 [sub_resource type="Resource" id="Success3"]
 script = ExtResource("Outcome")
-blurb = "Boarding teams seize uncommon technology."
+blurb = "Boarding teams recover an exceptional weapon design."
 salvage = 14
 hull = -4
 card_reward = true
+rare_card_reward = true
 minimum_card_tier = 2
 
 [sub_resource type="Resource" id="Approach3"]

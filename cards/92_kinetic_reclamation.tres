@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Kinetic Reclamation"
+tier = 2
+family = "materials"
+cost = 14
+allocation_category = "offense"
+description = "Enemy Shields ≤5: 11 piercing damage, +4 Energy. Else remove 10 Shields, +3 Energy."
+effects = {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 11, "pierce": 1.0, "energy": 4}, "else": {"break_shields": 10, "energy": 3}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 13, "pierce": 1.0, "energy": 5}, "else": {"break_shields": 12, "energy": 4}}}, {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 15, "pierce": 1.0, "energy": 6}, "else": {"break_shields": 14, "energy": 5}}}])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Execution Beam"
+tier = 2
+family = "energy"
+cost = 14
+allocation_category = "offense"
+description = "Deal 10 damage. If enemy Shields are zero after the hit, deal 6 more."
+effects = {"damage": 10, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 6}}}
+upgrade_effects = Array[Dictionary]([{"damage": 12, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 7}}}, {"damage": 14, "conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 8}}}])

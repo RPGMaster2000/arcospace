@@ -29,9 +29,15 @@ func _initialize() -> void:
 	deck.pending_choice = "card"
 	deck.card_offers = deck.random_card_offers(profile, rules, rng, 2)
 	for card in deck.card_offers:
-		check(card.tier >= 2, "Tier restriction")
-	var incoming: Resource = deck.card_offers[0]
-	check(not deck.choose_card(0, profile, rules).is_empty(), "Acquire valid offer")
+		check(card.tier == 2, "Ordinary draft honors the Tier 2 minimum without offering Tier 3")
+	# The draft may still contain prototypes with no upgrade definitions.
+	var choice: int = deck.card_offers.find_custom(func(card): return card.max_upgrades == 2)
+	check(choice >= 0, "Draft includes an upgradeable card for the upgrade transaction checks")
+	if choice < 0:
+		quit(1)
+		return
+	var incoming: Resource = deck.card_offers[choice]
+	check(not deck.choose_card(choice, profile, rules).is_empty(), "Acquire valid offer")
 	check(deck.choose_card(0, profile, rules).is_empty(), "Acquisition consumed once")
 	check(deck.acquired_draw_weights(rules) == {incoming.identity_key(): rules.acquired_card_draw_weight}, "Acquisition weight unchanged")
 	deck.pending_choice = "card"

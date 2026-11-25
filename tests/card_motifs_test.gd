@@ -33,8 +33,8 @@ func run() -> void:
 		if row.size() == 4:
 			rows[int(row[0])] = row
 	check(
-		Cards.CARDS.size() == 88 and rows.size() == 80 and Motifs.ASSIGNMENTS.size() == 81,
-		"All 80 shared identities plus one private enemy entry"
+		Cards.CARDS.size() == 115 and rows.size() == 80 and Motifs.ASSIGNMENTS.size() == 108,
+		"Original 80 assignments, 27 synergy motifs and one private enemy entry"
 	)
 	var view = Scene.instantiate()
 	root.add_child(view)
@@ -42,7 +42,11 @@ func run() -> void:
 	for base in Cards.CARDS:
 		var number: int = base.resource_path.get_file().get_slice("_", 0).to_int()
 		if not rows.has(number):
-			check(Motifs.texture_for(base) == null, "New unmapped cards keep placeholder")
+			if base in Cards.SYNERGY_CARDS:
+				for level in range(3):
+					check(Motifs.texture_for(base.with_upgrade(level)) != null, "Synergy artwork survives upgrades")
+			else:
+				check(Motifs.texture_for(base) == null, "Unmapped prototypes keep placeholder")
 			continue
 		var expected: PackedStringArray = rows[number]
 		check(

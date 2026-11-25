@@ -12,6 +12,8 @@ class_name EncounterOutcome
 ## EMP Pulse offline uses the longest individual duration.
 @export var next_battle: Dictionary = {}
 @export var card_reward: bool = false
+## Reserve a Tier 3 slot for an exceptional successful approach.
+@export var rare_card_reward: bool = false
 @export_range(1, 3, 1) var minimum_card_tier: int = 1
 @export var upgrade_card: bool = false
 @export var resource_choice: int = 0

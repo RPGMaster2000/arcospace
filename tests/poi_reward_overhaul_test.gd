@@ -30,7 +30,14 @@ func fresh(profile: Resource = Ships.PLAYERS[0]) -> Resource:
 
 func settle_choice(run: Resource) -> void:
 	if run.pending_choice == "card":
-		check(run.choose_card(0) and not run.choose_card(0), "Card selection is single-use")
+		if run.player_pool().size() > run.deck_limit():
+			# Hypothetical profiles with no authored deck use the full legacy fallback pool.
+			check(not run.choose_card(0) and run.decline_over_limit_reward()
+				and not run.decline_over_limit_reward(), "Over-capacity decks can decline a new offer once")
+		else:
+			check(run.choose_card(0) and not run.choose_card(0), "Card selection is single-use")
+			if run.pending_choice == "replace":
+				check(run.decline_card() and not run.decline_card(), "At capacity, keep the original deck after choosing")
 	elif run.pending_choice == "upgrade":
 		var key: String = run.upgrade_candidates()[0].identity_key()
 		check(run.choose_upgrade(key) and not run.choose_upgrade(key), "Upgrade selection is single-use")

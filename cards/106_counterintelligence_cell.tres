@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Counterintelligence Cell"
+tier = 2
+family = "crew"
+cost = 13
+allocation_category = "offense"
+description = "At 15+ enemy Crew: drain 10 Crew, gain 6 Energy. Else repair 6 Hull, gain 6 Materials."
+effects = {"conditional": {"target": "enemy", "attribute": "crew", "comparison": "at_least", "threshold": 15, "then": {"drain": {"crew": 10}, "energy": 6}, "else": {"hull": 6, "materials": 6}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "enemy", "attribute": "crew", "comparison": "at_least", "threshold": 15, "then": {"drain": {"crew": 12}, "energy": 7}, "else": {"hull": 8, "materials": 7}}}, {"conditional": {"target": "enemy", "attribute": "crew", "comparison": "at_least", "threshold": 15, "then": {"drain": {"crew": 14}, "energy": 8}, "else": {"hull": 10, "materials": 8}}}])

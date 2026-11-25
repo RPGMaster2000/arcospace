@@ -26,6 +26,8 @@ var confirm_button: Button
 var decline_button: Button
 var selection: Label
 var incoming_portrait: Button
+var purchase_prices: Dictionary = {}
+var purchase_balance: int = 0
 var selected_card: Resource
 var incoming: Resource
 var mode: String = ""
@@ -124,7 +126,8 @@ func _button(text: String, parent: Node) -> Button:
 # Inputs are disposable presentation snapshots, never an inventory or transaction owner.
 func present(
 	operation: String, cards: Array, remaining: int = 0,
-	incoming_card: Resource = null, capacity: int = 0, result_context: String = ""
+	incoming_card: Resource = null, capacity: int = 0, result_context: String = "",
+	prices: Dictionary = {}, balance: int = 0
 ) -> void:
 	var opening: bool = not shade.visible or closing
 	_stop_motion()
@@ -132,6 +135,8 @@ func present(
 		previous_focus = get_viewport().gui_get_focus_owner()
 	revision += 1
 	mode = operation
+	purchase_prices = prices
+	purchase_balance = balance
 	incoming = incoming_card
 	selected_card = null
 	consumed = false
@@ -222,6 +227,11 @@ func select_card(card: Resource) -> void:
 	selected_card = card
 	gallery.select_identity(card.identity_key())
 	confirm_button.disabled = false
+	if mode == "purchase" and purchase_prices.has(card.identity_key()):
+		var price: int = purchase_prices[card.identity_key()]
+		confirm_button.disabled = purchase_balance < price
+		context.text = ("%d Salvage · Balance after purchase: %d" % [price, purchase_balance - price]
+			if not confirm_button.disabled else "%d Salvage · You have %d" % [price, purchase_balance])
 	_refresh_details()
 
 func _refresh_details() -> void:

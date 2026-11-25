@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Reserve Equalizer"
+tier = 2
+family = "energy"
+cost = 12
+allocation_category = "systems"
+description = "Less Crew than enemy: +10 Crew, +4 Materials. Else +8 Materials, +4 Crew."
+effects = {"conditional": {"target": "self", "attribute": "crew", "comparison": "below", "threshold": 0, "compare_attribute": "crew", "compare_target": "enemy", "then": {"crew": 10, "materials": 4}, "else": {"materials": 8, "crew": 4}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "crew", "comparison": "below", "threshold": 0, "compare_attribute": "crew", "compare_target": "enemy", "then": {"crew": 12, "materials": 5}, "else": {"materials": 10, "crew": 5}}}, {"conditional": {"target": "self", "attribute": "crew", "comparison": "below", "threshold": 0, "compare_attribute": "crew", "compare_target": "enemy", "then": {"crew": 14, "materials": 6}, "else": {"materials": 12, "crew": 6}}}])

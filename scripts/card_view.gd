@@ -13,6 +13,7 @@ const ThemeStyle = preload("res://scripts/ui/card_theme.gd")
 const ART_TOP := 68.0
 const BODY_TOP := 131.0
 const INK := Color("edf4fa")
+const TIER_THREE_INK := Color("f4d58a")
 var family_tint := Color.WHITE
 # Optional title for a read-only enemy reveal; never stored on CardData.
 var display_title := ""
@@ -118,6 +119,13 @@ func title_text(name: String) -> String:
 	var font: Font = $TitleLabel.get_theme_font("font")
 	var first := ""
 	var words := title.split(" ")
+	var font_size: int = presentation_settings.card_title_font_size
+	if font.get_string_size(words[0], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
+		# Fold a long first word below the cost corner while retaining the title size.
+		var split := words[0].length() - 1
+		while split > 1 and font.get_string_size(words[0].left(split) + "-", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
+			split -= 1
+		return words[0].left(split) + "-\n" + title.substr(split)
 	while not words.is_empty():
 		var candidate: String = first + (" " if not first.is_empty() else "") + words[0]
 		if (
@@ -128,7 +136,7 @@ func title_text(name: String) -> String:
 						candidate,
 						HORIZONTAL_ALIGNMENT_LEFT,
 						-1,
-						presentation_settings.card_title_font_size
+						font_size
 					)
 					. x
 				)
@@ -187,6 +195,10 @@ func refresh_card() -> void:
 		("T%d " % card_data.tier if card_data.tier > 1 else "")
 		+ "+".repeat(card_data.upgrade_level)
 	)
+	if card_data.tier == 3:
+		$TierLabel.add_theme_color_override("font_color", TIER_THREE_INK)
+	else:
+		$TierLabel.add_theme_color_override("font_color", Color(0.65, 0.72, 0.78))
 	$CostLabel.text = str(card_data.cost)
 	$DescriptionLabel.text = Summary.card_text(card_data)
 	var artwork: Variant = (

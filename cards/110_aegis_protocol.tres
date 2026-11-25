@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Aegis Protocol"
+tier = 3
+family = "energy"
+cost = 22
+allocation_category = "defense"
+description = "Gain 18 Shields. If Shields already exceed the enemy’s, also gain 10 Materials."
+effects = {"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 18, "materials": 10}, "else": {"shields": 18}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 22, "materials": 12}, "else": {"shields": 22}}}, {"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 26, "materials": 14}, "else": {"shields": 26}}}])

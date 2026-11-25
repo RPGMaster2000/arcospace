@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Automated Assembly Line"
+tier = 2
+family = "materials"
+cost = 15
+allocation_category = "systems"
+description = "+1 Quarters and +4 Energy. At 4+ Synthesizer, also gain 4 Crew."
+effects = {"quarters": 1, "energy": 4, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 4}}}
+upgrade_effects = Array[Dictionary]([{"quarters": 1, "energy": 5, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 5}}}, {"quarters": 1, "energy": 6, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 6}}}])

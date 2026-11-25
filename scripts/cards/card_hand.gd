@@ -17,8 +17,10 @@ var last_replaced_identity: String = ""
 @export_range(1, 6, 1) var max_copies: int = 2
 ## TUNE: Tier 2 chance when the hand has room: 0.15 = 15%.
 @export_range(0.0, 1.0, 0.01) var tier_two_chance: float = 0.15
-## TUNE: Tier 3 chance, reserved for future cards. Zero disables random Tier 3 draws.
-@export_range(0.0, 1.0, 0.01) var tier_three_chance: float = 0.0
+## TUNE: Tier 3 chance when eligible. Zero disables random Tier 3 draws.
+@export_range(0.0, 1.0, 0.01) var tier_three_chance: float = 0.05
+## Tier 3 unlocks independently of Tier 2.
+@export_range(0, 20, 1) var tier_three_locked_turns: int = 5
 ## TUNE: Tier 2 is unavailable through this full round, including opening hands.
 @export_range(0, 20, 1) var tier_two_locked_turns: int = 2
 var identity_weights: Dictionary = {}
@@ -114,11 +116,12 @@ func draw_card(excluded_slot: int = -1, required_family: String = "") -> Resourc
 			buckets[card.tier].append(card)
 	var roll: float = rng.randf()
 	var tier: int = 1
-	if roll < tier_three_chance:
-		tier = 3
-	elif roll < tier_three_chance + clampf(tier_two_chance * drop_multiplier, 0, 1):
+	var tier_two_rate := clampf(tier_two_chance * drop_multiplier, 0, 1.0)
+	if roll < tier_two_rate:
 		tier = 2
-	# Full Tier 2 hands fall back to Tier 1; probabilities are per eligible draw.
+	elif roll < tier_two_rate + tier_three_chance:
+		tier = 3
+	# A locked, empty or occupied higher tier falls back to Tier 1.
 	var eligible: Array = buckets[tier] if not buckets[tier].is_empty() else buckets[1]
 	if eligible.is_empty():
 		# Incomplete custom pools must not block a valid draw; bundled player pools meet 2/2/2.
@@ -160,7 +163,8 @@ func _draw_weight(card: Resource) -> float:
 
 # Count identities excluding the replaced slot; upgrades keep original rarity and duplicate identity.
 func _eligible(card: Resource, excluded_slot: int) -> bool:
-	if card.tier > 1 and current_round <= tier_two_locked_turns:
+	if (card.tier == 2 and current_round <= tier_two_locked_turns
+		or card.tier == 3 and current_round <= tier_three_locked_turns):
 		return false
 	var copies: int = 0
 	for slot in range(cards.size()):

@@ -20,10 +20,10 @@ func _initialize() -> void:
 func snapshot() -> Dictionary:
 	return {"hull":30,"shields":10,"materials":100,"energy":100,"crew":100,"synthesizer":2,"reactor":2,"quarters":2}
 func run() -> void:
-	check(Cards.CARDS.size() == 88, "Expanded library has 88 identities")
+	check(Cards.CARDS.size() == 115, "Expanded library has 115 identities")
 	for card in Cards.CARDS:
 		var original: Dictionary = card.effects.duplicate(true)
-		if Cards.CARDS.find(card) >= 80:
+		if card in Cards.PROTOTYPES:
 			check(card.max_upgrades == 0 and card.with_upgrade(2).upgrade_level == 0, "Prototype uses authored base effects: " + card.card_name)
 			continue
 		check(card.upgrade_effects.size() == 2 and card.upgrade_level == 0, "Two upgrade definitions: " + card.card_name)

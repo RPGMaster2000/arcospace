@@ -40,12 +40,12 @@ failure = SubResource("Failure1")
 
 [sub_resource type="Resource" id="Failure2"]
 script = ExtResource("Outcome")
-blurb = "Choose one of the dealer's three available designs."
+blurb = "Browse the dealer's available designs."
 card_reward = true
 
 [sub_resource type="Resource" id="Success2"]
 script = ExtResource("Outcome")
-blurb = "Choose one of the dealer's three available designs."
+blurb = "Browse the dealer's available designs."
 card_reward = true
 
 [sub_resource type="Resource" id="Approach2"]

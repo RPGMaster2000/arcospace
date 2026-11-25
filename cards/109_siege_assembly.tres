@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Siege Assembly"
+tier = 3
+family = "materials"
+cost = 24
+allocation_category = "offense"
+description = "Enemy Shields ≤5: 17 piercing damage, +8 Crew. Else remove 16 Shields, then deal 9 damage."
+effects = {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 17, "pierce": 1.0, "crew": 8}, "else": {"break_shields": 16, "damage": 9}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 20, "pierce": 1.0, "crew": 9}, "else": {"break_shields": 19, "damage": 11}}}, {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "at_most", "threshold": 5, "then": {"damage": 23, "pierce": 1.0, "crew": 10}, "else": {"break_shields": 22, "damage": 13}}}])

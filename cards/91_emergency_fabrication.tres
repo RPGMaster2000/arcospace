@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Emergency Fabrication"
+tier = 2
+family = "materials"
+cost = 12
+allocation_category = "defense"
+description = "Repair 8 Hull. At 4+ Synthesizer, also gain 6 Crew."
+effects = {"hull": 8, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 6}}}
+upgrade_effects = Array[Dictionary]([{"hull": 10, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 7}}}, {"hull": 12, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "at_least", "threshold": 4, "then": {"crew": 8}}}])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Shield Dividend"
+tier = 2
+family = "energy"
+cost = 10
+allocation_category = "defense"
+description = "Gain 8 Shields. If Shields already exceed the enemy’s, also gain 7 Materials."
+effects = {"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 8, "materials": 7}, "else": {"shields": 8}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 10, "materials": 8}, "else": {"shields": 10}}}, {"conditional": {"target": "self", "attribute": "shields", "comparison": "above", "threshold": 0, "compare_attribute": "shields", "compare_target": "enemy", "then": {"shields": 12, "materials": 9}, "else": {"shields": 12}}}])

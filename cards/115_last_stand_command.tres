@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Last Stand Command"
+tier = 3
+family = "crew"
+cost = 24
+allocation_category = "defense"
+description = "Gain 10 Shields. Below 50% Hull, repair 18 Hull. Else deal 10 damage."
+effects = {"shields": 10, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 18}, "else": {"damage": 10}}}
+upgrade_effects = Array[Dictionary]([{"shields": 12, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 21}, "else": {"damage": 12}}}, {"shields": 14, "conditional": {"target": "self", "attribute": "hull", "comparison": "below", "threshold": 0.5, "fraction_of": "hull_capacity", "then": {"hull": 24}, "else": {"damage": 14}}}])

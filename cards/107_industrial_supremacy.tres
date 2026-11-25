@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Industrial Supremacy"
+tier = 3
+family = "materials"
+cost = 24
+allocation_category = "systems"
+description = "Gain 16 Energy, 16 Crew and +1 Reactor."
+effects = {"energy": 16, "crew": 16, "reactor": 1}
+upgrade_effects = Array[Dictionary]([{"energy": 18, "crew": 18, "reactor": 1}, {"energy": 20, "crew": 20, "reactor": 1}])

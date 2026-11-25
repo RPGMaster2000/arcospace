@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Reactor Cascade"
+tier = 2
+family = "energy"
+cost = 15
+allocation_category = "systems"
+description = "+1 Reactor. At 4+ Reactor before play, gain 8 Materials. Else gain 5 Shields."
+effects = {"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"reactor": 1, "materials": 8}, "else": {"reactor": 1, "shields": 5}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"reactor": 1, "materials": 10}, "else": {"reactor": 1, "shields": 7}}}, {"conditional": {"target": "self", "attribute": "reactor", "comparison": "at_least", "threshold": 4, "then": {"reactor": 1, "materials": 12}, "else": {"reactor": 1, "shields": 9}}}])

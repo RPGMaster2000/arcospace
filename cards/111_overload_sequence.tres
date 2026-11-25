@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Overload Sequence"
+tier = 3
+family = "energy"
+cost = 26
+allocation_category = "offense"
+description = "Enemy Shields already zero: 24 damage, +6 Crew. Else remove 20 Shields, then deal 10 damage."
+effects = {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 24, "crew": 6}, "else": {"break_shields": 20, "damage": 10}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 27, "crew": 7}, "else": {"break_shields": 23, "damage": 12}}}, {"conditional": {"target": "enemy", "attribute": "shields", "comparison": "equal", "threshold": 0, "then": {"damage": 30, "crew": 8}, "else": {"break_shields": 26, "damage": 14}}}])

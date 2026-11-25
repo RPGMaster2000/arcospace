@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Deep Cover"
+tier = 2
+family = "crew"
+cost = 14
+allocation_category = "offense"
+description = "At 3+ enemy Reactor: −1 Reactor, steal up to 6 Energy. Else drain 8 Energy, gain 5 Shields."
+effects = {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 3, "then": {"enemy_production": {"reactor": -1}, "steal": {"energy": 6}}, "else": {"drain": {"energy": 8}, "shields": 5}}}
+upgrade_effects = Array[Dictionary]([{"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 3, "then": {"enemy_production": {"reactor": -1}, "steal": {"energy": 8}}, "else": {"drain": {"energy": 10}, "shields": 6}}}, {"conditional": {"target": "enemy", "attribute": "reactor", "comparison": "at_least", "threshold": 3, "then": {"enemy_production": {"reactor": -1}, "steal": {"energy": 10}}, "else": {"drain": {"energy": 12}, "shields": 7}}}])

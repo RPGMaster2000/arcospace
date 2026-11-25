@@ -1285,14 +1285,14 @@ func resolve_approach(index: int, approach_index: int, forced_roll: float = -1.0
 	last_outcome = outcome.blurb + "\n" + describe_outcome(outcome, payout)
 	if approach.salvage_cost > 0:
 		last_outcome += "\nSpent %d Salvage." % approach.salvage_cost
-	_apply_outcome(outcome, payout)
+	_apply_outcome(outcome, payout, index, approach_index)
 	_spend_activity_time(rules.defense_tuning.poi_seconds, progress_committed.emit, present)
 	return true
 
 
 # Apply immediate Hull/Salvage and queue next-battle modifiers plus at most one choice type.
 # EXTEND: New reward fields also need EncounterOutcome, describe_outcome and expedition UI/test coverage.
-func _apply_outcome(outcome: Resource, discovery_salvage: int = -1) -> void:
+func _apply_outcome(outcome: Resource, discovery_salvage: int = -1, index: int = -1, approach: int = -1) -> void:
 	salvage += outcome.salvage if discovery_salvage < 0 else discovery_salvage + mini(0, outcome.salvage)
 	# Combined Hull model: neutral outcomes preserve purchased plating. Positive PoI repairs
 	# cannot add plating; damaging PoIs reduce the combined total (agreed single-value rule).
@@ -1302,7 +1302,10 @@ func _apply_outcome(outcome: Resource, discovery_salvage: int = -1) -> void:
 		hull = mini(ship().hull_capacity, hull + outcome.hull)
 	add_modifiers(outcome.next_battle)
 	if outcome.card_reward:
-		last_outcome += _deck.start_card_reward(ship(), rules, rng, outcome.minimum_card_tier)
+		var reward_rng := RandomNumberGenerator.new()
+		reward_rng.seed = hash([seed_used, system_number, index, approach, last_poi_success, "poi_cards"])
+		var rare: bool = last_poi_success == 1 and outcome.rare_card_reward
+		last_outcome += _deck.start_card_reward(ship(), rules, reward_rng, outcome.minimum_card_tier, rare)
 	elif outcome.upgrade_card:
 		if upgrade_candidates().is_empty():
 			salvage += rules.unavailable_upgrade_salvage
@@ -1364,12 +1367,12 @@ func describe_outcome(outcome: Resource, discovery_salvage: int = -1) -> String:
 	for key in outcome.next_battle:
 		parts.append("%+d %s next battle" % [outcome.next_battle[key], LABELS.get(key, key)])
 	if outcome.card_reward:
-		parts.append(
-			(
-				"Choose 1 of 3 %scards"
-				% ("uncommon-or-better " if outcome.minimum_card_tier > 1 else "")
-			)
-		)
+		var label := "Choose 1 of up to 5 cards"
+		if outcome.rare_card_reward or outcome.minimum_card_tier == 3:
+			label += " · Tier 3 option if unowned"
+		elif outcome.minimum_card_tier == 2:
+			label += " · Tier 2"
+		parts.append(label)
 	if outcome.upgrade_card:
 		parts.append("Upgrade one player card")
 	if outcome.resource_choice > 0:
@@ -1465,6 +1468,13 @@ func service_cost(slot: int, repair_amount: int = 1) -> int:
 	return approach.salvage_cost
 
 
+const RARE_CARD_PRICE := 25
+
+
+func service_card_cost(slot: int, card: Resource) -> int:
+	return RARE_CARD_PRICE if card != null and card.tier == 3 else service_cost(slot)
+
+
 func service_card_offers(slot: int) -> Array[Resource]:
 	var candidates: Array[Resource] = []
 	if service.is_empty() or slot < 0 or slot >= service.poi.approaches.size():
@@ -1472,6 +1482,8 @@ func service_card_offers(slot: int) -> Array[Resource]:
 	var reward: Resource = service.poi.approaches[slot].success
 	if not reward.card_reward: return candidates
 	candidates = available_reward_cards(reward.minimum_card_tier)
+	if system_number < 3:
+		candidates = candidates.filter(func(card): return card.tier < 3)
 	var shop_rng := RandomNumberGenerator.new()
 	shop_rng.seed = hash([seed_used, system_number, service_revision, slot, "outpost_cards"])
 	var offers: Array[Resource] = []
@@ -1481,6 +1493,8 @@ func service_card_offers(slot: int) -> Array[Resource]:
 		var card: Resource = bucket[shop_rng.randi_range(0, bucket.size() - 1)]
 		offers.append(card)
 		candidates.erase(card)
+		if tier == 3:
+			candidates = candidates.filter(func(candidate): return candidate.tier < 3)
 	while not candidates.is_empty() and offers.size() < 6:
 		offers.append(candidates.pop_at(shop_rng.randi_range(0, candidates.size() - 1)))
 	return offers
@@ -1492,16 +1506,17 @@ func service_locked_reason(slot: int) -> String:
 	if slot < 0 or slot >= service.poi.approaches.size():
 		return "Unknown service"
 	var approach: Resource = service.poi.approaches[slot]
-	if (
-		approach.success.card_reward
-		and available_reward_cards(approach.success.minimum_card_tier).is_empty()
-	):
-		return "No unowned cards meet this reward's minimum tier"
-	if approach.success.card_reward and player_pool().size() >= deck_limit():
-		return "Deck full"
+	var cost: int = service_cost(slot)
+	if approach.success.card_reward:
+		var offers := service_card_offers(slot)
+		if offers.is_empty():
+			return "No unowned cards meet this reward's minimum tier"
+		if player_pool().size() >= deck_limit():
+			return "Deck full"
+		var prices := offers.map(func(card): return service_card_cost(slot, card))
+		cost = int(prices.min())
 	if approach.success.hull > 0 and hull >= station_hull_ceiling():
 		return "Ablative Plating Full"
-	var cost: int = service_cost(slot)
 	if salvage < cost:
 		return "Requires %d Salvage (you have %d)" % [cost, salvage]
 	return ""
@@ -1519,7 +1534,7 @@ func purchase_service(slot: int, revision: int, repair_amount: int = 0, card_ind
 		var offers := service_card_offers(slot)
 		if card_index < 0 or card_index >= offers.size(): return false
 		chosen = offers[card_index]
-	var cost: int = service_cost(slot, repair_amount)
+	var cost: int = service_card_cost(slot, chosen) if chosen != null else service_cost(slot, repair_amount)
 	if cost < 0 or cost > salvage:
 		return false
 	# Validate everything before spending; consume confirmation before applying any reward.
@@ -1624,22 +1639,13 @@ func choose_battle_reward(acquire: bool) -> bool:
 	return true
 
 
-func _offer_battle_reward(count: int) -> void:
+func _offer_battle_reward(count: int, rare: bool = false) -> void:
 	if player_pool().size() > deck_limit():
 		start_upgrade_event(count)
 		return
-	var candidates := available_reward_cards(2)
-	var offers: Array[Resource] = []
 	var reward_rng := RandomNumberGenerator.new()
 	reward_rng.seed = hash([seed_used, system_number, active_battle, "victory_cards"])
-	for tier in [2, 3]:
-		var bucket := candidates.filter(func(card): return card.tier == tier)
-		if bucket.is_empty(): continue
-		var card: Resource = bucket[reward_rng.randi_range(0, bucket.size() - 1)]
-		offers.append(card)
-		candidates.erase(card)
-	while not candidates.is_empty() and offers.size() < 5:
-		offers.append(candidates.pop_at(reward_rng.randi_range(0, candidates.size() - 1)))
+	var offers := _deck.random_card_offers(ship(), rules, reward_rng, 1, rare)
 	if offers.is_empty():
 		start_upgrade_event(count)
 		return
@@ -1791,11 +1797,12 @@ func prepare_battle(index: int = -1, enemy_data: Resource = null, environment: D
 	setup.emp_offline = maxi(0, modifier_value("emp_pulse_offline"))
 	setup.player_cards = player_pool()
 	setup.identity_weights = acquired_draw_weights()
-	setup.enemy_cards = (
-		setup.enemy_profile.starting_cards.duplicate()
-		if setup.enemy_profile != null and not setup.enemy_profile.starting_cards.is_empty()
-		else shared_pool()
-	)
+	var source_profile: Resource = enemy_data
+	if source_profile == null:
+		if index >= 0 and index < encounters.size() and encounters[index].kind == "battle":
+			source_profile = encounters[index].get("enemy_data", Ships.ENEMIES[int(encounters[index].get("enemy", 0))])
+	var built_in := source_profile != null and source_profile.resource_path.begins_with("res://ships/enemy/")
+	setup.enemy_cards = Deck.enemy_pool(setup.enemy_profile, system_number, built_in)
 	pending_bonuses.clear()
 	pending_penalties.clear()
 	return setup
@@ -1941,9 +1948,8 @@ func record_battle(result: BattleResult) -> bool:
 		if count > 0:
 			last_outcome = "Combat victory. Choose your reward."
 			var rank: int = enemy_profile(encounters[active_battle]).enemy_rank
-			var lattice_interception: bool = is_warzone() and warzone.is_lattice() and rank == 1
-			if (rank == 0 or lattice_interception) and not encounters[active_battle].get("chasedown", false):
-				_offer_battle_reward(count)
+			if not encounters[active_battle].get("chasedown", false):
+				_offer_battle_reward(count, rank >= 1)
 			else:
 				start_upgrade_event(count)
 

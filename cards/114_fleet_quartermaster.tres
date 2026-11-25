@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+card_name = "Fleet Quartermaster"
+tier = 3
+family = "crew"
+cost = 24
+allocation_category = "systems"
+description = "Gain 15 Materials and 10 Energy. +1 Synthesizer if below own Reactor, else +1 Reactor."
+effects = {"materials": 15, "energy": 10, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "self", "then": {"synthesizer": 1}, "else": {"reactor": 1}}}
+upgrade_effects = Array[Dictionary]([{"materials": 17, "energy": 12, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "self", "then": {"synthesizer": 1}, "else": {"reactor": 1}}}, {"materials": 19, "energy": 14, "conditional": {"target": "self", "attribute": "synthesizer", "comparison": "below", "threshold": 0, "compare_attribute": "reactor", "compare_target": "self", "then": {"synthesizer": 1}, "else": {"reactor": 1}}}])

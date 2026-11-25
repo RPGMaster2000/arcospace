@@ -1,6 +1,7 @@
 extends SceneTree
 const State = preload("res://scripts/expedition_state.gd")
 const Rules = preload("res://encounters/expedition_rules.tres")
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Repairs = preload("res://scripts/repair_rules.gd")
 var failures: int = 0
 var checks: int = 0
@@ -136,8 +137,10 @@ func economy_checks(ship_index: int) -> void:
 		var rng_before: int = run.rng.state
 		var offers: Array = run.service_card_offers(2)
 		check(offers.size() == 6 and offers == run.service_card_offers(2), "Six deterministic browsable cards")
-		check(not run.purchase_service(2, revision) and run.salvage == 100 - 15 * n, "No payment without selection")
-		check(run.purchase_service(2, revision, 0, n) and run.salvage == 100 - 15 * (n + 1), "One atomic purchase")
+		var balance_before: int = run.salvage
+		var price: int = 25 if offers[n].tier == 3 else 15
+		check(not run.purchase_service(2, revision) and run.salvage == balance_before, "No payment without selection")
+		check(run.purchase_service(2, revision, 0, n) and run.salvage == balance_before - price, "One atomic purchase at its rarity price")
 		check(run.acquired_cards.has(offers[n]) and not run.purchase_service(2, revision, 0, n), "Selected card granted once")
 		check(run.rng.state == rng_before, "Shop randomness has a private stream")
 	check(run.acquired_cards.size() == 3 and run.shared_pool() == enemy_pool_before and run.player_pool().size() == 32, "Acquisitions extend only the ship's player pool")
@@ -181,7 +184,11 @@ func economy_checks(ship_index: int) -> void:
 	board.setup_settings = {"player_ship":ship_index, "enemy_ship":0, "modifier":0}
 	board.expedition = run
 	board.get_node("BattleEffects").enabled = false
+	# This fixture measures first-turn income, after the presentation hook runs.
+	var skip_before := Preferences.skip_cinematics()
+	Preferences.set_skip_cinematics(true)
 	root.add_child(board)
+	Preferences.set_skip_cinematics(skip_before)
 	check(board.player_materials == run.ship().materials + 15 - floori(run.ship().materials * 0.5) + run.production("synthesizer"), "Supply stacking and fifty-percent cap reach real battle")
 	check(run.pending_bonuses.is_empty() and run.pending_penalties.is_empty(), "Purchased modifiers consumed on battle entry")
 	board.free()

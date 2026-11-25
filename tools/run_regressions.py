@@ -12,7 +12,7 @@ from pathlib import Path
 from regression_support import completion_for, markdown, select_shard, write_summary
 
 
-TIMEOUTS = {"card_progression_test": 600, "card_tier_test": 300, "poi_reward_overhaul_test": 600, "power_allocation_test": 300, "trading_outpost_ui_test": 600, "travel_battle_test": 600, "ui_overhaul_test": 600}
+TIMEOUTS = {"card_progression_test": 600, "card_tier_test": 300, "poi_reward_overhaul_test": 600, "power_allocation_test": 300, "trading_outpost_test": 360, "trading_outpost_ui_test": 600, "travel_battle_test": 600, "ui_overhaul_test": 600}
 
 RENDER_ONLY = {"enemy_models_visual_test.gd"}  # Awaits frame_post_draw.
 ERRORS = re.compile(r"SCRIPT ERROR|ERROR:|Parse Error|Compile Error|Assertion failed|\b[1-9][0-9]* failures\b")
