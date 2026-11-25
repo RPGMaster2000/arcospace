@@ -36,3 +36,38 @@ Developer Testing exposes environment, size, home region, stellar configuration 
 The geography test compares 360 seeds each at Systems 3, 4 and 5 with the Phase 3 generator. Run `starfront_environment_geometry_test.gd` for distributions and fairness checks. The paired policy study uses `defense_warfare_strategies.gd` with and without `-- --legacy-geography`. Its map simulation uses real movement, interceptions and PoI resolution, and assumes each reached card battle ends in victory. This isolates the effects of travel and placement. The rendered comparison script accepts `--capture-all` after the renderer argument and writes Godot screenshots under `.godot/testlogs/later-starfront`.
 
 History stores only the last committed archetype. Current Defense saves already carry it in the environmental profile, while other campaign modes carry the prior value separately. Historical sectors keep their committed geometry. Navigable planets use saved positions, sizes and types. Decorative planets are still reconstructed by the existing seeded visual layer. Companion stars have no separate illumination or combat modifier.
+
+## Measured geometry
+
+The paired sweep used 1,080 sectors per version, with 360 seeds at each stage. The table reports per-sector means from the new generator. Directional concentration is the length of the mean unit direction from the star to each destination. A value near one means destinations largely share a bearing.
+
+| Archetype | Width | Homeworld radius | PoIs | Mean PoI separation, previous → new | Directional concentration | Storm coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| Conventional | 68.93 | 25.82 | 7.38 | 27.31 → 28.19 | 0.31 | 0.76% |
+| Scattered | 75.31 | 30.29 | 5.82 | 28.79 → 38.30 | 0.36 | 0.71% |
+| Crowded | 65.12 | 22.37 | 9.56 | 21.31 → 18.94 | 0.69 | 0.88% |
+| Asymmetric | 68.58 | 25.50 | 7.16 | 20.76 → 17.01 | 0.85 | 1.54% |
+| Unstable | 71.04 | 26.63 | 6.92 | 27.62 → 27.46 | 0.32 | 1.91% |
+| Storm-dominated | 72.14 | 27.38 | 6.62 | 27.52 → 30.66 | 0.32 | 13.76% |
+| Chaotic | 70.18 | 25.94 | 7.48 | 30.76 → 31.37 | 0.35 | 3.84% |
+
+Previously all sampled maps were 67.20 units wide and the homeworld was 26.40 units from the star. Compact maps now average 60.57 units across, expansive maps 78.85. Their respective average starting travel distances to destinations are 18.17 and 27.69 units. Average planetary orbit separation is 4.34 and 6.47 units. Scattered sectors average 2.13 planetary destinations and crowded ones average 3.69.
+
+Eight sectors used legacy geometry and 34 needed an alternative military placement. Compact sectors accounted for 29 of the alternatives. Every current geometry passed sequential interception and preparation checks. Storm-dominated sectors averaged 1.84 storms against 1.38 previously. Coverage still dropped from 15.23% to 13.76% as the new placement retained clean approach routes. Coverage here is the fraction of a 9 × 9 uniform grid inside a physical storm.
+
+## Strategic policies
+
+The audit ran 54 paired sectors per policy across Systems 3–5 and all six ships. Travel and PoI costs were authoritative. Card battle outcomes were optimistic and the study did not estimate combat difficulty or rewards from defeating enemies.
+
+| Policy | Clearances, previous → new | Total Homeworld damage, previous → new | Mean clear time, previous → new |
+|---|---:|---:|---:|
+| Nearest contact | 54 → 54 | 0 → 0 | 49.54 s → 49.46 s |
+| Most dangerous | 54 → 54 | 0 → 0 | 49.57 s → 49.40 s |
+| Nearby preparation | 54 → 54 | 20 → 20 | 53.07 s → 55.25 s |
+| Economic preparation | 54 → 54 | 100 → 40 | 50.83 s → 51.38 s |
+| Turret defense | 54 → 54 | 0 → 0 | 49.54 s → 49.46 s |
+| Tactical decoys | 54 → 54 | 0 → 0 | 49.54 s → 49.37 s |
+| Early mothership | 54 → 54 | 0 → 0 | 49.54 s → 49.46 s |
+| Long detours | 49 → 50 | 3,610 → 3,020 | 53.50 s → 53.20 s |
+
+Nearest-contact mothership reveal moved from 42.37 to 41.55 strategic seconds and hazardous battles fell from 45 to 40. Both preparation policies used 54 PoIs. Nearby preparation paid 339 Salvage, down from 383. Economic preparation paid 20, down from 42. These particular approaches granted no permanent production. This study samples one preparation per sector, so it does not establish the economy for a player who exhausts a dense map. PoI rewards were left at their existing values.

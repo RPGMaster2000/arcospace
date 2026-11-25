@@ -174,6 +174,14 @@ func _initialize() -> void:
 		and forced.system_variation.home_region == 2 and not forced.system_variation.companion.is_empty(),
 		"Developer settings use the production geometry")
 	check(JSON.stringify(Save.encode(forced)) == JSON.stringify(Save.encode(again)), "Selected seed reproduces the same sector")
+	var tampered := Variation.canonical(Save.encode(forced))
+	tampered.defense.home = [0, 0, 0]
+	check(Save.new().decode(tampered, current) == null, "Invalid homeworld coordinates are rejected")
+	tampered = Variation.canonical(Save.encode(forced))
+	tampered.system_variation.star_radius = 20.0
+	check(Save.new().decode(tampered, current) == null, "Corrupt stellar radius is rejected")
+	check(forced.system_variation.poi_count == forced.encounters.filter(func(item): return item.kind == "poi").size(),
+		"Committed density matches the actual installations")
 	var prior: String = forced.system_variation.archetype
 	forced.defense.complete = true
 	check(forced.generate_system() and forced.system_variation.archetype != prior, "Consecutive defense environments differ")

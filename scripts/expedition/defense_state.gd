@@ -166,7 +166,7 @@ func spawn_position(player: Vector3, reserve: Dictionary = {}) -> Variant:
 			var candidate: Vector3 = center + Vector3(cos(angle), 0, sin(angle)) * distance
 			if absf(candidate.x) > limit or absf(candidate.z) > limit or candidate.length() < stellar_clearance(): continue
 			if candidate.distance_to(player) < tuning.interception_radius + 1.0 or candidate.distance_to(home) < 5: continue
-			if v2 and Geometry3D.get_closest_point_to_segment(Vector3.ZERO, candidate, home).length() < stellar_clearance(): continue
+			if v2 and not Layout.clear_stellar_segment(candidate, home, stellar_clearance()): continue
 			var clear: bool = true
 			for other in units:
 				if other.status == "active" and candidate.distance_to(other.position) < 3.0: clear = false

@@ -51,6 +51,10 @@ static func stellar_clearance(profile: Dictionary) -> float:
 	return maxf(stellar, at.length() + float(companion.radius) + 0.3)
 
 
+static func clear_stellar_segment(from: Vector3, destination: Vector3, clearance: float) -> bool:
+	return Geometry3D.get_closest_point_to_segment(Vector3.ZERO, from, destination).length() >= clearance
+
+
 static func navigable(at: Vector3, expansion: float, margin: float = 0.0) -> bool:
 	return at.is_finite() and absf(at.y) < 0.001 and bounds(expansion).grow(-margin).has_point(Vector2(at.x, at.z))
 

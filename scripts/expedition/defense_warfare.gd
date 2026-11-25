@@ -368,7 +368,7 @@ static func _position(fleet: RefCounted, heading: float, fraction: float) -> Vec
 static func _clear(fleet: RefCounted, at: Vector3, outer: float, occupied: Array) -> bool:
 	if at.length() < outer + 1.6 or at.distance_to(fleet.start) < 7.0 or at.distance_to(fleet.home) < 9.0:
 		return false
-	if Geometry3D.get_closest_point_to_segment(Vector3.ZERO, at, fleet.home).length() < fleet.stellar_clearance():
+	if not Layout.clear_stellar_segment(at, fleet.home, fleet.stellar_clearance()):
 		return false
 	var gap: float = 2.0 * fleet.tuning.interception_radius + 0.75
 	if occupied.any(func(other): return at.distance_to(other) < gap):

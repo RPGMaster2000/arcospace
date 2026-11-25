@@ -408,6 +408,20 @@ func decode(data: Variant, configuration: Resource = Rules) -> Resource:
 	if state.pending_destination >= 0 and state.chasedown_index >= 0:
 		state.travel_destination = -1
 	state.environmental_instances = data.get("environmental_instances", []).duplicate(true)
+	if later:
+		var bounds := State.SystemLayout.bounds(state.layout_expansion)
+		for item in state.environmental_instances:
+			var center := Vector2(item.position[0], item.position[2])
+			if not bounds.grow(0.001).has_point(center): return null
+			if item.type == EnvironmentData.Solar.TYPE:
+				if not center.is_zero_approx() or not is_equal_approx(float(item.configuration.star_radius), float(variation.star_radius)):
+					return null
+			elif item.type == EnvironmentData.Storms.TYPE:
+				var axes := Vector2(item.region.axes[0], item.region.axes[2])
+				var angle: float = item.region.angle
+				var extent := Vector2(absf(cos(angle)) * axes.x + absf(sin(angle)) * axes.y,
+					absf(sin(angle)) * axes.x + absf(cos(angle)) * axes.y)
+				if not bounds.grow(0.001).encloses(Rect2(center - extent, extent * 2.0)): return null
 	var active_rift := State.TemporalRift.active(state.environmental_instances)
 	if state.is_defense():
 		state.rifts.reset(state.seed_used, state.system_number, state.defense.tuning.rift_initial_delay)

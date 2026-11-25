@@ -66,6 +66,7 @@ static func layout(data: Dictionary, snapshot: Dictionary, planetary: Array = []
 			var body: Dictionary = generated_planets[index % generated_planets.size()].duplicate(true)
 			body.merge(orbit, true)
 			body.index = data.planets.size()
+			body.name = "%s %d" % [data.name, body.index]
 			body.encounter = index
 			body.position = data.anchors[index]
 			body.radius = float(planet_sizes[index]) / (1.5 * 1.035)

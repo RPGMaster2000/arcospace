@@ -534,6 +534,7 @@ func _process(delta: float) -> void:
 	for index in label_order:
 		var button = markers[index]
 		if not button.visible or not button.contrast: continue
+		if system_variation.get("version") == 2: continue
 		for other in placed_enemies:
 			if button.get_global_rect().intersects(other.get_global_rect().grow(4)):
 				var right: float = other.position.x + other.size.x + 5.0
@@ -542,6 +543,8 @@ func _process(delta: float) -> void:
 		placed_enemies.append(button)
 	if warzone_view != null and warzone_view.is_lattice():
 		_space_lattice_names(placed_enemies)
+	elif system_variation.get("version") == 2:
+		_space_environment_markers()
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -553,6 +556,32 @@ func _process(delta: float) -> void:
 				behind = true
 				break
 		button.set_secondary(behind)
+
+
+func _space_environment_markers() -> void:
+	var placed: Array = hud_regions.duplicate()
+	if is_instance_valid(defense_effects) and is_instance_valid(defense_effects.home_panel):
+		placed.append(defense_effects.home_panel.get_global_rect())
+	var visible: Array = markers.keys().filter(func(index): return markers[index].visible)
+	if visible.is_empty(): return
+	visible.sort_custom(func(a, b): return markers[a].priority() > markers[b].priority())
+	var bounds := get_global_rect().grow(-3.0)
+	for index in visible:
+		var marker: Control = markers[index]
+		var anchor := camera.unproject_position(objects[index].position)
+		if not Rect2(Vector2.ZERO, size).has_point(anchor): continue
+		var box := marker.get_global_rect()
+		var offsets := [Vector2.ZERO, Vector2(-box.size.x * 0.76, 0), Vector2(box.size.x * 0.76, 0),
+			Vector2(0, -box.size.y - 4), Vector2(0, box.size.y + 4), Vector2(-box.size.x * 0.76, box.size.y),
+			Vector2(box.size.x * 0.76, box.size.y)]
+		for offset in offsets:
+			var position: Vector2 = (box.position + offset).clamp(bounds.position, bounds.end - box.size)
+			var candidate := Rect2(position, box.size)
+			if placed.any(func(other): return other.grow(3.0).intersects(candidate)): continue
+			marker.global_position = position
+			marker.anchor_point = anchor - marker.position
+			placed.append(candidate)
+			break
 
 
 # The map keeps compact icons selectable when nearby labels would overlap.
