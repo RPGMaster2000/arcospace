@@ -37,8 +37,13 @@ extends Resource
 @export var heading_size := 24
 @export var font: Font = preload("res://assets/fonts/emoji_ui.tres")
 @export_range(4, 24) var segments := 12
-## Visual reference only. Ships may have any number of Shields.
-@export_range(1, 200) var shield_reference := 50
+
+@export_group("Battle header")
+@export_range(0.0, 1.0, 0.01) var header_opacity := 0.84
+## Portion of the header's width covered by the gradient toward the outside.
+@export_range(0.1, 1.0, 0.01) var header_horizontal_fade := 0.92
+## Portion of the header's height covered by the downward fade.
+@export_range(0.1, 1.0, 0.01) var header_vertical_fade := 0.42
 
 @export_group("Motion")
 @export var hover_seconds := 0.12

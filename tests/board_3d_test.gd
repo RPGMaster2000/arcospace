@@ -27,6 +27,14 @@ func run() -> void:
 	for strength in [20, 10, 5, 1, 0]:
 		enemy.set_shield_strength(strength)
 		check(is_equal_approx(float(enemy.shield_material.get_shader_parameter("strength")), minf(strength / 10.0, 1.0)), "Shield opacity must follow strength below ten")
+	var previous := 0.0
+	for strength in [10, 50, 100, 200]:
+		enemy.set_shield_strength(strength)
+		var emphasis := float(enemy.shield_material.get_shader_parameter("shell_emphasis"))
+		check(emphasis >= previous and emphasis <= 0.160001, "Shield rim emphasis remains bounded")
+		previous = emphasis
+	check(previous > 0.0, "High Shields add visible rim emphasis")
+	enemy.set_shield_strength(0)
 	var enemy_rest_position: Vector3 = enemy.body.position
 	var before: Dictionary = board._both_states()
 	board.enemy_hull -= 3

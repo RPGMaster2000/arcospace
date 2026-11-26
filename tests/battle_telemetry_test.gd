@@ -46,6 +46,16 @@ func run() -> void:
 	check(not header.enemy.text.is_empty() and not header.enemy.get_node("Subtitle").text.is_empty(),
 		"Enemy identity includes the enemy profile")
 	check(not board.has_node("SalvageLabel"), "Combat header has no permanent Salvage counter")
+	for index in range(3):
+		var readout: Label = [header.player, header.turn, header.enemy][index]
+		var gradient: ColorRect = header._backdrops[readout]
+		var material := gradient.material as ShaderMaterial
+		check(gradient.show_behind_parent and gradient.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"Header gradients stay behind the text and leave interactions to the foreground")
+		check(material.get_shader_parameter("direction") == float(index - 1)
+			and is_equal_approx(material.get_shader_parameter("vertical_fade"), Holo.DEFAULT.header_vertical_fade)
+			and is_equal_approx(material.get_shader_parameter("shade").a, Holo.DEFAULT.header_opacity),
+			"Header gradient uses the configured direction, fade, and opacity")
 	var saved_motion := Preferences.ui_motion()
 	Preferences.set_ui_motion(1)
 	var snapshot: Dictionary = board._display_snapshot()
@@ -68,26 +78,63 @@ func run() -> void:
 	header.update(snapshot)
 	check(not header.turn.has_meta("holo_panel") and header.turn.modulate.a == 1.0,
 		"Minimal motion presents the new turn immediately")
-	Preferences.set_ui_motion(saved_motion)
 
-	var player_meter: ProgressBar = hud._shield_meters.player
-	var enemy_meter: ProgressBar = hud._shield_meters.enemy
-	check(player_meter.max_value == Holo.DEFAULT.shield_reference and enemy_meter.max_value == player_meter.max_value,
-		"Both sides use the same configured Shield reference")
-	hud._refresh_shields("player", 10, false)
-	hud._refresh_shields("enemy", 25, false)
-	check(is_equal_approx(player_meter.ratio, 0.2) and is_equal_approx(enemy_meter.ratio, 0.5),
-		"Ten and twenty-five Shield points fill one fifth and half of the bar")
-	hud._refresh_shields("player", 65, false)
-	check(player_meter.ratio == 1.0 and board.player_shields_label.text == "Shields 65 ↑",
-		"Overflow keeps the exact value with a distinct full meter")
-	hud._refresh_shields("player", 0, false)
-	check(player_meter.ratio == 0.0 and board.player_shields_label.text == "Shields 0", "Active zero is distinct")
-	hud._refresh_shields("enemy", 65, true)
-	check(enemy_meter.ratio == 0.0 and board.enemy_shields_label.text == "Shields OFF",
-		"Disabled Shields have their own explicit state")
-	hud._refresh_shields("enemy", 10, false)
-	check(is_equal_approx(enemy_meter.ratio, 0.2), "Overflow cannot increase the scale after Shields return")
+	var player_stack: Control = hud._shield_stacks.player
+	var enemy_stack: Control = hud._shield_stacks.enemy
+	check(not player_stack is Range and not enemy_stack is Range, "Shield stacks have no maximum or track")
+	for amount in [0, 1, 5, 23, 50, 100, 200, 203]:
+		for side in ["player", "enemy"]:
+			var stack: Control = hud._shield_stacks[side]
+			var readout: Label = board.get_node(side.capitalize() + "ShieldsLabel")
+			stack.update_shields(amount, false)
+			var strip: Dictionary = stack.strip_layout(stack.displayed_points)
+			check(readout.text == "Shields %d" % amount and stack.displayed_points == amount,
+				"Minimal motion shows the exact %d Shields immediately on %s" % [amount, side])
+			check(is_equal_approx(strip.partial, (amount % 5) / 5.0) and strip.width <= stack.size.x,
+				"The Shield remainder is fractional and fits the meter space")
+			if amount <= 50:
+				check(strip.full == floori(amount / 5.0) and strip.multiplier.is_empty(),
+					"Ordinary amounts draw individual five-point cells only")
+			else:
+				check(strip.full == 1 and strip.multiplier == "×%d" % floori(amount / 5.0),
+					"High totals group complete cells and keep any partial cell separate")
+
+	board.player_shields = 23
+	board.enemy_shields = 200
+	board.modifier.configure(3, 11)
+	board.modifier.active = true
+	board.refresh_display()
+	check(player_stack.displayed_points == 0.0 and enemy_stack.displayed_points == 0.0
+		and board.player_shields_label.text == "Shields OFF" and board.enemy_shields_label.text == "Shields OFF",
+		"Disabled Shields show no segments and a distinct label")
+	check(board.player_shields == 23 and board.enemy_shields == 200,
+		"Disabled presentation leaves the underlying Shield values intact")
+	board.modifier.active = false
+	board.refresh_display()
+	check(player_stack.displayed_points == 23.0 and enemy_stack.displayed_points == 200.0,
+		"Restoring Shields restores the exact segment counts")
+
+	Preferences.set_ui_motion(1)
+	player_stack.update_shields(50, false)
+	var gain: Tween = player_stack.get_meta("holo_shields")
+	check(player_stack.displayed_points == 23.0 and board.player_shields_label.text == "Shields 50",
+		"Growth starts from the displayed stack while the number remains exact")
+	gain.custom_step(Holo.DEFAULT.meter_seconds * 0.25)
+	var eased: float = player_stack.displayed_points
+	check(eased > 23.0 and eased < 50.0, "Shield additions ease through partial segments")
+	player_stack.update_shields(5, false)
+	check(not gain.is_valid() and player_stack.displayed_points == eased,
+		"A loss interrupts an in-flight gain from the currently painted amount")
+	var loss: Tween = player_stack.get_meta("holo_shields")
+	player_stack.update_shields(5, false)
+	check(player_stack.get_meta("holo_shields") == loss, "Repeated updates keep the in-flight transition")
+	loss.custom_step(Holo.DEFAULT.meter_seconds * 0.25)
+	check(player_stack.displayed_points < eased and player_stack.displayed_points > 5.0,
+		"Shield removal eases toward the target")
+	Preferences.set_ui_motion(0)
+	check(not player_stack.has_meta("holo_shields") and player_stack.displayed_points == 5.0
+		and board.player_shields_label.self_modulate.a == 1.0, "Switching to Minimal completes the transition")
+	Preferences.set_ui_motion(saved_motion)
 	board.player_hull = board.player_hull_capacity + 4
 	board.refresh_display()
 	check(board.player_hull_label.text.contains(str(board.player_hull)) and
@@ -105,6 +152,9 @@ func run() -> void:
 			hud.close_panels(true)
 		check(left.end.x < center.position.x and center.end.x < right.position.x and
 			is_equal_approx(center.get_center().x, board.size.x * 0.5), "Headers stay separated and centered at " + str(viewport))
+		var compact_strip: Dictionary = player_stack.strip_layout(203.0)
+		check(compact_strip.width <= player_stack.size.x and compact_strip.multiplier == "×40",
+			"Grouped Shields and a partial segment fit at " + str(viewport))
 		for side in ["Player", "Enemy"]:
 			for index in range(3):
 				var family: String = hud.RESERVES[index]

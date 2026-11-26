@@ -160,6 +160,7 @@ func begin_shield_shatter(settings: Resource) -> Callable:
 	shatter_effect.configure(shield, settings, shield_rest_tint)
 	# The logical strength is zero; keep the collapsing bubble bright until its visual release.
 	shield_material.set_shader_parameter("strength", 1.0)
+	shield_material.set_shader_parameter("shell_emphasis", 0.0)
 	return shatter_effect.seek
 
 
@@ -173,6 +174,10 @@ func set_shield_strength(value: int) -> void:
 	shield_material.set_shader_parameter(
 		"strength", 1.0 if collapsing else clampf(value / 10.0, 0.0, 1.0)
 	)
+	# Accrued Shields above ten add a restrained rim emphasis. The shatter
+	# and impact layers retain their established brightness.
+	shield_material.set_shader_parameter("shell_emphasis", 0.0 if collapsing else
+		clampf((value - 10.0) / 90.0, 0.0, 1.0) * 0.16)
 
 
 func animate_shield(tween: Tween, seconds: float, increase: bool = false) -> void:

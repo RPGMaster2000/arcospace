@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode unshaded, cull_back, depth_draw_never;
 uniform vec4 tint : source_color = vec4(0.2, 0.65, 1.0, 1.0);
 uniform float strength : hint_range(0.0, 1.0) = 1.0;
+uniform float shell_emphasis : hint_range(0.0, 0.16) = 0.0;
 uniform float formation : hint_range(0.0, 1.0) = 1.0;
 uniform float hit = 0.0;
 uniform float ripple_strength = 1.0;
@@ -33,7 +34,7 @@ void fragment() {
 	}
 	ALBEDO = mix(tint.rgb, vec3(0.85, 0.95, 1.0), clamp(wave + ripple + fractures + shatter_flash, 0.0, 1.0));
 	ALPHA = strength * clamp(
-	    (0.01 + rim * 0.85 + ripple * impact_opacity) * reveal
+	    (0.01 + rim * (0.85 + shell_emphasis) + ripple * impact_opacity) * reveal
 	    + wave * 0.65,
 	    0.0, 0.95
 		);
