@@ -32,7 +32,7 @@ func run() -> void:
   check(marker.get_theme_font("font").get_string_size(glyph,HORIZONTAL_ALIGNMENT_LEFT,-1,28)==Marker.EMOJI_FONT.get_string_size(glyph,HORIZONTAL_ALIGNMENT_LEFT,-1,28),"Native emoji advance preserved: "+kind)
  marker.set_state(false,false,true)
  check(marker.priority()==3,"Explicit selection outranks hover/focus")
- check(marker.get_theme_stylebox("normal").border_width_left==3,"Selection has strong outer border")
+ check(marker.get_theme_stylebox("normal").border_width_top==3,"Selection has strong outer border")
  check(marker.get_theme_stylebox("disabled").border_color==Color("b8faff"),"Disabled input retains unmistakable cyan selection")
  check(marker.get_theme_stylebox("normal").bg_color.a==0.5,"Stronger selection fill retains half opacity")
  check(marker.get_theme_stylebox("normal").bg_color.g>0.2,"Selection brightens background color")

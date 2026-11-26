@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+
 # RESPONSIBILITY: Present one read-only enlarged original card and its full effect/upgrade panel.
 # One lazily created, read-only overlay per SceneTree. Uses the original card scene, never a second renderer.
 const Data = preload("res://scripts/cards/card_data.gd")
@@ -124,14 +126,14 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 	var accent: Color = {
 		"materials": Color("ec8277"), "energy": Color("7dcbea"), "crew": Color("8bdfa1")
 	}[current_card.family]
-	var box: StyleBoxFlat = Style.style(accent).duplicate()
+	var box: Holo.Frame = Style.style(accent).duplicate()
 	for edge in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
 		box.set_content_margin(edge, 12)
 	info.add_theme_stylebox_override("panel", box)
 	for level in range(3):
 		var panel = PanelContainer.new()
 		var active: bool = level == current_card.upgrade_level
-		var style: StyleBoxFlat = Style.style(accent if active else Color("34495b")).duplicate()
+		var style: Holo.Frame = Style.style(accent if active else Color("34495b")).duplicate()
 		style.bg_color = Color("183243") if active else Color("101e2a")
 		for edge in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
 			style.set_content_margin(edge, 8)

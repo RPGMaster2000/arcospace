@@ -39,7 +39,7 @@ func run() -> void:
 	check(jump.self_modulate.b > jump.self_modulate.r, "Ready EMP pulses blue")
 	board.ftl.disabled_turns = 2
 	board.refresh_display()
-	var offline_box: StyleBoxFlat = jump.get_theme_stylebox("disabled")
+	var offline_box := jump.get_theme_stylebox("disabled")
 	check(jump.visible and jump.disabled and jump.text == "EMP offline" and offline_box.bg_color.r > offline_box.bg_color.g, "Charged offline Jump stays visible, red and disabled")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw

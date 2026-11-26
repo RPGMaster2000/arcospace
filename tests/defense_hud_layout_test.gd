@@ -1,4 +1,5 @@
 extends SceneTree
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 var checks := 0
 var failures := 0
@@ -55,7 +56,7 @@ func run() -> void:
 		for ratio in [.25,.65,.9]:
 			host.state.defense.pressure = ratio * host.state.defense.tuning.pressure_maximum
 			host.screen.set_defense_status(host.state)
-			check(is_equal_approx(hud.pressure_bar.value,ratio*100) and hud.pressure_fill.bg_color == (Color("77e596") if ratio < .5 else (Color("ffaf58") if ratio < .8 else Color("ff646e"))),"Pressure values and existing color thresholds unchanged")
+			check(is_equal_approx(hud.pressure_bar.value,ratio*100) and hud.pressure_fill.tint == (Holo.DEFAULT.friendly if ratio < .5 else (Holo.DEFAULT.warning if ratio < .8 else Holo.DEFAULT.hostile)),"Pressure retains exact values and semantic thresholds with holographic tints")
 		host.state.defense.pressure = 0
 		host.screen.set_defense_status(host.state)
 		await settle()

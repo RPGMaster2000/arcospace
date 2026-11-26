@@ -1,5 +1,7 @@
 @tool
 extends RefCounted
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 ## Native, lightweight card styling. Text and interactions remain in CardView.
 ## Shared gradient textures are read-only; no per-frame textures or materials.
 static var washes: Dictionary = {}
@@ -28,16 +30,21 @@ static func box(
 	hovered: bool,
 	affordable: bool,
 	storm: bool,
-	storm_color: Color
-) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
+	storm_color: Color,
+	tier: int = 1
+) -> Holo.Frame:
+	var role := "card" if tier == 1 else "card.tier%d" % tier
+	var style := Holo.frame(role, tint)
+	style.cut = 8.0
+	style.details = clampi(tier, 1, 3)
+	style.set_content_margin_all(0)
+	if affordable and tier > 1:
+		style.ornament_tint = Holo.DEFAULT.rarity_two if tier == 2 else Holo.DEFAULT.rarity_three
 	style.bg_color = base.lerp(tint, 0.035) if affordable else base.darkened(0.28).lerp(tint, 0.008)
 	style.border_color = Color(
 		tint, 1.0 if selected else (1.0 if hovered else (0.94 if affordable else 0.45))
 	)
-	style.set_border_width_all(3 if selected else 2)
-	style.set_corner_radius_all(7)
-	style.anti_aliasing = true
+	style.border_width_top = 3 if selected else 2
 	if selected:
 		style.shadow_color = Color(tint, 0.28)
 		style.shadow_size = 4

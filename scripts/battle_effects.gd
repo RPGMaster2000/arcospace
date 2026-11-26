@@ -1,5 +1,8 @@
 extends Node
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
 const BEAM_SECONDS: float = 0.45
@@ -202,6 +205,10 @@ func _play_changes(
 		)
 		var hull_delta: int = current.hull - old.hull
 		var shield_delta: int = current.shields - old.shields
+		if hull_delta != 0:
+			_defense_delta(get_parent().get_node(prefix + "HullLabel"), hull_delta, Holo.DEFAULT.hull, "HULL")
+		if shield_delta != 0:
+			_defense_delta(get_parent().get_node(prefix + "ShieldsLabel"), shield_delta, Holo.DEFAULT.shield, "SHD")
 		if hull_delta < 0:
 			Sound.play(&"ship_destroyed" if current.hull <= 0 and old.hull > 0 else &"hull_hit", self)
 		elif hull_delta > 0:
@@ -251,6 +258,8 @@ func _play_changes(
 			)
 			if delta > 0 or (delta < 0 and effect_delta < 0):
 				_count(icon.get_node(key), old[key], current[key])
+			elif delta < 0 and side == paid_side and key == paid_family and paid_cost > 0:
+				_defense_delta(icon.get_node(key), -paid_cost, Holo.family(key), "SPENT")
 			if delta > 0:
 				_stat_delta_popup(icon, delta, false)
 				Sound.play([&"materials_gain", &"energy_gain", &"crew_gain"][index], self)
@@ -294,6 +303,31 @@ func _play_changes(
 
 
 # Draw behind the icon/badge; the effect owns no input or game state.
+func _defense_delta(label: Label, amount: int, tint: Color, suffix: String) -> void:
+	var seconds := HoloMotion.duration(Holo.DEFAULT.meter_seconds * 1.4)
+	if seconds == 0.0: return
+	var old: Node = label.get_node_or_null("TelemetryDelta")
+	if old != null:
+		label.remove_child(old)
+		old.queue_free()
+	var popup := Label.new()
+	popup.name = "TelemetryDelta"
+	popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.text = "%+d %s" % [amount, suffix]
+	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	popup.add_theme_font_size_override("font_size", Holo.DEFAULT.label_size + 3)
+	popup.add_theme_color_override("font_color", tint.lightened(0.27) if amount < 0 else Holo.DEFAULT.crew)
+	popup.add_theme_color_override("font_outline_color", Holo.DEFAULT.surface_depth)
+	popup.add_theme_constant_override("outline_size", 5)
+	popup.position = Vector2(0, -21)
+	popup.size.x = label.size.x
+	label.add_child(popup)
+	var fade := HoloMotion.start(popup, &"delta").set_parallel()
+	fade.tween_property(popup, "modulate:a", 0.0, seconds).set_delay(seconds * 0.45)
+	fade.tween_property(popup, "position:y", -31.0, seconds)
+	fade.finished.connect(popup.queue_free)
+
+
 func _stat_delta_popup(icon: Control, delta: int, production: bool) -> void:
 	# Lightweight readable gain/loss feedback alongside the existing shader burst.
 	var popup := Label.new()
@@ -338,11 +372,15 @@ func _count(label: Label, start: int, target: int) -> void:
 	counters[label] = true
 	label.text = str(start)
 	var tween := _job()
-	var step: int = 1 if target > start else -1
-	# One callback per integer: no interpolation that skips intermediate values.
-	for value in range(start + step, target + step, step):
-		tween.tween_interval(count_step_seconds)
-		tween.tween_callback(func(): label.text = str(value))
+	# Preserve the existing combat pacing window. The cosmetic counter can
+	# settle sooner or snap in Minimal without changing when the job finishes.
+	var pacing := absf(target - start) * count_step_seconds
+	var seconds := minf(pacing, HoloMotion.duration(Holo.DEFAULT.meter_seconds))
+	if seconds == 0.0:
+		label.text = str(target)
+	else:
+		tween.tween_method(func(value: float): label.text = str(roundi(value)), float(start), float(target), seconds)
+	if pacing > seconds: tween.tween_interval(pacing - seconds)
 	tween.tween_callback(func(): counters.erase(label))
 
 

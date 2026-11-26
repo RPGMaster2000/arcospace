@@ -1,5 +1,8 @@
 extends CanvasLayer
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 # RESPONSIBILITY: Present shared descriptions and legends with optional controller-owned footer actions.
 # Shared modal for descriptions/legend; an optional footer hosts controller-owned actions.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -19,7 +22,7 @@ func _ready() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 	panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
+	panel.add_theme_stylebox_override("panel", Holo.frame("dialog"))
 	shade.add_child(panel)
 	var column = VBoxContainer.new()
 	panel.add_child(column)
@@ -70,7 +73,11 @@ func show_text(value: String) -> void:
 	desired_height = 320
 	previous_focus = get_viewport().gui_get_focus_owner()
 	body.text = value
+	var opening := not shade.visible
 	shade.show()
+	if opening:
+		HoloMotion.reveal(panel)
+		Holo.audio(Holo.DEFAULT.panel_sound, self)
 	close.grab_focus()
 	_fit()
 
@@ -87,6 +94,7 @@ func show_reference(section: String = "") -> void:
 
 
 func dismiss() -> void:
+	HoloMotion.restore_panel(panel)
 	extra.hide()
 	shade.hide()
 	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree():

@@ -1,4 +1,7 @@
 extends Control
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
 ## Presentation only. All amounts are snapshots of already-committed results.
 @export_range(0.1, 2.0) var title_fade_duration: float = 0.32
 @export_range(0.1, 3.0) var title_move_duration: float = 0.42
@@ -136,11 +139,21 @@ func play() -> void:
 	rewards.add_theme_constant_override("v_separation",8)
 	add_child(rewards)
 	for entry in [["🪨","Salvage earned","earned"],["❤️","Hull remaining","hull"],["⚔","Battles won","battles"],["✦","Card upgrades","upgrades"]]:
+		var tile := PanelContainer.new()
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var tint := Holo.DEFAULT.edge
+		match entry[2]:
+			"earned", "upgrades": tint = Holo.DEFAULT.reward
+			"hull": tint = Holo.DEFAULT.hull
+		var box := Holo.frame("reward", tint)
+		box.set_content_margin_all(6)
+		tile.add_theme_stylebox_override("panel", box)
+		rewards.add_child(tile)
 		var column := VBoxContainer.new()
 		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		column.add_theme_constant_override("separation",0)
-		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		rewards.add_child(column)
+		column.add_theme_constant_override("separation", 0)
+		tile.add_child(column)
 		var icon := label(entry[0],26)
 		column.add_child(icon)
 		var value := label("0",34)
@@ -149,8 +162,8 @@ func play() -> void:
 		column.add_child(caption)
 		if entry[2] == "upgrades" and summary.upgrades > 0:
 			for item in [icon,value,caption]: item.add_theme_color_override("font_color",SETTINGS.victory_accent_color)
-		values.append({"node":value,"icon":icon,"column":column,"target":int(summary.get(entry[2],0))})
-		animated.append(column)
+		values.append({"node":value,"icon":icon,"column":tile,"caption":caption,"target":int(summary.get(entry[2],0))})
+		animated.append(tile)
 	lines = VBoxContainer.new()
 	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lines.minimum_size_changed.connect(queue_fit)
@@ -160,6 +173,8 @@ func play() -> void:
 	details_button.text = "Details"
 	details_button.custom_minimum_size = Vector2(160,44)
 	details_button.focus_mode = Control.FOCUS_ALL
+	Holo.action(details_button)
+	HoloMotion.bind_button(details_button)
 	add_child(details_button)
 	details_overlay = preload("res://scripts/ui/info_overlay.gd").new()
 	add_child(details_overlay)
@@ -169,13 +184,17 @@ func play() -> void:
 	skip_button.text = "Skip Animation"
 	skip_button.custom_minimum_size = Vector2(160,44)
 	skip_button.focus_mode = Control.FOCUS_ALL
+	Holo.action(skip_button)
+	HoloMotion.bind_button(skip_button)
 	add_child(skip_button)
 	skip_button.pressed.connect(skip)
 	for path in ["NextEncounter","Continue","Configure"]:
 		var node: Control = panel.get_node(path)
 		if not node.visible: continue
 		controls.append(node)
-		if node is BaseButton:
+		if node is Button:
+			Holo.action(node, burst.accent, path != "Configure")
+			HoloMotion.bind_button(node)
 			disabled_states[node] = node.disabled
 			node.disabled = true
 			animated.append(node)
@@ -202,9 +221,7 @@ func play() -> void:
 	animation.tween_interval(maxf(REVEAL_SECONDS,maxf(title_fade_duration,title_move_duration)))
 	animation.chain().tween_callback(finish)
 	skip_button.grab_focus()
-	# No separate reduced-motion setting exists. Preserve Skip Cinematics as an
-	# immediate, complete summary; Battle VFX governs combat effects only.
-	if Preferences.skip_cinematics(): skip.call_deferred()
+	if Preferences.skip_cinematics() or Preferences.ui_motion() == 0: skip.call_deferred()
 
 # Wrapped labels can report narrow initial minimums until width settles.
 func queue_fit() -> void:
@@ -229,9 +246,14 @@ func fit() -> void:
 	identity_icon.size = Vector2(size.x-48,36)
 	subtitle.position = Vector2(24,size.y*0.28)
 	subtitle.size = Vector2(size.x-48,46)
-	rewards.columns = 4 if size.x >= 760 else 2
+	rewards.columns = 4 if size.x >= 630 else 2
+	var compact := size.y < 530 or size.x < 760
+	for row in values:
+		row.icon.add_theme_font_size_override("font_size", 20 if compact else 26)
+		row.node.add_theme_font_size_override("font_size", 26 if compact else 34)
+		row.caption.add_theme_font_size_override("font_size", 14 if compact else 18)
 	rewards.position = Vector2(size.x*0.06,size.y*(0.39 if rewards.columns == 4 else 0.34))
-	rewards.size = Vector2(size.x*0.88,110 if rewards.columns == 4 else 220)
+	rewards.size = Vector2(size.x*0.88,88 if compact and rewards.columns == 4 else (110 if rewards.columns == 4 else 174))
 	lines.position = Vector2(24,size.y*0.63)
 	lines.size = Vector2(size.x-48,32)
 	details_button.position = Vector2((size.x-160)*0.5,size.y*0.70)

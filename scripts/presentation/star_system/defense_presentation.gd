@@ -1,4 +1,7 @@
 extends Node3D
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 # Presentation-only adapter: snapshots and actual rendered displacement, no rules.
 var map: Control
 var home_panel: PanelContainer
@@ -136,9 +139,7 @@ func configure(source: Control) -> void:
 	home_panel.name = "HomeworldIntegrity"
 	home_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	home_panel.custom_minimum_size = Vector2(160, 38)
-	var backing := StyleBoxFlat.new()
-	backing.bg_color = Color(0.01, 0.04, 0.08, 0.9)
-	backing.set_corner_radius_all(5)
+	var backing := Holo.frame("compact", Holo.DEFAULT.friendly)
 	backing.set_content_margin_all(3)
 	home_panel.add_theme_stylebox_override("panel", backing)
 	var column := VBoxContainer.new()
@@ -151,9 +152,7 @@ func configure(source: Control) -> void:
 	integrity_bar = ProgressBar.new()
 	integrity_bar.custom_minimum_size = Vector2(150, 8)
 	integrity_bar.show_percentage = false
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("64d7ad")
-	integrity_bar.add_theme_stylebox_override("fill", fill)
+	Meter.attach(integrity_bar, Holo.DEFAULT.crew)
 	column.add_child(integrity_bar)
 	map.add_child(home_panel)
 	if map.turret_options.is_valid() and map.turret_requested.is_valid():

@@ -1,5 +1,7 @@
 extends MeshInstance3D
 ## Presentation only. No input areas, collisions, timers or lights.
+const ThemeSkin = preload("res://scripts/ui/holographic/skin.gd")
+
 var radius := 1.0
 var emphasized := false
 
@@ -12,6 +14,9 @@ func configure(body_radius: float, color: Color) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/poi_selection_ring.gdshader")
 	material.set_shader_parameter("ring_color", color)
+	if ThemeSkin.DEFAULT.reticle != null:
+		material.set_shader_parameter("ring_image", ThemeSkin.DEFAULT.reticle)
+		material.set_shader_parameter("use_ring_image", true)
 	material_override = material
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 

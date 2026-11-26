@@ -1,4 +1,7 @@
 extends Control
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
 ## A clipped, non-modal drawer attached to a resource column.
 
 signal closing
@@ -49,10 +52,9 @@ func _init(left: bool) -> void:
 	drawer.hide()
 	add_child(drawer)
 	surface = Panel.new()
-	var frame := _frame(Color(0.021, 0.061, 0.105, 0.96), Color("3c92b5"))
-	frame.set_border_width(SIDE_LEFT if left else SIDE_RIGHT, 3)
-	frame.shadow_color = Color(0.11, 0.65, 0.91, 0.23)
-	frame.shadow_size = 6
+	var frame := Holo.frame("panel", Holo.DEFAULT.friendly if left else Holo.DEFAULT.hostile)
+	frame.shadow_color = Color(frame.border_color, 0.20)
+	frame.shadow_size = 5
 	surface.add_theme_stylebox_override("panel", frame)
 	drawer.add_child(surface)
 
@@ -132,7 +134,7 @@ func set_open(value: bool, immediate: bool = false) -> void:
 		if focused != null and drawer.is_ancestor_of(focused):
 			focused.release_focus()
 		closing.emit()
-	if immediate:
+	if immediate or HoloMotion.duration(1.0) == 0.0:
 		drawer.visible = value
 		surface.position.x = 0
 		surface.modulate.a = 1
@@ -143,7 +145,7 @@ func set_open(value: bool, immediate: bool = false) -> void:
 		surface.position.x = retracted
 		surface.modulate.a = 0.0
 	drawer.show()
-	_motion = create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion = create_tween().set_parallel().set_trans(Holo.DEFAULT.transition).set_ease(Holo.DEFAULT.easing)
 	_motion.tween_property(surface, "position:x", 0.0 if value else retracted, 0.21)
 	_motion.tween_property(surface, "modulate:a", 1.0 if value else 0.0, 0.17)
 	if not value:

@@ -1,5 +1,8 @@
 extends HFlowContainer
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 # RESPONSIBILITY: Show expedition starting reserves, pending adjustments and Hull warning feedback.
 signal hull_requested
 # Exploration only: ship starting reserves plus effective pending adjustments.
@@ -49,9 +52,9 @@ func put(
 		button.add_theme_font_size_override("font_size", 20)
 		Presentation.action(button)
 		for style in ["normal", "hover", "pressed", "disabled"]:
-			var box: StyleBoxFlat = button.get_theme_stylebox(style).duplicate()
+			var box: Holo.Frame = button.get_theme_stylebox(style).duplicate()
 			box.bg_color = FAMILY_COLORS.get(key, Color("282a29ff"))
-			box.border_color = box.bg_color.lightened(.12)
+			box.border_color = Color(Holo.family(key), 0.54 if style == "disabled" else 0.82)
 			if style == "hover":
 				box.bg_color = box.bg_color.lightened(.08)
 			box.content_margin_left = 8
@@ -208,14 +211,20 @@ func exploration(state: Resource) -> void:
 
 func set_heartbeat(active: bool) -> void:
 	heartbeat_active = active
-	if not active and entries.has("hull"):
-		pulse_elapsed = 0.0
-		entries.hull.scale = Vector2.ONE
-		entries.hull.modulate = Color.WHITE
+	if not active: _reset_heartbeat()
+
+
+func _reset_heartbeat() -> void:
+	if not entries.has("hull"): return
+	pulse_elapsed = 0.0
+	entries.hull.scale = Vector2.ONE
+	entries.hull.modulate = Color.WHITE
 
 
 func _process(delta: float) -> void:
-	if not heartbeat_active or not is_visible_in_tree():
+	if not heartbeat_active or not is_visible_in_tree(): return
+	if HoloMotion.duration(1.0) == 0.0:
+		if pulse_elapsed > 0.0: _reset_heartbeat()
 		return
 	pulse_elapsed += delta
 	var phase: float = fmod(pulse_elapsed, maxf(0.5, pulse_period)) / maxf(0.5, pulse_period)

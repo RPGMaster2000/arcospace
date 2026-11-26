@@ -1,4 +1,6 @@
 extends Control
+
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
 # RESPONSIBILITY: Own exploration controls and query-only encounter presentation.
 # State inputs are borrowed for display; callbacks emit intent without mutating gameplay.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
@@ -189,7 +191,7 @@ func _build_ui() -> void:
 	focus_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var backing := Presentation.style(Presentation.COLORS.special)
 	backing.bg_color = Color(0.035,0.075,0.12,0.88)
-	backing.set_border_width_all(0)
+	backing.border_width_top = 1.0
 	focus_backing.add_theme_stylebox_override("panel",backing)
 	add_child(focus_backing)
 	move_child(focus_backing,1)
@@ -552,13 +554,17 @@ func _fit_focus() -> void:
 	return_button.position = Vector2(16+safe.x,74+safe.y)
 
 func _fade_focus(target: Control) -> void:
+	var duration := HoloMotion.duration(HoloMotion.ThemeSkin.DEFAULT.panel_seconds, true)
+	if duration <= 0.0:
+		_cancel_focus_motion()
+		return
 	focus_transition = true
 	target.modulate.a = 0
 	focus_motion = create_tween()
-	focus_motion.tween_property(target,"modulate:a",1.0,0.24)
+	focus_motion.tween_property(target,"modulate:a",1.0,duration)
 	if target == sidebar:
 		focus_backing.modulate.a = 0
-		focus_motion.parallel().tween_property(focus_backing,"modulate:a",1.0,0.24)
+		focus_motion.parallel().tween_property(focus_backing,"modulate:a",1.0,duration)
 	focus_motion.tween_callback(func(): focus_transition = false)
 
 func _cancel_focus_motion() -> void:

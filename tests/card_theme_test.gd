@@ -1,4 +1,6 @@
 extends SceneTree
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Effects = preload("res://scripts/cards/card_effects.gd")
 const Scene = preload("res://scenes/card.tscn")
@@ -40,7 +42,7 @@ func run() -> void:
 		)
 		var text: String = view.get_node("DescriptionLabel").text
 		var expected: Color = palettes[family]
-		var style: StyleBoxFlat = view.get_theme_stylebox("normal")
+		var style: Holo.Frame = view.get_theme_stylebox("normal")
 		backgrounds.append(style.bg_color)
 		check(view.presentation_settings.card_base_color == Color("0b1724"), "Requested navy base")
 		check(view.family_tint == expected, family + " exact requested primary color")
@@ -116,17 +118,10 @@ func run() -> void:
 			),
 			family + " selected outline and family glow"
 		)
-		check(
-			(
-				style.expand_margin_top == 0
-				and style.expand_margin_bottom == 0
-				and style.expand_margin_left == 0
-				and style.expand_margin_right == 0
-				and view.get_rect() == bounds
-				and view.scale == base_scale
-			),
-			"Selection never expands visual or input bounds"
-		)
+		var frame_bounds := Rect2(Vector2.ZERO, view.size)
+		check(Array(Holo.Frame.outline(frame_bounds.grow(-1.5), style.cut)).all(
+			func(point): return frame_bounds.has_point(point)) and view.get_rect() == bounds
+			and view.scale == base_scale, "Selection keeps all frame and input bounds")
 		view.set_ion_glow(true, Color.BLUE)
 		check(
 			rgb(view.get_theme_stylebox("normal").shadow_color) == expected,

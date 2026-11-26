@@ -1544,6 +1544,7 @@ func _sync_convoy(record: Dictionary) -> void:
 	var next := _defense_point(record.route[mini(int(record.leg) + 1, record.route.size() - 1)])
 	if position_now.distance_squared_to(next) > 0.00001:
 		objects[index].basis = _facing_basis(next - position_now) * Basis.from_scale(Vector3.ONE * 0.46)
+	markers[index].set_integrity(record.integrity, record.maximum_integrity)
 	var caption := "Evacuation Convoy · %d/%d" % [record.integrity, record.maximum_integrity]
 	if markers[index].tooltip_text != caption:
 		markers[index].set_label(caption, "🚀", true)

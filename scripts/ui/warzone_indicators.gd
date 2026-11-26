@@ -1,4 +1,6 @@
 extends RefCounted
+
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 ## Small shared graphics for the Warzone HUD and inspections.
 
 const ALLIED := Color("65dee9")
@@ -28,16 +30,12 @@ static func icon(kind: String, tint: Color, width: float = 24.0) -> TextureRect:
 	return image
 
 
-static func bar(tint: Color, height: float = 6.0) -> ProgressBar:
+static func bar(tint: Color, height: float = 6.0, background: Color = TRACK) -> ProgressBar:
 	var gauge := ProgressBar.new()
 	gauge.custom_minimum_size.y = height
 	gauge.show_percentage = false
 	gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for key in ["background", "fill"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = tint if key == "fill" else TRACK
-		style.set_corner_radius_all(2)
-		gauge.add_theme_stylebox_override(key, style)
+	Meter.attach(gauge, tint, background)
 	return gauge
 
 

@@ -1,4 +1,5 @@
 extends SceneTree
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const Catalog = preload("res://scripts/expedition/faction_catalog.gd")
 const Details = preload("res://scripts/ui/system_details.gd")
 const SAVE = preload("res://scripts/persistence/expedition_save.gd")
@@ -138,11 +139,11 @@ func run() -> void:
 			)
 			check(
 				(
-					hud.pressure_fill.bg_color
+					hud.pressure_fill.tint
 					== (
-						Color("77e596")
+						Holo.DEFAULT.friendly
 						if ratio < .5
-						else (Color("ffaf58") if ratio < .8 else Color("ff646e"))
+						else (Holo.DEFAULT.warning if ratio < .8 else Holo.DEFAULT.hostile)
 					)
 				),
 				"Pressure danger palette"

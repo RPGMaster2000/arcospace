@@ -1,4 +1,8 @@
 extends Button
+
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 # Presentation-only destination tag; the map supplies its projected anchor each frame.
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
 const ICONS = {
@@ -52,6 +56,13 @@ func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: fl
 	queue_redraw()
 
 
+func set_integrity(value: int, maximum: int) -> void:
+	var ratio := clampf(float(value) / maxi(1, maximum), 0, 1)
+	if is_equal_approx(fleet_strength, ratio): return
+	fleet_strength = ratio
+	queue_redraw()
+
+
 func set_warzone_importance(tier: int, consolidation: float = -1.0) -> void:
 	var next_tier := clampi(tier, 0, 2)
 	var next_progress := clampf(consolidation, 0.0, 1.0) if consolidation >= 0.0 else -1.0
@@ -79,6 +90,11 @@ func set_forecast(value: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if not (in_clash or warzone_importance == 2) or not is_visible_in_tree():
 		return
+	if Preferences.ui_motion() == 0:
+		if _pulse != 0.0:
+			_pulse = 0.0
+			queue_redraw()
+		return
 	_pulse = fmod(_pulse + delta * 3.8, TAU)
 	queue_redraw()
 
@@ -92,12 +108,10 @@ func style_tag(color: Color) -> void:
 	add_theme_font_override("font", EMOJI_FONT)
 	add_theme_font_size_override("font_size", 22 if lattice_tag else 28)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var box := StyleBoxFlat.new()
+		var box := Holo.frame("focus" if state == "focus" else "marker", accent, state)
 		box.draw_center = state!="focus" # Focus overlays the normal box: no second half-alpha fill.
 		box.bg_color = Color(accent.r*0.12,accent.g*0.12,accent.b*0.12,0.5)
 		box.border_color = accent * Color(1, 1, 1, 0.65)
-		box.set_border_width_all(1)
-		box.set_corner_radius_all(10)
 		box.content_margin_left = 7
 		box.content_margin_right = 7
 		box.content_margin_top = 4
@@ -154,7 +168,7 @@ func _refresh_state() -> void:
 	if completion_badge != null: completion_badge.visible = completed
 	if objective_badge != null: objective_badge.visible = not objective_value.is_empty() and not completed
 	for state in ["normal","hover","pressed","disabled","focus"]:
-		var box: StyleBoxFlat = get_theme_stylebox(state)
+		var box: Holo.Frame = get_theme_stylebox(state)
 		var bright: bool = emphasis or state in ["hover","pressed","focus"]
 		box.bg_color = Color(0.02,0.28,0.36,0.85 if contrast else 0.5) if selected else Color(foreground.r*0.12,foreground.g*0.12,foreground.b*0.12,0.85 if contrast else 0.5)
 		box.border_color = foreground.lightened(0.18) if bright else foreground
@@ -164,7 +178,7 @@ func _refresh_state() -> void:
 			box.border_color = Color("ffe4a2") if warzone_importance == 2 else Color("d4aa66")
 			box.border_color.a = 0.97 if warzone_importance == 2 else 0.82
 		if selected: box.border_color = Color("b8faff")
-		box.set_border_width_all(3 if selected or (lattice_tag and warzone_importance == 2) else (2 if bright or (lattice_tag and warzone_importance == 1) else 1))
+		box.border_width_top = 3 if selected or (lattice_tag and warzone_importance == 2) else (2 if bright or (lattice_tag and warzone_importance == 1) else 1)
 		box.shadow_color = Color(0.3,0.9,1.0,0.35) if selected else Color(foreground.r,foreground.g,foreground.b,0.18 if bright else 0.0)
 		box.shadow_size = 6 if selected else (4 if bright else 0)
 	begin_bulk_theme_override()
@@ -249,11 +263,12 @@ func _draw() -> void:
 			draw_arc(icon_center, ring, 0, TAU, 24, Color(capture_tint, 0.5 + sin(_pulse) * 0.19), 2.0, true)
 		elif capture_ratio > 0:
 			draw_arc(icon_center, ring, -PI / 2, -PI / 2 + TAU * capture_ratio, 28, capture_tint, 2.5, true)
-		if fleet_strength >= 0.0:
-			var track := Rect2(Vector2(8, size.y - 7), Vector2(size.x - 16, 3))
-			draw_rect(track, Color("20364b"))
-			track.size.x *= clampf(fleet_strength, 0.0, 1.0)
-			draw_rect(track, accent)
+	if fleet_strength >= 0.0:
+		var extent := Vector2(size.x - 16.0, 3.0)
+		var origin := Vector2(8.0, size.y - 7.0)
+		var cells := 6 if lattice_tag else Holo.DEFAULT.segments
+		Meter.draw_cells(self, extent, 0.0, extent.x, Color("25394c"), cells, false, origin)
+		Meter.draw_cells(self, extent, 0.0, extent.x * fleet_strength, accent, cells, false, origin)
 	if not forecast.is_empty():
 		var plate := Rect2(Vector2(1, size.y - 16), Vector2(size.x - 2, 15))
 		draw_rect(plate, Color("101a28"))
