@@ -537,6 +537,9 @@ func emp_checks() -> void:
 	check(not board.get_node("MatchResult").visible and board._presentation_locked()
 		and board.get_node("TurnLabel").text == "EMP PULSE",
 		"Victory indicators and combat input wait for the EMP")
+	var telemetry: Control = board.get_node("FTLPanel")
+	check(telemetry.state == "firing" and telemetry.fill == 1.0,
+		"EMP strip stays charged during the cinematic buildup")
 	board._warp_out()
 	check(board.battles_won == victories + 1 and board.enemy_hull == original_hull,
 		"Repeated activation cannot commit another result or turn escape into destruction")
@@ -547,6 +550,8 @@ func emp_checks() -> void:
 			"The electrical effects originate near the hull")
 	await capture("emp-charge")
 	await wait_until(func(): return director.stage == "emp_discharge", "EMP transitions into the discharge")
+	check(telemetry.state == "used" and telemetry.ratio == 0.0,
+		"The 3D discharge cue releases the EMP strip on the same stage")
 	await wait_until(func(): return is_instance_valid(director.emp_effect) and director.emp_effect._wave.scale.x > director.emp_effect._radius * 1.35,
 		"The pulse visibly expands past the emitter")
 	if is_instance_valid(director.emp_effect):

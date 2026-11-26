@@ -100,12 +100,12 @@ func run() -> void:
 	Motion.reveal(scene)
 	check(is_equal_approx(meter.display_ratio, 0.26) and not meter.has_meta("holo_meter"), "Minimal snaps gauges and removes pending motion")
 	check(scene.modulate.a == 1.0 and not scene.has_meta("holo_panel"), "Minimal leaves modal contents immediately available")
-	var emp := preload("res://scripts/ui/emp_ready_button.gd").new()
+	var emp := preload("res://scenes/ftl_panel.tscn").instantiate()
 	root.add_child(emp)
-	emp._process(0.12)
-	var ready := emp.self_modulate
-	emp._process(0.25)
-	check(emp.self_modulate == ready and ready.b > ready.r, "Reduced motion keeps ready EMP readable without pulsing")
+	emp.present({"emp": {"charge": 14, "charge_target": 14, "disabled_turns": 0, "can_warp": true},
+		"escaped_by_ftl": false, "winner": "", "current_actor": "player", "resolving_card": false, "effects_busy": false})
+	check(emp.fill == 1.0 and emp.sweep == 1.0 and not emp.has_meta("holo_charge"),
+		"Reduced motion keeps ready EMP readable without pulsing")
 	emp.free()
 	Preferences.set_ui_motion(2)
 	check(Motion.duration(0.2, true) > Motion.duration(0.2), "Cinematic strengthens decorative motion only")

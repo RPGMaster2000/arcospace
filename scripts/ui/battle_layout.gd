@@ -3,7 +3,7 @@ extends RefCounted
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const FAMILIES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
-const BUTTON_SIZE = Vector2(64, 38)
+const BUTTON_SIZE = Vector2(48, 48)
 
 
 static func safe_insets(view: Control) -> Vector4:
@@ -59,7 +59,8 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	var start := clampf(view.size.x * 0.25 - group_width * 0.5, content_edge, maxf(content_edge, midpoint - group_width - gap))
 	var tile_width := (group_width - gap) * 0.5
 	var status_height := 40.0 if horizontal and hand.position.y < 240 else 45.0
-	var status_y := hand.position.y - 96.0
+	var row_y := hand.position.y - BUTTON_SIZE.y - gap
+	var status_y := minf(hand.position.y - 96.0, row_y - status_height - tokens.related_gap)
 	if horizontal: status_y = maxf(status_y, y + height + tokens.related_gap)
 	for side in ["Player", "Enemy"]:
 		var player: bool = side == "Player"
@@ -74,22 +75,15 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 			label.add_theme_font_size_override("font_size", 17 if tile_width < 122 else 20)
 		hull_bar.position = hull.position + Vector2(padding, hull.size.y - padding - 6)
 		hull_bar.size = Vector2(tile_width - 2 * padding, 6)
-	var hull: Control = view.get_node("PlayerHullBar")
 	var emp: Control = view.get_node("FTLPanel")
-	emp.position = Vector2(hull.position.x, hull.get_rect().end.y + 2 * padding)
-	emp.size = Vector2(154 + 2 * padding, 30.0 if status_height < 45.0 else 37.0)
-	var charge: Label = emp.get_node("Charge")
-	charge.position = Vector2(padding, 3.0 if status_height < 45.0 else tokens.related_gap)
-	charge.size = Vector2(154, 17)
-	charge.clip_text = true
-	charge.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var progress: ProgressBar = emp.get_node("Progress")
-	progress.position = Vector2(padding, emp.size.y - padding - 5)
-	progress.size = Vector2(154, 5)
+	var emp_bottom := status_y - gap
+	var emp_top := maxf(y + height + gap if horizontal else y, emp_bottom - 88.0)
+	emp.position = Vector2(minf(midpoint - 52, start + group_width + gap), minf(emp_top, emp_bottom - 62.0))
+	emp.size = Vector2(48, emp_bottom - emp.position.y)
 
 	allocation.size = BUTTON_SIZE
 	var resources: Control = view.get_node("PlayerResource3")
-	allocation.position = Vector2(menu.position.x, resources.get_rect().end.y + gap)
+	allocation.position = Vector2(menu.position.x, maxf(row_y, resources.get_rect().end.y + gap))
 	var action_log: Control = view.get_node("LastActionLabel")
 	if action_log.visible:
 		action_log.position = Vector2(content_edge, 75 + inset.y)

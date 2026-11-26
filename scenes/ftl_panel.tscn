@@ -1,52 +1,21 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/emp_ready_button.gd" id="ReadyButton"]
-
-[sub_resource type="StyleBoxFlat" id="Track"]
-bg_color = Color(0.15, 0.22, 0.27, 0.65)
-[sub_resource type="StyleBoxFlat" id="Fill"]
-bg_color = Color(0.4, 0.7, 0.8, 0.8)
+[ext_resource type="Script" path="res://scripts/ui/emp_telemetry.gd" id="Telemetry"]
 
 [node name="FTLPanel" type="Control"]
-layout_mode = 1
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = -432.0
-offset_right = -184.0
-offset_top = -362.0
-offset_bottom = -335.0
+offset_right = 48.0
+offset_bottom = 84.0
 mouse_filter = 2
+script = ExtResource("Telemetry")
 
 [node name="Charge" type="Label" parent="."]
-offset_right = 248.0
-offset_bottom = 20.0
-theme_override_colors/font_color = Color(0.7, 0.79, 0.82, 1)
-theme_override_font_sizes/font_size = 14
-text = "Jump 0 / 14"
-mouse_filter = 2
-
-[node name="Progress" type="ProgressBar" parent="."]
-offset_top = 23.0
-offset_right = 154.0
-offset_bottom = 27.0
-theme_override_styles/background = SubResource("Track")
-theme_override_styles/fill = SubResource("Fill")
-max_value = 14.0
-step = 1.0
-show_percentage = false
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "EMP"
 mouse_filter = 2
 
 [node name="WarpButton" type="Button" parent="."]
 visible = false
-offset_top = 0.0
-offset_right = 154.0
-offset_bottom = 27.0
-theme_override_font_sizes/font_size = 15
-script = ExtResource("ReadyButton")
-text = "EMP Pulse"
-flat = true
 disabled = true
-tooltip_text = "Escape to win when EMP Pulse is fully charged and online."
-
+mouse_default_cursor_shape = 2

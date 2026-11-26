@@ -228,11 +228,17 @@ func run() -> void:
 			for index in range(MODES.size()):
 				await activate(board.allocation_button, index % 2 == 1)
 				check(board.allocation_popup.shade.visible, "Mouse/touch opens allocation popup")
-				check(root.get_visible_rect().encloses(board.allocation_popup.panel.get_global_rect()), "Centered popup fits landscape viewport")
+				check(root.get_visible_rect().encloses(board.allocation_popup.panel.get_global_rect()), "Slide-out options fit the landscape viewport")
+				var options: Rect2 = board.allocation_popup.panel.get_global_rect()
+				var hand_top: float = board.get_node(board.card_slots[0]).position.y
+				check(options.end.y < hand_top and not options.intersects(board.player_hull_label.get_global_rect())
+					and not options.intersects(board.player_shields_label.get_global_rect())
+					and not options.intersects(board.get_node("FTLPanel").get_global_rect()),
+					"Open flyout clears the hand, defense telemetry and EMP")
 				if ship_index == 0 and index == 0: await capture(str(dimensions.x))
 				await activate(board.allocation_popup.choices[index], index % 2 == 1)
 				check(board.hand.allocation_mode == MODES[index] and not board.allocation_popup.shade.visible, "Choice applies and closes popup")
-				check(board.allocation_button.text == board.allocation_popup.ICONS[index], "Button shows selected emoji")
+				check(board.allocation_button.get_node("ModeGlyph").kind == MODES[index], "Main glyph reflects the selected allocation")
 				check(board.hand.cards == held and board.enemy_hand.cards == enemy_held and board.hand.rng.state == rng_state and board.enemy_hand.rng.state == enemy_rng, "Switch never modifies/rerolls either current hand")
 				check(board.ship_snapshot("player") == original_resources and board.ftl.charge == charge and board.turn_number == turn, "Switch has no cost, cooldown or turn effect")
 				for slot in range(6):
@@ -244,6 +250,30 @@ func run() -> void:
 			cancel.pressed = true
 			root.push_input(cancel, true)
 			check(not board.allocation_popup.shade.visible and board.hand.allocation_mode == "systems", "Back dismisses without changing mode")
+		if ship_index == 0:
+			var popup = board.allocation_popup
+			await activate(board.allocation_button, true)
+			var destination: Rect2 = popup.choices[0].get_global_rect()
+			var touch := InputEventScreenTouch.new()
+			touch.position = destination.get_center()
+			touch.pressed = true
+			root.push_input(touch, true)
+			await create_timer(0.47).timeout
+			check(popup.detail.visible and popup._title.text == "Balanced", "Holding a touch on an icon reveals its draw behavior")
+			touch = InputEventScreenTouch.new()
+			touch.position = destination.get_center()
+			root.push_input(touch, true)
+			await settle()
+			check(popup.shade.visible and board.hand.allocation_mode == "systems", "Releasing a hold never selects the option")
+			await activate(board.allocation_button, true)
+			check(not popup.shade.visible and not popup.detail.visible, "Tapping the main icon again closes the flyout and detail")
+			await activate(board.allocation_button, false)
+			var outside := InputEventMouseButton.new()
+			outside.button_index = MOUSE_BUTTON_LEFT
+			outside.position = Vector2(board.size.x * 0.5, 190)
+			outside.pressed = true
+			root.push_input(outside, true)
+			check(not popup.shade.visible and board.hand.allocation_mode == "systems", "Outside press dismisses without changing mode")
 		board.current_actor = "enemy"
 		board._select_allocation("offense")
 		check(board.hand.allocation_mode == "offense", "Switching is free during enemy turn too")
