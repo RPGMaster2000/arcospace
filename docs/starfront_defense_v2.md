@@ -18,6 +18,14 @@ See [Later Starfront Defense](balance/starfront_warfare.md) for formations,
 battle tuning, and validation results. [Later Starfront geography](balance/starfront_environment.md)
 describes its environmental layouts and developer controls.
 
+New Starfront Defense sectors from System 3 onward also evacuate a civilian
+convoy. Its beacon and hostile pursuers appear on the map. Inspect the convoy
+to check integrity, extraction ETA and a rendezvous destination. Successful
+evacuation adds 15 Salvage. Destruction adds 20 Pressure and brings a single
+mandatory elite response. System 1, Warzone and already-generated saves keep
+their existing objectives.
+[Evacuation mechanics and balance results](balance/starfront_warfare.md#civilian-evacuation)
+
 ## Strategic clock
 
 | Pressure | Mothership |
@@ -80,6 +88,7 @@ available from their map control on the left, leaving the FTL panel clear.
 
 | View | Mobile Vulkan | GL Compatibility |
 |---|---|---|
+| Civilian evacuation, System 5 seed 39 | See the rendered convoy test | [Compatibility](starfront_defense_v2/convoy-gl_compatibility.webp) |
 | Initial fleet, orbits and FTL HUD | [Mobile](starfront_defense_v2/fleet-and-orbits-mobile.png) | [Compatibility](starfront_defense_v2/fleet-and-orbits-gl_compatibility.png) |
 | Mothership reveal at pressure 50 | [Mobile](starfront_defense_v2/reveal-mobile.png) | [Compatibility](starfront_defense_v2/reveal-gl_compatibility.png) |
 | Missile on approach | [Mobile](starfront_defense_v2/missile-flight-mobile.png) | [Compatibility](starfront_defense_v2/missile-flight-gl_compatibility.png) |

@@ -20,6 +20,8 @@ var atmospheric_nodes: Array[Node3D] = []
 const Lighting = preload("res://scripts/presentation/star_system/stellar_lighting.gd")
 const SolarVisual = preload("res://scripts/presentation/star_system/solar_interference.gd")
 const StormVisual = preload("res://scripts/presentation/star_system/space_storm.gd")
+const Evacuation = preload("res://scripts/expedition/evacuation_convoy.gd")
+const ConvoyVisual = preload("res://scripts/presentation/star_system/convoy_visual.gd")
 const RiftVisual = preload("res://scripts/presentation/star_system/temporal_rift_visual.gd")
 const Variation = preload("res://scripts/expedition/system_variation.gd")
 const Layout = preload("res://scripts/expedition/system_layout.gd")
@@ -37,6 +39,7 @@ var modifier_source: Callable
 var storm_legend: PanelContainer
 var presentation_blocked := false
 var locator_exclusions: Callable
+var convoy_route_visual: Node3D
 var rift_visuals: Dictionary = {}
 var rift_visual: Node3D:
 	get: return rift_visuals.values().front() if not rift_visuals.is_empty() else null
@@ -461,7 +464,7 @@ func configure(entries: Array, last_destination: int, duration: float, visual_se
 
 
 func _process(delta: float) -> void:
-	if gesture == Gesture.PRESS and hold_index >= 0 and not hold_fired and Time.get_ticks_msec() - hold_started >= hold_threshold_msec:
+	if gesture == Gesture.PRESS and hold_index != -1 and not hold_fired and Time.get_ticks_msec() - hold_started >= hold_threshold_msec:
 		hold_fired = true
 		gesture = Gesture.HOLD
 		inspect_requested.emit(hold_index)
@@ -547,6 +550,7 @@ func _process(delta: float) -> void:
 		_space_lattice_names(placed_enemies)
 	elif system_variation.get("version") == 2:
 		_space_environment_markers()
+	if is_instance_valid(convoy_route_visual): convoy_route_visual.project_beacon(self)
 	# Fixed positions, bounded O(n²) border emphasis only; no layout reconstruction.
 	for index in markers:
 		var button = markers[index]
@@ -650,7 +654,7 @@ func travel(index: int) -> void:
 	if inspection_active or is_instance_valid(decoy_preview): return
 	if not interactive or interception_pending or pinching or Time.get_ticks_msec() < gesture_block_until or not markers.has(index) or markers[index].disabled:
 		return
-	if markers[index].has_meta("warzone_ally"):
+	if markers[index].has_meta("warzone_ally") or index == Evacuation.MARKER:
 		inspect_requested.emit(index)
 		return
 	if before_travel.is_valid() and not before_travel.call(index):
@@ -1193,6 +1197,8 @@ func fit_overview() -> void:
 		for x in [-1,1]:
 			for y in [-1,1]:
 				for z in [-1,1]: points.append(at+Vector3(x,y,z)*radius)
+	if is_instance_valid(convoy_route_visual) and convoy_route_visual.visible:
+		points.append(convoy_route_visual.extraction)
 	camera.fit_system(points, settings, sector)
 
 func begin_introduction() -> void:
@@ -1465,8 +1471,13 @@ func sync_defense(snapshot: Dictionary) -> void:
 		active_decoy.configure(beacon.radius, false)
 		visual_root.add_child(active_decoy)
 	_sync_missiles(snapshot.get("missiles", {}).get("active", []), _defense_point(snapshot.home))
+	_sync_convoy(snapshot.get("convoy", {}))
 	for unit in snapshot.units:
 		var index: int = int(unit.encounter)
+		if not objects.has(index) and unit.get("punitive", false) and snapshot.has("punitive_profile") and unit.status == "active":
+			var vessel := Models.ship(snapshot.punitive_profile, true)
+			vessel.scale = Vector3.ONE * 0.55
+			_add_contact_marker(index, vessel, "Punitive Elite", "×", Color("fa9f88"))
 		if not objects.has(index): continue
 		var target := _defense_point(unit.position)
 		_set_defense_position(index, target)
@@ -1474,6 +1485,15 @@ func sync_defense(snapshot: Dictionary) -> void:
 		objects[index].visible = active
 		markers[index].disabled = not active
 		markers[index].tooltip_text = "Mothership · Neutralize to unlock FTL" if unit.mothership else "Incoming attacker → HOMEWORLD"
+		var hunter: bool = unit.get("target_kind") == "convoy"
+		if hunter != markers[index].has_meta("evacuation_pursuit"):
+			if hunter: markers[index].set_meta("evacuation_pursuit", true)
+			else: markers[index].remove_meta("evacuation_pursuit")
+			markers[index].set_objective("➤" if hunter else "")
+		match unit.get("target_kind"):
+			"convoy": markers[index].tooltip_text = "Pursuing evacuation convoy · ETA %.1fs" % unit.convoy_eta
+			"decoy": markers[index].tooltip_text = "Diverted toward tactical decoy"
+			"holding": markers[index].tooltip_text = "Punitive elite · Holding near Homeworld"
 		if modifier_source.is_valid():
 			var modifier: int = modifier_source.call(index)
 			if modifier != 0: markers[index].tooltip_text += "\n" + preload("res://scripts/combat_modifier.gd").NAMES[modifier]
@@ -1481,6 +1501,53 @@ func sync_defense(snapshot: Dictionary) -> void:
 			markers[index].tooltip_text += "\nAdvancing · ETA %.1fs" % snapshot.mothership_eta
 		visual_data.anchors[index] = target
 	if is_instance_valid(defense_effects): defense_effects.refresh(snapshot)
+
+
+func _add_contact_marker(index: int, model: Node3D, title: String, glyph: String, tint: Color) -> void:
+	destination_root.add_child(model)
+	objects[index] = model
+	var marker := preload("res://scripts/presentation/star_system/poi_marker.gd").new()
+	marker.style_tag(tint)
+	marker.set_label(title, glyph, true)
+	marker.contrast = true
+	marker.hit_allowed = func(at): return not point_is_reserved(at)
+	marker.nearest_hit = func(at): return nearest_marker(at) == index
+	marker.pressed.connect(travel.bind(index))
+	add_child(marker)
+	markers[index] = marker
+	var ring := preload("res://scripts/presentation/star_system/selectable_ring.gd").new()
+	visual_root.add_child(ring)
+	ring.configure(0.85, tint)
+	selection_rings[index] = ring
+
+
+func _sync_convoy(record: Dictionary) -> void:
+	if record.is_empty() or not is_instance_valid(destination_root): return
+	var index := Evacuation.MARKER
+	var active: bool = record.activity == "traveling"
+	if active and not objects.has(index):
+		var model := Models.ship(preload("res://ships/player/ganymede.tres"), true)
+		model.scale = Vector3.ONE * 0.46
+		_add_contact_marker(index, model, "Evacuation Convoy", "🚀", ConvoyVisual.TINT)
+	if not objects.has(index): return
+	if active and (not is_instance_valid(convoy_route_visual) or convoy_route_visual.get_parent() != visual_root):
+		convoy_route_visual = ConvoyVisual.new()
+		visual_root.add_child(convoy_route_visual)
+		convoy_route_visual.configure(record.route, self)
+	if is_instance_valid(convoy_route_visual): convoy_route_visual.visible = active
+	objects[index].visible = active
+	markers[index].disabled = not active
+	if not active: return
+	var position_now := _defense_point(record.position)
+	_set_defense_position(index, position_now)
+	visual_data.anchors[index] = position_now
+	var next := _defense_point(record.route[mini(int(record.leg) + 1, record.route.size() - 1)])
+	if position_now.distance_squared_to(next) > 0.00001:
+		objects[index].basis = _facing_basis(next - position_now) * Basis.from_scale(Vector3.ONE * 0.46)
+	var caption := "Evacuation Convoy · %d/%d" % [record.integrity, record.maximum_integrity]
+	if markers[index].tooltip_text != caption:
+		markers[index].set_label(caption, "🚀", true)
+		markers[index].tooltip_text = caption
 
 func _sync_missiles(records: Array, home: Vector3) -> void:
 	if not is_instance_valid(destination_root): return

@@ -785,6 +785,8 @@ func _show_star_map(resume_travel: bool = true) -> void:
 		_set_system_name(star_map.visual_data.name)
 		screen.set_faction(_faction_profile())
 		_refresh_defense_hud()
+		if new_system and state.defense.convoy != null and state.defense.convoy.traveling():
+			capture_hud.dismiss("Evacuation underway · %d hostile pursuers" % state.defense.convoy.pursuers.size())
 		if state.defense.reveal_pending: _reveal_mothership.call_deferred()
 	elif state.is_warzone():
 		_set_system_name(state.system_name)
@@ -1967,6 +1969,17 @@ func _defense_updated(events: Dictionary) -> void:
 	if not _uses_3d_map() or not is_instance_valid(star_map): return
 	star_map.sync_defense(state.defense_map_view())
 	star_map.flash_missile_shots(events.get("missile_shots", []))
+	var operations: Array = events.get("evacuation", [])
+	var notice := ""
+	for operation in operations:
+		match operation.type:
+			"pursuit": notice = "Hostile fleet pursuing the evacuation"
+			"hit": notice = "Convoy hit · −%d integrity" % operation.damage
+			"extracted": notice = "Convoy extracted · +%d Salvage" % state.defense.convoy.reward
+			"destroyed": notice = "Convoy destroyed · +%.0f Pressure" % operation.pressure
+			"punitive": notice = "Mandatory punitive elite has entered the system"
+	if not notice.is_empty(): capture_hud.dismiss(notice)
+	if events.get("convoy_reward", 0) > 0: resource_bar.exploration(state)
 	# Strategic overview shows live pressure and movement. Travel alone opens
 	# interception screens; action results are still routed by their caller.
 	if strategic_overview.active:
@@ -1989,7 +2002,7 @@ func _defense_updated(events: Dictionary) -> void:
 		map_destination = -1
 		phase = Phase.OVERVIEW
 		_clear("system")
-	elif events.get("decoy_changed", false):
+	elif events.get("decoy_changed", false) or not operations.is_empty():
 		var index: int = state.travel_destination
 		var unit: Dictionary = state.defense.unit_for(index)
 		if not unit.is_empty() and state.defense.available(unit):
@@ -2055,11 +2068,13 @@ func _refresh_defense_hud() -> void:
 func _inspect_marker(index: int) -> void:
 	if not decoy_camera.is_empty(): return
 	if not (state.is_defense() or state.is_warzone()) or inspecting or phase not in [Phase.OVERVIEW, Phase.TRAVELING]: return
+	var evacuation: bool = state.is_defense() and index == State.Defense.Convoy.MARKER
+	if evacuation and (state.defense.convoy == null or not state.defense.convoy.traveling()): return
 	var fleet: Dictionary = {}
 	if state.is_warzone() and star_map.markers.has(index) and star_map.markers[index].has_meta("warzone_ally"):
 		fleet = state.warzone.fleet_at(star_map.markers[index].get_meta("warzone_ally"))
 		if not state.warzone.active(fleet): return
-	elif not state.can_visit(index):
+	elif not evacuation and not state.can_visit(index):
 		return
 	if phase == Phase.TRAVELING:
 		_sample_navigation_position()
@@ -2072,6 +2087,14 @@ func _inspect_marker(index: int) -> void:
 	backing.bg_color.a = 0.97
 	star_map.inspection_active = true
 	map_destination = index
+	if evacuation:
+		_clear("preview")
+		view.add_child(_label(State.Defense.Convoy.LABEL, 22))
+		for line in preload("res://scripts/ui/system_details.gd").evacuation_details(state):
+			view.add_child(_label(line, 15))
+		_button("Plot Rendezvous", _plot_convoy_rendezvous)
+		return_button.show()
+		return
 	if not fleet.is_empty():
 		_clear("preview")
 		_add_fleet_readout(fleet, state.warzone)
@@ -2087,6 +2110,14 @@ func _inspect_marker(index: int) -> void:
 	return_button.visible = state.is_warzone()
 	for option in screen.sidebar.find_children("*", "BaseButton", true, false):
 		option.disabled = true
+
+
+func _plot_convoy_rendezvous() -> void:
+	if state.defense.convoy == null or not state.defense.convoy.traveling(): return
+	var origin := State.Defense.point(state.navigation.position)
+	var meeting: Vector3 = state.defense.intercept_point(State.Defense.Convoy.MARKER, origin)
+	_dismiss_inspection()
+	if is_instance_valid(star_map): star_map.travel_to_position(meeting)
 
 func _show_missile(index: int) -> void:
 	if not state.has_missile(index): return

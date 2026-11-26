@@ -163,36 +163,40 @@ func configure(source: Control) -> void:
 	var identities: Array = [-999]
 	for unit in map.defense_view.units: identities.append(int(unit.encounter))
 	for index in identities:
-		var tint := Color("58dcff") if index == -999 else Color("ff7943")
-		var ribbon := MeshInstance3D.new()
-		ribbon.mesh = ImmediateMesh.new()
-		var material := StandardMaterial3D.new()
-		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.vertex_color_use_as_albedo = true
-		material.cull_mode = BaseMaterial3D.CULL_DISABLED
-		ribbon.material_override = material
-		add_child(ribbon)
-		ribbons[index] = ribbon
-		histories[index] = []
-		ages[index] = 0.0
-		var plume := MeshInstance3D.new()
-		var shape := SphereMesh.new()
-		shape.radius = 0.12
-		shape.height = 0.6
-		shape.radial_segments = 8
-		shape.rings = 4
-		plume.mesh = shape
-		var glow := StandardMaterial3D.new()
-		glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		glow.albedo_color = tint
-		glow.emission_enabled = true
-		glow.emission = tint
-		glow.emission_energy_multiplier = 2.0
-		plume.material_override = glow
-		plume.visible = false
-		add_child(plume)
-		plumes[index] = plume
+		_add_trail(index)
+
+
+func _add_trail(index: int) -> void:
+	var tint := Color("58dcff") if index == -999 else Color("ff7943")
+	var ribbon := MeshInstance3D.new()
+	ribbon.mesh = ImmediateMesh.new()
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.vertex_color_use_as_albedo = true
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ribbon.material_override = material
+	add_child(ribbon)
+	ribbons[index] = ribbon
+	histories[index] = []
+	ages[index] = 0.0
+	var plume := MeshInstance3D.new()
+	var shape := SphereMesh.new()
+	shape.radius = 0.12
+	shape.height = 0.6
+	shape.radial_segments = 8
+	shape.rings = 4
+	plume.mesh = shape
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.albedo_color = tint
+	glow.emission_enabled = true
+	glow.emission = tint
+	glow.emission_energy_multiplier = 2.0
+	plume.material_override = glow
+	plume.visible = false
+	add_child(plume)
+	plumes[index] = plume
 
 func refresh(snapshot: Dictionary) -> void:
 	integrity_bar.max_value = float(snapshot.get("maximum_integrity", 100))
@@ -210,9 +214,10 @@ func refresh(snapshot: Dictionary) -> void:
 			_release(index)
 			continue
 		if unit.status == "reserve": continue
+		if not histories.has(index): _add_trail(index)
 		_sample(index, map.objects[index].position, map.objects[index].visible)
 		if (not unit.mothership or snapshot.get("mothership_advancing", false)) and map.objects[index].visible:
-			var direction: Vector3 = point(snapshot.home) - map.objects[index].position
+			var direction: Vector3 = point(unit.get("target", snapshot.home)) - map.objects[index].position
 			if direction.length_squared() > 0.001:
 				var model: Node3D = map.objects[index]
 				var original_scale: Vector3 = model.scale

@@ -78,6 +78,9 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool, 
 	var previous_rifts: Array = TemporalRift.active_all(environmental_instances).map(func(item): return item.id)
 	var events: Dictionary = defense.advance_time(seconds, from, to, carry,
 		rifts.advance_span.bind(defense, environmental_instances))
+	events.convoy_reward = _claim_evacuation()
+	if events.convoy_reward > 0 and not events.evacuation.any(func(item): return item.type == "extracted"):
+		events.evacuation.append({"type":"extracted"})
 	_secure_defense()
 	var extraction_salvage: int = poi_effects.advance_extraction(events.elapsed)
 	salvage += extraction_salvage
@@ -104,7 +107,7 @@ func _advance_strategy(seconds: float, from: Vector3, to: Vector3, carry: bool, 
 	if notify: defense_advanced.emit(events)
 	if not carry and (events.contact >= 0 or events.arrivals > 0 or events.escalated or events.revealed
 			or events.missile_event or events.decoy_changed or defense.failed() or target_lost
-			or not events.spawned.is_empty() or rift_changed or extraction_salvage > 0):
+			or not events.spawned.is_empty() or not events.evacuation.is_empty() or rift_changed or extraction_salvage > 0):
 		progress_committed.emit()
 	return events
 
@@ -290,6 +293,17 @@ func environment_view() -> Array:
 func defense_map_view() -> Dictionary:
 	var view: Dictionary = defense.snapshot()
 	view.temporal_rifts = TemporalRift.active_all(environmental_instances).duplicate(true)
+	if defense.convoy != null:
+		view.convoy.position = Defense.wire(defense.convoy.position())
+		view.convoy.eta = defense.convoy.remaining_seconds()
+		if defense.convoy.punitive_index >= 0:
+			view.punitive_profile = defense.convoy.punitive_entry.enemy_data
+		for unit in view.units:
+			var live: Dictionary = defense.unit_for(unit.encounter)
+			unit.target_kind = defense.target_kind(live)
+			unit.target = Defense.wire(defense.target_for(live))
+			if unit.target_kind == "convoy":
+				unit.convoy_eta = defense.convoy.pursuit_time(live.position, defense._speed(live))
 	return view
 
 func can_place_decoy() -> bool:
@@ -351,6 +365,9 @@ func resolve_missile(index: int, approach: String, present: Callable = Callable(
 	defense.missiles.active.erase(index)
 	defense.missiles.pending = -1
 	defense.update_clear()
+	var evacuation := _claim_evacuation()
+	if evacuation > 0:
+		defense_advanced.emit({"contact": -1, "evacuation": [{"type":"extracted"}], "convoy_reward": evacuation})
 	_spend_activity_time(seconds, func():
 		_secure_defense()
 		progress_committed.emit(), present)
@@ -752,7 +769,9 @@ func _generate_system(initial_test_launch: bool) -> bool:
 		refresh_defense_bodies()
 
 	navigation.reset_system()
-	if is_defense(): navigation.checkpoint_position(Defense.wire(defense.start))
+	if is_defense():
+		preload("res://scripts/expedition/convoy_generation.gd").generate(self)
+		navigation.checkpoint_position(Defense.wire(defense.start))
 	if is_warzone(): navigation.checkpoint_position(Defense.wire(warzone.start_position(layout_expansion)))
 	# A new system ends the leg but preserves the exploration risk cooldown.
 	chasedown_roll_policy.reset_leg()
@@ -1884,6 +1903,14 @@ func elite_resource_reward(result: BattleResult) -> int:
 	return amount / 2 if is_warzone() and result.allied_support else amount
 
 
+func _claim_evacuation() -> int:
+	var convoy: RefCounted = defense.convoy
+	if convoy == null or convoy.activity != "extracted" or convoy.reward_claimed: return 0
+	convoy.reward_claimed = true
+	salvage += convoy.reward
+	return convoy.reward
+
+
 # The secured reward is granted once, including when the final threat is a missile.
 func _secure_defense(result: BattleResult = null) -> void:
 	if not is_defense() or defense == null or not defense.complete or defense.secured_reward_claimed:
@@ -1963,10 +1990,13 @@ func record_battle(result: BattleResult) -> bool:
 			warzone.player_victory(warzone_fleet(active_battle).id, not result.escaped_by_ftl)
 		if is_defense():
 			defense.neutralize(active_battle)
+			var evacuation := _claim_evacuation()
+			if evacuation > 0: result.salvage_rewards.evacuation = evacuation
 			_secure_defense(result)
 			for remaining in defense.units:
 				if remaining.status == "secured": encounters[remaining.encounter].completed = true
-			defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": []})
+			defense_advanced.emit({"contact": -1, "arrivals": 0, "spawned": [], "convoy_reward":evacuation,
+				"evacuation":[{"type":"extracted"}] if evacuation > 0 else []})
 	if result.winner == "player":
 		var elite_bonus: int = elite_resource_reward(result)
 		if elite_bonus > 0:
@@ -1986,16 +2016,23 @@ func record_battle(result: BattleResult) -> bool:
 			last_outcome = "Combat victory. Choose your reward."
 			var rank: int = enemy_profile(encounters[active_battle]).enemy_rank
 			if not encounters[active_battle].get("chasedown", false):
-				_offer_battle_reward(count, rank >= 1)
+				# The mandatory convoy-loss response retains elite combat and upgrades.
+				# A loss cannot manufacture an extra Tier 3 acquisition roll.
+				_offer_battle_reward(count, rank >= 1 and not unit.get("punitive", false))
 			else:
 				start_upgrade_event(count)
 
 	var before_activity := salvage
+	var convoy_was_claimed: bool = is_defense() and defense.convoy != null and defense.convoy.reward_claimed
 	_commit_activity_time(rules.defense_tuning.battle_seconds)
 	if is_warzone():
 		result.strategic_summary = warzone.intervention_summary(warzone_contact.id, ally_id, ally_strength, report_start, true, result.escaped_by_ftl)
-	if salvage > before_activity:
-		result.salvage_rewards["operation" if is_warzone() else "extraction"] = salvage - before_activity
+	var extra := salvage - before_activity
+	if is_defense() and defense.convoy != null and not convoy_was_claimed and defense.convoy.reward_claimed:
+		result.salvage_rewards.evacuation = defense.convoy.reward
+		extra -= defense.convoy.reward
+	if extra > 0:
+		result.salvage_rewards["operation" if is_warzone() else "extraction"] = extra
 	result.salvage = salvage
 	progress_committed.emit()
 	return true

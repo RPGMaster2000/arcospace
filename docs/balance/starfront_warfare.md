@@ -77,3 +77,58 @@ The first run exposed an affordability problem with more expensive role cards. T
 Eight strategic policies ran 54 sectors each with authoritative map movement and optimistic card-battle outcomes. The nearest and most-dangerous interception policies secured every scenario with zero damage. Nearby PoI and economic policies cleared all sectors but gave up 20 and 100 total integrity respectively. Turret, decoy and early boss policies also cleared all 54, so this sample could not distinguish their benefits from timely interceptions. Detours cleared 49 of 54 and lost 3,610 total integrity. Nearest-intercept mothership reveals averaged 42.37 strategic seconds. Mothership advancing, missiles and victory persistence are exercised separately by the regression. AI card policies and deliberately favorable strategic outcomes measure different parts of the system. Their win rates are unsuitable as forecasts of campaign completion.
 
 Reproduce with `tests/defense_warfare_test.gd`, `tests/defense_warfare_strategies.gd` or `tests/defense_warfare_balance.gd` using Godot `--headless --path . --script`.
+
+## Civilian evacuation
+
+New v2 Starfront Defense sectors from System 3 onward generate one civilian evacuation convoy. System 1, Warzone and already-generated saves keep their existing objectives. The convoy uses a scene-independent moving PoI record for identity, progress and activity. DefenseState advances it with attacks, Pressure, reinforcement and missile events. The map renders the record without advancing it.
+
+| Setting | Default |
+| --- | ---: |
+| Starting and maximum integrity | 40 |
+| Movement speed | 0.7 units per strategic second |
+| Route duration | 35–55 strategic seconds |
+| Damage per hostile contact | 20 |
+| Simultaneous pursuers | Up to 2 |
+| Evacuation reward | 15 Salvage |
+| Destruction penalty | 20 Pressure, clamped at the existing maximum |
+| Punitive dispatch delay | 6 strategic seconds |
+
+Placement uses an independent convoy seed. It tests straight routes first, then routes with one bend if necessary. Departure is 4.7–9.5 units from Homeworld and clear of the player spawn. Extraction is at least 16 units from Homeworld. Segments keep a margin from map edges, stellar and planetary bodies, installations, construction sites and other PoIs. Candidate scoring checks interception from both sides. It rejects assignments that obstruct the player's opening approach to another attacker, using both a plotted intercept and short course corrections. At launch the majority of attackers still target Homeworld, and the first convoy threat leaves time for travel and a committed battle.
+
+Raiders, Vanguards and Disruptors can pursue. Deployment, remaining route and Pressure determine whether an arriving reserve joins. Pursuers lead the convoy with a relative-motion solution and can resume their orders after a tactical decoy expires. The event solver uses swept contact, including a contact at the end of a time slice. A valid player interception wins a tie with a convoy attack. Exact extraction wins a tie with an attack. An attacker that makes contact is spent and grants no player combat reward. Outstanding pursuers return to their existing primary targets when evacuation ends.
+
+If the convoy is destroyed, Pressure is applied immediately. A faction elite with the current stage's combat settings enters after six seconds or when the active cap permits. Its schedule is separate from the normal reserves and survives the mothership's defeat. It can strike Homeworld once, then holds nearby until defeated or disabled by EMP. Its existing elite Salvage, resource and upgrade rewards apply. Its acquisition draft uses ordinary Tier 1–2 eligibility to avoid giving an extra guaranteed Tier 3 roll for a lost evacuation. FTL requires the punitive contact to be resolved. If the battlefield is already secure and the convoy survives, extraction and its reward settle without extra travel time.
+
+Saves include the committed route and progress, incoming and spent pursuers, outcome, reward claim and punitive identity and state. The overlay, map labels and route drawing reconstruct from this data. Developer Test Launch offers an **Evacuation Convoy** selection in **Environment & Seed** for normal or 20-integrity starts and an option to relax role restrictions for initial pursuers. The override still requires a physically feasible pursuit. System 5, seed 39 is suitable for checking the convoy and beacon. System 5, seed 142 uses the bent-route fallback.
+
+### Procedural and strategic results
+
+A sweep of seeds 1–180 at each of Systems 3, 4 and 5 covered all four factions and all five doctrines. All 540 generated a convoy. One used a bend and none used an unthreatened route. There were 453 openings with one pursuer and 87 with two. Routes measured 35.03–54.99 seconds. The earliest opening hostile contact was 11.29 seconds, with a feasible player intercept plus the battle time before contact for every opening pursuer. With time advancing and no player interception, 186 of 540 convoys were destroyed and the punitive forces deployed in all 186.
+
+The policy study used 54 fixed systems per policy, drawn from seeds 31–48 at each of Systems 3, 4 and 5 across all six player ships. All policies secured 54/54 under optimistic card wins. Values below use real movement, hostile contacts, Pressure, PoIs and combat time costs.
+
+| Policy | Evacuated | Convoy damage | Homeworld damage | Mean strategic seconds | Evacuation Salvage |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Nearest Homeworld threat | 54/54 | 240 | 0 | 49.5 | 810 |
+| Most dangerous Homeworld threat | 54/54 | 220 | 0 | 49.5 | 810 |
+| Convoy first | 54/54 | 0 | 80 | 49.5 | 810 |
+| Alternate objectives | 54/54 | 0 | 40 | 49.4 | 810 |
+| Tactical decoys | 54/54 | 80 | 0 | 49.4 | 810 |
+| Turrets | 54/54 | 80 | 0 | 49.4 | 810 |
+| Nearby preparation | 54/54 | 180 | 40 | 55.3 | 810 |
+| Economic preparation | 54/54 | 200 | 40 | 51.3 | 810 |
+| Ignore convoy | 42/54 | 1,220 | 0 | 49.2 | 630 |
+| Deliberate sacrifice | 42/54 | 1,220 | 0 | 49.2 | 630 |
+| Rush mothership | 54/54 | 80 | 0 | 49.4 | 810 |
+
+Without convoys the convoy-first policy reduced to normal threat selection and averaged 49.5 seconds, 0 Homeworld damage and 6.06 battles. With convoys it averaged 5.98 battles and incurred four Homeworld strikes across the sample. Deliberate sacrifice saved less than one strategic second on average and ended with 625 less total Salvage than convoy-first across 54 matched systems. An early balance run showed that every extra elite encounter offered another rare draft. With ordinary draft eligibility, the same sacrifice policy yielded 104 rare drafts across all fights versus 109 for convoy-first, and zero came from punitive elites. Damage to the convoy is often strategically acceptable. These policies assume every card fight won and scripted preparation choices. They do not estimate human win rates, card difficulty, or physical-device performance.
+
+Reproduce with Godot 4.7.2:
+
+```sh
+godot --headless --path . --script res://tests/starfront_convoy_test.gd
+godot --headless --path . --script res://tests/starfront_convoy_balance.gd
+godot --headless --path . --script res://tests/starfront_convoy_balance.gd -- --no-convoy
+```
+
+The rendered convoy test captures the same seed in both renderers at 960×540 and checks map input at 686×384. Real-device Android input and full card battles remain manual playtests.
