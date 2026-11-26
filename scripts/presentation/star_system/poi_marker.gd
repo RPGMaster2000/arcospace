@@ -1,5 +1,6 @@
 extends Button
 
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 # Presentation-only destination tag; the map supplies its projected anchor each frame.
@@ -88,6 +89,11 @@ func set_forecast(value: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	if not (in_clash or warzone_importance == 2) or not is_visible_in_tree():
+		return
+	if Preferences.ui_motion() == 0:
+		if _pulse != 0.0:
+			_pulse = 0.0
+			queue_redraw()
 		return
 	_pulse = fmod(_pulse + delta * 3.8, TAU)
 	queue_redraw()

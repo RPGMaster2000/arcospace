@@ -211,14 +211,20 @@ func exploration(state: Resource) -> void:
 
 func set_heartbeat(active: bool) -> void:
 	heartbeat_active = active
-	if not active and entries.has("hull"):
-		pulse_elapsed = 0.0
-		entries.hull.scale = Vector2.ONE
-		entries.hull.modulate = Color.WHITE
+	if not active: _reset_heartbeat()
+
+
+func _reset_heartbeat() -> void:
+	if not entries.has("hull"): return
+	pulse_elapsed = 0.0
+	entries.hull.scale = Vector2.ONE
+	entries.hull.modulate = Color.WHITE
 
 
 func _process(delta: float) -> void:
-	if not heartbeat_active or not is_visible_in_tree() or HoloMotion.duration(1.0) == 0.0:
+	if not heartbeat_active or not is_visible_in_tree(): return
+	if HoloMotion.duration(1.0) == 0.0:
+		if pulse_elapsed > 0.0: _reset_heartbeat()
 		return
 	pulse_elapsed += delta
 	var phase: float = fmod(pulse_elapsed, maxf(0.5, pulse_period)) / maxf(0.5, pulse_period)
