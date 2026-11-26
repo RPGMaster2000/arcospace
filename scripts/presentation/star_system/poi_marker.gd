@@ -1,5 +1,6 @@
 extends Button
 
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 # Presentation-only destination tag; the map supplies its projected anchor each frame.
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
@@ -51,6 +52,13 @@ func set_warzone_readout(progress: float, tint: Color, clash: bool, strength: fl
 	in_clash = clash
 	fleet_strength = strength
 	set_process(clash or warzone_importance == 2)
+	queue_redraw()
+
+
+func set_integrity(value: int, maximum: int) -> void:
+	var ratio := clampf(float(value) / maxi(1, maximum), 0, 1)
+	if is_equal_approx(fleet_strength, ratio): return
+	fleet_strength = ratio
 	queue_redraw()
 
 
@@ -249,11 +257,12 @@ func _draw() -> void:
 			draw_arc(icon_center, ring, 0, TAU, 24, Color(capture_tint, 0.5 + sin(_pulse) * 0.19), 2.0, true)
 		elif capture_ratio > 0:
 			draw_arc(icon_center, ring, -PI / 2, -PI / 2 + TAU * capture_ratio, 28, capture_tint, 2.5, true)
-		if fleet_strength >= 0.0:
-			var track := Rect2(Vector2(8, size.y - 7), Vector2(size.x - 16, 3))
-			draw_rect(track, Color("20364b"))
-			track.size.x *= clampf(fleet_strength, 0.0, 1.0)
-			draw_rect(track, accent)
+	if fleet_strength >= 0.0:
+		var extent := Vector2(size.x - 16.0, 3.0)
+		var origin := Vector2(8.0, size.y - 7.0)
+		var cells := 6 if lattice_tag else Holo.DEFAULT.segments
+		Meter.draw_cells(self, extent, 0.0, extent.x, Color("25394c"), cells, false, origin)
+		Meter.draw_cells(self, extent, 0.0, extent.x * fleet_strength, accent, cells, false, origin)
 	if not forecast.is_empty():
 		var plate := Rect2(Vector2(1, size.y - 16), Vector2(size.x - 2, 15))
 		draw_rect(plate, Color("101a28"))

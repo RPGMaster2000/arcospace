@@ -80,7 +80,7 @@ func _draw() -> void:
 
 
 static func draw_cells(view: Control, extent: Vector2, start: float, end: float, color: Color,
-		segments: int = ThemeSkin.DEFAULT.segments, lit: bool = false) -> void:
+		segments: int = ThemeSkin.DEFAULT.segments, lit: bool = false, origin := Vector2.ZERO) -> void:
 	if end <= start or extent.x <= 0 or extent.y <= 0: return
 	var pitch := extent.x / maxi(1, segments)
 	var gutter := minf(2.0, pitch * 0.22)
@@ -88,6 +88,6 @@ static func draw_cells(view: Control, extent: Vector2, start: float, end: float,
 		var left := maxf(start, index * pitch)
 		var right := minf(end, (index + 1) * pitch - gutter)
 		if right <= left: continue
-		view.draw_rect(Rect2(left, 0, right - left, extent.y), color)
+		view.draw_rect(Rect2(origin + Vector2(left, 0), Vector2(right - left, extent.y)), color)
 		if lit and extent.y >= 4.0:
-			view.draw_line(Vector2(left, 0.5), Vector2(right, 0.5), color.lightened(0.4), 1.0)
+			view.draw_line(origin + Vector2(left, 0.5), origin + Vector2(right, 0.5), color.lightened(0.4), 1.0)

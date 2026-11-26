@@ -4,7 +4,7 @@ Angular panels and cyan telemetry now link ship selection, card combat, the expe
 
 The battle HUD uses segmented Hull, Shield and EMP readouts. Shield numbers are exact. The Shield bar shows the current value relative to its peak during the battle because Shields have no capacity. Hull segments share a scale with Ablative Plating, with gold marking the excess range. Shield and Hull changes produce separate signed readouts. Resource payments, gains and production changes use the same typography and family colors. Result tiles read committed rewards through the existing result sequence.
 
-The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
+The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, convoy integrity, fleet strength, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
 
 ## Skin and assets
 

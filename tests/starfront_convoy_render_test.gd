@@ -58,6 +58,7 @@ func run() -> void:
 	var convoy: RefCounted = state.defense.convoy
 	var start: Vector3 = convoy.position()
 	check(map.objects.has(Convoy.MARKER) and map.objects[Convoy.MARKER].visible, "Rendered evacuation transport")
+	check(is_equal_approx(map.markers[Convoy.MARKER].fleet_strength, 1.0), "Convoy meter reflects exact integrity")
 	check(map.convoy_route_visual.visible and map.convoy_route_visual.extraction_label.visible and map.convoy_route_visual.extraction_label.text == "EVAC BEACON", "Distinct route and extraction beacon")
 	var hostile: Button = map.markers[convoy.pursuers.front()]
 	check(hostile.tooltip_text.contains("Pursuing evacuation convoy") and hostile.has_meta("evacuation_pursuit"), "Pursuer has a visible badge and evacuation target")

@@ -8,7 +8,7 @@ uniform sampler2D ring_image : source_color, filter_linear, repeat_disable;
 void fragment() {
 	vec2 point = (UV - vec2(0.5)) * 2.0;
 	float radius = length(point);
-	float angle = atan(point.y, point.x);
+	float angle = atan(point.y, point.x + 0.000001);
 	float distance_to_ring = abs(radius - 0.84);
 	float line = 1.0 - smoothstep(0.009, 0.029, distance_to_ring);
 	float sector = abs(sin(angle * 2.0));
