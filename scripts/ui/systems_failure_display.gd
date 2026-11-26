@@ -6,6 +6,7 @@ const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var columns: Dictionary = {}
 var counts: Dictionary = {}
 var offline: Dictionary = {}
+var _warning_height := 0.0
 var _active: Dictionary = {"player": false, "enemy": false}
 
 
@@ -23,6 +24,10 @@ func _ready() -> void:
 		counts[side] = _label(column, 11)
 		offline[side] = _label(column, 12)
 		offline[side].add_theme_constant_override("line_spacing", -6)
+		# Reserve the full three-system warning even while the readout is hidden.
+		counts[side].text = "0 TURNS REMAINING"
+		offline[side].text = "Synthesizer\nReactor\nQuarters"
+		_warning_height = maxf(_warning_height, column.get_combined_minimum_size().y)
 		if side == "enemy":
 			for label in column.get_children():
 				label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -42,9 +47,10 @@ func _label(column: VBoxContainer, font_size: int) -> Label:
 	return label
 
 
-func fit(board_size: Vector2, top: float) -> void:
-	columns.player.position = Vector2(84, top)
-	columns.enemy.position = Vector2(board_size.x - 204, top)
+func fit(left: float, right: float, bottom: float) -> void:
+	var top := bottom - _warning_height
+	columns.player.position = Vector2(left, top)
+	columns.enemy.position = Vector2(right - columns.enemy.get_combined_minimum_size().x, top)
 
 
 func refresh(status: Dictionary) -> void:

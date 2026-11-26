@@ -1074,14 +1074,19 @@ script = ExtResource("ModifierRules")
 [editable path="QuartersUpgradeCard"]
 [editable path="TorpedoSalvoCard"]
 
-[node name="SalvageLabel" type="Label" parent="."]
-offset_left = 22.0
-offset_top = 50.0
-offset_right = 180.0
-offset_bottom = 74.0
+[node name="PlayerIdentity" type="Label" parent="."]
 mouse_filter = 2
-theme_override_font_sizes/font_size = 16
-text = "Salvage 0"
+theme_override_font_sizes/font_size = 21
+text = "Player Ship"
+
+[node name="Subtitle" type="Label" parent="PlayerIdentity"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="Round" type="Label" parent="TurnLabel"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
 
 [node name="PlayerHullBar" type="Control" parent="."]
 anchor_left = 0.5

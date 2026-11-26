@@ -9,14 +9,6 @@ signal hull_requested
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const POSITIVE = Color("8ce4ad")
 const NEGATIVE = Color("ffacb5")
-const FAMILY_COLORS = {
-	"materials": Color("3b252c"),
-	"synthesizer": Color("3b252c"),
-	"energy": Color("20354d"),
-	"reactor": Color("20354d"),
-	"crew": Color("253c30"),
-	"quarters": Color("253c30")
-}
 # Copied from Expedition's Inspector settings; only the Hull button is animated.
 var pulse_period: float = 1.45
 var pulse_scale: float = 1.03
@@ -53,14 +45,14 @@ func put(
 		Presentation.action(button)
 		for style in ["normal", "hover", "pressed", "disabled"]:
 			var box: Holo.Frame = button.get_theme_stylebox(style).duplicate()
-			box.bg_color = FAMILY_COLORS.get(key, Color("282a29ff"))
+			box.bg_color = Holo.family_surface(key)
 			box.border_color = Color(Holo.family(key), 0.54 if style == "disabled" else 0.82)
 			if style == "hover":
 				box.bg_color = box.bg_color.lightened(.08)
-			box.content_margin_left = 8
-			box.content_margin_right = 8
-			box.content_margin_top = 1
-			box.content_margin_bottom = 1
+			box.content_margin_left = Holo.DEFAULT.compact_padding
+			box.content_margin_right = Holo.DEFAULT.compact_padding
+			box.content_margin_top = 3
+			box.content_margin_bottom = 3
 			button.add_theme_stylebox_override(style, box)
 		# Button text retains sizing/accessibility; child labels color each adjustment.
 		for color in [

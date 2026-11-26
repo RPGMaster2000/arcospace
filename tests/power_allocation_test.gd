@@ -223,7 +223,7 @@ func run() -> void:
 				check(card.size == Vector2(198,294) and card.scale.is_equal_approx(Vector2.ONE * expected_scale), "Existing card dimensions/scaling preserved")
 			var allocation_rect: Rect2 = board.allocation_button.get_global_rect()
 			var crew_rect: Rect2 = board.get_node("PlayerResource3").get_global_rect()
-			check(root.get_visible_rect().encloses(allocation_rect) and allocation_rect.position.y >= crew_rect.end.y and is_equal_approx(allocation_rect.position.x, crew_rect.position.x), "Allocation stays accessible below the resource column at every aspect")
+			check(root.get_visible_rect().encloses(allocation_rect) and allocation_rect.position.y >= crew_rect.end.y and is_equal_approx(allocation_rect.position.x, board.get_node("PlayerResource1").global_position.x), "Allocation stays accessible below the resource column at every aspect")
 			check(not allocation_rect.intersects(board.player_hull_label.get_global_rect()) and not allocation_rect.intersects(board.player_shields_label.get_global_rect()), "Allocation avoids essential ship information")
 			for index in range(MODES.size()):
 				await activate(board.allocation_button, index % 2 == 1)

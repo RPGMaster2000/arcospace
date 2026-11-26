@@ -1,5 +1,8 @@
 extends RefCounted
 # RESPONSIBILITY: Fit battle utility controls; never move ships, cards or combat status bars.
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const FAMILIES = ["materials", "energy", "crew"]
+const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const BUTTON_SIZE = Vector2(64, 38)
 
 
@@ -25,41 +28,89 @@ static func scaled_insets(safe: Rect2i, window: Vector2i, logical: Vector2) -> V
 
 static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	var inset := safe_insets(view)
-	# Keep the left column at the content edge; a display-wide inset creates a second gutter.
-	menu.position = Vector2(23, 16 + inset.y)
+	var tokens := Holo.DEFAULT
+	var edge := float(tokens.section_gap)
+	var padding := float(tokens.compact_padding)
+	menu.position = Vector2(edge + inset.x, 16 + inset.y)
 	menu.size = Vector2(48, 48)
-	for path in ["TurnLabel", "SalvageLabel"]:
-		view.get_node(path).position.x = menu.position.x + menu.size.x + 12
-		view.get_node(path).position.y = (15 if path == "TurnLabel" else 44) + inset.y
-	for index in range(1, 4):
-		view.get_node("PlayerResource%d" % index).position.x = 23
-		view.get_node("PlayerResource%d" % index).position.y = 90 + (index - 1) * 78 + inset.y
-		view.get_node("EnemyResource%d" % index).position.x = view.size.x - 94 - inset.z
-		view.get_node("EnemyResource%d" % index).position.y = 90 + (index - 1) * 78 + inset.y
-	# Mirror the player header rows at the right screen margin.
-	var heading: Label = view.get_node("ModeLabel")
-	heading.position = Vector2(view.size.x - 23 - inset.z - heading.size.x, 15 + inset.y)
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var subtitle: Label = heading.get_node("Subtitle")
-	subtitle.position = Vector2(0, 29)
-	subtitle.offset_right = 0
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	view.hud.header.fit(view.size.x, menu.get_rect().end.x + tokens.spacing + padding,
+		view.size.x - edge - inset.z - padding, 12 + inset.y)
+
+	var hand: Control = view.get_node(view.card_slots[0])
+	var y := 82.0 + inset.y
+	var rail := 100.0 if view.size.x >= 880 else 82.0
+	var gap := float(tokens.spacing)
+	var row_budget := (hand.position.y - y - BUTTON_SIZE.y - gap * 3) / 3
+	var horizontal := row_budget < 54
+	var height := clampf(row_budget, 54, 72) if not horizontal else 55.0
+	if horizontal: rail = clampf((view.size.x - inset.x - inset.z - edge * 2 - gap * 5) / 6, 64, 91)
+	for side in ["Player", "Enemy"]:
+		var x: float = menu.position.x if side == "Player" else view.size.x - edge - inset.z - rail
+		var direction := 1.0 if side == "Player" else -1.0
+		for i in FAMILIES.size():
+			var tile: Control = view.get_node("%sResource%d" % [side, i + 1])
+			tile.position = Vector2(x + i * (rail + gap) * direction, y) if horizontal else Vector2(x, y + i * (height + gap))
+			tile.size = Vector2(rail, height)
+			_fit_resource(tile, i, padding, height >= 64.0)
+
+	var content_edge := maxf(menu.position.x, edge + inset.z) + rail + gap
+	var midpoint := view.size.x * 0.5
+	var group_width := clampf(midpoint - content_edge - tokens.section_gap, 132, 334)
+	var start := clampf(view.size.x * 0.25 - group_width * 0.5, content_edge, maxf(content_edge, midpoint - group_width - gap))
+	var tile_width := (group_width - gap) * 0.5
+	var status_height := 40.0 if horizontal and hand.position.y < 240 else 45.0
+	var status_y := hand.position.y - 96.0
+	if horizontal: status_y = maxf(status_y, y + height + tokens.related_gap)
+	for side in ["Player", "Enemy"]:
+		var player: bool = side == "Player"
+		var hull: Control = view.get_node(side + "HullLabel")
+		var shield: Control = view.get_node(side + "ShieldsLabel")
+		var hull_bar: Control = view.get_node(side + "HullBar")
+		var group_x: float = start if player else view.size.x - start - group_width
+		hull.position = Vector2(group_x if player else group_x + tile_width + gap, status_y)
+		shield.position = Vector2(group_x + tile_width + gap if player else group_x, status_y)
+		for label in [hull, shield]:
+			label.size = Vector2(tile_width, status_height)
+			label.add_theme_font_size_override("font_size", 17 if tile_width < 122 else 20)
+		hull_bar.position = hull.position + Vector2(padding, hull.size.y - padding - 6)
+		hull_bar.size = Vector2(tile_width - 2 * padding, 6)
 	var hull: Control = view.get_node("PlayerHullBar")
 	var emp: Control = view.get_node("FTLPanel")
-	emp.position = Vector2(hull.position.x, hull.position.y + hull.size.y + 6)
+	emp.position = Vector2(hull.position.x, hull.get_rect().end.y + 2 * padding)
+	emp.size = Vector2(154 + 2 * padding, 30.0 if status_height < 45.0 else 37.0)
 	var charge: Label = emp.get_node("Charge")
-	charge.size.x = emp.get_node("Progress").size.x
+	charge.position = Vector2(padding, 3.0 if status_height < 45.0 else tokens.related_gap)
+	charge.size = Vector2(154, 17)
 	charge.clip_text = true
 	charge.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var progress: ProgressBar = emp.get_node("Progress")
+	progress.position = Vector2(padding, emp.size.y - padding - 5)
+	progress.size = Vector2(154, 5)
+
 	allocation.size = BUTTON_SIZE
 	var resources: Control = view.get_node("PlayerResource3")
-	allocation.position = Vector2(resources.position.x, resources.position.y + resources.size.y + 8)
-	# The optional 2D fallback has a visible action log.
-	# Its 3D counterpart is already hidden; leave that presentation unchanged.
+	allocation.position = Vector2(menu.position.x, resources.get_rect().end.y + gap)
 	var action_log: Control = view.get_node("LastActionLabel")
 	if action_log.visible:
-		action_log.position = Vector2(140 + inset.x, 76 + inset.y)
-		action_log.size.x = view.size.x - 280 - inset.x - inset.z
-	view.get_node("SystemsFailureDisplay").fit(
-		view.size, resources.position.y + resources.size.y + 6
-	)
+		action_log.position = Vector2(content_edge, 75 + inset.y)
+		action_log.size.x = view.size.x - 2 * content_edge
+	view.get_node("SystemsFailureDisplay").fit(start, view.size.x - start, status_y - gap)
+
+
+static func _fit_resource(tile: Control, index: int, pad: float, roomy: bool) -> void:
+	var width := tile.size.x - 2 * pad
+	var reserve: Label = tile.get_node(FAMILIES[index])
+	var production: Label = tile.get_node(PRODUCTION[index])
+	var family: Label = tile.get_node("FamilyLabel")
+	var badge: Control = tile.get_node("ProductionBadge")
+	var production_height := 18.0 if roomy else 14.0
+	family.position = Vector2(pad, pad if roomy else 3.0)
+	family.size = Vector2(width, 13)
+	reserve.position = Vector2(pad, family.get_rect().end.y)
+	reserve.size = Vector2(width, tile.size.y - (pad if roomy else 3.0) - production_height - reserve.position.y)
+	reserve.add_theme_font_size_override("font_size", 26 if roomy else 18)
+	badge.position = Vector2(pad, tile.size.y - (pad if roomy else 3.0) - production_height)
+	badge.size = Vector2(width, production_height)
+	production.position = badge.position
+	production.size = badge.size
+	production.add_theme_font_size_override("font_size", 12 if roomy else 11)
