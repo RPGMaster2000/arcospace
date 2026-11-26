@@ -82,12 +82,14 @@ static func _search(fleet: RefCounted, convoy: RefCounted, rng: RandomNumberGene
 			candidates.append({"id":unit.encounter, "eta":eta, "score":absf(eta - 19.0) + (2 if role == "disruptor" else 0)})
 		candidates.sort_custom(func(a, b): return a.score < b.score)
 		var selected: Array = []
-		if not candidates.is_empty():
-			selected.append(candidates.front().id)
-			for candidate in candidates.slice(1):
-				if selected.size() >= limit: break
-				if absf(candidate.eta - candidates.front().eta) < 3.0: continue
-				selected.append(candidate.id)
+		var first_eta := INF
+		for candidate in candidates:
+			if selected.size() >= limit: break
+			if absf(candidate.eta - first_eta) < 3.0: continue
+			var proposed := selected + [candidate.id]
+			if not _opening_contacts_clear(fleet, convoy, original, proposed): continue
+			selected = proposed
+			if selected.size() == 1: first_eta = candidate.eta
 		var score: float = float(selected.size()) * 18.0 + finish.length() * 0.10 - absf(travel - 47.0) * 0.06
 		if not candidates.is_empty(): score -= float(candidates.front().score) * 0.25
 		if score > best:
@@ -108,4 +110,51 @@ static func _clear_route(points: Array[Vector3], bounds: Rect2, stellar: float, 
 		for blocker in blockers:
 			if Geometry3D.get_closest_point_to_segment(blocker[0], previous, at).distance_to(blocker[0]) < blocker[1]:
 				return false
+	return true
+
+
+## Preserve access to each opening attacker after redirecting some of them.
+## Check the map's projected intercept and a short approach tracking the
+## target's current position. The latter also covers players adjusting course.
+static func _opening_contacts_clear(fleet: RefCounted, convoy: RefCounted, opening: Array, pursuers: Array) -> bool:
+	var courses := []
+	var rate: float = fleet.tuning.seconds_per_distance
+	var radius: float = fleet.tuning.interception_radius
+	for unit in opening:
+		var speed: float = fleet._speed(unit)
+		var at: Vector3 = unit.position
+		var target: Vector3 = convoy.guidance(at, speed) if unit.encounter in pursuers else fleet.home
+		var meeting: Vector3 = fleet._intercept(at, target, speed, fleet.start)
+		courses.append({"at":at, "velocity":(target - at).normalized() * speed, "meeting":meeting})
+	for course in courses:
+		var distance: float = fleet.start.distance_to(course.meeting)
+		var travel := distance * rate
+		var velocity: Vector3 = (course.meeting - fleet.start).normalized() / rate
+		var contact: float = fleet.hit_time(fleet.start - course.at, velocity - course.velocity, radius, travel + 0.0001)
+		if not is_finite(contact): return false
+		for other in courses:
+			if course == other: continue
+			if is_finite(fleet.hit_time(fleet.start - other.at, velocity - other.velocity, radius, contact)):
+				return false
+		var player: Vector3 = fleet.start
+		var elapsed := 0.0
+		var reached := false
+		while elapsed < travel + fleet.tuning.battle_seconds:
+			var toward: Vector3 = course.at + course.velocity * elapsed
+			var step := player.move_toward(toward, 1.0) - player
+			var span := step.length() * rate
+			if span <= 0.000001: break
+			var aligning := step / span
+			var desired: float = fleet.hit_time(player - toward, aligning - course.velocity, radius, span)
+			for other in courses:
+				if course == other: continue
+				var at: Vector3 = other.at + other.velocity * elapsed
+				if is_finite(fleet.hit_time(player - at, aligning - other.velocity, radius, minf(span, desired))):
+					return false
+			if is_finite(desired):
+				reached = true
+				break
+			player += step
+			elapsed += span
+		if not reached: return false
 	return true

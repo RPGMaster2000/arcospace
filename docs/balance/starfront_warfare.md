@@ -93,7 +93,7 @@ New v2 Starfront Defense sectors from System 3 onward generate one civilian evac
 | Destruction penalty | 20 Pressure, clamped at the existing maximum |
 | Punitive dispatch delay | 6 strategic seconds |
 
-Placement uses an independent convoy seed. It tests straight routes first, then routes with one bend if necessary. Departure is 4.7–9.5 units from Homeworld and clear of the player spawn. Extraction is at least 16 units from Homeworld. Segments keep a margin from map edges, stellar and planetary bodies, installations, construction sites and other PoIs. Candidate scoring checks interception from both sides. At launch the majority of attackers still target Homeworld, and the first convoy threat leaves time for travel and a committed battle.
+Placement uses an independent convoy seed. It tests straight routes first, then routes with one bend if necessary. Departure is 4.7–9.5 units from Homeworld and clear of the player spawn. Extraction is at least 16 units from Homeworld. Segments keep a margin from map edges, stellar and planetary bodies, installations, construction sites and other PoIs. Candidate scoring checks interception from both sides. It rejects assignments that obstruct the player's opening approach to another attacker, using both a plotted intercept and short course corrections. At launch the majority of attackers still target Homeworld, and the first convoy threat leaves time for travel and a committed battle.
 
 Raiders, Vanguards and Disruptors can pursue. Deployment, remaining route and Pressure determine whether an arriving reserve joins. Pursuers lead the convoy with a relative-motion solution and can resume their orders after a tactical decoy expires. The event solver uses swept contact, including a contact at the end of a time slice. A valid player interception wins a tie with a convoy attack. Exact extraction wins a tie with an attack. An attacker that makes contact is spent and grants no player combat reward. Outstanding pursuers return to their existing primary targets when evacuation ends.
 
@@ -103,25 +103,25 @@ Saves include the committed route and progress, incoming and spent pursuers, out
 
 ### Procedural and strategic results
 
-A sweep of seeds 1–180 at each of Systems 3, 4 and 5 covered all four factions and all five doctrines. All 540 generated a convoy. One used a bend and none used an unthreatened route. There were 452 openings with one pursuer and 88 with two. Routes measured 35.03–54.99 seconds. The earliest opening hostile contact was 11.29 seconds, with a feasible player intercept plus the battle time before contact for every opening pursuer. With time advancing and no player interception, 184 of 540 convoys were destroyed and the punitive forces deployed in all 184.
+A sweep of seeds 1–180 at each of Systems 3, 4 and 5 covered all four factions and all five doctrines. All 540 generated a convoy. One used a bend and none used an unthreatened route. There were 453 openings with one pursuer and 87 with two. Routes measured 35.03–54.99 seconds. The earliest opening hostile contact was 11.29 seconds, with a feasible player intercept plus the battle time before contact for every opening pursuer. With time advancing and no player interception, 186 of 540 convoys were destroyed and the punitive forces deployed in all 186.
 
 The policy study used 54 fixed systems per policy, drawn from seeds 31–48 at each of Systems 3, 4 and 5 across all six player ships. All policies secured 54/54 under optimistic card wins. Values below use real movement, hostile contacts, Pressure, PoIs and combat time costs.
 
 | Policy | Evacuated | Convoy damage | Homeworld damage | Mean strategic seconds | Evacuation Salvage |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Nearest Homeworld threat | 54/54 | 200 | 0 | 49.6 | 810 |
-| Most dangerous Homeworld threat | 54/54 | 180 | 0 | 49.4 | 810 |
+| Nearest Homeworld threat | 54/54 | 240 | 0 | 49.5 | 810 |
+| Most dangerous Homeworld threat | 54/54 | 220 | 0 | 49.5 | 810 |
 | Convoy first | 54/54 | 0 | 80 | 49.5 | 810 |
-| Alternate objectives | 54/54 | 20 | 40 | 49.4 | 810 |
-| Tactical decoys | 54/54 | 100 | 0 | 49.4 | 810 |
-| Turrets | 54/54 | 100 | 0 | 49.4 | 810 |
-| Nearby preparation | 54/54 | 220 | 40 | 55.2 | 810 |
-| Economic preparation | 54/54 | 240 | 40 | 51.3 | 810 |
-| Ignore convoy | 43/54 | 1,140 | 0 | 49.0 | 645 |
-| Deliberate sacrifice | 43/54 | 1,140 | 0 | 49.0 | 645 |
-| Rush mothership | 54/54 | 100 | 0 | 49.4 | 810 |
+| Alternate objectives | 54/54 | 0 | 40 | 49.4 | 810 |
+| Tactical decoys | 54/54 | 80 | 0 | 49.4 | 810 |
+| Turrets | 54/54 | 80 | 0 | 49.4 | 810 |
+| Nearby preparation | 54/54 | 180 | 40 | 55.3 | 810 |
+| Economic preparation | 54/54 | 200 | 40 | 51.3 | 810 |
+| Ignore convoy | 42/54 | 1,220 | 0 | 49.2 | 630 |
+| Deliberate sacrifice | 42/54 | 1,220 | 0 | 49.2 | 630 |
+| Rush mothership | 54/54 | 80 | 0 | 49.4 | 810 |
 
-Without convoys the convoy-first policy reduced to normal threat selection and averaged 49.5 seconds, 0 Homeworld damage and 6.06 battles. With convoys it averaged 5.98 battles and incurred four Homeworld strikes across the sample. Deliberate sacrifice saved less than one strategic second on average and ended with 495 less total Salvage than convoy-first across 54 matched systems. The 11 extra elite encounters initially offered every sacrificed convoy another rare draft. With ordinary draft eligibility, the same sacrifice policy yielded 107 rare drafts across all fights versus 109 for convoy-first, and zero came from punitive elites. Damage to the convoy is often strategically acceptable. These policies assume every card fight won and scripted preparation choices. They do not estimate human win rates, card difficulty, or physical-device performance.
+Without convoys the convoy-first policy reduced to normal threat selection and averaged 49.5 seconds, 0 Homeworld damage and 6.06 battles. With convoys it averaged 5.98 battles and incurred four Homeworld strikes across the sample. Deliberate sacrifice saved less than one strategic second on average and ended with 625 less total Salvage than convoy-first across 54 matched systems. An early balance run showed that every extra elite encounter offered another rare draft. With ordinary draft eligibility, the same sacrifice policy yielded 104 rare drafts across all fights versus 109 for convoy-first, and zero came from punitive elites. Damage to the convoy is often strategically acceptable. These policies assume every card fight won and scripted preparation choices. They do not estimate human win rates, card difficulty, or physical-device performance.
 
 Reproduce with Godot 4.7.2:
 

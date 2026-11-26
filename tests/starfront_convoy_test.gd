@@ -5,6 +5,7 @@ const Rules = preload("res://encounters/expedition_rules.tres")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
 const Moving = preload("res://scripts/expedition/moving_poi.gd")
 const Result = preload("res://scripts/combat/battle_result.gd")
+const Contact = preload("res://tests/fixtures/expedition_contact.gd")
 var checks := 0
 var failures := 0
 
@@ -73,6 +74,12 @@ func generation() -> void:
 				minimum_eta = minf(eta, minimum_eta)
 				var response: float = fleet.start.distance_to(fleet.intercept_point(index, fleet.start)) * fleet.tuning.seconds_per_distance
 				check(not enemy.mothership and fleet.target_kind(enemy) == "convoy" and response + fleet.tuning.battle_seconds < eta, "Player can intercept each initial pursuer")
+			if seed_value <= 8:
+				for unit in fleet.units:
+					if unit.mothership or unit.reinforcement: continue
+					var approach := reload_run(run)
+					check(approach != null and Contact.reach(approach, unit.encounter),
+						"Opening attacker %d remains reachable with convoy active in %d/%d" % [unit.encounter, stage, seed_value])
 			if seed_value <= 4 or convoy.route.size() > 2:
 				var copy := reload_run(run)
 				check(copy != null and copy.defense.convoy.snapshot() == convoy.snapshot(), "Committed route and pursuers survive JSON save")
