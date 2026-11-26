@@ -2,13 +2,17 @@
 
 Angular panels and cyan telemetry now link ship selection, card combat, the expedition map, inspections, settings, deck views and battle results. Deep navy panels preserve contrast over the 3D scene. Warm red identifies Materials, blue identifies Energy, and green identifies Crew. Hull damage, shields, faction sides, warnings and rare rewards retain their own color cues. The battle HUD also labels the three resources so color is one cue among several.
 
-The battle HUD uses segmented Hull, Shield and EMP readouts. Shield numbers are exact. The Shield bar shows the current value relative to its peak during the battle because Shields have no capacity. Hull segments share a scale with Ablative Plating, with gold marking the excess range. Shield and Hull changes produce separate signed readouts. Resource payments, gains and production changes use the same typography and family colors. Result tiles read committed rewards through the existing result sequence.
+The battle header pairs the selected player ship and signature with the enemy’s name, faction and role. The centered indicator uses the current battle round and animates on a change of ownership. Tap the player identity to open Battle Systems, which includes ship information, active boons and temporary bonuses. Salvage remains visible in progression screens and battle results.
+
+Both Shield meters use the same configurable 50-point visual reference. The HUD shows exact values, an illuminated overflow marker above 50, and **Shields OFF** when an effect disables the system. Hull keeps its actual capacity and displays Ablative Plating beyond that capacity in gold. The Hull tint shifts to amber and red as integrity falls. Materials, Energy and Crew have distinct tinted plates with production printed inside. Short layouts move the two resource groups into mirrored rows when needed to clear the hand. Unaffordable cards retain legible rules and use a warning-colored cost. Tier 2 adds a secondary frame and labeled badge, and Tier 3 adds gold trim and a short edge sweep when revealed or selected.
 
 The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, convoy integrity, fleet strength, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
 
 ## Skin and assets
 
 [Holographic skin](../resources/presentation/holographic_skin.tres) is the default Inspector-editable Resource. It exposes palette, typography, padding, cuts, border width, glow, motion, and the optional asset layers. Cards still accept per-card illustration textures independently of the frame. Card-family colors can still be tuned through Card Presentation Settings.
+
+Compact padding, related-element gaps and section gaps are shared tokens. The Resource also exposes family surfaces and the visual Shield reference. The Shield setting does not affect combat values.
 
 Native StyleBoxes handle panels, push buttons, tabs, card frames, focus outlines and notifications. Godot manages container sizing and native controls keep their hit areas and focus. The fallback draws a short list of canvas commands per redraw. Status bars use their existing native values and ranges with a mouse-transparent segmented painter. The map ring uses bounded geometry on its existing plane and a single material per ring.
 
@@ -49,5 +53,12 @@ Use **Intercept** to advance the sample gauge, **Replay entrance** to replay a p
 The captures use the actual scenes under GL Compatibility. The map and battle use System 5, seed 39. Opening draws and the exact billboard poses may differ between captures.
 
     godot --path . --rendering-method gl_compatibility --script res://tests/holographic_captures.gd
+
+The battle telemetry comparison uses the same card hand and combat values before and after the refinement.
+
+| Battle state | GL Compatibility comparison |
+| --- | --- |
+| 65 Shields, zero enemy Shields, critical Hull, production changes and all three card tiers at 960×540 | [Before and after](battle_telemetry/high-shields.webp) |
+| Disabled Shields and enemy turn at 760×428 | [Before and after](battle_telemetry/shields-off.webp) |
 
 Review on an Android device at the default and lowest supported landscape sizes. Check the card hand and result labels under bright lighting, native touch interactions, visibility over bright storm backdrops, and frame pacing while opening map inspections.

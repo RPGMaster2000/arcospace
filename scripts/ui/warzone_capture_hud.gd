@@ -60,7 +60,7 @@ func _ready() -> void:
 	shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell.add_child(notice_label)
 	notice_anchor.add_child(shell)
-	notice_frame = Holo.plate(notice_label, Holo.frame("compact"), Vector2(12, 4))
+	notice_frame = Holo.plate(notice_label, Holo.frame("compact"), Vector2(Holo.DEFAULT.padding.y, Holo.DEFAULT.compact_padding))
 	notice_label.hide()
 
 

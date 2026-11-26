@@ -45,12 +45,20 @@ func update_hull(value: int, limit: int) -> void:
 	queue_redraw()
 
 
+func condition_color() -> Color:
+	if not animate_changes: return hull_color
+	var ratio := float(hull) / maxi(1, capacity)
+	if ratio <= 0.25: return ThemeSkin.DEFAULT.hull
+	if ratio <= 0.55: return ThemeSkin.DEFAULT.warning
+	return ThemeSkin.DEFAULT.crew
+
+
 func _draw() -> void:
 	var total := maxf(maxf(capacity, displayed_hull), preview_hull)
 	var boundary := size.x * capacity / total
 	var amount := size.x * clampf(displayed_hull, 0, capacity) / total
 	Meter.draw_cells(self, size, 0, size.x, Color("2c222d"))
-	Meter.draw_cells(self, size, 0, amount, hull_color.lerp(Color.WHITE, _impact), ThemeSkin.DEFAULT.segments, true)
+	Meter.draw_cells(self, size, 0, amount, condition_color().lerp(Color.WHITE, _impact), ThemeSkin.DEFAULT.segments, true)
 	Meter.draw_cells(self, size, boundary, size.x * displayed_hull / total, plating_color, ThemeSkin.DEFAULT.segments, true)
 	if preview_hull > hull:
 		Meter.draw_cells(self, size, amount, size.x * mini(preview_hull, capacity) / total, repair_color)

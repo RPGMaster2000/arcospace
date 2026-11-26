@@ -31,7 +31,16 @@ var _system: Label
 var _identity: Label
 var _abilities: Label
 var _beam: Label
+const Header = preload("res://scripts/ui/battle_header.gd")
+const RESERVES := ["materials", "energy", "crew"]
+const PRODUCTION := ["synthesizer", "reactor", "quarters"]
+const PRODUCTION_TAGS := ["SYN", "REACT", "QTR"]
+var header: Header
+var _player_profile: Label
 var _shield_meters: Dictionary = {}
+var _shield_painters: Dictionary = {}
+var _shield_frames: Dictionary = {}
+var _shield_status: Dictionary = {}
 var _enemy_modifier: Label
 
 
@@ -61,7 +70,6 @@ func _init(board_view: Control) -> void:
 		"ModeRule",
 		"PlayerHullBar",
 		"PlayerShip/ShieldPlaceholder",
-		"SalvageLabel",
 		"TurnLabel",
 		"SystemsFailureDisplay"
 	]:
@@ -119,6 +127,15 @@ func _init(board_view: Control) -> void:
 		board_view.add_child(panel)
 	player_panel.handle.pressed.connect(_toggle_panel.bind(player_panel, enemy_panel))
 	enemy_panel.handle.pressed.connect(_toggle_panel.bind(enemy_panel, player_panel))
+	header = Header.new(board_view, _toggle_panel.bind(player_panel, enemy_panel))
+	_player_profile = player_panel.add_section("SHIP PROFILE")
+	var player_ship: Resource = board_view.player_ship_data
+	if player_ship != null:
+		_player_profile.text = player_ship.summary
+		if player_ship.signature_card != null:
+			var signature: Resource = player_ship.signature_card
+			_player_profile.text = "%s · %s\n%s" % [signature.card_name, signature.description, player_ship.summary]
+	_player_profile.get_parent().visible = not _player_profile.text.is_empty()
 	_boons = player_panel.add_section("ACTIVE BOONS")
 	_system = player_panel.add_section("STAR SYSTEM")
 	_modifier = player_panel.add_section("BATTLE MODIFIER")
@@ -132,6 +149,7 @@ func _init(board_view: Control) -> void:
 
 
 func _style_telemetry(board_view: Control) -> void:
+	var skin := Holo.DEFAULT
 	for side in ["player", "enemy"]:
 		var prefix: String = side.capitalize()
 		nodes[prefix + "HullBar"].animate_changes = true
@@ -139,49 +157,83 @@ func _style_telemetry(board_view: Control) -> void:
 			var label: Label = nodes[side + "_" + kind + "_label"]
 			var tint := Holo.family(kind)
 			var style := Holo.frame("status", tint)
-			style.cut = 5
-			Holo.plate(label, style, Vector2(4, -2))
+			Holo.plate(label, style)
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+			var ink_margins := StyleBoxEmpty.new()
+			ink_margins.content_margin_top = skin.related_gap
+			label.add_theme_stylebox_override("normal", ink_margins)
 			if kind == "shields":
 				var bar := ProgressBar.new()
 				bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				bar.show_percentage = false
-				bar.tooltip_text = "Shields relative to the highest value this battle"
+				bar.max_value = maxi(1, skin.shield_reference)
+				bar.accessibility_name = "Shields"
 				label.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
 				bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-				bar.offset_bottom = -3.0
-				bar.offset_top = -7.0
-				bar.offset_left = 4.0
-				bar.offset_right = -4.0
-				Meter.attach(bar, tint)
+				bar.offset_bottom = -skin.compact_padding
+				bar.offset_top = -skin.compact_padding - 6.0
+				bar.offset_left = skin.compact_padding
+				bar.offset_right = -skin.compact_padding
+				_shield_painters[side] = Meter.attach(bar, tint)
 				_shield_meters[side] = bar
-		for i in range(3):
-			var key: String = ["materials", "energy", "crew"][i]
+				_shield_frames[side] = style
+		for i in range(RESERVES.size()):
+			var key: String = RESERVES[i]
 			var widget: Control = board_view.get_node("%sResource%d" % [prefix, i + 1])
 			var tint := Holo.family(key)
-			var badge: ColorRect = widget.get_node("ProductionBadge")
 			for item in ["Shape", "Outline", "BadgeOutline"]:
 				widget.get_node(item).hide()
+			var badge: ColorRect = widget.get_node("ProductionBadge")
 			badge.color = Color.TRANSPARENT
-			Holo.plate(badge, Holo.frame("compact", tint))
-			Holo.plate(widget.get_node(key), Holo.frame("status", tint), Vector2(1, 7))
-			widget.get_node(key).add_theme_color_override("font_color", Holo.DEFAULT.text)
-			var nameplate := Label.new()
-			nameplate.text = ["MAT", "ENG", "CREW"][i]
-			nameplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			nameplate.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			nameplate.add_theme_font_size_override("font_size", 9)
-			nameplate.add_theme_color_override("font_color", tint)
-			nameplate.position = Vector2(0, 6)
-			nameplate.size.x = widget.get_node(key).size.x
-			widget.add_child(nameplate)
-			widget.get_node(["synthesizer", "reactor", "quarters"][i]).add_theme_color_override("font_color", tint)
-	var turn: Label = nodes["TurnLabel"]
-	Holo.plate(turn, Holo.frame("compact", Holo.DEFAULT.edge), Vector2(5, 1))
-	for rule in ["ModeRule", "HandRule"]:
-		nodes[rule].default_color = Color(Holo.DEFAULT.edge, 0.58)
-	var charge: ProgressBar = nodes["FTLPanel/Progress"]
-	Meter.attach(charge, Holo.DEFAULT.energy)
+			var background := Holo.family_surface(key)
+			var panel := Holo.frame("status." + key, tint)
+			panel.bg_color = background
+			panel.depth_color = background.darkened(0.27)
+			Holo.plate(widget, panel)
+			var production := Holo.frame("status." + PRODUCTION[i], tint)
+			production.bg_color = background.lightened(0.06)
+			production.depth_color = background
+			production.border_color = Color(tint, 0.38)
+			production.details = 0
+			production.cut = 3
+			Holo.plate(badge, production)
+			widget.get_node(key).add_theme_color_override("font_color", skin.text)
+			var family := Label.new()
+			family.name = "FamilyLabel"
+			family.text = key.to_upper()
+			family.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			family.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			family.add_theme_font_size_override("font_size", 11)
+			family.add_theme_color_override("font_color", tint)
+			widget.add_child(family)
+	nodes["ModeRule"].hide()
+	nodes["HandRule"].default_color = Color(skin.edge, 0.58)
+	Holo.plate(board_view.get_node("FTLPanel"), Holo.frame("status", skin.energy))
+	Meter.attach(nodes["FTLPanel/Progress"], skin.energy)
+
+
+func _refresh_shields(side: String, amount: int, disabled: bool) -> void:
+	var meter: ProgressBar = _shield_meters[side]
+	var label: Label = nodes[side + "_shields_label"]
+	var overflow := amount > meter.max_value and not disabled
+	label.text = "Shields OFF" if disabled else "Shields %d%s" % [amount, " ↑" if overflow else ""]
+	label.tooltip_text = "Shield systems disabled" if disabled else (
+		"%d Shields · Bar reference %d%s" % [amount, int(meter.max_value), " · Above scale" if overflow else ""])
+	meter.accessibility_name = label.text
+	meter.value = 0 if disabled else minf(amount, meter.max_value)
+	var status := "off" if disabled else ("overflow" if overflow else "on")
+	if _shield_status.get(side) == status: return
+	_shield_status[side] = status
+	var skin := Holo.DEFAULT
+	var tint := skin.muted if disabled else (skin.shield.lightened(0.46) if overflow else skin.shield)
+	_shield_painters[side].set_tint(tint)
+	_shield_frames[side].border_color = Color(tint, 0.97 if overflow else 0.63)
+	label.add_theme_color_override("font_color", tint)
+	if disabled:
+		HoloMotion.stop(_shield_painters[side], &"meter")
+		_shield_painters[side].display_ratio = 0.0
+
 
 func add_overdrive(button: MenuButton) -> void:
 	player_panel.content.add_child(button)
@@ -203,6 +255,7 @@ func close_panels(immediate: bool = false) -> void:
 func set_panels_locked(locked: bool, immediate: bool = false) -> void:
 	if locked:
 		close_panels(immediate)
+	header.player_info.disabled = locked
 	player_panel.handle.disabled = locked
 	enemy_panel.handle.disabled = locked
 
@@ -264,15 +317,7 @@ func refresh(data: Dictionary) -> void:
 
 
 func refresh_results(data: Dictionary) -> void:
-	nodes["ModeLabel"].text = data.enemy_name
-	nodes["ModeLabel/Subtitle"].text = data.enemy_subtitle
-	nodes["ModeLabel"].add_theme_font_size_override(
-		"font_size", nodes["TurnLabel"].get_theme_font_size("font_size")
-	)
-	nodes["ModeLabel/Subtitle"].add_theme_font_size_override(
-		"font_size", nodes["SalvageLabel"].get_theme_font_size("font_size")
-	)
-	nodes["SalvageLabel"].text = "Salvage %d" % data.salvage
+	header.update(data)
 	nodes["MatchResult/Panel/BattlesWon"].visible = data.winner in ["enemy", "draw"]
 	nodes["MatchResult/Panel/BattlesWon"].text = "%d BATTLES WON" % data.battles_won
 	nodes["MatchResult/Panel/Rewards"].visible = data.winner == "player"
@@ -412,64 +457,22 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 	var player_can_act: bool = (
 		data.winner.is_empty() and data.current_actor == "player" and not data.resolving_card
 	)
-	if data.get("emp_pending", false):
-		nodes["TurnLabel"].text = "EMP PULSE"
-	elif data.winner.is_empty():
-		nodes["TurnLabel"].text = (
-			"Turn %d · %s"
-			% [data.turn_number, "You" if data.current_actor == "player" else "Enemy"]
-		)
-	else:
-		nodes["TurnLabel"].text = (
-			"DRAW"
-			if data.winner == "draw"
-			else ("YOU WIN" if data.winner == "player" else "ENEMY WINS")
-		)
-	nodes["player_hull_label"].text = "Hull %d/%d" % [data.player.hull, data.player.hull_capacity]
-	nodes["player_hull_label"].add_theme_color_override(
-		"font_color",
-		(
-			nodes["PlayerHullBar"].plating_color
-			if data.player.hull > data.player.hull_capacity
-			else Color(0.82, 0.84, 0.87)
-		)
-	)
-	nodes["PlayerHullBar"].update_hull(data.player.hull, data.player.hull_capacity)
-	nodes["player_shields_label"].text = (
-		"Shields OFF" if data.shields_disabled else "Shields %d" % data.player.shields
-	)
-	nodes["enemy_hull_label"].text = "Hull %d/%d" % [data.enemy.hull, data.enemy.hull_capacity]
-	nodes["enemy_hull_label"].add_theme_color_override(
-		"font_color",
-		(
-			nodes["EnemyHullBar"].plating_color
-			if data.enemy.hull > data.enemy.hull_capacity
-			else Color(0.82, 0.84, 0.87)
-		)
-	)
-	nodes["EnemyHullBar"].update_hull(data.enemy.hull, data.enemy.hull_capacity)
-	nodes["enemy_shields_label"].text = (
-		"Shields OFF" if data.shields_disabled else "Shields %d" % data.enemy.shields
-	)
-	for side in _shield_meters:
-		var meter: ProgressBar = _shield_meters[side]
-		var shield: int = data[side].shields
-		meter.max_value = maxf(meter.get_meta("peak", 1), shield)
-		meter.set_meta("peak", meter.max_value)
-		meter.value = 0 if data.shields_disabled else shield
-	nodes["battle_effects"].set_number(nodes["player_materials_label"], data.player.materials)
-	nodes["player_synthesizer_label"].text = str(data.player.synthesizer)
-
-	nodes["battle_effects"].set_number(nodes["player_energy_label"], data.player.energy)
-	nodes["player_reactor_label"].text = str(data.player.reactor)
-	nodes["battle_effects"].set_number(nodes["player_crew_label"], data.player.crew)
-	nodes["player_quarters_label"].text = str(data.player.quarters)
-	nodes["battle_effects"].set_number(nodes["enemy_materials_label"], data.enemy.materials)
-	nodes["enemy_synthesizer_label"].text = str(data.enemy.synthesizer)
-	nodes["battle_effects"].set_number(nodes["enemy_energy_label"], data.enemy.energy)
-	nodes["enemy_reactor_label"].text = str(data.enemy.reactor)
-	nodes["battle_effects"].set_number(nodes["enemy_crew_label"], data.enemy.crew)
-	nodes["enemy_quarters_label"].text = str(data.enemy.quarters)
+	for side in ["player", "enemy"]:
+		var ship: Dictionary = data[side]
+		var hull_bar: Control = nodes[side.capitalize() + "HullBar"]
+		var hull_label: Label = nodes[side + "_hull_label"]
+		hull_label.text = "Hull %d/%d" % [ship.hull, ship.hull_capacity]
+		hull_bar.update_hull(ship.hull, ship.hull_capacity)
+		hull_label.add_theme_color_override("font_color", hull_bar.plating_color if ship.hull > ship.hull_capacity else hull_bar.condition_color())
+		_refresh_shields(side, ship.shields, data.shields_disabled)
+		for i in RESERVES.size():
+			var reserve: String = RESERVES[i]
+			var production: String = PRODUCTION[i]
+			nodes["battle_effects"].set_number(nodes[side + "_" + reserve + "_label"], ship[reserve])
+			var label: Label = nodes[side + "_" + production + "_label"]
+			label.text = "%s %+d" % [PRODUCTION_TAGS[i], ship[production]]
+			label.tooltip_text = "%s %+d per turn" % [production.capitalize(), ship[production]]
+			label.accessibility_name = label.tooltip_text
 	for slot in range(cards.size()):
 		var button = cards[slot]
 		var shown: Dictionary = data.cards[slot]
@@ -515,8 +518,8 @@ func fit_combat_controls(board_size: Vector2) -> void:
 	nodes["LastActionLabel"].size.x = board_size.x - 160
 
 
-static func fit_jump_button(button: Button, progress_width: float) -> void:
-	button.size = Vector2(progress_width, 27)
+static func fit_jump_button(button: Button, panel_size: Vector2) -> void:
+	button.size = panel_size
 	button.position = Vector2.ZERO
 
 

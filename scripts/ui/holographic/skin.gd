@@ -32,7 +32,7 @@ static func frame(role: String, tint: Color = Color.TRANSPARENT, state: String =
 	box.content_margin_right = skin.padding.x
 	box.content_margin_top = skin.padding.y
 	box.content_margin_bottom = skin.padding.y
-	if compact: box.set_content_margin_all(5)
+	if compact: box.set_content_margin_all(skin.compact_padding)
 	apply_assets(box, role, state, skin)
 	return box
 
@@ -61,6 +61,14 @@ static func family(key: String, skin: Settings = DEFAULT) -> Color:
 		"shields": return skin.shield
 		"salvage": return skin.reward
 		_: return skin.edge
+
+
+static func family_surface(key: String, skin: Settings = DEFAULT) -> Color:
+	match key:
+		"materials", "synthesizer": return skin.materials_surface
+		"energy", "reactor": return skin.energy_surface
+		"crew", "quarters": return skin.crew_surface
+		_: return skin.surface
 
 
 static func action(button: Button, tint: Color = Color.TRANSPARENT, primary: bool = false, skin: Settings = DEFAULT) -> void:

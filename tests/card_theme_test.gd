@@ -157,18 +157,18 @@ func run() -> void:
 		)
 		check(
 			(
-				view.get_node("DescriptionLabel").modulate.r >= 0.55
-				and view.get_node("DescriptionLabel").modulate.r <= 0.65
+				view.get_node("DescriptionLabel").modulate.r >= 0.85
+				and view.get_node("DescriptionLabel").modulate.r < 1.0
 				and view.get_node("DescriptionLabel").modulate.a == 1
 			),
-			"Unaffordable rules are visibly dimmed but readable"
+			"Unaffordable rules retain high contrast"
 		)
 		check(
 			(
 				not view.get_node("DiscardButton").disabled
-				and view.get_node("CostLabel").get_theme_color("font_color") == expected
+				and view.get_node("CostLabel").get_theme_color("font_color") == view.Holo.DEFAULT.warning
 			),
-			"Discard remains available; cost retains its family"
+			"Discard remains available and unaffordable cost uses the warning color"
 		)
 		view.set_playable(true, 1)
 		check(

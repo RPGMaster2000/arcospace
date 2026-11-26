@@ -11,6 +11,9 @@ extends Resource
 @export var materials := Color("fa937f")
 @export var energy := Color("68cbff")
 @export var crew := Color("73e2ac")
+@export var materials_surface := Color("38232bfa")
+@export var energy_surface := Color("142f46fa")
+@export var crew_surface := Color("1b392efa")
 @export var hull := Color("fa817b")
 @export var shield := Color("6cbdff")
 @export var friendly := Color("65dee9")
@@ -24,13 +27,18 @@ extends Resource
 @export_range(2.0, 25.0, 1.0) var corner_cut := 11.0
 @export_range(0.0, 1.0, 0.01) var glow := 0.22
 @export var line_width := 1.0
+@export var compact_padding := 7
+@export var related_gap := 5
 @export var spacing := 8
+@export var section_gap := 20
 @export var padding := Vector2(16, 12)
 @export var touch_height := 48
 @export var label_size := 14
 @export var heading_size := 24
 @export var font: Font = preload("res://assets/fonts/emoji_ui.tres")
 @export_range(4, 24) var segments := 12
+## Visual reference only. Ships may have any number of Shields.
+@export_range(1, 200) var shield_reference := 50
 
 @export_group("Motion")
 @export var hover_seconds := 0.12

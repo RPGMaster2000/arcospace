@@ -159,7 +159,7 @@ func run() -> void:
 		board.salvage = 12
 		board.refresh_display()
 		check(board.get_node("PlayerResource2").visible and board.get_node("PlayerHullLabel").visible, "Original battle resource and Hull UI restored")
-		check(board.get_node("SalvageLabel").visible and board.get_node("FTLPanel/Charge").visible, "Original Salvage and EMP Pulse UI restored")
+		check(not board.has_node("SalvageLabel") and board.get_node("PlayerIdentity").visible and board.get_node("FTLPanel/Charge").visible, "Ship identity and EMP replace permanent combat Salvage")
 		check(board.get_node("PlayerResource2/energy").text == "37", "Original resource values update")
 		for child in board.get_children(): check(not child is HFlowContainer, "No exploration bar in combat")
 		if kind == 2:

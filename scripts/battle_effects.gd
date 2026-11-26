@@ -271,7 +271,7 @@ func _play_changes(
 			var production_delta: int = current[PRODUCTION[index]] - old[PRODUCTION[index]]
 			if production_delta != 0:
 				_resource_burst(icon, COLORS[index] if production_delta > 0 else Color(1.0, 0.25, 0.35), true)
-				_stat_delta_popup(icon, production_delta, true)
+				_stat_delta_popup(icon, production_delta, true, PRODUCTION[index].capitalize())
 			if production_delta != 0:
 				Sound.play(&"production_gain" if production_delta > 0 else &"production_loss", self)
 				_pulse_icon(icon, COLORS[index], production_delta > 0)
@@ -328,11 +328,11 @@ func _defense_delta(label: Label, amount: int, tint: Color, suffix: String) -> v
 	fade.finished.connect(popup.queue_free)
 
 
-func _stat_delta_popup(icon: Control, delta: int, production: bool) -> void:
+func _stat_delta_popup(icon: Control, delta: int, production: bool, caption: String = "") -> void:
 	# Lightweight readable gain/loss feedback alongside the existing shader burst.
 	var popup := Label.new()
 	popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	popup.text = ("%+d" % delta) + (" PROD" if production else "")
+	popup.text = "%s %+d" % [caption, delta] if production else "%+d" % delta
 	popup.add_theme_font_size_override("font_size", 27 if production else 23)
 	popup.add_theme_color_override("font_color", Color(0.55, 1.0, 0.6) if delta > 0 else Color(1.0, 0.34, 0.37))
 	popup.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))

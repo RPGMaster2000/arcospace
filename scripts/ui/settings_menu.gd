@@ -213,7 +213,7 @@ func _fit() -> void:
 	panel.size = Vector2(minf(860, shade.size.x - 48), minf(600, shade.size.y - 48))
 	panel.position = (shade.size - panel.size) * 0.5
 	for edge in ["left", "right", "top", "bottom"]:
-		_margin.add_theme_constant_override("margin_" + edge, 12 if shade.size.y < 480 else 24)
+		_margin.add_theme_constant_override("margin_" + edge, roundi(Holo.DEFAULT.padding.y) if shade.size.y < 480 else Holo.DEFAULT.section_gap)
 
 
 func present() -> void:

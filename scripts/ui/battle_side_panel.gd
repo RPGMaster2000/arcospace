@@ -105,15 +105,14 @@ func _init(left: bool) -> void:
 
 func fit(first: Rect2, last: Rect2, hand_top: float, view_width: float) -> void:
 	var area := first.merge(last)
-	# The production badge overhangs the left resource tile.
-	area.size.x += 28 if _left else 14
-	if not _left:
-		area.position.x -= 14
 	handle.position = area.position
 	handle.size = area.size
 	var width := minf(WIDTH, view_width * 0.43)
-	drawer.position = Vector2(area.end.x + 3 if _left else area.position.x - width - 3, area.position.y)
-	drawer.size = Vector2(width, maxf(100, hand_top - area.position.y - 12))
+	if is_equal_approx(first.position.y, last.position.y):
+		drawer.position = Vector2(area.position.x if _left else area.end.x - width, area.end.y + 6)
+	else:
+		drawer.position = Vector2(area.end.x + 6 if _left else area.position.x - width - 6, area.position.y)
+	drawer.size = Vector2(width, maxf(48, hand_top - drawer.position.y - 12))
 	surface.size = drawer.size
 	if _motion and _motion.is_running():
 		_motion.kill()

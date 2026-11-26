@@ -154,7 +154,8 @@ func run() -> void:
 				not text.clip_text and text.max_lines_visible == -1,
 				id + " important effects never hidden by clipping/ellipsis"
 			)
-			for hand_scale in [1.0, (960.0 - 32 - 50) / (198 * 6)]:
+			for hand_width in [1280.0, 960.0, 686.0]:
+				var hand_scale := minf(1.0, (hand_width - 82.0) / (198 * 6))
 				view.discard_target_height = 44.0 / hand_scale
 				view.refresh_card()
 				# Label shaping is the production renderer's actual measured text.

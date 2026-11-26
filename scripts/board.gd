@@ -1164,6 +1164,9 @@ func _display_snapshot() -> Dictionary:
 	return {
 		"player": ship_snapshot("player"),
 		"enemy": ship_snapshot("enemy"),
+		"player_name": player_ship_data.ship_name if player_ship_data != null else "Player Ship",
+		"player_subtitle": (player_ship_data.signature_card.card_name if player_ship_data.signature_card != null
+			else player_ship_data.subtitle) if player_ship_data != null else "",
 		"enemy_name": enemy_ship_data.ship_name if enemy_ship_data != null else "Enemy Ship",
 		"enemy_subtitle": enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel",
 		"active_boons": PackedStringArray(),
@@ -1325,7 +1328,7 @@ func _select_allocation(mode: String) -> void:
 
 func _fit_jump_button() -> void:
 	# Board3D positions this control before the base Board has initialized its HUD.
-	BattleHUD.fit_jump_button($FTLPanel/WarpButton, $FTLPanel/Progress.size.x)
+	BattleHUD.fit_jump_button($FTLPanel/WarpButton, $FTLPanel.size)
 
 
 func _update_jump_style() -> void:

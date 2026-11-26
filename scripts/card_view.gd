@@ -26,6 +26,12 @@ var affordable := true
 var storm_active := false
 var storm_color := Color(0.15, 0.55, 1.0)
 var theme_stamp := ""
+var _rarity_identity := ""
+var _rarity_plate: Panel
+var _sweep := 0.0:
+	set(value):
+		_sweep = value
+		queue_redraw()
 ## TUNE: Shared normal-card text and read-only inspection settings.
 @export var presentation_settings: Resource = preload("res://resources/card_presentation.tres")
 @export var visual_settings: Resource = preload("res://resources/visual/alpha_visual_settings.tres")
@@ -74,6 +80,8 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 		return
 	if selected and not interaction_selected and card_data != null and not disabled:
 		Sound.play(&"card_select", self)
+	if selected and not interaction_selected and card_data != null and card_data.tier == 3:
+		_play_rarity_sweep()
 	interaction_hovered = hovered and card_data != null
 	interaction_selected = selected and card_data != null
 	if interaction_tween != null and interaction_tween.is_valid():
@@ -169,8 +177,11 @@ func refresh_card() -> void:
 	$DiscardButton.offset_top = 294.0 - discard_target_height
 	$DiscardButton.offset_bottom = 294.0
 	$DiscardButton.custom_minimum_size.y = discard_target_height
-	$DescriptionLabel.offset_top = BODY_TOP
-	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - 7
+	# Recover text space by compressing the illustration before the touch
+	# footer grows. Keep body typography and the full discard hit target.
+	var art_reduction := clampf(discard_target_height - 45.0, 0.0, 35.0)
+	$DescriptionLabel.offset_top = BODY_TOP - art_reduction
+	$DescriptionLabel.offset_bottom = $DiscardButton.offset_top - Holo.DEFAULT.compact_padding
 	$DescriptionLabel.clip_text = false
 	$DescriptionLabel.max_lines_visible = -1
 	$DescriptionLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
@@ -179,9 +190,14 @@ func refresh_card() -> void:
 	$TitleLabel.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for art in [$ArtPlaceholder, $FullCardArt]:
 		art.position = Vector2(12, ART_TOP)
-		art.size = Vector2(174, 56)
+		art.size = Vector2(174, 56 - art_reduction)
 	fit_placeholder_art()
+	$TierLabel.position.y = ART_TOP + 56 - art_reduction - 19.0
 	if card_data == null:
+		_rarity_identity = ""
+		if is_instance_valid(_rarity_plate): _rarity_plate.hide()
+		if not Engine.is_editor_hint(): HoloMotion.stop(self, &"rarity")
+		_sweep = 0.0
 		$TitleLabel.text = "Empty slot"
 		$TierLabel.text = ""
 		$CostLabel.text = ""
@@ -199,10 +215,27 @@ func refresh_card() -> void:
 		("T%d " % card_data.tier if card_data.tier > 1 else "")
 		+ "+".repeat(card_data.upgrade_level)
 	)
-	if card_data.tier == 3:
-		$TierLabel.add_theme_color_override("font_color", TIER_THREE_INK)
-	else:
-		$TierLabel.add_theme_color_override("font_color", Color(0.65, 0.72, 0.78))
+	var rarity_id := "%s/%d" % [card_data.identity_key(), card_data.upgrade_level]
+	if rarity_id != _rarity_identity:
+		_rarity_identity = rarity_id
+		if not Engine.is_editor_hint(): HoloMotion.stop(self, &"rarity")
+		_sweep = 0.0
+		if card_data.tier == 3: _play_rarity_sweep()
+	var rarity_tint := TIER_THREE_INK if card_data.tier == 3 else Holo.DEFAULT.rarity_two
+	$TierLabel.add_theme_color_override("font_color", rarity_tint)
+	if card_data.tier > 1:
+		if not is_instance_valid(_rarity_plate) or _rarity_plate.get_meta("tier", 0) != card_data.tier:
+			var badge := Holo.frame("status", rarity_tint)
+			badge.details = 0
+			badge.cut = 3.0
+			if not is_instance_valid(_rarity_plate):
+				_rarity_plate = Holo.plate($TierLabel, badge, Vector2(3, -2))
+			else:
+				_rarity_plate.add_theme_stylebox_override("panel", badge)
+			_rarity_plate.set_meta("tier", card_data.tier)
+		_rarity_plate.show()
+	elif is_instance_valid(_rarity_plate):
+		_rarity_plate.hide()
 	$CostLabel.text = str(card_data.cost)
 	$DescriptionLabel.text = Summary.card_text(card_data)
 	var artwork: Variant = (
@@ -249,7 +282,7 @@ func refresh_card() -> void:
 	footer.set_border_width_all(0)
 	footer.expand_margin_bottom = -3  # Paint inside the frame; retain the full input rect.
 	footer.content_margin_top = maxf(0, discard_target_height - footer_visual_height)
-	footer.content_margin_bottom = 4
+	footer.content_margin_bottom = Holo.DEFAULT.related_gap
 	$DiscardButton.add_theme_stylebox_override("normal", footer)
 	$DiscardButton.add_theme_stylebox_override("disabled", footer)
 	var highlighted: StyleBoxFlat = footer.duplicate()
@@ -276,9 +309,10 @@ func set_playable(playable: bool, can_afford: int = -1) -> void:
 	# Dim the surface and ink moderately; never lose resource identity or readable rules.
 	self_modulate = Color.WHITE
 	for path in ["TitleLabel", "TierLabel", "DescriptionLabel"]:
-		get_node(path).modulate = Color.WHITE if affordable else Color(0.58, 0.58, 0.58)
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.87, 0.89, 0.93)
 	for path in ["CostLabel", "ResourceIcon", "CostRule"]:
-		get_node(path).modulate = Color.WHITE if affordable else Color(0.62, 0.62, 0.62)
+		get_node(path).modulate = Color.WHITE if affordable else Color(0.71, 0.72, 0.74)
+	$CostLabel.add_theme_color_override("font_color", family_tint if affordable else Holo.DEFAULT.warning)
 	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.35)
 	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.42, 0.42, 0.42)
 	$FullCardArt.modulate = $ArtPlaceholder.modulate
@@ -352,7 +386,19 @@ func set_ion_glow(active: bool, tint: Color = Color(0.15, 0.55, 1.0)) -> void:
 	apply_card_theme()
 
 
+func _play_rarity_sweep() -> void:
+	if Engine.is_editor_hint() or not is_inside_tree() or not is_visible_in_tree(): return
+	var seconds := HoloMotion.duration(Holo.DEFAULT.meter_seconds, true)
+	if seconds <= 0.0: return
+	_sweep = 0.001
+	HoloMotion.start(self, &"rarity").tween_property(self, "_sweep", 1.0, seconds)
+
+
 func _draw() -> void:
+	if _sweep > 0.0 and _sweep < 1.0 and card_data != null and card_data.tier == 3:
+		var point := lerpf(14, 143, _sweep)
+		draw_line(Vector2(point, 4), Vector2(point + 34, 4),
+			Color(TIER_THREE_INK, sin(_sweep * PI) * (0.8 if affordable else 0.42)), 2.0, true)
 	# Slim visible footer; the existing full-width Button retains its larger hitbox.
 	draw_rect(Rect2(7, 294 - footer_visual_height, 184, footer_visual_height - 3), Color("0b121c"))
 	draw_line(

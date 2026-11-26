@@ -63,6 +63,13 @@ func _draw(canvas: RID, rect: Rect2) -> void:
 			ticks.append(point)
 			ticks.append(point + Vector2(3, -3))
 		RenderingServer.canvas_item_add_multiline(canvas, ticks, PackedColorArray([trace]), 1.0)
+	if details >= 2 and minf(area.size.x, area.size.y) > 8.0:
+		var inner := area.grow(-3.5)
+		var secondary := outline(inner, maxf(1.0, clipped - 2.0))
+		secondary.append(secondary[0])
+		var secondary_tint := border_color if ornament_tint == Color.TRANSPARENT else ornament_tint
+		RenderingServer.canvas_item_add_polyline(canvas, secondary,
+			PackedColorArray([Color(secondary_tint, 0.43 if details >= 3 else 0.24)]), 1.0, true)
 	_draw_ornament(canvas, rect)
 
 

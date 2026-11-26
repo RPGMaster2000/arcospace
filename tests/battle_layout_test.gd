@@ -72,7 +72,7 @@ func run() -> void:
 		var hand: Control = board.get_node(board.card_slots[0])
 		var crew: Control = board.get_node("PlayerResource3")
 		check(
-			menu.get_global_rect().end.x < board.get_node("TurnLabel").position.x,
+			menu.get_global_rect().end.x < board.get_node("PlayerIdentity").position.x,
 			"Menu sits to left of player information"
 		)
 		check(
@@ -83,9 +83,11 @@ func run() -> void:
 		check(board.allocation_button.size.x == 64, "Allocation matches 64 px resource icon")
 		var heading: Label = board.get_node("ModeLabel")
 		var subtitle: Label = heading.get_node("Subtitle")
-		check(is_equal_approx(board.size.x - heading.get_rect().end.x, 23), "Enemy header at right margin")
-		check(heading.position.y == board.get_node("TurnLabel").position.y, "Header first rows align")
-		check(subtitle.global_position.y == board.get_node("SalvageLabel").global_position.y, "Header second rows align")
+		var skin := preload("res://resources/presentation/holographic_skin.tres")
+		check(is_equal_approx(board.size.x - heading.get_rect().end.x, skin.section_gap + skin.compact_padding), "Enemy header keeps a safe edge and inner padding")
+		check(heading.position.y == board.get_node("PlayerIdentity").position.y, "Ship identities align")
+		check(subtitle.global_position.y == board.get_node("PlayerIdentity/Subtitle").global_position.y, "Header subtitles align")
+		check(is_equal_approx(board.get_node("TurnLabel").get_rect().get_center().x, board.size.x * 0.5), "Round readout is centered")
 		for resource_index in range(1, 4):
 			check(board.get_node("PlayerResource%d" % resource_index).position.y == board.get_node("EnemyResource%d" % resource_index).position.y, "Resource rows mirror")
 		check(not player_panel.drawer.visible and not enemy_panel.drawer.visible, "Drawers start closed")

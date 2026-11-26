@@ -64,7 +64,7 @@ func run() -> void:
 	board._fit_ftl() # Refit after screenshot frames have advanced the ship's idle motion.
 	var hull_bar: Control = board.get_node("PlayerHullBar")
 	var panel: Control = board.get_node("FTLPanel")
-	check(is_equal_approx(panel.position.x, hull_bar.position.x) and is_equal_approx(panel.position.y, hull_bar.position.y + hull_bar.size.y + 6), "EMP aligns directly below player Hull")
+	check(is_equal_approx(panel.position.x, hull_bar.position.x) and is_equal_approx(panel.position.y, board.player_hull_label.get_rect().end.y + preload("res://resources/presentation/holographic_skin.tres").compact_padding), "EMP aligns directly below player Hull")
 	check(jump.get_global_rect().end.y < board.get_node(board.card_slots[0]).position.y, "Charged EMP button clears card hand")
 	check(board.player_shields_label.get_theme_font_size("font_size") == board.player_hull_label.get_theme_font_size("font_size"), "Matching status font sizes")
 	board.hud.enemy_panel.handle.pressed.emit()
