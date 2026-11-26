@@ -94,7 +94,7 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	if action_log.visible:
 		action_log.position = Vector2(content_edge, 75 + inset.y)
 		action_log.size.x = view.size.x - 2 * content_edge
-	view.get_node("SystemsFailureDisplay").fit(view.size, resources.get_rect().end.y + tokens.related_gap)
+	view.get_node("SystemsFailureDisplay").fit(start, view.size.x - start, status_y - gap)
 
 
 static func _fit_resource(tile: Control, index: int, pad: float, roomy: bool) -> void:
