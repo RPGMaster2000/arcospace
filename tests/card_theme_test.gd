@@ -150,6 +150,7 @@ func run() -> void:
 		)
 		view.set_playable(false, 0)
 		view.set_discardable(true)
+		view.refresh_card()
 		style = view.get_theme_stylebox("normal")
 		check(
 			rgb(style.border_color) == expected and style.border_color.a < 0.94,

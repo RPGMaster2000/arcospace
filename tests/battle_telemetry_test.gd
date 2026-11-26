@@ -2,6 +2,7 @@ extends SceneTree
 
 const BoardScene = preload("res://scenes/board_3d.tscn")
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 var checks := 0
 var failures := 0
 
@@ -17,7 +18,22 @@ func check(condition: bool, message: String) -> void:
 	push_error(message)
 
 
+func activate(control: Control, touch: bool) -> void:
+	for pressed in [true, false]:
+		var event: InputEvent
+		if touch:
+			event = InputEventScreenTouch.new()
+		else:
+			event = InputEventMouseButton.new()
+			event.button_index = MOUSE_BUTTON_LEFT
+		event.position = control.get_global_rect().get_center()
+		event.pressed = pressed
+		root.push_input(event, true)
+		await process_frame
+
+
 func run() -> void:
+	OS.set_environment("ARCOSPACE_BATTLE_CINEMATICS", "0")
 	var board = BoardScene.instantiate()
 	board.setup_settings = {"player_ship": 1, "enemy_ship": 0}
 	root.add_child(board)
@@ -30,6 +46,8 @@ func run() -> void:
 	check(not header.enemy.text.is_empty() and not header.enemy.get_node("Subtitle").text.is_empty(),
 		"Enemy identity includes the enemy profile")
 	check(not board.has_node("SalvageLabel"), "Combat header has no permanent Salvage counter")
+	var saved_motion := Preferences.ui_motion()
+	Preferences.set_ui_motion(1)
 	var snapshot: Dictionary = board._display_snapshot()
 	snapshot.turn_number = 8
 	snapshot.current_actor = "player"
@@ -44,7 +62,13 @@ func run() -> void:
 		else header.turn.get_meta("holo_panel") == first_transition), "Repeated update keeps the current turn transition")
 	snapshot.current_actor = "player"
 	header.update(snapshot)
-	check(first_transition == null or not first_transition.is_valid(), "Next turn interrupts the old transition")
+	check(first_transition != null and not first_transition.is_valid(), "Next turn interrupts the old transition")
+	Preferences.set_ui_motion(0)
+	snapshot.current_actor = "enemy"
+	header.update(snapshot)
+	check(not header.turn.has_meta("holo_panel") and header.turn.modulate.a == 1.0,
+		"Minimal motion presents the new turn immediately")
+	Preferences.set_ui_motion(saved_motion)
 
 	var player_meter: ProgressBar = hud._shield_meters.player
 	var enemy_meter: ProgressBar = hud._shield_meters.enemy
@@ -75,6 +99,10 @@ func run() -> void:
 		var left := board.get_node("PlayerIdentity").get_global_rect() as Rect2
 		var right := board.get_node("ModeLabel").get_global_rect() as Rect2
 		var center: Rect2 = header.turn.get_global_rect()
+		if viewport != Vector2i(960, 540):
+			await activate(header.player_info, viewport.x == 686)
+			check(hud.player_panel.open, "Player identity opens Battle Systems at " + str(viewport))
+			hud.close_panels(true)
 		check(left.end.x < center.position.x and center.end.x < right.position.x and
 			is_equal_approx(center.get_center().x, board.size.x * 0.5), "Headers stay separated and centered at " + str(viewport))
 		for side in ["Player", "Enemy"]:

@@ -258,7 +258,7 @@ func refresh_card() -> void:
 	$ArtPlaceholder/Backdrop.color = Color("060d15").lerp(family_tint, 0.045)
 	$ArtPlaceholder/Accent.default_color = Color(family_tint, 0.6)
 	$CostRule.default_color = Color(family_tint, 0.9)
-	$CostLabel.add_theme_color_override("font_color", family_tint)
+	$CostLabel.add_theme_color_override("font_color", family_tint if affordable else Holo.DEFAULT.warning)
 	for node in [$TitleLabel, $DescriptionLabel]:
 		node.add_theme_color_override("font_color", INK)
 	apply_card_theme()

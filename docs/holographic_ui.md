@@ -58,7 +58,8 @@ The battle telemetry comparison uses the same card hand and combat values before
 
 | Battle state | GL Compatibility comparison |
 | --- | --- |
-| 65 Shields, zero enemy Shields, critical Hull, production changes and all three card tiers at 960×540 | [Before and after](battle_telemetry/high-shields.webp) |
+| 65 Shields, zero enemy Shields, damaged Hull, production changes and all three card tiers at 960×540 | [Before and after](battle_telemetry/high-shields.webp) |
 | Disabled Shields and enemy turn at 760×428 | [Before and after](battle_telemetry/shields-off.webp) |
+| Critical Hull at 686×384 | [Mobile Vulkan capture](battle_telemetry/compact.webp) |
 
 Review on an Android device at the default and lowest supported landscape sizes. Check the card hand and result labels under bright lighting, native touch interactions, visibility over bright storm backdrops, and frame pacing while opening map inspections.
