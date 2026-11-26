@@ -1,4 +1,7 @@
 extends Control
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 # Shared edge HUD layout and introduction typography. Reuses the screen's actual controls.
 signal settled
 signal geometry_changed
@@ -46,7 +49,7 @@ var _wait_held := false
 var _wait_elapsed := 0.0
 var wait_touch_index := -1
 var pressure_bar: ProgressBar
-var pressure_fill: StyleBoxFlat
+var pressure_fill: Control
 var pressure_gap: Control
 var status_actions: VBoxContainer
 var details_button: Button
@@ -75,11 +78,7 @@ func _ready() -> void:
 	z_index = 100
 	for corner in range(5):
 		var panel := PanelContainer.new()
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.025,0.055,0.085,0.8)
-		style.set_corner_radius_all(8)
-		style.set_content_margin_all(5)
-		panel.add_theme_stylebox_override("panel",style)
+		panel.add_theme_stylebox_override("panel", Holo.frame("compact"))
 		add_child(panel)
 		panels.append(panel)
 		panel.minimum_size_changed.connect(queue_layout)
@@ -145,9 +144,7 @@ func _ready() -> void:
 		count.mouse_filter = MOUSE_FILTER_IGNORE
 		warzone_summary.add_child(count)
 		warzone_counts.append(count)
-	territory_bar = WarzoneIcons.bar(WarzoneIcons.ALLIED, 4)
-	var hostile_track := territory_bar.get_theme_stylebox("background") as StyleBoxFlat
-	hostile_track.bg_color = WarzoneIcons.HOSTILE
+	territory_bar = WarzoneIcons.bar(WarzoneIcons.ALLIED, 4, WarzoneIcons.HOSTILE)
 	status.add_child(territory_bar)
 	warzone_warning = HBoxContainer.new()
 	warzone_warning.mouse_filter = MOUSE_FILTER_IGNORE
@@ -163,12 +160,7 @@ func _ready() -> void:
 	pressure_bar.custom_minimum_size = Vector2(210,6)
 	pressure_bar.show_percentage = false
 	pressure_bar.mouse_filter = MOUSE_FILTER_IGNORE
-	var pressure_track := StyleBoxFlat.new()
-	pressure_track.bg_color = Color("263d4f")
-	pressure_track.set_corner_radius_all(2)
-	pressure_bar.add_theme_stylebox_override("background",pressure_track)
-	pressure_fill = StyleBoxFlat.new()
-	pressure_bar.add_theme_stylebox_override("fill",pressure_fill)
+	pressure_fill = Meter.attach(pressure_bar, Holo.DEFAULT.warning)
 	status.add_child(pressure_bar)
 	pressure_gap = Control.new()
 	pressure_gap.custom_minimum_size.y = 18
@@ -225,9 +217,7 @@ func _ready() -> void:
 	hull_bar = ProgressBar.new()
 	hull_bar.custom_minimum_size.y = 4
 	hull_bar.show_percentage = false
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("6dc7d7")
-	hull_bar.add_theme_stylebox_override("fill",fill)
+	Meter.attach(hull_bar, Holo.DEFAULT.hull)
 	hull_bar.mouse_filter = MOUSE_FILTER_IGNORE
 	utilities = HBoxContainer.new()
 	utilities.add_theme_constant_override("separation",4)
@@ -518,7 +508,7 @@ func set_defense_status(state: Resource) -> void:
 	metagame.text = "PRESSURE %d / %d" % [int(state.defense.pressure),int(state.defense.tuning.pressure_maximum)]
 	if state.defense.mothership_advancing: metagame.text += "\nMOTHERSHIP ADVANCING"
 	pressure_bar.value = ratio*100
-	pressure_fill.bg_color = Color("77e596") if ratio < 0.5 else (Color("ffaf58") if ratio < 0.8 else Color("ff646e"))
+	pressure_fill.set_tint(Holo.DEFAULT.friendly if ratio < 0.5 else (Holo.DEFAULT.warning if ratio < 0.8 else Holo.DEFAULT.hostile))
 	pressure_bar.tooltip_text = "Pressure %.1f / %.1f" % [state.defense.pressure,state.defense.tuning.pressure_maximum]
 	turret_count.text = "Turrets: %d%s" % [state.defense.turrets.size(), " · Travel +50%" if state.poi_effects.fuel > 0 else ""]
 	_sync_strategic_controls()

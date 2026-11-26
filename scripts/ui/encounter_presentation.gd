@@ -1,5 +1,8 @@
 extends RefCounted
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 const Sound = preload("res://scripts/audio/sfx.gd")
 
 # RESPONSIBILITY: Share encounter glyphs, colors, fonts and control styling.
@@ -112,33 +115,12 @@ static func poi_key(poi: Resource) -> String:
 	return poi.resource_path.get_file().get_basename()
 
 
-static func style(accent: Color, selected: bool = false, muted: bool = false) -> StyleBoxFlat:
-	var box = StyleBoxFlat.new()
-	box.bg_color = Color("263e55") if selected else Color("192b3c")
-	box.border_color = accent if not muted else Color("394653")
-	if muted:
-		box.bg_color = Color("182330")
-	box.set_border_width_all(2 if selected else 1)
-	box.set_corner_radius_all(12)
-	box.content_margin_left = 16
-	box.content_margin_right = 16
-	box.content_margin_top = 12
-	box.content_margin_bottom = 12
-	return box
+static func style(accent: Color, selected: bool = false, muted: bool = false, role: String = "panel") -> Holo.Frame:
+	return Holo.frame(role, accent, "disabled" if muted else ("selected" if selected else ""))
 
 
 static func action(button: Button, primary: bool = false) -> void:
+	Holo.action(button, Color.TRANSPARENT, primary)
 	if not Engine.is_editor_hint():
 		Sound.bind_ui(button)
-	var focus = style(COLORS.special, true)
-	focus.bg_color = Color(0, 0, 0, 0)
-	focus.border_color = Color("98c6ef")
-	button.add_theme_stylebox_override("focus", focus)
-	for key in ["normal", "hover", "pressed", "disabled"]:
-		var box = style(COLORS.special, key == "pressed", key == "disabled")
-		if primary and key != "disabled":
-			box.bg_color = Color("e8f1f7")
-		button.add_theme_stylebox_override(key, box)
-	for key in ["font_color", "font_hover_color", "font_pressed_color"]:
-		button.add_theme_color_override(key, Color("172b3b") if primary else Color("e3edf6"))
-	button.add_theme_color_override("font_disabled_color", Color("a7b8c9"))
+		HoloMotion.bind_button(button)

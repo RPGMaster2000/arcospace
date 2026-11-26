@@ -1,5 +1,10 @@
 extends RefCounted
 
+const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+
 const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Render combat HUD/results and fit generic 2D controls.
 # DOES NOT: Advance turns, record rewards, choose encounters or modify combat state.
@@ -26,6 +31,7 @@ var _system: Label
 var _identity: Label
 var _abilities: Label
 var _beam: Label
+var _shield_meters: Dictionary = {}
 var _enemy_modifier: Label
 
 
@@ -82,6 +88,7 @@ func _init(board_view: Control) -> void:
 		"enemy_quarters_label"
 	]:
 		nodes[field] = board_view.get(field)
+	_style_telemetry(board_view)
 	card_slots.assign(board_view.card_slots)
 	for path in card_slots:
 		cards.append(board_view.get_node(path))
@@ -122,6 +129,59 @@ func _init(board_view: Control) -> void:
 	_abilities.get_parent().hide()
 	describe_enemy(board_view.enemy_ship_data)
 
+
+
+func _style_telemetry(board_view: Control) -> void:
+	for side in ["player", "enemy"]:
+		var prefix: String = side.capitalize()
+		nodes[prefix + "HullBar"].animate_changes = true
+		for kind in ["hull", "shields"]:
+			var label: Label = nodes[side + "_" + kind + "_label"]
+			var tint := Holo.family(kind)
+			var style := Holo.frame("status", tint)
+			style.cut = 5
+			Holo.plate(label, style, Vector2(4, -2))
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			if kind == "shields":
+				var bar := ProgressBar.new()
+				bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				bar.show_percentage = false
+				bar.tooltip_text = "Shields relative to the highest value this battle"
+				label.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
+				bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+				bar.offset_bottom = -3.0
+				bar.offset_top = -7.0
+				bar.offset_left = 4.0
+				bar.offset_right = -4.0
+				Meter.attach(bar, tint)
+				_shield_meters[side] = bar
+		for i in range(3):
+			var key: String = ["materials", "energy", "crew"][i]
+			var widget: Control = board_view.get_node("%sResource%d" % [prefix, i + 1])
+			var tint := Holo.family(key)
+			var badge: ColorRect = widget.get_node("ProductionBadge")
+			for item in ["Shape", "Outline", "BadgeOutline"]:
+				widget.get_node(item).hide()
+			badge.color = Color.TRANSPARENT
+			Holo.plate(badge, Holo.frame("compact", tint))
+			Holo.plate(widget.get_node(key), Holo.frame("status", tint), Vector2(1, 7))
+			widget.get_node(key).add_theme_color_override("font_color", Holo.DEFAULT.text)
+			var nameplate := Label.new()
+			nameplate.text = ["MAT", "ENG", "CREW"][i]
+			nameplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			nameplate.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			nameplate.add_theme_font_size_override("font_size", 9)
+			nameplate.add_theme_color_override("font_color", tint)
+			nameplate.position = Vector2(0, 6)
+			nameplate.size.x = widget.get_node(key).size.x
+			widget.add_child(nameplate)
+			widget.get_node(["synthesizer", "reactor", "quarters"][i]).add_theme_color_override("font_color", tint)
+	var turn: Label = nodes["TurnLabel"]
+	Holo.plate(turn, Holo.frame("compact", Holo.DEFAULT.edge), Vector2(5, 1))
+	for rule in ["ModeRule", "HandRule"]:
+		nodes[rule].default_color = Color(Holo.DEFAULT.edge, 0.58)
+	var charge: ProgressBar = nodes["FTLPanel/Progress"]
+	Meter.attach(charge, Holo.DEFAULT.energy)
 
 func add_overdrive(button: MenuButton) -> void:
 	player_panel.content.add_child(button)
@@ -391,6 +451,12 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 	nodes["enemy_shields_label"].text = (
 		"Shields OFF" if data.shields_disabled else "Shields %d" % data.enemy.shields
 	)
+	for side in _shield_meters:
+		var meter: ProgressBar = _shield_meters[side]
+		var shield: int = data[side].shields
+		meter.max_value = maxf(meter.get_meta("peak", 1), shield)
+		meter.set_meta("peak", meter.max_value)
+		meter.value = 0 if data.shields_disabled else shield
 	nodes["battle_effects"].set_number(nodes["player_materials_label"], data.player.materials)
 	nodes["player_synthesizer_label"].text = str(data.player.synthesizer)
 
@@ -473,7 +539,7 @@ func update_jump_style(disabled_turns: int) -> void:
 		button.add_theme_stylebox_override(key, compact_box)
 	if offline:
 		for key in ["normal", "hover", "pressed", "disabled"]:
-			var box: StyleBoxFlat = button.get_theme_stylebox(key).duplicate()
+			var box: Holo.Frame = button.get_theme_stylebox(key).duplicate()
 			box.bg_color = Color("702b35")
 			box.border_color = Color("ef7e88")
 			button.add_theme_stylebox_override(key, box)

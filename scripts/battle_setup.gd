@@ -1,5 +1,8 @@
 extends Control
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 const Sound = preload("res://scripts/audio/sfx.gd")
 # RESPONSIBILITY: Select a profile and use the existing new-run/Continue pathways.
 # Presentation owns camera and cinematic timing; persistence owns disk data.
@@ -86,8 +89,8 @@ func _ready() -> void:
 	begin_button.visible = not saved_run.is_empty()
 	begin_button.pressed.connect(_request_new)
 	start_button.pressed.connect(_primary_action)
-	for button in [deck_button, begin_button, start_button, $Legend]: Presentation.action(button, button == start_button)
-	start_button.add_theme_color_override("font_focus_color", Color("102838"))
+	for button in [deck_button, begin_button, start_button, $Legend, previous_ship, next_ship]: Presentation.action(button, button == start_button)
+	$Selection/Information.add_theme_stylebox_override("panel", Holo.frame("selection"))
 	$Selection.hide()
 	_update_chrome()
 	resized.connect(_layout)
@@ -105,6 +108,7 @@ func _update_chrome() -> void:
 func _selection_ready() -> void:
 	get_node("/root/Music").play_ship_selection()
 	$Selection.show()
+	HoloMotion.reveal($Selection, Holo.DEFAULT.transition_seconds)
 	showcase.select_ship(selected_ship, true)
 	start_button.grab_focus()
 

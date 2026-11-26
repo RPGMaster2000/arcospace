@@ -1,6 +1,9 @@
 @tool
 extends Button
 
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+
 const Sound = preload("res://scripts/audio/sfx.gd")
 
 # RESPONSIBILITY: Display a card resource in the editor and at runtime.
@@ -83,15 +86,16 @@ func set_interaction_emphasis(hovered: bool, selected: bool) -> void:
 		else (visual_settings.card_hover_scale if interaction_hovered else 1.0)
 	)
 	var elevation: float = visual_settings.card_hover_elevation if interaction_hovered else 0.0
-	interaction_tween = create_tween().set_parallel(true)
-	interaction_tween.set_trans(visual_settings.interaction_transition).set_ease(
-		visual_settings.interaction_ease
-	)
-	var duration: float = (
-		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration
-	)
-	interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
-	interaction_tween.tween_property(art, "position:y", ART_TOP - elevation, duration)
+	var duration := HoloMotion.duration(
+		visual_settings.card_selected_duration if selected else visual_settings.card_hover_duration)
+	if duration == 0.0:
+		art.scale = Vector2.ONE
+		art.position.y = ART_TOP
+	else:
+		interaction_tween = create_tween().set_parallel(true)
+		interaction_tween.set_trans(Holo.DEFAULT.transition).set_ease(Holo.DEFAULT.easing)
+		interaction_tween.tween_property(art, "scale", Vector2.ONE * zoom, duration)
+		interaction_tween.tween_property(art, "position:y", ART_TOP - elevation, duration)
 	apply_card_theme()
 
 
@@ -310,7 +314,8 @@ func apply_card_theme() -> void:
 			interaction_hovered,
 			affordable,
 			storm_active,
-			storm_color
+			storm_color,
+			card_data.tier if card_data != null else 1
 		]
 	)
 	if stamp == theme_stamp:
@@ -324,15 +329,14 @@ func apply_card_theme() -> void:
 			interaction_hovered or state == "hover",
 			affordable,
 			storm_active,
-			storm_color
+			storm_color,
+			card_data.tier if card_data != null else 1
 		)
 		add_theme_stylebox_override(state, box)
 	# Keep native keyboard focus visible without a second, unrelated blue border.
-	var focus := StyleBoxFlat.new()
-	focus.bg_color = Color.TRANSPARENT
-	focus.border_color = Color(family_tint, 0.9)
-	focus.set_border_width_all(1)
-	focus.set_corner_radius_all(7)
+	var focus := Holo.frame("focus", family_tint)
+	focus.cut = 8.0
+	focus.set_content_margin_all(0)
 	add_theme_stylebox_override("focus", focus)
 	queue_redraw()
 

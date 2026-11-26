@@ -1,4 +1,6 @@
 extends Button
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 # Presentation-only destination tag; the map supplies its projected anchor each frame.
 const EMOJI_FONT = preload("res://assets/fonts/ArcospaceEmoji.ttf")
 const ICONS = {
@@ -92,12 +94,10 @@ func style_tag(color: Color) -> void:
 	add_theme_font_override("font", EMOJI_FONT)
 	add_theme_font_size_override("font_size", 22 if lattice_tag else 28)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var box := StyleBoxFlat.new()
+		var box := Holo.frame("focus" if state == "focus" else "marker", accent, state)
 		box.draw_center = state!="focus" # Focus overlays the normal box: no second half-alpha fill.
 		box.bg_color = Color(accent.r*0.12,accent.g*0.12,accent.b*0.12,0.5)
 		box.border_color = accent * Color(1, 1, 1, 0.65)
-		box.set_border_width_all(1)
-		box.set_corner_radius_all(10)
 		box.content_margin_left = 7
 		box.content_margin_right = 7
 		box.content_margin_top = 4
@@ -154,7 +154,7 @@ func _refresh_state() -> void:
 	if completion_badge != null: completion_badge.visible = completed
 	if objective_badge != null: objective_badge.visible = not objective_value.is_empty() and not completed
 	for state in ["normal","hover","pressed","disabled","focus"]:
-		var box: StyleBoxFlat = get_theme_stylebox(state)
+		var box: Holo.Frame = get_theme_stylebox(state)
 		var bright: bool = emphasis or state in ["hover","pressed","focus"]
 		box.bg_color = Color(0.02,0.28,0.36,0.85 if contrast else 0.5) if selected else Color(foreground.r*0.12,foreground.g*0.12,foreground.b*0.12,0.85 if contrast else 0.5)
 		box.border_color = foreground.lightened(0.18) if bright else foreground
@@ -164,7 +164,7 @@ func _refresh_state() -> void:
 			box.border_color = Color("ffe4a2") if warzone_importance == 2 else Color("d4aa66")
 			box.border_color.a = 0.97 if warzone_importance == 2 else 0.82
 		if selected: box.border_color = Color("b8faff")
-		box.set_border_width_all(3 if selected or (lattice_tag and warzone_importance == 2) else (2 if bright or (lattice_tag and warzone_importance == 1) else 1))
+		box.border_width_top = 3 if selected or (lattice_tag and warzone_importance == 2) else (2 if bright or (lattice_tag and warzone_importance == 1) else 1)
 		box.shadow_color = Color(0.3,0.9,1.0,0.35) if selected else Color(foreground.r,foreground.g,foreground.b,0.18 if bright else 0.0)
 		box.shadow_size = 6 if selected else (4 if bright else 0)
 	begin_bulk_theme_override()

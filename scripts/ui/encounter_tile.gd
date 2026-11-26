@@ -141,9 +141,9 @@ func _label(value: String, font_size: int) -> Label:
 func refresh_style() -> void:
 	for key in ["normal", "hover", "pressed", "disabled"]:
 		add_theme_stylebox_override(
-			key, Presentation.style(accent, selected or key == "pressed", disabled)
+			key, Presentation.style(accent, selected or key == "pressed", disabled, "selection")
 		)
-	var focus = Presentation.style(Color("a8d9fc"), true)
+	var focus = Presentation.style(Color("a8d9fc"), true, false, "focus")
 	focus.bg_color = Color.TRANSPARENT
 	add_theme_stylebox_override("focus", focus)
 	if is_instance_valid(icon_label):

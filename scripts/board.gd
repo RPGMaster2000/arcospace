@@ -1295,7 +1295,7 @@ func _setup_allocation() -> void:
 	allocation_button.add_theme_font_size_override("font_size", 22)
 	ResultPresentation.action(allocation_button)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var box: StyleBoxFlat = allocation_button.get_theme_stylebox(state).duplicate()
+		var box: StyleBox = allocation_button.get_theme_stylebox(state).duplicate()
 		box.content_margin_left = 8
 		box.content_margin_right = 8
 		box.content_margin_top = 6

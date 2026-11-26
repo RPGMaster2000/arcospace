@@ -1,5 +1,8 @@
 extends CanvasLayer
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 # RESPONSIBILITY: Present owned card identities, capacity and inspection without modifying the deck.
 const Gallery = preload("res://scripts/ui/card_gallery.gd")
 const Inspector = preload("res://scripts/ui/card_inspector.gd")
@@ -16,7 +19,7 @@ var previous_focus: Control
 func _ready() -> void:
 	layer = 110
 	shade = ColorRect.new()
-	shade.color = Color("101d2b")
+	shade.color = Holo.DEFAULT.surface_depth
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 	var margin = MarginContainer.new()
@@ -24,6 +27,7 @@ func _ready() -> void:
 	for edge in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + edge, 20)
 	shade.add_child(margin)
+	Holo.plate(margin, Holo.frame("dialog"))
 	var column = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
 	margin.add_child(column)
@@ -63,10 +67,12 @@ func show_cards(values: Array, caption: String) -> void:
 	title.text = caption
 	gallery.set_cards(values)
 	shade.show()
+	HoloMotion.reveal(shade)
 	return_button.grab_focus()
 
 
 func dismiss() -> void:
+	HoloMotion.restore_panel(shade)
 	inspector.dismiss()
 	shade.hide()
 	if is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree():

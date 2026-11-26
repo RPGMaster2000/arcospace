@@ -1,4 +1,6 @@
 extends VBoxContainer
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 # Read-only encounter facts. Build controls once; resize and content updates preserve identity.
 const Presentation = preload("res://scripts/ui/encounter_presentation.gd")
 const Modifiers = preload("res://scripts/combat_modifier.gd")
@@ -15,7 +17,7 @@ var _boss := false
 var _pressure_text := ""
 var _pressure_notice: Label
 var _fonts: Array = []
-var _section_styles: Array[StyleBoxFlat] = []
+var _section_styles: Array[Holo.Frame] = []
 var _section_columns: Array[VBoxContainer] = []
 var _defenses: Dictionary = {}
 var _reserves: Dictionary = {}
@@ -106,10 +108,9 @@ func _build() -> void:
 		var value := _label("", 20, 22)
 		column.add_child(value)
 		var bar := ProgressBar.new()
+		bar.custom_minimum_size.y = 6
 		bar.show_percentage = false
-		var fill := StyleBoxFlat.new()
-		fill.bg_color = Color("dd8596") if key == "hull_capacity" else Color("6cc4ea")
-		bar.add_theme_stylebox_override("fill", fill)
+		preload("res://scripts/ui/holographic/segmented_meter.gd").attach(bar, Holo.family("hull" if key == "hull_capacity" else "shields"))
 		column.add_child(bar)
 		_defenses[key] = [value, bar]
 	var reserves := HBoxContainer.new()

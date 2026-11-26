@@ -1,5 +1,8 @@
 extends CanvasLayer
 
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+
 # RESPONSIBILITY: Present audio/settings controls and pause gameplay while open.
 # DOES NOT: Reset an expedition; the owning screen handles main_menu_requested.
 signal cinematics_changed(enabled: bool)
@@ -20,6 +23,7 @@ var music_toggle: CheckButton
 var cinematics_toggle: CheckButton
 var battle_vfx_toggle: CheckButton
 var strategic_time_toggle: CheckButton
+var ui_motion: OptionButton
 var main_menu_button: Button
 var quit_button: Button
 # Future settings belong here; the body already scrolls on compact displays.
@@ -42,7 +46,7 @@ func _ready() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 	panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", Presentation.style(Presentation.COLORS.special))
+	panel.add_theme_stylebox_override("panel", Holo.frame("dialog"))
 	shade.add_child(panel)
 	_margin = MarginContainer.new()
 	panel.add_child(_margin)
@@ -131,6 +135,21 @@ func _ready() -> void:
 			add_child(notice)
 			notice.confirmed.connect(notice.queue_free)
 			notice.popup_centered(Vector2i(460, 160)))
+	var motion_heading := Label.new()
+	motion_heading.text = "Interface Motion"
+	motion_heading.add_theme_font_size_override("font_size", Holo.DEFAULT.heading_size)
+	extra_settings.add_child(motion_heading)
+	ui_motion = OptionButton.new()
+	ui_motion.name = "UIMotion"
+	ui_motion.accessibility_name = "Interface Motion"
+	ui_motion.tooltip_text = "Minimal reduces UI animation and removes decorative pulses."
+	ui_motion.custom_minimum_size.y = Holo.DEFAULT.touch_height
+	for profile in ["Minimal", "Standard", "Cinematic"]: ui_motion.add_item(profile)
+	Presentation.action(ui_motion)
+	ui_motion.select(Preferences.ui_motion())
+	ui_motion.item_selected.connect(func(profile: int):
+		if Preferences.set_ui_motion(profile) != OK: ui_motion.select(Preferences.ui_motion()))
+	extra_settings.add_child(ui_motion)
 	var lens_toggle := CheckButton.new()
 	lens_toggle.text = "Star-map lens effects (experimental)"
 	lens_toggle.custom_minimum_size.y = 52
@@ -212,10 +231,12 @@ func present() -> void:
 	sfx_volume.set_value_no_signal(_sfx.volume)
 	shade.show()
 	_fit()
+	HoloMotion.reveal(panel)
 	close_button.grab_focus()
 
 
 func dismiss() -> void:
+	HoloMotion.restore_panel(panel)
 	shade.hide()
 	_restore_pause()
 	if is_instance_valid(_previous_focus) and _previous_focus.is_visible_in_tree():

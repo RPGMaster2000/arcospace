@@ -1,4 +1,5 @@
 extends Control
+const HoloFrame = preload("res://scripts/ui/holographic/frame.gd")
 
 const WarzoneVictoryBanner = preload("res://scripts/ui/warzone_victory_banner.gd")
 const StrategicOverview = preload("res://scripts/presentation/star_system/strategic_time_overview.gd")
@@ -1971,14 +1972,28 @@ func _defense_updated(events: Dictionary) -> void:
 	star_map.flash_missile_shots(events.get("missile_shots", []))
 	var operations: Array = events.get("evacuation", [])
 	var notice := ""
+	var notice_kind := "compact"
 	for operation in operations:
+		notice_kind = "warning" if operation.type in ["hit", "destroyed", "punitive"] else ("reward" if operation.type == "extracted" else "compact")
 		match operation.type:
 			"pursuit": notice = "Hostile fleet pursuing the evacuation"
 			"hit": notice = "Convoy hit · −%d integrity" % operation.damage
 			"extracted": notice = "Convoy extracted · +%d Salvage" % state.defense.convoy.reward
 			"destroyed": notice = "Convoy destroyed · +%.0f Pressure" % operation.pressure
 			"punitive": notice = "Mandatory punitive elite has entered the system"
-	if not notice.is_empty(): capture_hud.dismiss(notice)
+	if notice.is_empty():
+		notice_kind = "warning"
+		if events.get("homeworld_damage", 0) > 0:
+			notice = "Homeworld hit · −%d integrity" % events.homeworld_damage
+		elif events.get("escalated", false):
+			notice = "Mothership advancing on Homeworld"
+		elif events.get("revealed", false):
+			notice = "Mothership signal detected"
+		elif events.get("missile_contact", -1) >= 0:
+			notice = "Missile in interception range"
+		elif not events.get("spawned", []).is_empty():
+			notice = "Enemy reinforcements entering the system"
+	if not notice.is_empty(): capture_hud.dismiss(notice, notice_kind)
 	if events.get("convoy_reward", 0) > 0: resource_bar.exploration(state)
 	# Strategic overview shows live pressure and movement. Travel alone opens
 	# interception screens; action results are still routed by their caller.
@@ -2082,7 +2097,8 @@ func _inspect_marker(index: int) -> void:
 		state.cancel_travel()
 		star_map.apply_navigation_position(State.Defense.point(state.navigation.position))
 	inspecting = true
-	var backing: StyleBoxFlat = screen.focus_backing.get_theme_stylebox("panel")
+	capture_hud.notice_label.hide()
+	var backing: HoloFrame = screen.focus_backing.get_theme_stylebox("panel")
 	inspection_backing_color = backing.bg_color
 	backing.bg_color.a = 0.97
 	star_map.inspection_active = true
@@ -2320,7 +2336,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _dismiss_inspection() -> void:
 	if not inspecting: return
 	inspecting = false
-	var backing: StyleBoxFlat = screen.focus_backing.get_theme_stylebox("panel")
+	var backing: HoloFrame = screen.focus_backing.get_theme_stylebox("panel")
 	backing.bg_color = inspection_backing_color
 	if is_instance_valid(star_map):
 		star_map.consume_gesture()

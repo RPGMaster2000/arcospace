@@ -1,4 +1,7 @@
 extends Control
+
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
 # RESPONSIBILITY: Own one temporary raised hand card; never execute a combat action.
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 const Targets = preload("res://scripts/cards/card_targets.gd")
@@ -140,7 +143,7 @@ func present(hold: Node) -> void:
 	inspect.disabled = true
 	inspect.show()
 	tween = create_tween().set_trans(settings.preview_transition).set_ease(Tween.EASE_OUT)
-	tween.tween_property(source, "position", target, 0.0 if settings.reduced_preview_animation else settings.preview_raise_duration)
+	tween.tween_property(source, "position", target, 0.0 if (settings.reduced_preview_animation or HoloMotion.Preferences.ui_motion() == 0) else settings.preview_raise_duration)
 	tween.tween_callback(func(): inspect.disabled = false)
 	tween.tween_property(inspect, "modulate:a", 1.0, settings.preview_fade_duration)
 	queue_redraw()
@@ -170,7 +173,7 @@ func dismiss(immediate: bool = false) -> void:
 		else:
 			var lower := create_tween().set_trans(settings.preview_transition).set_ease(Tween.EASE_OUT)
 			lowering[card] = {"tween": lower, "origin": origin, "z": saved_z}
-			lower.tween_property(card, "position", origin, 0.0 if settings.reduced_preview_animation else settings.preview_lower_duration)
+			lower.tween_property(card, "position", origin, 0.0 if (settings.reduced_preview_animation or HoloMotion.Preferences.ui_motion() == 0) else settings.preview_lower_duration)
 			lower.tween_callback(func():
 				if is_instance_valid(card): card.z_index = lowering[card].z
 				lowering.erase(card))
@@ -186,7 +189,7 @@ func dismiss(immediate: bool = false) -> void:
 func _process(delta: float) -> void:
 	if source != null:
 		pulse_time += delta
-		var pulse: float = 1.0 if settings.reduced_preview_animation else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
+		var pulse: float = 1.0 if (settings.reduced_preview_animation or HoloMotion.Preferences.ui_motion() == 0) else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
 		for glow in target_glows:
 			glow.modulate.a = 0.7 + pulse * settings.target_pulse_intensity * 0.6
 		_update_dimmer()
@@ -289,13 +292,17 @@ func refresh_targets() -> void:
 
 func _draw() -> void:
 	if source == null or settings == null: return
-	var pulse: float = 1.0 if settings.reduced_preview_animation else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
+	var pulse: float = 1.0 if (settings.reduced_preview_animation or HoloMotion.Preferences.ui_motion() == 0) else (sin(pulse_time * TAU / settings.target_pulse_duration) + 1.0) * 0.5
 	for mark in target_marks:
 		var control: Control = mark[0]
 		var rect: Rect2 = control.get_global_rect().grow(4)
 		var color: Color = mark[1]
 		var index: int = mark[3]
 		color.a = 0.75 + pulse * settings.target_pulse_intensity * 0.5
+		if index == 0:
+			var path := Holo.Frame.outline(rect, 5.0)
+			path.append(path[0])
+			draw_polyline(path, Color(color, color.a * 0.55), 1.0, true)
 		draw_string(ThemeDB.fallback_font, rect.position + Vector2(index * 18, -6), mark[2], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
 
 

@@ -4,6 +4,8 @@ extends CanvasLayer
 signal cancel_requested
 
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const Motion = preload("res://scripts/ui/holographic/motion.gd")
 const Icons = preload("res://scripts/ui/warzone_indicators.gd")
 
 var blocker: Control
@@ -11,6 +13,8 @@ var caption: Label
 var progress: ProgressBar
 var cancel_button: Button
 var notice_label: Label
+var notice_frame: Panel
+var notice_kind := ""
 var notice_timer: Tween
 
 
@@ -46,11 +50,17 @@ func _ready() -> void:
 	notice_label = Label.new()
 	notice_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	notice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	notice_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	notice_label.offset_top = 75
-	notice_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	notice_label.add_theme_constant_override("outline_size", 8)
-	add_child(notice_label)
+	var notice_anchor := CenterContainer.new()
+	notice_anchor.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	notice_anchor.offset_top = 75
+	notice_anchor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(notice_anchor)
+	var shell := PanelContainer.new()
+	shell.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell.add_child(notice_label)
+	notice_anchor.add_child(shell)
+	notice_frame = Holo.plate(notice_label, Holo.frame("compact"), Vector2(12, 4))
 	notice_label.hide()
 
 
@@ -70,12 +80,20 @@ func update_progress(title: String, elapsed: int, duration: int) -> void:
 	progress.accessibility_name = caption.text
 
 
-func dismiss(message: String = "") -> void:
+func dismiss(message: String = "", kind: String = "compact") -> void:
 	blocker.hide()
+	if notice_label.visible and notice_label.text == message and notice_kind == kind: return
+	notice_kind = kind
+	Motion.restore_panel(notice_label)
 	if notice_timer != null: notice_timer.kill()
 	notice_label.text = message
 	notice_label.visible = not message.is_empty()
 	if notice_label.visible:
+		notice_frame.add_theme_stylebox_override("panel", Holo.frame(kind))
+		notice_label.add_theme_color_override("font_color", Holo.DEFAULT.warning if kind == "warning" else Holo.DEFAULT.text)
+		Motion.reveal(notice_label, Holo.DEFAULT.selection_seconds)
+		if kind == "warning": Holo.audio(Holo.DEFAULT.warning_sound, self)
+		if kind == "reward": Holo.audio(Holo.DEFAULT.reward_sound, self)
 		notice_timer = create_tween()
 		notice_timer.tween_interval(2.5)
 		notice_timer.tween_callback(notice_label.hide)

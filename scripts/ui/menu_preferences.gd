@@ -32,6 +32,7 @@ static func mark_preview_hint_seen() -> Error:
 # Shared presentation notification, without an autoload or save-game fields.
 class Events extends RefCounted:
 	signal battle_vfx_changed(enabled: bool)
+	signal ui_motion_changed(profile: int)
 static var events := Events.new()
 
 
@@ -62,3 +63,25 @@ static func set_strategic_time_overview(enabled: bool) -> Error:
 	settings.load(PATH)
 	settings.set_value("presentation", "strategic_time_overview", enabled)
 	return settings.save(PATH)
+
+
+static var _ui_motion := -1
+
+
+static func ui_motion() -> int:
+	if _ui_motion < 0:
+		var settings := ConfigFile.new()
+		settings.load(PATH)
+		_ui_motion = clampi(int(settings.get_value("presentation", "ui_motion", 1)), 0, 2)
+	return _ui_motion
+
+
+static func set_ui_motion(profile: int) -> Error:
+	var settings := ConfigFile.new()
+	settings.load(PATH)
+	settings.set_value("presentation", "ui_motion", clampi(profile, 0, 2))
+	var result := settings.save(PATH)
+	if result == OK:
+		_ui_motion = clampi(profile, 0, 2)
+		events.ui_motion_changed.emit(_ui_motion)
+	return result
