@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
-const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+const ShieldStack = preload("res://scripts/ui/holographic/shield_stack.gd")
 
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 
@@ -37,10 +37,7 @@ const PRODUCTION := ["synthesizer", "reactor", "quarters"]
 const PRODUCTION_TAGS := ["SYN", "REACT", "QTR"]
 var header: Header
 var _player_profile: Label
-var _shield_meters: Dictionary = {}
-var _shield_painters: Dictionary = {}
-var _shield_frames: Dictionary = {}
-var _shield_status: Dictionary = {}
+var _shield_stacks: Dictionary = {}
 var _enemy_modifier: Label
 
 
@@ -164,20 +161,14 @@ func _style_telemetry(board_view: Control) -> void:
 			ink_margins.content_margin_top = skin.related_gap
 			label.add_theme_stylebox_override("normal", ink_margins)
 			if kind == "shields":
-				var bar := ProgressBar.new()
-				bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				bar.show_percentage = false
-				bar.max_value = maxi(1, skin.shield_reference)
-				bar.accessibility_name = "Shields"
-				label.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
-				bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-				bar.offset_bottom = -skin.compact_padding
-				bar.offset_top = -skin.compact_padding - 6.0
-				bar.offset_left = skin.compact_padding
-				bar.offset_right = -skin.compact_padding
-				_shield_painters[side] = Meter.attach(bar, tint)
-				_shield_meters[side] = bar
-				_shield_frames[side] = style
+				var stack := ShieldStack.new(label)
+				label.add_child(stack, false, Node.INTERNAL_MODE_FRONT)
+				stack.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+				stack.offset_bottom = 1 - skin.compact_padding
+				stack.offset_top = stack.offset_bottom - 12
+				stack.offset_left = skin.compact_padding
+				stack.offset_right = -skin.compact_padding
+				_shield_stacks[side] = stack
 		for i in range(RESERVES.size()):
 			var key: String = RESERVES[i]
 			var widget: Control = board_view.get_node("%sResource%d" % [prefix, i + 1])
@@ -211,28 +202,6 @@ func _style_telemetry(board_view: Control) -> void:
 	nodes["HandRule"].default_color = Color(skin.edge, 0.58)
 	Holo.plate(board_view.get_node("FTLPanel"), Holo.frame("status", skin.energy))
 	Meter.attach(nodes["FTLPanel/Progress"], skin.energy)
-
-
-func _refresh_shields(side: String, amount: int, disabled: bool) -> void:
-	var meter: ProgressBar = _shield_meters[side]
-	var label: Label = nodes[side + "_shields_label"]
-	var overflow := amount > meter.max_value and not disabled
-	label.text = "Shields OFF" if disabled else "Shields %d%s" % [amount, " ↑" if overflow else ""]
-	label.tooltip_text = "Shield systems disabled" if disabled else (
-		"%d Shields · Bar reference %d%s" % [amount, int(meter.max_value), " · Above scale" if overflow else ""])
-	meter.accessibility_name = label.text
-	meter.value = 0 if disabled else minf(amount, meter.max_value)
-	var status := "off" if disabled else ("overflow" if overflow else "on")
-	if _shield_status.get(side) == status: return
-	_shield_status[side] = status
-	var skin := Holo.DEFAULT
-	var tint := skin.muted if disabled else (skin.shield.lightened(0.46) if overflow else skin.shield)
-	_shield_painters[side].set_tint(tint)
-	_shield_frames[side].border_color = Color(tint, 0.97 if overflow else 0.63)
-	label.add_theme_color_override("font_color", tint)
-	if disabled:
-		HoloMotion.stop(_shield_painters[side], &"meter")
-		_shield_painters[side].display_ratio = 0.0
 
 
 func add_overdrive(button: MenuButton) -> void:
@@ -464,7 +433,7 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 		hull_label.text = "Hull %d/%d" % [ship.hull, ship.hull_capacity]
 		hull_bar.update_hull(ship.hull, ship.hull_capacity)
 		hull_label.add_theme_color_override("font_color", hull_bar.plating_color if ship.hull > ship.hull_capacity else hull_bar.condition_color())
-		_refresh_shields(side, ship.shields, data.shields_disabled)
+		_shield_stacks[side].update_shields(ship.shields, data.shields_disabled)
 		for i in RESERVES.size():
 			var reserve: String = RESERVES[i]
 			var production: String = PRODUCTION[i]
