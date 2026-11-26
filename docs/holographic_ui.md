@@ -6,6 +6,10 @@ The battle header pairs the selected player ship and signature with the enemy’
 
 Shield telemetry draws one electric-blue segment per five Shield points and fills the remainder proportionally. When individual segments would crowd the tile, one segment and a multiplier represent the complete segments, followed by any partial segment. The number always shows the exact protection. A depleted stack reads **Shields 0**, and a temporarily disabled stack reads **Shields OFF**. Shield changes ease the segment widths and briefly emphasize the new number. Minimal motion updates immediately. Hull keeps its actual capacity and displays Ablative Plating beyond that capacity in gold. The Hull tint shifts to amber and red as integrity falls. Materials, Energy and Crew have distinct tinted plates with production printed inside. Short layouts move the two resource groups into mirrored rows when needed to clear the hand. Unaffordable cards retain legible rules and use a warning-colored cost. Tier 2 adds a secondary frame and labeled badge, and Tier 3 adds gold trim and a short edge sweep when revealed or selected.
 
+The violet EMP strip fills upward beside the player's defense readouts. It shows readiness, a firing cue during the cinematic, and the used or offline state. At full charge it sweeps upward once. At activation it drains on the 3D discharge cue, or immediately when the cinematic is skipped by preference. Minimal motion switches directly to the resulting state. The charging strip opens the EMP reference, and the full tile becomes the activation target when ready.
+
+The Power Allocation button sits above the hand. Its unfolding chevron and engraved glyph show the menu state and current allocation. Tap to reveal four fixed touch targets, tap a mode to select it, or hold a mode to inspect its draw weighting without selecting it. Tap the main button again or tap outside to close.
+
 The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, convoy integrity, fleet strength, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
 
 ## Skin and assets
@@ -72,3 +76,12 @@ The latest Shield stack and borderless header captures use the real battle scene
 | Dark space, 23 and 1 Shield points | [Partial segments](battle_telemetry/shield-stacks-dark.webp) |
 | Bright solar arena at 760×428, 200 and 50 Shield points | [Grouped and individual segments](battle_telemetry/shield-stacks-bright.webp) |
 | Same solar arena with Shields disabled | [Shields OFF](battle_telemetry/shield-stacks-disabled.webp) |
+
+
+| Battle systems in Mobile Vulkan | Screenshot |
+| --- | --- |
+| Charging strip and folded Power Allocation button | [Collapsed controls](battle_telemetry/emp-charging-collapsed.webp) |
+| Stable full-charge state | [Ready EMP](battle_telemetry/emp-ready.webp) |
+| Mid-drain, synchronized with the 3D wave | [Discharge](battle_telemetry/emp-discharge.webp) |
+| Four icon-only options at 760×428 | [Expanded allocation](battle_telemetry/emp-expanded.webp) |
+| Draw-weight detail after a touch hold at 760×428 | [Hold to read](battle_telemetry/emp-hold-details.webp) |

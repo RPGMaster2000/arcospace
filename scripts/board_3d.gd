@@ -190,6 +190,8 @@ func _ready() -> void:
 	cinematic_director.settings = cinematic_settings
 	add_child(cinematic_director)
 	cinematic_director.configure(self,camera,backdrop,$BattleView)
+	cinematic_director.stage_changed.connect(func(stage: String):
+		if stage == "emp_discharge": $FTLPanel.discharge())
 	cinematic_director.started.connect(func():
 		if hud != null:
 			hud.set_panels_locked(true, true))
@@ -251,9 +253,8 @@ func _process(delta: float) -> void:
 
 
 func _fit_ftl() -> void:
-	# Shared HUD placement follows the Hull bar, independently of camera/idle motion.
+	# Shared HUD placement is independent of camera and idle motion.
 	_fit_allocation_button()
-	_fit_jump_button()
 
 func _begin_battle_presentation() -> void:
 	await cinematic_director.introduction(

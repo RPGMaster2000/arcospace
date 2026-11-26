@@ -80,7 +80,7 @@ func run() -> void:
 			"Allocation sits below Crew"
 		)
 		check(board.allocation_button.size.y >= 38 and menu.size.y >= 48, "Touch-friendly access")
-		check(board.allocation_button.size.x == 64, "Allocation matches 64 px resource icon")
+		check(board.allocation_button.size.x == 48, "Allocation uses a compact 48-unit touch target")
 		var heading: Label = board.get_node("ModeLabel")
 		var subtitle: Label = heading.get_node("Subtitle")
 		var skin := preload("res://resources/presentation/holographic_skin.tres")

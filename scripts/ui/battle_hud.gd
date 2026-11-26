@@ -1,6 +1,5 @@
 extends RefCounted
 
-const Meter = preload("res://scripts/ui/holographic/segmented_meter.gd")
 const ShieldStack = preload("res://scripts/ui/holographic/shield_stack.gd")
 
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
@@ -47,8 +46,7 @@ func _init(board_view: Control) -> void:
 		"EnemyHullBar",
 		"EnemyShip/ShieldPlaceholder",
 		"EnemyTurnBanner",
-		"FTLPanel/Charge",
-		"FTLPanel/Progress",
+		"FTLPanel",
 		"FTLPanel/WarpButton",
 		"HandRule",
 		"LastActionLabel",
@@ -114,7 +112,7 @@ func _init(board_view: Control) -> void:
 		for attribute in preload("res://scripts/cards/card_targets.gd").ATTRIBUTES:
 			if attribute in ["hull", "shields"]:
 				bind_reference(nodes[side + "_" + attribute + "_label"], reference, "defenses")
-	bind_reference(nodes["FTLPanel/Charge"], reference, "emp")
+	bind_reference(nodes["FTLPanel"], reference, "emp")
 	for column in nodes["SystemsFailureDisplay"].columns.values():
 		for label in column.get_children(): bind_reference(label, reference, "failure")
 
@@ -200,8 +198,6 @@ func _style_telemetry(board_view: Control) -> void:
 			widget.add_child(family)
 	nodes["ModeRule"].hide()
 	nodes["HandRule"].default_color = Color(skin.edge, 0.58)
-	Holo.plate(board_view.get_node("FTLPanel"), Holo.frame("status", skin.energy))
-	Meter.attach(nodes["FTLPanel/Progress"], skin.energy)
 
 
 func add_overdrive(button: MenuButton) -> void:
@@ -292,6 +288,7 @@ func refresh_results(data: Dictionary) -> void:
 	nodes["MatchResult/Panel/Rewards"].visible = data.winner == "player"
 	nodes["allocation_button"].visible = data.winner.is_empty() or data.get("destruction_presenting",false)
 	nodes["allocation_button"].disabled = not data.winner.is_empty()
+	if nodes["allocation_button"].disabled: nodes["allocation_popup"].dismiss()
 	if not data.winner.is_empty():
 		nodes["allocation_popup"].dismiss()
 	nodes["MatchResult"].visible = (
@@ -387,31 +384,7 @@ func refresh_emp(data: Dictionary) -> void:
 		Sound.play(&"emp_charge", scope)
 	_emp_charge = data.emp.charge
 	_emp_ready = ready_now
-	var ftl_status: String = "EMP Pulse %d / %d" % [data.emp.charge, data.emp.charge_target]
-	if data.emp.disabled_turns > 0:
-		ftl_status += " · Offline (%d turns)" % data.emp.disabled_turns
-	elif data.emp.can_warp:
-		ftl_status += " · Ready"
-	nodes["FTLPanel/Charge"].text = ftl_status
-	nodes["FTLPanel/Charge"].tooltip_text = ftl_status
-	nodes["FTLPanel/Charge"].text = ftl_status.replace("EMP Pulse ", "EMP ").replace(
-		" · Offline (", " · Off ("
-	)
-	nodes["FTLPanel/Progress"].max_value = data.emp.charge_target
-	nodes["FTLPanel/Progress"].value = data.emp.charge
-	var charged: bool = data.emp.charge >= data.emp.charge_target and (data.winner.is_empty() or data.get("destruction_presenting",false))
-	nodes["FTLPanel/Charge"].visible = not charged
-	nodes["FTLPanel/Progress"].visible = not charged
-	nodes["FTLPanel/WarpButton"].visible = charged
-	update_jump_style(data.emp.disabled_turns)
-	nodes["FTLPanel/WarpButton"].disabled = (
-		not data.emp.can_warp
-		or data.current_actor != "player"
-		or data.resolving_card
-		or data.effects_busy
-		or not data.winner.is_empty()
-	)
-
+	nodes["FTLPanel"].present(data)
 
 func refresh_ships_and_cards(data: Dictionary) -> void:
 	nodes["EnemyTurnBanner"].show_enemy_turn(
@@ -485,37 +458,6 @@ func fit_combat_controls(board_size: Vector2) -> void:
 	nodes["HandRule"].position.y = hand_top - 8 - 359
 	nodes["LastActionLabel"].position = Vector2(16, hand_top - 32)
 	nodes["LastActionLabel"].size.x = board_size.x - 160
-
-
-static func fit_jump_button(button: Button, panel_size: Vector2) -> void:
-	button.size = panel_size
-	button.position = Vector2.ZERO
-
-
-func update_jump_style(disabled_turns: int) -> void:
-	var offline: bool = disabled_turns > 0
-	var button: Button = nodes["FTLPanel/WarpButton"]
-	button.text = "EMP offline" if offline else "EMP Pulse"
-	button.tooltip_text = (
-		"Offline: %d turns remaining." % disabled_turns if offline else "Escape by EMP Pulse."
-	)
-	if button.has_meta("offline_style") and button.get_meta("offline_style") == offline:
-		return
-	button.set_meta("offline_style", offline)
-	ResultPresentation.action(button)
-	button.add_theme_font_size_override("font_size", 13)
-	for key in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var compact_box: StyleBox = button.get_theme_stylebox(key).duplicate()
-		compact_box.content_margin_top = 2
-		compact_box.content_margin_bottom = 2
-		button.add_theme_stylebox_override(key, compact_box)
-	if offline:
-		for key in ["normal", "hover", "pressed", "disabled"]:
-			var box: Holo.Frame = button.get_theme_stylebox(key).duplicate()
-			box.bg_color = Color("702b35")
-			box.border_color = Color("ef7e88")
-			button.add_theme_stylebox_override(key, box)
-		button.add_theme_color_override("font_disabled_color", Color("ffd3d7"))
 
 
 static func bind_reference(control: Control, overlay: Node, section: String) -> void:

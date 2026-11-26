@@ -45,6 +45,16 @@ extends Resource
 ## Portion of the header's height covered by the downward fade.
 @export_range(0.1, 1.0, 0.01) var header_vertical_fade := 0.42
 
+@export_group("Battle systems")
+@export var emp_color := Color("aa78ff")
+@export var emp_bright := Color("e1a3ff")
+@export_range(3.0, 14.0, 1.0) var emp_thickness := 7.0
+@export_range(0.0, 1.0, 0.01) var emp_glow := 0.68
+@export var emp_ready_seconds := 0.52
+@export var emp_discharge_seconds := 0.26
+@export var allocation_slide_seconds := 0.22
+@export var allocation_hold_seconds := 0.42
+
 @export_group("Motion")
 @export var hover_seconds := 0.12
 @export var press_seconds := 0.09

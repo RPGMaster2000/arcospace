@@ -327,9 +327,6 @@ func _ready() -> void:
 	resized.connect(_fit_board_lines)
 	_fit_board_lines()
 	$FTLPanel/WarpButton.pressed.connect(_warp_out)
-	$FTLPanel/WarpButton.flat = false
-	$FTLPanel/WarpButton.add_theme_font_size_override("font_size", 18)
-	preload("res://scripts/ui/encounter_presentation.gd").action($FTLPanel/WarpButton)
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
 	hand.deal_player_opening()
@@ -1277,13 +1274,13 @@ func _fit_board_lines() -> void:
 func _fit_combat_controls() -> void:
 	hud.fit_combat_controls(size)
 	_fit_allocation_button()
-	_fit_jump_button()
 
 
 func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
 	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button)
+	allocation_popup.fit()
 	hud.fit_side_panels(self)
 
 
@@ -1294,23 +1291,15 @@ func _setup_allocation() -> void:
 	allocation_button = Button.new()
 	allocation_button.name = "PowerAllocation"
 	allocation_button.custom_minimum_size = preload("res://scripts/ui/battle_layout.gd").BUTTON_SIZE
-	allocation_button.add_theme_font_override("font", ResultPresentation.UI_FONT)
-	allocation_button.add_theme_font_size_override("font_size", 22)
-	ResultPresentation.action(allocation_button)
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var box: StyleBox = allocation_button.get_theme_stylebox(state).duplicate()
-		box.content_margin_left = 8
-		box.content_margin_right = 8
-		box.content_margin_top = 6
-		box.content_margin_bottom = 6
-		allocation_button.add_theme_stylebox_override(state, box)
+	var skin := preload("res://scripts/ui/holographic/skin.gd")
+	allocation_button.toggle_mode = true
+	skin.action(allocation_button, skin.DEFAULT.friendly)
 	add_child(allocation_button)
+	allocation_popup.bind_anchor(allocation_button)
 	allocation_popup.mode_selected.connect(_select_allocation)
-	allocation_button.pressed.connect(
-		func():
-			hud.close_panels()
-			allocation_popup.present(hand.allocation_mode, hand._allocation_multiplier)
-	)
+	allocation_button.pressed.connect(func():
+		hud.close_panels()
+		allocation_popup.toggle(hand.allocation_mode, hand._allocation_multiplier))
 	_select_allocation("balanced")
 
 
@@ -1321,18 +1310,7 @@ func _select_allocation(mode: String) -> void:
 		return
 	if hud != null:
 		hud.close_panels()
-	var index: int = allocation_popup.MODES.find(mode)
-	allocation_button.text = allocation_popup.ICONS[index]
-	allocation_button.tooltip_text = "Power Allocation · " + allocation_popup.NAMES[index]
-
-
-func _fit_jump_button() -> void:
-	# Board3D positions this control before the base Board has initialized its HUD.
-	BattleHUD.fit_jump_button($FTLPanel/WarpButton, $FTLPanel.size)
-
-
-func _update_jump_style() -> void:
-	hud.update_jump_style(ftl.disabled_turns)
+	allocation_popup.set_mode(mode)
 
 
 #endregion
