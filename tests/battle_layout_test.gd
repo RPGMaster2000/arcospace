@@ -100,9 +100,16 @@ func run() -> void:
 		check(emp_rect.position.is_equal_approx(Vector2(resources.end.x + skin.related_gap, resources.position.y))
 			and is_equal_approx(emp_rect.end.y, resources.end.y)
 			and is_equal_approx(emp_rect.size.x, resources.size.x * 0.24), "EMP aligns with the player resource rail")
-		check(is_equal_approx(player_panel.handle.position.x, emp_rect.end.x + skin.related_gap)
-			and is_equal_approx(player_panel.drawer.position.x, player_panel.handle.get_rect().end.x + skin.related_gap),
-			"Handle and drawer follow the EMP with consistent gaps")
+		var tab: Rect2 = emp.activation_bounds()
+		check(tab.size.is_equal_approx(Vector2(48, 48)) and is_equal_approx(tab.position.y, emp_rect.position.y),
+			"EMP activation tab is touch-sized and top-aligned")
+		check(player_panel.handle.position.x >= emp_rect.end.x + skin.related_gap
+			and player_panel.drawer.position.x >= player_panel.handle.get_rect().end.x + skin.related_gap
+			and not tab.intersects(player_panel.handle.get_rect()) and not tab.intersects(player_panel.drawer.get_rect()),
+			"Handle and drawer clear the expanded EMP tab")
+		for control in [board.get_node("PlayerResource1"), board.get_node("PlayerResource2"), crew,
+			board.allocation_button, board.player_hull_label, board.player_shields_label, hand]:
+			check(not tab.intersects(control.get_rect()), "Top EMP activation tab clears other battle controls")
 		check(not emp_rect.intersects(board.player_hull_label.get_rect()) and not emp_rect.intersects(board.allocation_button.get_rect()),
 			"The attached EMP clears Hull and Power Allocation")
 		var enemy_resources: Rect2 = board.get_node("EnemyResource1").get_rect()
@@ -278,6 +285,9 @@ func run() -> void:
 			layout.fit(board, board.settings_button, board.allocation_button, safe)
 			board.allocation_popup.fit()
 			board.hud.fit_side_panels(board)
+			check(safe.encloses(emp.activation_bounds())
+				and not emp.activation_bounds().intersects(player_panel.handle.get_rect()),
+				"Top EMP tab and drawer handle remain separated inside asymmetric safe bounds")
 			var first: Rect2 = hand.get_global_rect()
 			var last: Rect2 = board.get_node(board.card_slots[5]).get_global_rect()
 			check(safe.encloses(first) and safe.encloses(last)
