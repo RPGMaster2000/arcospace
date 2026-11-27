@@ -116,7 +116,7 @@ func _init(left: bool) -> void:
 	_update_handle()
 
 
-func fit(first: Rect2, last: Rect2, hand_top: float, view_width: float, attachment: Rect2) -> void:
+func fit(first: Rect2, last: Rect2, hand_top: float, view_width: float, attachment: Rect2, activation := Rect2()) -> void:
 	var area := first.merge(last)
 	var row := is_equal_approx(first.position.y, last.position.y)
 	var width := minf(WIDTH, view_width * 0.43)
@@ -127,8 +127,15 @@ func fit(first: Rect2, last: Rect2, hand_top: float, view_width: float, attachme
 	handle.size = Vector2(HANDLE_WIDTH, minf(Holo.DEFAULT.touch_height, attachment.size.y))
 	var x := attachment.end.x + gap if _left else attachment.position.x - HANDLE_WIDTH - gap
 	handle.position = Vector2(x, attachment.get_center().y - handle.size.y * 0.5)
-	width = minf(width, view_width - handle.get_rect().end.x - gap if _left else x - gap)
-	drawer.position = Vector2(handle.get_rect().end.x + gap if _left else x - width - gap,
+	# Reserve the top EMP action footprint without moving the normal stacked
+	# rail's handle. Short horizontal rails need more horizontal separation.
+	if _left and activation.has_area() and handle.get_rect().intersects(activation.grow(gap)):
+		handle.position.x = activation.end.x + gap
+	var drawer_left := handle.get_rect().end.x + gap
+	if _left and activation.has_area() and not row:
+		drawer_left = maxf(drawer_left, activation.end.x + gap)
+	width = minf(width, view_width - drawer_left - gap if _left else x - gap)
+	drawer.position = Vector2(drawer_left if _left else x - width - gap,
 		area.end.y + gap if row else area.position.y)
 	drawer.size = Vector2(width, maxf(48, hand_top - drawer.position.y - 12))
 	surface.size = drawer.size
