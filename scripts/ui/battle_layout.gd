@@ -101,7 +101,8 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 	if action_log.visible:
 		action_log.position = Vector2(left + rail + gap, bounds.position.y + 75)
 		action_log.size.x = right - left - 2 * (rail + gap)
-	var warning_edge: float = emp.get_rect().end.x + tokens.related_gap * 2 + view.hud.player_panel.HANDLE_WIDTH
+	var activation: Rect2 = emp.activation_bounds()
+	var warning_edge: float = maxf(emp.get_rect().end.x, activation.end.x) + tokens.related_gap * 2 + view.hud.player_panel.HANDLE_WIDTH
 	view.get_node("SystemsFailureDisplay").fit(warning_edge,
 		right - rail - gap - view.hud.enemy_panel.HANDLE_WIDTH, allocation.position.y - gap)
 
