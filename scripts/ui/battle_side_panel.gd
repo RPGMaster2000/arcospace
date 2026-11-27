@@ -37,36 +37,27 @@ func _init(left: bool) -> void:
 	handle.add_theme_font_override("font", Presentation.UI_FONT)
 	handle.add_theme_font_size_override("font_size", 21)
 	for state in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
-		if left:
-			var tab := Holo.frame("compact", CYAN, state)
-			tab.bg_color = Holo.DEFAULT.surface_depth.lerp(CYAN, 0.06 if state == "normal" else 0.14)
-			tab.cut = 5.0
-			tab.set_content_margin_all(3)
-			handle.add_theme_stylebox_override(state, tab)
-			continue
-		var tint := Color(CYAN, 0.25 if state == "normal" else 0.75)
-		var edge := _frame(Color.TRANSPARENT, tint)
-		edge.set_border_width_all(0)
-		edge.set_border_width(SIDE_LEFT, 1)
-		edge.content_margin_left = 3
-		edge.content_margin_right = 3
-		handle.add_theme_stylebox_override(state, edge)
-	handle.alignment = HORIZONTAL_ALIGNMENT_CENTER if left else HORIZONTAL_ALIGNMENT_LEFT
+		var tab := Holo.frame("compact", CYAN, state)
+		tab.bg_color = Holo.DEFAULT.surface_depth.lerp(CYAN, 0.06 if state == "normal" else 0.14)
+		tab.cut = 5.0
+		tab.set_content_margin_all(3)
+		tab.draw_center = state != "focus"
+		handle.add_theme_stylebox_override(state, tab)
+	handle.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	handle.add_theme_color_override("font_color", CYAN)
 	add_child(handle)
 
-	if _left:
-		# Keep the whole resource rail as a secondary tap target for the drawer.
-		_resource_target = Button.new()
-		var transparent := StyleBoxEmpty.new()
-		for style in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
-			_resource_target.add_theme_stylebox_override(style, transparent)
-		_resource_target.mouse_default_cursor_shape = CURSOR_POINTING_HAND
-		_resource_target.focus_mode = Control.FOCUS_NONE
-		_resource_target.tooltip_text = handle.tooltip_text
-		add_child(_resource_target)
-		_resource_target.pressed.connect(func():
-			if not handle.disabled: handle.pressed.emit())
+	# Keep the whole resource rail as a secondary tap target for the drawer.
+	_resource_target = Button.new()
+	var transparent := StyleBoxEmpty.new()
+	for style in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		_resource_target.add_theme_stylebox_override(style, transparent)
+	_resource_target.mouse_default_cursor_shape = CURSOR_POINTING_HAND
+	_resource_target.focus_mode = Control.FOCUS_NONE
+	_resource_target.tooltip_text = handle.tooltip_text
+	add_child(_resource_target)
+	_resource_target.pressed.connect(func():
+		if not handle.disabled: handle.pressed.emit())
 
 	drawer = Control.new()
 	drawer.clip_contents = true
@@ -129,18 +120,16 @@ func fit(first: Rect2, last: Rect2, hand_top: float, view_width: float, attachme
 	var area := first.merge(last)
 	var row := is_equal_approx(first.position.y, last.position.y)
 	var width := minf(WIDTH, view_width * 0.43)
-	if _left:
-		var gap: float = Holo.DEFAULT.related_gap
-		_resource_target.position = area.position
-		_resource_target.size = area.size
-		handle.size = Vector2(HANDLE_WIDTH, minf(Holo.DEFAULT.touch_height, attachment.size.y))
-		handle.position = Vector2(attachment.end.x + gap, attachment.get_center().y - handle.size.y * 0.5)
-		drawer.position = Vector2(handle.get_rect().end.x + gap, area.end.y + gap if row else area.position.y)
-		width = minf(width, view_width - drawer.position.x - gap)
-	else:
-		handle.position = area.position
-		handle.size = area.size
-		drawer.position = Vector2(area.end.x - width, area.end.y + 6) if row else Vector2(area.position.x - width - 6, area.position.y)
+	var gap: float = Holo.DEFAULT.related_gap
+	if not _left: attachment = area
+	_resource_target.position = area.position
+	_resource_target.size = area.size
+	handle.size = Vector2(HANDLE_WIDTH, minf(Holo.DEFAULT.touch_height, attachment.size.y))
+	var x := attachment.end.x + gap if _left else attachment.position.x - HANDLE_WIDTH - gap
+	handle.position = Vector2(x, attachment.get_center().y - handle.size.y * 0.5)
+	width = minf(width, view_width - handle.get_rect().end.x - gap if _left else x - gap)
+	drawer.position = Vector2(handle.get_rect().end.x + gap if _left else x - width - gap,
+		area.end.y + gap if row else area.position.y)
 	drawer.size = Vector2(width, maxf(48, hand_top - drawer.position.y - 12))
 	surface.size = drawer.size
 	if _motion and _motion.is_running():

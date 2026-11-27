@@ -1272,16 +1272,25 @@ func _fit_board_lines() -> void:
 
 
 func _fit_combat_controls() -> void:
-	hud.fit_combat_controls(size)
+	hud.fit_combat_controls(_battle_bounds())
 	_fit_allocation_button()
 
 
 func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
-	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button)
+	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button, _battle_bounds())
 	allocation_popup.fit()
 	hud.fit_side_panels(self)
+
+
+func _battle_bounds() -> Rect2:
+	var layout := preload("res://scripts/ui/battle_layout.gd")
+	return layout.safe_bounds(size, layout.safe_insets(self))
+
+
+func _defense_flank_offset() -> float:
+	return absf($EnemyShip.position.x - $PlayerShip.position.x) * 0.5
 
 
 func _setup_allocation() -> void:
@@ -1293,7 +1302,11 @@ func _setup_allocation() -> void:
 	allocation_button.custom_minimum_size = preload("res://scripts/ui/battle_layout.gd").BUTTON_SIZE
 	var skin := preload("res://scripts/ui/holographic/skin.gd")
 	allocation_button.toggle_mode = true
-	skin.action(allocation_button, skin.DEFAULT.friendly)
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		var frame := skin.frame("focus" if state == "focus" else "status.allocation", skin.DEFAULT.friendly,
+			"pressed" if state == "hover_pressed" else state)
+		frame.set_content_margin_all(skin.DEFAULT.compact_padding)
+		allocation_button.add_theme_stylebox_override(state, frame)
 	add_child(allocation_button)
 	allocation_popup.bind_anchor(allocation_button)
 	allocation_popup.mode_selected.connect(_select_allocation)

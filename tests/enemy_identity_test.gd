@@ -40,7 +40,7 @@ func fits(label: Label, name: String) -> void:
 	var width: float = minf(120.0,label.size.x) if label.name == "TitleLabel" else label.size.x
 	for line in label.text.split("\n"):
 		check(
-			font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= width + 1,
+			font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x * label.scale.x <= width + 1,
 			name + ": text fits its actual width"
 		)
 

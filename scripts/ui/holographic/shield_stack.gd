@@ -75,7 +75,7 @@ func _draw() -> void:
 	if displayed_points <= 0.0 or size.x <= 0.0 or size.y <= 0.0: return
 	var strip := strip_layout(displayed_points)
 	var x := maxf(0.0, (size.x - float(strip.width)) * 0.5)
-	var height := minf(size.y, 8.0)
+	var height := minf(size.y, 10.0)
 	var y := (size.y - height) * 0.5
 	for segment in int(strip.full):
 		_draw_cell(Vector2(x, y), height, 1.0)

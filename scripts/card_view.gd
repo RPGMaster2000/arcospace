@@ -2,6 +2,7 @@
 extends Button
 
 const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+const TITLE_PRICE_CLEARANCE := 120.0
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 
 const Sound = preload("res://scripts/audio/sfx.gd")
@@ -124,40 +125,22 @@ func _gui_input(event: InputEvent) -> void:
 		discard_requested.emit()
 
 
-# Two-line shaped header: the first line reserves the cost corner; the second
-# uses the full width BELOW the cost. Every title keeps the same 18px type.
+# The first line clears the price. Condense an exceptional long opening word
+# horizontally so the title can wrap on a word boundary at the same height.
 func title_text(name: String) -> String:
 	var title := name.trim_suffix("++").trim_suffix("+")
 	var font: Font = $TitleLabel.get_theme_font("font")
-	var first := ""
-	var words := title.split(" ")
 	var font_size: int = presentation_settings.card_title_font_size
-	if font.get_string_size(words[0], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
-		# Fold a long first word below the cost corner while retaining the title size.
-		var split := words[0].length() - 1
-		while split > 1 and font.get_string_size(words[0].left(split) + "-", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 120:
-			split -= 1
-		return words[0].left(split) + "-\n" + title.substr(split)
+	var words := title.split(" ")
+	var opening := font.get_string_size(words[0], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var width := minf(1.0, TITLE_PRICE_CLEARANCE / maxf(opening, 1.0))
+	$TitleLabel.scale = Vector2(width, 1.0)
+	var first := ""
 	while not words.is_empty():
-		var candidate: String = first + (" " if not first.is_empty() else "") + words[0]
-		if (
-			(
-				(
-					font
-					. get_string_size(
-						candidate,
-						HORIZONTAL_ALIGNMENT_LEFT,
-						-1,
-						font_size
-					)
-					. x
-				)
-				> 120
-			)
-			and not first.is_empty()
-		):
+		var next: String = first + (" " if not first.is_empty() else "") + words[0]
+		if not first.is_empty() and font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * width > TITLE_PRICE_CLEARANCE:
 			break
-		first = candidate
+		first = next
 		words.remove_at(0)
 	return first + ("\n" + " ".join(words) if not words.is_empty() else "")
 

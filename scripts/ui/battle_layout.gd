@@ -1,5 +1,5 @@
 extends RefCounted
-# RESPONSIBILITY: Fit battle utility controls; never move ships, cards or combat status bars.
+## Shared safe bounds for the hand and mirrored battlefield HUD.
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const FAMILIES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
@@ -26,26 +26,36 @@ static func scaled_insets(safe: Rect2i, window: Vector2i, logical: Vector2) -> V
 	)
 
 
-static func fit(view: Control, menu: Button, allocation: Button) -> void:
-	var inset := safe_insets(view)
+static func safe_bounds(view_size: Vector2, inset: Vector4) -> Rect2:
+	var side := maxf(inset.x, inset.z)
+	return Rect2(side, inset.y, view_size.x - side * 2, view_size.y - inset.y - inset.w)
+
+
+static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) -> void:
 	var tokens := Holo.DEFAULT
 	var edge := float(tokens.section_gap)
 	var padding := float(tokens.compact_padding)
-	menu.position = Vector2(edge + inset.x, 16 + inset.y)
+	var gap := float(tokens.spacing)
+	var left := bounds.position.x + edge
+	var right := bounds.end.x - edge
+	var midpoint := bounds.get_center().x
+	menu.position = Vector2(left, bounds.position.y + 16)
 	menu.size = Vector2(48, 48)
-	view.hud.header.fit(view.size.x, menu.get_rect().end.x + tokens.spacing + padding,
-		view.size.x - edge - inset.z - padding, 12 + inset.y)
+	var identity_inset := menu.size.x + gap + padding
+	view.hud.header.fit(view.size.x, left + identity_inset, right - identity_inset, bounds.position.y + 12)
 
 	var hand: Control = view.get_node(view.card_slots[0])
-	var y := 82.0 + inset.y
-	var rail := 100.0 if view.size.x >= 880 else 82.0
-	var gap := float(tokens.spacing)
-	var row_budget := (hand.position.y - y - BUTTON_SIZE.y - gap * 3) / 3
-	var horizontal := row_budget < 54
-	var height := clampf(row_budget, 54, 72) if not horizontal else 55.0
-	if horizontal: rail = clampf((view.size.x - inset.x - inset.z - edge * 2 - gap * 5) / 6, 64, 91)
+	var status_height := 45.0
+	var status_y := hand.position.y - 14.0 - status_height
+	var allocation_y := status_y - BUTTON_SIZE.y - gap
+	var y := bounds.position.y + 82.0
+	var rail := 100.0 if bounds.size.x >= 880 else 82.0
+	var row_budget := (allocation_y - y - gap * 2 - tokens.related_gap) / 3.0
+	var horizontal := row_budget < 54.0
+	var height := clampf(row_budget, 54.0, 72.0) if not horizontal else 55.0
+	if horizontal: rail = clampf((right - left - gap * 5) / 6.0, 64, 91)
 	for side in ["Player", "Enemy"]:
-		var x: float = menu.position.x if side == "Player" else view.size.x - edge - inset.z - rail
+		var x := left if side == "Player" else right - rail
 		var direction := 1.0 if side == "Player" else -1.0
 		for i in FAMILIES.size():
 			var tile: Control = view.get_node("%sResource%d" % [side, i + 1])
@@ -60,40 +70,35 @@ static func fit(view: Control, menu: Button, allocation: Button) -> void:
 	emp.position = Vector2(resources.end.x + tokens.related_gap, resources.position.y)
 	emp.size = Vector2(materials.size.x * 0.24, resources.size.y)
 
-	var content_edge := maxf(menu.position.x, edge + inset.z) + rail + gap
-	var midpoint := view.size.x * 0.5
-	var group_width := clampf(midpoint - content_edge - tokens.section_gap, 132, 334)
-	var start := clampf(view.size.x * 0.25 - group_width * 0.5, content_edge, maxf(content_edge, midpoint - group_width - gap))
-	var status_height := 40.0 if horizontal and hand.position.y < 240 else 45.0
-	var row_y := hand.position.y - BUTTON_SIZE.y - gap
-	var status_y := minf(hand.position.y - 96.0, row_y - status_height - tokens.related_gap)
-	if horizontal: status_y = maxf(status_y, y + height + tokens.related_gap)
-	# A left safe inset can put the resource rail beside the Hull tile.
-	if resources.end.y > status_y and emp.get_rect().end.x > start:
-		start = emp.get_rect().end.x + tokens.related_gap
-		group_width = minf(group_width, midpoint - start - gap)
+	var card_width := hand.size.x * hand.scale.x
+	var group_width := minf(258.0, card_width * 1.30)
+	var min_flank := (group_width + card_width) * 0.5 + gap * 2
+	var max_flank := midpoint - left - group_width * 0.5
+	var flank := clampf(view._defense_flank_offset(), min_flank, maxf(min_flank, max_flank))
 	var tile_width := (group_width - gap) * 0.5
 	for side in ["Player", "Enemy"]:
 		var player: bool = side == "Player"
 		var hull: Control = view.get_node(side + "HullLabel")
 		var shield: Control = view.get_node(side + "ShieldsLabel")
 		var hull_bar: Control = view.get_node(side + "HullBar")
-		var group_x: float = start if player else view.size.x - start - group_width
-		hull.position = Vector2(group_x if player else group_x + tile_width + gap, status_y)
-		shield.position = Vector2(group_x + tile_width + gap if player else group_x, status_y)
+		var origin := midpoint + (-flank if player else flank) - group_width * 0.5
+		hull.position = Vector2(origin if player else origin + tile_width + gap, status_y)
+		shield.position = Vector2(origin + tile_width + gap if player else origin, status_y)
 		for label in [hull, shield]:
 			label.size = Vector2(tile_width, status_height)
 			label.add_theme_font_size_override("font_size", 17 if tile_width < 122 else 20)
 		hull_bar.position = hull.position + Vector2(padding, hull.size.y - padding - 6)
 		hull_bar.size = Vector2(tile_width - 2 * padding, 6)
-	allocation.size = BUTTON_SIZE
-	allocation.position = Vector2(menu.position.x, maxf(row_y, resources.end.y + gap))
+	allocation.size = Vector2(rail, BUTTON_SIZE.y)
+	allocation.position = Vector2(left, resources.end.y + tokens.related_gap)
+
 	var action_log: Control = view.get_node("LastActionLabel")
 	if action_log.visible:
-		action_log.position = Vector2(content_edge, 75 + inset.y)
-		action_log.size.x = view.size.x - 2 * content_edge
-	var player_warning_edge := maxf(start, emp.get_rect().end.x + tokens.related_gap * 2 + view.hud.player_panel.HANDLE_WIDTH)
-	view.get_node("SystemsFailureDisplay").fit(player_warning_edge, view.size.x - start, status_y - gap)
+		action_log.position = Vector2(left + rail + gap, bounds.position.y + 75)
+		action_log.size.x = right - left - 2 * (rail + gap)
+	var warning_edge: float = emp.get_rect().end.x + tokens.related_gap * 2 + view.hud.player_panel.HANDLE_WIDTH
+	view.get_node("SystemsFailureDisplay").fit(warning_edge,
+		right - rail - gap - view.hud.enemy_panel.HANDLE_WIDTH, allocation.position.y - gap)
 
 
 static func _fit_resource(tile: Control, index: int, pad: float, roomy: bool) -> void:

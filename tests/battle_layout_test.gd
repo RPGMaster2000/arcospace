@@ -50,7 +50,8 @@ func capture(caption: String) -> void:
 
 
 func run() -> void:
-	var insets: Vector4 = preload("res://scripts/ui/battle_layout.gd").scaled_insets(
+	var layout := preload("res://scripts/ui/battle_layout.gd")
+	var insets: Vector4 = layout.scaled_insets(
 		Rect2i(90, 20, 2160, 1040), Vector2i(2340, 1080), Vector2(1560, 720)
 	)
 	check(
@@ -80,11 +81,14 @@ func run() -> void:
 			"Allocation sits below Crew"
 		)
 		check(board.allocation_button.size.y >= 38 and menu.size.y >= 48, "Touch-friendly access")
-		check(board.allocation_button.size.x == 48, "Allocation uses a compact 48-unit touch target")
+		check(is_equal_approx(board.allocation_button.size.x, crew.size.x)
+			and is_equal_approx(board.allocation_button.position.y - crew.get_rect().end.y,
+				preload("res://resources/presentation/holographic_skin.tres").related_gap),
+			"Power Allocation attaches directly to the rail at the same width")
 		var heading: Label = board.get_node("ModeLabel")
 		var subtitle: Label = heading.get_node("Subtitle")
 		var skin := preload("res://resources/presentation/holographic_skin.tres")
-		check(is_equal_approx(board.size.x - heading.get_rect().end.x, skin.section_gap + skin.compact_padding), "Enemy header keeps a safe edge and inner padding")
+		check(is_equal_approx(board.size.x - heading.get_rect().end.x, board.get_node("PlayerIdentity").position.x), "Ship identities have mirrored outside edges")
 		check(heading.position.y == board.get_node("PlayerIdentity").position.y, "Ship identities align")
 		check(subtitle.global_position.y == board.get_node("PlayerIdentity/Subtitle").global_position.y, "Header subtitles align")
 		check(is_equal_approx(board.get_node("TurnLabel").get_rect().get_center().x, board.size.x * 0.5), "Round readout is centered")
@@ -101,6 +105,26 @@ func run() -> void:
 			"Handle and drawer follow the EMP with consistent gaps")
 		check(not emp_rect.intersects(board.player_hull_label.get_rect()) and not emp_rect.intersects(board.allocation_button.get_rect()),
 			"The attached EMP clears Hull and Power Allocation")
+		var enemy_resources: Rect2 = board.get_node("EnemyResource1").get_rect()
+		var player_resources: Rect2 = board.get_node("PlayerResource1").get_rect()
+		check(is_equal_approx(player_resources.position.x, board.size.x - enemy_resources.end.x)
+			and player_resources.size == enemy_resources.size, "Both resource rails share equal margins and dimensions")
+		check(is_equal_approx(enemy_panel.handle.get_rect().end.x + skin.related_gap, enemy_resources.position.x)
+			and enemy_panel.drawer.get_rect().end.x < enemy_panel.handle.position.x, "Enemy handle and drawer extend inward")
+		var defense: Rect2 = board.player_hull_label.get_rect()
+		check(is_equal_approx(hand.position.y - defense.end.y, 14.0)
+			and is_equal_approx(defense.position.y, board.enemy_shields_label.position.y)
+			and is_equal_approx(defense.position.x, board.size.x - board.enemy_hull_label.get_rect().end.x),
+			"Hull and Shields mirror each other directly above the hand")
+		var player_group := defense.merge(board.player_shields_label.get_rect())
+		var right_shield: Rect2 = board.enemy_shields_label.get_rect()
+		var min_flank := 0.5 * (player_group.size.x + hand.size.x * hand.scale.x) + skin.spacing * 2
+		var max_flank: float = board.size.x * 0.5 - skin.section_gap - player_group.size.x * 0.5
+		check(is_equal_approx(board.size.x * 0.5 - player_group.get_center().x,
+			clampf(board._defense_flank_offset(), min_flank, max_flank)),
+			"Defense groups follow the measured ship separation with central clearance")
+		check(right_shield.position.x - player_group.end.x >= hand.size.x * hand.scale.x,
+			"The centered card fits between the defense groups")
 		check(not player_panel.drawer.visible and not enemy_panel.drawer.visible, "Drawers start closed")
 		for panel in [player_panel, enemy_panel]:
 			check(panel.drawer.get_global_rect().end.y < hand.position.y, "Drawer clears the card hand")
@@ -248,6 +272,21 @@ func run() -> void:
 				[card.position, card.size, card.scale] == poses[index],
 				"Utility panels preserve hand geometry"
 			)
+		if dimensions.x == 686:
+			var safe := layout.safe_bounds(board.size, Vector4(64, 14, 12, 26))
+			board.hud.fit_combat_controls(safe)
+			layout.fit(board, board.settings_button, board.allocation_button, safe)
+			board.allocation_popup.fit()
+			board.hud.fit_side_panels(board)
+			var first: Rect2 = hand.get_global_rect()
+			var last: Rect2 = board.get_node(board.card_slots[5]).get_global_rect()
+			check(safe.encloses(first) and safe.encloses(last)
+				and is_equal_approx(first.merge(last).get_center().x, board.size.x * 0.5),
+				"An asymmetric notch keeps the hand centered and inside the safe area")
+			check(board.get_node("PlayerResource1").position.x >= safe.position.x
+				and is_equal_approx(board.get_node("PlayerResource1").position.x,
+					board.size.x - board.get_node("EnemyResource1").get_rect().end.x),
+				"The larger cutout inset applies to both resource rails")
 		board.free()
 		await process_frame
 	print("Battle layout: %d checks, %d failures" % [checks, failures])

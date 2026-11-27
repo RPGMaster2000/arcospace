@@ -37,6 +37,7 @@ const PRODUCTION_TAGS := ["SYN", "REACT", "QTR"]
 var header: Header
 var _player_profile: Label
 var _shield_stacks: Dictionary = {}
+var _hull_frames: Dictionary = {}
 var _enemy_modifier: Label
 
 
@@ -153,6 +154,7 @@ func _style_telemetry(board_view: Control) -> void:
 			var tint := Holo.family(kind)
 			var style := Holo.frame("status", tint)
 			Holo.plate(label, style)
+			if kind == "hull": _hull_frames[side] = style
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 			var ink_margins := StyleBoxEmpty.new()
@@ -406,7 +408,11 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 		var hull_label: Label = nodes[side + "_hull_label"]
 		hull_label.text = "Hull %d/%d" % [ship.hull, ship.hull_capacity]
 		hull_bar.update_hull(ship.hull, ship.hull_capacity)
-		hull_label.add_theme_color_override("font_color", hull_bar.plating_color if ship.hull > ship.hull_capacity else hull_bar.condition_color())
+		var hull_tint: Color = hull_bar.plating_color if ship.hull > ship.hull_capacity else hull_bar.condition_color()
+		hull_label.add_theme_color_override("font_color", hull_tint)
+		var hull_frame: Holo.Frame = _hull_frames[side]
+		var border := Color(hull_tint, hull_frame.border_color.a)
+		if hull_frame.border_color != border: hull_frame.border_color = border
 		_shield_stacks[side].update_shields(ship.shields, data.shields_disabled)
 		for i in RESERVES.size():
 			var reserve: String = RESERVES[i]
@@ -437,17 +443,17 @@ func fit_board_lines(
 	nodes["HandRule"].points = points
 
 
-func fit_combat_controls(board_size: Vector2) -> void:
+func fit_combat_controls(bounds: Rect2) -> void:
 	if is_instance_valid(tactical): tactical.dismiss(true)
 	var gap: float = 10.0
-	var card_scale: float = minf(1.0, (board_size.x - 32 - gap * 5) / (198 * 6))
+	var card_scale: float = minf(1.0, (bounds.size.x - 32 - gap * 5) / (198 * 6))
 	var hand_width: float = 198 * card_scale * 6 + gap * 5
 	for index in range(cards.size()):
 		var card: Control = cards[index]
 		card.scale = Vector2.ONE * card_scale
 		card.position = Vector2(
-			(board_size.x - hand_width) / 2 + index * (198 * card_scale + gap),
-			board_size.y - 12 - 294 * card_scale
+			bounds.get_center().x - hand_width / 2 + index * (198 * card_scale + gap),
+			bounds.end.y - 12 - 294 * card_scale
 		)
 		card.discard_target_height = card.presentation_settings.discard_button_height / card_scale
 		card.get_node("DiscardButton").add_theme_font_size_override(
@@ -455,10 +461,10 @@ func fit_combat_controls(board_size: Vector2) -> void:
 		)
 		if card.card_data != null:
 			card.refresh_card()
-	var hand_top: float = board_size.y - 12 - 294 * card_scale
+	var hand_top: float = bounds.end.y - 12 - 294 * card_scale
 	nodes["HandRule"].position.y = hand_top - 8 - 359
-	nodes["LastActionLabel"].position = Vector2(16, hand_top - 32)
-	nodes["LastActionLabel"].size.x = board_size.x - 160
+	nodes["LastActionLabel"].position = Vector2(bounds.position.x + 16, hand_top - 32)
+	nodes["LastActionLabel"].size.x = bounds.size.x - 160
 
 
 static func bind_reference(control: Control, overlay: Node, section: String) -> void:
