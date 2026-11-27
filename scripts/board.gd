@@ -372,7 +372,7 @@ func _begin_battle_presentation() -> void:
 func _start_hud_boot() -> void:
 	if interface_motion.boot_started or not InterfaceMotion.allowed(): return
 	refresh_display()
-	interface_motion.begin(hud, _display_snapshot())
+	interface_motion.begin(hud, _display_snapshot(), $CardMotion.settings.enabled)
 	hud.set_panels_locked(true, true)
 	hud.tactical.dismiss(true)
 	allocation_button.disabled = true
@@ -1148,9 +1148,9 @@ func refresh_display() -> void:
 
 
 func _present_replacement(slot: int) -> void:
-	var shown := _shown_card(hand.cards[slot])
-	if winner.is_empty() and interface_motion.replacement(slot, shown):
-		$CardMotion.fade_played_player()
+	var motion = $CardMotion
+	if winner.is_empty() and motion.settings.enabled and interface_motion.replacement(slot, _shown_card(hand.cards[slot])):
+		motion.fade_played_player()
 
 
 func _shown_card(card: Resource) -> Dictionary:
@@ -1219,7 +1219,7 @@ func _display_snapshot() -> Dictionary:
 		"result_cause": result_cause,
 		"systems_failure": systems_failure.snapshot(_both_states()),
 		"battles_won": battles_won,
-		"resolving_card": resolving_card or _presentation_locked() or not damage_timeline.pending.is_empty(),
+		"resolving_card": resolving_card or interface_motion.booting or not damage_timeline.pending.is_empty(),
 		"current_actor": current_actor,
 		"turn_number": turn_number,
 		"escaped_by_ftl": escaped_by_ftl,

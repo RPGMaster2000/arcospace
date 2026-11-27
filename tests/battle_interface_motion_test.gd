@@ -36,12 +36,13 @@ func capture(name: String) -> void:
 	root.get_texture().get_image().save_webp(capture_dir.path_join(name + ".webp"), false, 0.86)
 
 
-func fresh(resume := {}, fast_camera := false) -> Node:
+func fresh(resume := {}, fast_camera := false, card_motion_enabled := true) -> Node:
 	var board = BoardScene.instantiate()
 	board.setup_settings = {"player_ship": 0, "enemy_ship": 0, "player_energy": 0,
 		"enemy_data": preload("res://ships/enemy/siege_monitor.tres")}
 	board.get_node("BattleEffects").enabled = false
 	board.get_node("CardMotion").settings = board.get_node("CardMotion").settings.duplicate()
+	board.get_node("CardMotion").settings.enabled = card_motion_enabled
 	board.battle_setup = preload("res://scripts/combat/battle_setup.gd").new()
 	board.battle_setup.battle_seed = 1147
 	board.progression_actions.rng.seed = 7195
@@ -247,6 +248,18 @@ func run() -> void:
 	minimal.queue_free()
 	await process_frame
 	if DisplayServer.get_name() == "headless":
+		Preferences.set_ui_motion(1)
+		var motion_disabled = fresh({}, false, false)
+		check(motion_disabled.interface_motion.boot_duration == 0.20
+			and motion_disabled.interface_motion.flights.is_empty(), "Authored Card Motion opt-out uses the short HUD reveal")
+		await motion_disabled.interface_motion.boot_finished
+		var slot: int = motion_disabled.hand.cards.find(Surge)
+		check(await motion_disabled._act("player", slot, false), "Card Motion opt-out preserves Play Again")
+		check(motion_disabled.interface_motion.flights.is_empty() and motion_disabled.hud.cards[slot].visible,
+			"Card Motion opt-out restores replacement input immediately")
+		motion_disabled.queue_free()
+		await process_frame
+
 		OS.set_environment("ARCOSPACE_BATTLE_CINEMATICS", "1")
 		var saved_skip := Preferences.skip_cinematics()
 		Preferences.set_skip_cinematics(false)

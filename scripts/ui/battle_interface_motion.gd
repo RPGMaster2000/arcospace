@@ -53,12 +53,12 @@ static func allowed() -> bool:
 	return OS.get_environment("ARCOSPACE_BATTLE_HUD_BOOT") != "0"
 
 
-func begin(hud: RefCounted, snapshot: Dictionary) -> void:
+func begin(hud: RefCounted, snapshot: Dictionary, card_motion_enabled: bool) -> void:
 	if boot_started: return
 	boot_started = true
 	if not allowed(): return
 	booting = true
-	var minimal := Motion.Preferences.ui_motion() == 0
+	var minimal := Motion.Preferences.ui_motion() == 0 or not card_motion_enabled
 	boot_duration = MINIMAL_SECONDS if minimal else BOOT_SECONDS
 	_boot = create_tween().set_parallel()
 	for identity in [hud.header.player, hud.header.enemy]:
@@ -276,6 +276,9 @@ func _input(event: InputEvent) -> void:
 			_touch_skip_frame = Engine.get_process_frames()
 			get_viewport().set_input_as_handled()
 			skip_requested.emit()
+		elif event.pressed and event.index == _skip_touch:
+			# A touch can leave the app before its release arrives.
+			_skip_touch = -1
 		elif not event.pressed and event.index == _skip_touch:
 			_skip_touch = -1
 			get_viewport().set_input_as_handled()
@@ -285,7 +288,10 @@ func _input(event: InputEvent) -> void:
 			_eat_release = true
 			get_viewport().set_input_as_handled()
 			if booting: skip_requested.emit()
-		elif not event.pressed and _eat_release:
+		elif event.pressed:
+			# The next click takes over after an interrupted skip gesture.
+			_eat_release = false
+		elif _eat_release:
 			_eat_release = false
 			get_viewport().set_input_as_handled()
 	elif booting and input_skip_enabled and event.is_action_pressed("ui_cancel"):
