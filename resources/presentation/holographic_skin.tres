@@ -6,3 +6,6 @@
 script = ExtResource("1")
 panel_sound = &"ui_select"
 reward_sound = &"result_reveal"
+battle_boot_sound = &"ui_select"
+card_draw_sound = &"card_select"
+extra_action_sound = &"ui_confirm"

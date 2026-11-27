@@ -18,6 +18,11 @@ var displayed_hull := 30.0:
 	set(value):
 		displayed_hull = value
 		queue_redraw()
+var _damage_from := 0.0
+var _damage_fade := 0.0:
+	set(value):
+		_damage_fade = value
+		queue_redraw()
 var _impact := 0.0:
 	set(value):
 		_impact = value
@@ -36,11 +41,19 @@ func update_hull(value: int, limit: int) -> void:
 		Motion.stop(self, &"hull")
 		displayed_hull = float(hull)
 		_impact = 0.0
+		_damage_fade = 0.0
 	elif hull != previous or capacity != previous_capacity:
-		_impact = 0.54 if hull < previous else 0.23
+		var damaged := hull < previous
+		_impact = 0.12 if damaged else 0.36
 		var animation := Motion.start(self, &"hull").set_parallel()
-		animation.tween_property(self, "displayed_hull", float(hull), seconds)
+		animation.tween_property(self, "displayed_hull", float(hull), seconds * (0.55 if damaged else 1.0))
 		animation.tween_property(self, "_impact", 0.0, seconds)
+		if damaged:
+			_damage_from = maxf(displayed_hull, previous)
+			_damage_fade = 0.8
+			animation.tween_property(self, "_damage_fade", 0.0, seconds).set_delay(0.09)
+		else:
+			_damage_fade = 0.0
 	_initialized = true
 	queue_redraw()
 
@@ -55,11 +68,15 @@ func condition_color() -> Color:
 
 func _draw() -> void:
 	var total := maxf(maxf(capacity, displayed_hull), preview_hull)
+	if _damage_fade > 0.0: total = maxf(total, _damage_from)
 	var boundary := size.x * capacity / total
 	var amount := size.x * clampf(displayed_hull, 0, capacity) / total
 	Meter.draw_cells(self, size, 0, size.x, Color("2c222d"))
 	Meter.draw_cells(self, size, 0, amount, condition_color().lerp(Color.WHITE, _impact), ThemeSkin.DEFAULT.segments, true)
 	Meter.draw_cells(self, size, boundary, size.x * displayed_hull / total, plating_color, ThemeSkin.DEFAULT.segments, true)
+	if _damage_fade > 0.0:
+		Meter.draw_cells(self, size, size.x * displayed_hull / total, size.x * _damage_from / total,
+			Color(ThemeSkin.DEFAULT.hull, _damage_fade), ThemeSkin.DEFAULT.segments)
 	if preview_hull > hull:
 		Meter.draw_cells(self, size, amount, size.x * mini(preview_hull, capacity) / total, repair_color)
 		Meter.draw_cells(self, size, size.x * maxi(capacity, hull) / total, size.x * preview_hull / total, plating_color.lightened(0.2))

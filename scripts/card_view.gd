@@ -2,6 +2,7 @@
 extends Button
 
 const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+const SignalAccent = preload("res://scripts/ui/battle_signal.gd")
 const TITLE_PRICE_CLEARANCE := 120.0
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 
@@ -24,6 +25,15 @@ var display_title := ""
 var footer_visual_height := 28.0
 var preview_selected := false
 var affordable := true
+var _affordability_ink := 1.0:
+	set(value):
+		_affordability_ink = value
+		if not is_node_ready(): return
+		for state in ["normal", "disabled", "hover", "pressed"]:
+			var box := get_theme_stylebox(state) as Holo.Frame
+			if box != null:
+				ThemeStyle.shade_affordability(box, presentation_settings.card_base_color, family_tint, value,
+					interaction_selected or preview_selected or interaction_hovered or state in ["hover", "pressed"])
 var storm_active := false
 var storm_color := Color(0.15, 0.55, 1.0)
 var theme_stamp := ""
@@ -286,20 +296,44 @@ func refresh_card() -> void:
 	tooltip_text += "\nHold / I / middle-click: inspect · Right-click: discard"
 
 
-func set_playable(playable: bool, can_afford: int = -1) -> void:
+func set_playable(playable: bool, can_afford: int = -1, feedback: bool = false) -> void:
 	disabled = not playable
+	var previous := affordable
 	affordable = bool(int(playable) if can_afford < 0 else can_afford)
-	# Dim the surface and ink moderately; never lose resource identity or readable rules.
+	# Dim the surface and ink moderately; preserve readable rules and discard.
 	self_modulate = Color.WHITE
 	for path in ["TitleLabel", "TierLabel", "DescriptionLabel"]:
 		get_node(path).modulate = Color.WHITE if affordable else Color(0.87, 0.89, 0.93)
 	for path in ["CostLabel", "ResourceIcon", "CostRule"]:
 		get_node(path).modulate = Color.WHITE if affordable else Color(0.71, 0.72, 0.74)
 	$CostLabel.add_theme_color_override("font_color", family_tint if affordable else Holo.DEFAULT.warning)
-	$ThemeWash.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.35)
-	$ArtPlaceholder.modulate = Color.WHITE if affordable else Color(0.42, 0.42, 0.42)
-	$FullCardArt.modulate = $ArtPlaceholder.modulate
+	var seconds := HoloMotion.duration(Holo.DEFAULT.selection_seconds)
+	var wash := Color.WHITE if affordable else Color(1, 1, 1, 0.35)
+	var art := Color.WHITE if affordable else Color(0.42, 0.42, 0.42)
+	if feedback and previous != affordable and seconds > 0.0:
+		var tween := HoloMotion.start(self, &"affordability").set_parallel()
+		tween.tween_property(self, "_affordability_ink", float(affordable), seconds)
+		tween.tween_property($ThemeWash, "modulate", wash, seconds)
+		for surface in [$ArtPlaceholder, $FullCardArt]:
+			tween.tween_property(surface, "modulate", art, seconds)
+		if affordable:
+			SignalAccent.sweep($CostLabel, family_tint, 0.24)
+	elif not feedback or not has_meta(&"holo_affordability"):
+		HoloMotion.stop(self, &"affordability")
+		$ThemeWash.modulate = wash
+		$ArtPlaceholder.modulate = art
+		$FullCardArt.modulate = art
+		_affordability_ink = float(affordable)
 	apply_card_theme()
+
+
+func pulse_draw() -> void:
+	if card_data == null: return
+	var ink: Color = Holo.DEFAULT.rarity_three if card_data.tier == 3 else (
+		Holo.DEFAULT.rarity_two if card_data.tier == 2 else family_tint)
+	SignalAccent.sweep(self, ink,
+		HoloMotion.duration(0.23, card_data.tier > 1))
+	if card_data.tier == 3: _play_rarity_sweep()
 
 
 func fit_placeholder_art() -> void:
@@ -349,6 +383,8 @@ func apply_card_theme() -> void:
 			storm_color,
 			card_data.tier if card_data != null else 1
 		)
+		ThemeStyle.shade_affordability(box, presentation_settings.card_base_color, family_tint, _affordability_ink,
+			selected or interaction_hovered or state in ["hover", "pressed"])
 		add_theme_stylebox_override(state, box)
 	# Keep native keyboard focus visible without a second, unrelated blue border.
 	var focus := Holo.frame("focus", family_tint)

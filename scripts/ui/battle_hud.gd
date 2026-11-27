@@ -1,5 +1,6 @@
 extends RefCounted
 
+const SignalAccent = preload("res://scripts/ui/battle_signal.gd")
 const ShieldStack = preload("res://scripts/ui/holographic/shield_stack.gd")
 
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
@@ -39,6 +40,8 @@ var _player_profile: Label
 var _shield_stacks: Dictionary = {}
 var _hull_frames: Dictionary = {}
 var _enemy_modifier: Label
+var _card_identities: Dictionary = {}
+var _failure_systems: Dictionary = {"player": [], "enemy": []}
 
 
 func _init(board_view: Control) -> void:
@@ -92,6 +95,10 @@ func _init(board_view: Control) -> void:
 		"enemy_quarters_label"
 	]:
 		nodes[field] = board_view.get(field)
+	for prefix in ["Player", "Enemy"]:
+		for i in range(1, 4):
+			var path := "%sResource%d" % [prefix, i]
+			nodes[path] = board_view.get_node(path)
 	_style_telemetry(board_view)
 	card_slots.assign(board_view.card_slots)
 	for path in card_slots:
@@ -282,6 +289,7 @@ func refresh(data: Dictionary) -> void:
 	refresh_panels(data)
 	tactical.update_context(data)
 	nodes["SystemsFailureDisplay"].refresh(data.systems_failure)
+	_refresh_interference(data.systems_failure)
 	refresh_results(data)
 	refresh_emp(data)
 	refresh_ships_and_cards(data)
@@ -403,7 +411,7 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 		data.enemy.shields > 0 and not data.shields_disabled
 	)
 	var player_can_act: bool = (
-		data.winner.is_empty() and data.current_actor == "player" and not data.resolving_card
+		data.winner.is_empty() and data.current_actor == "player" and not data.resolving_card and not data.presentation_locked
 	)
 	for side in ["player", "enemy"]:
 		var ship: Dictionary = data[side]
@@ -428,12 +436,64 @@ func refresh_ships_and_cards(data: Dictionary) -> void:
 	for slot in range(cards.size()):
 		var button = cards[slot]
 		var shown: Dictionary = data.cards[slot]
-		button.card_data = shown.preview
+		var same_card: bool = _card_identities.get(slot) == shown.identity
+		_card_identities[slot] = shown.identity
+		if button.card_data != shown.preview: button.card_data = shown.preview
 		button.set_ion_glow(shown.ion_glow, shown.get("storm_color",Color(0.15,0.55,1.0)))
 		button.set_playable(
-			shown.present and player_can_act and shown.affordable, int(shown.affordable)
+			shown.present and player_can_act and shown.affordable, int(shown.affordable),
+			same_card and shown.present and not data.presentation_locked and button.is_visible_in_tree()
 		)
 		button.set_discardable(shown.present and player_can_act)
+
+
+func shield_stack(side: String) -> Control:
+	return _shield_stacks[side]
+
+
+func boot_targets() -> Array:
+	var targets := [header.player, header.enemy, header.turn, nodes.FTLPanel, nodes.allocation_button]
+	for side in ["player", "enemy"]:
+		var prefix := str(side).capitalize()
+		targets.append_array([nodes[prefix + "HullBar"], nodes[side + "_hull_label"], nodes[side + "_shields_label"]])
+		for i in range(1, 4):
+			targets.append(nodes["%sResource%d" % [prefix, i]])
+	return targets + cards
+
+
+func finish_boot() -> void:
+	for side in ["player", "enemy"]:
+		var hull: Control = nodes[side.capitalize() + "HullBar"]
+		hull.displayed_hull = float(hull.hull)
+		_shield_stacks[side].settle_display()
+	nodes.FTLPanel.settle_display()
+
+
+func production_pulse(side: String, before: Dictionary, after: Dictionary) -> void:
+	for index in RESERVES.size():
+		var family: String = RESERVES[index]
+		if after[family] <= before[family]: continue
+		SignalAccent.sweep(nodes["%sResource%d" % [side.capitalize(), index + 1]], Holo.family(family), 0.38, &"production")
+
+
+func emp_interference() -> void:
+	# EMP temporarily disrupts the depicted enemy Shield field and drive.
+	if _shield_stacks.enemy.points > 0 and not _shield_stacks.enemy.disabled:
+		SignalAccent.sweep(nodes.enemy_shields_label, Holo.DEFAULT.emp_bright, 0.36, &"interference")
+
+
+func _refresh_interference(status: Dictionary) -> void:
+	for side in ["player", "enemy"]:
+		var offline: Array = Array(status[side].offline)
+		for index in PRODUCTION.size():
+			var system: String = PRODUCTION[index]
+			var any_change: bool = offline.has(system) != _failure_systems[side].has(system)
+			if not any_change: continue
+			var tile: Control = nodes["%sResource%d" % [side.capitalize(), index + 1]]
+			var badge: Control = tile.get_node("ProductionBadge")
+			SignalAccent.sweep(badge, Holo.DEFAULT.hostile if offline.has(system) else Holo.family(system),
+				0.30, &"interference" if offline.has(system) else &"sweep")
+		_failure_systems[side] = offline
 
 
 func fit_board_lines(

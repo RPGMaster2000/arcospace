@@ -40,10 +40,7 @@ static func box(
 	style.set_content_margin_all(0)
 	if affordable and tier > 1:
 		style.ornament_tint = Holo.DEFAULT.rarity_two if tier == 2 else Holo.DEFAULT.rarity_three
-	style.bg_color = base.lerp(tint, 0.035) if affordable else base.darkened(0.28).lerp(tint, 0.008)
-	style.border_color = Color(
-		tint, 1.0 if selected else (1.0 if hovered else (0.94 if affordable else 0.45))
-	)
+	shade_affordability(style, base, tint, float(affordable), selected or hovered)
 	style.border_width_top = 3 if selected else 2
 	if selected:
 		style.shadow_color = Color(tint, 0.28)
@@ -58,3 +55,8 @@ static func box(
 		style.shadow_color = Color(tint, 0.09 if affordable else 0.03)
 		style.shadow_size = 3
 	return style
+
+
+static func shade_affordability(style: Holo.Frame, base: Color, tint: Color, saturation: float, highlighted: bool) -> void:
+	style.bg_color = base.darkened(0.28).lerp(tint, 0.008).lerp(base.lerp(tint, 0.035), saturation)
+	style.border_color = Color(tint, 1.0 if highlighted else lerpf(0.45, 0.94, saturation))

@@ -76,8 +76,14 @@ extends Resource
 @export var meter_track: Texture2D
 @export var meter_fill: Texture2D
 @export var reticle: Texture2D
+@export var deck_back: Texture2D
 
 @export_group("Interface audio")
+@export var battle_boot_sound: StringName
+@export var deck_sound: StringName
+@export var card_draw_sound: StringName
+@export var rare_draw_sound: StringName
+@export var extra_action_sound: StringName
 @export var panel_sound: StringName
 @export var warning_sound: StringName
 @export var reward_sound: StringName

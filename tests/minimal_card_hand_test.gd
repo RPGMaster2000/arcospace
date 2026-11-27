@@ -274,6 +274,12 @@ func run() -> void:
 		board.refresh_display()
 		await settle()
 		view = board.get_node(board.card_slots[0])
+		# The preceding discard has already refilled the hand. Wait for that
+		# committed replacement to become a visible touch target.
+		var reveal_deadline := Time.get_ticks_msec() + 3000
+		while not view.is_visible_in_tree() and Time.get_ticks_msec() < reveal_deadline:
+			await process_frame
+		check(view.is_visible_in_tree(), "The drawn replacement exposes its footer for input")
 		view.discard_requested.connect(func(): discards += 1, CONNECT_ONE_SHOT)
 		var before: int = board.get("player_" + view.card_data.family)
 		var family: String = view.card_data.family

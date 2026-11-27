@@ -168,7 +168,11 @@ func _play_direct_damage(side: String, duration: float = BEAM_SECONDS) -> Tween:
 
 func set_number(label: Label, value: int) -> void:
 	if not counters.has(label):
-		label.text = str(value)
+		paint_number(value, label)
+
+
+func paint_number(value: float, label: Label) -> void:
+	label.text = str(roundi(value))
 
 
 # Compare committed snapshots to schedule visuals; these deltas must never be applied to gameplay again.
@@ -379,7 +383,7 @@ func _count(label: Label, start: int, target: int) -> void:
 	if seconds == 0.0:
 		label.text = str(target)
 	else:
-		tween.tween_method(func(value: float): label.text = str(roundi(value)), float(start), float(target), seconds)
+		tween.tween_method(paint_number.bind(label), float(start), float(target), seconds)
 	if pacing > seconds: tween.tween_interval(pacing - seconds)
 	tween.tween_callback(func(): counters.erase(label))
 
