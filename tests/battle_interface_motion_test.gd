@@ -52,7 +52,7 @@ func fresh(resume := {}, fast_camera := false, card_motion_enabled := true) -> N
 	board.resume_combat = resume
 	if fast_camera:
 		board.cinematic_settings = board.cinematic_settings.duplicate()
-		board.cinematic_settings.introduction_seconds = Vector3(0.1, 0.1, 0.4)
+		board.cinematic_settings.introduction_seconds = Vector3(0.1, 0.1, 0.8)
 	root.add_child(board)
 	return board
 
@@ -280,7 +280,15 @@ func run() -> void:
 		var cinematic = fresh({}, true)
 		check(cinematic.cinematic_director.active and not cinematic.interface_motion.boot_started,
 			"Flight presentation retains its establishing shot before the HUD boot")
-		await until(func(): return cinematic.interface_motion.booting, "Camera reaches the HUD pullback")
+		var director = cinematic.cinematic_director
+		await until(func(): return director.stage == "confrontation", "Camera reaches confrontation")
+		check(not cinematic.interface_motion.boot_started, "HUD stays hidden at the beginning of confrontation")
+		await until(func(): return cinematic.interface_motion.booting, "Camera reaches the late HUD cue")
+		var hold: float = minf(director.settings.confrontation_hold, director.settings.introduction_seconds.z * 0.4)
+		var expected_cue: float = director.settings.duration(hold) + maxf(0.0,
+			director.settings.duration(director.settings.introduction_seconds.z - hold) - 0.4)
+		check(director.motion.get_total_elapsed_time() >= expected_cue - 0.03,
+			"HUD boot waits until the final 400 ms of the pullback")
 		check(cinematic.interface_motion.visible and cinematic.cinematic_director.active,
 			"The HUD starts animating during the original camera pullback")
 		cinematic.cinematic_director.skip()
