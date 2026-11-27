@@ -196,7 +196,13 @@ func _ready() -> void:
 	for ship in [cinematic_director.player, cinematic_director.enemy]:
 		ship.shield_material.set_shader_parameter("rim_power", 4.6)
 	cinematic_director.stage_changed.connect(func(stage: String):
-		if stage == "emp_discharge": $FTLPanel.discharge())
+		if stage == "emp_discharge":
+			$FTLPanel.discharge()
+			hud.emp_interference()
+		elif stage == "confrontation" and InterfaceMotion.allowed():
+			cinematic_director.release_intro_hud(hud.boot_targets() + [interface_motion])
+			interface_motion.input_skip_enabled = false
+			_start_hud_boot())
 	cinematic_director.started.connect(func():
 		if hud != null:
 			hud.set_panels_locked(true, true))
@@ -281,10 +287,16 @@ func _begin_battle_presentation() -> void:
 		enemy_ship_data.subtitle if enemy_ship_data != null else "Unknown Vessel"
 	)
 	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit and not cinematic_director.exiting:
-		_begin_turn("player")
+		interface_motion.input_skip_enabled = true
+		if cinematic_director.skipped:
+			interface_motion.boot_started = true
+			interface_motion.finish_boot()
+		await super._begin_battle_presentation()
 
 func _begin_emp_presentation() -> void:
-	if not is_instance_valid(cinematic_director) or not cinematic_director.allowed(): return
+	if not is_instance_valid(cinematic_director) or not cinematic_director.allowed():
+		super._begin_emp_presentation()
+		return
 	emp_presented = true
 	# The director cancels any old presentation before acquiring the camera.
 	# Keep the committed result masked through that handoff as well.
@@ -296,7 +308,7 @@ func _begin_emp_presentation() -> void:
 
 
 func _presentation_locked() -> bool:
-	return victory_pending or emp_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
+	return super._presentation_locked() or victory_pending or emp_pending or (is_instance_valid(cinematic_director) and cinematic_director.active)
 
 func _prepare_beam_presentation(side: String, card: Resource) -> float:
 	if not cinematic_director.allowed(): return 0.0

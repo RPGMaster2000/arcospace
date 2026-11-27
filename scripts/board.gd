@@ -111,8 +111,8 @@ var setup_settings: Dictionary = {}
 var extra_action_requested: bool = false
 # Card replacement is delayed until its owner begins the next turn.
 var pending_card_draws: Dictionary = {"player": [], "enemy": []}
-# Only the visual presentation is deferred; hand cards are drawn on schedule.
-var replacement_covers: Dictionary = {}
+const InterfaceMotion = preload("res://scripts/ui/battle_interface_motion.gd")
+var interface_motion: InterfaceMotion
 var resolving_card: bool = false
 @onready var ftl = $FTLDrive
 @onready var hand = $CardHand
@@ -322,6 +322,12 @@ func _ready() -> void:
 	failure_display.name = "SystemsFailureDisplay"
 	add_child(failure_display)
 	hud = BattleHUD.new(self)
+	interface_motion = InterfaceMotion.new()
+	interface_motion.name = "BattleInterfaceMotion"
+	add_child(interface_motion)
+	interface_motion.configure(hud)
+	interface_motion.boot_finished.connect(_settle_hud_boot)
+	interface_motion.skip_requested.connect(interface_motion.finish_boot)
 	mode_rule_origin = $ModeRule.position
 	hand_rule_origin = $HandRule.position
 	resized.connect(_fit_board_lines)
@@ -329,8 +335,9 @@ func _ready() -> void:
 	$FTLPanel/WarpButton.pressed.connect(_warp_out)
 	for active_hand in [hand, enemy_hand]:
 		active_hand.current_round = turn_number
-	hand.deal_player_opening()
-	enemy_hand.deal(card_slots.size())
+	if resume_combat.is_empty():
+		hand.deal_player_opening()
+		enemy_hand.deal(card_slots.size())
 	for slot in range(card_slots.size()):
 		var button: Button = get_node(card_slots[slot])
 		button.pressed.connect(_on_card_pressed.bind(slot))
@@ -353,12 +360,33 @@ func _ready() -> void:
 		_begin_battle_presentation()
 
 
-# Presentation hooks; the 2D board keeps the original immediate flow.
+# The first authoritative turn still starts after the entrance presentation.
 func _begin_battle_presentation() -> void:
-	_begin_turn("player")
+	_start_hud_boot()
+	if interface_motion.booting:
+		await interface_motion.boot_finished
+	if is_inside_tree() and not is_queued_for_deletion() and not checkpoint_exit:
+		_begin_turn("player")
+
+
+func _start_hud_boot() -> void:
+	if interface_motion.boot_started or not InterfaceMotion.allowed(): return
+	refresh_display()
+	interface_motion.begin(hud, _display_snapshot(), $CardMotion.settings.enabled)
+	hud.set_panels_locked(true, true)
+	hud.tactical.dismiss(true)
+	allocation_button.disabled = true
+
+
+func _settle_hud_boot() -> void:
+	if is_queued_for_deletion(): return
+	hud.finish_boot()
+	allocation_button.disabled = false
+	refresh_display()
+
 
 func _presentation_locked() -> bool:
-	return false
+	return is_instance_valid(interface_motion) and interface_motion.booting
 
 func _card_resolution_presented(_side: String, _damage: int, _discard: bool) -> void:
 	pass
@@ -486,8 +514,10 @@ func _begin_turn(side: String) -> void:
 				$ModifierDisplay.ftl_online(ftl.can_warp())
 	var state: Dictionary = ship_snapshot(side)
 	if winner.is_empty():
+		var before_income := state.duplicate()
 		Execution.begin_turn(state)
 		apply_ship_snapshot(side, state)
+		hud.production_pulse(side, before_income, state)
 	battle_effects.play_changes(before, _both_states(), "", "", 0, asteroid_event or turret_event)
 	resolving_card = battle_effects.busy or resolving_card
 	_check_winner()
@@ -553,6 +583,9 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 	if not _can_play_card(card, discard, side):
 		return false
 	resolving_card = true
+	if side == "player":
+		interface_motion.complete_slot(slot)
+		hud.header.clear_extra_action()
 	enemy_timer.stop()
 	refresh_display()
 	var storm_card: bool = (
@@ -589,9 +622,10 @@ func _act(side: String, slot: int, discard: bool) -> bool:
 		var extra_hand = hand if side == "player" else enemy_hand
 		for pending_slot in pending_card_draws[side]:
 			extra_hand.replace_card(pending_slot)
-			if side == "player": _delay_replacement_reveal(pending_slot)
+			if side == "player": _present_replacement(pending_slot)
 		pending_card_draws[side].clear()
 		refresh_display()
+		if side == "player": hud.header.show_extra_action()
 		if side == "enemy":
 			enemy_timer.start()
 	else:
@@ -640,7 +674,7 @@ func _finish_turn(side: String) -> void:
 	outgoing_hand.current_round = turn_number
 	for pending_slot in pending_card_draws[side]:
 		outgoing_hand.replace_card(pending_slot)
-		if side == "player": _delay_replacement_reveal(pending_slot)
+		if side == "player": _present_replacement(pending_slot)
 	pending_card_draws[side].clear()
 	await _begin_turn(next.side)
 
@@ -1061,7 +1095,7 @@ func _warp_out() -> void:
 
 
 func _begin_emp_presentation() -> void:
-	pass
+	hud.emp_interference()
 
 
 func _damage_ftl(amount: int) -> void:
@@ -1103,53 +1137,37 @@ func _continue_encounter() -> void:
 func refresh_display() -> void:
 	_update_overdrive()
 	hud.refresh(_display_snapshot())
-	# HUD affordability refresh resets self_modulate; hide unfilled slots after it.
-	# Preserve the one-second delayed reveal for newly drawn replacement cards.
 	for slot in range(card_slots.size()):
 		var view: Control = get_node(card_slots[slot])
-		if hand.cards[slot] == null or replacement_covers.has(slot):
-			view.self_modulate.a = 0.0
-		else:
-			view.self_modulate.a = 1.0
+		view.visible = not interface_motion.flights.has(slot)
+		view.self_modulate.a = 0.0 if hand.cards[slot] == null else 1.0
 	if $MatchResult.visible and not result_music_started:
 		result_music_started = true
 		# Start music only when the result is revealed, after combat presentation.
 		get_node("/root/Music").play_result(winner == "player", enemy_ship_data.enemy_rank if enemy_ship_data != null else 0)
 
 
-func _delay_replacement_reveal(slot: int) -> void:
-	# Hide the entire card face (including the empty-slot placeholder), not a cover.
-	# Hand state and combat progression remain untouched.
-	var view: Control = get_node(card_slots[slot])
-	var token: int = int(replacement_covers.get(slot, 0)) + 1
-	replacement_covers[slot] = token
-	view.self_modulate.a = 0.0
-	get_tree().create_timer(1.0, false).timeout.connect(_finish_replacement_reveal.bind(slot, token))
+func _present_replacement(slot: int) -> void:
+	var motion = $CardMotion
+	if winner.is_empty() and motion.settings.enabled and interface_motion.replacement(slot, _shown_card(hand.cards[slot])):
+		motion.fade_played_player()
 
 
-func _finish_replacement_reveal(slot: int, token: int) -> void:
-	if not is_inside_tree() or is_queued_for_deletion(): return
-	if replacement_covers.get(slot) != token: return
-	replacement_covers.erase(slot)
-	var view: Control = get_node_or_null(card_slots[slot])
-	if is_instance_valid(view):
-		view.modulate.a = 1.0
-		view.self_modulate.a = 1.0
+func _shown_card(card: Resource) -> Dictionary:
+	return {
+		"preview": modifier.preview(card),
+		"identity": card,
+		"present": card != null,
+		"affordable": _can_play_card(card, false, "player"),
+		"ion_glow": modifier.affects_card(card),
+		"storm_color": modifier.storm_color(modifier.kind, true)
+	}
 
 
 func _display_snapshot() -> Dictionary:
 	var shown_cards: Array[Dictionary] = []
 	for card in hand.cards:
-		shown_cards.append(
-			{
-				"preview": modifier.preview(card),
-				"present": card != null,
-				"affordable": _can_play_card(card, false, "player"),
-				"ion_glow":
-				modifier.affects_card(card),
-				"storm_color": modifier.storm_color(modifier.kind,true)
-			}
-		)
+		shown_cards.append(_shown_card(card))
 	var modifier_name: String = modifier.NAMES[modifier.kind].capitalize()
 	var modifier_status: String = BattleHUD.modifier_status(modifier, turn_number)
 	var modifier_details: String = modifier_name + "\n"
@@ -1201,7 +1219,7 @@ func _display_snapshot() -> Dictionary:
 		"result_cause": result_cause,
 		"systems_failure": systems_failure.snapshot(_both_states()),
 		"battles_won": battles_won,
-		"resolving_card": resolving_card or not damage_timeline.pending.is_empty(),
+		"resolving_card": resolving_card or interface_motion.booting or not damage_timeline.pending.is_empty(),
 		"current_actor": current_actor,
 		"turn_number": turn_number,
 		"escaped_by_ftl": escaped_by_ftl,
@@ -1280,6 +1298,7 @@ func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
 	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button, _battle_bounds())
+	if is_instance_valid(interface_motion): interface_motion.fit_deck()
 	allocation_popup.fit()
 	hud.fit_side_panels(self)
 

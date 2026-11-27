@@ -54,7 +54,7 @@ func present(data: Dictionary) -> void:
 			if state != "firing":
 				state = "firing"
 				ratio = 1.0
-				_snap()
+				settle_display()
 				$Charge.tooltip_text = "EMP Pulse firing"
 				tooltip_text = $Charge.tooltip_text
 				_update_ink()
@@ -121,7 +121,7 @@ func _fit_label() -> void:
 func _animate(seconds: float) -> void:
 	seconds = Motion.duration(seconds, state in ["ready", "used"])
 	if seconds <= 0.0 or not is_visible_in_tree():
-		_snap()
+		settle_display()
 		return
 	sweep = 0.0 if state in ["ready", "used"] else 1.0
 	var tween := Motion.start(self, &"charge").set_parallel()
@@ -130,14 +130,14 @@ func _animate(seconds: float) -> void:
 		tween.tween_property(self, "sweep", 1.0, seconds).set_trans(Tween.TRANS_LINEAR)
 
 
-func _snap() -> void:
+func settle_display() -> void:
 	Motion.stop(self, &"charge")
 	fill = ratio
 	sweep = 1.0
 
 
 func _motion_changed(profile: int) -> void:
-	if profile == 0: _snap()
+	if profile == 0: settle_display()
 
 
 func _tint() -> Color:

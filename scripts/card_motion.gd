@@ -30,7 +30,7 @@ func animate_action(
 		await resolve.call()
 		return
 	if side == "player" and not discard:
-		_fade_lingering_enemies()
+		_fade_lingering(&"enemy_linger")
 	source_view = source
 	var card_size := Vector2(198, 294)
 	var start: Vector2 = $EnemyOrigin.position - card_size * 0.5
@@ -95,6 +95,7 @@ func animate_action(
 		var destination := start - Vector2(0, lift)
 		if side == "player":
 			destination.x = (size.x - extent.x) * 0.5
+			clipper.set_meta(&"player_linger", true)
 		else:
 			clipper.set_meta(&"enemy_linger", true)
 
@@ -165,10 +166,14 @@ func _center_player_card(progress: float, card: Control, start: Vector2, destina
 	card.position = Vector2(lerpf(start.x, destination.x, slide), lerpf(start.y, destination.y, lift))
 
 
-func _fade_lingering_enemies() -> void:
+func fade_played_player() -> void:
+	_fade_lingering(&"player_linger")
+
+
+func _fade_lingering(tag: StringName) -> void:
 	for card in lingering_cards:
-		if not card.has_meta(&"enemy_linger"): continue
-		card.remove_meta(&"enemy_linger")
+		if not card.has_meta(tag): continue
+		card.remove_meta(tag)
 		lingering_tweens[card].kill()
 		var fade := create_tween()
 		lingering_tweens[card] = fade

@@ -16,6 +16,10 @@ var displayed_points := 0.0:
 		displayed_points = value
 		queue_redraw()
 var _readout: Label
+var _surge := 0.0:
+	set(value):
+		_surge = value
+		queue_redraw()
 
 
 func _init(readout: Label) -> void:
@@ -28,6 +32,7 @@ func _init(readout: Label) -> void:
 func update_shields(amount: int, offline: bool) -> void:
 	if amount == points and offline == disabled: return
 	var animate := points >= 0 and not offline and not disabled and is_visible_in_tree()
+	var restoring := amount > points
 	points = amount
 	disabled = offline
 	_readout.text = "Shields OFF" if disabled else "Shields %d" % points
@@ -43,16 +48,19 @@ func update_shields(amount: int, offline: bool) -> void:
 		var tween := Motion.start(self, &"shields").set_parallel()
 		tween.tween_property(self, "displayed_points", float(points), seconds)
 		tween.tween_property(_readout, "self_modulate:a", 1.0, seconds)
+		_surge = 0.78 if restoring else 0.47
+		tween.tween_property(self, "_surge", 0.0, seconds)
 	else:
-		_snap()
+		settle_display()
 
 
 func _motion_changed(profile: int) -> void:
-	if profile == 0: _snap()
+	if profile == 0: settle_display()
 
 
-func _snap() -> void:
+func settle_display() -> void:
 	Motion.stop(self, &"shields")
+	_surge = 0.0
 	displayed_points = 0.0 if disabled else float(maxi(0, points))
 	_readout.self_modulate.a = 1.0
 
@@ -95,5 +103,5 @@ func _draw_cell(origin: Vector2, height: float, fraction: float) -> void:
 	if texture != null:
 		draw_texture_rect_region(texture, area, Rect2(Vector2.ZERO, Vector2(texture.get_width() * fraction, texture.get_height())), ACCENT)
 		return
-	draw_rect(area, ACCENT)
-	draw_rect(Rect2(area.position, Vector2(area.size.x, 1.0)), HIGHLIGHT)
+	draw_rect(area, ACCENT.lerp(HIGHLIGHT, _surge * 0.43))
+	draw_rect(Rect2(area.position, Vector2(area.size.x, 1.0 + _surge)), HIGHLIGHT.lerp(Color.WHITE, _surge * 0.46))

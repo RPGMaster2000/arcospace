@@ -189,6 +189,14 @@ func _begin(mode: String, fullscreen: bool) -> int:
 	return revision
 
 
+func release_intro_hud(controls: Array) -> void:
+	if not active or kind != "introduction": return
+	for control in controls:
+		if not _ui.has(control): continue
+		control.visible = _ui[control]
+		_ui.erase(control)
+
+
 func mask_ui() -> void:
 	if not active:
 		return

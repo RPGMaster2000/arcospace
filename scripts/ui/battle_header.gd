@@ -2,6 +2,8 @@ extends RefCounted
 ## Fits two ship identities and a dedicated, event-driven round readout.
 const SkinTheme = preload("res://scripts/ui/holographic/skin.gd")
 const Motion = preload("res://scripts/ui/holographic/motion.gd")
+const SignalAccent = preload("res://scripts/ui/battle_signal.gd")
+const Sound = preload("res://scripts/audio/sfx.gd")
 const GradientShader = preload("res://shaders/battle_header_gradient.gdshader")
 
 var player: Label
@@ -11,6 +13,7 @@ var round_label: Label
 var player_info: Button
 var _backdrops: Dictionary = {}
 var _owner := ""
+var _extra_action: Tween
 
 
 func _init(board: Control, open_player: Callable) -> void:
@@ -67,14 +70,35 @@ func update(data: Dictionary) -> void:
 		state = outcome + "_result"
 		turn.text = {"player":"YOU WIN", "enemy":"ENEMY WINS", "draw":"DRAW"}.get(outcome, "")
 	else:
-		turn.text = "YOUR TURN" if owner == "player" else "ENEMY TURN"
+		turn.text = ("PLAY AGAIN" if _extra_action != null else "YOUR TURN") if owner == "player" else "ENEMY TURN"
 	if state == _owner: return
+	clear_extra_action()
 	var palette := SkinTheme.DEFAULT
 	var tint: Color = {"player":palette.friendly,"enemy":palette.hostile,"emp":palette.shield,
 		"player_result":palette.reward,"enemy_result":palette.hostile,"draw_result":palette.muted}.get(state, palette.edge)
 	turn.add_theme_color_override("font_color", tint.lightened(0.24))
 	if not _owner.is_empty(): Motion.reveal(turn, palette.selection_seconds)
 	_owner = state
+
+
+func show_extra_action() -> void:
+	if _owner != "player": return
+	clear_extra_action()
+	turn.text = "PLAY AGAIN"
+	var skin := SkinTheme.DEFAULT
+	SignalAccent.sweep(turn, skin.friendly, 0.36)
+	if skin.extra_action_sound != &"": Sound.play(skin.extra_action_sound, turn)
+	_extra_action = turn.create_tween()
+	_extra_action.tween_interval(0.72)
+	_extra_action.tween_callback(clear_extra_action)
+
+
+func clear_extra_action() -> void:
+	if _extra_action == null: return
+	_extra_action.kill()
+	_extra_action = null
+	if turn.text == "PLAY AGAIN": turn.text = "YOUR TURN"
+	SignalAccent.clear(turn)
 
 
 func fit(width: float, left: float, right: float, top: float) -> void:

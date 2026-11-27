@@ -58,6 +58,14 @@ does not prevent collecting the remaining test results. Shutdown leak warnings
 are retained in logs and listed separately, not suppressed or treated as proof
 of a first-party memory leak. Audio playback quality is not verified by Dummy audio.
 
+Ordinary regression fixtures use immediate battle entry via
+`ARCOSPACE_BATTLE_HUD_BOOT=0`. The battle interface motion suite explicitly enables
+entry animation and checks the boot timeline, camera handoff, skip, inputs, exact
+hand and RNG restoration, and draw geometry. It runs in headless, GL Compatibility,
+and Mobile Vulkan. Replacement visuals and feedback remain enabled by their
+ordinary presentation settings in the other fixtures.
+
+
 Each process has a combined stdout/stderr `.log` and a separate `.engine.log`.
 `summary.json` is replaced after each result and records the currently running
 process, elapsed times, exit codes, errors and shutdown warning lines. If a job is
