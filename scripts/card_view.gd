@@ -27,7 +27,7 @@ var preview_selected := false
 var affordable := true
 var _affordability_ink := 1.0:
 	set(value):
-		if is_equal_approx(_affordability_ink, value): return
+		if _affordability_ink == value: return
 		_affordability_ink = value
 		if not is_node_ready(): return
 		for state in ["normal", "disabled", "hover", "pressed"]:
