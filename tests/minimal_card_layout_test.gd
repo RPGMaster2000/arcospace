@@ -100,7 +100,7 @@ func run() -> void:
 				id + " complete name preserved"
 			)
 			check(
-				font.get_string_size(lines[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x * title.scale.x <= 126.01,
+				font.get_string_size(lines[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x * title.scale.x <= 120.01,
 				id + " title first line clears cost icon"
 			)
 			if lines.size() > 1:

@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode unshaded, cull_back, depth_draw_never;
 uniform vec4 tint : source_color = vec4(0.2, 0.65, 1.0, 1.0);
 uniform float strength : hint_range(0.0, 1.0) = 1.0;
+uniform float rim_power : hint_range(3.0, 6.0) = 3.0;
 uniform float shell_emphasis : hint_range(0.0, 0.16) = 0.0;
 uniform float formation : hint_range(0.0, 1.0) = 1.0;
 uniform float hit = 0.0;
@@ -16,7 +17,7 @@ varying vec3 shell_point;
 void vertex() { shell_point = VERTEX; }
 void fragment() {
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
-	float rim = pow(1.0 - facing, 3.0);
+	float rim = pow(1.0 - facing, rim_power);
 	float radius = sqrt(max(0.0, 1.0 - facing * facing));
 	float reveal = (keep_shell || formation >= 1.0) ? 1.0 : 1.0 - smoothstep(formation - 0.04, formation + 0.04, radius);
 	float wave = (1.0 - smoothstep(0.0, 0.09, abs(radius - formation))) * sin(formation * 3.14159);

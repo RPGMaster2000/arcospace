@@ -2,6 +2,7 @@
 extends Button
 
 const HoloMotion = preload("res://scripts/ui/holographic/motion.gd")
+const TITLE_PRICE_CLEARANCE := 120.0
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 
 const Sound = preload("res://scripts/audio/sfx.gd")
@@ -132,12 +133,12 @@ func title_text(name: String) -> String:
 	var font_size: int = presentation_settings.card_title_font_size
 	var words := title.split(" ")
 	var opening := font.get_string_size(words[0], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var width := minf(1.0, 126.0 / maxf(opening, 1.0))
+	var width := minf(1.0, TITLE_PRICE_CLEARANCE / maxf(opening, 1.0))
 	$TitleLabel.scale = Vector2(width, 1.0)
 	var first := ""
 	while not words.is_empty():
 		var next: String = first + (" " if not first.is_empty() else "") + words[0]
-		if not first.is_empty() and font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * width > 126:
+		if not first.is_empty() and font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * width > TITLE_PRICE_CLEARANCE:
 			break
 		first = next
 		words.remove_at(0)
