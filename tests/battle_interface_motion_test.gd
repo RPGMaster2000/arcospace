@@ -32,6 +32,7 @@ func until(condition: Callable, detail: String, timeout_ms: int = 30000) -> void
 
 func capture(name: String) -> void:
 	if capture_dir.is_empty(): return
+	if OS.has_environment("ARCOSPACE_DECK_CAPTURES") and name not in ["01-deck", "02-dealing", "06-replacement"]: return
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_webp(capture_dir.path_join(name + ".webp"), false, 0.86)
 
@@ -99,6 +100,7 @@ func run() -> void:
 	await until(func(): return motion.deck.visible and motion.deck.assembly > 0.25,
 		"Deck materializes before boot finishes", 90000)
 	check(Checkpoint.capture(board) == before, "Deck materialization leaves both hands, both ships, rounds, and RNG untouched")
+	check(is_equal_approx(motion.deck.get_rect().get_center().x, motion.deck_origin(true).x), "Opening deck uses the centered origin")
 	check(motion.deck.mouse_filter == Control.MOUSE_FILTER_IGNORE, "The temporary deck ignores input")
 	await capture("01-deck")
 	await until(func(): return visible_packets(motion) >= 2, "Staggered opening draws overlap")
@@ -155,6 +157,7 @@ func run() -> void:
 	check(board.current_actor == "enemy" and motion.flights.has(another), "Discard replacement uses the same projected deck")
 	check(board.get_node("EnemyResource2").has_meta(&"battle_signal"), "Enemy turn income emits the same production feedback")
 	await until(func(): return visible_packets(motion) > 0 or motion.flights.is_empty(), "Ordinary replacement leaves the deck")
+	check(motion.deck.get_rect().get_center().x < motion.deck_origin(true).x, "Replacement rematerializes at its left origin")
 	await capture("06-replacement")
 	await until(func(): return not motion.deck.visible, "Projector retracts after the replacement")
 	check(motion.flights.is_empty() and board.hud.cards[another].visible, "Ordinary draw leaves no active animation nodes")
@@ -212,24 +215,34 @@ func run() -> void:
 		var bounds := Layout.safe_bounds(board.size, Vector4(24, 14, 42, 38))
 		board.hud.fit_combat_controls(bounds)
 		Layout.fit(board, board.settings_button, board.allocation_button, bounds)
-		motion.fit_deck()
-		var projected: Rect2 = motion.deck.get_rect().grow(10)
+		board.hud.fit_side_panels(board)
+		motion.fit_deck(bounds)
+		var opening: Vector2 = motion.deck_origin(true)
+		var replacement: Vector2 = motion.deck_origin(false)
+		check(is_equal_approx(opening.x, bounds.get_center().x) and replacement.x < opening.x,
+			"Opening origin is centered and replacement origin is on the player side")
+		board._present_replacement(0)
+		var projected: Rect2 = (motion.deck.get_transform() * Rect2(Vector2.ZERO, motion.deck.size)).grow(8)
 		check(bounds.encloses(projected), "Deck stays inside simulated asymmetric safe bounds")
 		var obstacles := ["PlayerHullLabel", "PlayerShieldsLabel", "EnemyHullLabel", "EnemyShieldsLabel",
-			"PlayerResource3", "EnemyResource1", "PowerAllocation", "FTLPanel"]
+			"PlayerResource3", "EnemyResource1", "PowerAllocation", "FTLPanel", "PlayerTacticalPanel/ResourceHandle"]
 		for path in obstacles:
 			check(not projected.intersects(board.get_node(path).get_rect()), "Deck is clear of %s at %s" % [path, viewport])
 		for slot in board.hud.cards.size():
 			board._present_replacement(slot)
 			var packet: Control = motion.flights[slot].packet
 			var face: Control = packet.get_child(1)
-			var blocked := false
-			for step in range(11):
-				motion._pose(step / 10.0, slot, packet, face, packet.get_child(0))
-				var bounds_card: Rect2 = packet.get_transform() * Rect2(face.position, face.size)
-				for path in obstacles:
-					blocked = blocked or bounds_card.intersects(board.get_node(path).get_rect())
-			check(not blocked, "Every draw path clears telemetry at %s in slot %d" % [viewport, slot])
+			for opening_draw in [true, false]:
+				var blocked := false
+				for step in range(21):
+					motion._pose(step / 20.0, slot, packet, face, packet.get_child(0), opening_draw)
+					var bounds_card: Rect2 = packet.get_transform() * Rect2(face.position, face.size)
+					for path in obstacles:
+						blocked = blocked or bounds_card.intersects(board.get_node(path).get_rect())
+					if step == 0:
+						check(bounds_card.get_center().is_equal_approx(motion.deck_origin(opening_draw)),
+							"The animated card starts on its projector")
+				check(not blocked, "Draw path clears telemetry at %s in slot %d (opening %s)" % [viewport, slot, opening_draw])
 			motion.complete_slot(slot)
 	board.queue_free()
 	await process_frame
