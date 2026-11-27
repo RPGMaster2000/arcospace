@@ -29,6 +29,12 @@ var _boot: Tween
 var _boot_items: Array[Control] = []
 var _hand: Array[Control] = []
 var _defenses: Array[Control] = []
+var _player_hull: Control
+var _left_controls: Array[Control] = []
+var _battle_center_x := 0.0
+var _replacement_origin := Vector2.ZERO
+var _replacement_scale := 0.28
+var _opening_deck := true
 var _eat_release := false
 var _swept: Array[Control] = []
 var _skip_touch := -1
@@ -41,6 +47,10 @@ func configure(hud: RefCounted) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_hand.assign(hud.cards)
 	_defenses.assign([hud.nodes.player_shields_label, hud.nodes.enemy_shields_label])
+	_player_hull = hud.nodes.player_hull_label
+	_left_controls.assign([hud.nodes.PlayerResource1, hud.nodes.PlayerResource2,
+		hud.nodes.PlayerResource3, hud.nodes.FTLPanel, hud.nodes.allocation_button,
+		hud.player_panel.handle])
 	deck = DeckVisual.new()
 	deck.name = "ProjectedDeck"
 	deck.hide()
@@ -100,12 +110,12 @@ func begin(hud: RefCounted, snapshot: Dictionary, card_motion_enabled: bool) -> 
 		for slot in _hand.size():
 			_reveal(_hand[slot], 0.0, MINIMAL_SECONDS, Color.TRANSPARENT, true)
 	else:
-		_boot.tween_callback(_show_deck).set_delay(DEAL_START - DECK_IN)
+		_boot.tween_callback(_show_deck.bind(true)).set_delay(DEAL_START - DECK_IN)
 		_boot.tween_callback(_sound.bind(Holo.DEFAULT.battle_boot_sound)).set_delay(0.17)
 		for slot in _hand.size():
 			var shown: Dictionary = snapshot.cards[slot]
 			if shown.present:
-				_deal(slot, shown, DEAL_START + slot * DEAL_STAGGER, DEAL_TRAVEL, DEAL_SETTLE)
+				_deal(slot, shown, DEAL_START + slot * DEAL_STAGGER, DEAL_TRAVEL, DEAL_SETTLE, true)
 	_boot.tween_interval(boot_duration)
 	_boot.finished.connect(finish_boot, CONNECT_ONE_SHOT)
 
@@ -141,12 +151,12 @@ func finish_boot() -> void:
 
 func replacement(slot: int, shown: Dictionary) -> bool:
 	if Motion.Preferences.ui_motion() == 0 or not shown.present: return false
-	_show_deck()
+	_show_deck(false)
 	_deal(slot, shown, DECK_IN * 0.68, REPLACEMENT_TRAVEL, 0.045)
 	return true
 
 
-func _deal(slot: int, shown: Dictionary, delay: float, seconds: float, settle: float) -> void:
+func _deal(slot: int, shown: Dictionary, delay: float, seconds: float, settle: float, opening: bool = false) -> void:
 	_remove_flight(slot)
 	var packet := Control.new()
 	packet.name = "DealtCard%d" % slot
@@ -172,32 +182,41 @@ func _deal(slot: int, shown: Dictionary, delay: float, seconds: float, settle: f
 	_hand[slot].hide()
 	tween.tween_interval(delay)
 	tween.tween_callback(func():
-		_pose(0.0, slot, packet, face, back)
+		_pose(0.0, slot, packet, face, back, opening)
 		packet.show()
 		if not booting or slot % 2 == 0:
 			var sample: StringName = Holo.DEFAULT.rare_draw_sound if shown.preview.tier > 1 else Holo.DEFAULT.card_draw_sound
 			_sound(sample))
-	tween.tween_method(_pose.bind(slot, packet, face, back), 0.0, 1.0, seconds)
+	tween.tween_method(_pose.bind(slot, packet, face, back, opening), 0.0, 1.0, seconds)
 	tween.tween_interval(settle)
 	tween.tween_callback(complete_slot.bind(slot, true))
 
 
-func _pose(progress: float, slot: int, packet: Control, face: Control, back: Control) -> void:
+func _pose(progress: float, slot: int, packet: Control, face: Control, back: Control, opening: bool) -> void:
 	var destination := _hand[slot]
-	var deck_center := deck_origin()
+	var deck_center := deck_origin(opening)
 	var extent := destination.size * destination.scale
 	var goal := destination.position + extent * 0.5
 	var slide := smoothstep(0.55, 1.0, progress)
 	var fall := 1.0 - pow(1.0 - progress, 2.0)
+	var launch_scale := 0.28
+	var rotation := sin(progress * PI) * 0.10
+	var expansion := smoothstep(0.14, 0.94, progress)
+	if not opening:
+		# Drop past the defense tiles in the side lane before crossing the hand.
+		fall = 1.0 - pow(1.0 - minf(progress / 0.56, 1.0), 2.0)
+		slide = smoothstep(0.51, 1.0, progress)
+		launch_scale = _replacement_scale
+		expansion = slide
+		rotation *= slide
 	var approach := Vector2(deck_center.x, goal.y + 11.0)
 	var center := deck_center.lerp(approach, fall).lerp(goal, slide)
 	# Keep cards narrow until they have cleared the defensive telemetry,
 	# then spread out inside the hand. The last frame matches the slot.
 	var flip := absf(cos(progress * PI * 1.04))
-	var expansion := smoothstep(0.14, 0.94, progress)
-	var factor := lerpf(0.28, destination.scale.x, expansion)
+	var factor := lerpf(launch_scale, destination.scale.x, expansion)
 	packet.scale = Vector2(factor * lerpf(maxf(0.08, flip), 1.0, slide), factor)
-	packet.rotation = sin(progress * PI) * 0.10 * signf(goal.x - deck_center.x)
+	packet.rotation = rotation * signf(goal.x - deck_center.x)
 	packet.pivot_offset = destination.size * 0.5
 	packet.position = center - packet.pivot_offset
 	face.size = destination.size
@@ -212,24 +231,73 @@ func _pose(progress: float, slot: int, packet: Control, face: Control, back: Con
 	face.modulate = Color.WHITE.lerp(ink.lightened(0.58), shine * (0.43 if face.card_data.tier == 3 else 0.26))
 
 
-func deck_origin() -> Vector2:
+func deck_origin(opening: bool) -> Vector2:
+	if not opening: return _replacement_origin
 	var left := _defenses[0].get_rect()
 	var right := _defenses[1].get_rect()
-	return Vector2((left.end.x + right.position.x) * 0.5,
+	return Vector2(_battle_center_x,
 		minf(left.position.y, right.position.y) - 64.0)
 
 
-func fit_deck() -> void:
-	deck.position = deck_origin() - deck.size * 0.5
+func fit_deck(bounds: Rect2) -> void:
+	_battle_center_x = bounds.get_center().x
+	var hull := _player_hull.get_rect()
+	var shield := _defenses[0].get_rect()
+	var opening := deck_origin(true)
+	var hand := _hand[0]
+	var gap: float = Holo.DEFAULT.spacing
+	var compact := DeckVisual.EXTENT
+	var preferred := Vector2(_left_controls.back().get_global_rect().end.x + compact.x * 0.5 + gap,
+		hull.position.y - compact.y * 0.5 - gap)
+	# Use HUD edges as candidate boundaries. The outer lane is usually beside
+	# the ship. Narrow layouts can use the inside edge of the player side.
+	var lanes := [Vector2(bounds.position.x, hull.position.x),
+		Vector2(shield.end.x, opening.x)]
+	for scale_factor: float in [0.28, 0.24, 0.20]:
+		var half_extent := (hand.size * scale_factor).max(compact) * 0.5 + Vector2(12, 10) + Vector2.ONE * gap
+		var y := hull.position.y - half_extent.y
+		var best := Vector2.INF
+		for lane: Vector2 in lanes:
+			var left := lane.x + half_extent.x
+			var right := lane.y - half_extent.x
+			if left > right or y - half_extent.y < bounds.position.y: continue
+			var candidates := [clampf(preferred.x, left, right), left, right]
+			for control in _left_controls:
+				var rect := control.get_global_rect()
+				candidates.append(rect.end.x + half_extent.x)
+				candidates.append(rect.position.x - half_extent.x)
+			for x: float in candidates:
+				if x < left or x > right: continue
+				var corridor := Rect2(x - half_extent.x, y - half_extent.y,
+					half_extent.x * 2.0, hand.position.y - y + half_extent.y)
+				if _left_controls.any(func(control: Control): return corridor.intersects(control.get_global_rect())): continue
+				var candidate := Vector2(x, y)
+				if candidate.distance_squared_to(preferred) < best.distance_squared_to(preferred):
+					best = candidate
+		if best.is_finite():
+			_replacement_origin = best
+			_replacement_scale = scale_factor
+			_fit_projector()
+			return
+	# Extreme safe insets can eliminate the outer lane. Retain the inside
+	# player-side edge and keep the projection compact.
+	_replacement_scale = hand.scale.x * 0.18
+	_replacement_origin = Vector2(shield.end.x + (opening.x - shield.end.x) * 0.32, opening.y)
+	_fit_projector()
 
 
-func _show_deck() -> void:
+func _fit_projector() -> void:
+	deck.position = deck_origin(_opening_deck) - deck.size * 0.5
+
+
+func _show_deck(opening: bool) -> void:
+	_opening_deck = opening
 	if not deck.visible:
 		deck.assembly = 0.0
 		deck.premium = Motion.Preferences.ui_motion() == 2
 		deck.show()
 		_sound(Holo.DEFAULT.deck_sound)
-	fit_deck()
+	_fit_projector()
 	Motion.start(deck, &"assembly").tween_property(deck, "assembly", 1.0, DECK_IN)
 
 

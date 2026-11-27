@@ -1297,10 +1297,11 @@ func _fit_combat_controls() -> void:
 func _fit_allocation_button() -> void:
 	if not is_instance_valid(allocation_button):
 		return
-	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button, _battle_bounds())
-	if is_instance_valid(interface_motion): interface_motion.fit_deck()
+	var bounds := _battle_bounds()
+	preload("res://scripts/ui/battle_layout.gd").fit(self, settings_button, allocation_button, bounds)
 	allocation_popup.fit()
 	hud.fit_side_panels(self)
+	if is_instance_valid(interface_motion): interface_motion.fit_deck(bounds)
 
 
 func _battle_bounds() -> Rect2:
