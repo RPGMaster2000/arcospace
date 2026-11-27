@@ -140,7 +140,7 @@ func run() -> void:
 	check(board.player_hull_label.text.contains(str(board.player_hull)) and
 		board.get_node("PlayerHullBar").tooltip_text.contains("Plating"), "Hull telemetry keeps Ablative Plating")
 
-	for viewport in [Vector2i(1280, 720), Vector2i(960, 540), Vector2i(686, 384)]:
+	for viewport in [Vector2i(1280, 720), Vector2i(960, 540), Vector2i(2560, 1080), Vector2i(686, 384)]:
 		root.size = viewport
 		for frame in 3: await process_frame
 		var left := board.get_node("PlayerIdentity").get_global_rect() as Rect2
@@ -155,20 +155,49 @@ func run() -> void:
 		var compact_strip: Dictionary = player_stack.strip_layout(203.0)
 		check(compact_strip.width <= player_stack.size.x and compact_strip.multiplier == "×40",
 			"Grouped Shields and a partial segment fit at " + str(viewport))
-		for side in ["Player", "Enemy"]:
-			for index in range(3):
-				var family: String = hud.RESERVES[index]
-				var production: String = hud.PRODUCTION[index]
-				var tile: Control = board.get_node("%sResource%d" % [side, index + 1])
-				var badge: Control = tile.get_node("ProductionBadge")
-				var badge_text: Label = tile.get_node(production)
-				var frame_style: StyleBox = tile.get_child(0, true).get_theme_stylebox("panel")
-				check(frame_style.bg_color == Holo.family_surface(family), "Resource surface matches " + family)
-				check(Rect2(Vector2.ZERO, tile.size).encloses(badge.get_rect()) and
-					badge.get_rect().encloses(badge_text.get_rect()) and badge_text.text.begins_with(hud.PRODUCTION_TAGS[index]),
-					"Production fits inside its family panel at " + str(viewport))
+		check_resource_rows(board, str(viewport))
+		if viewport == Vector2i(686, 384):
+			var original_size: int = board.player_materials_label.get_theme_font_size("font_size")
+			var layout := preload("res://scripts/ui/battle_layout.gd")
+			var safe := layout.safe_bounds(board.size, Vector4(0, 32, 0, 64))
+			board.hud.fit_combat_controls(safe)
+			layout.fit(board, board.settings_button, board.allocation_button, safe)
+			await process_frame
+			check(board.get_node("PlayerResource1").position.y == board.get_node("PlayerResource3").position.y,
+				"Constrained height exercises the horizontal resource fallback")
+			check(board.player_materials_label.get_theme_font_size("font_size") == original_size,
+				"Reserve type stays the same size in the fallback")
+			check_resource_rows(board, "constrained height")
 
 	board.queue_free()
 	await process_frame
 	print("Battle telemetry: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
+
+
+func check_resource_rows(board: Control, context: String) -> void:
+	var hud = board.hud
+	for side in ["Player", "Enemy"]:
+		for index in range(3):
+			var family: String = hud.RESERVES[index]
+			var production: String = hud.PRODUCTION[index]
+			var tile: Control = board.get_node("%sResource%d" % [side, index + 1])
+			var badge: Control = tile.get_node("ProductionBadge")
+			var badge_text: Label = tile.get_node(production)
+			var family_label: Label = tile.get_node("FamilyLabel")
+			var reserve: Label = tile.get_node(family)
+			check(family_label.get_rect().end.y < reserve.position.y
+				and reserve.get_rect().end.y < badge.position.y,
+				"Family, reserve and badge have independent rows on %s at %s" % [tile.name, context])
+			check(family_label.size.y >= family_label.get_line_height()
+				and reserve.size.y >= reserve.get_line_height()
+				and badge_text.size.y >= badge_text.get_line_height(),
+				"Every resource row fits its font metrics on %s at %s" % [tile.name, context])
+			var backdrop: Control = badge.get_child(0, true)
+			check(badge.get_global_rect().encloses(backdrop.get_global_rect()),
+				"The badge backdrop stays inside the badge at " + context)
+			var frame_style: StyleBox = tile.get_child(0, true).get_theme_stylebox("panel")
+			check(frame_style.bg_color == Holo.family_surface(family), "Resource surface matches " + family)
+			check(Rect2(Vector2.ZERO, tile.size).encloses(badge.get_rect()) and
+				badge.get_rect().encloses(badge_text.get_rect()) and badge_text.text.begins_with(hud.PRODUCTION_TAGS[index]),
+				"Production fits inside its family panel at " + context)
