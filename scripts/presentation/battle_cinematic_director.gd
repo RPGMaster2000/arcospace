@@ -4,6 +4,9 @@ extends Node
 signal settled
 signal started
 signal stage_changed(stage: String)
+## Presentation cue, separate from the three camera shot stages.
+signal intro_hud_ready
+const INTRO_HUD_LEAD_SECONDS := 0.4
 const Preferences = preload("res://scripts/ui/menu_preferences.gd")
 const ImportedVFX = preload("res://scripts/effects/imported_combat_vfx.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
@@ -296,6 +299,7 @@ func introduction(enemy_name: String = "", enemy_class: String = "") -> void:
 	var travel := a.origin.distance_to(_camera_rest.origin)
 	# Bend above the intervening player ship, then descend into its normal frame.
 	var pullback := a.origin + (a.basis.z * .38 + exit_direction * .26 + Vector3.UP * .42) * travel
+	var pullback_seconds: float = settings.duration(settings.introduction_seconds.z - hold)
 	motion = create_tween()
 	motion.tween_interval(settings.duration(hold))
 	(
@@ -313,10 +317,15 @@ func introduction(enemy_name: String = "", enemy_class: String = "") -> void:
 				_set_camera(pose, lerpf(settings.cinematic_fov, adjusted, p)),
 			0.0,
 			1.0,
-			settings.duration(settings.introduction_seconds.z - hold)
+			pullback_seconds
 		)
 		. set_trans(Tween.TRANS_SINE)
 		. set_ease(Tween.EASE_IN_OUT)
+	)
+	# Run alongside the final pullback, using actual playback duration.
+	# A short pullback starts the HUD immediately after the confrontation hold.
+	motion.parallel().tween_callback(intro_hud_ready.emit).set_delay(
+		maxf(0.0, pullback_seconds - INTRO_HUD_LEAD_SECONDS)
 	)
 	motion.tween_callback(settled.emit)
 	await settled

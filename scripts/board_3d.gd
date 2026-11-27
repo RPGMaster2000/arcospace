@@ -198,8 +198,9 @@ func _ready() -> void:
 	cinematic_director.stage_changed.connect(func(stage: String):
 		if stage == "emp_discharge":
 			$FTLPanel.discharge()
-			hud.emp_interference()
-		elif stage == "confrontation" and InterfaceMotion.allowed():
+			hud.emp_interference())
+	cinematic_director.intro_hud_ready.connect(func():
+		if InterfaceMotion.allowed():
 			cinematic_director.release_intro_hud(hud.boot_targets() + [interface_motion])
 			interface_motion.input_skip_enabled = false
 			_start_hud_boot())
