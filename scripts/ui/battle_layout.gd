@@ -50,7 +50,7 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 	var allocation_y := status_y - BUTTON_SIZE.y - gap
 	var y := bounds.position.y + 82.0
 	var rail := 100.0 if bounds.size.x >= 880 else 82.0
-	var row_budget := (allocation_y - y - gap * 3) / 3.0
+	var row_budget := (allocation_y - y - gap * 2 - tokens.related_gap) / 3.0
 	var horizontal := row_budget < 54.0
 	var height := clampf(row_budget, 54.0, 72.0) if not horizontal else 55.0
 	if horizontal: rail = clampf((right - left - gap * 5) / 6.0, 64, 91)
@@ -70,15 +70,18 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 	emp.position = Vector2(resources.end.x + tokens.related_gap, resources.position.y)
 	emp.size = Vector2(materials.size.x * 0.24, resources.size.y)
 
-	var group_x := maxf(hand.position.x, left)
-	var group_width := minf(258.0, hand.size.x * hand.scale.x * 1.30)
+	var card_width := hand.size.x * hand.scale.x
+	var group_width := minf(258.0, card_width * 1.30)
+	var min_flank := (group_width + card_width) * 0.5 + gap * 2
+	var max_flank := midpoint - left - group_width * 0.5
+	var flank := clampf(view._defense_flank_offset(), min_flank, maxf(min_flank, max_flank))
 	var tile_width := (group_width - gap) * 0.5
 	for side in ["Player", "Enemy"]:
 		var player: bool = side == "Player"
 		var hull: Control = view.get_node(side + "HullLabel")
 		var shield: Control = view.get_node(side + "ShieldsLabel")
 		var hull_bar: Control = view.get_node(side + "HullBar")
-		var origin := group_x if player else 2 * midpoint - group_x - group_width
+		var origin := midpoint + (-flank if player else flank) - group_width * 0.5
 		hull.position = Vector2(origin if player else origin + tile_width + gap, status_y)
 		shield.position = Vector2(origin + tile_width + gap if player else origin, status_y)
 		for label in [hull, shield]:
@@ -86,16 +89,16 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 			label.add_theme_font_size_override("font_size", 17 if tile_width < 122 else 20)
 		hull_bar.position = hull.position + Vector2(padding, hull.size.y - padding - 6)
 		hull_bar.size = Vector2(tile_width - 2 * padding, 6)
-	allocation.size = BUTTON_SIZE
-	allocation.position = Vector2(left, minf(allocation_y, resources.end.y + gap))
+	allocation.size = Vector2(rail, BUTTON_SIZE.y)
+	allocation.position = Vector2(left, resources.end.y + tokens.related_gap)
 
 	var action_log: Control = view.get_node("LastActionLabel")
 	if action_log.visible:
 		action_log.position = Vector2(left + rail + gap, bounds.position.y + 75)
 		action_log.size.x = right - left - 2 * (rail + gap)
 	var warning_edge: float = emp.get_rect().end.x + tokens.related_gap * 2 + view.hud.player_panel.HANDLE_WIDTH
-	view.get_node("SystemsFailureDisplay").fit(maxf(group_x, warning_edge),
-		minf(2 * midpoint - group_x, right - rail - gap), allocation.position.y - gap)
+	view.get_node("SystemsFailureDisplay").fit(warning_edge,
+		right - rail - gap - view.hud.enemy_panel.HANDLE_WIDTH, allocation.position.y - gap)
 
 
 static func _fit_resource(tile: Control, index: int, pad: float, roomy: bool) -> void:

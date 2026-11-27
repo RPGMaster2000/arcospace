@@ -99,7 +99,8 @@ func set_mode(mode: String) -> void:
 
 func fit() -> void:
 	_step = TARGET + Holo.DEFAULT.related_gap
-	panel.position = _anchor.get_global_rect().position + Vector2(_step, 0)
+	var launcher := _anchor.get_global_rect()
+	panel.position = Vector2(launcher.end.x + Holo.DEFAULT.related_gap, launcher.position.y)
 	panel.size = Vector2(_step * choices.size() - Holo.DEFAULT.related_gap, TARGET)
 	for index in choices.size():
 		choices[index].position = Vector2(index * _step, 0)
@@ -148,7 +149,7 @@ func _slide(opening: bool) -> void:
 		var button := choices[index]
 		button.disabled = not opening
 		var plate := _plates[index]
-		var folded := Vector2(-_step * (index + 1), 0)
+		var folded := Vector2(_anchor.get_global_rect().get_center().x - button.get_global_rect().get_center().x, 0)
 		var target := Vector2.ZERO if opening else folded
 		if tween == null:
 			plate.position = target

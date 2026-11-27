@@ -96,7 +96,7 @@ func run() -> void:
 	await create_timer(2.3).timeout
 	check(motion.get_child_count() == 4, "Temporary animation nodes must be removed after their visual hold")
 	board.free()
-	await lane_checks()
+	await center_path_checks()
 	# Closing/restarting during motion must safely destroy its running tween.
 	board = BoardScene.instantiate()
 	board.get_node("BattleEffects").enabled = false
@@ -110,7 +110,7 @@ func run() -> void:
 	quit(1 if failures else 0)
 
 
-func lane_checks() -> void:
+func center_path_checks() -> void:
 	var layout := preload("res://scripts/ui/battle_layout.gd")
 	for viewport in [Vector2i(1280, 720), Vector2i(1680, 720), Vector2i(686, 384)]:
 		root.size = viewport
@@ -130,24 +130,56 @@ func lane_checks() -> void:
 		for slot in 6:
 			var source: Control = board.get_node(board.card_slots[slot])
 			var cues := [0]
+			var enemy_visual: Control
+			var enemy_tail: Tween
+			if slot == 0:
+				motion.animate_action(Library.CARDS[11], null, "enemy", false, func(): pass)
+				enemy_visual = motion.get_child(motion.get_child_count() - 1)
+				motion.active_tween.custom_step(1.0)
+				enemy_tail = motion.lingering_tweens[enemy_visual]
 			motion.animate_action(Library.CARDS[11], source, "player", false, func(): cues[0] += 1)
 			var visual: Control = motion.get_child(motion.get_child_count() - 1)
 			check(visual.global_position.is_equal_approx(source.global_position) and visual.scale == source.scale,
 				"Activation starts at the real hand slot and scale")
+			if slot == 0:
+				var handoff: Tween = motion.lingering_tweens[enemy_visual]
+				check(not enemy_tail.is_valid() and handoff != enemy_tail, "Player play interrupts the decorative enemy tail")
+				handoff.custom_step(motion.settings.travel_seconds * 0.2)
+				check(enemy_visual.modulate.a > 0.0 and enemy_visual.modulate.a < 1.0,
+					"The enemy card fades as the player starts moving")
+				handoff.custom_step(1.0)
+				check(not motion.lingering_cards.has(enemy_visual), "Enemy card is cleared before centered resolution")
 			var tween: Tween = motion.active_tween
 			tween.pause()
-			var step: float = motion.settings.travel_seconds / 10.0
-			for sample in 10:
+			var step: float = motion.settings.travel_seconds / 60.0
+			for sample in 60:
 				tween.custom_step(step)
-				for tile in tiles:
-					check(not tile.intersects(visual.get_global_rect()), "Card approach clears defense telemetry")
+				if sample == 9:
+					check(visual.position.x != source.position.x and visual.position.y < source.position.y,
+						"The slide and lift overlap during the same animation")
+				check_clear(visual, tiles)
 			if tween.is_valid(): tween.custom_step(step)
-			var enemy_tail: float = motion.size.x * motion.ENEMY_LANE - 198.0 * motion.ENEMY_EXIT_WIDTH
-			check(is_equal_approx(visual.position.y, source.position.y - source.size.y * source.scale.y * 0.20)
-				and visual.get_global_rect().end.x <= enemy_tail and cues[0] == 1,
-				"The card lifts about 20 percent and resolves once beside the enemy exit lane")
+			check(is_equal_approx(visual.get_global_rect().get_center().x, board.size.x * 0.5)
+				and is_equal_approx(visual.position.y, source.position.y - source.size.y * source.scale.y * 0.20)
+				and cues[0] == 1, "The card resolves once at the exact center with its 20 percent lift")
+			var lift_y := visual.position.y
+			var departure: Tween = motion.lingering_tweens[visual]
+			departure.pause()
+			departure.custom_step(0.48)
+			check(is_equal_approx(visual.position.y, lift_y) and visual.modulate.a == 1.0,
+				"The usual hold precedes the exit")
+			for sample in 20:
+				departure.custom_step(0.014)
+				check_clear(visual, tiles)
+				check(is_equal_approx(visual.get_global_rect().get_center().x, board.size.x * 0.5),
+					"The exit remains centered throughout the fade")
 			motion.active_tween.custom_step(1.0)
 			motion.clear_lingering_cards()
 			await process_frame
 		board.free()
 		await process_frame
+
+
+func check_clear(visual: Control, tiles: Array[Rect2]) -> void:
+	for tile in tiles:
+		check(not tile.intersects(visual.get_global_rect()), "Card path clears Hull and Shields")

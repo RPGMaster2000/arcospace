@@ -4,7 +4,7 @@ const Flavor = preload("res://scripts/ui/enemy_card_flavor.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
 const ENEMY_LANE := 0.51
 const ENEMY_EXIT_WIDTH := 0.65
-const LANE_GAP := 12.0
+const ENEMY_HANDOFF_FADE := 0.12
 
 # RESPONSIBILITY: Present a card, invoke resolution at its cue, then finish motion.
 # DOES NOT: Pay costs, apply abilities, draw cards or switch turns.
@@ -29,6 +29,8 @@ func animate_action(
 		Sound.play(&"card_discard" if discard else &"card_play", self)
 		await resolve.call()
 		return
+	if side == "player" and not discard:
+		_fade_lingering_enemies()
 	source_view = source
 	var card_size := Vector2(198, 294)
 	var start: Vector2 = $EnemyOrigin.position - card_size * 0.5
@@ -92,7 +94,9 @@ func animate_action(
 		var lift := extent.y * 0.20 if side == "player" else card_size.y * 0.04
 		var destination := start - Vector2(0, lift)
 		if side == "player":
-			destination.x = _player_lane(extent.x)
+			destination.x = (size.x - extent.x) * 0.5
+		else:
+			clipper.set_meta(&"enemy_linger", true)
 
 		var glow := Panel.new()
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -109,7 +113,7 @@ func animate_action(
 		clipper.move_child(glow, 0)
 		active_tween = _new_tween().set_parallel(true)
 		if side == "player":
-			active_tween.tween_method(_approach_lane.bind(clipper, start, destination), 0.0, 1.0, settings.travel_seconds)
+			active_tween.tween_method(_center_player_card.bind(clipper, start, destination), 0.0, 1.0, settings.travel_seconds)
 		else:
 			active_tween.tween_property(clipper, "position", destination, settings.travel_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		active_tween.tween_property(clipper, "modulate:a", 1.0, settings.travel_seconds)
@@ -153,18 +157,23 @@ func animate_action(
 	source_view = null
 
 
-func _player_lane(card_width: float) -> float:
-	var shields: Control = get_parent().get_node("PlayerShieldsLabel")
-	var left := shields.get_rect().end.x + LANE_GAP
-	var right := size.x * ENEMY_LANE - 198.0 * ENEMY_EXIT_WIDTH - LANE_GAP
-	return maxf(left, (left + right - card_width) * 0.5)
-
-
-func _approach_lane(progress: float, card: Control, start: Vector2, destination: Vector2) -> void:
-	# Advance horizontally before the lift reaches the defense row.
-	var slide := 1.0 - pow(1.0 - minf(1.0, progress / 0.7), 3.0)
-	var lift := 1.0 - pow(1.0 - clampf((progress - 0.39) / 0.61, 0.0, 1.0), 3.0)
+func _center_player_card(progress: float, card: Control, start: Vector2, destination: Vector2) -> void:
+	# Both axes move through one tween. The earlier horizontal easing clears
+	# the defense tiles before the later part of the lift crosses their height.
+	var slide := smoothstep(0.0, 1.0, 1.0 - pow(1.0 - progress, 4.0))
+	var lift := smoothstep(0.0, 1.0, progress * progress)
 	card.position = Vector2(lerpf(start.x, destination.x, slide), lerpf(start.y, destination.y, lift))
+
+
+func _fade_lingering_enemies() -> void:
+	for card in lingering_cards:
+		if not card.has_meta(&"enemy_linger"): continue
+		card.remove_meta(&"enemy_linger")
+		lingering_tweens[card].kill()
+		var fade := create_tween()
+		lingering_tweens[card] = fade
+		fade.tween_property(card, "modulate:a", 0.0, minf(ENEMY_HANDOFF_FADE, settings.travel_seconds * 0.4))
+		fade.tween_callback(_finish_lingering_card.bind(weakref(card)))
 
 
 func _finish_lingering_card(card_ref: WeakRef) -> void:

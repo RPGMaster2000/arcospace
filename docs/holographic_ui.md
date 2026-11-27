@@ -10,9 +10,9 @@ The violet EMP strip fills upward beside the player’s Materials, Energy and Cr
 
 The Power Allocation button sits above the hand. Its unfolding chevron and engraved glyph show the menu state and current allocation. Tap to reveal four fixed touch targets, tap a mode to select it, or hold a mode to inspect its draw weighting without selecting it. Tap the main button again or tap outside to close.
 
-The hand and mirrored HUD use the same safe bounds. The larger horizontal inset applies to both sides so the hand and round readout stay centered with an asymmetric cutout. The hand caps at 198×294 logical units per card. The Hull and Shield tiles sit 14 logical units above the hand. The Power Allocation flyout sits above those tiles, alongside the left HUD. Both tactical handles have their own space on the inward side of the resource rails.
+The hand and mirrored HUD use the same safe bounds. The larger horizontal inset applies to both sides so the hand and round readout stay centered with an asymmetric cutout. The hand caps at 198×294 logical units per card. The Hull and Shield tiles sit 14 logical units above the hand and mirror the ships’ resting separation around screen center. Their spacing also reserves clearance for the widest played card. The Power Allocation control attaches below Crew, matches the resource rail width, and unfolds above the defense tiles. Both tactical handles have their own space on the inward side of the resource rails.
 
-In rendered trials, moving the defense tiles down with the original in-place lift covered telemetry at activation. Played player cards now slide from their actual hand slots into the open lane between the defense groups and lift by the same 20% of their on-screen height. The horizontal slide leads the lift to clear the tiles. The existing cue, linger, exit, discard and replacement timings still apply. Enemy cards keep their original position and exit.
+In rendered trials, moving the defense tiles down with the original in-place lift covered telemetry at activation. Played player cards slide from their actual hand slots to the exact horizontal center and lift by the same 20% of their on-screen height in a single motion. Both axes ease together, with the horizontal movement leading so the lift clears the tiles. The existing player cue, linger, exit, discard and replacement timings still apply. A lingering enemy card fades when the player commits a play, leaving room for the centered card.
 
 
 The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, convoy integrity, fleet strength, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
@@ -96,7 +96,7 @@ The latest Shield stack and borderless header captures use the real battle scene
 
 ## Responsive battle captures
 
-The before-and-after sheet pairs the same render sizes on main and on the revised layout. The animation frames include a real Laser Burst during Shield loss and resource spend, its replacement, and consecutive player plays while an enemy card lingers.
+The before-and-after sheet pairs the same render sizes on main and on the revised layout. The animation frames include a real Laser Burst during Shield loss and resource spend, its replacement, the enemy card fading as the player commits a play, and consecutive centered player cards.
 
 - [Before and after at five landscape sizes](battle_telemetry/responsive-dock-comparison.webp)
 - [Card motion and compact safe-area examples](battle_telemetry/responsive-dock-motion.webp)

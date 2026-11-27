@@ -167,6 +167,7 @@ var backdrop_scale: Vector3
 var backdrop: MeshInstance3D
 var battle_camera: Camera3D
 var baseline_fov: float
+var _defense_offset := 0.0
 
 
 func _ready() -> void:
@@ -234,6 +235,20 @@ func _fit_backdrop() -> void:
 		battle_camera.fov = fitted_fov
 		backdrop.scale = fitted_scale
 	_fit_ftl()
+
+
+func _defense_flank_offset() -> float:
+	# Measure the authored ship regions in the resting camera. Keep the HUD
+	# steady while a cinematic temporarily moves that camera or either ship.
+	if is_instance_valid(cinematic_director) and cinematic_director.active:
+		return _defense_offset if _defense_offset > 0.0 else super._defense_flank_offset()
+	var viewport_size := battle_camera.get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0: return super._defense_flank_offset()
+	var battlefield := battle_camera.get_parent()
+	var player_x := battle_camera.unproject_position(battlefield.get_node("PlayerShip").global_position).x
+	var enemy_x := battle_camera.unproject_position(battlefield.get_node("EnemyShip").global_position).x
+	_defense_offset = absf(enemy_x - player_x) * 0.5 * $BattleView.size.x / viewport_size.x
+	return _defense_offset
 
 
 ## TUNE: Engine light factors relative to its scene-authored brightness.

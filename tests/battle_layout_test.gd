@@ -81,7 +81,10 @@ func run() -> void:
 			"Allocation sits below Crew"
 		)
 		check(board.allocation_button.size.y >= 38 and menu.size.y >= 48, "Touch-friendly access")
-		check(board.allocation_button.size.x == 48, "Allocation uses a compact 48-unit touch target")
+		check(is_equal_approx(board.allocation_button.size.x, crew.size.x)
+			and is_equal_approx(board.allocation_button.position.y - crew.get_rect().end.y,
+				preload("res://resources/presentation/holographic_skin.tres").related_gap),
+			"Power Allocation attaches directly to the rail at the same width")
 		var heading: Label = board.get_node("ModeLabel")
 		var subtitle: Label = heading.get_node("Subtitle")
 		var skin := preload("res://resources/presentation/holographic_skin.tres")
@@ -113,6 +116,15 @@ func run() -> void:
 			and is_equal_approx(defense.position.y, board.enemy_shields_label.position.y)
 			and is_equal_approx(defense.position.x, board.size.x - board.enemy_hull_label.get_rect().end.x),
 			"Hull and Shields mirror each other directly above the hand")
+		var player_group := defense.merge(board.player_shields_label.get_rect())
+		var right_shield: Rect2 = board.enemy_shields_label.get_rect()
+		var min_flank := 0.5 * (player_group.size.x + hand.size.x * hand.scale.x) + skin.spacing * 2
+		var max_flank: float = board.size.x * 0.5 - skin.section_gap - player_group.size.x * 0.5
+		check(is_equal_approx(board.size.x * 0.5 - player_group.get_center().x,
+			clampf(board._defense_flank_offset(), min_flank, max_flank)),
+			"Defense groups follow the measured ship separation with central clearance")
+		check(right_shield.position.x - player_group.end.x >= hand.size.x * hand.scale.x,
+			"The centered card fits between the defense groups")
 		check(not player_panel.drawer.visible and not enemy_panel.drawer.visible, "Drawers start closed")
 		for panel in [player_panel, enemy_panel]:
 			check(panel.drawer.get_global_rect().end.y < hand.position.y, "Drawer clears the card hand")

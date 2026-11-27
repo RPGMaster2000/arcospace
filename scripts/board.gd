@@ -1289,6 +1289,10 @@ func _battle_bounds() -> Rect2:
 	return layout.safe_bounds(size, layout.safe_insets(self))
 
 
+func _defense_flank_offset() -> float:
+	return absf($EnemyShip.position.x - $PlayerShip.position.x) * 0.5
+
+
 func _setup_allocation() -> void:
 	hand.configure_player_allocation(allocation_settings.matching_draw_weight)
 	allocation_popup = preload("res://scripts/ui/power_allocation_popup.gd").new()
