@@ -31,7 +31,7 @@ func run() -> void:
 			await process_frame
 			var label = battle.get_node("FTLPanel/Charge")
 			var button = battle.get_node("FTLPanel/WarpButton")
-			check(label.visible and label.text == "READY" and button.visible and is_equal_approx(button.position.x, 0), "Charged EMP keeps the telemetry visible and enables activation")
+			check(label.visible and label.text == "RDY" and button.visible and is_equal_approx(button.position.x, 0), "Charged EMP keeps the telemetry visible and enables activation")
 			battle._warp_out()
 			check(battle.escaped_by_ftl and battle.winner == "player", "Live EMP Pulse succeeds")
 			check(host.state.pressure == 1 and host.state.salvage == 0, "Live escape grants one pressure and zero Salvage")

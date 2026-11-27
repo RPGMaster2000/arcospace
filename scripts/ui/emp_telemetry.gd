@@ -23,6 +23,7 @@ func _ready() -> void:
 	_frame.details = 0
 	_frame.cut = 6
 	Holo.plate(self, _frame)
+	$Charge.clip_text = true
 	_icon = Glyph.new()
 	_icon.kind = "emp"
 	add_child(_icon)
@@ -40,6 +41,7 @@ func _fit() -> void:
 	_icon.position = Vector2((size.x - _icon.size.x) * 0.5, 5)
 	$Charge.position = Vector2(0, size.y - 18)
 	$Charge.size = Vector2(size.x, 14)
+	_fit_label()
 	$WarpButton.size = size
 	queue_redraw()
 
@@ -98,12 +100,22 @@ func discharge() -> void:
 
 func _update_ink() -> void:
 	var tint := _tint()
-	$Charge.text = {"ready": "READY", "offline": "OFF", "firing": "FIRING", "used": "USED"}.get(state, "EMP")
+	$Charge.text = {"ready": "RDY", "offline": "OFF", "firing": "FIRE", "used": "USED"}.get(state, "EMP")
+	_fit_label()
 	$Charge.accessibility_name = $Charge.tooltip_text
 	$Charge.add_theme_color_override("font_color", tint.lightened(0.16))
 	_icon.ink = tint
 	_frame.border_color = Color(tint, 0.82 if state == "ready" else 0.51)
 	queue_redraw()
+
+
+func _fit_label() -> void:
+	var label: Label = $Charge
+	var font := label.get_theme_font("font")
+	var font_size := 10
+	while font_size > 6 and font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > size.x - 2:
+		font_size -= 1
+	label.add_theme_font_size_override("font_size", font_size)
 
 
 func _animate(seconds: float) -> void:
@@ -136,8 +148,8 @@ func _tint() -> Color:
 
 func _draw() -> void:
 	var skin := Holo.DEFAULT
-	var top := 26.0
-	var bottom := size.y - 22.0
+	var top := 25.0
+	var bottom := size.y - 18.0
 	if bottom <= top: return
 	var width: float = skin.emp_thickness
 	var left := (size.x - width) * 0.5

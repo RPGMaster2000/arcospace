@@ -240,7 +240,7 @@ func run() -> void:
 			check(root.get_visible_rect().encloses(held.get_global_rect()), "Hand inside screen " + str(dimensions))
 			check(absf(held.get_global_rect().end.y - (root.get_visible_rect().end.y - 12)) < 2, "Combat card bottom anchored")
 			check(held.get_node("DiscardButton").get_global_rect().size.y >= 32.9, "Compact discard footer remains 33 pixels")
-		check(board.get_node("FTLPanel").size.x == 48 and board.get_node("FTLPanel").size.y > 48, "EMP is vertical and touch-sized")
+		check(is_equal_approx(board.get_node("FTLPanel").size.x, board.get_node("PlayerResource1").size.x * 0.24) and board.get_node("FTLPanel").size.y > 48, "EMP is a slim vertical extension of the resource rail")
 		board.ftl.charge = board.ftl.charge_target
 		board._record_result()
 		board.refresh_display()

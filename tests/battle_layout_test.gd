@@ -57,7 +57,7 @@ func run() -> void:
 		insets.is_equal_approx(Vector4(60, 40.0 / 3.0, 60, 40.0 / 3.0)),
 		"Android cutout insets convert to logical HUD coordinates"
 	)
-	for dimensions in [Vector2i(1280, 720), Vector2i(1560, 720), Vector2i(1680, 720)]:
+	for dimensions in [Vector2i(1280, 720), Vector2i(1560, 720), Vector2i(1680, 720), Vector2i(686, 384)]:
 		root.size = dimensions
 		var board = load("res://scenes/board_3d.tscn").instantiate()
 		board.setup_settings = {"player_ship": 0, "enemy_data": preload("res://ships/enemy/siege_monitor.tres"), "seed": 2026}
@@ -90,6 +90,17 @@ func run() -> void:
 		check(is_equal_approx(board.get_node("TurnLabel").get_rect().get_center().x, board.size.x * 0.5), "Round readout is centered")
 		for resource_index in range(1, 4):
 			check(board.get_node("PlayerResource%d" % resource_index).position.y == board.get_node("EnemyResource%d" % resource_index).position.y, "Resource rows mirror")
+		var resources: Rect2 = board.get_node("PlayerResource1").get_rect().merge(crew.get_rect())
+		var emp: Control = board.get_node("FTLPanel")
+		var emp_rect := emp.get_rect()
+		check(emp_rect.position.is_equal_approx(Vector2(resources.end.x + skin.related_gap, resources.position.y))
+			and is_equal_approx(emp_rect.end.y, resources.end.y)
+			and is_equal_approx(emp_rect.size.x, resources.size.x * 0.24), "EMP aligns with the player resource rail")
+		check(is_equal_approx(player_panel.handle.position.x, emp_rect.end.x + skin.related_gap)
+			and is_equal_approx(player_panel.drawer.position.x, player_panel.handle.get_rect().end.x + skin.related_gap),
+			"Handle and drawer follow the EMP with consistent gaps")
+		check(not emp_rect.intersects(board.player_hull_label.get_rect()) and not emp_rect.intersects(board.allocation_button.get_rect()),
+			"The attached EMP clears Hull and Power Allocation")
 		check(not player_panel.drawer.visible and not enemy_panel.drawer.visible, "Drawers start closed")
 		for panel in [player_panel, enemy_panel]:
 			check(panel.drawer.get_global_rect().end.y < hand.position.y, "Drawer clears the card hand")
@@ -150,9 +161,11 @@ func run() -> void:
 			board.hand.allocation_mode == "offense" and not board.allocation_popup.shade.visible,
 			"Existing allocation selection works"
 		)
-		var touch: bool = dimensions.x == 1560
+		var touch: bool = dimensions.x in [1560, 686]
 		await activate(crew, touch)
 		check(player_panel.open and not enemy_panel.open, "Resource tile opens the player drawer")
+		check(player_panel.drawer.visible and not player_panel.drawer.get_rect().intersects(emp_rect),
+			"The open drawer leaves the charge strip visible and accessible")
 		check(board.hud._boons.text == "No active boons", "Empty boons have an explicit state")
 		check(board.hud._system.text == "Standalone battle", "Standalone battle has no system pressure")
 		for kind in range(board.modifier.NAMES.size()):

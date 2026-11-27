@@ -29,7 +29,7 @@ func run() -> void:
 		check(not board.resolving_card, "Input unlocks after result")
 	board.refresh_display()
 	var panel = board.get_node("FTLPanel")
-	check(panel.get_rect().end.y < board.player_hull_label.position.y, "EMP has its own lane above the defense readouts")
+	check(not panel.get_rect().intersects(board.player_hull_label.get_rect()), "EMP keeps clear of the defense readouts")
 	display.ftl_offline()
 	check(display.get_node("FTLTint").color.a > 0, "Offline FTL flashes screen")
 	var original = root.canvas_transform

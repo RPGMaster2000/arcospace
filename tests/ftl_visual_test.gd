@@ -42,7 +42,7 @@ func run() -> void:
 	Preferences.set_ui_motion(1)
 	board.ftl.charge = board.ftl.charge_target
 	board.refresh_display()
-	check(jump.visible and not jump.disabled and panel.get_node("Charge").text == "READY",
+	check(jump.visible and not jump.disabled and panel.get_node("Charge").text == "RDY",
 		"Full EMP retains vertical telemetry and enables the action")
 	check(jump.position == Vector2.ZERO and jump.size.is_equal_approx(panel.size),
 		"EMP button has the complete telemetry tile as a touch target")
@@ -86,8 +86,11 @@ func run() -> void:
 	board._begin_turn("player")
 	check(board.get_node("ModifierDisplay/FTLFlash").text == "EMP PULSE ONLINE", "Fully charged repaired FTL announces online")
 	board._fit_ftl() # Refit after screenshot frames have advanced the ship's idle motion.
-	check(panel.size.y > panel.size.x and panel.size.x >= 48 and panel.position.x < board.size.x * 0.5,
-		"Vertical EMP occupies a compact player-side lane")
+	var resources: Rect2 = board.get_node("PlayerResource1").get_rect().merge(board.get_node("PlayerResource3").get_rect())
+	check(is_equal_approx(panel.size.x, 0.24 * board.get_node("PlayerResource1").size.x)
+		and is_equal_approx(panel.size.y, resources.size.y)
+		and panel.position.is_equal_approx(Vector2(resources.end.x + SkinTheme.DEFAULT.related_gap, resources.position.y)),
+		"The EMP is a thin extension of the player resource rail")
 	for tile in [board.player_hull_label, board.player_shields_label, board.get_node("PlayerResource3"), board.allocation_button]:
 		check(not panel.get_global_rect().intersects(tile.get_global_rect()), "EMP keeps clear of other combat controls")
 	check(jump.get_global_rect().end.y < board.get_node(board.card_slots[0]).position.y, "Charged EMP button clears card hand")
