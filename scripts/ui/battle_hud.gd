@@ -188,7 +188,10 @@ func _style_telemetry(board_view: Control) -> void:
 			production.border_color = Color(tint, 0.38)
 			production.details = 0
 			production.cut = 3
+			production.set_content_margin_all(0)
 			Holo.plate(badge, production)
+			widget.get_node(PRODUCTION[i]).add_theme_font_size_override("font_size", 11)
+			widget.get_node(key).add_theme_font_size_override("font_size", 22)
 			widget.get_node(key).add_theme_color_override("font_color", skin.text)
 			var family := Label.new()
 			family.name = "FamilyLabel"

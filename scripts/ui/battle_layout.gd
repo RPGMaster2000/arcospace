@@ -4,6 +4,9 @@ const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const FAMILIES = ["materials", "energy", "crew"]
 const PRODUCTION = ["synthesizer", "reactor", "quarters"]
 const BUTTON_SIZE = Vector2(48, 48)
+const RESOURCE_VERTICAL_PAD := 2.0
+const RESOURCE_ROW_GAP := 1.0
+const PRODUCTION_VERTICAL_PAD := 1.0
 
 
 static func safe_insets(view: Control) -> Vector4:
@@ -47,12 +50,14 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 	var hand: Control = view.get_node(view.card_slots[0])
 	var status_height := 45.0
 	var status_y := hand.position.y - 14.0 - status_height
-	var allocation_y := status_y - BUTTON_SIZE.y - gap
+	var allocation_y := status_y - BUTTON_SIZE.y - tokens.related_gap
 	var y := bounds.position.y + 82.0
 	var rail := 100.0 if bounds.size.x >= 880 else 82.0
 	var row_budget := (allocation_y - y - gap * 2 - tokens.related_gap) / 3.0
-	var horizontal := row_budget < 54.0
-	var height := clampf(row_budget, 54.0, 72.0) if not horizontal else 55.0
+	var rows := _measure_resource_rows(view)
+	var min_height := rows.x + rows.y + rows.z + 2 * (RESOURCE_VERTICAL_PAD + RESOURCE_ROW_GAP)
+	var horizontal := row_budget < min_height
+	var height := min_height if horizontal else minf(row_budget, maxf(72.0, min_height))
 	if horizontal: rail = clampf((right - left - gap * 5) / 6.0, 64, 91)
 	for side in ["Player", "Enemy"]:
 		var x := left if side == "Player" else right - rail
@@ -61,7 +66,7 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 			var tile: Control = view.get_node("%sResource%d" % [side, i + 1])
 			tile.position = Vector2(x + i * (rail + gap) * direction, y) if horizontal else Vector2(x, y + i * (height + gap))
 			tile.size = Vector2(rail, height)
-			_fit_resource(tile, i, padding, height >= 64.0)
+			_fit_resource(tile, i, padding, rows, min_height)
 
 	var materials: Control = view.get_node("PlayerResource1")
 	var crew: Control = view.get_node("PlayerResource3")
@@ -101,20 +106,38 @@ static func fit(view: Control, menu: Button, allocation: Button, bounds: Rect2) 
 		right - rail - gap - view.hud.enemy_panel.HANDLE_WIDTH, allocation.position.y - gap)
 
 
-static func _fit_resource(tile: Control, index: int, pad: float, roomy: bool) -> void:
+static func _measure_resource_rows(view: Control) -> Vector3:
+	# Share the tallest measured row on either side so the rails mirror even
+	# when shaped text uses a different fallback font.
+	var rows := Vector3.ZERO
+	for side in ["Player", "Enemy"]:
+		for i in FAMILIES.size():
+			var tile := view.get_node("%sResource%d" % [side, i + 1])
+			rows.x = maxf(rows.x, _line_height(tile.get_node("FamilyLabel")))
+			rows.y = maxf(rows.y, _line_height(tile.get_node(FAMILIES[i])))
+			rows.z = maxf(rows.z, _line_height(tile.get_node(PRODUCTION[i])) + 2 * PRODUCTION_VERTICAL_PAD)
+	return rows
+
+
+static func _line_height(label: Label) -> float:
+	return ceilf(maxf(label.get_line_height(), label.get_minimum_size().y))
+
+
+static func _fit_resource(tile: Control, index: int, pad: float, rows: Vector3, min_height: float) -> void:
 	var width := tile.size.x - 2 * pad
 	var reserve: Label = tile.get_node(FAMILIES[index])
 	var production: Label = tile.get_node(PRODUCTION[index])
 	var family: Label = tile.get_node("FamilyLabel")
 	var badge: Control = tile.get_node("ProductionBadge")
-	var production_height := 18.0 if roomy else 14.0
-	family.position = Vector2(pad, pad if roomy else 3.0)
-	family.size = Vector2(width, 13)
-	reserve.position = Vector2(pad, family.get_rect().end.y)
-	reserve.size = Vector2(width, tile.size.y - (pad if roomy else 3.0) - production_height - reserve.position.y)
-	reserve.add_theme_font_size_override("font_size", 26 if roomy else 18)
-	badge.position = Vector2(pad, tile.size.y - (pad if roomy else 3.0) - production_height)
-	badge.size = Vector2(width, production_height)
-	production.position = badge.position
-	production.size = badge.size
-	production.add_theme_font_size_override("font_size", 12 if roomy else 11)
+	# Grow the insets and gaps with spare height. All three rows keep the
+	# same type sizes when the viewport changes.
+	var extra := (tile.size.y - min_height) * 0.25
+	var gap := RESOURCE_ROW_GAP + extra
+	family.position = Vector2(pad, RESOURCE_VERTICAL_PAD + extra)
+	family.size = Vector2(width, rows.x)
+	reserve.position = Vector2(pad, family.get_rect().end.y + gap)
+	reserve.size = Vector2(width, rows.y)
+	badge.position = Vector2(pad, reserve.get_rect().end.y + gap)
+	badge.size = Vector2(width, rows.z)
+	production.position = badge.position + Vector2(0, PRODUCTION_VERTICAL_PAD)
+	production.size = Vector2(width, rows.z - 2 * PRODUCTION_VERTICAL_PAD)
