@@ -49,7 +49,7 @@ func configure(hud: RefCounted) -> void:
 	_defenses.assign([hud.nodes.player_shields_label, hud.nodes.enemy_shields_label])
 	_player_hull = hud.nodes.player_hull_label
 	_left_controls.assign([hud.nodes.PlayerResource1, hud.nodes.PlayerResource2,
-		hud.nodes.PlayerResource3, hud.nodes.FTLPanel, hud.nodes.allocation_button,
+		hud.nodes.PlayerResource3, hud.nodes.FTLPanel, hud.nodes.FTLPanel.activation_tab, hud.nodes.allocation_button,
 		hud.player_panel.handle])
 	deck = DeckVisual.new()
 	deck.name = "ProjectedDeck"
