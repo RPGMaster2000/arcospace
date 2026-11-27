@@ -44,11 +44,12 @@ func _draw() -> void:
 			_path([Vector2(14, 2), Vector2(5, 13), Vector2(11, 13), Vector2(10, 22),
 				Vector2(19, 10), Vector2(13, 10), Vector2(14, 2)])
 		_:
-			_path([Vector2(12, 3), Vector2(12, 20), Vector2(6, 20)])
-			_path([Vector2(12, 20), Vector2(18, 20)])
-			_path([Vector2(3, 7), Vector2(21, 7)])
-			_path([Vector2(5, 7), Vector2(2, 14), Vector2(8, 14), Vector2(5, 7)])
-			_path([Vector2(19, 7), Vector2(16, 14), Vector2(22, 14), Vector2(19, 7)])
+			_path([Vector2(12, 6), Vector2(12, 11), Vector2(5, 11), Vector2(5, 17)])
+			_path([Vector2(12, 11), Vector2(19, 11), Vector2(19, 17)])
+			_path([Vector2(12, 11), Vector2(12, 17)])
+			for x in [5, 12, 19]:
+				draw_rect(Rect2(x - 1.8, 17, 3.6, 3.6), ink, false, 1.2)
+			draw_circle(Vector2(12, 4), 2, ink, true, -1.0, true)
 
 	if launcher:
 		var edge := Vector2(size.x - 6.0, size.y * 0.5)

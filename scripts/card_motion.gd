@@ -2,6 +2,9 @@ extends Control
 
 const Flavor = preload("res://scripts/ui/enemy_card_flavor.gd")
 const Sound = preload("res://scripts/audio/sfx.gd")
+const ENEMY_LANE := 0.51
+const ENEMY_EXIT_WIDTH := 0.65
+const LANE_GAP := 12.0
 
 # RESPONSIBILITY: Present a card, invoke resolution at its cue, then finish motion.
 # DOES NOT: Pay costs, apply abilities, draw cards or switch turns.
@@ -78,16 +81,19 @@ func animate_action(
 		$Scanner.hide()
 		resolve.call()
 	else:
-		# Cards activate in place rather than covering the battlefield.
-		# Player: lift in the hand. Enemy: place the compact activation between
-		# the ship (left), title (above), and resource stack (right).
 		if side == "enemy":
-			start = Vector2(size.x * 0.51, maxf(155.0, size.y * 0.29))
+			start = Vector2(size.x * ENEMY_LANE, maxf(155.0, size.y * 0.29))
 			clipper.position = start
-		var destination: Vector2 = start + Vector2(0, -card_size.y * (0.20 if side == "player" else 0.04))
-		if side == "enemy":
 			clipper.scale = Vector2.ONE * 0.72
 			clipper.modulate.a = 0.0
+		elif source != null:
+			clipper.scale = source.scale
+		var extent := card_size * clipper.scale
+		var lift := extent.y * 0.20 if side == "player" else card_size.y * 0.04
+		var destination := start - Vector2(0, lift)
+		if side == "player":
+			destination.x = _player_lane(extent.x)
+
 		var glow := Panel.new()
 		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -102,7 +108,10 @@ func animate_action(
 		clipper.add_child(glow)
 		clipper.move_child(glow, 0)
 		active_tween = _new_tween().set_parallel(true)
-		active_tween.tween_property(clipper, "position", destination, settings.travel_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		if side == "player":
+			active_tween.tween_method(_approach_lane.bind(clipper, start, destination), 0.0, 1.0, settings.travel_seconds)
+		else:
+			active_tween.tween_property(clipper, "position", destination, settings.travel_seconds).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		active_tween.tween_property(clipper, "modulate:a", 1.0, settings.travel_seconds)
 		await step_finished
 		if cancelling: return
@@ -117,7 +126,7 @@ func animate_action(
 		# A parallel tween starts all tracks together; hold must be a prior step.
 		exit_tween.tween_interval(linger_seconds)
 		exit_tween.tween_property(clipper, "modulate:a", 0.0, 0.28)
-		exit_tween.parallel().tween_property(clipper, "position", clipper.position + (Vector2(-card_size.x * 0.65, 0) if side == "enemy" else Vector2(0, -card_size.y * 0.65)), 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		exit_tween.parallel().tween_property(clipper, "position", clipper.position + (Vector2(-card_size.x * ENEMY_EXIT_WIDTH, 0) if side == "enemy" else Vector2(0, -extent.y * 0.65)), 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		exit_tween.tween_callback(_finish_lingering_card.bind(weakref(clipper)))
 		if present.is_valid(): present.call()
 		# Preserve the existing refill tween completion boundary. Tests and
@@ -142,6 +151,20 @@ func animate_action(
 		if cancelling:
 			return
 	source_view = null
+
+
+func _player_lane(card_width: float) -> float:
+	var shields: Control = get_parent().get_node("PlayerShieldsLabel")
+	var left := shields.get_rect().end.x + LANE_GAP
+	var right := size.x * ENEMY_LANE - 198.0 * ENEMY_EXIT_WIDTH - LANE_GAP
+	return maxf(left, (left + right - card_width) * 0.5)
+
+
+func _approach_lane(progress: float, card: Control, start: Vector2, destination: Vector2) -> void:
+	# Advance horizontally before the lift reaches the defense row.
+	var slide := 1.0 - pow(1.0 - minf(1.0, progress / 0.7), 3.0)
+	var lift := 1.0 - pow(1.0 - clampf((progress - 0.39) / 0.61, 0.0, 1.0), 3.0)
+	card.position = Vector2(lerpf(start.x, destination.x, slide), lerpf(start.y, destination.y, lift))
 
 
 func _finish_lingering_card(card_ref: WeakRef) -> void:

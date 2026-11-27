@@ -190,6 +190,10 @@ func _ready() -> void:
 	cinematic_director.settings = cinematic_settings
 	add_child(cinematic_director)
 	cinematic_director.configure(self,camera,backdrop,$BattleView)
+	# Slightly tighten the authored battle bubbles. Their existing rim and
+	# shatter animations continue to use the same mesh and instance material.
+	for ship in [cinematic_director.player, cinematic_director.enemy]:
+		ship.shield.scale *= 0.92
 	cinematic_director.stage_changed.connect(func(stage: String):
 		if stage == "emp_discharge": $FTLPanel.discharge())
 	cinematic_director.started.connect(func():
