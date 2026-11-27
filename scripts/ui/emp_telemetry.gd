@@ -118,7 +118,10 @@ func _set_activation_tab(show_tab: bool) -> void:
 	tween.tween_property(activation_tab, "scale:x", 1.0 if show_tab else 0.18, seconds)
 	tween.tween_property(activation_tab, "modulate:a", 1.0 if show_tab else 0.0, seconds)
 	if not show_tab:
-		tween.chain().tween_callback(activation_tab.hide)
+		tween.chain().tween_callback(func():
+			activation_tab.hide()
+			activation_tab.scale = Vector2.ONE
+			activation_tab.modulate.a = 1.0)
 
 
 func _settle_activation_tab() -> void:
