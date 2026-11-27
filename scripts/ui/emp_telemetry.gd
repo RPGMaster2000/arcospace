@@ -3,6 +3,8 @@ extends Control
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const Motion = preload("res://scripts/ui/holographic/motion.gd")
 const Glyph = preload("res://scripts/ui/holographic/system_glyph.gd")
+const ACTIVATION_SIZE := Vector2(48, 48)
+const ACTIVATION_JOIN := 4.0
 
 var state := ""
 var ratio := 0.0
@@ -16,6 +18,8 @@ var sweep := 1.0:
 		queue_redraw()
 var _icon: Control
 var _frame: Holo.Frame
+var activation_tab: Button
+var _tab_requested := false
 
 
 func _ready() -> void:
@@ -31,6 +35,10 @@ func _ready() -> void:
 	for key in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
 		$WarpButton.add_theme_stylebox_override(key, transparent)
 	$WarpButton.add_theme_stylebox_override("focus", Holo.frame("focus", Holo.DEFAULT.emp_color))
+	# Keep the entire strip as a secondary touch target. The top tab is the
+	# primary visible action and shares the original pressed signal.
+	$WarpButton.focus_mode = Control.FOCUS_NONE
+	_make_activation_tab()
 	Motion.Preferences.events.ui_motion_changed.connect(_motion_changed)
 	resized.connect(_fit)
 	_fit()
@@ -43,7 +51,84 @@ func _fit() -> void:
 	$Charge.size = Vector2(size.x, 14)
 	_fit_label()
 	$WarpButton.size = size
+	activation_tab.position = Vector2(size.x - ACTIVATION_JOIN, 0)
+	activation_tab.size = ACTIVATION_SIZE
 	queue_redraw()
+
+
+## Final tab footprint in board coordinates, reserved even while retracted.
+func activation_bounds() -> Rect2:
+	return Rect2(position + Vector2(size.x - ACTIVATION_JOIN, 0), ACTIVATION_SIZE)
+
+
+func _make_activation_tab() -> void:
+	activation_tab = Button.new()
+	activation_tab.name = "ActivationTab"
+	activation_tab.custom_minimum_size = ACTIVATION_SIZE
+	activation_tab.mouse_default_cursor_shape = CURSOR_POINTING_HAND
+	activation_tab.accessibility_name = "Fire EMP Pulse"
+	for key in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		var frame := Holo.frame("focus" if key == "focus" else "compact", Holo.DEFAULT.emp_bright,
+			"pressed" if key == "hover_pressed" else key)
+		frame.set_content_margin_all(3)
+		frame.cut = 6
+		if key == "normal":
+			frame.bg_color = Holo.DEFAULT.surface_depth.lerp(Holo.DEFAULT.emp_color, 0.30)
+		activation_tab.add_theme_stylebox_override(key, frame)
+	add_child(activation_tab)
+	var bolt := Glyph.new()
+	bolt.kind = "emp"
+	bolt.ink = Holo.DEFAULT.emp_bright
+	bolt.position = Vector2(12, 4)
+	bolt.size = Vector2(24, 24)
+	activation_tab.add_child(bolt)
+	var caption := Label.new()
+	caption.text = "EMP"
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 11)
+	caption.add_theme_color_override("font_color", Holo.DEFAULT.emp_bright)
+	caption.mouse_filter = MOUSE_FILTER_IGNORE
+	caption.position = Vector2(0, 29)
+	caption.size = Vector2(ACTIVATION_SIZE.x, 16)
+	activation_tab.add_child(caption)
+	activation_tab.pressed.connect(func():
+		if $WarpButton.visible and not $WarpButton.disabled:
+			$WarpButton.pressed.emit())
+	activation_tab.disabled = true
+	activation_tab.hide()
+
+
+func _set_activation_tab(show_tab: bool) -> void:
+	activation_tab.disabled = not show_tab or $WarpButton.disabled
+	activation_tab.mouse_filter = Control.MOUSE_FILTER_STOP if show_tab else Control.MOUSE_FILTER_IGNORE
+	activation_tab.focus_mode = Control.FOCUS_ALL if show_tab else Control.FOCUS_NONE
+	activation_tab.tooltip_text = $WarpButton.tooltip_text
+	if _tab_requested == show_tab: return
+	_tab_requested = show_tab
+	Motion.stop(self, &"activation")
+	var seconds := Motion.duration(0.16, true)
+	if seconds <= 0.0 or not is_visible_in_tree():
+		_settle_activation_tab()
+		return
+	if show_tab and not activation_tab.visible:
+		activation_tab.scale.x = 0.18
+		activation_tab.modulate.a = 0.0
+	activation_tab.show()
+	var tween := Motion.start(self, &"activation").set_parallel()
+	tween.tween_property(activation_tab, "scale:x", 1.0 if show_tab else 0.18, seconds)
+	tween.tween_property(activation_tab, "modulate:a", 1.0 if show_tab else 0.0, seconds)
+	if not show_tab:
+		tween.chain().tween_callback(func():
+			activation_tab.hide()
+			activation_tab.scale = Vector2.ONE
+			activation_tab.modulate.a = 1.0)
+
+
+func _settle_activation_tab() -> void:
+	Motion.stop(self, &"activation")
+	activation_tab.scale = Vector2.ONE
+	activation_tab.modulate.a = 1.0
+	activation_tab.visible = _tab_requested
 
 
 func present(data: Dictionary) -> void:
@@ -61,6 +146,7 @@ func present(data: Dictionary) -> void:
 		else:
 			discharge()
 		$WarpButton.hide()
+		_set_activation_tab(false)
 		return
 	$Charge.tooltip_text = "EMP Pulse %d / %d" % [info.charge, info.charge_target]
 	var next_ratio := clampf(float(info.charge) / maxi(1, info.charge_target), 0.0, 1.0)
@@ -75,10 +161,11 @@ func present(data: Dictionary) -> void:
 		next = "near"
 	var charged: bool = info.charge >= info.charge_target
 	$WarpButton.visible = charged and (data.winner.is_empty() or data.get("destruction_presenting", false))
-	$WarpButton.disabled = not info.can_warp or data.current_actor != "player" or data.resolving_card or data.effects_busy or not data.winner.is_empty()
+	$WarpButton.disabled = not info.can_warp or data.current_actor != "player" or data.resolving_card or data.effects_busy or data.get("presentation_locked", false) or not data.winner.is_empty()
 	$WarpButton.accessibility_name = "Fire EMP Pulse" if info.can_warp else $Charge.tooltip_text
 	tooltip_text = $Charge.tooltip_text
 	$WarpButton.tooltip_text = tooltip_text
+	_set_activation_tab(info.can_warp and data.winner.is_empty())
 	if state == next and is_equal_approx(ratio, next_ratio): return
 	var first := state.is_empty()
 	state = next
@@ -92,6 +179,7 @@ func discharge() -> void:
 	state = "used"
 	ratio = 0.0
 	$WarpButton.hide()
+	_set_activation_tab(false)
 	$Charge.tooltip_text = "EMP Pulse discharged"
 	tooltip_text = $Charge.tooltip_text
 	_update_ink()
@@ -137,7 +225,9 @@ func settle_display() -> void:
 
 
 func _motion_changed(profile: int) -> void:
-	if profile == 0: settle_display()
+	if profile == 0:
+		settle_display()
+		_settle_activation_tab()
 
 
 func _tint() -> Color:
