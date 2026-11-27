@@ -23,8 +23,8 @@ func check(condition: bool, detail: String) -> void:
 	push_error(detail)
 
 
-func until(condition: Callable, detail: String) -> void:
-	var deadline := Time.get_ticks_msec() + 30000
+func until(condition: Callable, detail: String, timeout_ms: int = 30000) -> void:
+	var deadline := Time.get_ticks_msec() + timeout_ms
 	while not condition.call() and Time.get_ticks_msec() < deadline:
 		await process_frame
 	check(condition.call(), detail)
@@ -93,7 +93,10 @@ func run() -> void:
 	check(motion.boot_duration == 1.65 and board.enemy_timer.is_stopped(), "Standard boot duration and AI timer")
 	check(not await board._act("player", 0, true), "Cards are locked until the opening presentation settles")
 	await capture("00-boot")
-	await until(func(): return motion.deck.visible and motion.deck.assembly > 0.25, "Deck materializes before boot finishes")
+	# Vulkan software rendering may compile the first real battlefield frame
+	# before the opening-stage tweens receive their next process step.
+	await until(func(): return motion.deck.visible and motion.deck.assembly > 0.25,
+		"Deck materializes before boot finishes", 90000)
 	check(Checkpoint.capture(board) == before, "Deck materialization leaves both hands, both ships, rounds, and RNG untouched")
 	check(motion.deck.mouse_filter == Control.MOUSE_FILTER_IGNORE, "The temporary deck ignores input")
 	await capture("01-deck")

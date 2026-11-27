@@ -70,7 +70,7 @@ SUITES = {"gl_compatibility": COMPATIBILITY, "mobile": MOBILE}
 
 # Camera cases retain production-length shots and render three hull classes plus
 # four real-input viewport sizes; budget for software-renderer frame overhead.
-TIMEOUTS = {"card_motifs_test": 360, "enemy_identity_test": 180,"atmospheric_accents_render_test": 240,"modifier_environment_test": 360,"system_variety_render_test": 300, "starfront_environment_render_test": 240, "extreme_weather_render_test": 360,"beam_depth_test": 240,"battlefield_depth_test": 240,"battle_cinematic_test": 360, "battle_departure_test": 240,"faction_expansion_visual_test": 240,"power_allocation_test": 300, "unified_hud_test": 300,
+TIMEOUTS = {"battle_interface_motion_test": 240, "card_motifs_test": 360, "enemy_identity_test": 180,"atmospheric_accents_render_test": 240,"modifier_environment_test": 360,"system_variety_render_test": 300, "starfront_environment_render_test": 240, "extreme_weather_render_test": 360,"beam_depth_test": 240,"battlefield_depth_test": 240,"battle_cinematic_test": 360, "battle_departure_test": 240,"faction_expansion_visual_test": 240,"power_allocation_test": 300, "unified_hud_test": 300,
             "result_upgrade_input_test": 240, "result_animation_test": 180}
 
 
