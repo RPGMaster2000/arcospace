@@ -245,7 +245,8 @@ func fit_side_panels(view: Control) -> void:
 			view.get_node(side + "Resource3").get_rect(),
 			cards[0].position.y,
 			view.size.x,
-			nodes["FTLPanel"].get_rect() if side == "Player" else Rect2()
+			nodes["FTLPanel"].get_rect() if side == "Player" else Rect2(),
+			nodes["FTLPanel"].activation_bounds() if side == "Player" else Rect2()
 		)
 
 
