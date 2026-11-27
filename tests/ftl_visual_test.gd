@@ -112,8 +112,16 @@ func run() -> void:
 	check(board.player_shields_label.get_theme_font_size("font_size") == board.player_hull_label.get_theme_font_size("font_size"), "Matching status font sizes")
 	board.hud.enemy_panel.handle.pressed.emit()
 	panel._settle_activation_tab()
-	# Use the new visible action, not the board method or old strip target.
-	tab.pressed.emit()
+	# Tap the outward portion of the tab, beyond the old narrow strip.
+	var touch_point := tab.get_global_rect().get_center()
+	check(touch_point.x > panel.get_global_rect().end.x, "The new touch target extends beyond the strip")
+	for down in [true, false]:
+		var tap := InputEventScreenTouch.new()
+		tap.index = 0
+		tap.position = touch_point
+		tap.pressed = down
+		root.push_input(tap, true)
+		if down: await process_frame
 	check(board.escaped_by_ftl and not board.hud.enemy_panel.drawer.visible, "Using EMP closes the enemy drawer")
 	check(panel.state == "used" and not jump.visible and tab.disabled, "Successful activation exits the ready state")
 	var discharge: Tween = panel.get_meta("holo_charge")
