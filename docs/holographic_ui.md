@@ -26,6 +26,8 @@ Production cues are emitted only during the committed turn-income step. Resource
 The projector uses the skin’s existing frame and ornament rules with the `deck.back` role. Assign `deck_back` in the Holographic Skin Resource to supply imported artwork for the deck and the moving backs. The layout, flip and animation timing are independent of the texture dimensions. Optional boot, deck, draw, rare-draw and Play Again sound event IDs use the existing SFX routing and user volume. The deck and the active card copies ignore input. The effects use bounded Control geometry and node-owned Tweens.
 
 
+Rendered checkpoints are available for the [opening deal](battle_telemetry/interface_motion/opening.webp), [combat feedback and rare draws](battle_telemetry/interface_motion/combat-feedback.webp), and [ultrawide and compact layouts](battle_telemetry/interface_motion/landscape.webp). The render fixtures use Godot 4.7.2. To capture the same events locally, set `ARCOSPACE_UI_CAPTURE` to an output directory and run `tests/battle_interface_motion_test.gd` with a rendered Godot instance and `--fixed-fps 60`. The default window is 1280×720. `ARCOSPACE_UI_CAPTURE_WIDTH=2560` or `686` selects ultrawide or compact landscape. Compact captures use desktop Mobile Vulkan. Physical Android frame pacing and touch comfort still need device testing.
+
 The map keeps the 3D scene and existing interaction zones. Segmented indicators cover Homeworld, convoy integrity, fleet strength, Pressure, capture, War Effort and territory. Markers use angular labels and world-aligned targeting rings. Notices use existing strategic event data. Convoy confirmations and alerts use different treatments.
 
 ## Skin and assets
