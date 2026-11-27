@@ -27,6 +27,7 @@ func run() -> void:
 	check(board.get_node("ModifierDisplay/FTLFlash").text.contains("RESUMING CHARGING"), "Repair transition announces resumed charging")
 	var panel: Control = board.get_node("FTLPanel")
 	var jump: Button = panel.get_node("WarpButton")
+	var tab: Button = panel.activation_tab
 	var charge_preview: Dictionary = board._display_snapshot()
 	charge_preview.emp.charge = 0
 	charge_preview.emp.can_warp = false
@@ -37,7 +38,7 @@ func run() -> void:
 		board.refresh_display()
 		check(is_equal_approx(panel.fill, float(charge) / board.ftl.charge_target),
 			"Idle strip displays the exact vertical fill")
-		check(panel.state == ("near" if charge == board.ftl.charge_target - 1 else "charging") and not jump.visible,
+		check(panel.state == ("near" if charge == board.ftl.charge_target - 1 else "charging") and not jump.visible and not tab.visible,
 			"Uncharged EMP stays passive")
 	Preferences.set_ui_motion(1)
 	board.ftl.charge = board.ftl.charge_target
@@ -46,6 +47,16 @@ func run() -> void:
 		"Full EMP retains vertical telemetry and enables the action")
 	check(jump.position == Vector2.ZERO and jump.size.is_equal_approx(panel.size),
 		"EMP button has the complete telemetry tile as a touch target")
+	var expansion: Tween = panel.get_meta("holo_activation")
+	expansion.custom_step(0.08)
+	check(tab.visible and not tab.disabled and tab.scale.x > 0.18 and tab.scale.x < 1.0,
+		"The top action tab expands only on readiness")
+	board.refresh_display()
+	check(panel.get_meta("holo_activation") == expansion, "Repeated refresh does not restart tab expansion")
+	expansion.custom_step(1.0)
+	check(tab.get_global_rect().size.is_equal_approx(Vector2(48, 48))
+		and tab.get_global_rect().position.is_equal_approx(panel.activation_bounds().position),
+		"Top tab settles with a full-size touch target")
 	var ready: Tween = panel.get_meta("holo_charge")
 	ready.custom_step(SkinTheme.DEFAULT.emp_ready_seconds * 0.5)
 	check(panel.sweep > 0.0 and panel.sweep < 1.0, "Ready shimmer sweeps upward once")
@@ -65,6 +76,10 @@ func run() -> void:
 	board.refresh_display()
 	check(jump.visible and jump.disabled and panel.state == "offline" and panel.get_node("Charge").text == "OFF",
 		"Charged offline EMP remains visible and disabled")
+	check(tab.disabled, "Offline EMP disables the activation tab immediately")
+	var retraction: Tween = panel.get_meta("holo_activation")
+	retraction.custom_step(1.0)
+	check(not tab.visible, "Offline EMP retracts the top tab")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.godot/testlogs/jump-offline.png")
@@ -96,9 +111,11 @@ func run() -> void:
 	check(jump.get_global_rect().end.y < board.get_node(board.card_slots[0]).position.y, "Charged EMP button clears card hand")
 	check(board.player_shields_label.get_theme_font_size("font_size") == board.player_hull_label.get_theme_font_size("font_size"), "Matching status font sizes")
 	board.hud.enemy_panel.handle.pressed.emit()
-	board._warp_out()
+	panel._settle_activation_tab()
+	# Use the new visible action, not the board method or old strip target.
+	tab.pressed.emit()
 	check(board.escaped_by_ftl and not board.hud.enemy_panel.drawer.visible, "Using EMP closes the enemy drawer")
-	check(panel.state == "used" and not jump.visible, "Successful activation exits the ready state")
+	check(panel.state == "used" and not jump.visible and tab.disabled, "Successful activation exits the ready state")
 	var discharge: Tween = panel.get_meta("holo_charge")
 	discharge.custom_step(SkinTheme.DEFAULT.emp_discharge_seconds * 0.5)
 	check(panel.fill < 1.0 and panel.fill > 0.0 and panel.sweep < 1.0, "EMP visibly drains during its discharge")
@@ -110,10 +127,12 @@ func run() -> void:
 	charge_preview.emp.charge = charge_preview.emp.charge_target
 	charge_preview.emp.can_warp = true
 	panel.present(charge_preview)
-	check(panel.state == "ready" and panel.fill == 1.0 and not panel.has_meta("holo_charge"),
+	check(panel.state == "ready" and panel.fill == 1.0 and tab.visible and tab.scale == Vector2.ONE
+		and not panel.has_meta("holo_activation") and not panel.has_meta("holo_charge"),
 		"Minimal motion presents readiness immediately")
 	panel.discharge()
-	check(panel.state == "used" and panel.fill == 0.0 and panel.sweep == 1.0, "Minimal motion snaps the used state")
+	check(panel.state == "used" and panel.fill == 0.0 and panel.sweep == 1.0 and not tab.visible,
+		"Minimal motion snaps the used state and retracts the tab")
 	Preferences.set_ui_motion(previous_motion)
 	board.queue_free()
 	await process_frame
