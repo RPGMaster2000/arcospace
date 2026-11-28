@@ -1,5 +1,6 @@
 extends CanvasLayer
 
+const Motion = preload("res://scripts/ui/holographic/motion.gd")
 const Holo = preload("res://scripts/ui/holographic/skin.gd")
 
 # RESPONSIBILITY: Present one read-only enlarged original card and its full effect/upgrade panel.
@@ -213,6 +214,12 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 	info_scroll.scroll_vertical = 0
 	shade.show()
 	_layout()
+	var seconds: float = Motion.duration(0.18) if owner.has_method("set_card_scale") else settings.inspection_tween_duration
+	if seconds <= 0.0:
+		info.modulate.a = 1.0
+		shade.color.a = settings.background_dim_opacity
+		close_button.grab_focus()
+		return
 	var target: Vector2 = visual.position
 	var scale_target: Vector2 = visual.scale
 	visual.position = original.get_global_transform_with_canvas().origin
@@ -222,14 +229,14 @@ func present(owner: Control, original: Control, configuration: Resource) -> void
 	tween = create_tween().set_parallel(true)
 	(
 		tween
-		. tween_property(visual, "position", target, settings.inspection_tween_duration)
+		. tween_property(visual, "position", target, seconds)
 		. set_trans(Tween.TRANS_CUBIC)
 		. set_ease(Tween.EASE_OUT)
 	)
-	tween.tween_property(visual, "scale", scale_target, settings.inspection_tween_duration)
-	tween.tween_property(info, "modulate:a", 1.0, settings.inspection_tween_duration)
+	tween.tween_property(visual, "scale", scale_target, seconds)
+	tween.tween_property(info, "modulate:a", 1.0, seconds)
 	tween.tween_property(
-		shade, "color:a", settings.background_dim_opacity, settings.inspection_tween_duration
+		shade, "color:a", settings.background_dim_opacity, seconds
 	)
 	close_button.grab_focus()
 
@@ -275,7 +282,8 @@ func dismiss(immediate: bool = false) -> void:
 	closing = true
 	if tween:
 		tween.kill()
-	if immediate or not is_instance_valid(source_visual) or not source_visual.is_visible_in_tree():
+	var seconds: float = Motion.duration(0.18) if is_instance_valid(source) and source.has_method("set_card_scale") else settings.inspection_tween_duration
+	if immediate or seconds <= 0.0 or not is_instance_valid(source_visual) or not source_visual.is_visible_in_tree():
 		_finish()
 		return
 	tween = create_tween().set_parallel(true)
@@ -283,16 +291,16 @@ func dismiss(immediate: bool = false) -> void:
 		visual,
 		"position",
 		source_visual.get_global_transform_with_canvas().origin,
-		settings.inspection_tween_duration
+		seconds
 	)
 	tween.tween_property(
 		visual,
 		"scale",
 		Vector2.ONE * source_visual.get_global_transform_with_canvas().get_scale().x,
-		settings.inspection_tween_duration
+		seconds
 	)
-	tween.tween_property(info, "modulate:a", 0.0, settings.inspection_tween_duration)
-	tween.tween_property(shade, "color:a", 0.0, settings.inspection_tween_duration)
+	tween.tween_property(info, "modulate:a", 0.0, seconds)
+	tween.tween_property(shade, "color:a", 0.0, seconds)
 	tween.chain().tween_callback(_finish)
 
 

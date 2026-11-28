@@ -223,6 +223,8 @@ func _ready() -> void:
 			_deck_trim_previous_phase = -1)
 	current_deck_viewer = preload("res://scripts/ui/deck_viewer.gd").new()
 	add_child(current_deck_viewer)
+	card_management.view_deck_requested.connect(_show_deck_from_offer)
+	current_deck_viewer.closed.connect(func(): card_management.set_deck_open(false))
 	outcome_flash = preload("res://scripts/ui/outcome_flash.gd").new()
 	outcome_flash.visual_settings = visual_settings
 	add_child(outcome_flash)
@@ -1416,7 +1418,7 @@ func _shop_choice_current(revision: int) -> bool:
 
 
 func _purchase_outpost_service(
-	slot: int, amount: int, revision: int, card_index: int, source: OutpostScreen
+	slot: int, amount: int, revision: int, card_index: int, source: OutpostScreen, card_feedback: Array = []
 ) -> void:
 	if (
 		inspecting
@@ -1428,6 +1430,9 @@ func _purchase_outpost_service(
 		return
 	if await _run_strategic_action(func(present): return state.purchase_service(slot, revision, amount, card_index, present)):
 		return_to_outpost = true
+		if not card_feedback.is_empty() and state.pending_choice != "replace":
+			card_management.accepted("purchase", card_feedback)
+			Sound.play(&"upgrade_acquired", self)
 		_purchase_finished()
 
 
@@ -1507,7 +1512,9 @@ func _select_battle_reward(acquire: bool) -> void:
 
 
 func _choose_card(index: int) -> void:
+	var visual: Array = card_management.confirmation_snapshot("card")
 	if state.choose_card(index):
+		if state.pending_choice != "replace": card_management.accepted("card", visual)
 		Sound.play(&"upgrade_acquired", self)
 		_purchase_finished()
 
@@ -1552,19 +1559,25 @@ func _management_confirmed(mode: String, card: Resource, revision: int) -> void:
 			var slot := _shop_slot
 			var shop_revision := _shop_revision
 			var offers: Array[Resource] = state.service_card_offers(slot)
+			var visual: Array = card_management.confirmation_snapshot("purchase")
 			card_management.dismiss(true)
-			_purchase_outpost_service(slot, 0, shop_revision, offers.find(card), outpost_screen)
+			_purchase_outpost_service(slot, 0, shop_revision, offers.find(card), outpost_screen, visual)
 		return
 	if not _management_current(revision):
 		return
 	match mode:
 		"card": _choose_card(state.card_offers.find(card))
 		"card_batch":
-			if state.confirm_card_batch(): _purchase_finished()
+			var visual: Array = card_management.confirmation_snapshot(mode)
+			if state.confirm_card_batch():
+				if state.pending_choice != "replace": card_management.accepted(mode, visual)
+				_purchase_finished()
 		"upgrade": _upgrade(card.identity_key())
 		"replace": _replace_card()
 		"trim":
+			var visual: Array = card_management.confirmation_snapshot(mode)
 			if state.trim_deck(card.identity_key()):
+				card_management.accepted(mode, visual)
 				if state.player_pool().size() > state.deck_limit():
 					_present_legacy_deck_trim()
 				else:
@@ -1603,17 +1616,25 @@ func _show_current_deck() -> void:
 	if state.pending_choice.is_empty() and state.player_pool().size() > state.deck_limit():
 		_present_legacy_deck_trim()
 		return
-	current_deck_viewer.show_cards(
-		state.player_pool(),
-		(
-			state.ship().ship_name
-			+ " · Deck: %d / %d · Read only" % [state.player_pool().size(), state.deck_limit()]
-		)
-	)
+	_show_deck_archive(false)
+
+
+func _show_deck_from_offer() -> void:
+	if card_management.consumed or card_management.closing or card_management.deck_open: return
+	if not card_management.mode in ["card", "card_batch", "purchase"]: return
+	card_management.set_deck_open(true)
+	_show_deck_archive(true)
+
+
+func _show_deck_archive(over_offer: bool) -> void:
+	current_deck_viewer.show_cards(state.player_pool(), state.ship().ship_name + " · Tactical Archive",
+		state.deck_limit(), over_offer)
 
 
 func _upgrade(key: String) -> void:
+	var visual: Array = card_management.confirmation_snapshot("upgrade")
 	if state.choose_upgrade(key):
+		card_management.accepted("upgrade", visual)
 		Sound.play(&"upgrade_acquired", self)
 		show_outcome()
 
@@ -1630,7 +1651,10 @@ func _select_replacement(card: Resource) -> void:
 
 
 func _replace_card() -> void:
+	var visual: Array = card_management.confirmation_snapshot("replace")
+	var received: Resource = state.pending_card
 	if state.replace_card(replacement_key):
+		card_management.accepted("replace", visual, received)
 		_purchase_finished()
 
 

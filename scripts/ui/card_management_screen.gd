@@ -5,6 +5,12 @@ signal confirmed(mode: String, card: Resource, revision: int)
 signal declined(revision: int)
 signal closed
 signal save_quit_requested
+signal view_deck_requested
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
+const Motion = preload("res://scripts/ui/holographic/motion.gd")
+const Safe = preload("res://scripts/ui/card_screen_margins.gd")
+const Effects = preload("res://scripts/ui/card_effect_text.gd")
+const CommitFeedback = preload("res://scripts/ui/card_commit_feedback.gd")
 const Gallery = preload("res://scripts/ui/card_gallery.gd")
 const Portrait = preload("res://scripts/ui/card_portrait.gd")
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
@@ -17,8 +23,6 @@ var instruction: Label
 var gallery: VBoxContainer
 var details_scroll: ScrollContainer
 var details: VBoxContainer
-var incoming_header: HBoxContainer
-var incoming_identity: Label
 var footer: HBoxContainer
 var context: Label
 var save_quit_button: Button
@@ -36,16 +40,24 @@ var consumed: bool = true
 var closing: bool = false
 var motion: Tween
 var previous_focus: Control
+var view_deck_button: Button
+var deck_open := false
+var body: BoxContainer
+var details_panel: PanelContainer
+var comparison: HBoxContainer
+var compared: Array[Button] = []
+var feedback: CommitFeedback
 
 func _ready() -> void:
 	layer = 140
 	shade = ColorRect.new()
-	shade.color = Color("09121e")
+	shade.color = Holo.DEFAULT.surface_depth
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 	margin = MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.add_child(margin)
+	Holo.plate(margin, Holo.frame("dialog"))
 	var column = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	margin.add_child(column)
@@ -54,11 +66,14 @@ func _ready() -> void:
 	heading = _label("", 27)
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(heading)
+	heading.add_theme_color_override("font_color", Holo.DEFAULT.edge)
+	view_deck_button = _button("View Deck", header)
+	view_deck_button.pressed.connect(view_deck_requested.emit)
 	save_quit_button = _button("Save & Quit", header)
 	save_quit_button.pressed.connect(save_quit_requested.emit)
 	instruction = _label("", 18)
 	column.add_child(instruction)
-	var body = HBoxContainer.new()
+	body = BoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 20)
 	column.add_child(body)
@@ -68,22 +83,21 @@ func _ready() -> void:
 	gallery.size_flags_stretch_ratio = 0.63
 	body.add_child(gallery)
 	gallery.card_selected.connect(select_card)
-	var panel = PanelContainer.new()
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_stretch_ratio = 0.37
-	panel.add_theme_stylebox_override("panel", Style.style(Style.COLORS.special))
-	body.add_child(panel)
+	details_panel = PanelContainer.new()
+	details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_panel.size_flags_stretch_ratio = 0.37
+	details_panel.add_theme_stylebox_override("panel", Holo.frame("compact"))
+	body.add_child(details_panel)
 	var right = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 12)
-	panel.add_child(right)
-	incoming_header = HBoxContainer.new()
-	incoming_header.add_theme_constant_override("separation", 14)
-	right.add_child(incoming_header)
-	incoming_identity = _label("", 19)
-	incoming_identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	incoming_header.add_child(incoming_identity)
+	details_panel.add_child(right)
+
+	comparison = HBoxContainer.new()
+	comparison.add_theme_constant_override("separation", 10)
+	comparison.alignment = BoxContainer.ALIGNMENT_CENTER
+	right.add_child(comparison)
 	details_scroll = Scroll.new()
-	details_scroll.resized.connect(func(): _fit_upgrade_preview.call_deferred())
+	details_scroll.resized.connect(func(): _fit_comparison.call_deferred())
 	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(details_scroll)
 	details = VBoxContainer.new()
@@ -102,6 +116,8 @@ func _ready() -> void:
 	for action in [decline_button, confirm_button]:
 		action.custom_minimum_size.y = 60
 	confirm_button.pressed.connect(_confirm)
+	feedback = CommitFeedback.new()
+	add_child(feedback)
 	shade.resized.connect(_fit)
 	shade.hide()
 
@@ -117,7 +133,7 @@ func _label(text: String, font_size: int) -> Label:
 func _button(text: String, parent: Node) -> Button:
 	var button = Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(180, 52)
+	button.custom_minimum_size = Vector2(124, 52)
 	button.add_theme_font_size_override("font_size", 20)
 	Style.action(button)
 	parent.add_child(button)
@@ -141,20 +157,20 @@ func present(
 	selected_card = null
 	consumed = false
 	closing = false
-	confirm_button.disabled = true
+	confirm_button.disabled = mode != "card_batch"
 	decline_button.visible = mode in ["replace", "trim", "purchase"]
 	decline_button.text = "Keep Current Deck" if mode == "replace" else "Back"
 	decline_button.disabled = false
 	match mode:
 		"card":
 			heading.text = "Acquire Card"
-			instruction.text = "Choose one reward. Select a card to compare its details."
-			context.text = "One card reward"
+			instruction.text = "Choose one card to add to your deck."
+			context.text = "%d offered" % cards.size()
 			confirm_button.text = "Acquire Card"
 		"purchase":
 			heading.text = "Trading Outpost · Buy a Card"
 			instruction.text = "Select a card to preview it. Salvage is spent on confirmation."
-			context.text = result_context
+			context.text = "%s · Balance %d Salvage" % [result_context, purchase_balance]
 			confirm_button.text = "Confirm Purchase"
 		"card_batch":
 			heading.text = "Two Tier 1 Cards"
@@ -178,7 +194,17 @@ func present(
 			confirm_button.text = "Replace Selected Card"
 	if mode != "purchase" and not result_context.is_empty():
 		instruction.text = result_context + " · " + instruction.text
-	gallery.show_toolbar = mode not in ["card","card_batch","purchase"]
+	var offers := mode in ["card", "card_batch", "purchase"]
+	view_deck_button.visible = offers
+	view_deck_button.disabled = false
+	body.vertical = offers
+	details_panel.custom_minimum_size = Vector2(0, 116 if offers else 0)
+	details_panel.size_flags_vertical = Control.SIZE_FILL
+	gallery.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	gallery.offer_layout = offers
+	gallery.prices = purchase_prices if mode == "purchase" else {}
+	gallery.balance = purchase_balance
+	gallery.show_toolbar = not offers
 	gallery.filters.visible = gallery.show_toolbar
 	gallery.category = "All"
 	gallery.sort_mode = 0
@@ -186,37 +212,23 @@ func present(
 	gallery.set_category("All")
 	gallery.set_cards(cards)
 	gallery.select_identity("")
-	incoming_header.visible = mode == "replace"
-	if is_instance_valid(incoming_portrait):
-		incoming_header.remove_child(incoming_portrait)
-		incoming_portrait.queue_free()
-	incoming_portrait = null
-	if mode == "replace":
-		incoming_identity.text = (
-			"RECEIVE\n%s\n%d %s · Tier %d · Upgrade %d"
-			% [incoming.card_name, incoming.cost, incoming.family.capitalize(), incoming.tier, incoming.upgrade_level]
-		)
-		incoming_portrait = Portrait.new()
-		incoming_portrait.card_data = incoming
-		incoming_portrait.card_scale = 0.45
-		incoming_portrait.inspection_enabled = false
-		incoming_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		incoming_portrait.focus_mode = Control.FOCUS_NONE
-		incoming_header.add_child(incoming_portrait)
 	_refresh_details()
 	shade.show()
 	_fit()
-	shade.modulate.a = 0.0 if opening else 1.0
-	if opening:
+	var seconds := Motion.duration(FADE_TIME)
+	shade.modulate.a = 0.0 if opening and seconds > 0.0 else 1.0
+	if opening and seconds > 0.0:
 		motion = create_tween()
-		motion.tween_property(shade, "modulate:a", 1.0, FADE_TIME)
+		motion.tween_property(shade, "modulate:a", 1.0, seconds)
+	if offers:
+		_reveal_offers.call_deferred(revision)
 	# Remove keyboard focus from the covered expedition UI.
 	get_viewport().gui_release_focus()
 	if not gallery.grid.get_children().is_empty():
 		gallery.grid.get_child(0).grab_focus()
 
 func select_card(card: Resource) -> void:
-	if consumed or closing or not shade.visible or not gallery.scroll.allows_activation():
+	if deck_open or consumed or closing or not shade.visible or not gallery.scroll.allows_activation():
 		return
 	var valid: bool = false
 	for candidate in gallery.cards:
@@ -234,71 +246,118 @@ func select_card(card: Resource) -> void:
 			if not confirm_button.disabled else "%d Salvage · You have %d" % [price, purchase_balance])
 	_refresh_details()
 
+func _reveal_offers(requested: int) -> void:
+	if revision == requested and shade.visible: gallery.reveal_visible()
+
+
+func set_deck_open(value: bool) -> void:
+	deck_open = value
+	gallery.set_interaction_enabled(not value)
+
+
 func _refresh_details() -> void:
-	for child in details.get_children():
-		details.remove_child(child)
-		child.queue_free()
-	selection = _label("Select a card", 21)
+	for container in [details, comparison]:
+		for child in container.get_children():
+			container.remove_child(child)
+			child.queue_free()
+	compared.clear()
+	incoming_portrait = null
+	selection = _label("Both cards are included" if mode == "card_batch" else "Select a card", 19)
+	selection.add_theme_color_override("font_color", Holo.DEFAULT.edge)
 	details.add_child(selection)
-	if selected_card != null:
-		selection.text = selected_card.card_name
+	comparison.visible = mode in ["upgrade", "replace"]
 	if mode == "replace":
-		if selected_card != null:
-			_card_section("REMOVE", selected_card, false)
-		else:
-			details.add_child(_label("REMOVE\nSelect an owned card from the gallery.", 18))
-		details.add_child(_label("RECEIVE · Effects", 21))
-		details.add_child(_label(incoming.description, 18))
+		if selected_card != null: _comparison_card("REMOVE", selected_card, Holo.DEFAULT.hostile)
+		incoming_portrait = _comparison_card("RECEIVE", incoming, Holo.DEFAULT.friendly)
+		selection.text = selected_card.card_name + " → " + incoming.card_name if selected_card != null else "Choose an owned card to remove"
+		_add_effects("RECEIVE", incoming)
+		if selected_card != null: _add_effects("REMOVE", selected_card)
 	elif selected_card != null:
+		var card: Resource = selected_card
+		selection.text = card.card_name
 		if mode == "upgrade":
-			var next: Resource = selected_card.with_upgrade(selected_card.upgrade_level + 1)
-			selection.text = "After Upgrade"
-			var preview := Portrait.new()
-			preview.card_data = next
-			preview.card_scale = 1.2
-			preview.inspection_enabled = false
-			preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			preview.focus_mode = Control.FOCUS_NONE
-			preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			details.add_child(preview)
-			_fit_upgrade_preview.call_deferred()
+			var next: Resource = card.with_upgrade(card.upgrade_level + 1)
+			_comparison_card("CURRENT", card, Holo.DEFAULT.muted)
+			var arrow := _label("→", 24)
+			arrow.custom_minimum_size.x = 26
+			arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			comparison.add_child(arrow)
+			_comparison_card("AFTER UPGRADE", next, Holo.DEFAULT.friendly)
+			var change := _label("Cost %d → %d %s" % [card.cost, next.cost, card.family.capitalize()]
+				if card.cost != next.cost else "Cost %d %s" % [next.cost, next.family.capitalize()], 15)
+			details.add_child(change)
+			var text := RichTextLabel.new()
+			text.bbcode_enabled = true
+			text.fit_content = true
+			text.scroll_active = false
+			text.add_theme_font_size_override("normal_font_size", 16)
+			text.text = Effects.comparison(next, card)
+			details.add_child(text)
 		else:
-			_card_section("SELECTED", selected_card, true)
+			_add_effects("" if mode != "trim" else "REMOVE", card)
 	details_scroll.scroll_vertical = 0
+	_fit_comparison.call_deferred()
 
-func _fit_upgrade_preview() -> void:
-	var requested: int = revision
-	if not is_inside_tree(): return
-	await get_tree().process_frame
-	if not is_inside_tree() or requested != revision: return
-	if mode != "upgrade" or selected_card == null: return
-	for child in details.get_children():
-		if child is Portrait:
-			# Up to 20% larger; reduce only at short landscape heights to keep art intact.
-			var space: float = details_scroll.size.y-selection.size.y-16
-			child.set_card_scale(minf(1.2,minf((details_scroll.size.x-16)/198.0,maxf(0.1,space)/294.0)))
 
-func _card_section(title: String, card: Resource, art: bool, portrait_scale: float = 0.65) -> Button:
-	details.add_child(_label(title, 21))
-	var portrait: Button
-	if art:
-		portrait = Portrait.new()
-		portrait.card_data = card
-		portrait.card_scale = portrait_scale
-		portrait.inspection_enabled = false
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		portrait.focus_mode = Control.FOCUS_NONE
-		portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		details.add_child(portrait)
-	details.add_child(_label(
-		"%s · %d %s · Tier %d · Upgrade %d"
-		% [card.card_name, card.cost, card.family.capitalize(), card.tier, card.upgrade_level], 18
-	))
-	details.add_child(_label(card.description, 18))
+func _add_effects(role: String, card: Resource) -> void:
+	details.add_child(_label("%s%d %s · Tier %d · Upgrade %d" % [
+		role + " · " if not role.is_empty() else "", card.cost, card.family.capitalize(), card.tier, card.upgrade_level], 15))
+	details.add_child(_label(card.description, 17))
+
+
+func _comparison_card(role: String, card: Resource, tint: Color) -> Button:
+	var column := VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	comparison.add_child(column)
+	var label := _label(role, 14)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", tint)
+	column.add_child(label)
+	var portrait := Portrait.new()
+	portrait.card_data = card
+	portrait.card_scale = 0.42
+	portrait.inspection_enabled = false
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.focus_mode = Control.FOCUS_NONE
+	column.add_child(portrait)
+	compared.append(portrait)
 	return portrait
 
+
+func _fit_comparison() -> void:
+	if compared.is_empty(): return
+	var width: float = details_scroll.size.x - (52 if mode == "upgrade" else 22)
+	var height: float = body.size.y * 0.57 - 20
+	var scale_value := clampf(minf(width / (198 * compared.size()), height / 294.0), 0.32, 0.85)
+	for portrait in compared: portrait.set_card_scale(scale_value)
+
+
+func confirmation_snapshot(kind: String) -> Array:
+	var result: Array = []
+	if not shade.visible: return result
+	for portrait in gallery.grid.get_children():
+		if kind == "card_batch" or portrait.card_data == selected_card:
+			var card: Resource = portrait.card_data
+			if kind == "upgrade": card = card.with_upgrade(card.upgrade_level + 1)
+			result.append({"card": card, "rect": portrait.get_global_rect()})
+	return result
+
+
+func accepted(kind: String, snapshot: Array, received: Resource = null) -> void:
+	feedback.play(kind, snapshot, received)
+	if Motion.duration(CommitFeedback.SECONDS) == 0.0: return
+	if kind in ["card", "card_batch", "purchase"]:
+		for portrait in gallery.grid.get_children():
+			var acquired: bool = kind == "card_batch" or portrait.card_data == selected_card
+			Motion.stop(portrait, &"gallery_reveal")
+			if acquired:
+				portrait.modulate.a = 0.0
+			else:
+				Motion.start(portrait, &"gallery_reveal").tween_property(portrait, "modulate:a", 0.25, 0.14)
+
+
 func _confirm() -> void:
-	if consumed or closing or not shade.visible or selected_card == null or confirm_button.disabled:
+	if deck_open or consumed or closing or not shade.visible or (selected_card == null and mode != "card_batch") or confirm_button.disabled:
 		return
 	consumed = true
 	confirm_button.disabled = true
@@ -306,7 +365,7 @@ func _confirm() -> void:
 	confirmed.emit(mode, selected_card, revision)
 
 func _decline() -> void:
-	if consumed or closing or not shade.visible or mode not in ["replace", "trim", "purchase"] or not decline_button.visible:
+	if deck_open or consumed or closing or not shade.visible or mode not in ["replace", "trim", "purchase"] or not decline_button.visible:
 		return
 	consumed = true
 	confirm_button.disabled = true
@@ -317,16 +376,18 @@ func dismiss(immediate: bool = false) -> void:
 	revision += 1
 	consumed = true
 	_stop_motion()
+	if immediate: feedback.clear()
 	if not shade.visible:
 		return
 	closing = true
+	set_deck_open(false)
 	confirm_button.disabled = true
 	decline_button.disabled = true
-	if immediate:
+	if immediate or Motion.duration(FADE_TIME) <= 0.0:
 		_finish_close()
 	else:
 		motion = create_tween()
-		motion.tween_property(shade, "modulate:a", 0.0, FADE_TIME)
+		motion.tween_property(shade, "modulate:a", 0.0, CommitFeedback.SECONDS if feedback.get_child_count() > 0 else FADE_TIME)
 		motion.tween_callback(_finish_close)
 
 func _finish_close() -> void:
@@ -344,25 +405,15 @@ func _stop_motion() -> void:
 		motion.kill()
 
 func _fit() -> void:
-	_fit_upgrade_preview.call_deferred()
-	# Small margins; no reserved expedition HUD height. Honor actual desktop/mobile safe area.
-	var safe: Rect2i = DisplayServer.get_display_safe_area() if OS.has_feature("android") else Rect2i()
-	var window: Vector2i = DisplayServer.window_get_size()
-	var inset = Vector4.ZERO
-	if OS.has_feature("android") and window.x > 0 and window.y > 0:
-		var scale_factor: Vector2 = shade.size / Vector2(window)
-		inset = Vector4(
-			safe.position.x * scale_factor.x, safe.position.y * scale_factor.y,
-			(window.x - safe.end.x) * scale_factor.x, (window.y - safe.end.y) * scale_factor.y
-		)
-	for pair in [["left", inset.x], ["top", inset.y], ["right", inset.z], ["bottom", inset.w]]:
-		margin.add_theme_constant_override("margin_" + pair[0], 12 + maxi(0, roundi(pair[1])))
+	Safe.fit(margin, 20)
+	_fit_comparison.call_deferred()
+
 
 func _input(event: InputEvent) -> void:
 	var inspection: Node = get_node_or_null("/root/CardInspection")
 	if inspection != null and inspection.is_open():
 		return
-	if shade.visible and event.is_action_pressed("ui_cancel"):
+	if not deck_open and shade.visible and event.is_action_pressed("ui_cancel"):
 		if mode == "purchase":
 			_decline()
 		get_viewport().set_input_as_handled()

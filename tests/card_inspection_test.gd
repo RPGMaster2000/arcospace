@@ -182,7 +182,7 @@ func test_gallery() -> void:
 	click(point,MOUSE_BUTTON_LEFT,true); click(point,MOUSE_BUTTON_LEFT,false)
 	check(host.card_management.selected_card == portrait.card_data,"Normal acquisition tap selects inline details")
 	host.card_management.confirm_button.pressed.emit()
-	await create_timer(.25).timeout
+	if host.card_management.closing: await host.card_management.closed
 	host._show_current_deck()
 	await settle()
 	portrait=host.current_deck_viewer.gallery.grid.get_child(0)

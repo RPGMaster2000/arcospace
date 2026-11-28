@@ -129,7 +129,7 @@ func run() -> void:
 			await activate(modal.confirm_button,input)
 			check(state.upgrades_remaining == before-1,"Each real confirmation consumes exactly one upgrade")
 		check(state.pending_choice.is_empty() and state.upgrades_remaining == 0,"All pending upgrades complete normally")
-		await create_timer(0.3).timeout
+		if modal.closing: await modal.closed
 		await settle()
 		var next: Button
 		for action in host.view.find_children("*","Button",true,false):
