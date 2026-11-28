@@ -76,7 +76,11 @@ func run() -> void:
 	check(host.state.acquired_draw_weights()[incoming.identity_key()] == 3.0, "Incoming is weighted acquisition")
 	while host.card_management.closing: await process_frame
 	host._show_current_deck()
-	check(host.current_deck_viewer.title.text.contains("Deck: 34 / 34") and host.current_deck_viewer.gallery.cards.size()==34, "Deck viewer reflects current capacity")
+	var archive = host.current_deck_viewer
+	check(archive.composition.readout.text.contains("34 / 34 cards")
+		and archive.gallery.cards.size() == 34, "Archive composition displays the full deck and its capacity")
+	check(archive.composition.families.reduce(func(total, count): return total + count, 0) == 34,
+		"The resource distribution accounts for every owned card")
 	host.current_deck_viewer.dismiss()
 	var retained: Array = host.state.player_pool()
 	host.state.pending_choice = "card"

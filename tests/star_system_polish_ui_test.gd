@@ -62,14 +62,24 @@ func run():
  host.state.start_upgrade_event(2)
  host.show_outcome()
  var modal = host.card_management
- modal.select_card(modal.gallery.cards[0])
+ var selected: Resource = modal.gallery.cards[0]
+ modal.select_card(selected)
+ var expected: Resource = selected.with_upgrade(selected.upgrade_level + 1)
  for dimensions in [Vector2i(960,540),Vector2i(1280,720),Vector2i(1680,720)]:
   root.size = dimensions
   for n in range(20): await process_frame
-  check(modal.details.get_child_count()==2,"Upgrade preview contains only heading and upgraded card")
-  var portrait = modal.details.get_child(1)
-  check(portrait.get_global_rect().end.y <= modal.details_scroll.get_global_rect().end.y+1,"Entire upgrade card fits available height")
-  check(portrait.card_scale<=1.2,"Upgrade enlargement stays modest")
+  check(modal.compared.size() == 2, "Comparison shows current and upgraded cards")
+  if modal.compared.size() == 2:
+   var current = modal.compared[0]
+   var upgraded = modal.compared[1]
+   check(current.card_data == selected and upgraded.card_data.effects == expected.effects
+    and upgraded.card_data.upgrade_level == expected.upgrade_level, "Both portraits reflect the actual upgrade")
+   check(current.get_global_rect().end.x <= upgraded.get_global_rect().position.x, "Comparison portraits stay side by side")
+   for portrait in modal.compared:
+    check(modal.comparison.get_global_rect().encloses(portrait.get_global_rect()), "Entire comparison card fits its row")
+    check(portrait.card_scale <= 1.2, "Comparison enlargement stays modest")
+   check(modal.comparison.get_global_rect().end.y <= modal.details_scroll.get_global_rect().position.y,
+    "The effects readout does not cover the comparison portraits")
   check(modal.footer.get_global_rect().end.y <= root.get_visible_rect().end.y,"Upgrade actions stay visible")
   if DisplayServer.get_name()!="headless":
    await RenderingServer.frame_post_draw
