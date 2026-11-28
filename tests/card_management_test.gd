@@ -1,6 +1,7 @@
 extends SceneTree
 const Cards = preload("res://scripts/cards/card_library.gd")
 const Save = preload("res://scripts/persistence/expedition_save.gd")
+const LANDSCAPE := [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(2560, 1080), Vector2i(686, 384)]
 var checks: int = 0
 var failures: int = 0
 var host: Control
@@ -17,13 +18,19 @@ func _initialize() -> void:
 func settle() -> void:
 	for n in range(16): await process_frame
 func capture(label: String) -> void:
-	if DisplayServer.get_name() == "headless": return
+	var directory := OS.get_environment("ARCOSPACE_ARCHIVE_CAPTURES")
+	if DisplayServer.get_name() == "headless" or directory.is_empty(): return
+	if not label in ["archive", "acquire-1280", "upgrade-1280", "replace-1280", "rare", "outpost", "compact-insets"]: return
+	await create_timer(0.44).timeout
 	await RenderingServer.frame_post_draw
-	DirAccess.make_dir_recursive_absolute("res://.godot/testlogs")
-	root.get_texture().get_image().save_png("res://.godot/testlogs/card-management-" + label + ".png")
+	DirAccess.make_dir_recursive_absolute(directory)
+	var frame := root.get_texture().get_image()
+	if frame.get_width() > 1150:
+		frame.resize(1150, roundi(frame.get_height() * 1150.0 / frame.get_width()), Image.INTERPOLATE_LANCZOS)
+	frame.save_webp(directory.path_join(label + ".webp"), false, 0.81)
 func layout_checks(label: String) -> void:
 	var modal = host.card_management
-	for dimensions in [Vector2i(1280,720), Vector2i(960,540), Vector2i(1680,720)]:
+	for dimensions in LANDSCAPE:
 		root.size = dimensions
 		await settle()
 		var bounds: Rect2 = root.get_visible_rect()
@@ -54,7 +61,7 @@ func run() -> void:
 	var modal = host.card_management
 	modal.save_quit_button.show()
 	var screen_id: int = host.screen.get_instance_id()
-	for dimensions in [Vector2i(1280,720),Vector2i(960,540),Vector2i(1680,720)]:
+	for dimensions in LANDSCAPE:
 		root.size = dimensions
 		offer()
 		await settle()
@@ -79,12 +86,31 @@ func run() -> void:
 		await settle()
 		check(root.get_visible_rect().encloses(modal.footer.get_global_rect()), "Footer stays in viewport")
 		check(not modal.gallery.scroll.is_ancestor_of(modal.confirm_button), "Confirm outside gallery scroll")
-		check(modal.gallery.size.x / (modal.gallery.size.x + modal.details_scroll.get_parent().get_parent().size.x) > 0.59, "Gallery owns majority of width")
+		check(modal.gallery.get_global_rect().end.y <= modal.details_panel.get_global_rect().position.y,
+			"Centered offer row is above the compact detail strip")
+		check(modal.gallery.grid.columns == modal.gallery.cards.size(), "Five-card offer fits in one landscape row")
 		await capture("acquire-%d" % dimensions.x)
+		var checkpoint: Dictionary = Save.encode(host.state)
+		var revision: int = modal.revision
+		var scroll_position: int = modal.gallery.scroll.scroll_vertical
+		modal.view_deck_button.pressed.emit()
+		var archive = host.current_deck_viewer
+		check(archive.layer > modal.layer and archive.shade.visible, "Deck archive opens above reward")
+		check(archive.composition.families.reduce(func(total, n): return total + n, 0) == host.state.player_pool().size(),
+			"Composition matches the actual owned deck")
+		if dimensions.x == 1280:
+			await settle()
+			await capture("archive")
+		modal.confirm_button.pressed.emit()
+		check(Save.encode(host.state) == checkpoint, "Covered reward cannot commit and opening archive consumes no RNG")
+		archive.dismiss()
+		check(modal.revision == revision and modal.selected_card == selected and modal.gallery.scroll.scroll_vertical == scroll_position,
+			"Archive return preserves offers, selection and scroll")
 		var before: int = host.state.acquired_cards.size()
 		modal.confirm_button.pressed.emit()
 		modal.confirm_button.pressed.emit()
 		check(host.state.acquired_cards.size() == before + 1, "Acquire exactly once")
+		check(modal.feedback.get_child_count() > 0, "Accepted acquisition creates short read-only feedback")
 		while modal.closing: await process_frame
 		check(not modal.shade.visible and host.screen.process_mode == Node.PROCESS_MODE_INHERIT, "Fade out releases modal and input")
 		check(host.screen.get_instance_id() == screen_id, "Expedition screen retained")
@@ -95,14 +121,13 @@ func run() -> void:
 	var upgrade: Resource = modal.gallery.cards[0]
 	modal.select_card(upgrade)
 	check(modal.heading.text.contains("2 upgrades remaining"), "Remaining counter")
-	check(modal.selection.text == "After Upgrade" and modal.details.get_child_count()==2, "Upgrade details contain only heading and real upgraded card")
-	var preview: Button
-	for child in modal.details.get_children():
-		if child.get_script() == preload("res://scripts/ui/card_portrait.gd"):
-			preview = child
-	check(preview != null and preview.card_data.effects == upgrade.with_upgrade(upgrade.upgrade_level + 1).effects, "Right portrait shows actual next upgrade")
+	check(modal.compared.size() == 2 and modal.compared[0].card_data == upgrade,
+		"Comparison includes the existing definition")
+	var preview: Button = modal.compared[1]
+	check(preview.card_data.effects == upgrade.with_upgrade(upgrade.upgrade_level + 1).effects, "Right portrait shows actual next upgrade")
 	await settle()
-	check(preview.card_scale > 1.0 and preview.card_scale <= 1.2, "Upgrade portrait enlarges within available space")
+	check(preview.card_scale > 0.4 and preview.card_scale == modal.compared[0].card_scale,
+		"Both comparison portraits retain the same readable proportions")
 	await layout_checks("upgrade")
 	var old_revision: int = modal.revision
 	modal.confirm_button.pressed.emit()
@@ -139,6 +164,8 @@ func run() -> void:
 	modal.select_card(outgoing)
 	var key: String = outgoing.identity_key()
 	check(modal.selection.text.contains(outgoing.card_name), "Outgoing comparison updates")
+	check(modal.compared.size() == 2 and modal.compared[0].card_data == outgoing and modal.compared[1].card_data == incoming,
+		"Replacement compares the exact owned card and reward")
 	encoded = Save.encode(host.state)
 	resumed = Save.new().decode(encoded)
 	check(resumed.pending_card.identity_key() == incoming.identity_key() and resumed.pending_choice == "replace", "Pending replacement survives version 1 save")
@@ -208,6 +235,41 @@ func run() -> void:
 	check(modal.gallery.scroll.scroll_vertical == gallery_offset, "Details wheel does not scroll gallery")
 	check(modal.footer.get_global_rect() == footer_before, "Details wheel does not move actions")
 	check(Cards.CARDS[0].description != long_card.description, "Disposable detail fixture leaves card definitions unchanged")
+	# Authored visual fixtures exercise rare offers, the price strip and compact safe insets.
+	root.size = Vector2i(1280, 720)
+	var rare: Resource = preload("res://cards/108_bastion_foundry.tres")
+	var offers: Array = [Cards.CARDS[0], Cards.CARDS[4], rare, Cards.CARDS[14], Cards.CARDS[19]]
+	modal.present("card", offers)
+	modal.select_card(rare)
+	await settle()
+	check(modal.gallery.visible_cards == offers and modal.selected_card == rare, "Rare reward order and identity are preserved")
+	await capture("rare")
+	var prices: Dictionary = {}
+	for card in offers: prices[card.identity_key()] = 25 if card.tier == 3 else 15
+	modal.present("purchase", offers, 0, null, 34, "Card prices", prices, 20)
+	modal.select_card(rare)
+	check(modal.confirm_button.disabled and modal.context.text.contains("25 Salvage"), "Unaffordable rare purchase remains selectable for inspection")
+	modal.select_card(offers[0])
+	check(not modal.confirm_button.disabled and modal.context.text.contains("5"), "Affordable offer shows the post-purchase balance")
+	await settle()
+	await capture("outpost")
+	root.size = Vector2i(686, 384)
+	await settle()
+	preload("res://scripts/ui/card_screen_margins.gd").apply(modal.margin, 20, Vector4(34, 10, 8, 18))
+	await settle()
+	check(modal.margin.get_global_rect().encloses(modal.footer.get_global_rect()) and modal.footer.get_global_rect().position.x >= 54,
+		"Asymmetric safe margins keep the purchase action reachable")
+	await capture("compact-insets")
+	var preferences = preload("res://scripts/ui/menu_preferences.gd")
+	var previous: int = preferences.ui_motion()
+	preferences.set_ui_motion(0)
+	modal.dismiss(true)
+	modal.present("card_batch", offers.slice(0, 2))
+	check(not modal.confirm_button.disabled and modal.selected_card == null, "Batch confirmation keeps both cards without requiring a selection")
+	check(modal.shade.modulate.a == 1.0, "Minimal motion reveals the reward immediately")
+	modal.accepted("card_batch", modal.confirmation_snapshot("card_batch"))
+	check(modal.feedback.get_child_count() == 0, "Minimal motion omits the confirmation projection")
+	preferences.set_ui_motion(previous)
 	host.free()
 	await settle()
 	print("Card management: %d checks, %d failures" % [checks,failures])

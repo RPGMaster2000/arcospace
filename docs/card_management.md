@@ -1,4 +1,30 @@
-# Expedition card management — Phase 1
+# Expedition card management
+
+## Tactical Archive and reward screens
+
+The Tactical Archive counts owned identities by resource family and tier, and counts upgraded cards once per identity. Its segmented strip uses the actual family counts. Expedition decks show their current capacity. Starting-deck previews show only the collection count. Filters, sorting and the original card renderer are shared across the archive and the management galleries.
+
+Acquisition, batch rewards and purchases give their offers the full gallery width. Selection details occupy a small scrollable strip above the fixed confirmation actions. Purchase cards show their individual Salvage prices, and the footer previews the remaining balance. Both cards in a batch are included in one confirmation. View Deck opens the existing archive above these screens, preserving the pending choice, price, selection, scroll and focus.
+
+Upgrades compare the current definition with the exact next upgrade and use the existing effect formatter for changed values. Replacement shows the outgoing and incoming cards side by side with REMOVE and RECEIVE labels. Legacy trimming has only an outgoing card.
+
+Opening reveals are staggered for the visible gallery cards. Committed acquisitions use the existing holographic projector in a brief confirmation effect. Upgrades and replacements use detached copies of the shared card portrait. The expedition controller starts confirmation effects from accepted state operations. Transitioning to a required replacement keeps the reward pending. Minimal motion presents the complete interface immediately and omits the confirmation projection.
+
+The Godot 4.7.2 test fixture checks desktop, ultrawide and compact landscape layouts, including simulated asymmetric display insets. To reproduce the visual comparison, set `ARCOSPACE_ARCHIVE_CAPTURES` to a writable directory and run `tests/card_management_test.gd` with a renderer. Physical Android performance and touch comfort still need device testing.
+
+## Rendered examples
+
+- [Tactical Archive](card_management_screenshots/tactical_archive/archive.webp)
+- [Five-card acquisition](card_management_screenshots/tactical_archive/acquire-1280.webp)
+- [Tier III offer](card_management_screenshots/tactical_archive/rare.webp)
+- [Upgrade comparison](card_management_screenshots/tactical_archive/upgrade-1280.webp)
+- [Replacement comparison](card_management_screenshots/tactical_archive/replace-1280.webp)
+- [Trading Outpost](card_management_screenshots/tactical_archive/outpost.webp)
+- [Compact landscape with asymmetric insets (desktop Mobile Vulkan)](card_management_screenshots/tactical_archive/compact-vulkan.webp)
+
+## Phase 1 implementation history
+
+The measurements and examples below describe earlier versions of the shared management screen.
 
 Starting revision: `fbec1714dc9a`. This is a presentation change; State, Deck,
 card Resources, combat rules and the version 1 save codec are unchanged.

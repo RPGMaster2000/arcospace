@@ -2,6 +2,9 @@ extends Button
 
 # RESPONSIBILITY: Embed the original card scene in galleries without combat actions.
 # Shared visual adapter: renders the real battle card, with no play/discard behavior.
+const Motion = preload("res://scripts/ui/holographic/motion.gd")
+const Sound = preload("res://scripts/audio/sfx.gd")
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const CARD = preload("res://scenes/card.tscn")
 var card_data: Resource
 var comparison_base: Resource
@@ -10,6 +13,10 @@ var rendering: Button
 var badge: Label
 var hold_input: Node
 var inspection_enabled: bool = true
+var selected := false
+var price := -1
+var purchase_balance := 0
+var price_label: Label
 
 
 func _ready() -> void:
@@ -39,6 +46,14 @@ func _ready() -> void:
 		hold_input = preload("res://scripts/ui/card_hold.gd").new()
 		add_child(hold_input)
 		hold_input.bind_card(self, rendering, rendering.presentation_settings)
+	if price >= 0:
+		price_label = Label.new()
+		price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		price_label.add_theme_font_size_override("font_size", 15)
+		price_label.add_theme_color_override("font_color", Holo.DEFAULT.reward if price <= purchase_balance else Holo.DEFAULT.warning)
+		price_label.text = "%d Salvage%s" % [price, " · Short" if price > purchase_balance else ""]
+		add_child(price_label)
 	set_card_scale(card_scale)
 	tooltip_text = (
 		card_data.card_name
@@ -49,18 +64,24 @@ func _ready() -> void:
 		+ "\n"
 		+ card_data.description
 	)
-	focus_entered.connect(func(): rendering.set_interaction_emphasis(true, false))
-	focus_exited.connect(func(): rendering.set_interaction_emphasis(false, false))
-	mouse_entered.connect(func(): rendering.set_interaction_emphasis(true, false))
-	mouse_exited.connect(func(): rendering.set_interaction_emphasis(false, false))
-
-	button_down.connect(func(): rendering.set_interaction_emphasis(true, true))
-	button_up.connect(func(): rendering.set_interaction_emphasis(is_hovered(), false))
+	focus_entered.connect(_emphasis)
+	focus_exited.connect(_emphasis)
+	mouse_entered.connect(_emphasis)
+	mouse_exited.connect(_emphasis)
+	button_down.connect(func():
+		Sound.play(&"card_select", self)
+		_emphasis())
+	button_up.connect(_emphasis)
 
 
 func set_card_scale(value: float) -> void:
+	if is_equal_approx(value, card_scale) and custom_minimum_size.x > 0: return
 	card_scale = value
 	custom_minimum_size = Vector2(198, 294) * value
+	if price_label != null:
+		price_label.position = Vector2(0.0, custom_minimum_size.y + 4)
+		price_label.size = Vector2(custom_minimum_size.x, 22)
+		custom_minimum_size.y += 26
 	if rendering:
 		rendering.size = Vector2(198, 294)
 		rendering.scale = Vector2.ONE * value
@@ -68,14 +89,28 @@ func set_card_scale(value: float) -> void:
 
 # Selection decoration surrounds the original renderer without altering its artwork.
 func set_selected(active: bool) -> void:
-	var border: ReferenceRect = get_node_or_null("SelectionBorder")
+	selected = active
+	var border: Panel = get_node_or_null("SelectionBorder")
 	if border == null:
-		border = ReferenceRect.new()
+		border = Panel.new()
 		border.name = "SelectionBorder"
-		border.editor_only = false
-		border.border_color = Color("9ddfff")
-		border.border_width = 3.0
+		border.add_theme_stylebox_override("panel", Holo.frame("focus", Holo.family(card_data.family)))
 		border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		border.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(border)
 	border.visible = active
+	if rendering: _emphasis()
+
+
+func _emphasis() -> void:
+	var hover := is_hovered() or has_focus()
+	rendering.interaction_hovered = hover
+	rendering.interaction_selected = selected or button_pressed
+	rendering.apply_card_theme()
+	var seconds := Motion.duration(0.15)
+	var destination := Vector2(0, -5 if selected else (-3 if hover else 0))
+	if seconds > 0.0:
+		Motion.start(rendering, &"gallery_lift").tween_property(rendering, "position", destination, seconds)
+	else:
+		Motion.stop(rendering, &"gallery_lift")
+		rendering.position = Vector2.ZERO

@@ -5,6 +5,8 @@ extends CanvasLayer
 signal confirmed(card: Resource)
 signal opened
 signal closed
+const Motion = preload("res://scripts/ui/holographic/motion.gd")
+const Holo = preload("res://scripts/ui/holographic/skin.gd")
 const Portrait = preload("res://scripts/ui/card_portrait.gd")
 const Style = preload("res://scripts/ui/encounter_presentation.gd")
 var shade: ColorRect
@@ -22,6 +24,8 @@ var previous_focus: Control
 var tween: Tween
 var consumed: bool = true
 var read_only: bool = false
+var compare_button: Button
+var leaving := false
 
 
 func _ready() -> void:
@@ -33,6 +37,7 @@ func _ready() -> void:
 	panel = VBoxContainer.new()
 	panel.add_theme_constant_override("separation", 16)
 	shade.add_child(panel)
+	Holo.plate(panel, Holo.frame("dialog"), Vector2(12, 8))
 	heading = Label.new()
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 24)
@@ -65,17 +70,26 @@ func _ready() -> void:
 		button.add_theme_font_size_override("font_size", 22)
 		Style.action(button, button == confirm_button)
 		actions.add_child(button)
-	cancel_button.pressed.connect(dismiss)
+	compare_button = Button.new()
+	compare_button.custom_minimum_size = Vector2(144, 52)
+	Style.action(compare_button)
+	actions.add_child(compare_button)
+	compare_button.pressed.connect(func():
+		present(current_card, current_card.with_upgrade(current_card.upgrade_level + 1) if next_card == null else null, true))
+	cancel_button.pressed.connect(_request_close)
 	confirm_button.pressed.connect(_confirm)
 	shade.resized.connect(_fit)
 	shade.hide()
 
 
 func present(card: Resource, upgraded: Resource = null, inspect_only: bool = false) -> void:
-	previous_focus = get_viewport().gui_get_focus_owner()
+	if not shade.visible: previous_focus = get_viewport().gui_get_focus_owner()
 	current_card = card
 	next_card = upgraded
 	read_only = inspect_only
+	leaving = false
+	cancel_button.disabled = false
+	compare_button.disabled = false
 	consumed = false
 	for child in cards_row.get_children():
 		cards_row.remove_child(child)
@@ -102,6 +116,8 @@ func present(card: Resource, upgraded: Resource = null, inspect_only: bool = fal
 		if upgraded != null
 		else ""
 	)
+	compare_button.visible = inspect_only and card.upgrade_level < mini(2, card.upgrade_effects.size())
+	compare_button.text = "Current card" if upgraded != null else "Next upgrade"
 	confirm_button.visible = not inspect_only
 	confirm_button.disabled = false
 	confirm_button.text = "Confirm upgrade" if upgraded != null else "Acquire card"
@@ -115,11 +131,16 @@ func present(card: Resource, upgraded: Resource = null, inspect_only: bool = fal
 	shade.show()
 	opened.emit()
 	_fit()
-	shade.modulate.a = 0
+	shade.modulate.a = 1.0
 	if tween:
 		tween.kill()
-	tween = create_tween()
-	tween.tween_property(shade, "modulate:a", 1.0, 0.16)
+	if Motion.duration(0.18) > 0.0:
+		shade.modulate.a = 0.0
+		tween = create_tween().set_parallel()
+		tween.tween_property(shade, "modulate:a", 1.0, 0.18)
+		for portrait in portraits:
+			portrait.rendering.position.y = 6.0
+			tween.tween_property(portrait.rendering, "position:y", 0.0, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	cancel_button.grab_focus()
 	_fit.call_deferred()
 
@@ -160,7 +181,22 @@ func _confirm() -> void:
 	confirmed.emit(chosen)
 
 
+func _request_close() -> void:
+	if leaving: return
+	if not read_only or Motion.duration(0.16) == 0.0:
+		dismiss()
+		return
+	leaving = true
+	cancel_button.disabled = true
+	compare_button.disabled = true
+	if tween: tween.kill()
+	tween = create_tween()
+	tween.tween_property(shade, "modulate:a", 0.0, 0.16)
+	tween.tween_callback(dismiss)
+
+
 func dismiss() -> void:
+	leaving = false
 	var was_visible: bool = shade.visible
 	consumed = true
 	if tween:
@@ -179,10 +215,12 @@ func _input(event: InputEvent) -> void:
 	if not shade.visible:
 		return
 	if event.is_action_pressed("ui_cancel"):
-		dismiss()
+		_request_close()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
-		if confirm_button.visible:
+		if compare_button.visible:
+			(compare_button if get_viewport().gui_get_focus_owner() == cancel_button else cancel_button).grab_focus()
+		elif confirm_button.visible:
 			(
 				(
 					cancel_button
